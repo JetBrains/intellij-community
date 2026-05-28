@@ -199,6 +199,13 @@ private val PROMPT_HIGHLIGHTING = Key.create<RangeHighlighter>("completion.comma
 private val LOOKUP_HIGHLIGHTING = Key.create<List<RangeHighlighter>>("completion.command.lookup.highlighting")
 private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 
+private val errorAttributes = setOf(
+  CodeInsightColors.ERRORS_ATTRIBUTES,
+  CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES,
+  CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING,
+  CodeInsightColors.RUNTIME_ERROR
+)
+
 internal class CommandCompletionListener : LookupManagerListener {
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
@@ -288,12 +295,9 @@ private class CommandCompletionHighlightingListener(
                                                                    lookup.lookupOriginalStart)
     val endOffset = topLevelEditor.caretModel.offset
     if (!installed.get()) {
+      val range = TextRange(startOffset, endOffset)
       topLevelEditor.addHighlightingPredicate(SUPPRESS_PREDICATE_KEY, EditorHighlightingPredicate { highlighter ->
-        val attributesKey = highlighter.textAttributesKey ?: return@EditorHighlightingPredicate true
-        if (!(attributesKey == CodeInsightColors.ERRORS_ATTRIBUTES || attributesKey == CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES || attributesKey == CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING || attributesKey == CodeInsightColors.RUNTIME_ERROR)) {
-          return@EditorHighlightingPredicate true
-        }
-        return@EditorHighlightingPredicate !TextRange(startOffset, endOffset).intersects(highlighter.textRange)
+        ignoreErrorIfInRange(highlighter, range)
       })
       installed.set(true)
     }
@@ -301,6 +305,14 @@ private class CommandCompletionHighlightingListener(
     previousHighlighting?.let { topLevelEditor.markupModel.removeHighlighter(it) }
     val highlighter = topLevelEditor.markupModel.addRangeHighlighter(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES, startOffset, endOffset, PROMPT_LAYER, HighlighterTargetArea.EXACT_RANGE)
     lookup.putUserData(PROMPT_HIGHLIGHTING, highlighter)
+  }
+
+  private fun ignoreErrorIfInRange(
+    highlighter: RangeHighlighter,
+    range: TextRange,
+  ): Boolean {
+    val attributesKey = highlighter.textAttributesKey ?: return true
+    return attributesKey !in errorAttributes || !range.intersects(highlighter.textRange)
   }
 
   override fun currentItemChanged(event: LookupEvent) {
