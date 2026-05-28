@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.Clock
+import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.UIUtil
@@ -28,6 +29,7 @@ import javax.swing.KeyStroke
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 private const val MY_SHIFT_SHIFT_ACTION = "ModifierKeyDoubleClickHandlerTest.action1"
 private const val MY_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action2"
@@ -286,6 +288,20 @@ class ModifierKeyDoubleClickHandlerTest {
   }
 
   @Test
+  fun keymapGestureShortcutSurvivesRuntimeResyncDuringDoubleClick() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    syncKeymapShortcuts()
+
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    ctrlPress()
+    ctrlRelease()
+    syncKeymapShortcuts()
+    ctrlPress()
+    ctrlRelease()
+    assertEquals(1, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
   fun removingKeymapGestureShortcutUnregistersRuntimeDoubleClick() {
     resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
     syncKeymapShortcuts()
@@ -346,16 +362,18 @@ class ModifierKeyDoubleClickHandlerTest {
     assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
 
     actionManager.unregisterAction(MY_KEYMAP_CTRL_CTRL_ACTION)
-    UIUtil.dispatchAllInvocationEvents()
+    waitUntilAssertSucceedsBlocking(timeout = 2.seconds) {
+      assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    }
 
-    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
     dispatchCtrlDoubleClick()
     assertEquals(0, keymapCtrlCtrlActionInvocationCount)
 
     actionManager.registerAction(MY_KEYMAP_CTRL_CTRL_ACTION, createAction { keymapCtrlCtrlActionInvocationCount++ })
-    UIUtil.dispatchAllInvocationEvents()
+    waitUntilAssertSucceedsBlocking(timeout = 2.seconds) {
+      assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    }
 
-    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
     dispatchCtrlDoubleClick()
     assertEquals(1, keymapCtrlCtrlActionInvocationCount)
   }
