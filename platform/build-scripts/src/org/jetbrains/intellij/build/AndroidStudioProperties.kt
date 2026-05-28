@@ -85,8 +85,6 @@ class AndroidStudioProperties : ProductProperties() {
       "-XX:FlightRecorderOptions=stackdepth=256",
       // Required by instantapps-api.jar (ag/I55803b347).
       "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED",
-      // Enable use of the deprecated SecurityManager (b/302171264).
-      "-Djava.security.manager=allow",
       // Workaround for C2 crashes b/377324522
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::simpleType",
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
