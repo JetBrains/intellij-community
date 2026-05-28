@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.repository.serialization;
+package com.intellij.platform.runtime.repository.impl;
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import org.jetbrains.annotations.ApiStatus;
@@ -9,26 +10,29 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class RawIncludedRuntimeModule {
+public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   private final RuntimeModuleId myModuleId;
   private final RuntimeModuleLoadingRule myLoadingRule;
   private final @Nullable RuntimeModuleId myRequiredIfAvailableId;
 
   @ApiStatus.Internal
-  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull RuntimeModuleLoadingRule loadingRule, @Nullable RuntimeModuleId requiredIfAvailableId) {
+  public IncludedRuntimeModuleImpl(@NotNull RuntimeModuleId moduleId, @NotNull RuntimeModuleLoadingRule loadingRule, @Nullable RuntimeModuleId requiredIfAvailableId) {
     myModuleId = moduleId;
     myLoadingRule = loadingRule;
     myRequiredIfAvailableId = requiredIfAvailableId;
   }
 
+  @Override
   public @NotNull RuntimeModuleId getModuleId() {
     return myModuleId;
   }
 
+  @Override
   public @NotNull RuntimeModuleLoadingRule getLoadingRule() {
     return myLoadingRule;
   }
 
+  @Override
   public @Nullable RuntimeModuleId getRequiredIfAvailableId() {
     return myRequiredIfAvailableId;
   }
@@ -37,7 +41,7 @@ public final class RawIncludedRuntimeModule {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
 
-    RawIncludedRuntimeModule module = (RawIncludedRuntimeModule)o;
+    IncludedRuntimeModuleImpl module = (IncludedRuntimeModuleImpl)o;
     return myModuleId.equals(module.myModuleId) && myLoadingRule == module.myLoadingRule
            && Objects.equals(myRequiredIfAvailableId, module.myRequiredIfAvailableId);
   }
@@ -49,6 +53,6 @@ public final class RawIncludedRuntimeModule {
 
   @Override
   public String toString() {
-    return "RawIncludedRuntimeModule{moduleId=" + myModuleId + '}';
+    return "IncludedRuntimeModule{moduleId=" + myModuleId + '}';
   }
 }

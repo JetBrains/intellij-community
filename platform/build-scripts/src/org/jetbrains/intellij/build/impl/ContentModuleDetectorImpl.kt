@@ -4,12 +4,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleRegistrationData
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
 import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 import org.jdom.Element
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
@@ -129,7 +130,7 @@ internal class ContentModuleDetectorImpl(
     entries: Collection<DistributionFileEntry>,
     project: JpsProject,
     pluginId: String,
-  ): List<RawIncludedRuntimeModule> {
+  ): List<IncludedRuntimeModule> {
     val includedModules = entries.mapNotNull { entry ->
       val relativeOutputPath = entry.relativeOutputFile ?: ""
       when (entry) {
@@ -138,13 +139,13 @@ internal class ContentModuleDetectorImpl(
           val key = ContentModuleInPlugin(pluginId, moduleName)
           val loadingRule = loadingRulesForContentModules[key] ?: RuntimeModuleLoadingRule.EMBEDDED
           val requiredIfAvailableId = requiredIfAvailableAttributeForContentModules[key]
-          RawIncludedRuntimeModule(createModuleId(moduleName, project), loadingRule, requiredIfAvailableId)
+          IncludedRuntimeModuleImpl(createModuleId(moduleName, project), loadingRule, requiredIfAvailableId)
         }
         is ProjectLibraryEntry -> {
-          RawIncludedRuntimeModule(RuntimeModuleId.projectLibrary(entry.data.libraryName), RuntimeModuleLoadingRule.EMBEDDED, null)
+          IncludedRuntimeModuleImpl(RuntimeModuleId.projectLibrary(entry.data.libraryName), RuntimeModuleLoadingRule.EMBEDDED, null)
         }
         is ModuleTestOutputEntry ->
-          RawIncludedRuntimeModule(RuntimeModuleId.moduleTests (entry.moduleName), RuntimeModuleLoadingRule.EMBEDDED, null)
+          IncludedRuntimeModuleImpl(RuntimeModuleId.moduleTests(entry.moduleName), RuntimeModuleLoadingRule.EMBEDDED, null)
         is ModuleLibraryFileEntry -> null // module-level libraries are included in the runtime descriptor for corresponding module
         is CustomAssetEntry -> null
       }?.takeIf { shouldIncludeInPluginHeader(it.moduleId, relativeOutputPath) }

@@ -1,3 +1,7 @@
+*:com.intellij.platform.runtime.repository.IncludedRuntimeModule
+- a:getLoadingRule():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
+- a:getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
+- a:getRequiredIfAvailableId():com.intellij.platform.runtime.repository.RuntimeModuleId
 *f:com.intellij.platform.runtime.repository.MalformedRepositoryException
 - java.lang.RuntimeException
 *:com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
@@ -48,12 +52,6 @@
 - a:getIncludedModules():java.util.List
 - a:getPluginDescriptorModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - a:getPluginId():java.lang.String
-*f:com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
-- equals(java.lang.Object):Z
-- getLoadingRule():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
-- getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
-- getRequiredIfAvailableId():com.intellij.platform.runtime.repository.RuntimeModuleId
-- hashCode():I
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - <init>(java.lang.String,java.util.List,java.util.List):V
 - s:create(com.intellij.platform.runtime.repository.RuntimeModuleId,com.intellij.platform.runtime.repository.RuntimeModuleVisibility,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor

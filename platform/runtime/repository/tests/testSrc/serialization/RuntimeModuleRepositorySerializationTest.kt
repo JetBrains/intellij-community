@@ -8,6 +8,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.createModuleDescriptor
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
 import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor.create
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
@@ -135,13 +136,13 @@ class RuntimeModuleRepositorySerializationTest {
       "plugin.id",
       raw("ij.plugin", "jetbrains"),
       listOf(
-        RawIncludedRuntimeModule(raw("ij.optional", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, null),
-        RawIncludedRuntimeModule(raw("ij.required", "jetbrains"), RuntimeModuleLoadingRule.REQUIRED, null),
-        RawIncludedRuntimeModule(raw("ij.embedded", "jetbrains"), RuntimeModuleLoadingRule.EMBEDDED, null),
-        RawIncludedRuntimeModule(raw("ij.on_demand", "jetbrains"), RuntimeModuleLoadingRule.ON_DEMAND, null),
-        RawIncludedRuntimeModule(raw("ij.required.backend", "jetbrains"),
-                                 RuntimeModuleLoadingRule.OPTIONAL,
-                                 raw("intellij.platform.backend", "jetbrains")),
+        IncludedRuntimeModuleImpl(raw("ij.optional", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, null),
+        IncludedRuntimeModuleImpl(raw("ij.required", "jetbrains"), RuntimeModuleLoadingRule.REQUIRED, null),
+        IncludedRuntimeModuleImpl(raw("ij.embedded", "jetbrains"), RuntimeModuleLoadingRule.EMBEDDED, null),
+        IncludedRuntimeModuleImpl(raw("ij.on_demand", "jetbrains"), RuntimeModuleLoadingRule.ON_DEMAND, null),
+        IncludedRuntimeModuleImpl(raw("ij.required.backend", "jetbrains"),
+                                  RuntimeModuleLoadingRule.OPTIONAL,
+                                  raw("intellij.platform.backend", "jetbrains")),
       )
     )
     check(descriptors, listOf(pluginHeader)) {

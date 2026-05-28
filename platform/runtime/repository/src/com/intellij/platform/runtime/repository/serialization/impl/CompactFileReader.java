@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility;
 import com.intellij.platform.runtime.repository.RuntimePluginHeader;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
 import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl;
@@ -108,7 +109,7 @@ public final class CompactFileReader {
         }
         RuntimeModuleId pluginDescriptorModuleId = moduleIds[pluginDescriptorModuleIdIndex];
         int includedModulesCount = in.readInt();
-        List<RawIncludedRuntimeModule> includedModules = new ArrayList<>(includedModulesCount);
+        List<IncludedRuntimeModule> includedModules = new ArrayList<>(includedModulesCount);
         for (int j = 0; j < includedModulesCount; j++) {
           int includedModuleIndex = in.readInt();
           if (includedModuleIndex < 0 || includedModuleIndex >= totalModuleIdCount) {
@@ -124,7 +125,7 @@ public final class CompactFileReader {
             throw new MalformedRepositoryException("Invalid required-if-available index '" + requiredIfAvailableIndex + "' for '" + moduleId.getDisplayName() + "' in '" + pluginId + "'");
           }
           RuntimeModuleId requiredIfAvailable = requiredIfAvailableIndex == -1 ? null : moduleIds[requiredIfAvailableIndex];
-          includedModules.add(new RawIncludedRuntimeModule(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));
+          includedModules.add(new IncludedRuntimeModuleImpl(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));
         }
         pluginHeaders.add(new RuntimePluginHeaderImpl(pluginId, pluginDescriptorModuleId, includedModules));
       }

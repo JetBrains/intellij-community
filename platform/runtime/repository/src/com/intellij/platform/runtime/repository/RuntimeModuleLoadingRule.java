@@ -6,7 +6,7 @@ package com.intellij.platform.runtime.repository;
  * Meaning of the entries is the same as entries in {@link com.intellij.ide.plugins.ModuleLoadingRule} for content modules in plugins, but
  * here it applies not only to plugin modules, but to the platform modules as well.
  * In the future we can reuse this enum instead of having two copies.
- * @see com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule#getLoadingRule()
+ * @see IncludedRuntimeModule#getLoadingRule()
  */
 public enum RuntimeModuleLoadingRule {
   /**

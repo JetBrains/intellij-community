@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository;
 
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,5 +15,5 @@ public interface RuntimePluginHeader {
 
   /// Returns the list of modules included in the plugin: plugin content modules, JPS modules that aren't registered as content modules,
   /// and JPS project-level libraries included in the plugin's distribution.
-  @NotNull List<RawIncludedRuntimeModule> getIncludedModules();
+  @NotNull List<IncludedRuntimeModule> getIncludedModules();
 }

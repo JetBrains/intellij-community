@@ -50,9 +50,6 @@ public final class ProductModulesXmlSerializer {
           if (moduleName == null || moduleName.isEmpty()) {
             throw new XMLStreamException("Module name is not specified");
           }
-          /* actually, main-root-modules may refer to a content module, but we don't have attributes for specifying namespaces there;
-             so for now, all modules are treated as legacy JPS modules, and code in RawIncludedRuntimeModule.resolve check both variants;
-             this won't be needed when we stop using main-root-modules and take the data directly from the runtime module repository (IJPL-241655) */
           RuntimeModuleId moduleId = RuntimeModuleId.legacyJpsModule(moduleName);
           if ("main-root-modules".equals(secondLevelTag)) {
             //todo remove later: this is temporarily kept to avoid exceptions if the tag is still present for some reasons

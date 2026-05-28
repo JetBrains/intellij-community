@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimePluginHeader;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public final class CompactFileWriter {
       }
       for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         referencedModuleIds.add(pluginHeader.getPluginDescriptorModuleId());
-        for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
+        for (IncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           referencedModuleIds.add(includedModule.getModuleId());
           RuntimeModuleId requiredIfAvailableId = includedModule.getRequiredIfAvailableId();
           if (requiredIfAvailableId != null) {
@@ -129,7 +129,7 @@ public final class CompactFileWriter {
         }
         out.writeInt(pluginDescriptorModuleIdIndex);
         out.writeInt(pluginHeader.getIncludedModules().size());
-        for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
+        for (IncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           Integer includedModuleIndex = moduleIdIndexes.get(includedModule.getModuleId());
           if (includedModuleIndex == null) {
             throw new AssertionError("Unknown included module '" + includedModule.getModuleId().getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
