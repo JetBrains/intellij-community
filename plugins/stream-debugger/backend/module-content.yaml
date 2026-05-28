@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.debugger.streams.backend.jar
-  modules:
-  - name: intellij.debugger.streams.backend
