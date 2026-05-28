@@ -272,6 +272,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final RegExpPattern pattern = group.getPattern();
     final RegExpBranch[] branches = pattern.getBranches();
+    final RegExpGroup.Type type = group.getType();
     if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
       // catches "()" as well as "(|)"
       myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.empty.group")).create();
@@ -279,7 +280,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     else if (branches.length == 1) {
       final RegExpAtom[] atoms = branches[0].getAtoms();
       if (atoms.length == 1 && atoms[0] instanceof RegExpGroup innerGroup) {
-        final RegExpGroup.Type type = group.getType();
         if (type == RegExpGroup.Type.CAPTURING_GROUP || type == RegExpGroup.Type.ATOMIC || type == RegExpGroup.Type.NON_CAPTURING) {
           if (group.isCapturing() == innerGroup.isCapturing()) {
             myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.redundant.group.nesting")).create();
@@ -293,8 +293,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
                                RegExpBundle.message("error.this.named.group.syntax.is.not.supported.in.this.regex.dialect")).create();
       }
     }
-    if (group.getType() == RegExpGroup.Type.ATOMIC && !myLanguageHosts.supportsPossessiveQuantifiers(group)) {
+    if (type == RegExpGroup.Type.ATOMIC && !myLanguageHosts.supportsPossessiveQuantifiers(group)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.atomic.groups.are.not.supported.in.this.regex.dialect"))
+        .create();
+    }
+    if (type == RegExpGroup.Type.PCRE_BRANCH_RESET && !myLanguageHosts.supportsBranchResetGroup(group)) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.branch.reset.group.not.supported.in.this.regex.dialect"))
         .create();
     }
     final String name = group.getName();
@@ -311,8 +315,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (node != null) myHolder.newAnnotation(HighlightSeverity.ERROR,
                                                RegExpBundle.message("error.group.with.name.0.already.defined", name)).range(node).create();
     }
-    final RegExpGroup.Type groupType = group.getType();
-    if (groupType == RegExpGroup.Type.POSITIVE_LOOKBEHIND || groupType == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
+    if (type == RegExpGroup.Type.POSITIVE_LOOKBEHIND || type == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
       final RegExpLanguageHost.Lookbehind support = myLanguageHosts.supportsLookbehind(group);
       if (support == RegExpLanguageHost.Lookbehind.NOT_SUPPORTED) {
         myHolder.newAnnotation(HighlightSeverity.ERROR,

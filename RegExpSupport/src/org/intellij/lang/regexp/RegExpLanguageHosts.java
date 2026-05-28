@@ -189,6 +189,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.supportsLookbehind(group);
   }
 
+  public boolean supportsBranchResetGroup(RegExpGroup group) {
+    final RegExpLanguageHost host = findRegExpHost(group);
+    return host == null || host.supportsBranchResetGroup(group);
+  }
+
   public @Nullable Number getQuantifierValue(@NotNull RegExpNumber valueElement) {
     final RegExpLanguageHost host = findRegExpHost(valueElement);
     if (host == null) {

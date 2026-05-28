@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.module.Module;
@@ -159,6 +159,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     return group.getType() == RegExpGroup.Type.NAMED_GROUP && hasAtLeastJdkVersion(group, JavaSdkVersion.JDK_1_7);
+  }
+
+  @Override
+  public boolean supportsBranchResetGroup(PsiElement context) {
+    return false;
   }
 
   @Override
