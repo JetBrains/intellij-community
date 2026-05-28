@@ -34,7 +34,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
@@ -135,7 +134,7 @@ class PluginDownloader private constructor(
   fun getFilePath(): Path {
     val file = myFile
     if (file == null) {
-      throw IOException("Plugin '" + pluginName + "' was not successfully downloaded")
+      throw IOException("Plugin '$pluginName' was not successfully downloaded")
     }
     return file
   }
@@ -172,7 +171,7 @@ class PluginDownloader private constructor(
           LOG.info("Preparing to downgrade plugin '" + myPluginId + "' : " + pluginVersion + " -> " + installedDescriptor.version)
         }
         else if (result <= 0) {
-          LOG.info("Preparing: plugin " + myPluginId + ": current version (max) " + pluginVersion)
+          LOG.info("Preparing: plugin $myPluginId: current version (max) $pluginVersion")
           return false
         }
       }
@@ -192,7 +191,7 @@ class PluginDownloader private constructor(
       return false
     }
 
-    val loaded = LoadingState.COMPONENTS_LOADED.isOccurred()  // plugins can be requested during initial IDE setup
+    val loaded = LoadingState.COMPONENTS_LOADED.isOccurred  // plugins can be requested during initial IDE setup
     if (loaded && !PluginSignatureChecker.verifyIfRequired(myDescriptor, file, isFromMarketplace(), true)) {
       myShownErrors = true
       return false
@@ -218,7 +217,7 @@ class PluginDownloader private constructor(
         LOG.info("Downgrading plugin '" + myPluginId + "' : " + pluginVersion + " -> " + descriptor.version)
       }
       else if (result <= 0) {
-        LOG.info("Plugin " + myPluginId + ": current version (max) " + pluginVersion)
+        LOG.info("Plugin $myPluginId: current version (max) $pluginVersion")
         reportError(IdeBundle.message("error.older.update", pluginVersion, descriptor.version))
         return false
       }
@@ -256,7 +255,7 @@ class PluginDownloader private constructor(
   }
 
   private fun reportError(@NotificationContent errorMessage: String) {
-    LOG.info("PluginDownloader error: " + errorMessage)
+    LOG.info("PluginDownloader error: $errorMessage")
     myShownErrors = true
     myErrorsConsumer.accept(IdeBundle.message("error.plugin.was.not.installed", pluginName, errorMessage))
   }
@@ -265,7 +264,7 @@ class PluginDownloader private constructor(
   fun install() {
     PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(), myOldFile)
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val isInstalled = PluginManagerCore.isPluginInstalled(myDescriptor.pluginId)
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor, isInstalled, true)
     }
@@ -301,7 +300,7 @@ class PluginDownloader private constructor(
       indicator.setText2(IdeBundle.message("progress.downloading.plugin", pluginName))
     }
 
-    LOG.info("downloading plugin " + myPluginName + "(" + myPluginId + ") version " + myPluginVersion + " from " + myPluginUrl)
+    LOG.info("downloading plugin $myPluginName($myPluginId) version $myPluginVersion from $myPluginUrl")
     val downloader = myDownloadService ?: MarketplacePluginDownloadService()
     val oldFile = myOldFile
     return if (oldFile != null) {
@@ -325,15 +324,15 @@ class PluginDownloader private constructor(
     }
 
     val node = PluginNode(id)
-    node.setName(pluginName)
-    node.setProductCode(productCode)
-    node.setReleaseDate(releaseDate)
-    node.setReleaseVersion(releaseVersion)
-    node.setLicenseOptional(isLicenseOptional)
+    node.name = pluginName
+    node.productCode = productCode
+    node.releaseDate = releaseDate
+    node.releaseVersion = releaseVersion
+    node.isLicenseOptional = isLicenseOptional
     node.setVersion(pluginVersion)
-    node.setDownloadUrl(myPluginUrl)
-    node.setDependencies(ContainerUtil.map(myDependencies) { dep -> PluginDependencyImpl(dep.pluginId, null, dep.isOptional) })
-    node.setDescription(myDescription)
+    node.downloadUrl = myPluginUrl
+    node.setDependencies(myDependencies.map { dep -> PluginDependencyImpl(dep.pluginId, null, dep.isOptional) })
+    node.description = myDescription
     return node
   }
 
