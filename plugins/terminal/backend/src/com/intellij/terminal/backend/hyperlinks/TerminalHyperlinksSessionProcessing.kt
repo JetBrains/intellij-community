@@ -6,6 +6,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.toUpdate
@@ -17,24 +19,30 @@ internal fun scheduleHyperlinksSessionProcessing(session: BackendTerminalHyperli
 }
 
 private suspend fun processHyperlinksSession(session: BackendTerminalHyperlinksSession) = coroutineScope {
+  // BackendTerminalHyperlinkFacade is not thread-safe, so we need to synchronize access to it
+  val facadeMutex = Mutex()
+
   launch(CoroutineName("Process input events")) {
-    processInputEvents(session.hyperlinksFacade, session.inputEventsSink)
+    processInputEvents(session.hyperlinksFacade, session.inputEventsSink, facadeMutex)
   }
   launch(CoroutineName("Process results")) {
-    collectHyperlinkResults(session.hyperlinksFacade, session.hyperlinkUpdatesChannel)
+    collectHyperlinkResults(session.hyperlinksFacade, session.hyperlinkUpdatesChannel, facadeMutex)
   }
 }
 
 private suspend fun processInputEvents(
   hyperlinkFacade: BackendTerminalHyperlinkFacade,
   inputEventsChannel: ReceiveChannel<TerminalHyperlinksInputEvent>,
+  facadeMutex: Mutex,
 ) {
   for (event in inputEventsChannel) {
-    try {
-      processInputEvent(hyperlinkFacade, event)
-    }
-    catch (e: Exception) {
-      LOG.error("Error when processing input event $event", e)
+    facadeMutex.withLock {
+      try {
+        processInputEvent(hyperlinkFacade, event)
+      }
+      catch (e: Exception) {
+        LOG.error("Error when processing input event $event", e)
+      }
     }
   }
 }
@@ -51,28 +59,42 @@ private fun processInputEvent(
   }
 }
 
-private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFacade, sink: SendChannel<TerminalHyperlinksOutputEvent>) {
+private suspend fun collectHyperlinkResults(
+  facade: BackendTerminalHyperlinkFacade,
+  sink: SendChannel<TerminalHyperlinksOutputEvent>,
+  facadeMutex: Mutex,
+) {
   facade.heartbeatFlow.collect {
-    val events = try {
-      facade.collectResultsAndMaybeStartNewTask()
+    val events = facadeMutex.withLock {
+      collectResultsAndApplyToModel(facade)
     }
-    catch (e: Exception) {
-      LOG.error("Error when collecting hyperlink results", e)
-      return@collect
-    }
-
     for (event in events) {
-      if (event is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
-        try {
-          facade.updateModelState(event)
-        }
-        catch (e: Exception) {
-          LOG.error("Error when updating model state: $event", e)
-        }
-      }
       sink.send(event)
     }
   }
+}
+
+private fun collectResultsAndApplyToModel(facade: BackendTerminalHyperlinkFacade): List<TerminalHyperlinksOutputEvent> {
+  val events = try {
+    facade.collectResultsAndMaybeStartNewTask()
+  }
+  catch (e: Exception) {
+    LOG.error("Error when collecting hyperlink results", e)
+    return emptyList()
+  }
+
+  for (event in events) {
+    if (event is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
+      try {
+        facade.updateModelState(event)
+      }
+      catch (e: Exception) {
+        LOG.error("Error when updating model state: $event", e)
+      }
+    }
+  }
+
+  return events
 }
 
 private val LOG = fileLogger()
