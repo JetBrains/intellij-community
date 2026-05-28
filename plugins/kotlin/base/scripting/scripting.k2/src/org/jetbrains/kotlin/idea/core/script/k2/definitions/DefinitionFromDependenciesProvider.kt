@@ -5,14 +5,14 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent
@@ -45,17 +45,40 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
     }
 
     override fun getDefinitionsClassPath(): Iterable<File> {
-        val explicitClasspath = ScriptDefinitionSettingsStateComponent.getInstance(project).state.parsedClasspath
-        return (explicitClasspath + ScriptTemplatesFromDependenciesCache.getOrDiscover(project).classpath).distinct().map { File(it) }
+        val settings = ScriptDefinitionSettingsStateComponent.getInstance(project).state
+        val explicitClasspath = settings.parsedClasspath
+        val discoveredClasspath = ScriptTemplatesFromDependenciesCache.getOrDiscover(project).classpath
+        val autoResolvedClasspath = tryToGuessClasspath(settings.parsedClassNames)
+        return (explicitClasspath + discoveredClasspath + autoResolvedClasspath).distinct().map { File(it) }
     }
 
     override fun useDiscovery(): Boolean = false
+
+    private fun tryToGuessClasspath(fqns: List<String>): List<String> {
+        if (fqns.isEmpty()) return emptyList()
+        return runReadActionBlocking {
+            val javaFacade = JavaPsiFacade.getInstance(project)
+            val projectScope = GlobalSearchScope.projectScope(project)
+            val projectFileIndex = ProjectFileIndex.getInstance(project)
+            val classpath = linkedSetOf<Path>()
+            for (fqn in fqns) {
+                val psiClass = javaFacade.findClass(fqn, projectScope) ?: continue
+                val classFile = psiClass.containingFile?.virtualFile ?: continue
+                val module = projectFileIndex.getModuleForFile(classFile) ?: continue
+                for (virtualFile in OrderEnumerator.orderEntries(module).withoutSdk().classesRoots) {
+                    val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
+                    classpath.addIfNotNull(localVirtualFile.fileSystem.getNioPath(localVirtualFile))
+                }
+            }
+            classpath.map { it.absolutePathString() }
+        }
+    }
 }
 
 private object ScriptTemplatesFromDependenciesCache {
     fun getOrDiscover(project: Project): DefinitionTemplates = project.cacheByClass(
         ScriptTemplatesFromDependenciesCache::class.java,
-        ScriptDefinitionsModificationTracker.getInstance(project)
+        ScriptDefinitionsModificationTracker.getInstance(project),
     ) {
         runReadActionBlocking {
             val templatesFolders =
@@ -64,7 +87,7 @@ private object ScriptTemplatesFromDependenciesCache {
             val files = mutableListOf<VirtualFile>()
             for (templatesFolder in templatesFolders) {
                 val children = templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
-                    ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }?.children?.filter {
+                    ?.takeIf { projectFileIndex.isInLibraryClasses(it) }?.children?.filter {
                         !it.name.endsWith(MAIN_KTS)
                     } ?: continue
                 files += children
@@ -88,15 +111,7 @@ private object ScriptTemplatesFromDependenciesCache {
             scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${root.path}" }
 
             val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root).filter {
-                if (it is ModuleSourceOrderEntry) {
-                    if (ModuleRootManager.getInstance(it.ownerModule).fileIndex.isInTestSourceContent(root)) {
-                        return@filter false
-                    }
-
-                    it.getFiles(OrderRootType.SOURCES).contains(root)
-                } else {
-                    it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
-                }
+                it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
             }.takeIf { it.isNotEmpty() } ?: return@forEach
 
             for (virtualFile in templateFiles) {
