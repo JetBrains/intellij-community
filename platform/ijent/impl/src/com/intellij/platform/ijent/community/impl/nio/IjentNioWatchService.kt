@@ -50,7 +50,7 @@ internal class IjentNioWatchService(
       if (collectJob != null) return
       // Call watchChanges() synchronously to establish the subscription BEFORE addWatchRoots() is called.
       // This matches the pattern in EelFileWatcher.setupWatcherJob().
-      val flow = fsBlocking { ijentFs.watchChanges() }
+      val flow = ijentFs.fsBlocking { watchChanges() }
       changeFlow = flow
       collectJob = scope.launch {
         try {
@@ -110,7 +110,7 @@ internal class IjentNioWatchService(
       }
     }
 
-    fsBlocking {
+    ijentFs.fsBlocking {
       ijentFs.addWatchRoots(
         WatchOptionsBuilder()
           .changeTypes(watchedChangeTypes)
@@ -126,7 +126,7 @@ internal class IjentNioWatchService(
     val eelPath = (key.watchable() as? AbsoluteIjentNioPath)?.eelPath ?: return
     keys.remove(eelPath)
     try {
-      fsBlocking {
+      ijentFs.fsBlocking {
         ijentFs.unwatch(UnwatchOptionsBuilder(eelPath).build())
       }
     }
@@ -162,7 +162,7 @@ internal class IjentNioWatchService(
     scope.cancel()
     for ((eelPath, _) in keys) {
       try {
-        fsBlocking {
+        ijentFs.fsBlocking {
           ijentFs.unwatch(UnwatchOptionsBuilder(eelPath).build())
         }
       }

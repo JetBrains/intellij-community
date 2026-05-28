@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
 import com.intellij.openapi.vfs.limits.FileSizeLimit
-import com.intellij.platform.eel.PrefetchDataElement
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -29,14 +28,13 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountProvider
 import com.intellij.platform.eel.provider.EelMountRoot
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.PrefetchContextBuilder
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.buildPrefetchContext
 import com.intellij.platform.eel.provider.canReadPermissionsDirectly
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.transformPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
@@ -75,7 +73,7 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
   else {
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
-      fsBlocking {
+      eelPath.fsBlocking {
         it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
       }
     }?.transformPath(eelPath)
@@ -84,7 +82,7 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
       val nioAttributes = Files.readAttributes(directAccessNioPath, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
       return FileAttributes.fromNio(directAccessNioPath, nioAttributes)
     }
-    return fsBlocking {
+    return eelPath.fsBlocking {
       // stale persisted descriptor (machine deregistered) - surface as not-found (IJPL-245202)
       val machine = eelPath.descriptor.getResolvedEelMachine() ?: throw NoSuchFileException(nioPath.toString())
       val eelFsApi = machine.toEelApi(eelPath.descriptor).fs
@@ -107,7 +105,7 @@ fun listWithAttributesUsingEel(
     }
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
-      fsBlocking {
+      eelPath.fsBlocking {
         it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
       }
     }?.transformPath(eelPath)
@@ -183,8 +181,13 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
   }
 
   val element = try {
-    val ctx = fsBlocking { buildPrefetchContext(remoteRoots) }
-    ctx[PrefetchDataElement]
+    PrefetchContextBuilder(remoteRoots).apply {
+      rootsByDescriptor.keys.forEach { descriptor ->
+        descriptor.fsBlocking {
+          prefetchForDescriptor(descriptor)
+        }
+      }
+    }.toElement()
   }
   catch (e: Exception) {
     LOG.warn("Failed to prefetch remote roots for VFS refresh", e)
@@ -226,7 +229,7 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
 
   val limit = FileSizeLimit.getContentLoadLimit(FileUtilRt.getExtension(path.fileName.toString()))
 
-  val result = fsBlocking {
+  val result = eelDescriptor.fsBlocking {
     try {
       val eelApi = eelDescriptor.toEelApi()
       eelApi.fs.readFile(eelPath).limit(limit).failFastIfBeyondLimit(true).getOrThrowFileSystemException()
@@ -252,7 +255,7 @@ internal fun toEelPath(parent: VirtualFile, childName: String): EelPath? =
 
 internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.CaseSensitivity {
   val directAccessPath = (eelPath.asNioPath().fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
-    fsBlocking {
+    eelPath.fsBlocking {
       it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.CaseSensitivity)
     }
   }?.transformPath(eelPath)
@@ -274,9 +277,9 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
     eelPath
   }
 
-  val eelApi = eelPathToCheck.descriptor.toEelApiBlocking()
 
-  return fsBlocking {
+  return eelPathToCheck.fsBlocking {
+    val eelApi = eelPathToCheck.descriptor.toEelApi()
     val stat = eelApi.fs.stat(eelPathToCheck).doNotResolve().eelIt().getOr {
       return@fsBlocking FileAttributes.CaseSensitivity.UNKNOWN
     }
@@ -341,7 +344,7 @@ private fun visitDirectory(
   if (filter != null && filter.isEmpty()) {
     return  //nothing to read
   }
-  fsBlocking {
+  directory.fsBlocking {
     val eelFsApi = directory.descriptor.toEelApi().fs
     val directoryList =
       eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE).eelIt()

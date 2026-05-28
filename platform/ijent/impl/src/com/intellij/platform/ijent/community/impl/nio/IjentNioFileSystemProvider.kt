@@ -14,6 +14,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.D
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
 import com.intellij.platform.eel.fs.EelFileSystemApiHelpers
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
@@ -21,6 +22,7 @@ import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.EelWindowsFileInfoImpl
 import com.intellij.platform.eel.fs.changeAttributes
 import com.intellij.platform.eel.fs.copy
+import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.fs.move
 import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.impl.base.fs.EelFsResultImpl
@@ -218,13 +220,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
                       })
         .build()
 
-      fsBlocking {
-        if (READ in options) {
-          IjentNioFileChannel.createReadingWriting(fs, writeOptions)
-        }
-        else {
-          IjentNioFileChannel.createWriting(fs, writeOptions)
-        }
+      if (READ in options) {
+        IjentNioFileChannel.createReadingWriting(fs, writeOptions)
+      }
+      else {
+        IjentNioFileChannel.createWriting(fs, writeOptions)
       }
     }
     else {
@@ -233,9 +233,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("READ + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("READ + NOFOLLOW_LINKS")
 
-      fsBlocking {
-        IjentNioFileChannel.createReading(fs, path.eelPath)
-      }
+      IjentNioFileChannel.createReading(fs, path.eelPath)
     }
   }
 
@@ -255,41 +253,40 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureAbsoluteIjentNioPath(dir)
     val nioFs = dir.nioFs
 
-    return fsBlocking {
-      val notFilteredPaths =
-        if (FetchAttributesFilter.isFetchAttributesFilter(pathFilter)) {
-          nioFs.ijentFs
-            .listDirectoryWithAttrs(dir.eelPath, EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
-            .getOrThrowFileSystemException()
-            .asSequence()
-            .map { (childName, childStat) ->
-              val childIjentPath = dir.eelPath.getChild(childName)
-              val childAttrs = when (childStat) {
-                is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
-                is EelWindowsFileInfo -> IjentNioWindowsFileAttributes(childStat)
-              }
-              AbsoluteIjentNioPath(childIjentPath, nioFs, childAttrs)
+    val notFilteredPaths =
+      if (FetchAttributesFilter.isFetchAttributesFilter(pathFilter)) {
+        nioFs.ijentFs
+          .listDirectoryWithAttrs(dir.eelPath)
+          .symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
+          .getOrThrowFileSystemExceptionBlocking()
+          .asSequence()
+          .map { (childName, childStat) ->
+            val childIjentPath = dir.eelPath.getChild(childName)
+            val childAttrs = when (childStat) {
+              is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
+              is EelWindowsFileInfo -> IjentNioWindowsFileAttributes(childStat)
             }
-        }
-        else {
-          nioFs.ijentFs
-            .listDirectory(dir.eelPath)
-            .getOrThrowFileSystemException()
-            .asSequence()
-            .map { childName ->
-              val childIjentPath = dir.eelPath.getChild(childName)
-              AbsoluteIjentNioPath(childIjentPath, nioFs, null)
-            }
-        }
-      val nioPathList = notFilteredPaths.filterTo(mutableListOf()) { nioPath ->
-        pathFilter?.accept(nioPath) != false
+            AbsoluteIjentNioPath(childIjentPath, nioFs, childAttrs)
+          }
       }
+      else {
+        nioFs.ijentFs
+          .fsBlocking { listDirectory(dir.eelPath) }
+          .getOrThrowFileSystemException()
+          .asSequence()
+          .map { childName ->
+            val childIjentPath = dir.eelPath.getChild(childName)
+            AbsoluteIjentNioPath(childIjentPath, nioFs, null)
+          }
+      }
+    val nioPathList = notFilteredPaths.filterTo(mutableListOf()) { nioPath ->
+      pathFilter?.accept(nioPath) != false
+    }
 
-      object : DirectoryStream<Path> {
-        // The compiler doesn't (didn't?) allow to relax types here.
-        override fun iterator(): MutableIterator<Path> = nioPathList.iterator()
-        override fun close(): Unit = Unit
-      }
+    return object : DirectoryStream<Path> {
+      // The compiler doesn't (didn't?) allow to relax types here.
+      override fun iterator(): MutableIterator<Path> = nioPathList.iterator()
+      override fun close(): Unit = Unit
     }
   }
 
@@ -302,19 +299,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       throw IOException(e)
     }
     val path = dir.eelPath
-    fsBlocking {
-      when (val fsApi = dir.nioFs.ijentFs) {
-        is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList()).getOrThrowFileSystemException()
-        is IjentFileSystemWindowsApi -> fsApi.createDirectory(path).getOrThrowFileSystemException()
-      }
+    when (val fsApi = dir.nioFs.ijentFs) {
+      is IjentFileSystemPosixApi -> fsApi.fsBlocking { createDirectory(path, emptyList()) }.getOrThrowFileSystemException()
+      is IjentFileSystemWindowsApi -> fsApi.fsBlocking { createDirectory(path) }.getOrThrowFileSystemException()
     }
   }
 
   override fun delete(path: Path) {
     ensureAbsoluteIjentNioPath(path)
-    fsBlocking {
-      path.nioFs.ijentFs.delete(path.eelPath, false).getOrThrowFileSystemException()
-    }
+    path.nioFs.ijentFs.fsBlocking { delete(path.eelPath, false) }.getOrThrowFileSystemException()
   }
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption) {
@@ -343,9 +336,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       }
     }
 
-    fsBlocking {
-      copyOptions.getOrThrowFileSystemException()
-    }
+    copyOptions.getOrThrowFileSystemExceptionBlocking()
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
@@ -353,19 +344,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureAbsoluteIjentNioPath(target)
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
-    return fsBlocking {
-      source.nioFs.ijentFs.move(sourcePath, targetPath)
-        .replaceExisting(
-          when {
-            StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
-            StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
-            else -> DO_NOT_REPLACE
-          })
-        // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
-        // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
-        .followLinks(false)
-        .getOrThrowFileSystemException()
-    }
+    return source.nioFs.ijentFs.move(sourcePath, targetPath)
+      .replaceExisting(
+        when {
+          StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
+          StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
+          else -> DO_NOT_REPLACE
+        })
+      // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
+      // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
+      .followLinks(false)
+      .getOrThrowFileSystemExceptionBlocking()
   }
 
   override fun isSameFile(path: Path, path2: Path): Boolean {
@@ -373,8 +362,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureAbsoluteIjentNioPath(path2)
     val nioFs = path.nioFs
 
-    return fsBlocking {
-      nioFs.ijentFs.sameFile(path.eelPath.normalize(), path2.eelPath.normalize())
+    return nioFs.ijentFs.fsBlocking {
+      sameFile(path.eelPath.normalize(), path2.eelPath.normalize())
     }
       .getOrThrowFileSystemException()
   }
@@ -383,9 +372,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureAbsoluteIjentNioPath(path)
     return when (val ijentFs = path.nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> path.normalize().fileName.toString().startsWith(".")
-      is IjentFileSystemWindowsApi -> fsBlocking {
-        ijentFs.stat(path.eelPath).getOrThrowFileSystemException().permissions.isHidden
-      }
+      is IjentFileSystemWindowsApi -> ijentFs.stat(path.eelPath).getOrThrowFileSystemExceptionBlocking().permissions.isHidden
     }
   }
 
@@ -396,31 +383,29 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
     val fs = ensureAbsoluteIjentNioPath(path).nioFs
-    fsBlocking {
-      when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi -> {
-          val fileInfo = ijentFs
-            // According to the Javadoc, this method must follow symlinks.
-            .stat(path.eelPath)
-            .resolveAndFollow()
-            .getOrThrowFileSystemException()
+    when (val ijentFs = fs.ijentFs) {
+      is IjentFileSystemPosixApi -> {
+        val fileInfo = ijentFs
+          // According to the Javadoc, this method must follow symlinks.
+          .stat(path.eelPath)
+          .resolveAndFollow()
+          .getOrThrowFileSystemExceptionBlocking()
 
-          val error = EelPathUtils.checkAccess(ijentFs.user, fileInfo, *modes)
-          if (error != null) {
-            EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
-          }
+        val error = EelPathUtils.checkAccess(ijentFs.user, fileInfo, *modes)
+        if (error != null) {
+          EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
         }
-        is IjentFileSystemWindowsApi -> {
-          val fileInfo = ijentFs
-            // According to the Javadoc, this method must follow symlinks.
-            .stat(path.eelPath)
-            .resolveAndFollow()
-            .getOrThrowFileSystemException()
+      }
+      is IjentFileSystemWindowsApi -> {
+        val fileInfo = ijentFs
+          // According to the Javadoc, this method must follow symlinks.
+          .stat(path.eelPath)
+          .resolveAndFollow()
+          .getOrThrowFileSystemExceptionBlocking()
 
-          val error = EelPathUtils.checkAccess(fileInfo, *modes)
-          if (error != null) {
-            EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
-          }
+        val error = EelPathUtils.checkAccess(fileInfo, *modes)
+        if (error != null) {
+          EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
         }
       }
     }
@@ -481,15 +466,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val ijentFs = fs.ijentFs
     val result = when (ijentFs) {
       is IjentFileSystemPosixApi -> {
-        val fileInfo = fsBlocking {
-          ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
-        }
+        val fileInfo = ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemExceptionBlocking()
         IjentNioPosixFileAttributes(fileInfo)
       }
       is IjentFileSystemWindowsApi -> {
-        val fileInfo = fsBlocking {
-          ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
-        }
+        val fileInfo = ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemExceptionBlocking()
         IjentNioWindowsFileAttributes(fileInfo)
       }
     }
@@ -617,9 +598,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       }
       else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
     }
-    fsBlocking {
-      builder.getOrThrowFileSystemException()
-    }
+    builder.getOrThrowFileSystemExceptionBlocking()
   }
 
   override fun newAsynchronousFileChannel(
@@ -655,11 +634,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       "Can't create symlinks between different file systems"
     }
 
-    fsBlocking {
-      when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(eelTarget, link.eelPath).getOrThrowFileSystemException()
-        is IjentFileSystemWindowsApi -> ijentFs.createSymbolicLink(eelTarget, link.eelPath).getOrThrowFileSystemException()
-      }
+    when (val ijentFs = fs.ijentFs) {
+      is IjentFileSystemPosixApi -> ijentFs.fsBlocking { createSymbolicLink(eelTarget, link.eelPath) }.getOrThrowFileSystemException()
+      is IjentFileSystemWindowsApi -> ijentFs.fsBlocking { createSymbolicLink(eelTarget, link.eelPath) }.getOrThrowFileSystemException()
     }
   }
 
@@ -671,17 +648,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
     val absolutePath = link.eelPath
     val os = fs.ijentFs.descriptor.osFamily
-    return fsBlocking {
-      when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi, is IjentFileSystemWindowsApi -> when (val type =
-          ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {
-          is Symlink.Resolved.Absolute -> AbsoluteIjentNioPath(type.result, link.nioFs, null)
-          is Symlink.Resolved.Relative -> {
-            RelativeIjentNioPath(type.result.split(*os.directorySeparators), link.nioFs)
-          }
-          is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
-          is Symlink.Unresolved -> error("Impossible, the link should be resolved")
+    return when (val ijentFs = fs.ijentFs) {
+      is IjentFileSystemPosixApi, is IjentFileSystemWindowsApi -> when (val type =
+        ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemExceptionBlocking().type) {
+        is Symlink.Resolved.Absolute -> AbsoluteIjentNioPath(type.result, link.nioFs, null)
+        is Symlink.Resolved.Relative -> {
+          RelativeIjentNioPath(type.result.split(*os.directorySeparators), link.nioFs)
         }
+        is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
+        is Symlink.Unresolved -> error("Impossible, the link should be resolved")
       }
     }
   }

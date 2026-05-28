@@ -185,9 +185,7 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
         if (LinkOption.NOFOLLOW_LINKS in options)
           normalizedPath
         else
-          fsBlocking {
-            nioFs.ijentFs.canonicalize(normalizedPath)
-          }.getOrThrowFileSystemException()
+          nioFs.ijentFs.fsBlocking { canonicalize(normalizedPath) }.getOrThrowFileSystemException()
       }.toNioPath(true)
   }
 

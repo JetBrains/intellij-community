@@ -9,9 +9,7 @@ import com.intellij.platform.eel.PrefetchDataElement
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.ThreadContextElement
-import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -80,36 +78,22 @@ private class PrefetchDataElementImpl(private val data: Map<EelPath, Map<String,
  * Returns a [CoroutineContext] with [PrefetchDataElement] carrying the results.
  */
 @ApiStatus.Internal
-suspend fun buildPrefetchContext(remoteRoots: List<Pair<EelDescriptor, EelPath>>): CoroutineContext {
-  if (remoteRoots.isEmpty()) return EmptyCoroutineContext
-
-  try {
-    val prefetchData = HashMap<EelPath, HashMap<String, EelFileInfo>>(maxOf(remoteRoots.size * 20, 256))
-    val rootsByDescriptor = remoteRoots.groupBy(keySelector = { it.first }, valueTransform = { it.second })
-
-    for ((descriptor, roots) in rootsByDescriptor) {
-      val prefetcher = descriptor.toEelApi().fs as? com.intellij.platform.eel.fs.DirectoryPrefetcher ?: continue
-      prefetcher.prefetchDirectories(roots).collect { (path, info) ->
-        val parent = path.parent ?: return@collect
-        prefetchData.getOrPut(parent) { HashMap() }[path.fileName] = info
-        if (info.type is EelFileInfo.Type.Directory) {
-          prefetchData.getOrPut(path) { HashMap() }
-        }
+class PrefetchContextBuilder(remoteRoots: List<Pair<EelDescriptor, EelPath>>) {
+  private val prefetchData = HashMap<EelPath, HashMap<String, EelFileInfo>>(maxOf(remoteRoots.size * 20, 256))
+  val rootsByDescriptor: Map<EelDescriptor, List<EelPath>> = remoteRoots.groupBy(keySelector = { it.first }, valueTransform = { it.second })
+  suspend fun prefetchForDescriptor(descriptor: EelDescriptor) {
+    val prefetcher = descriptor.toEelApi().fs as? com.intellij.platform.eel.fs.DirectoryPrefetcher ?: return
+    prefetcher.prefetchDirectories(checkNotNull(rootsByDescriptor[descriptor])).collect { (path, info) ->
+      val parent = path.parent ?: return@collect
+      prefetchData.getOrPut(parent) { HashMap() }[path.fileName] = info
+      if (info.type is EelFileInfo.Type.Directory) {
+        prefetchData.getOrPut(path) { HashMap() }
       }
     }
-
-    if (prefetchData.isEmpty()) return EmptyCoroutineContext
-
-    @Suppress("UNCHECKED_CAST")
-    val element = PrefetchDataElementImpl(prefetchData as Map<EelPath, Map<String, EelFileInfo>>)
-    LOG.info("Prefetched ${element.size} directories for scanning")
+  }
+  fun toElement(): PrefetchDataElement? {
+    if (prefetchData.isEmpty()) return null
+    val element = PrefetchDataElementImpl(prefetchData)
     return element
-  }
-  catch (e: java.util.concurrent.CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    LOG.warn("Failed to prefetch remote directory trees", e)
-    return EmptyCoroutineContext
   }
 }

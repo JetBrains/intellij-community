@@ -32,21 +32,21 @@ internal class IjentNioFileStore(
   }
 
   override fun getTotalSpace(): Long {
-    return fsBlocking {
-      ijentFsApi.getDiskInfo(path).getOrThrowFileSystemException().totalSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
-    }
+    return ijentFsApi.fsBlocking {
+      getDiskInfo(path)
+    }.getOrThrowFileSystemException().totalSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
   }
 
   override fun getUsableSpace(): Long {
-    return fsBlocking {
-      ijentFsApi.getDiskInfo(path).getOrThrowFileSystemException().availableSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
-    }
+    return ijentFsApi.fsBlocking {
+      getDiskInfo(path)
+    }.getOrThrowFileSystemException().availableSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
   }
 
   override fun getUnallocatedSpace(): Long {
-    return fsBlocking {
-      ijentFsApi.getDiskInfo(path).getOrThrowFileSystemException().availableSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
-    }
+    return ijentFsApi.fsBlocking {
+      ijentFsApi.getDiskInfo(path)
+    }.getOrThrowFileSystemException().availableSpace.coerceAtMost(Long.MAX_VALUE.toULong()).toLong()
   }
 
   override fun supportsFileAttributeView(type: Class<out FileAttributeView?>?): Boolean {
@@ -56,7 +56,6 @@ internal class IjentNioFileStore(
     when (ijentFsApi) {
       is IjentFileSystemPosixApi -> return type == IjentNioPosixFileAttributeView::class.java
       is IjentFileSystemWindowsApi -> return type == DosFileAttributeView::class.java
-      else -> return false
     }
   }
 
@@ -67,7 +66,6 @@ internal class IjentNioFileStore(
     when (ijentFsApi) {
       is IjentFileSystemPosixApi -> return name == "posix"
       is IjentFileSystemWindowsApi -> return name == "dos"
-      else -> return false
     }
   }
 

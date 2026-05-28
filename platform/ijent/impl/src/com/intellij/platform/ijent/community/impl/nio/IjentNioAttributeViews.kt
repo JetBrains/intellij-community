@@ -37,7 +37,7 @@ internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, 
     if (lastAccessTime != null) {
       builder.updateTime(EelFileSystemApiHelpers.ChangeAttributes::accessTime, lastAccessTime)
     }
-    fsBlocking {
+    api.fsBlocking {
       builder.getOrThrowFileSystemException()
     }
   }

@@ -6,8 +6,13 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.prepareThreadContext
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOwnedBuilder
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
@@ -23,6 +28,26 @@ internal fun Path.toEelPath(): EelPath =
     this is AbsoluteIjentNioPath -> eelPath
     else -> throw IllegalArgumentException("$this is not absolute IjentNioPath")
   }
+
+@ApiStatus.Internal
+fun <F : EelFileSystemApi, T> F.fsBlocking(body: suspend F.() -> T): T {
+  return descriptor.fsBlocking {
+    body()
+  }
+}
+
+@ApiStatus.Internal
+fun <T> EelPath.fsBlocking(body: suspend () -> T): T {
+  return descriptor.fsBlocking {
+    body()
+  }
+}
+
+
+@ApiStatus.Internal
+fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSystemExceptionBlocking(): T {
+  return eelDescriptor.fsBlocking { getOrThrowFileSystemException() }
+}
 
 /**
  * Bridges synchronous NIO into IJent coroutines using [runBlocking].
@@ -50,12 +75,11 @@ internal fun Path.toEelPath(): EelPath =
  * body() should never dispatch to [Dispatchers.Default] or await coroutines from there.
  */
 @ApiStatus.Internal
-fun <T> fsBlocking(body: suspend () -> T): T {
-  // After this timeout the operation is considered as potentially hanging.
-  val timeout = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger().milliseconds
+fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
+  val timeout = 500.milliseconds
   return IntelliJCoroutinesFacade.runAndCompensateParallelism(timeout) {
     fsBlockingWithoutParallelismCompensation {
-      showModalDialogOnTimeout(timeout) {
+      showModalDialogOnTimeout(this, timeout) {
         body()
       }
     }

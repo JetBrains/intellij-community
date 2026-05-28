@@ -15,6 +15,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.community.impl.nio.CloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
@@ -46,10 +48,8 @@ private class EdtOnceTask : OnceTask<CloseDecision>() {
 
 @Service
 internal class NotRespondingFilesystemDialogService {
-  typealias IjentId = Unit
-
-  private val pendingRequests = ConcurrentHashMap<IjentId, Pair<List<Project>, OnceTask<CloseDecision>>>()
-  suspend fun doOnceOrWait(ijentId: IjentId, projects: List<Project>, f: suspend () -> CloseDecision): CloseDecision {
+  private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, OnceTask<CloseDecision>>>()
+  suspend fun doOnceOrWait(ijentId: EelDescriptor, projects: List<Project>, f: suspend () -> CloseDecision): CloseDecision {
     val onceTask = pendingRequests.compute(ijentId) { _, v ->
       when {
         v == null -> projects to EdtOnceTask()
@@ -69,14 +69,16 @@ internal class NotRespondingFilesystemDialogService {
 }
 
 internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
-  override suspend fun showModalDialog(): CloseDecision {
-    val projectsToClose = ProjectManager.getInstance().openProjects.toList()
-    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(Unit, projectsToClose) {
-      showCloseProjectDialog(projectsToClose)
+  override suspend fun showModalDialog(eelDescriptor: EelDescriptor): CloseDecision {
+    val projectsToClose = ProjectManager.getInstance().openProjects.filter {
+      it.getEelDescriptor() == eelDescriptor
+    }
+    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
+      showCloseProjectDialog(eelDescriptor, projectsToClose)
     }
   }
 
-  private suspend fun showCloseProjectDialog(projects: List<Project>): CloseDecision {
+  private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, projects: List<Project>): CloseDecision {
     val closeDecision = suspendCancellableCoroutine { cont ->
       val builder = DialogBuilder().apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
@@ -101,7 +103,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
           }
           WelcomeFrame.showIfNoProjectOpened()
         }
-        cont.resume(CloseDecision())
+        cont.resume(CloseDecision(eelDescriptor))
       }
       else {
         cont.resume(null)
