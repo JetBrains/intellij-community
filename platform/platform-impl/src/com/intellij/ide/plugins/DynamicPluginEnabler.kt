@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -68,13 +68,8 @@ class DynamicPluginEnabler : PluginEnabler {
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
     val pluginsLoaded = if (progressTitle == null) {
       val loaded = AtomicBoolean(false)
-      if (ApplicationManager.getApplication().isDispatchThread) {
+      runInEdt {
         loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
-      } else {
-        // licensing may call this method from the main thread (not EDT)
-        ApplicationManager.getApplication().invokeAndWait {
-          loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
-        }
       }
       loaded.get()
     } else {
