@@ -127,9 +127,8 @@ class PluginDownloader private constructor(
   val descriptor: IdeaPluginDescriptor
     get() = myDescriptor
 
-  // TODO this method is nullable for extra safety, can probably be dropped later with some caution
   @get:ApiStatus.Internal
-  val uiModel: PluginUiModel?
+  val uiModel: PluginUiModel
     get() = myModel
 
   @Throws(IOException::class)

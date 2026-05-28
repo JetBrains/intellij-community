@@ -497,7 +497,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val updateData = UpdateCheckerFacade.getInstance().getPluginUpdates(plugins = listOf(pluginId))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
-      .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
+      .map { it.uiModel }
       .firstOrNull()
   }
 
@@ -509,9 +509,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return service
     } else {
       val service = PluginUpdatesService.connectWithUpdates({ results ->
-                                                              callback(results.pluginUpdates.all.map {
-                                                                it.uiModel ?: PluginUiModelAdapter(it.descriptor)
-                                                              })
+                                                              callback(results.pluginUpdates.all.map { it.uiModel })
                                                             })
       service.setFilter { session.isPluginEnabled(it.pluginId) }
       session.updateService = service
