@@ -1382,7 +1382,6 @@ plugins/kotlin/jvm-debugger/eval4j
 plugins/kotlin/jvm-debugger/evaluation
 plugins/kotlin/jvm-debugger/evaluation/k1
 plugins/kotlin/jvm-debugger/evaluation/k2
-plugins/kotlin/jvm-debugger/sequence
 plugins/kotlin/jvm-debugger/test
 plugins/kotlin/jvm-debugger/test/compose
 plugins/kotlin/jvm-debugger/test/compose/testFramework
@@ -1573,6 +1572,7 @@ plugins/stream-debugger
 plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
+plugins/stream-debugger/kotlin
 plugins/stream-debugger/shared
 plugins/stream-debugger/testFramework
 plugins/svn4idea

@@ -132,7 +132,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.evaluation" exported="" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.injection.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.injection" exported="" />

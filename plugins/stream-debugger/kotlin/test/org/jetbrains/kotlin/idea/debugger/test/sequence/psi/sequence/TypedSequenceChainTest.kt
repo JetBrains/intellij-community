@@ -9,7 +9,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class TypedSequenceChain : TypedChainTestCase("sequence/positive/types") {
+class TypedSequenceChainTest : TypedChainTestCase("sequence/positive/types") {
     override val kotlinChainBuilder: StreamChainBuilder = KotlinSequenceSupportProvider().chainBuilder
 
     fun testAny() = doTest(KotlinSequenceTypes.ANY)

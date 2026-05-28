@@ -3,17 +3,14 @@ package org.jetbrains.kotlin.idea.debugger.test.sequence.dsl
 
 import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.test.DslTestCase
-import com.intellij.testFramework.common.BazelTestUtil
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import com.intellij.openapi.application.PluginPathManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinCollectionsPeekCallFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFactory
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinDslTest : DslTestCase(DslImpl(KotlinStatementFactory(KotlinCollectionsPeekCallFactory()))), ExpectedPluginModeProvider {
@@ -23,10 +20,6 @@ class KotlinDslTest : DslTestCase(DslImpl(KotlinStatementFactory(KotlinCollectio
     }
 
     override fun getTestDataPath(): String {
-        return if (BazelTestUtil.isUnderBazelTest) {
-            TestKotlinArtifacts.kotlinJvmDebuggerTestData.resolve("sequence").resolve("dsl").toString()
-        } else {
-            File(KotlinRoot.DIR, "jvm-debugger/test/testData/sequence/dsl").absolutePath
-        }
+        return PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/sequence/dsl"
     }
 }

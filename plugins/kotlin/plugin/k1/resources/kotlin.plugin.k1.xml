@@ -69,7 +69,6 @@
     <module name="intellij.kotlin.projectWizard.maven"/>
     <module name="intellij.kotlin.projectWizard.compose"/>
     <module name="intellij.kotlin.jvm.decompiler"/>
-    <module name="kotlin.jvm-debugger.sequence.k1"/>
     <module name="intellij.kotlin.runConfigurations.junit"/>
     <module name="kotlin.run-configurations.junit-fe10"/>
     <module name="intellij.kotlin.runConfigurations.testng"/>

@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.debugger.test.sequence
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.debugger.streams.test.StreamChainBuilderTestCase
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -19,7 +19,8 @@ abstract class KotlinPsiChainBuilderTestCase(private val relativePath: String) :
         setUpWithKotlinPlugin { super.setUp() }
     }
 
-    override fun getTestDataPath(): String = "$DEBUGGER_TESTDATA_PATH_BASE/sequence/psi/$relativeTestPath"
+    override fun getTestDataPath(): String =
+        "${PluginPathManager.getPluginHomePath("stream-debugger")}/testData/sequence/psi/$relativeTestPath"
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun getFileExtension(): String = ".kt"

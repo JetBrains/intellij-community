@@ -69,7 +69,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="TEST" />
@@ -79,7 +78,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.native" scope="TEST" />
@@ -87,13 +85,10 @@
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k1.testFramework" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
   </component>
 </module>

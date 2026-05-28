@@ -27,12 +27,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fe10" level="project" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.debugger" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.java" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
@@ -52,9 +46,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams.tests" scope="TEST" />
   </component>
 </module>
