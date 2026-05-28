@@ -312,6 +312,9 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(descriptor, baseDescriptor, context)
   }
 
+  /**
+   * @return non-null message explaining why unloading is not possible, null otherwise
+   */
   @RequiresBackgroundThread(generateAssertion = false)
   fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
@@ -329,6 +332,9 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
   }
 
+  /**
+   * @return non-null message explaining why loading is not possible, null otherwise
+   */
   @RequiresBackgroundThread(generateAssertion = false)
   fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
