@@ -32,6 +32,9 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -353,9 +356,17 @@ object PluginInstaller {
       }
 
       val oldFile = if (installedPlugin != null && !installedPlugin.isBundled) installedPlugin.getPluginPath() else null
-      var isRestartRequired = oldFile != null ||
-                              !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
-                              operation.isRestartRequired
+      var isRestartRequired =
+        oldFile != null ||
+        operation.isRestartRequired ||
+        runWithModalProgressBlocking( // FIXME this is an ad-hoc fix for accessing BGT-method from EDT
+          parent?.let { ModalTaskOwner.component(it) } ?: project?.let { ModalTaskOwner.project(it) }
+          ?: ModalTaskOwner.guess(),
+          "",
+          cancellation = TaskCancellation.nonCancellable()
+        ) {
+          DynamicPlugins.checkCanLoadWithoutRestart(pluginDescriptor)?.also { LOG.info(it) } != null
+        }
       for (dynamicPluginInstall in operation.pendingDynamicPluginInstalls) {
         val installed = installAndLoadDynamicPlugin(dynamicPluginInstall.file, parent, dynamicPluginInstall.pluginDescriptor)
         if (!installed) {
