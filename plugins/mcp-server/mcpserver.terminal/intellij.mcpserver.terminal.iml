@@ -12,6 +12,13 @@
             <stringArg name="apiVersion" arg="2.3" />
             <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+              </args>
+            </arrayArg>
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
