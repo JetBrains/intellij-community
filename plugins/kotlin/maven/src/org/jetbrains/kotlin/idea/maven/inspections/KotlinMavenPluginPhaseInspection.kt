@@ -194,8 +194,15 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val file = pointer.element ?: return
-            PomFile.forFileOrNull(file)
-                ?.addKotlinExecution(module, kotlinPlugin, goal, PomFile.getPhase(module.hasJavaFiles(), false), false, listOf(goal))
+            PomFile.forFileOrNull(file)?.addKotlinExecution(
+                module,
+                kotlinPlugin,
+                goal,
+                PomFile.getPhase(module.hasJavaFiles(), false),
+                false,
+                listOf(goal),
+                kotlinPlugin.version.value
+            )
         }
     }
 
@@ -252,7 +259,15 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
             val file = pointer.element ?: return
             PomFile.forFileOrNull(file)?.let { pom ->
                 val plugin = pom.addKotlinPlugin(version)
-                pom.addKotlinExecution(module, plugin, "compile", PomFile.getPhase(module.hasJavaFiles(), false), false, listOf(goal))
+                pom.addKotlinExecution(
+                    module,
+                    plugin,
+                    "compile",
+                    PomFile.getPhase(module.hasJavaFiles(), false),
+                    false,
+                    listOf(goal),
+                    version
+                )
             }
         }
     }

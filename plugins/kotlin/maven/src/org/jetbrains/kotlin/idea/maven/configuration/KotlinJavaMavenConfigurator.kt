@@ -37,9 +37,17 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
         return FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, GlobalSearchScope.moduleScope(module))
     }
 
-    override fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module) {
-        createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.Compile, PomFile.KotlinGoals.Compile, module, false)
-        createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.TestCompile, PomFile.KotlinGoals.TestCompile, module, true)
+    override fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module, kotlinVersion: String?) {
+        createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.Compile, PomFile.KotlinGoals.Compile, module, false, kotlinVersion)
+        createExecution(
+            pomFile,
+            kotlinPlugin,
+            PomFile.DefaultPhases.TestCompile,
+            PomFile.KotlinGoals.TestCompile,
+            module,
+            true,
+            kotlinVersion
+        )
 
         if (hasJavaFiles(module) || pomFile.hasJavacPlugin()) {
             pomFile.addJavacExecutions(module, kotlinPlugin)

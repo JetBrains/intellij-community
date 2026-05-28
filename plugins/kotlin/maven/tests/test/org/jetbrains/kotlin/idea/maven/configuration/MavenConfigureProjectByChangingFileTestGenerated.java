@@ -90,6 +90,11 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
         runTest("testData/configurator/jvm/simpleProjectKotlin2_3_10AddsExtensionsToPlugin/");
     }
 
+    @TestMetadata("simpleProjectKotlin2_4DoesntAddSourceDirectories")
+    public void testSimpleProjectKotlin2_4DoesntAddSourceDirectories() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectKotlin2_4DoesntAddSourceDirectories/");
+    }
+
     @TestMetadata("simpleProjectMilestone")
     public void testSimpleProjectMilestone() throws Exception {
         runTest("testData/configurator/jvm/simpleProjectMilestone/");

@@ -259,7 +259,8 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         executionId: String,
         phase: String,
         isTest: Boolean,
-        goals: List<String>
+        goals: List<String>,
+        kotlinVersion: String? = null
     ) {
         val contentEntries = ModuleRootManager.getInstance(module).contentEntries
 
@@ -269,16 +270,18 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             .mapNotNull { VfsUtilCore.getRelativePath(it, xmlFile.virtualFile.parent, '/') }
             .toMutableSet()
 
-        // Adds a Kotlin source path if it exists
-        for (contentEntry in contentEntries) {
-            val contentEntryPath = contentEntry.file?.path ?: return
-            val kotlinEntry = if (isTest) KOTLIN_TEST_SOURCE_ENTRY else KOTLIN_SOURCE_ENTRY
-            val file = resolveRelativePath(kotlinEntry, contentEntryPath)
-            if (file.exists()) sourceDirs.add(kotlinEntry) else continue
-        }
-
         val execution = addExecution(plugin, executionId, phase, goals)
-        executionSourceDirs(execution, sourceDirs.toList())
+        // If we don't know the Kotlin version, we add source entities just in case because it doesn't break anything
+        if (kotlinVersion == null || !isKotlinVersionAtLeast(kotlinVersion, LanguageVersion.KOTLIN_2_4)) {
+            // Adds a Kotlin source path if it exists
+            for (contentEntry in contentEntries) {
+                val contentEntryPath = contentEntry.file?.path ?: return
+                val kotlinEntry = if (isTest) KOTLIN_TEST_SOURCE_ENTRY else KOTLIN_SOURCE_ENTRY
+                val file = resolveRelativePath(kotlinEntry, contentEntryPath)
+                if (file.exists()) sourceDirs.add(kotlinEntry) else continue
+            }
+            executionSourceDirs(execution, sourceDirs.toList())
+        }
     }
 
     fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String): Boolean =
