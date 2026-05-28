@@ -448,6 +448,10 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//plugins/gradle/native/tooling:gradle-native-tooling-tests",
     "//plugins/gradle/native/tooling:gradle-native-tooling-tests_test_lib",
+    "//plugins/gradle/completion:completion-tests",
+    "//plugins/gradle/completion:completion-tests_test_lib",
+    "//plugins/gradle/completion/kotlin/tests",
+    "//plugins/gradle/completion/kotlin/tests:tests_test_lib",
     "//plugins/gradle/completion/toml:gradle-completion-toml-tests",
     "//plugins/gradle/completion/toml:gradle-completion-toml-tests_test_lib",
   ]
