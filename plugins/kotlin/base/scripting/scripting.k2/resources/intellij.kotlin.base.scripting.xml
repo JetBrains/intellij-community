@@ -81,14 +81,11 @@
             id="StandardScriptDefinitionContributor"
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
-    <scriptDefinitionsSource
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
   </extensions>
 
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
-              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionTemplateListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

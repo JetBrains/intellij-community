@@ -69,6 +69,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/util",
     "//platform/eel-provider",
+    "//plugins/kotlin/scripting",
   ]
 )
 
@@ -130,6 +131,7 @@ jvm_library(
     "//platform/util:util-ui_test_lib",
     "//platform/util:util_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//plugins/kotlin/scripting:scripting_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end

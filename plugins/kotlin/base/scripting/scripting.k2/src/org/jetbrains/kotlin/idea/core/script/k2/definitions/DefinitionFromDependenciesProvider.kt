@@ -1,8 +1,8 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -12,66 +12,69 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.search.FilenameIndex
+import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent
+import org.jetbrains.kotlin.idea.core.script.k2.settings.parsedClassNames
+import org.jetbrains.kotlin.idea.core.script.k2.settings.parsedClasspath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
+import org.jetbrains.kotlin.utils.addIfNotNull
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
-
-private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classname"
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 data class DefinitionTemplates(
     val fqns: List<String>,
     val classpath: List<String>
 )
 
-@Service(Service.Level.PROJECT)
-class DefinitionFromDependenciesContributor(private val project: Project) {
-    suspend fun discoverDefinitionTemplates(): DefinitionTemplates {
-        return readAction {
-            val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
+private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classname"
+
+@Suppress("IO_FILE_USAGE")
+class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitionsProvider {
+    override val id: String
+        get() = this::class.java.name
+
+    override fun getDefinitionClasses(): Iterable<String> {
+        val explicitFqns = ScriptDefinitionSettingsStateComponent.getInstance(project).state.parsedClassNames
+        return (explicitFqns + ScriptTemplatesFromDependenciesCache.getOrDiscover(project).fqns).distinct()
+    }
+
+    override fun getDefinitionsClassPath(): Iterable<File> {
+        val explicitClasspath = ScriptDefinitionSettingsStateComponent.getInstance(project).state.parsedClasspath
+        return (explicitClasspath + ScriptTemplatesFromDependenciesCache.getOrDiscover(project).classpath).distinct().map { File(it) }
+    }
+
+    override fun useDiscovery(): Boolean = false
+}
+
+private object ScriptTemplatesFromDependenciesCache {
+    fun getOrDiscover(project: Project): DefinitionTemplates = project.cacheByClass(
+        ScriptTemplatesFromDependenciesCache::class.java,
+        ScriptDefinitionsModificationTracker.getInstance(project)
+    ) {
+        runReadActionBlocking {
+            val templatesFolders =
+                FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
             val projectFileIndex = ProjectFileIndex.getInstance(project)
             val files = mutableListOf<VirtualFile>()
             for (templatesFolder in templatesFolders) {
                 val children = templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
                     ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }?.children?.filter {
-                        !it.name.endsWith(
-                            MAIN_KTS
-                        )
+                        !it.name.endsWith(MAIN_KTS)
                     } ?: continue
                 files += children
             }
 
-            getTemplateClassPath(files)
-        }.also {
-            scriptingDebugLog { "Script templates found: ${it.fqns}" }
+            getTemplateClassPath(project, files)
         }
     }
 
-    suspend fun updateWorkspaceModel(templates: DefinitionTemplates) {
-        project.workspaceModel.update("refreshing discovered script templates from project dependencies") { storage ->
-            val existing = storage.entities(ScriptDefinitionTemplateEntity::class.java).singleOrNull()
-            if (existing != null) {
-                storage.modifyScriptDefinitionTemplateEntity(existing) {
-                    this.templateFqns = templates.fqns.toMutableList()
-                    this.classpath = templates.classpath.toMutableList()
-                }
-            } else {
-                storage addEntity ScriptDefinitionTemplateEntity(
-                    templateFqns = templates.fqns,
-                    classpath = templates.classpath,
-                    entitySource = DefinitionFromDependenciesEntitySource,
-                )
-            }
-        }
-    }
-
-    private fun getTemplateClassPath(files: Collection<VirtualFile>): DefinitionTemplates {
+    private fun getTemplateClassPath(project: Project, files: Collection<VirtualFile>): DefinitionTemplates {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) { // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
@@ -108,19 +111,11 @@ class DefinitionFromDependenciesContributor(private val project: Project) {
             for (orderEntry in orderEntriesForFile) {
                 for (virtualFile in OrderEnumerator.orderEntries(orderEntry.ownerModule).withoutSdk().classesRoots) {
                     val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
-                    localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.let(classpath::add)
+                    classpath.addIfNotNull(localVirtualFile.fileSystem.getNioPath(localVirtualFile))
                 }
             }
         }
 
-        return DefinitionTemplates(templates.toList(),classpath.map { it.absolutePathString() })
-    }
-}
-
-internal class ScriptDefinitionTemplateListener(val project: Project) : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(ScriptDefinitionTemplateEntity::class.java).any()) {
-            ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
-        }
+        return DefinitionTemplates(templates.toList(), classpath.map { it.absolutePathString() })
     }
 }

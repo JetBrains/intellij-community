@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.settings
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.fields.ExpandableTextField
@@ -18,7 +19,7 @@ import com.intellij.util.Function
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_SCRIPTING_SETTINGS_ID
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesContributor
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -59,20 +60,26 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     override fun isModified(): Boolean = previousModificationStamp != currentModificationStamp
 
-    private fun initFromPersistedState() {
+    private fun reloadTable() {
         val state = ScriptDefinitionSettingsStateComponent.getInstance(project).state.copy()
 
-        val models = ScriptDefinitionProviderImpl.getInstance(project).definitionsFromSources.sortedBy {
-            state.getScriptDefinitionOrder(it)
-        }.map {
-            ScriptDefinitionTableModel(
-                id = it.definitionId,
-                name = it.name,
-                pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
-                    ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
-                canBeSwitchedOff = it.canDefinitionBeSwitchedOff,
-                isEnabled = state.isScriptDefinitionEnabled(it)
-            )
+        val models = runWithModalProgressBlocking(
+            ModalTaskOwner.guess(),
+            KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath"),
+            TaskCancellation.cancellable()
+        ) {
+            ScriptDefinitionProviderImpl.getInstance(project).definitionsFromSources.sortedBy {
+                state.getScriptDefinitionOrder(it)
+            }.map {
+                ScriptDefinitionTableModel(
+                    id = it.definitionId,
+                    name = it.name,
+                    pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
+                        ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
+                    canBeSwitchedOff = it.canDefinitionBeSwitchedOff,
+                    isEnabled = state.isScriptDefinitionEnabled(it)
+                )
+            }
         }
 
         tableView.stopEditing()
@@ -87,11 +94,11 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
     }
 
     override fun reset() {
-        initFromPersistedState()
+        reloadTable()
     }
 
     override fun createComponent(): JComponent {
-        initFromPersistedState()
+        reloadTable()
 
         return panel {
             group(message("kotlin.script.definitions.title"), false) {
@@ -134,51 +141,37 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     override fun apply() {
         if (isModified) {
-            runWithModalProgressBlocking(
-                project,
-                KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")
-            ) {
-                scanClasspath()
+            val explicitTemplateClassNames = explicitTemplateClassNamesProperty.get()
+            val explicitTemplateClasspath = explicitTemplateClasspathProperty.get()
+
+            ScriptDefinitionSettingsStateComponent.getInstance(project).update {
+                ScriptDefinitionSettingsStateComponent.State(
+                    currentModels.map { model ->
+                        ScriptDefinitionSettingsStateComponent.DefinitionSetting(model.name, model.id, model.isEnabled)
+                    },
+                    explicitTemplateClassNames,
+                    explicitTemplateClasspath,
+                )
             }
+
+            reloadTable()
+            val currentDefinitionIds = currentModels.map { it.id }
+            val foundFqns = DefinitionFromDependenciesProvider(project).getDefinitionClasses()
+                .filter { it in currentDefinitionIds }.toList()
+
+            definitionsFromClassPathTitle.set(
+                foundFqns.joinToString(
+                    prefix = "<html>${
+                        KotlinBaseScriptingBundle.message(
+                            "label.kotlin.script.one.definitions.found", foundFqns.size
+                        )
+                    }<br>", separator = "<br>", postfix = "</html>"
+                ) {
+                    "<code>$it</code>"
+                })
 
             previousModificationStamp = currentModificationStamp
         }
-    }
-
-
-    private suspend fun scanClasspath() {
-        val explicitTemplateClassNames = explicitTemplateClassNamesProperty.get()
-        val explicitTemplateClasspath = explicitTemplateClasspathProperty.get()
-
-        val service = project.service<DefinitionFromDependenciesContributor>()
-        val discoveredTemplates = service.discoverDefinitionTemplates()
-        service.updateWorkspaceModel(discoveredTemplates)
-
-        ScriptDefinitionSettingsStateComponent.getInstance(project).updateSettings {
-            ScriptDefinitionSettingsStateComponent.State(
-                currentModels.map { model ->
-                    ScriptDefinitionSettingsStateComponent.DefinitionSetting(model.name, model.id, model.isEnabled)
-                },
-                explicitTemplateClassNames,
-                explicitTemplateClasspath,
-            )
-        }
-
-        initFromPersistedState()
-        val currentDefinitionIds = currentModels.map { it.id }
-        val added =
-            (parseExplicitTemplateInput(explicitTemplateClassNames).toSet() + discoveredTemplates.fqns).filter { it in currentDefinitionIds }
-
-        definitionsFromClassPathTitle.set(
-            added.joinToString(
-                prefix = "<html>${
-                    KotlinBaseScriptingBundle.message(
-                        "label.kotlin.script.one.definitions.found", added.size
-                    )
-                }<br>", separator = "<br>", postfix = "</html>"
-            ) {
-                "<code>$it</code>"
-            })
     }
 
     override fun getDisplayName(): String = message("script.name.kotlin.scripting")
