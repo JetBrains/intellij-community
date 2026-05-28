@@ -39,7 +39,7 @@ public interface RuntimeModuleRepository {
    * Searches for the module header by the given {@code moduleId} or returns {@code null} if it is not found in the repository.
    */
   @ApiStatus.Internal
-  @Nullable RuntimeModuleHeader findHeader(@NotNull RuntimeModuleId moduleId);
+  @Nullable RuntimeModuleHeader findModuleHeader(@NotNull RuntimeModuleId moduleId);
 
   /**
    * Computes resource paths of a module with the given {@code moduleId} without resolving its dependencies.

@@ -110,14 +110,14 @@ class RuntimeModuleRepositoryChecker private constructor(
             .asSequence()
             .filter { it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
             .flatMap { included ->
-              repository.findHeader(included.moduleId)?.let { module -> module.ownClasspath.map { it to included.moduleId } } ?: emptyList()
+              repository.findModuleHeader(included.moduleId)?.let { module -> module.ownClasspath.map { it to included.moduleId } } ?: emptyList()
             }
             .groupBy({ it.first }, { it.second })
 
       val pluginHeaders = loadBundledPluginHeaders(productModules, softly)
       pluginHeaders.forEach { pluginHeader ->
         for (includedModule in pluginHeader.includedModules) {
-          val pluginModule = repository.findHeader(includedModule.moduleId) ?: continue
+          val pluginModule = repository.findModuleHeader(includedModule.moduleId) ?: continue
 
           //todo: remove when PY-89477 is fixed (`intellij.pycharm.community` module contains two classes and some resources only, adding it to two classpaths shouldn't cause problems)
           if (pluginModule.moduleId.name == "intellij.pycharm.community") continue
@@ -175,7 +175,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     pluginHeaders.forEach { header ->
       header.includedModules.forEach { includedModule ->
         if (includedModule.loadingRule == RuntimeModuleLoadingRule.EMBEDDED) {
-          if (repository.findHeader(includedModule.moduleId) == null) {
+          if (repository.findModuleHeader(includedModule.moduleId) == null) {
             softly.registerFailure(
               place = includedModule.moduleId.displayName,
               errorMessage = "Module '${includedModule.moduleId.displayName}' included as as embedded in the plugin '${header.pluginId}' is not found in the runtime module repository"
@@ -189,7 +189,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     }
 
     val productResourceRoots = allProductModules.keys.flatMap { moduleId ->
-      val moduleHeader = repository.findHeader(moduleId)
+      val moduleHeader = repository.findModuleHeader(moduleId)
       if (moduleHeader == null) {
         softly.registerFailure(
           place = moduleId.displayName,

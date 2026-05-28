@@ -36,10 +36,10 @@ class RepositoryTest {
     val foo = repository.getModule(fooId)
     assertEquals(listOf(foo), bar.dependencies)
 
-    val fooHeader = repository.findHeader(fooId)
+    val fooHeader = repository.findModuleHeader(fooId)
     assertNotNull(fooHeader)
     assertEquals("ij.foo", fooHeader.moduleId.name)
-    val barHeader = repository.findHeader(barId)
+    val barHeader = repository.findModuleHeader(barId)
     assertEquals(emptyList<RuntimeModuleId>(), fooHeader.dependencies)
     assertNotNull(barHeader)
     assertEquals("ij.bar", barHeader.moduleId.name)
@@ -70,7 +70,7 @@ class RepositoryTest {
       repository.getModule(bazId)
     }
     assertEquals("Cannot resolve module 'ij.baz': module 'unresolved' (<- 'ij.bar' <- 'ij.baz') is not found", exception.message)
-    assertEquals("ij.bar", repository.findHeader(barId)?.moduleId?.name)
+    assertEquals("ij.bar", repository.findModuleHeader(barId)?.moduleId?.name)
   }
 
   @Test

@@ -55,7 +55,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   @Override
-  public @Nullable RuntimeModuleHeader findHeader(@NotNull RuntimeModuleId moduleId) {
+  public @Nullable RuntimeModuleHeader findModuleHeader(@NotNull RuntimeModuleId moduleId) {
     return resolveHeader(moduleId);
   }
 

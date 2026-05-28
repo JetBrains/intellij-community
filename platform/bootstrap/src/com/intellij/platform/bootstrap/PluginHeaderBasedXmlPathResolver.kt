@@ -32,7 +32,7 @@ internal class PluginHeaderBasedXmlPathResolver(
     val moduleName = path.removeSuffix(".xml")
     val includedModule = header.includedModules.find { it.moduleId.name == moduleName }
     if (includedModule != null) {
-      val moduleHeader = moduleRepository.findHeader(includedModule.moduleId)
+      val moduleHeader = moduleRepository.findModuleHeader(includedModule.moduleId)
       if (moduleHeader != null) {
         val input = moduleHeader.readFile(path) ?: error("Cannot resolve $path in $moduleHeader")
         val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this, dataLoader))
@@ -46,7 +46,7 @@ internal class PluginHeaderBasedXmlPathResolver(
   override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
     val runtimeModuleId = RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)
     val legacyModuleId = RuntimeModuleId.legacyJpsModule(moduleId.name)
-    val moduleHeader = moduleRepository.findHeader(runtimeModuleId) ?: moduleRepository.findHeader(legacyModuleId)
+    val moduleHeader = moduleRepository.findModuleHeader(runtimeModuleId) ?: moduleRepository.findModuleHeader(legacyModuleId)
     return moduleHeader?.ownClasspath ?: emptyList()
   }
 }
