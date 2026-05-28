@@ -17,11 +17,11 @@ import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlin
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo

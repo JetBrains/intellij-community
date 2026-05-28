@@ -9,10 +9,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 

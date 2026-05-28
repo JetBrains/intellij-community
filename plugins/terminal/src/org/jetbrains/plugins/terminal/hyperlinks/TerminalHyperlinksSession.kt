@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 
 @ApiStatus.Internal
 interface TerminalHyperlinksSession {

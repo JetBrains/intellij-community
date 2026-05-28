@@ -8,8 +8,8 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 
 @ApiStatus.Internal
 @Rpc

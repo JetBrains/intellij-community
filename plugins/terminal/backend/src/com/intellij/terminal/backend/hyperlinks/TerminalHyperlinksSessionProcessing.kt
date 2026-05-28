@@ -6,9 +6,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.toUpdate
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 
 internal fun scheduleHyperlinksSessionProcessing(session: BackendTerminalHyperlinksSession) {
   session.coroutineScope.launch(CoroutineName("BackendTerminalHyperlinksSession processing")) {
