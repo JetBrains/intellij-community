@@ -1,14 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.moduleRepository
 
-import org.jetbrains.intellij.build.impl.moduleRepository.ResourcePathsSchema
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryValidator
-import org.jetbrains.intellij.build.impl.moduleRepository.isProjectLevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
@@ -22,6 +16,21 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.getEmbeddedProductTempPluginDir
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.createPlatformLayout
+import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
+import org.jetbrains.intellij.build.impl.isScrambledWithFrontend
+import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.moduleRepository
 
-import org.jetbrains.intellij.build.impl.moduleRepository.ContentModuleDetector
-import org.jetbrains.intellij.build.impl.moduleRepository.ContentModuleRegistrationData
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -14,6 +12,9 @@ import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
 import org.jdom.Element
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
@@ -25,7 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import kotlin.io.path.pathString
 
 /**
- * Provide information about [JpsModule] registered as content modules using data [DescriptorCacheContainer].
+ * Provide information about [JpsModule] registered as content modules using data [org.jetbrains.intellij.build.impl.DescriptorCacheContainer].
  */
 internal class ContentModuleDetectorImpl(
   platformLayout: PlatformLayout,

@@ -35,7 +35,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.buildDistributions
