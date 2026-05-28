@@ -277,16 +277,14 @@ private class CommandCompletionHighlightingListener(
   }
 
   override fun uiRefreshed() {
-    completionService?.addFilters(lookup, nonWrittenFiles, psiFile, topLevelEditor)
-    val item = lookup.currentItemOrEmpty
-    if (updateItem(item)) return
+    completionService.addFilters(lookup, nonWrittenFiles, psiFile, topLevelEditor)
+    updateItem(lookup.currentItemOrEmpty)
   }
 
-  private fun updateItem(item: LookupElement?): Boolean {
-    val element = item?.`as`(CommandCompletionLookupElement::class.java)
-    if (element == null) {
+  private fun updateItem(item: LookupElement?) {
+    val element = item?.`as`(CommandCompletionLookupElement::class.java) ?: run {
       clear()
-      return true
+      return
     }
 
     if (element.useLookupString) {
@@ -296,7 +294,6 @@ private class CommandCompletionHighlightingListener(
       clearPromptHighlighting()
     }
     updateHighlighting(element)
-    return false
   }
 
   override fun lookupCanceled(event: LookupEvent) {
@@ -338,9 +335,8 @@ private class CommandCompletionHighlightingListener(
   }
 
   override fun currentItemChanged(event: LookupEvent) {
-    completionService?.setHint(lookup, topLevelEditor, nonWrittenFiles)
-    val item = event.item
-    updateItem(item)
+    completionService.setHint(lookup, topLevelEditor, nonWrittenFiles)
+    updateItem(event.item)
   }
 
   private fun updateHighlighting(element: CommandCompletionLookupElement) {
