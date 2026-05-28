@@ -63,11 +63,9 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
 internal class CommandCompletionService : Disposable.Default {
   internal fun filterLookupAfterChar(typed: Char, editor: Editor, file: PsiFile, lookup: LookupImpl): Boolean {
     if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return false
-    val factory = getFactory(file.language)
-    if (factory?.filterSuffix() != typed) return false
+    val factory = getFactory(file.language)?.takeIf { it.filterSuffix() == typed } ?: return false
     val offset = editor.caretModel.offset
-    if (offset == 0) return false
-    return factory.suffix() == editor.document.immutableCharSequence[offset - 1]
+    return offset > 0 && factory.suffix() == editor.document.immutableCharSequence[offset - 1]
   }
 
   fun getFactory(language: Language): CommandCompletionFactory? {
