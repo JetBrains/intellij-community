@@ -49,16 +49,20 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
     if (!isGenerallyApplicable()) return false
     val project = editor.project ?: return false
-    val commandCompletionService = project.service<CommandCompletionService>()
-    val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return false
+
     val offset = editor.caretModel.offset
+    val document = editor.document
+    if (StringUtil.isJavaIdentifierPart(document.immutableCharSequence[offset])) return false
+
+    val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return false
+
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val injectedElement = injectedLanguageManager.findInjectedElementAt(targetFile, offset)
     if (injectedElement != null) return false
-    val dumbService = DumbService.getInstance(project)
-    val commandCompletionFactory = commandCompletionService.getFactory(targetFile.language) ?: return false
-    if (!dumbService.isUsableInCurrentContext(commandCompletionFactory)) return false
-    if (StringUtil.isJavaIdentifierPart(editor.document.immutableCharSequence[offset])) return false
+
+    val commandCompletionFactory = project.service<CommandCompletionService>().getFactory(targetFile.language) ?: return false
+    if (!DumbService.getInstance(project).isUsableInCurrentContext(commandCompletionFactory)) return false
+
     return commandCompletionFactory.suffix() == charTyped &&
            commandCompletionFactory.isApplicable(targetFile, offset)
   }
@@ -85,30 +89,40 @@ internal val ORIGINAL_EDITOR = Key.create<Pair<Editor, Int>>("completion.command
 
 @Service(Service.Level.PROJECT)
 internal class NonWriteAccessCommandCompletionService(
-  val coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
 ) {
 
   fun insertNewEditor(editor: Editor) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (editor !is EditorImpl) return
     val project = editor.project ?: return
-    val offset = editor.caretModel.offset
+
+    val textField = LanguageTextField(FileTypes.PLAIN_TEXT.language, editor.project, "", true).apply {
+      val height = ((editor.charHeight * 2 * 1.2) / JBUIScale.scale(1.0F)).toInt() + 10
+      val width = editor.lineHeight * 6
+      val size = JBUI.size(width, height)
+      this.maximumSize = size
+      this.minimumSize = size
+      this.preferredSize = size
+    }
+
     val inlayProperties = InlayProperties().relatesToPrecedingText(true).showAbove(false).showWhenFolded(false)
-    val textField = LanguageTextField(FileTypes.PLAIN_TEXT.language, editor.project, "", true)
-    val height = ((editor.charHeight * 2 * 1.2) / JBUIScale.scale(1.0F)).toInt() + 10
-    val width = editor.lineHeight * 6
-    val size = JBUI.size(width, height)
-    textField.maximumSize = size
-    textField.minimumSize = size
-    textField.preferredSize = size
-    val componentInlay: Inlay<ComponentInlayRenderer<LanguageTextField>>? = editor.addComponentInlay(offset, inlayProperties, ComponentInlayRenderer(textField, ComponentInlayAlignment.INLINE_COMPONENT))
-    if (componentInlay == null) return
-    IdeFocusManager.getInstance(editor.project).requestFocus(textField, true)
+    val offset = editor.caretModel.offset
+    val componentInlay = editor.addComponentInlay(
+      offset,
+      inlayProperties,
+      ComponentInlayRenderer(textField, ComponentInlayAlignment.INLINE_COMPONENT)
+    ) ?: return
+
+    IdeFocusManager.getInstance(project).requestFocus(textField, true)
+
     editor.putUserData(INSTALLED_EDITOR, componentInlay)
     Disposer.register(editor.disposable, componentInlay)
     textField.setDisposedWith(editor.disposable)
+
     val inlayedEditor = textField.getEditor(true) ?: return
     inlayedEditor.putUserData(ORIGINAL_EDITOR, Pair(editor, offset))
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runCompletion(project, inlayedEditor, componentInlay)
     }
@@ -128,7 +142,7 @@ internal class NonWriteAccessCommandCompletionService(
       val codeCompletionHandlerBase = CodeCompletionHandlerBase(CompletionType.BASIC, true, false, true)
       codeCompletionHandlerBase.invokeCompletion(project, inlayedEditor, 1)
       val activeLookup = LookupManager.getActiveLookup(inlayedEditor)
-      if (activeLookup == null || activeLookup !is Disposable) {
+      if (activeLookup !is Disposable) {
         Disposer.dispose(componentInlay)
         return@run
       }
