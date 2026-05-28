@@ -6,7 +6,7 @@ compiler_plugin_jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt"]),
   resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_expects",
   deps = ["@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel"],
 )
