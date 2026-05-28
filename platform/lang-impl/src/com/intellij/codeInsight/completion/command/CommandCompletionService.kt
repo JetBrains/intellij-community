@@ -147,8 +147,11 @@ internal class CommandCompletionService : Disposable.Default {
     val state = applicationCommandCompletionService.state
     if (state.showCounts > MAX_COUNT_TO_SHOW_HINT) return
     state.showCounts += 1
-    val inlineElement: Inlay<HintRenderer?> = topLevelEditor.inlayModel.addInlineElement(endOffset, true, EditorLineStripeTextRenderer("      " + CodeInsightBundle.message("command.completion.filter.hint", completionFactory.filterSuffix())))
-                                              ?: return
+    val inlineElement = topLevelEditor.inlayModel.addInlineElement(
+      endOffset,
+      true,
+      EditorLineStripeTextRenderer("      " + CodeInsightBundle.message("command.completion.filter.hint", completionFactory.filterSuffix()))
+    ) ?: return
     Disposer.register(lookup, inlineElement)
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
 
@@ -185,7 +188,7 @@ internal class CommandCompletionService : Disposable.Default {
 
 private val EP_NAME = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
 
-private val INSTALLED_HINT: Key<Inlay<HintRenderer?>> = Key.create("completion.command.installed.hint")
+private val INSTALLED_HINT: Key<Inlay<out HintRenderer>> = Key.create("completion.command.installed.hint")
 private val INSTALLED_HINT_KEY: Key<Boolean> = Key.create("completion.command.installed.hint")
 private val INSTALLED_ADDITIONAL_MATCHER_KEY: Key<Boolean> = Key.create("completion.command.installed.additional.matcher")
 private val INSTALLED_PROMPT_KEY: Key<AtomicBoolean> = Key.create("completion.command.installed.lookup.command.listener")
