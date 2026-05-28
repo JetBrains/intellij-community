@@ -60,12 +60,9 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
  * completion factories to customize behavior according to individual requirements.
  */
 @Service(Service.Level.PROJECT)
-internal class CommandCompletionService : Disposable {
+internal class CommandCompletionService : Disposable.Default {
   companion object {
     private val EP_NAME: LanguageExtension<CommandCompletionFactory> = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
-  }
-
-  override fun dispose() {
   }
 
   internal fun filterLookupAfterChar(typed: Char, editor: Editor, file: PsiFile, lookup: LookupImpl): Boolean {
