@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.reworked.backend
+package com.intellij.terminal.tests.reworked.hyperlinks
 
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
@@ -50,7 +50,7 @@ import java.awt.event.MouseEvent
 import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(JUnit4::class)
-internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
+internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
