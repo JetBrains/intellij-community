@@ -67,7 +67,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 
 private const val STANDARD_MEAN_PRIORITY = 100.0
@@ -86,7 +85,6 @@ private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
  * completions for specific command-based scenarios in supported languages or files.
  *
  */
-@ApiStatus.Internal
 internal class CommandCompletionProvider(val contributor: CommandCompletionContributor) : CompletionProvider<CompletionParameters?>() {
 
   companion object {
@@ -554,7 +552,6 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
   }
 }
 
-@ApiStatus.Internal
 internal class CommandCompletionUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on a command completion calculating.")
 

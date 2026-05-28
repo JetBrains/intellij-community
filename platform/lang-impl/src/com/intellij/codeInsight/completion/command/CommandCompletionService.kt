@@ -48,7 +48,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
@@ -61,7 +60,6 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
  * integration of additional matchers, hint rendering, and custom lookup arrangements. It relies on language-specific
  * completion factories to customize behavior according to individual requirements.
  */
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 internal class CommandCompletionService(
   val coroutineScope: CoroutineScope,
@@ -209,7 +207,6 @@ private val PROMPT_HIGHLIGHTING = Key.create<RangeHighlighter>("completion.comma
 private val LOOKUP_HIGHLIGHTING = Key.create<List<RangeHighlighter>>("completion.command.lookup.highlighting")
 private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 
-@ApiStatus.Internal
 internal class CommandCompletionListener : LookupManagerListener {
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
@@ -364,7 +361,6 @@ private class CommandCompletionHighlightingListener(
  * select an item, or hide the lookup based on various conditions, such as the presence of
  * specific data in the current lookup or the state of the caret/editor.
  */
-@ApiStatus.Internal
 internal class CommandCompletionCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return null
@@ -403,7 +399,6 @@ internal class CommandCompletionCharFilter : CharFilter() {
  * A private implementation of the `LookupCustomizer` interface that modifies a lookup instance
  * to insert additional flags.
  */
-@ApiStatus.Internal
 internal class CommandCompletionLookupCustomizer : LookupCustomizer {
   override fun customizeLookup(lookupImpl: LookupImpl) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return

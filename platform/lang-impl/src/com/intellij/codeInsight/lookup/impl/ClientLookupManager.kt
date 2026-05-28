@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.HintHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
@@ -101,7 +100,6 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
   protected abstract fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl
 }
 
-@ApiStatus.Experimental
 @Internal
 val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPointName("com.intellij.lookup.customizer")
 
@@ -112,7 +110,6 @@ val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPoi
  * This is intended to be used internally within the system and not exposed for external use.
  * Use [com.intellij.codeInsight.lookup.LookupManagerListener]
  */
-@ApiStatus.Experimental
 @Internal
 interface LookupCustomizer {
   fun customizeLookup(lookupImpl: LookupImpl)

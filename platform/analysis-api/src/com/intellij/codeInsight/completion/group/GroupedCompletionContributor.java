@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.group;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * grouping behavior for completion items in the IDE, allowing completion results to be categorized into separate groups.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 public interface GroupedCompletionContributor {
   boolean groupIsEnabled(CompletionParameters parameters);
 

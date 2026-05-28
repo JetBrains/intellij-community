@@ -137,13 +137,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.openapi.extensions.ExtensionPointName
-*f:com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider
-- com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider
-- <init>():V
-- documentationTarget(com.intellij.psi.PsiFile,com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.platform.backend.documentation.DocumentationTarget
-*f:com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProviderKt
-- sf:combineFragments(java.util.List,java.util.List):java.util.List
-- sf:getLookupElementCustomPreviewHolder(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 *a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V

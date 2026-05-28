@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
  * An interface for handling typed characters without write access to the document.
  * Please note that this is an experimental class and can be deleted in the future
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 public interface NonWriteAccessTypedHandler {
   ExtensionPointName<NonWriteAccessTypedHandler> EP_NAME = new ExtensionPointName<>("com.intellij.nonWriteAccessTypedHandler");

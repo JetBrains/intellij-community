@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.extensions.ExtensionPointName
-import jdk.jfr.Experimental
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,7 +18,6 @@ interface LookupElementCustomPreviewHolder {
 /**
  * An internal interface used to determine if a given [Lookup] instance may have a custom preview.
  */
-@Experimental
 @ApiStatus.Internal
 interface LookupMayHaveCustomPreviewProvider {
   companion object {

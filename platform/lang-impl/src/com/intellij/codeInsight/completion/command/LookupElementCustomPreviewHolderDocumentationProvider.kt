@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -61,10 +61,11 @@ import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Function
 
-
+@ApiStatus.Internal
 class LookupElementCustomPreviewHolderDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     val customPreviewHolder = getLookupElementCustomPreviewHolder(element) ?: return null
@@ -321,6 +322,7 @@ private fun String.indexesOf(fragment: String): MutableList<Int> {
   return result
 }
 
+@ApiStatus.Internal
 @VisibleForTesting
 fun combineFragments(
   fragments: List<IntentionPreviewDiffResult.Fragment>,
@@ -380,7 +382,6 @@ internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHa
     return true
   }
 }
-
 
 internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
@@ -450,6 +451,7 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
   })
 }
 
+@ApiStatus.Internal
 fun getLookupElementCustomPreviewHolder(element: LookupElement?): LookupElementCustomPreviewHolder? {
   if (element is CompletionItemLookupElement) {
     return element.item() as? LookupElementCustomPreviewHolder
