@@ -4,6 +4,9 @@ package com.intellij.codeInsight.lookup
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,4 +28,11 @@ interface LookupMayHaveCustomPreviewProvider {
   }
 
   fun mayHaveCustomPreview(lookup: Lookup): Boolean
+}
+
+private val previewCacheKey = Key.create<IntentionPreviewInfo>("preview.cache")
+
+@ApiStatus.Internal
+fun UserDataHolder.cachePreview(block: () -> IntentionPreviewInfo): IntentionPreviewInfo {
+  return ConcurrencyUtil.computeIfAbsent(this, previewCacheKey) { block() }
 }
