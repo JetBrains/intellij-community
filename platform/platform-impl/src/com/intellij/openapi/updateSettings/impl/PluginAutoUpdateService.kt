@@ -175,7 +175,7 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
             updateFile.move(updatePathInAutoUpdatesDir)
             updatePathInAutoUpdatesDir
           }
-          updatesState[downloader.id] = DownloadedUpdate(downloader.id, downloader.pluginVersion, updatePathInAutoUpdateDir)
+          updatesState[downloader.id] = DownloadedUpdate(downloader.id, requireNotNull(downloader.pluginVersion), updatePathInAutoUpdateDir)
           downloadedList.add(downloader)
         }
       }

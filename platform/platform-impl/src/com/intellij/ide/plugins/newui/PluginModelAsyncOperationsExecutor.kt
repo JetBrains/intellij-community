@@ -144,7 +144,7 @@ internal object PluginModelAsyncOperationsExecutor {
   fun findPlugins(downloaders: Collection<PluginDownloader>, callback: Function<Map<PluginId, PluginUiModel>, Unit>) {
     val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     coroutineScope.launch(Dispatchers.IO) {
-      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(downloaders.map(PluginDownloader::getId).toSet())
+      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(downloaders.map(PluginDownloader::id).toSet())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback.apply(pluginModels)
       }

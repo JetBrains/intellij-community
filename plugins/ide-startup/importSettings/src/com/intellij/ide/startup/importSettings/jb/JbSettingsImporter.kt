@@ -438,7 +438,7 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
       LOG.info("Downloading ${pluginDownloader.id}")
       if (pluginDownloader.prepareToInstall(progressIndicator)) {
-        PluginInstaller.unpackPlugin(pluginDownloader.filePath, PathManager.getPluginsDir())
+        PluginInstaller.unpackPlugin(pluginDownloader.getFilePath(), PathManager.getPluginsDir())
         LOG.info("Downloaded and unpacked newer version of plugin '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}")
       }
       else {

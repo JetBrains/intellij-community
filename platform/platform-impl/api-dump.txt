@@ -1053,6 +1053,40 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - f:toolName:java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
+f:com.intellij.openapi.updateSettings.impl.PluginDownloader
+- sf:Companion:com.intellij.openapi.updateSettings.impl.PluginDownloader$Companion
+- sf:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor):I
+- sf:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):I
+- sf:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- sf:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String,com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:getBuildNumber():com.intellij.openapi.util.BuildNumber
+- f:getDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
+- f:getFilePath():java.nio.file.Path
+- f:getId():com.intellij.openapi.extensions.PluginId
+- sf:getMarketplaceDownloadsUUID():java.lang.String
+- f:getPluginId():java.lang.String
+- f:getPluginName():java.lang.String
+- f:getPluginVersion():java.lang.String
+- f:getProductCode():java.lang.String
+- f:getReleaseDate():java.util.Date
+- f:getReleaseVersion():I
+- f:install():V
+- f:installDynamically(javax.swing.JComponent):Z
+- f:isFromMarketplace():Z
+- f:isLicenseOptional():Z
+- f:isShownErrors():Z
+- f:prepareToInstall(com.intellij.openapi.progress.ProgressIndicator):Z
+- sf:showErrorDialog(java.lang.String):V
+- f:toPluginNode():com.intellij.ide.plugins.PluginNode
+- f:withDownloadService(com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:withErrorsConsumer(java.util.function.Consumer):com.intellij.openapi.updateSettings.impl.PluginDownloader
+f:com.intellij.openapi.updateSettings.impl.PluginDownloader$Companion
+- f:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor):I
+- f:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):I
+- f:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String,com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:getMarketplaceDownloadsUUID():java.lang.String
+- f:showErrorDialog(java.lang.String):V
 f:com.intellij.openapi.updateSettings.impl.UpdateChannel
 - f:getBuilds():java.util.List
 - f:getEvalDays():I

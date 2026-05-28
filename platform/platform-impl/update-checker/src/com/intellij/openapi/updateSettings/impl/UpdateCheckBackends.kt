@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.updateSettings.impl.PluginDownloader.compareVersionsSkipBrokenAndIncompatible
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.allowedDowngrade
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.allowedUpgrade
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.checkAndPrepareToInstall
@@ -59,7 +58,7 @@ internal open class MarketplacePluginRepository : RemotePluginRepository("defaul
       val descriptor = installedDescriptors[id]
 
       if (lastUpdate != null &&
-          (descriptor == null || compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
+          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginModel(id.idString, lastUpdate, indicator) }
           .onFailure {
             if (!isNetworkError(it)) throw it
