@@ -76,7 +76,7 @@ public final class ProductModulesSerialization {
       RuntimeModuleId includedId = includedFromData.getFromModule();
       InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getName() + "/product-modules.xml");
       if (inputStream == null) {
-        throw new MalformedRepositoryException("'" + includedId.getPresentableName() + "' included in " +
+        throw new MalformedRepositoryException("'" + includedId.getDisplayName() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");
       }
       RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);

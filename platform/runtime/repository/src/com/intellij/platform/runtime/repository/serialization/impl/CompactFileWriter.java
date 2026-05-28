@@ -110,7 +110,7 @@ public final class CompactFileWriter {
         for (RuntimeModuleId dependency : descriptor.getDependencyIds()) {
           Integer index = moduleIdIndexes.get(dependency);
           if (index == null) {
-            throw new AssertionError("Unknown dependency '" + dependency.getPresentableName() + "' in '" + descriptor.getModuleId().getPresentableName() + "'");
+            throw new AssertionError("Unknown dependency '" + dependency.getDisplayName() + "' in '" + descriptor.getModuleId().getDisplayName() + "'");
           }
           out.writeInt(index);
         }
@@ -125,14 +125,14 @@ public final class CompactFileWriter {
         out.writeUTF(pluginHeader.getPluginId());
         Integer pluginDescriptorModuleIdIndex = moduleIdIndexes.get(pluginHeader.getPluginDescriptorModuleId());
         if (pluginDescriptorModuleIdIndex == null) {
-          throw new AssertionError("Unknown plugin descriptor module '" + pluginHeader.getPluginDescriptorModuleId().getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+          throw new AssertionError("Unknown plugin descriptor module '" + pluginHeader.getPluginDescriptorModuleId().getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
         }
         out.writeInt(pluginDescriptorModuleIdIndex);
         out.writeInt(pluginHeader.getIncludedModules().size());
         for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           Integer includedModuleIndex = moduleIdIndexes.get(includedModule.getModuleId());
           if (includedModuleIndex == null) {
-            throw new AssertionError("Unknown included module '" + includedModule.getModuleId().getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+            throw new AssertionError("Unknown included module '" + includedModule.getModuleId().getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
           }
           out.writeInt(includedModuleIndex);
           out.write(indexOf(includedModule.getLoadingRule(), CompactFileReader.LOADING_RULES_BY_INDEX));
@@ -140,7 +140,7 @@ public final class CompactFileWriter {
           if (requiredIfAvailableId != null) {
             Integer requiredIfAvailableIndex = moduleIdIndexes.get(requiredIfAvailableId);
             if (requiredIfAvailableIndex == null) {
-              throw new AssertionError("Unknown required-if-available module '" + requiredIfAvailableId.getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+              throw new AssertionError("Unknown required-if-available module '" + requiredIfAvailableId.getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
             }
             out.writeInt(requiredIfAvailableIndex);
           }

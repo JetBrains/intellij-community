@@ -26,7 +26,7 @@ private fun checkRuntimeModuleRepository(
   builder.expected()
   UsefulTestCase.assertSameElements(buildRepositoryData.allModuleIds, builder.descriptors.map { it.moduleId })
   for (expectedDescriptor in builder.descriptors) {
-    UsefulTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.presentableName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
+    UsefulTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.displayName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
   }
 }
 

@@ -77,7 +77,7 @@ public final class RawRuntimeModuleDescriptor {
   @Override
   public String toString() {
     return "RawRuntimeModuleDescriptor{" +
-           "id='" + myId.getPresentableName() + '\'' +
+           "id='" + myId.getDisplayName() + '\'' +
            ", visibility=" + myVisibility.name() +
            ", resourcePaths=" + myResourcePaths +
            ", dependencies=" + myDependencies +

@@ -75,7 +75,7 @@ public final class CompactFileReader {
 
         int visibilityIndex = in.read();
         if (visibilityIndex < 0 || visibilityIndex >= VISIBILITIES_BY_INDEX.length) {
-          throw new MalformedRepositoryException("Invalid visibility index '" + visibilityIndex + "' in '" + descriptorId.getPresentableName() + "'");
+          throw new MalformedRepositoryException("Invalid visibility index '" + visibilityIndex + "' in '" + descriptorId.getDisplayName() + "'");
         }
         RuntimeModuleVisibility visibility = VISIBILITIES_BY_INDEX[visibilityIndex];
 
@@ -84,7 +84,7 @@ public final class CompactFileReader {
         for (int j = 0; j < dependenciesCount; j++) {
           int dependencyIndex = in.readInt();
           if (dependencyIndex < 0 || dependencyIndex >= totalModuleIdCount) {
-            throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getPresentableName() + "'");
+            throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getDisplayName() + "'");
           }
           dependencies.add(moduleIds[dependencyIndex]);
         }
@@ -116,11 +116,11 @@ public final class CompactFileReader {
           RuntimeModuleId moduleId = moduleIds[includedModuleIndex];
           int loadingRuleIndex = in.read();
           if (loadingRuleIndex < 0 || loadingRuleIndex >= LOADING_RULES_BY_INDEX.length) {
-            throw new MalformedRepositoryException("Invalid loading rule index '" + loadingRuleIndex + "' for '" + moduleId.getPresentableName() + "' in '" + pluginId + "'");
+            throw new MalformedRepositoryException("Invalid loading rule index '" + loadingRuleIndex + "' for '" + moduleId.getDisplayName() + "' in '" + pluginId + "'");
           }
           int requiredIfAvailableIndex = in.readInt();
           if (requiredIfAvailableIndex < -1 || requiredIfAvailableIndex > totalModuleIdCount) {
-            throw new MalformedRepositoryException("Invalid required-if-available index '" + requiredIfAvailableIndex + "' for '" + moduleId.getPresentableName() + "' in '" + pluginId + "'");
+            throw new MalformedRepositoryException("Invalid required-if-available index '" + requiredIfAvailableIndex + "' for '" + moduleId.getDisplayName() + "' in '" + pluginId + "'");
           }
           RuntimeModuleId requiredIfAvailable = requiredIfAvailableIndex == -1 ? null : moduleIds[requiredIfAvailableIndex];
           includedModules.add(new RawIncludedRuntimeModule(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));

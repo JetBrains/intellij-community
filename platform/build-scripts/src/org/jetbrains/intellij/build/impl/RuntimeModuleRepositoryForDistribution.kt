@@ -167,7 +167,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     val commonDependencies = descriptors.first().dependencyIds
     for (descriptor in descriptors) {
       if (descriptor.dependencyIds != commonDependencies) {
-        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '${moduleId.presentableName}', ${descriptor.dependencyIds} and $commonDependencies")
+        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '${moduleId.displayName}', ${descriptor.dependencyIds} and $commonDependencies")
       }
     }
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
@@ -178,7 +178,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     val header = headers.first()
     for (anotherHeader in headers.drop(1)) {
       if (header.pluginId != anotherHeader.pluginId || header.includedModules != anotherHeader.includedModules) {
-        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different plugin headers for module '${pluginDescriptorModule.presentableName}': $header and $anotherHeader")
+        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different plugin headers for module '${pluginDescriptorModule.displayName}': $header and $anotherHeader")
       }
     }
     commonPluginHeaders.add(header)

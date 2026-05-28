@@ -9,9 +9,9 @@
 *f:com.intellij.platform.runtime.repository.RuntimeModuleId
 - s:contentModule(java.lang.String,java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId
 - equals(java.lang.Object):Z
+- getDisplayName():java.lang.String
 - getName():java.lang.String
 - getNamespace():java.lang.String
-- getPresentableName():java.lang.String
 - getStringId():java.lang.String
 - hashCode():I
 - s:module(java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId

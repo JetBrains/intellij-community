@@ -42,7 +42,7 @@ final class CompactFileReaderForVersion2 {
       for (int j = 0; j < dependenciesCount; j++) {
         int dependencyIndex = in.readInt();
         if (dependencyIndex < 0 || dependencyIndex >= totalIdCount) {
-          throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getPresentableName() + "'");
+          throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getDisplayName() + "'");
         }
         dependencies.add(descriptorIds[dependencyIndex]);
       }

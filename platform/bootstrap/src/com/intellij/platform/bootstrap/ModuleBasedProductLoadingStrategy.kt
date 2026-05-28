@@ -76,7 +76,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val mainGroupClassPath = corePluginHeader.includedModules.filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED }.flatMapTo(LinkedHashSet()) { module ->
       val classpath = moduleRepository.findHeader(module.moduleId)?.ownClasspath ?: emptyList()
       if (tracing) {
-        classpath.forEach { logger.trace("Classpath for core plugin: adding $it from module '${module.moduleId.presentableName}'") }
+        classpath.forEach { logger.trace("Classpath for core plugin: adding $it from module '${module.moduleId.displayName}'") }
       }
       classpath
     }
@@ -138,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val bundled = productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModuleId ->
       val pluginHeader = moduleRepository.findBundledPluginHeader(pluginDescriptorModuleId)
       if (pluginHeader == null) {
-        logger<ModuleBasedProductLoadingStrategy>().error("Plugin header for module '${pluginDescriptorModuleId.presentableName}' is not found in the runtime module repository")
+        logger<ModuleBasedProductLoadingStrategy>().error("Plugin header for module '${pluginDescriptorModuleId.displayName}' is not found in the runtime module repository")
         return@mapNotNull null
       }
       scope.async {
@@ -166,7 +166,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         }
         if (traceLogging) {
           for (path in header.ownClasspath) {
-            logger.info("Classpath for '${pluginHeader.pluginId}': adding $path from module '${includedModule.moduleId.presentableName}'")
+            logger.info("Classpath for '${pluginHeader.pluginId}': adding $path from module '${includedModule.moduleId.displayName}'")
           }
         }
         pluginDescriptorClasspathSet.addAll(header.ownClasspath)
