@@ -55,9 +55,8 @@ object PluginInstaller {
   @JvmField
   val UNKNOWN_HOST_MARKER: String = "__unknown_repository__"
 
-  @ApiStatus.Internal
   @JvmField
-  val ourLock: Any = Any()
+  internal val ourLock: Any = Any()
 
   /**
    * @return true if restart is needed
@@ -68,7 +67,7 @@ object PluginInstaller {
   fun prepareToUninstall(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     synchronized(ourLock) {
       if (PluginManagerCore.isPluginInstalled(pluginDescriptor.getPluginId())) {
-        if (pluginDescriptor.isBundled()) {
+        if (pluginDescriptor.isBundled) {
           throw IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId())
         }
         else {
@@ -88,10 +87,10 @@ object PluginInstaller {
   @JvmStatic
   @Throws(IOException::class)
   fun uninstallAfterRestart(pluginDescriptor: IdeaPluginDescriptor) {
-    if (pluginDescriptor.isBundled()) {
+    if (pluginDescriptor.isBundled) {
       throw IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId())
     }
-    LOG.debug("Scheduling uninstallation of plugin " + pluginDescriptor + " after restart")
+    LOG.debug("Scheduling uninstallation of plugin $pluginDescriptor after restart")
     // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
     // This way plugin installation always takes place after plugin uninstallation.
     addActionCommandsToBeginning(listOf(DeleteCommand(pluginDescriptor.getPluginPath())))
@@ -128,6 +127,7 @@ object PluginInstaller {
     if (uninstalledWithoutRestart) {
       try {
         LOG.debug("Deleting dynamic plugin from disk: " + pluginDescriptor.getPluginPath())
+        @Suppress("UseOptimizedEelFunctions")
         NioFiles.deleteRecursively(pluginDescriptor.getPluginPath())
       }
       catch (e: IOException) {
@@ -167,7 +167,7 @@ object PluginInstaller {
     existingPlugin: Path?,
     deleteSourceFile: Boolean,
   ) {
-    LOG.debug("Scheduling installation of plugin " + descriptor + " after restart")
+    LOG.debug("Scheduling installation of plugin $descriptor after restart")
     val commands = ArrayList<ActionCommand>()
 
     if (existingPlugin != null) {
@@ -175,8 +175,8 @@ object PluginInstaller {
     }
 
     val pluginsPath = getPluginsPath()
-    if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      commands.add(CopyCommand(sourceFile, pluginsPath.resolve(sourceFile.getFileName())))
+    if (sourceFile.fileName.toString().endsWith(".jar")) {
+      commands.add(CopyCommand(sourceFile, pluginsPath.resolve(sourceFile.fileName)))
     }
     else {
       // drops stale directory
@@ -216,15 +216,16 @@ object PluginInstaller {
   @JvmStatic
   @Throws(IOException::class)
   fun unpackPlugin(sourceFile: Path, targetPath: Path): Path {
-    LOG.debug("Unpacking " + sourceFile + " to " + targetPath)
+    LOG.debug("Unpacking $sourceFile to $targetPath")
     val target: Path
-    if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      target = targetPath.resolve(sourceFile.getFileName().toString())
+    if (sourceFile.fileName.toString().endsWith(".jar")) {
+      target = targetPath.resolve(sourceFile.fileName.toString())
       NioFiles.createDirectories(targetPath)
       Files.copy(sourceFile, target, StandardCopyOption.REPLACE_EXISTING)
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile))
+      @Suppress("UseOptimizedEelFunctions")
       NioFiles.deleteRecursively(target)
       Decompressor.Zip(sourceFile).withZipExtensions().extract(targetPath)
     }
@@ -235,10 +236,10 @@ object PluginInstaller {
   @Throws(IOException::class)
   fun rootEntryName(zip: Path): String {
     JBZipFile(zip).use { zipFile ->
-      for (zipEntry in zipFile.getEntries()) {
+      for (zipEntry in zipFile.entries) {
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash is found anywhere in the path
-        val name = zipEntry.getName()
+        val name = zipEntry.name
         val i = name.indexOf('/')
         if (i > 0) {
           return name.substring(0, i)
@@ -246,7 +247,7 @@ object PluginInstaller {
       }
     }
 
-    throw IOException("Corrupted archive (no file entries): " + zip)
+    throw IOException("Corrupted archive (no file entries): $zip")
   }
 
   @JvmStatic
@@ -275,7 +276,7 @@ object PluginInstaller {
 
       if (pluginDescriptor == null) {
         MessagesEx.showErrorDialog(parent,
-                                   IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()),
+                                   IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.fileName),
                                    CommonBundle.getErrorTitle())
         return
       }
@@ -312,12 +313,12 @@ object PluginInstaller {
       if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId())) {
         val message = IdeBundle.message("dialog.message.plugin.core.part",
                                         pluginDescriptor.name,
-                                        ApplicationNamesInfo.getInstance().getFullProductName())
+                                        ApplicationNamesInfo.getInstance().fullProductName)
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle())
         return
       }
 
-      val previousVersion = if (installedPlugin != null) installedPlugin.getVersion() else null
+      val previousVersion = installedPlugin?.getVersion()
       PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor, InstallationSourceEnum.FROM_DISK, previousVersion)
 
       if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
@@ -351,11 +352,11 @@ object PluginInstaller {
         return
       }
 
-      val oldFile = if (installedPlugin != null && !installedPlugin.isBundled()) installedPlugin.getPluginPath() else null
+      val oldFile = if (installedPlugin != null && !installedPlugin.isBundled) installedPlugin.getPluginPath() else null
       var isRestartRequired = oldFile != null ||
                               !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
-                              operation.isRestartRequired()
-      for (dynamicPluginInstall in operation.getPendingDynamicPluginInstalls()) {
+                              operation.isRestartRequired
+      for (dynamicPluginInstall in operation.pendingDynamicPluginInstalls) {
         val installed = installAndLoadDynamicPlugin(dynamicPluginInstall.file, parent, dynamicPluginInstall.pluginDescriptor)
         if (!installed) {
           isRestartRequired = true
@@ -373,7 +374,7 @@ object PluginInstaller {
         pluginEnabler.disable(setOf(toDisable))
       }
 
-      val installedDependencies = operation.getInstalledDependentPlugins()
+      val installedDependencies = operation.installedDependentPlugins
       val installedPlugins = ArrayList<IdeaPluginDescriptor>()
       installedPlugins.add(pluginDescriptor)
       for (plugin in installedDependencies) {
@@ -394,13 +395,11 @@ object PluginInstaller {
 
       if (!isRestartRequired) {
         val session: PluginManagerSession? = PluginManagerSessionService.getInstance().getSession(model.mySessionId.toString())
-        if (session != null) {
-          session.dynamicPluginsToInstall.put(pluginDescriptor.pluginId, PendingDynamicPluginInstall(file, pluginDescriptor))
-        }
+        session?.dynamicPluginsToInstall?.put(pluginDescriptor.pluginId, PendingDynamicPluginInstall(file, pluginDescriptor))
       }
       callback.accept(PluginInstallCallbackData(file, pluginDescriptor, isRestartRequired))
       for (callbackData in installedDependencies) {
-        if (!callbackData.pluginDescriptor.pluginId.equals(pluginDescriptor.pluginId)) {
+        if (callbackData.pluginDescriptor.pluginId != pluginDescriptor.pluginId) {
           callback.accept(callbackData)
         }
       }
@@ -424,7 +423,7 @@ object PluginInstaller {
   }
 
   /**
-   * @return {@code true} if plugin was successfully installed without a restart, {@code false} if restart is required
+   * @return {@code true} if the plugin was successfully installed without a restart, {@code false} if restart is required
    */
   @ApiStatus.Internal
   @JvmStatic
@@ -448,7 +447,7 @@ object PluginInstaller {
     // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
     val loadedPlugin = PluginManagerCore.findPlugin(targetPluginId)
     if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
-      LOG.warn("Plugin " + loadedPlugin + " is still loaded, restart is required") // FIXME IJPL-193781
+      LOG.warn("Plugin $loadedPlugin is still loaded, restart is required") // FIXME IJPL-193781
       return false
     }
 
@@ -457,7 +456,7 @@ object PluginInstaller {
     val pluginMap = pluginSet.buildPluginIdMap()
 
     if (pluginRequiresUltimatePluginButItsDisabled(targetDescriptor, pluginMap, contentModuleIdMap)) {
-      LOG.warn("Plugin " + targetPluginId + " requires Ultimate plugin, but it's disabled")
+      LOG.warn("Plugin $targetPluginId requires Ultimate plugin, but it's disabled")
       return false
     }
 
@@ -478,7 +477,7 @@ object PluginInstaller {
 
   @JvmStatic
   private fun keepArchive(): Boolean {
-    return !LoadingState.COMPONENTS_LOADED.isOccurred() || RegistryManager.getInstance().`is`("ide.plugins.keep.archive")
+    return !LoadingState.COMPONENTS_LOADED.isOccurred || RegistryManager.getInstance().`is`("ide.plugins.keep.archive")
   }
 
   @JvmStatic
@@ -533,12 +532,14 @@ object PluginInstaller {
   @JvmStatic
   private fun shutdownOrRestartAppAfterInstall(descriptor: IdeaPluginDescriptorImpl) {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
-      PluginManagerConfigurable.getUpdatesDialogTitle(),
-      { action ->
-        IdeBundle.message("plugin.installed.ide.restart.required.message",
-                          descriptor.getName(),
-                          action,
-                          ApplicationNamesInfo.getInstance().getFullProductName())
-      })
+      PluginManagerConfigurable.getUpdatesDialogTitle()
+    ) { action ->
+      IdeBundle.message(
+        "plugin.installed.ide.restart.required.message",
+        descriptor.getName(),
+        action,
+        ApplicationNamesInfo.getInstance().fullProductName
+      )
+    }
   }
 }
