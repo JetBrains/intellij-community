@@ -33,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
@@ -58,7 +59,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.time.Duration.Companion.milliseconds
 
-internal fun installHyperlinksProcessing(
+@ApiStatus.Internal
+fun installHyperlinksProcessing(
   project: Project,
   outputModel: TerminalOutputModel,
   editor: EditorEx,

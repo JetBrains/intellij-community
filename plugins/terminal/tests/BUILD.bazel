@@ -169,6 +169,8 @@ jvm_library(
         "//plugins/terminal/completion:completion-tests_test_lib",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal.tests` end

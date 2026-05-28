@@ -5,49 +5,48 @@ import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.InlayProvider
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
+import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import kotlinx.coroutines.CoroutineName
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.awt.event.MouseEvent
 import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(JUnit4::class)
@@ -118,10 +117,6 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       createRecordingAsyncHyperlink(hyperlinkInfo, "async-only", failOnSyncNavigate = true)
     }
     updateModel(0L, "0: line0 link0")
-
-    assertStoredHyperlinkInfo(at(0, "link0")) { hyperlinkInfo ->
-      assertThat(hyperlinkInfo).isInstanceOf(TerminalAsyncHyperlinkInfo::class.java)
-    }
 
     click(at(0, "link0"))
 
@@ -223,8 +218,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link0"), highlight = HIGHLIGHT1, followedHighlight = HIGHLIGHT2, hoveredHighlight = HIGHLIGHT3),
-      link(at(1, "link1"), highlight = HIGHLIGHT2, followedHighlight = HIGHLIGHT3, hoveredHighlight = HIGHLIGHT4),
+      link(at(0, "link0"), highlight = HIGHLIGHT1),
+      link(at(1, "link1"), highlight = HIGHLIGHT2),
     )
     assertHighlightings()
   }
@@ -473,71 +468,58 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   private fun withFixture(test: suspend Fixture.() -> Unit) =
-    timeoutRunBlocking(coroutineName = "BackendTerminalHyperlinkHighlighterTest") {
-      val fixture = Fixture(project)
-      ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
-        ConsoleFilterProvider.FILTER_PROVIDERS,
-        listOf(ConsoleFilterProvider { arrayOf(fixture.filter as Filter) }),
-        testRootDisposable
-      )
-      withContext(Dispatchers.Default) {
-        fixture.run(test)
+    timeoutRunBlocking(
+      context = Dispatchers.EDT + ModalityState.any().asContextElement(),
+      coroutineName = "BackendTerminalHyperlinkHighlighterTest"
+    ) {
+      val fixtureScope = childScope("Fixture")
+      try {
+        val fixture = Fixture(project, fixtureScope)
+        ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
+          ConsoleFilterProvider.FILTER_PROVIDERS,
+          listOf(ConsoleFilterProvider { arrayOf(fixture.filter as Filter) }),
+          testRootDisposable
+        )
+
+        test(fixture)
+      }
+      finally {
+        fixtureScope.cancel()
       }
     }
 
-  private class Fixture(private val project: Project) {
-
+  @OptIn(AwaitCancellationAndInvoke::class)
+  private class Fixture(
+    private val project: Project,
+    private val coroutineScope: CoroutineScope,
+  ) {
     private val outputModel = TerminalTestUtil.createOutputModel(MAX_LENGTH)
-    private val document: Document get() = outputModel.document
-    private lateinit var backendFacade: BackendTerminalHyperlinkFacade
-    private val updateEvents = Channel<List<TerminalOutputEvent>>(capacity = UNLIMITED)
-    private val pendingUpdateEventCount = MutableStateFlow(0)
+
+    private val editor = TerminalUiUtils.createOutputEditor(
+      document = outputModel.document,
+      project = project,
+      settings = JBTerminalSystemSettingsProvider(),
+      installContextMenu = false,
+    ).also {
+      coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+        EditorFactory.getInstance().releaseEditor(it)
+      }
+      // Size the editor so that offsetToXY produces valid screen coordinates in a headless test.
+      it.component.setSize(800, 600)
+    }
+
+    private val hyperlinkFacade = installHyperlinksProcessing(
+      project = project,
+      outputModel = outputModel,
+      editor = editor,
+      coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
+    )
 
     val filter = MyFilter()
 
-    private val clickedLinks = mutableListOf<String>()
+    private val clickedLinks = MutableStateFlow(emptyList<String>())
 
-    suspend fun run(test: suspend Fixture.() -> Unit) {
-      coroutineScope {
-        val hyperlinkScope = childScope("BackendTerminalHyperlinkHighlighterTest hyperlink scope")
-        backendFacade = BackendTerminalHyperlinkFacade.install("Test", project, hyperlinkScope, outputModel, null)
-
-        // Do what StateAwareTerminalSession does, but with less infrastructure around.
-        // Note: do NOT use MutableSharedFlow with UNDISPATCHED,
-        // it's useless when combined with merge(), as it does its own launches (without UNDISPATCHED) inside.
-        // Instead, we use channel with an unlimited buffer to avoid losing some of the first events.
-        // Then the channel is consumed once as a flow, thus allowing to merge it with the heartbeat flow.
-        val eventJob = launch(CoroutineName("BackendTerminalHyperlinkHighlighterTest event processing")) {
-          merge(updateEvents.consumeAsFlow(), backendFacade.heartbeatFlow.map { listOf(it) }).collect { events ->
-            events.forEach { event ->
-              when (event) {
-                is TerminalContentUpdatedEvent -> {
-                  outputModel.updateContent(event)
-                  pendingUpdateEventCount.update { it - 1 }
-                }
-                Unit -> {
-                  val hyperlinkEvents = backendFacade.collectResultsAndMaybeStartNewTask()
-                  for (hyperlinkEvent in hyperlinkEvents) {
-                    if (hyperlinkEvent is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
-                      backendFacade.updateModelState(hyperlinkEvent)
-                    }
-                  }
-                }
-                else -> throw Exception("Event type is not used in the test: $event")
-              }
-            }
-          }
-        }
-
-        test()
-
-        // only for normal completion, otherwise test() is expected to throw
-        eventJob.cancel()
-        hyperlinkScope.cancel()
-      }
-    }
-
-    suspend fun updateModel(fromLine: Long, newText: String) {
+    fun updateModel(fromLine: Long, newText: String) {
       val textWithEol = newText.ensureEOL()
       val event = TerminalContentUpdatedEvent(
         text = textWithEol,
@@ -546,103 +528,82 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         cursorLogicalLineIndex = fromLine + textWithEol.count { it == '\n' } - 1,
         cursorColumnIndex = 0
       )
-      updateEvents.send(listOf(event))
-      pendingUpdateEventCount.update { it + 1 }
+      outputModel.updateContent(event)
     }
 
     suspend fun assertText(expected: String) {
       awaitEventProcessing()
-      assertThat(document.text).isEqualTo(expected.ensureEOL())
+      assertThat(editor.document.text).isEqualTo(expected.ensureEOL())
     }
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
       awaitEventProcessing()
-      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().mapNotNull { link ->
-        val start = TerminalOffset.of(link.absoluteStartOffset)
-        val end = TerminalOffset.of(link.absoluteEndOffset)
-        if (start < outputModel.startOffset && end >= outputModel.startOffset) {
-          null // partially trimmed links are allowed
-        }
-        else {
-          ActualLinkWrapper(
-            outputModel.getText(start, end).toString(),
-            link,
-          )
-        }
-      }
-      assertThat(actualLinks).hasSameSizeAs(expectedLinks)
-      for (i in actualLinks.indices) {
-        val actual = actualLinks[i].link
-        val expected = expectedLinks[i]
-        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
-        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
-        if (i == 0 && actualStartOffset < outputModel.startOffset) continue // partially trimmed link, we may not be able to locate it
-        val expectedStartOffset = expected.locator.locateOffset(outputModel)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val expectedLayer = HighlighterLayer.HYPERLINK
 
-        val description = "at $i actual link $actual expected link $expected"
-        assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
-        assertThat(actualEndOffset).`as`(description).isEqualTo(expectedEndOffset)
-        assertThat(actual.style).`as`(description).isEqualTo(expected.highlight)
-        assertThat(actual.followedStyle).`as`(description).isEqualTo(expected.followedHighlight)
-        assertThat(actual.hoveredStyle).`as`(description).isEqualTo(expected.hoveredHighlight)
-        assertThat(actual.layer).`as`(description).isEqualTo(expectedLayer)
-      }
+      val actualHighlighters = readMarkup(HighlighterLayer.HYPERLINK)
+      assertHighlighters(actualHighlighters, expectedLinks.map { Decorated(it.locator, it.highlight) }, layerLabel = "link")
     }
-
-    private data class ActualLinkWrapper(
-      val line: String,
-      val link: TerminalHyperlinkInfo,
-    )
 
     suspend fun assertHighlightings(vararg expectedHighlightings: Highlighting) {
       awaitEventProcessing()
-      val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>().map { highlighting ->
-        ActualHighlightingWrapper(
-          outputModel.getText(TerminalOffset.of(highlighting.absoluteStartOffset), TerminalOffset.of(highlighting.absoluteEndOffset))
-            .toString(),
-          highlighting,
-        )
-      }
-      assertThat(actualHighlightings).hasSameSizeAs(expectedHighlightings)
-      for (i in actualHighlightings.indices) {
-        val actual = actualHighlightings[i].highlighting
-        val expected = expectedHighlightings[i]
-        val expectedStartOffset = expected.locator.locateOffset(outputModel)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
-        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
-        val expectedLayer = HighlighterLayer.CONSOLE_FILTER
 
-        val description = "at $i actual highlight $actual expected highlight $expected"
-        assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
-        assertThat(actualEndOffset).`as`(description).isEqualTo(expectedEndOffset)
-        assertThat(actual.style).`as`(description).isEqualTo(expected.highlight)
-        assertThat(actual.layer).`as`(description).isEqualTo(expectedLayer)
+      val actualHighlighters = readMarkup(HighlighterLayer.CONSOLE_FILTER)
+      assertHighlighters(actualHighlighters, expectedHighlightings.map { Decorated(it.locator, it.highlight) }, layerLabel = "highlight")
+    }
+
+    private fun readMarkup(layer: Int): List<RangeHighlighter> {
+      val text = editor.document.text
+      return editor.markupModel.allHighlighters
+        .filter { it.isValid && it.layer == layer }
+        .filter {
+          // Drop leading partially trimmed highlighters: the highlighter's visible text no
+          // longer starts with the filter's "link" / "highlight" prefix.
+          val visibleText = text.substring(it.startOffset, it.endOffset)
+          visibleText.matches(filter.pattern)
+        }
+        .sortedBy { it.startOffset }
+    }
+
+    private fun assertHighlighters(actual: List<RangeHighlighter>, expected: List<Decorated>, layerLabel: String) {
+      assertThat(actual).hasSameSizeAs(expected)
+      for (i in actual.indices) {
+        val actualHighlighter = actual[i]
+        val expectedDecorated = expected[i]
+        val expectedAbsStart = expectedDecorated.locator.locateOffset(outputModel)
+        val expectedAbsEnd = expectedAbsStart + expectedDecorated.locator.length.toLong()
+        val expectedStartOffset = expectedAbsStart.toRelative(outputModel)
+        val expectedEndOffset = expectedAbsEnd.toRelative(outputModel)
+
+        val description = "at $i actual $layerLabel ${actualHighlighter.toRangeString(editor)} " +
+                          "expected $layerLabel $expectedDecorated"
+        assertThat(actualHighlighter.startOffset).`as`(description).isEqualTo(expectedStartOffset)
+        assertThat(actualHighlighter.endOffset).`as`(description).isEqualTo(expectedEndOffset)
+
+        val expectedAttributes = expectedDecorated.highlight
+        if (expectedAttributes != null) {
+          val actualAttributes = actualHighlighter.getTextAttributes(editor.colorsScheme)
+          assertThat(actualAttributes).`as`(description).isEqualTo(expectedAttributes)
+        }
       }
     }
 
-    private data class ActualHighlightingWrapper(
-      val line: String,
-      val highlighting: TerminalHighlightingInfo,
-    )
+    private fun RangeHighlighter.toRangeString(editor: EditorEx): String =
+      "RangeHighlighter(start=$startOffset, end=$endOffset, layer=$layer, " +
+      "text=\"${editor.document.getText(TextRange.create(startOffset, endOffset))}\")"
 
     suspend fun assertInlays(vararg expectedInlays: Inlay) {
       awaitEventProcessing()
-      val actualInlays = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalInlayInfo>()
-      assertThat(actualInlays).hasSameSizeAs(expectedInlays)
-      for (i in actualInlays.indices) {
-        val actual = actualInlays[i]
-        val expected = expectedInlays[i]
-        val expectedStartOffset = expected.locator.locateOffset(outputModel)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
-        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
 
-        val description = "at $i actual inlay $actual expected inlay $expected"
-        assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
-        assertThat(actualEndOffset).`as`(description).isEqualTo(expectedEndOffset)
+      val actual = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength).sortedBy { it.offset }
+      assertThat(actual).hasSameSizeAs(expectedInlays)
+      for (i in actual.indices) {
+        val actualInlay = actual[i]
+        val expected = expectedInlays[i]
+        val expectedAbsStart = expected.locator.locateOffset(outputModel)
+        val expectedAbsEnd = expectedAbsStart + expected.locator.length.toLong()
+        val expectedEndOffset = expectedAbsEnd.toRelative(outputModel)
+        val description = "at $i actual inlay offset=${actualInlay.offset} expected $expected (end=$expectedEndOffset)"
+        // The applier places inlays at the END offset of the highlighted range, see toEditorDecoration().
+        assertThat(actualInlay.offset).`as`(description).isEqualTo(expectedEndOffset)
       }
     }
 
@@ -651,30 +612,31 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       assertClickedLinks(*clicks.map { it.substring }.toTypedArray())
     }
 
-    suspend fun assertStoredHyperlinkInfo(click: LinkLocator, assertion: (HyperlinkInfo) -> Unit) {
-      awaitEventProcessing()
-      val actualLink = click.locateLink(outputModel, backendFacade) as TerminalHyperlinkInfo
-      assertion(checkNotNull(actualLink.hyperlinkInfo))
-    }
-
     suspend fun click(vararg clicks: LinkLocator) {
       awaitEventProcessing()
-      for (click in clicks) {
-        backendFacade.hyperlinkClicked(click.locateLink(outputModel, backendFacade).id, null)
+
+      for (clickLocator in clicks) {
+        val expectedSize = clickedLinks.value.size + 1
+        val absoluteOffset = clickLocator.locateOffset(outputModel)
+        val relativeOffset = absoluteOffset.toRelative(outputModel)
+        val point = editor.offsetToXY(relativeOffset)
+        val component = editor.contentComponent
+        val ts = System.currentTimeMillis()
+        component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_PRESSED, ts, 0, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+        component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_RELEASED, ts + 1, 0, point.x, point.y, 1, false, MouseEvent.BUTTON1))
+        // Await the click is processed
+        clickedLinks.first { it.size == expectedSize }
       }
-      awaitEventProcessing()
     }
 
     fun assertClickedLinks(vararg expectedLinks: String) {
-      assertThat(clickedLinks).containsExactly(*expectedLinks)
+      assertThat(clickedLinks.value).containsExactly(*expectedLinks)
     }
 
     fun link(
       at: LinkLocator,
       highlight: TextAttributes? = filter.highlight,
-      followedHighlight: TextAttributes? = filter.followedHighlight,
-      hoveredHighlight: TextAttributes? = filter.hoveredHighlight,
-    ): Link = Link(at, highlight, followedHighlight, hoveredHighlight)
+    ): Link = Link(at, highlight)
 
     fun inlay(
       at: LinkLocator,
@@ -688,15 +650,12 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     fun at(line: Int, substring: String): LinkLocator = LinkLocator(line, substring)
 
     private suspend fun awaitEventProcessing() {
-      pendingUpdateEventCount.first { it == 0 }
-      backendFacade.awaitTaskCompletion()
+      hyperlinkFacade.awaitProcessed(outputModel.modificationStamp)
     }
 
     data class Link(
       val locator: LinkLocator,
       val highlight: TextAttributes?,
-      val followedHighlight: TextAttributes?,
-      val hoveredHighlight: TextAttributes?,
     )
 
     data class Highlighting(
@@ -707,6 +666,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     data class Inlay(
       val locator: LinkLocator,
     )
+
+    private data class Decorated(val locator: LinkLocator, val highlight: TextAttributes?)
 
     data class LinkLocator(val line: Int, val substring: String) {
       val length: Int get() = substring.length
@@ -719,12 +680,6 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val column = lineText.indexOfSingle(substring)
         return lineStart + column.toLong()
       }
-
-      fun locateLink(outputModel: TerminalOutputModel, backendFacade: BackendTerminalHyperlinkFacade): TerminalFilterResultInfo {
-        val offset = locateOffset(outputModel)
-        val links = backendFacade.dumpState().hyperlinks
-        return links.single { offset.toAbsolute() in it.absoluteStartOffset until it.absoluteEndOffset }
-      }
     }
 
     inner class MyFilter : Filter {
@@ -734,7 +689,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       var delayPerLine = 0L
       var hyperlinkInfoFactory: (HyperlinkInfo) -> HyperlinkInfo = { hyperlinkInfo -> hyperlinkInfo }
 
-      private val pattern = Regex("""(link|highlight|link_inlay|highlight_inlay)\d+""")
+      val pattern = Regex("""(link|highlight|link_inlay|highlight_inlay)\d+""")
 
       override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         if (delayPerLine > 0) {
@@ -790,7 +745,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
     private inner class MyHyperlinkInfo(private val value: String) : HyperlinkInfo {
       override fun navigate(project: Project) {
-        clickedLinks += value
+        clickedLinks.update { it + value }
       }
     }
 
@@ -815,7 +770,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
 
       override suspend fun navigate(project: Project, mouseEvent: EditorMouseEvent?) {
-        clickedLinks += value
+        clickedLinks.update { it + value }
         if (!delegateAfterRecording) {
           return
         }
@@ -846,7 +801,11 @@ private class InlayResultItem(
   highlightAttributes,
   followedHyperlinkAttributes,
   hoveredHyperlinkAttributes
-), InlayProvider
+), InlayProvider {
+  override fun createInlayRenderer(editor: Editor): EditorCustomElementRenderer {
+    return EditorCustomElementRenderer { 1 }
+  }
+}
 
 private val HIGHLIGHT1 =
   EditorColorsManager.getInstance().globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES)
@@ -868,4 +827,8 @@ private fun String.indexOfSingle(substring: String): Int {
   require(indexOfFirst != -1) { "Substring '$substring' not found in '$this'" }
   require(indexOfFirst == indexOfLast) { "There are several substrings from $indexOfFirst to $indexOfLast" }
   return indexOfFirst
+}
+
+private fun TerminalOffset.toRelative(model: TerminalOutputModel): Int {
+  return (this - model.startOffset).toInt()
 }
