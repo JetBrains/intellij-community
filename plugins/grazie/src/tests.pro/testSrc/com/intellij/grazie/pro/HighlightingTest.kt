@@ -194,6 +194,32 @@ class HighlightingTest : BaseTestCase() {
           """)
   }
 
+  @NeedsCloud
+  @Test
+  fun `test problems are correctly mapped to sentences in javadoc`() {
+    val text = """
+      public class A {
+          /**
+           * This is the first sentence.
+           * 1. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">re</STYLE_SUGGESTION>ad all enabled bundles
+           * 2. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">pr</STYLE_SUGGESTION>epare a syntax table of supported languages
+           * 3. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">pr</STYLE_SUGGESTION>epare a preference table of enabled bundles
+           * 4. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">fi</STYLE_SUGGESTION>ll the extensions mapping for {@link A}
+           */
+          public void reloadEnabledBundles() {
+          }
+
+          /**
+           * <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">cu</STYLE_SUGGESTION>stom highlighting colors defined inside bundles (not in themes).
+           * Note that background color in text attributes is stored in raw format and isn't merged with the default background.
+           */
+          public void getCustomHighlightingColors() {}
+      }
+    """.trimIndent()
+    myFixture.configureByText("A.java", text)
+    myFixture.checkHighlighting()
+  }
+
   @Test
   fun `test allow subject absence in comments`() {
     checkCloudAndLocal("a.kt",
