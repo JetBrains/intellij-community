@@ -11,7 +11,7 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
-  alias(jps.plugins.expects)
+  id("fleet-multiplatform-expects-module")
   // GRADLE_PLUGINS__MARKER_END
 }
 

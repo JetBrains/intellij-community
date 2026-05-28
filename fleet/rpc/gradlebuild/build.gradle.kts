@@ -13,6 +13,7 @@ plugins {
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.kotlin.serialization)
+  id("rpc")
   // GRADLE_PLUGINS__MARKER_END
 }
 

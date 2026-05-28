@@ -14,8 +14,8 @@ plugins {
   id("fleet-module")
   alias(jps.plugins.kotlin.serialization)
   alias(jps.plugins.ksp)
-  alias(jps.plugins.rpc)
   id("fleet-ksp-plugin")
+  id("rpc")
   // GRADLE_PLUGINS__MARKER_END
 }
 
