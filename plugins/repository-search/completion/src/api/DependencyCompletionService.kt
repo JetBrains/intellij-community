@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.NonExtendable
 interface DependencyCompletionService {
   fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> = flowOf()
   fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> = flowOf()
@@ -23,6 +24,7 @@ interface DependencyCompletionService {
   }
 }
 
+@ApiStatus.OverrideOnly
 interface DependencyCompletionContributor {
   val buildSystemId: ProjectSystemId
   val source: DependencyCompletionContributionSource
