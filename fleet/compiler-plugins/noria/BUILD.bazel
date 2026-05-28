@@ -32,9 +32,9 @@ jvm_library(
   name = "noria",
   module_name = "fleet.compiler.plugins.noria",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_noria",
   deps = [
     "@lib//:kotlin-stdlib",
