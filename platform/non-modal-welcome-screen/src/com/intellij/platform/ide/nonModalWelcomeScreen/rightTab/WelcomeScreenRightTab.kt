@@ -62,6 +62,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBund
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.StartupSwitchModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomButton
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomListComboBox
@@ -273,6 +274,9 @@ class WelcomeScreenRightTab(
       ComboBoxInfoPanelModel(AllIconsKeys.General.Keyboard,
                              "welcome.screen.right.tab.keymap.switch.prefix",
                              KeymapModel()),
+      ComboBoxInfoPanelModel(AllIconsKeys.General.Settings,
+                             "welcome.screen.right.tab.startup.switch.prefix",
+                             StartupSwitchModel()),
     ) + additionalButtons
 
     val buttonsPerRow = contentProvider.buttonsPerRow

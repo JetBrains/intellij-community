@@ -13,8 +13,10 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
-import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectScopeHolder
+import kotlinx.coroutines.launch
 
 internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
   abstract val items: List<T>
@@ -100,7 +102,7 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     }
 
     private fun getThemes(): List<LafReference> {
-      val groupedThemes = ThemeListProvider.Companion.getInstance().getShownThemes()
+      val groupedThemes = ThemeListProvider.getInstance().getShownThemes()
       return groupedThemes.infos.flatMap { it.items }.map { LafReference(it.name, it.id) }
     }
 
@@ -124,6 +126,16 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
         NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.reopen")
       else
         NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.welcome")
+    }
+
+    override fun externalUpdateListener(project: Project): ((Int) -> Unit) -> Unit = { stateListener ->
+      WelcomeScreenProjectScopeHolder.getInstance(project).coroutineScope.launch {
+        settings.propertyChangedFlow.collect {
+          if (it == GeneralSettings.PropertyNames.reopenLastProject) {
+            stateListener(currentItemIndex())
+          }
+        }
+      }
     }
   }
 }

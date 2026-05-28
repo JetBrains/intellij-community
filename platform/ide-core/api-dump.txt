@@ -69,6 +69,8 @@ f:com.intellij.ide.GeneralSettings
 - f:setShowTipsOnStartup(Z):V
 f:com.intellij.ide.GeneralSettings$Companion
 - f:getInstance():com.intellij.ide.GeneralSettings
+e:com.intellij.ide.GeneralSettings$PropertyNames
+- sf:reopenLastProject:com.intellij.ide.GeneralSettings$PropertyNames
 f:com.intellij.ide.IdeCoreBundle
 - sf:BUNDLE:java.lang.String
 - <init>():V
