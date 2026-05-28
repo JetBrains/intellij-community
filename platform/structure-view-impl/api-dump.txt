@@ -62,6 +62,9 @@ com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:setActionActive(java.lang.String,Z):V
 f:com.intellij.ide.util.FileStructurePopup
 - com.intellij.platform.structureView.impl.StructurePopup
+- rebuildAndUpdateAsync():org.jetbrains.concurrency.Promise
+- selectCurrentAsync():org.jetbrains.concurrency.Promise
+- waitUpdateFinishedAsync():org.jetbrains.concurrency.Promise
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider

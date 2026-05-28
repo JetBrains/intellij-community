@@ -500,6 +500,25 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner, S
     return result;
   }
 
+  @TestOnly
+  @Override
+  public @NotNull Promise<?> rebuildAndUpdateAsync() {
+    return rebuildAndUpdate();
+  }
+
+  @TestOnly
+  @Override
+  public @NotNull Promise<?> waitUpdateFinishedAsync() {
+    // The legacy popup completes its update inside rebuildAndUpdate(); no separate wait needed.
+    return Promises.resolvedPromise();
+  }
+
+  @TestOnly
+  @Override
+  public @NotNull Promise<?> selectCurrentAsync() {
+    return select(getCurrentElement());
+  }
+
   public boolean isDisposed() {
     return myDisposed;
   }
