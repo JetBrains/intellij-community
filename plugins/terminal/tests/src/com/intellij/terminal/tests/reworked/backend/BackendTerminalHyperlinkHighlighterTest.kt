@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
@@ -516,7 +517,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
                 }
                 Unit -> {
                   val modelUpdateEvent = backendFacade.collectResultsAndMaybeStartNewTask()
-                  if (modelUpdateEvent != null) {
+                  if (modelUpdateEvent is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
                     backendFacade.updateModelState(modelUpdateEvent)
                   }
                 }

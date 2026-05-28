@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
@@ -177,7 +177,7 @@ private suspend fun processHyperlinkResults(
   debugName: String,
   outputModel: TerminalOutputModel,
   applier: EditorTextDecorationApplier,
-  hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksChangedEvent>,
+  hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
   val hyperlinksModel = TerminalHyperlinksModel(
@@ -187,7 +187,7 @@ private suspend fun processHyperlinkResults(
 
   for (event in hyperlinkUpdatesChannel) {
     try {
-      processHyperlinksUpdateEvent(outputModel, hyperlinksModel, applier, event, onLinkClicked)
+      processHyperlinksOutputEvent(outputModel, hyperlinksModel, applier, event, onLinkClicked)
     }
     catch (e: Exception) {
       LOG.error("Error when processing hyperlinks update: $event", e)
@@ -195,25 +195,29 @@ private suspend fun processHyperlinkResults(
   }
 }
 
-private fun processHyperlinksUpdateEvent(
+private fun processHyperlinksOutputEvent(
   outputModel: TerminalOutputModel,
   hyperlinksModel: TerminalHyperlinksModel,
   applier: EditorTextDecorationApplier,
-  event: TerminalHyperlinksChangedEvent,
+  event: TerminalHyperlinksOutputEvent,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
-  val removeFromOffset = event.removeFromOffset
-  if (removeFromOffset != null) {
-    val removed = hyperlinksModel.removeHyperlinks(removeFromOffset)
-    applier.removeDecorations(removed.map { it.toPlatformId() })
-  }
+  when (event) {
+    is TerminalHyperlinksOutputEvent.HyperlinksUpdated -> {
+      val removeFromOffset = event.removeFromOffset
+      if (removeFromOffset != null) {
+        val removed = hyperlinksModel.removeHyperlinks(removeFromOffset)
+        applier.removeDecorations(removed.map { it.toPlatformId() })
+      }
 
-  val hyperlinks = event.hyperlinks.map { it.toFilterResultInfo() }
-  hyperlinksModel.addHyperlinks(hyperlinks)
-  val decorations = hyperlinks.mapNotNull {
-    it.toEditorDecoration(outputModel, onLinkClicked)
+      val hyperlinks = event.hyperlinks.map { it.toFilterResultInfo() }
+      hyperlinksModel.addHyperlinks(hyperlinks)
+      val decorations = hyperlinks.mapNotNull {
+        it.toEditorDecoration(outputModel, onLinkClicked)
+      }
+      applier.addDecorations(decorations)
+    }
   }
-  applier.addDecorations(decorations)
 }
 
 private fun TerminalFilterResultInfo.toEditorDecoration(

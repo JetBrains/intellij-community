@@ -17,7 +17,7 @@ import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlin
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
@@ -63,7 +63,7 @@ class BackendTerminalHyperlinkFacade(
     highlighter.applyUpdate(update)
   }
 
-  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
+  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksOutputEvent? {
     // The event is immediately passed to updateModelState(),
     // but the tests need to wait until it was actually applied, and they wait concurrently.
     // This flow works as a latch: it's locked before we even retrieve the event,
@@ -76,7 +76,7 @@ class BackendTerminalHyperlinkFacade(
     return modelUpdateEvent
   }
 
-  fun updateModelState(event: TerminalHyperlinksChangedEvent): Boolean {
+  fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated): Boolean {
     val removedFrom = event.removeFromOffset
     if (removedFrom != null) {
       model.removeHyperlinks(removedFrom)

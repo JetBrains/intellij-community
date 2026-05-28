@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
@@ -210,7 +210,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     )
   }
 
-  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
+  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksOutputEvent? {
     val result = currentTaskRunner?.getNextOutputEvent { isValid(it) }
     maybeStartNewTask()
     return result
@@ -351,7 +351,7 @@ private sealed class TaskRunner {
   abstract val filter: CompositeFilter
   abstract suspend fun run()
   abstract fun isRunning(): Boolean
-  abstract fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent?
+  abstract fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksOutputEvent?
   abstract fun resultsCount(): Int
 }
 
@@ -366,13 +366,13 @@ private class TrimTaskRunner(
 
   override fun resultsCount(): Int = 0
 
-  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent {
+  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksOutputEvent {
     // An event with non-null removeFromOffset means "remove trimmed at the start and from this offset at the end,"
     // so we specify the end-of-document offset to indicate that only the trimming should be done.
-    return TerminalHyperlinksChangedEvent(
+    return TerminalHyperlinksOutputEvent.HyperlinksUpdated(
       documentModificationStamp = task.modificationStamp,
       removeFromOffset = task.endOffset.toAbsolute(),
-      emptyList(),
+      hyperlinks = emptyList(),
     )
   }
 }
@@ -444,7 +444,7 @@ private class HighlightTaskRunner(
     }
   }
 
-  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent? {
+  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksOutputEvent? {
     return createEvent(collectResults(predicate))
   }
 
@@ -479,7 +479,7 @@ private class HighlightTaskRunner(
     LOG.debug { "Processed $count results, removed ${count - valid} invalid ones" }
   }
 
-  private fun createEvent(hyperlinks: List<TaskResult>): TerminalHyperlinksChangedEvent? {
+  private fun createEvent(hyperlinks: List<TaskResult>): TerminalHyperlinksOutputEvent? {
     var send: Boolean
     var remove: Boolean
     val isRunning = isRunning()
@@ -513,7 +513,7 @@ private class HighlightTaskRunner(
     }
     if (!send) return null
     isFirstEvent = false
-    return TerminalHyperlinksChangedEvent(
+    return TerminalHyperlinksOutputEvent.HyperlinksUpdated(
       documentModificationStamp = task.modificationStamp,
       removeFromOffset = if (remove) task.startAbsoluteOffset else null,
       hyperlinks = hyperlinks,

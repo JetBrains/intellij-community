@@ -4,7 +4,7 @@ import com.intellij.terminal.backend.hyperlinks.TerminalHyperlinksSessionsManage
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
@@ -15,7 +15,7 @@ internal class TerminalHyperlinksSessionRemoteApiImpl : TerminalHyperlinksSessio
     return getSession(sessionId).inputEventsSink
   }
 
-  override suspend fun getHyperlinkUpdatesChannel(sessionId: TerminalHyperlinksSessionId): ReceiveChannel<TerminalHyperlinksChangedEvent> {
+  override suspend fun getHyperlinkUpdatesChannel(sessionId: TerminalHyperlinksSessionId): ReceiveChannel<TerminalHyperlinksOutputEvent> {
     return getSession(sessionId).hyperlinkUpdatesChannel
   }
 

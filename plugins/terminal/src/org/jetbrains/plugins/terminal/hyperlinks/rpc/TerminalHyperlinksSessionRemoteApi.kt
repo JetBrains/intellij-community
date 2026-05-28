@@ -9,14 +9,14 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 
 @ApiStatus.Internal
 @Rpc
 interface TerminalHyperlinksSessionRemoteApi : RemoteApi<Unit> {
   suspend fun getInputEventsSink(sessionId: TerminalHyperlinksSessionId): SendChannel<TerminalHyperlinksInputEvent>
 
-  suspend fun getHyperlinkUpdatesChannel(sessionId: TerminalHyperlinksSessionId): ReceiveChannel<TerminalHyperlinksChangedEvent>
+  suspend fun getHyperlinkUpdatesChannel(sessionId: TerminalHyperlinksSessionId): ReceiveChannel<TerminalHyperlinksOutputEvent>
 
   suspend fun handleHyperlinkClick(sessionId: TerminalHyperlinksSessionId, event: TerminalHyperlinkClickedEvent)
 

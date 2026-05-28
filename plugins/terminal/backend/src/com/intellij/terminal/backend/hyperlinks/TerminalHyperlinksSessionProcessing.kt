@@ -6,7 +6,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.toUpdate
 
@@ -51,9 +51,9 @@ private fun processInputEvent(
   }
 }
 
-private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFacade, sink: SendChannel<TerminalHyperlinksChangedEvent>) {
+private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFacade, sink: SendChannel<TerminalHyperlinksOutputEvent>) {
   facade.heartbeatFlow.collect {
-    val changeEvent = try {
+    val event = try {
       facade.collectResultsAndMaybeStartNewTask()
     }
     catch (e: Exception) {
@@ -61,17 +61,17 @@ private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFaca
       return@collect
     }
 
-    if (changeEvent != null) {
+    if (event is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
       try {
-        facade.updateModelState(changeEvent)
+        facade.updateModelState(event)
       }
       catch (e: Exception) {
-        LOG.error("Error when updating model state: $changeEvent", e)
+        LOG.error("Error when updating model state: $event", e)
       }
     }
 
-    if (changeEvent != null) {
-      sink.send(changeEvent)
+    if (event != null) {
+      sink.send(event)
     }
   }
 }

@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
@@ -57,7 +57,7 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
     )
 
     val inputEventsSink = Channel<TerminalHyperlinksInputEvent>()
-    val hyperlinkUpdatesChannel = Channel<TerminalHyperlinksChangedEvent>()
+    val hyperlinkUpdatesChannel = Channel<TerminalHyperlinksOutputEvent>()
 
     val session = BackendTerminalHyperlinksSession(
       id = id,

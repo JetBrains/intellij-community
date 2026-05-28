@@ -13,7 +13,7 @@ interface TerminalHyperlinksSession {
 
   val inputEventsSink: SendChannel<TerminalHyperlinksInputEvent>
 
-  val hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksChangedEvent>
+  val hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>
 
   suspend fun handleHyperlinkClick(event: TerminalHyperlinkClickedEvent)
 }
