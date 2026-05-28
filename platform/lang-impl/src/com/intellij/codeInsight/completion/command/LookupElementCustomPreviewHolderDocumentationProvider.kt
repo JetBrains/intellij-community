@@ -454,8 +454,11 @@ private fun generatePreview(
 
 @ApiStatus.Internal
 fun LookupElement.getCustomPreviewHolder(): LookupElementCustomPreviewHolder? {
-  return this.`as`(CompletionItemLookupElement::class.java)?.item() as? LookupElementCustomPreviewHolder
-         ?: this.`as`(LookupElementCustomPreviewHolder::class.java)
+  val holder =
+    this.`as`(CompletionItemLookupElement::class.java)?.item() as? LookupElementCustomPreviewHolder
+    ?: this.`as`(LookupElementCustomPreviewHolder::class.java)
+
+  return holder?.takeIf { it.hasPreview() }
 }
 
 internal fun showJavaDocPreview(project: Project): Boolean =

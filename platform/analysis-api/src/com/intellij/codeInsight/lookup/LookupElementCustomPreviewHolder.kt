@@ -15,6 +15,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface LookupElementCustomPreviewHolder {
+  fun hasPreview(): Boolean = true
+
   fun preview(ctx: ActionContext): IntentionPreviewInfo
 }
 
