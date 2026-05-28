@@ -55,7 +55,6 @@
     </pluginRepositories>
 
     <build>
-        <sourceDirectory></sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>

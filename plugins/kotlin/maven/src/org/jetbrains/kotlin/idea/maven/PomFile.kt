@@ -375,7 +375,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             execution.configuration.xmlTag?.findSubTags("sourceDirs")?.forEach { it.deleteCascade() }
             singleDirectoryElement.undefine()
         } else if (sourceDirs.size == 1 && !forceSingleSource) {
-            singleDirectoryElement.stringValue = sourceDirs.single()
+            if (sourceDirs.first().isNotEmpty()) {
+                singleDirectoryElement.stringValue = sourceDirs.single()
+            }
             execution.configuration.xmlTag?.findSubTags("sourceDirs")?.forEach { it.deleteCascade() }
         } else {
             val sourceDirsTag = executionConfiguration(execution, "sourceDirs")

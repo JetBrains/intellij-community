@@ -25,7 +25,7 @@
     </dependencies>
 
     <build>
-        <sourceDirectory></sourceDirectory>
+        <sourceDirectory>wrong-source-dir</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
