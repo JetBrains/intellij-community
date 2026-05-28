@@ -251,8 +251,8 @@ private val VIA_CHANNELS_CACHE_FILE_WRITER = ToFileWriter { path: Path, offsetIn
   }
 }
 
-/** Valid values: `null, 'disabled', 'in-memory' (for debug), 'persistent'` */
-private val USE_WRITE_AHEAD_LOG = System.getProperty("indexes.use-write-ahead-log", "disabled")
+/** Valid values: `null`/`'disabled'`, `'persistent'`, `'in-memory'` (for debugging)  */
+private val USE_WRITE_AHEAD_LOG = System.getProperty("indexes.use-write-ahead-log", "persistent")
 
 //The WAL is opened but never closed -- because currently there is no clear lifecycle ownership for the WAL.
 // It is hard to pinpoint the trigger for 'WAL is not needed anymore and can be closed': WAL lifespan should
@@ -260,8 +260,8 @@ private val USE_WRITE_AHEAD_LOG = System.getProperty("indexes.use-write-ahead-lo
 // FilePageCache and Indexes have lifespan ~= application, and not very well-defined (could be closed by either
 // regular way or by ShutDownTracker) => it is hard to define WAL lifespan too.
 //Luckily, WAL _could_ live without a well-defined lifespan: the current WAL implementation over the mmapped
-// file allows WAL to still work correctly even being NOT properly closed (at least as long as OS is not crash
-// and keeps mmapped pages intact) -- so we don't close WAL and rely on this property for now.
+// file allows WAL to still work correctly even being NOT properly closed (at least as long as OS is not crashing
+// and keeps mmapped pages safe) -- so we don't close WAL and rely on this property for now.
 private val WRITE_AHEAD_LOG = when (USE_WRITE_AHEAD_LOG) {
   "disabled", null -> null
   "persistent" -> setupPersistentWAL(PathManager.getIndexRoot())
