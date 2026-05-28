@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
+import com.intellij.util.io.stats.CachedChannelsStatistics
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -11,7 +12,12 @@ import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.assertThrows
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.nio.channels.FileChannel
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.READ
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.Random
 
 /**
@@ -175,6 +181,42 @@ internal class PersistentHashMapValueStorageContractTest {
         PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(previousContext)
       }
     }
+  }
+
+  @Test
+  fun `value storage reads and writes through StorageLockContext ChannelsAccessor`() {
+    val storageFile = tempDir.resolve("channel-accessor-backed-file-accessor.values")
+    val firstPayload = accessorFirstPayload()
+    val secondPayload = accessorSecondPayload()
+    val channelsAccessor = RecordingChannelsAccessor()
+    val lockContext = StorageLockContext(false, channelsAccessor)
+    val config = TestConfig(name = "plain", hasNoChunks = false, useCompression = false)
+
+    val firstAddress = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
+      storage.appendPayload(firstPayload, previousTailAddress = 0).also {
+        storage.force()
+      }
+    }
+
+    val secondAddress = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
+      storage.assertRecord(firstAddress, firstPayload, 1, "Value written through the custom accessor must be readable after reopen")
+      storage.appendPayload(secondPayload, previousTailAddress = firstAddress).also {
+        storage.force()
+      }
+    }
+
+    withStorage(storageFile, config, readOnly = true, lockContext = lockContext) { storage ->
+      storage.assertRecord(secondAddress,
+                           firstPayload + secondPayload,
+                           2,
+                           "Value storage must read value chains through the custom accessor")
+    }
+
+    assertEquals(0, channelsAccessor.activeChannels, "Recording accessor must not keep channels open after operations")
+    assertEquals(0, channelsAccessor.idempotentOperations, "Adapter append protocol must not use retryable idempotent operations")
+    assertTrue(channelsAccessor.operations.any { !it.readOnly }, "Adapter must use the supplied accessor for write operations")
+    assertTrue(channelsAccessor.operations.any { it.readOnly }, "Adapter must use the supplied accessor for read operations")
+    assertTrue(channelsAccessor.closedPaths.contains(storageFile), "Adapter disposal must close channels through the supplied accessor")
   }
 
   /** Keeps the generated operation stream reproducible and reports enough context when a generated case fails. */
@@ -356,8 +398,55 @@ internal class PersistentHashMapValueStorageContractTest {
     val chunksCount: Int,
   )
 
+  private class RecordingChannelsAccessor : ChannelsAccessor {
+    val operations = ArrayList<Operation>()
+    val closedPaths = ArrayList<Path>()
+    var activeChannels = 0
+      private set
+    var idempotentOperations = 0
+      private set
+
+    override fun getStatistics(): CachedChannelsStatistics {
+      return CachedChannelsStatistics(0, 0, 0, operations.size + idempotentOperations, 0)
+    }
+
+    override fun <T> executeOp(path: Path, operation: ChannelsAccessor.FileChannelOperation<T>, readOnly: Boolean): T {
+      operations.add(Operation(path, readOnly))
+      if (!readOnly) {
+        Files.createDirectories(path.parent)
+      }
+
+      val options = if (readOnly) arrayOf(READ) else arrayOf(READ, WRITE, CREATE)
+      activeChannels++
+      try {
+        FileChannel.open(path, *options).use { channel ->
+          return operation.execute(channel)
+        }
+      }
+      finally {
+        activeChannels--
+      }
+    }
+
+    override fun <T> executeIdempotentOp(
+      path: Path,
+      operation: FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T>,
+      readOnly: Boolean,
+    ): T {
+      idempotentOperations++
+      return executeOp(path, { channel -> operation.execute(channel) }, readOnly)
+    }
+
+    override fun closeChannel(path: Path) {
+      closedPaths.add(path)
+    }
+
+    data class Operation(val path: Path, val readOnly: Boolean)
+  }
+
   private companion object {
     private const val OPERATION_COUNT = 120
+    private const val ACCESSOR_SECOND_PAYLOAD_SIZE = 4096
 
     private val SEEDS = listOf(1L, 2L, 5L, 20260528L)
 
@@ -404,13 +493,27 @@ internal class PersistentHashMapValueStorageContractTest {
       return testConfigurations(hasNoChunks = false) + testConfigurations(hasNoChunks = true)
     }
 
+    private fun accessorFirstPayload(): ByteArray {
+      return byteArrayOf(1, 2, 3, 4)
+    }
+
+    private fun accessorSecondPayload(): ByteArray {
+      return ByteArray(ACCESSOR_SECOND_PAYLOAD_SIZE) { index -> (index % 251).toByte() }
+    }
+
     private inline fun <T> withStorage(
       storageFile: Path,
       config: TestConfig,
       readOnly: Boolean,
+      lockContext: StorageLockContext? = null,
       action: (PersistentHashMapValueStorage) -> T,
     ): T {
-      val storage = PersistentHashMapValueStorage.create(storageFile, config.options(readOnly))
+      val storage = if (lockContext == null) {
+        PersistentHashMapValueStorage.create(storageFile, config.options(readOnly))
+      }
+      else {
+        PersistentHashMapValueStorage.create(storageFile, config.options(readOnly), lockContext)
+      }
       try {
         return action(storage)
       }
