@@ -4,6 +4,7 @@ package com.intellij.util.gist;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -93,7 +94,7 @@ public final class GistManagerImpl extends GistManager {
 
   public GistManagerImpl(@NotNull CoroutineScope coroutineScope) {
     gistStorage = GistStorage.getInstance();
-    myDropCachesQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("gist-manager-drop-caches", 500, coroutineScope)
+    myDropCachesQueue = MergingUpdateQueue.Companion.mergingUpdateQueue("gist-manager-drop-caches", 500, coroutineScope)
       .setRestartTimerOnAdd(true);
   }
 
@@ -157,9 +158,11 @@ public final class GistManagerImpl extends GistManager {
 
   private void invalidateDependentCaches() {
     Runnable dropCaches = () -> {
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        PsiManager.getInstance(project).dropPsiCaches();
-      }
+      WriteAction.run(() -> {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          PsiManager.getInstance(project).dropPsiCaches();
+        }
+      });
     };
     if (myMergingDropCachesRequestors.get() == 0) {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), dropCaches);
