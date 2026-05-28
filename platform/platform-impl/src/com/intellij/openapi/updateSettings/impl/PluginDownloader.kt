@@ -34,6 +34,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
@@ -273,6 +274,7 @@ class PluginDownloader private constructor(
     }
   }
 
+  @RequiresEdt(generateAssertion = false)
   @Throws(IOException::class)
   fun installDynamically(ownerComponent: JComponent?): Boolean {
     assert(myDescriptor is IdeaPluginDescriptorImpl)
@@ -386,6 +388,7 @@ class PluginDownloader private constructor(
       return createDownloader(descriptor, null, null)
     }
 
+    @RequiresEdt(generateAssertion = false)
     private fun unloadDescriptorById(pluginId: PluginId): Boolean {
       val descriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
       val pluginDescriptor = descriptor.getMainDescriptor()
