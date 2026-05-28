@@ -365,7 +365,10 @@ object ChooserPopupUtil {
       }
       .setCloseOnEnter(false)
       .configure(popupConfig)
-      .createPopup()
+      .createPopup().apply {
+        // non-empty list returns pref size without considering "visibleRowCount"
+        content.preferredSize = JBDimension(250, 300)
+      }
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
     PopupUtil.setPopupToggleComponent(popup, point.component)
