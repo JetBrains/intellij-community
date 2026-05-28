@@ -381,7 +381,8 @@ private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress(
 }
 
 private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
-  return !plugin.isBundled && !PluginManagerCore.isVendorJetBrains(plugin.vendor ?: "")
+  return !plugin.isBundled && !PluginManagerCore.isVendorJetBrains(plugin.vendor ?: "") ||
+         plugin.pluginId.idString == "com.intellij.monorepo.devkit"
 }
 
 private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
