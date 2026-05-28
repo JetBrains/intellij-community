@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.repository.serialization;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +21,11 @@ import java.util.stream.Collectors;
  */
 public final class RawRuntimeModuleRepositoryData {
   private final Map<RuntimeModuleId, RawRuntimeModuleDescriptor> myModuleDescriptors;
-  private final List<RawRuntimePluginHeader> myPluginHeaders;
+  private final List<RuntimePluginHeader> myPluginHeaders;
   private final Path myBasePath;
 
   private RawRuntimeModuleRepositoryData(@NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> moduleDescriptors,
-                                         @NotNull List<RawRuntimePluginHeader> pluginHeaders,
+                                         @NotNull List<RuntimePluginHeader> pluginHeaders,
                                          @NotNull Path basePath) {
     myModuleDescriptors = moduleDescriptors;
     myPluginHeaders = pluginHeaders;
@@ -65,7 +66,7 @@ public final class RawRuntimeModuleRepositoryData {
     return myModuleDescriptors.keySet();
   }
 
-  public @NotNull List<@NotNull RawRuntimePluginHeader> getPluginHeaders() {
+  public @NotNull List<@NotNull RuntimePluginHeader> getPluginHeaders() {
     return myPluginHeaders;
   }
 
@@ -93,7 +94,7 @@ public final class RawRuntimeModuleRepositoryData {
   @ApiStatus.Internal
   public static @NotNull RawRuntimeModuleRepositoryData create(
     @NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> moduleDescriptors,
-    @NotNull List<RawRuntimePluginHeader> pluginHeaders,
+    @NotNull List<RuntimePluginHeader> pluginHeaders,
     @NotNull Path basePath
   ) {
     return new RawRuntimeModuleRepositoryData(moduleDescriptors, pluginHeaders, basePath);

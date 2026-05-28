@@ -11,15 +11,15 @@ import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderCont
 import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import java.nio.file.Path
 
 /**
- * Implementation of [PathResolver] that uses data from [RawRuntimePluginHeader] and [com.intellij.platform.runtime.repository.RuntimeModuleRepository]
+ * Implementation of [PathResolver] that uses data from [com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl] and [com.intellij.platform.runtime.repository.RuntimeModuleRepository]
  * to determine paths to plugin files.
  */
 internal class PluginHeaderBasedXmlPathResolver(
-  private val header: RawRuntimePluginHeader,
+  private val header: RuntimePluginHeader,
   private val moduleRepository: RuntimeModuleRepository,
   private val fallbackResolver: PathResolver,
 ) : PathResolver by fallbackResolver {

@@ -10,9 +10,9 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
 import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -33,7 +33,7 @@ private fun checkRuntimeModuleRepository(
 internal fun generateAndCheck(project: JpsProject, basePath: Path, expected: RawDescriptorListBuilder.() -> Unit) {
   val generatedDescriptors = generateAndValidateRuntimeModuleRepository(project)
   val moduleDescriptors = generatedDescriptors.associateBy { it.moduleId }
-  val pluginHeaders = emptyList<RawRuntimePluginHeader>()
+  val pluginHeaders = emptyList<RuntimePluginHeader>()
   val rawData = RawRuntimeModuleRepositoryData.create(moduleDescriptors, pluginHeaders, basePath)
   checkRuntimeModuleRepository(rawData, expected)
 }

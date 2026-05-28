@@ -11,8 +11,8 @@ import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleReposi
 import com.intellij.devkit.runtimeModuleRepository.generator.isProjectLevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.MultiMap
 import io.opentelemetry.api.trace.Span
@@ -172,7 +172,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     }
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
-  val commonPluginHeaders = ArrayList<RawRuntimePluginHeader>()
+  val commonPluginHeaders = ArrayList<RuntimePluginHeader>()
   for (pluginDescriptorModule in commonPluginDescriptorModules) {
     val headers = repositories.map { repository -> repository.pluginHeaders.single { it.pluginDescriptorModuleId == pluginDescriptorModule } }
     val header = headers.first()

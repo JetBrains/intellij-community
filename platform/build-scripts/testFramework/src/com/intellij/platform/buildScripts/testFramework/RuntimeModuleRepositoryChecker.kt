@@ -9,7 +9,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.util.containers.FList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -151,7 +151,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun findCorePluginHeaderForFrontend(softly: SoftAssertions): RawRuntimePluginHeader? {
+  private fun findCorePluginHeaderForFrontend(softly: SoftAssertions): RuntimePluginHeader? {
     val corePluginModuleName = "intellij.frontend.split.customization"
     val corePluginForFrontendHeader = repository.findBundledPluginHeader(RuntimeModuleId.legacyJpsModule(corePluginModuleName))
     if (corePluginForFrontendHeader == null) {
@@ -253,7 +253,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun loadBundledPluginHeaders(productModules: ProductModules, softly: SoftAssertions): List<RawRuntimePluginHeader> {
+  private fun loadBundledPluginHeaders(productModules: ProductModules, softly: SoftAssertions): List<RuntimePluginHeader> {
     return productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModule ->
       val header = repository.findBundledPluginHeader(pluginDescriptorModule)
       if (header == null && !isBundledPluginSkipped(pluginDescriptorModule)) {

@@ -7,8 +7,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
+import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
 import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import org.jdom.Element
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
@@ -37,7 +38,7 @@ internal class ContentModuleDetectorImpl(
   private val contentModules = mutableMapOf<String, ContentModuleRegistrationData>()
   private val loadingRulesForContentModules = mutableMapOf<ContentModuleInPlugin, RuntimeModuleLoadingRule>()
   private val requiredIfAvailableAttributeForContentModules = mutableMapOf<ContentModuleInPlugin, RuntimeModuleId>()
-  val pluginHeaders: List<RawRuntimePluginHeader>
+  val pluginHeaders: List<RuntimePluginHeader>
 
   init {
     val platformContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
@@ -118,10 +119,10 @@ internal class ContentModuleDetectorImpl(
     return null
   }
 
-  private fun createPluginHeader(plugin: PluginBuildDescriptor, pluginId: String, project: JpsProject): RawRuntimePluginHeader {
+  private fun createPluginHeader(plugin: PluginBuildDescriptor, pluginId: String, project: JpsProject): RuntimePluginHeader {
     val pluginDescriptorModuleId = createModuleId(plugin.layout.mainModule, project)
     val includedModules = convertDistributionEntriesToIncludedModules(plugin.distribution, project, pluginId)
-    return RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules)
+    return RuntimePluginHeaderImpl(pluginId, pluginDescriptorModuleId, includedModules)
   }
 
   private fun convertDistributionEntriesToIncludedModules(
@@ -151,10 +152,10 @@ internal class ContentModuleDetectorImpl(
     return includedModules
   }
 
-  private fun createCorePluginHeader(platformEntries: List<DistributionFileEntry>, pluginDescriptorModuleId: RuntimeModuleId, project: JpsProject): RawRuntimePluginHeader {
+  private fun createCorePluginHeader(platformEntries: List<DistributionFileEntry>, pluginDescriptorModuleId: RuntimeModuleId, project: JpsProject): RuntimePluginHeader {
     val pluginId = "com.intellij"
     val includedModules = convertDistributionEntriesToIncludedModules(platformEntries, project, pluginId)
-    return RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules)
+    return RuntimePluginHeaderImpl(pluginId, pluginDescriptorModuleId, includedModules)
   }
 
   /**

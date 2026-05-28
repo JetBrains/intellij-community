@@ -5,10 +5,11 @@ import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
+import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,7 @@ public final class CompactFileReader {
       }
 
       int pluginHeadersCount = in.readInt();
-      List<RawRuntimePluginHeader> pluginHeaders = new ArrayList<>(pluginHeadersCount);
+      List<RuntimePluginHeader> pluginHeaders = new ArrayList<>(pluginHeadersCount);
       for (int i = 0; i < pluginHeadersCount; i++) {
         String pluginId = in.readUTF();
         int pluginDescriptorModuleIdIndex = in.readInt();
@@ -125,7 +126,7 @@ public final class CompactFileReader {
           RuntimeModuleId requiredIfAvailable = requiredIfAvailableIndex == -1 ? null : moduleIds[requiredIfAvailableIndex];
           includedModules.add(new RawIncludedRuntimeModule(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));
         }
-        pluginHeaders.add(RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules));
+        pluginHeaders.add(new RuntimePluginHeaderImpl(pluginId, pluginDescriptorModuleId, includedModules));
       }
 
       return RawRuntimeModuleRepositoryData.create(descriptors, pluginHeaders, filePath.getParent());

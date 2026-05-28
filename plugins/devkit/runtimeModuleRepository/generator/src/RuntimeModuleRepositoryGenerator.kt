@@ -4,8 +4,8 @@ package com.intellij.devkit.runtimeModuleRepository.generator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.ex.JpsElementBase
@@ -64,7 +64,7 @@ object RuntimeModuleRepositoryGenerator {
     return descriptors
   }
 
-  fun saveModuleRepository(descriptors: List<RawRuntimeModuleDescriptor>, pluginHeaders: List<RawRuntimePluginHeader>,
+  fun saveModuleRepository(descriptors: List<RawRuntimeModuleDescriptor>, pluginHeaders: List<RuntimePluginHeader>,
                            targetDirectory: Path) {
     try {
       val bootstrapModuleName = "intellij.platform.bootstrap"

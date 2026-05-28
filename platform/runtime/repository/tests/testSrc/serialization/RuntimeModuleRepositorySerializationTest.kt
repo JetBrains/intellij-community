@@ -6,7 +6,9 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPAC
 import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.createModuleDescriptor
+import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor.create
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
 import com.intellij.platform.runtime.repository.xml
@@ -129,7 +131,7 @@ class RuntimeModuleRepositorySerializationTest {
       createModuleDescriptor("ij.embedded", emptyList(), emptyList()),
       createModuleDescriptor("ij.required.backend", emptyList(), emptyList()),
     )
-    val pluginHeader = RawRuntimePluginHeader.create(
+    val pluginHeader = RuntimePluginHeaderImpl(
       "plugin.id",
       raw("ij.plugin", "jetbrains"),
       listOf(
@@ -137,7 +139,9 @@ class RuntimeModuleRepositorySerializationTest {
         RawIncludedRuntimeModule(raw("ij.required", "jetbrains"), RuntimeModuleLoadingRule.REQUIRED, null),
         RawIncludedRuntimeModule(raw("ij.embedded", "jetbrains"), RuntimeModuleLoadingRule.EMBEDDED, null),
         RawIncludedRuntimeModule(raw("ij.on_demand", "jetbrains"), RuntimeModuleLoadingRule.ON_DEMAND, null),
-        RawIncludedRuntimeModule(raw("ij.required.backend", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, raw("intellij.platform.backend", "jetbrains")),
+        RawIncludedRuntimeModule(raw("ij.required.backend", "jetbrains"),
+                                 RuntimeModuleLoadingRule.OPTIONAL,
+                                 raw("intellij.platform.backend", "jetbrains")),
       )
     )
     check(descriptors, listOf(pluginHeader)) {
@@ -179,7 +183,7 @@ class RuntimeModuleRepositorySerializationTest {
 
   private fun check(
     moduleDescriptors: List<RawRuntimeModuleDescriptor>,
-    pluginHeaders: List<RawRuntimePluginHeader> = emptyList(),
+    pluginHeaders: List<RuntimePluginHeader> = emptyList(),
     bootstrapModuleName: String? = null,
     bootstrapClassPath: String? = null,
     content: DirectoryContentBuilder.() -> Unit,
@@ -218,7 +222,7 @@ class RuntimeModuleRepositorySerializationTest {
   private fun checkLoadingFromCompactFile(
     filePath: Path,
     expectedDescriptors: List<RawRuntimeModuleDescriptor>,
-    expectedPluginHeaders: List<RawRuntimePluginHeader>
+    expectedPluginHeaders: List<RuntimePluginHeader>
   ) {
     val repositoryData = RuntimeModuleRepositorySerialization.loadFromCompactFile(filePath)
     val actualDescriptors = repositoryData.allModuleIds.map { repositoryData.findDescriptor(it)!! }

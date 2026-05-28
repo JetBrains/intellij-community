@@ -22,7 +22,7 @@ import com.intellij.platform.runtime.product.serialization.ProductModulesSeriali
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
@@ -149,7 +149,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun loadBundledPluginFromPluginHeader(
-    pluginHeader: RawRuntimePluginHeader,
+    pluginHeader: RuntimePluginHeader,
     bundledPluginsDir: Path,
     zipPool: ZipEntryResolverPool,
     loadingContext: PluginDescriptorLoadingContext,
@@ -208,7 +208,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     classpathRoot: Path,
     bundledPluginsDir: Path,
     pluginDescriptorClasspath: List<Path>,
-    pluginHeader: RawRuntimePluginHeader,
+    pluginHeader: RuntimePluginHeader,
     zipFilePool: ZipEntryResolverPool,
     loadingContext: PluginDescriptorLoadingContext,
   ): PluginMainDescriptor? {
@@ -267,7 +267,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
    * Since JARs of plugin's modules may be located in different directories (until IJPL-220139 is fixed), the code tries to determine the
    * plugin directory by JARs located in standard locations (lib/ or lib/modules).
    */
-  private fun determinePluginDirectory(classpathRoot: Path, bundledPluginsDir: Path, pluginHeader: RawRuntimePluginHeader): Path? {
+  private fun determinePluginDirectory(classpathRoot: Path, bundledPluginsDir: Path, pluginHeader: RuntimePluginHeader): Path? {
     val grandparent = classpathRoot.parent.parent
     if (grandparent.parent == bundledPluginsDir) return grandparent
     return pluginHeader.includedModules

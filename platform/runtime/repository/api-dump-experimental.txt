@@ -28,7 +28,7 @@
 - s:values():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule[]
 *:com.intellij.platform.runtime.repository.RuntimeModuleRepository
 - s:create(java.nio.file.Path):com.intellij.platform.runtime.repository.RuntimeModuleRepository
-- a:findBundledPluginHeader(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+- a:findBundledPluginHeader(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.RuntimePluginHeader
 - a:getBootstrapClasspath(java.lang.String):java.util.List
 - a:getBundledPluginHeaders():java.util.List
 - a:getModule(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
@@ -44,6 +44,10 @@
 - sf:PUBLIC:com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 - s:valueOf(java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 - s:values():com.intellij.platform.runtime.repository.RuntimeModuleVisibility[]
+*:com.intellij.platform.runtime.repository.RuntimePluginHeader
+- a:getIncludedModules():java.util.List
+- a:getPluginDescriptorModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
+- a:getPluginId():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 - equals(java.lang.Object):Z
 - getLoadingRule():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
@@ -71,11 +75,6 @@
 - getBasePath():java.nio.file.Path
 - getMainPluginModuleId():java.lang.String
 - getPluginHeaders():java.util.List
-*f:com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
-- s:create(java.lang.String,com.intellij.platform.runtime.repository.RuntimeModuleId,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
-- getIncludedModules():java.util.List
-- getPluginDescriptorModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
-- getPluginId():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 - s:loadBootstrapClasspath(java.nio.file.Path,java.lang.String):java.lang.String[]
 - s:loadFromCompactFile(java.nio.file.Path):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData

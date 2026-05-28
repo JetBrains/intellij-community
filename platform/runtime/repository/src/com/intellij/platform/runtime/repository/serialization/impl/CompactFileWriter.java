@@ -2,9 +2,9 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import java.util.Set;
 
 public final class CompactFileWriter {
   public static void saveToFile(@NotNull Collection<RawRuntimeModuleDescriptor> originalModuleDescriptors,
-                                @NotNull Collection<RawRuntimePluginHeader> originalPluginHeaders,
+                                @NotNull Collection<RuntimePluginHeader> originalPluginHeaders,
                                 @Nullable String bootstrapModuleName,
                                 int generatorVersion,
                                 @NotNull Path outputFile) throws IOException {
@@ -49,8 +49,8 @@ public final class CompactFileWriter {
       Collections.sort(moduleDescriptors,
                        Comparator.comparing((RawRuntimeModuleDescriptor descriptor) -> descriptor.getModuleId().getNamespace())
                                  .thenComparing(descriptor -> descriptor.getModuleId().getName()));
-      List<RawRuntimePluginHeader> pluginHeaders = new ArrayList<>(originalPluginHeaders);
-      Collections.sort(pluginHeaders, Comparator.comparing(RawRuntimePluginHeader::getPluginId));
+      List<RuntimePluginHeader> pluginHeaders = new ArrayList<>(originalPluginHeaders);
+      Collections.sort(pluginHeaders, Comparator.comparing(RuntimePluginHeader::getPluginId));
 
 
       Map<RuntimeModuleId, Integer> moduleIdIndexes = new HashMap<>(moduleDescriptors.size());
@@ -64,7 +64,7 @@ public final class CompactFileWriter {
       for (RawRuntimeModuleDescriptor descriptor : moduleDescriptors) {
         referencedModuleIds.addAll(descriptor.getDependencyIds());
       }
-      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         referencedModuleIds.add(pluginHeader.getPluginDescriptorModuleId());
         for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           referencedModuleIds.add(includedModule.getModuleId());
@@ -121,7 +121,7 @@ public final class CompactFileWriter {
       }
 
       out.writeInt(pluginHeaders.size());
-      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         out.writeUTF(pluginHeader.getPluginId());
         Integer pluginDescriptorModuleIdIndex = moduleIdIndexes.get(pluginHeader.getPluginDescriptorModuleId());
         if (pluginDescriptorModuleIdIndex == null) {

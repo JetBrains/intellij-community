@@ -2,7 +2,6 @@
 package com.intellij.platform.runtime.repository;
 
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,11 +69,11 @@ public interface RuntimeModuleRepository {
    * Returns the list of headers of plugins bundled with the current distribution.
    * For a monolithic IDE, it also includes plugins bundled with its embedded frontend.
    */
-  @NotNull List<@NotNull RawRuntimePluginHeader> getBundledPluginHeaders();
+  @NotNull List<@NotNull RuntimePluginHeader> getBundledPluginHeaders();
 
   /**
    * Returns the header of a plugin bundled with the current distribution which {@code plugin.xml} is located in
    * {@code pluginDescriptorModuleId} or {@code null} if no such plugin is found.
    */
-  @Nullable RawRuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId);
+  @Nullable RuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId);
 }

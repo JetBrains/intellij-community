@@ -2,15 +2,15 @@
 package com.intellij.devkit.runtimeModuleRepository.generator
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 
 object RuntimeModuleRepositoryValidator {
   interface ErrorReporter {
     fun reportError(errorMessage: String)
   }
   
-  fun validate(descriptors: List<RawRuntimeModuleDescriptor>, pluginHeaders: List<RawRuntimePluginHeader>, errorReporter: ErrorReporter) {
+  fun validate(descriptors: List<RawRuntimeModuleDescriptor>, pluginHeaders: List<RuntimePluginHeader>, errorReporter: ErrorReporter) {
     val moduleIDs = HashSet<RuntimeModuleId>()
     for (descriptor in descriptors) {
       if (!moduleIDs.add(descriptor.moduleId)) {

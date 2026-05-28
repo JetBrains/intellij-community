@@ -3,8 +3,8 @@ package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -15,7 +15,7 @@ import java.io.PrintWriter;
 import static com.intellij.platform.runtime.repository.serialization.impl.ModuleXmlSerializer.writeEolAndIndent;
 
 final class PluginHeaderXmlSerializer {
-  static void writePluginHeaderXml(RawRuntimePluginHeader header, PrintWriter output, XMLOutputFactory factory) throws XMLStreamException {
+  static void writePluginHeaderXml(RuntimePluginHeader header, PrintWriter output, XMLOutputFactory factory) throws XMLStreamException {
     XMLStreamWriter writer = factory.createXMLStreamWriter(output);
     writer.writeStartDocument("UTF-8", "1.0");
     writeEolAndIndent(writer, 0);
