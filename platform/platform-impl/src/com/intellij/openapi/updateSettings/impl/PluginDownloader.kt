@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
@@ -33,6 +34,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.VersionComparatorUtil
@@ -277,11 +280,15 @@ class PluginDownloader private constructor(
   @RequiresEdt(generateAssertion = false)
   @Throws(IOException::class)
   fun installDynamically(ownerComponent: JComponent?): Boolean {
-    assert(myDescriptor is IdeaPluginDescriptorImpl)
-    val descriptor = myDescriptor as IdeaPluginDescriptorImpl
+    assert(myDescriptor is PluginMainDescriptor)
+    val descriptor = myDescriptor as PluginMainDescriptor
+
+    val canLoad = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") { // FIXME this is an ad-hoc to run BGT method on EDT
+      DynamicPlugins.checkCanLoadWithoutRestart(descriptor) == null
+    }
 
     val appliedWithoutRestart =
-      DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor) &&
+      canLoad &&
       (myOldFile == null || unloadDescriptorById(descriptor.pluginId)) &&
       PluginInstaller.installAndLoadDynamicPlugin(getFilePath(), ownerComponent, descriptor)
 
@@ -392,7 +399,10 @@ class PluginDownloader private constructor(
     private fun unloadDescriptorById(pluginId: PluginId): Boolean {
       val descriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
       val pluginDescriptor = descriptor.getMainDescriptor()
-      if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
+      val canUnload = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") { // FIXME this is an ad-hoc to run BGT method on EDT
+        DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) == null
+      }
+      if (!canUnload) {
         return false
       }
       val options = DynamicPlugins.UnloadPluginOptions().withDisable(false).withUpdate(true).withWaitForClassloaderUnload(true)
