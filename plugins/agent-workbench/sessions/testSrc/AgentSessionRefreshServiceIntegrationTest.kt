@@ -88,7 +88,9 @@ class AgentSessionRefreshServiceIntegrationTest {
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.threads.take(3).all { thread -> thread.cost != null } && project.threads.drop(3).all { thread -> thread.cost == null }
+        project.threads.size == threads.size &&
+        project.threads.take(3).all { thread -> thread.cost != null } &&
+        project.threads.drop(3).all { thread -> thread.cost == null }
       }
 
       assertThat(costLoadRequests.toList()).containsExactly(listOf("thread-4", "thread-3", "thread-2"))
@@ -96,9 +98,8 @@ class AgentSessionRefreshServiceIntegrationTest {
       service.showMoreThreads(PROJECT_PATH)
 
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.all { thread -> thread.cost != null } == true
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.threads.size == threads.size && project.threads.all { thread -> thread.cost != null }
       }
 
       assertThat(costLoadRequests.toList()).containsExactly(

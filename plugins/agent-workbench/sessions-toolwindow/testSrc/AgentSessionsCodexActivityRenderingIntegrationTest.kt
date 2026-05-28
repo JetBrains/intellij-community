@@ -211,31 +211,67 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     val sourceClass = Class.forName("com.intellij.agent.workbench.codex.sessions.CodexSessionSource")
     val constructor = sourceClass.declaredConstructors.firstOrNull { candidate ->
       val parameterTypes = candidate.parameterTypes
-      parameterTypes.size in setOf(3, 5) &&
+      !candidate.isSynthetic &&
+      parameterTypes.size >= 3 &&
       parameterTypes[0] == backendClass &&
       parameterTypes[1] == refreshHintsProviderClass &&
       parameterTypes[2] == refreshHintsProviderClass &&
-      (parameterTypes.size == 3 || (parameterTypes[3] == backendClass && Function1::class.java.isAssignableFrom(parameterTypes[4])))
+      parameterTypes.drop(3).all { parameterType ->
+        parameterType == backendClass ||
+        Function1::class.java.isAssignableFrom(parameterType) ||
+        parameterType.name == "com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex" ||
+        parameterType.name == "com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader"
+      }
     } ?: error("Unsupported CodexSessionSource constructor shape")
     constructor.isAccessible = true
     val backend = createStaticBackend(backendClass, backendThreads)
     val appServerRefreshHintsProvider = createAppServerRefreshHintsProvider(snapshotsByThreadId)
     val rolloutRefreshHintsProvider = createEmptyRefreshHintsProvider(refreshHintsProviderClass)
-    return if (constructor.parameterCount == 5) {
-      constructor.newInstance(
-        backend,
-        appServerRefreshHintsProvider,
-        rolloutRefreshHintsProvider,
-        null,
-        { _: Any? -> AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
-      ) as AgentSessionSource
+    val constructorArgs = buildList {
+      add(backend)
+      add(appServerRefreshHintsProvider)
+      add(rolloutRefreshHintsProvider)
+      constructor.parameterTypes.drop(3).forEach { parameterType ->
+        add(
+          when {
+            parameterType == backendClass -> null
+            Function1::class.java.isAssignableFrom(parameterType) -> { _: Any? ->
+              AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+            }
+            parameterType.name == "com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex" -> createInMemoryCodexThreadPathIndex()
+            parameterType.name == "com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader" -> {
+              createExactRolloutThreadLoader()
+            }
+            else -> error("Unsupported CodexSessionSource constructor parameter: ${parameterType.name}")
+          }
+        )
+      }
+    }
+    return constructor.newInstance(*constructorArgs.toTypedArray()) as AgentSessionSource
+  }
+
+  private fun createInMemoryCodexThreadPathIndex(): Any {
+    val indexClass = Class.forName("com.intellij.agent.workbench.codex.sessions.InMemoryCodexThreadPathIndex")
+    val constructor = indexClass.declaredConstructors.firstOrNull { candidate -> !candidate.isSynthetic && candidate.parameterCount == 0 }
+                      ?: error("Unsupported InMemoryCodexThreadPathIndex constructor shape")
+    constructor.isAccessible = true
+    return constructor.newInstance()
+  }
+
+  private fun createExactRolloutThreadLoader(): Any {
+    val loaderClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader")
+    val constructor = loaderClass.declaredConstructors.firstOrNull { candidate -> !candidate.isSynthetic && candidate.parameterCount == 0 }
+                      ?: loaderClass.declaredConstructors.firstOrNull { candidate ->
+                        !candidate.isSynthetic && candidate.parameterCount == 1 && Function1::class.java.isAssignableFrom(candidate.parameterTypes[0])
+                      }
+                      ?: error("Unsupported CodexExactRolloutThreadLoader constructor shape")
+    constructor.isAccessible = true
+    return if (constructor.parameterCount == 0) {
+      constructor.newInstance()
     }
     else {
-      constructor.newInstance(
-        backend,
-        appServerRefreshHintsProvider,
-        rolloutRefreshHintsProvider,
-      ) as AgentSessionSource
+      val parserStub: (Any?) -> Nothing? = { null }
+      constructor.newInstance(parserStub)
     }
   }
 

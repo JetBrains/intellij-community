@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonStringOrNull
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.SystemProperties
 import java.math.BigDecimal
 import java.nio.file.Files
 import java.nio.file.Path
@@ -163,5 +164,5 @@ private fun readJsonBigDecimalOrNull(parser: JsonParser): BigDecimal? {
 }
 
 internal fun defaultJunieSessionsRootPath(): Path {
-  return Path.of(System.getProperty("user.home") ?: ".", ".junie", "sessions")
+  return Path.of(SystemProperties.getUserHome(), ".junie", "sessions")
 }
