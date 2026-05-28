@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.relativeTo
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
@@ -55,6 +56,9 @@ internal class ImageInfo(
   fun getFlags(): Int {
     var result = 0
     for (image in images) {
+      if (image.relativeTo(sourceRoot.path).contains(Path.of("modifiers"))) {
+        result = result or ImageDescriptor.IS_MODIFIER_ICON
+      }
       val path = image.toString()
       when {
         path.contains("@2x.") -> {
