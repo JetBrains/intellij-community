@@ -256,7 +256,7 @@ private val VIA_CHANNELS_CACHE_FILE_WRITER = ToFileWriter { path: Path, offsetIn
 }
 
 /** Valid values: `null, 'disabled', 'in-memory' (for debug), 'persistent'` */
-private val USE_WRITE_AHEAD_LOG = System.getProperty("indexes.use-write-ahead-log", "persistent")
+private val USE_WRITE_AHEAD_LOG = System.getProperty("indexes.use-write-ahead-log", "disabled")
 
 //The WAL is opened but never closed -- because currently there is no clear lifecycle ownership for the WAL.
 // It is hard to pinpoint the trigger for 'WAL is not needed anymore and can be closed': WAL lifespan should
