@@ -40,6 +40,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.zip.JBZipFile
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -73,7 +74,14 @@ object PluginInstaller {
           throw IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId())
         }
         else {
-          val needRestart = pluginDescriptor.isEnabled() && !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor)
+          val checkNeedsRestart = { !DynamicPlugins.checkCanUnloadWithoutRestart(pluginDescriptor.getMainDescriptor()) }
+          val needRestart = PluginManagerCore.isLoaded(pluginDescriptor) && if (EDT.isCurrentThreadEdt()) { // FIXME this is an ad-hoc fix to run BGT method on EDT
+            runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+              checkNeedsRestart()
+            }
+          } else {
+            checkNeedsRestart()
+          }
           if (needRestart) {
             uninstallAfterRestart(pluginDescriptor)
           }
