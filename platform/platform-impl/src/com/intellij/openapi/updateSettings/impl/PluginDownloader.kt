@@ -397,16 +397,15 @@ class PluginDownloader private constructor(
 
     @RequiresEdt(generateAssertion = false)
     private fun unloadDescriptorById(pluginId: PluginId): Boolean {
-      val descriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
-      val pluginDescriptor = descriptor.getMainDescriptor()
+      val plugin = PluginManagerCore.findPlugin(pluginId)?.getMainDescriptor() ?: return false
       val canUnload = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") { // FIXME this is an ad-hoc to run BGT method on EDT
-        DynamicPlugins.validateCanUnloadWithoutRestart(descriptor) == null
+        DynamicPlugins.validateCanUnloadWithoutRestart(plugin) == null
       }
       if (!canUnload) {
         return false
       }
       val options = DynamicPlugins.UnloadPluginOptions().withDisable(false).withUpdate(true).withWaitForClassloaderUnload(true)
-      return DynamicPlugins.unloadPlugin(pluginDescriptor, options)
+      return DynamicPlugins.unloadPlugin(plugin, options)
     }
 
     @JvmStatic
