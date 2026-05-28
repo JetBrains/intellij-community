@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -211,38 +212,51 @@ private val errorAttributes = setOf(
 internal class CommandCompletionListener : LookupManagerListener {
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
+    if (newLookup !is LookupImpl) return
+
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
-    var editor = newLookup?.editor ?: return
-    val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
-    var psiFile = newLookup.psiFile ?: return
+
     val project = newLookup.project
-    var nonWrittenFiles = false
+
+    val originalEditor = newLookup.editor.getUserData(ORIGINAL_EDITOR)
+
+    val nonWrittenFiles: Boolean
+    val editor: Editor
+    val psiFile: PsiFile
     if (originalEditor != null) {
       editor = originalEditor.first
       psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
       nonWrittenFiles = true
     }
-    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile)
-    if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
+    else {
+      editor = newLookup.editor
+      psiFile = newLookup.psiFile ?: return
+      nonWrittenFiles = false
+    }
+
+    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile) ?: return
+    if (topLevelFile.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
       return
     }
-    val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    if (topLevelEditor !is EditorImpl) return
-    if (newLookup !is LookupImpl) return
-    val completionService = editor.project?.getService(CommandCompletionService::class.java)
-    completionService?.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
-    val highlightingListener = CommandCompletionHighlightingListener(topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
+
+    val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor) as? EditorImpl ?: return
+
+    val completionService = project.service<CommandCompletionService>()
+    completionService.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
+
+    val highlightingListener = CommandCompletionHighlightingListener(project, topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
     newLookup.addLookupListener(highlightingListener)
     Disposer.register(newLookup, highlightingListener)
   }
 }
 
 private class CommandCompletionHighlightingListener(
-  val topLevelEditor: EditorImpl,
-  val lookup: LookupImpl,
-  val psiFile: PsiFile, //injected file
-  val nonWrittenFiles: Boolean,
-  val completionService: CommandCompletionService?,
+  private val project: Project,
+  private val topLevelEditor: EditorImpl,
+  private val lookup: LookupImpl,
+  private val psiFile: PsiFile, //injected file
+  private val nonWrittenFiles: Boolean,
+  private val completionService: CommandCompletionService,
 ) : LookupListener, Disposable {
 
   private fun clearPromptHighlighting() {
@@ -257,7 +271,7 @@ private class CommandCompletionHighlightingListener(
 
   private fun clear() {
     clearPromptHighlighting()
-    val highlightManager = HighlightManager.getInstance(topLevelEditor.project ?: return)
+    val highlightManager = HighlightManager.getInstance(project)
     val previousLookupHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
     previousLookupHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
   }
@@ -330,7 +344,6 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun updateHighlighting(element: CommandCompletionLookupElement) {
-    val project = topLevelEditor.project ?: return
     val highlightManager = HighlightManager.getInstance(project)
     val previousHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
     previousHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
