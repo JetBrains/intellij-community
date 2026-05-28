@@ -413,12 +413,13 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test treating markup as quotes`() {
-    configureByText("a.md", """
-      From the toolbar, click _<GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.MISSING_ARTICLE">Add link</GRAMMAR_ERROR>_, then select **is duplicated by**.
+    val text = """
+      From the toolbar, click _Add link_, then select **is duplicated by**.
       **This** is still <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">an </GRAMMAR_ERROR>mistake.
       This happened in *Tuesday*.
       Import a *Workflow*
-    """.trimIndent())
+    """.trimIndent()
+    configureByText("a.md", text)
     myFixture.checkHighlighting()
 
     Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(true, testRootDisposable)
@@ -430,6 +431,11 @@ class HighlightingTest : BaseTestCase() {
       <p><b>This</b> is still <GRAMMAR_ERROR>an </GRAMMAR_ERROR>mistake.</p>
       </body>
     """.trimIndent())
+    myFixture.checkHighlighting()
+
+    // sentence tokenizer should respect exclusions
+    Registry.get("grazie.correct.text.enabled").setValue(false, testRootDisposable)
+    configureByText("a.md", text)
     myFixture.checkHighlighting()
   }
 
@@ -622,8 +628,8 @@ class HighlightingTest : BaseTestCase() {
 
     // Suggestions are reordered by [TextProblemAggregator] starting with the most meaningful ones
     val intentions = availableIntentions
-    assertEquals(intentions[1].text, "Jim, get")
-    assertEquals(intentions[2].text, "Jim gets")
+    assertEquals("Jim, get", intentions[1].text)
+    assertEquals("Jim gets", intentions[2].text)
   }
 
   @NeedsCloud
@@ -652,7 +658,7 @@ class HighlightingTest : BaseTestCase() {
       UIUtil.dispatchAllInvocationEvents()
     }
     assertFalse(GrazieConfig.get().useOxfordSpelling, "Disable Oxford Spelling should've updated GrazieConfig")
-    assertEquals(GrazieConfig.get().availableLanguages, setOf(Lang.BRITISH_ENGLISH), "Disable Oxford Spelling should have not updated available languages")
+    assertEquals(setOf(Lang.BRITISH_ENGLISH), GrazieConfig.get().availableLanguages, "Disable Oxford Spelling should have not updated available languages")
   }
 
   companion object {
