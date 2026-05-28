@@ -4,8 +4,8 @@ load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 compiler_plugin_jvm_library(
   name = "expects-compiler-plugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt"]),
-  resources = glob(["src/main/resources/**/*"]),
+  srcs = glob(["srcJvmMain/**/*.kt"]),
+  resources = glob(["resources/**/*"]),
   resource_strip_prefix = "src/main/resources",
   kotlinc_opts = ":custom_expects",
   deps = ["@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel"],
