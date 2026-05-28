@@ -36,4 +36,14 @@ sealed interface TerminalHyperlinksOutputEvent {
      */
     val hyperlinks: List<TerminalFilterResultInfoDto>,
   ) : TerminalHyperlinksOutputEvent
+
+  /**
+   * Signals that a highlighting task has finished — every [HyperlinksUpdated] event
+   * for that task has already been emitted before this one.
+   */
+  @Serializable
+  data class TaskFinished(
+    /** The document modification stamp of the task that just finished. */
+    val documentModificationStamp: Long,
+  ) : TerminalHyperlinksOutputEvent
 }

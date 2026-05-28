@@ -53,7 +53,7 @@ private fun processInputEvent(
 
 private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFacade, sink: SendChannel<TerminalHyperlinksOutputEvent>) {
   facade.heartbeatFlow.collect {
-    val event = try {
+    val events = try {
       facade.collectResultsAndMaybeStartNewTask()
     }
     catch (e: Exception) {
@@ -61,16 +61,15 @@ private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFaca
       return@collect
     }
 
-    if (event is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
-      try {
-        facade.updateModelState(event)
+    for (event in events) {
+      if (event is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
+        try {
+          facade.updateModelState(event)
+        }
+        catch (e: Exception) {
+          LOG.error("Error when updating model state: $event", e)
+        }
       }
-      catch (e: Exception) {
-        LOG.error("Error when updating model state: $event", e)
-      }
-    }
-
-    if (event != null) {
       sink.send(event)
     }
   }

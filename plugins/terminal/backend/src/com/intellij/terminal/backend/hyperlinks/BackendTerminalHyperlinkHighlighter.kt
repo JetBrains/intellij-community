@@ -210,10 +210,24 @@ internal class BackendTerminalHyperlinkHighlighter(
     )
   }
 
-  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksOutputEvent? {
-    val result = currentTaskRunner?.getNextOutputEvent { isValid(it) }
+  /**
+   * Drains the next batch of hyperlink results and rolls the task state forward.
+   *
+   * Returns 0, 1, or 2 events:
+   * - At most one [TerminalHyperlinksOutputEvent.HyperlinksUpdated] carrying newly computed results.
+   * - At most one [TerminalHyperlinksOutputEvent.TaskFinished], emitted if the currently running task has finished.
+   *   When both events fire in the same call, `TaskFinished` comes after the `HyperlinksUpdated` in the returned list.
+   */
+  fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
+    val runnerBefore = currentTaskRunner
+    val hyperlinksEvent = runnerBefore?.getNextOutputEvent { isValid(it) }
+
     maybeStartNewTask()
-    return result
+    val taskFinished = if (runnerBefore != null && currentTaskRunner !== runnerBefore) {
+      TerminalHyperlinksOutputEvent.TaskFinished(documentModificationStamp = runnerBefore.task.modificationStamp)
+    }
+    else null
+    return listOfNotNull(hyperlinksEvent, taskFinished)
   }
 
   private fun isValid(taskResult: TaskResult): Boolean {
@@ -314,12 +328,13 @@ private data class TaskState(
 }
 
 private sealed class Task {
+  abstract val modificationStamp: Long
   abstract fun hasWorkToDo(): Boolean
 }
 
 private data class TrimTask(
   val endOffset: TerminalOffset,
-  val modificationStamp: Long,
+  override val modificationStamp: Long,
 ) : Task() {
   override fun hasWorkToDo(): Boolean = true // trimming always makes sense
 }
@@ -334,7 +349,7 @@ private data class HighlightTask(
   val startLine: TerminalLineIndex,
   val endLine: TerminalLineIndex,  // Inclusive
   val startOffset: TerminalOffset,
-  val modificationStamp: Long,
+  override val modificationStamp: Long,
 ) : Task() {
   val startAbsoluteOffset: Long get() = startOffset.toAbsolute()
 

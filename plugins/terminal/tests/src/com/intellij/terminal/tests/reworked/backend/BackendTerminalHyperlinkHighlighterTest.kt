@@ -516,9 +516,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
                   pendingUpdateEventCount.update { it - 1 }
                 }
                 Unit -> {
-                  val modelUpdateEvent = backendFacade.collectResultsAndMaybeStartNewTask()
-                  if (modelUpdateEvent is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
-                    backendFacade.updateModelState(modelUpdateEvent)
+                  val hyperlinkEvents = backendFacade.collectResultsAndMaybeStartNewTask()
+                  for (hyperlinkEvent in hyperlinkEvents) {
+                    if (hyperlinkEvent is TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
+                      backendFacade.updateModelState(hyperlinkEvent)
+                    }
                   }
                 }
                 else -> throw Exception("Event type is not used in the test: $event")

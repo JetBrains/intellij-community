@@ -30,6 +30,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
@@ -63,17 +64,23 @@ internal fun installHyperlinksProcessing(
   editor: EditorEx,
   coroutineScope: CoroutineScope,
 ): FrontendTerminalHyperlinkFacade {
+  // The modification stamp of the most recent highlighting task whose
+  // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
+  val lastFinishedTaskStamp = MutableStateFlow(0L)
   val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
+
   coroutineScope.launch {
-    processHyperlinks(project, outputModel, applier)
+    processHyperlinks(project, outputModel, applier, lastFinishedTaskStamp)
   }
-  return FrontendTerminalHyperlinkFacade(applier)
+
+  return FrontendTerminalHyperlinkFacade(applier, lastFinishedTaskStamp)
 }
 
 private suspend fun processHyperlinks(
   project: Project,
   outputModel: TerminalOutputModel,
   applier: EditorTextDecorationApplier,
+  lastFinishedTaskStamp: MutableStateFlow<Long>,
 ) = coroutineScope {
   val scope = this
   val session = createHyperlinksSession(project, scope.childScope("FrontendTerminalHyperlinksSession"))
@@ -88,6 +95,7 @@ private suspend fun processHyperlinks(
       outputModel = outputModel,
       applier = applier,
       hyperlinkUpdatesChannel = session.hyperlinkUpdatesChannel,
+      lastFinishedTaskStamp = lastFinishedTaskStamp,
       onLinkClicked = { id, mouseEvent ->
         scope.launch {
           session.handleHyperlinkClick(TerminalHyperlinkClickedEvent(id, mouseEvent))
@@ -178,6 +186,7 @@ private suspend fun processHyperlinkResults(
   outputModel: TerminalOutputModel,
   applier: EditorTextDecorationApplier,
   hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>,
+  lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
   val hyperlinksModel = TerminalHyperlinksModel(
@@ -187,7 +196,7 @@ private suspend fun processHyperlinkResults(
 
   for (event in hyperlinkUpdatesChannel) {
     try {
-      processHyperlinksOutputEvent(outputModel, hyperlinksModel, applier, event, onLinkClicked)
+      processHyperlinksOutputEvent(outputModel, hyperlinksModel, applier, event, lastFinishedTaskStamp, onLinkClicked)
     }
     catch (e: Exception) {
       LOG.error("Error when processing hyperlinks update: $event", e)
@@ -200,6 +209,7 @@ private fun processHyperlinksOutputEvent(
   hyperlinksModel: TerminalHyperlinksModel,
   applier: EditorTextDecorationApplier,
   event: TerminalHyperlinksOutputEvent,
+  lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
   when (event) {
@@ -216,6 +226,9 @@ private fun processHyperlinksOutputEvent(
         it.toEditorDecoration(outputModel, onLinkClicked)
       }
       applier.addDecorations(decorations)
+    }
+    is TerminalHyperlinksOutputEvent.TaskFinished -> {
+      lastFinishedTaskStamp.value = event.documentModificationStamp
     }
   }
 }

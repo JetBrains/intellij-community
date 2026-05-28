@@ -63,17 +63,16 @@ class BackendTerminalHyperlinkFacade(
     highlighter.applyUpdate(update)
   }
 
-  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksOutputEvent? {
-    // The event is immediately passed to updateModelState(),
-    // but the tests need to wait until it was actually applied, and they wait concurrently.
-    // This flow works as a latch: it's locked before we even retrieve the event,
-    // and unlocked only after it's applied (or if it's null).
-    pendingUpdateEvents.update { it + 1 }
-    val modelUpdateEvent = highlighter.collectResultsAndMaybeStartNewTask()
-    if (modelUpdateEvent == null) {
-      pendingUpdateEvents.update { it - 1 }
+  fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
+    val events = highlighter.collectResultsAndMaybeStartNewTask()
+    // HyperlinksUpdated events are immediately passed to updateModelState(),
+    // but the tests need to wait until they were actually applied, and they wait concurrently.
+    // This counter works as a latch: incremented here for each HyperlinksUpdated, decremented in updateModelState.
+    val updatesCount = events.count { it is TerminalHyperlinksOutputEvent.HyperlinksUpdated }
+    if (updatesCount > 0) {
+      pendingUpdateEvents.update { it + updatesCount }
     }
-    return modelUpdateEvent
+    return events
   }
 
   fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated): Boolean {
