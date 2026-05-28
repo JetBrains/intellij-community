@@ -14,6 +14,11 @@
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionMerger"/>
 
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassOverriddenAtRuntime"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.modularization.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.jps.ClassOverriddenAtRuntimeInspection"
+                     key="class.overridden.at.runtime.display.name" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FrequentlyUsedInheritorInspection"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
