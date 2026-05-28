@@ -4,11 +4,11 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.target.local.toLocalPtyOptions
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -270,7 +270,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     override val localRoot: Path,
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
-    private fun targetRootPath(): Path {
+    fun targetRootPath(): Path {
       return eel.fs.getPath(targetRoot).asNioPath()
     }
 
