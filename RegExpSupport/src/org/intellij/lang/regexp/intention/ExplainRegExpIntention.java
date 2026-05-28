@@ -346,12 +346,16 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     return root;
   }
 
-  private void leaf(@NotNull PsiElement element, @NotNull NameNode nameNode, @NotNull @DetailedDescription String explanation) {
-    current.insert(new RegExpTreeNode(buildNodeValue(element, nameNode, explanation)), current.getChildCount());
+  private void leaf(@NotNull PsiElement element, @NotNull NameNode name, @NotNull @DetailedDescription String explanation) {
+    current.insert(new RegExpTreeNode(new ValueNode(buildPatternFragments(element, true), name, explanation, false)), current.getChildCount());
   }
 
-  private void branch(@NotNull PsiElement element, @NotNull NameNode nameNode, @NotNull @DetailedDescription String explanation) {
-    branch(buildNodeValue(element, nameNode, explanation));
+  private void branch(@NotNull PsiElement element, @NotNull NameNode name, @NotNull @DetailedDescription String explanation) {
+    branch(element, name, explanation, true);
+  }
+
+  private void branch(@NotNull PsiElement element, @NotNull NameNode name, @NotNull @DetailedDescription String explanation, boolean expand) {
+    branch(new ValueNode(buildPatternFragments(element, true), name, explanation, expand));
   }
 
   private void branch(ValueNode value) {
@@ -360,20 +364,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     current = node;
   }
 
-  private ValueNode buildNodeValue(@NotNull PsiElement element,
-                                   @NotNull NameNode nameNode,
-                                   @NotNull @DetailedDescription String explanation) {
-    return buildNodeValue(element, nameNode, explanation, true);
-  }
-
-  private ValueNode buildNodeValue(PsiElement element,
-                                   @NotNull NameNode nameNode,
-                                   @NotNull @DetailedDescription String explanation,
-                                   boolean expand) {
-    return new ValueNode(buildPatternFragments(element, true), nameNode, explanation, expand);
-  }
-
-  private @NotNull List<Fragment> buildPatternFragments(PsiElement element, boolean emphasize) {
+  private @NotNull List<Fragment> buildPatternFragments(@NotNull PsiElement element, boolean emphasize) {
     return buildPatternFragments(element, emphasize, new SmartList<>());
   }
 
@@ -392,7 +383,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
         else {
           boolean keepEmphasis = element instanceof RegExpCharRange
                                  || element instanceof RegExpBranch
-                                 || element instanceof RegExpClosure && child instanceof RegExpQuantifier
+                                 || element instanceof RegExpQuantifier
                                  || element instanceof RegExpConditional && (child instanceof RegExpBackref
                                                                              || child instanceof RegExpNamedGroupRef);
           buildPatternFragments(child, keepEmphasis && emphasize, list);
@@ -601,19 +592,23 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
   @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
-    NameNode node = regExpClass.isNegated()
-                    ? new NameNode("Negated Character Class", "https://www.regular-expressions.info/charclass.html#negated")
-                    : new NameNode("Character Class", "https://www.regular-expressions.info/charclass.html");
+    NameNode name = regExpClass.isNegated()
+                ? new NameNode("Negated Character Class", "https://www.regular-expressions.info/charclass.html#negated")
+                : new NameNode("Character Class", "https://www.regular-expressions.info/charclass.html");
     RegExpClassElement[] elements = regExpClass.getElements();
     if (elements.length == 1 && elements[0] instanceof RegExpChar c) {
       // single character case
-      branch(regExpClass.isNegated()
-             ? buildNodeValue(regExpClass, node, "matches 1 character that is not the " + charText(c) + " character", false)
-             : buildNodeValue(regExpClass, node, "matches the " + charText(c) + " character", false));
+      branch(regExpClass, name, regExpClass.isNegated()
+                                         ? "matches 1 character that is not the " + charText(c) + " character"
+                                         : "matches the " + charText(c) + " character", false);
+    }
+    else if (elements.length == 1 && elements[0] instanceof RegExpCharRange range) {
+      branch(regExpClass, name, regExpClass.isNegated() ? "matches 1 character not " + rangeText(range)
+                                                        : "matches 1 character " + rangeText(range), false);
     }
     else {
-      String set = elements.length == 1 && elements[0] instanceof RegExpCharRange range ? rangeText(range) : "in the set";
-      branch(regExpClass, node, regExpClass.isNegated() ? "matches 1 character not " + set : "matches 1 character " + set);
+      branch(regExpClass, name, regExpClass.isNegated() ? "matches 1 character not " + "in the set"
+                                                        : "matches 1 character " + "in the set");
     }
     super.visitRegExpClass(regExpClass);
     parent();
@@ -629,9 +624,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
   @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
-    if (range.getParent() instanceof RegExpClass aClass && aClass.getElements().length == 1) return;
-    leaf(range, new NameNode("Range", "https://www.regular-expressions.info/charclass.html"),
-         "matches 1 character " + rangeText(range));
+    leaf(range, new NameNode("Range", "https://www.regular-expressions.info/charclass.html"), "matches 1 character " + rangeText(range));
   }
 
   private static @Nls @NotNull String rangeText(RegExpCharRange range) {
