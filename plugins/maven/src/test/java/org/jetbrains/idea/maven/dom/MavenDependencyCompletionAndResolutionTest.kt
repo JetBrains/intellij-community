@@ -1255,4 +1255,28 @@ ${libPath.parent}</depDir>
       }
     }
   }
+
+  @Test
+  fun testNoCompletionInProjectRootGroupId() = runBlocking {
+    updateProjectPom("""
+                       <groupId>junit<caret></groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """.trimIndent())
+
+    // completion must NOT fire inside the root project coordinate tags
+    assertCompletionVariants(projectPom)
+  }
+
+  @Test
+  fun testNoCompletionInProjectRootArtifactId() = runBlocking {
+    updateProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project<caret></artifactId>
+                       <version>1</version>
+                       """.trimIndent())
+
+    // completion must NOT fire inside the root project coordinate tags
+    assertCompletionVariants(projectPom)
+  }
 }
