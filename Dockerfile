@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM registry.jetbrains.team/p/ij/docker-hub/ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b AS build_env
+FROM registry.jetbrains.team/p/ij/docker-hub/ubuntu:22.04@sha256:ce941a2a18bbb922e434d6d6d2b31e571a5c3826eaf6ada0a41dcc905bd2d906 AS build_env
 LABEL Description="IDE Build Environment"
 RUN apt-get update && \
     apt-get install -y \
