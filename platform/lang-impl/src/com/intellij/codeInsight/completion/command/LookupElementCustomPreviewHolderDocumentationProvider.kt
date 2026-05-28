@@ -92,21 +92,21 @@ private class CustomPreviewDocumentationTarget(
   }
 
   override fun computePresentation(): TargetPresentation {
-    if (customPreviewHolder is LookupElement) {
-      val presentation = LookupElementPresentation()
-      customPreviewHolder.renderElement(presentation)
-
-      var presentableText = presentation.itemText
-      if (presentableText == null && customPreviewHolder is CommandCompletionLookupElement) {
-        presentableText = customPreviewHolder.command.presentableName
-      }
-      presentableText = presentableText ?: ""
-      return TargetPresentation.builder(presentableText)
-        .icon(presentation.icon)
-        .containerText(presentation.tailText)
-        .presentation()
+    if (customPreviewHolder !is LookupElement) {
+      return TargetPresentation.builder("").presentation()
     }
-    return TargetPresentation.builder("").presentation()
+
+    val presentation = LookupElementPresentation()
+    customPreviewHolder.renderElement(presentation)
+
+    val presentableText = presentation.itemText
+                          ?: (customPreviewHolder as? CommandCompletionLookupElement)?.command?.presentableName
+                          ?: ""
+
+    return TargetPresentation.builder(presentableText)
+      .icon(presentation.icon)
+      .containerText(presentation.tailText)
+      .presentation()
   }
 
   override fun computeDocumentation(): DocumentationResult {
