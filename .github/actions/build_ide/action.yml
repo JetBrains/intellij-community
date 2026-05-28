@@ -15,6 +15,10 @@ inputs:
     default: ''
     description: 'any custom system properties'
     required: false
+  swap_size:
+    default: '30G'
+    description: 'swap file size (e.g. 16G, 30G)'
+    required: false
 runs:
   using: composite
   steps:
@@ -51,6 +55,19 @@ runs:
         docker builder prune --all --force || true
         echo "Disk space after cleanup:"
         df -h /
+    - name: Expand swap
+      shell: bash
+      # language=bash
+      run: |
+        # The IDE build may hit OOM (exit 137) with the default 16 GB RAM and 4 GB swap.
+        # /mnt on hosted runners has ~70 GB free, so move swap there and grow it.
+        sudo swapoff -a || true
+        sudo rm -f /mnt/swapfile /swapfile
+        sudo fallocate -l ${{inputs.swap_size}} /mnt/swapfile
+        sudo chmod 600 /mnt/swapfile
+        sudo mkswap /mnt/swapfile
+        sudo swapon /mnt/swapfile
+        free -h
     - name: Checkout JetBrains/android
       uses: actions/checkout@v6.0.2
       with:
