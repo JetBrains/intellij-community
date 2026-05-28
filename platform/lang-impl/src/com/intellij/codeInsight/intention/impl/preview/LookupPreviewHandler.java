@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -29,11 +29,10 @@ import java.util.function.Function;
  * @param <T> type of the elements in the list, for which the preview is supported.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 public final class LookupPreviewHandler<T> implements LookupListener {
   private final IntentionPreviewPopupUpdateProcessor myProcessor;
   private final LookupImpl myLookup;
-  private final Function<Object, @Nullable T> myMapper;
+  private final Function<@Nullable Object, @Nullable T> myMapper;
   private final Map<@Nullable T, Integer> counterHolder = new HashMap<>();
   private final AtomicInteger counterValue = new AtomicInteger(0);
   private final AtomicBoolean shown = new AtomicBoolean(false);
@@ -104,7 +103,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
   }
 
   private void update(@NotNull LookupImpl list) {
-    Object selectedItem = list.getCurrentItem();
+    LookupElement selectedItem = list.getCurrentItem();
     T item = myMapper.apply(selectedItem);
     update(item);
   }
@@ -123,7 +122,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
     if (!shown.get()) {
       return;
     }
-    Integer index = counterHolder.computeIfAbsent(action, k -> counterValue.getAndIncrement());
+    Integer index = counterHolder.computeIfAbsent(action, _ -> counterValue.getAndIncrement());
     myProcessor.setup(myPopup, index);
     myProcessor.updatePopup(action);
   }
