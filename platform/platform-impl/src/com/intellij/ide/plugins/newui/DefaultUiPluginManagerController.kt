@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.DynamicPluginEnabler
 import com.intellij.ide.plugins.DynamicPlugins
-import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstallPluginRequest
@@ -194,7 +193,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         if (descriptor.isBundled) {
           installWithoutRestart = false
         }
-        else if (!allowLoadUnloadWithoutRestart(descriptor.pluginId)) {
+        else if (!checkCanUnloadWithoutRestart(descriptor.pluginId)) {
           installWithoutRestart = false
         }
         else if (!descriptor.isEnabled) {
@@ -790,9 +789,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.filter { pluginRequiresUltimatePluginButItsDisabled(it, idMap, contentModuleIdMap) }
   }
 
-  private fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
-    val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
-    return allowLoadUnloadWithoutRestart(descriptorImpl)
+  private suspend fun checkCanUnloadWithoutRestart(pluginId: PluginId): Boolean {
+    val plugin = PluginManagerCore.findPlugin(pluginId) as? PluginMainDescriptor ?: return false
+    return withContext(Dispatchers.Default) { DynamicPlugins.checkCanUnloadWithoutRestart(plugin) == null }
   }
 
   private fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {
