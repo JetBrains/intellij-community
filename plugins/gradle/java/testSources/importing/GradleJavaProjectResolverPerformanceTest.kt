@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.CsvSource
 class GradleJavaProjectResolverPerformanceTest {
 
   @Nested
+  @PerformanceUnitTest
   inner class SdkData {
 
     private val gradleJvmFixture = gradleJvmFixture()
