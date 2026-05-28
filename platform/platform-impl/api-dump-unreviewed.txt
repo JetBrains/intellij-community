@@ -2971,11 +2971,6 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 - f:getFile():java.nio.file.Path
 - f:getRestartNeeded():Z
 - hashCode():I
-f:com.intellij.ide.plugins.PluginInstaller
-- sf:UNKNOWN_HOST_MARKER:java.lang.String
-- s:addStateListener(com.intellij.ide.plugins.PluginStateListener):V
-- s:rootEntryName(java.nio.file.Path):java.lang.String
-- s:unpackPlugin(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
 f:com.intellij.ide.plugins.PluginManagerUISettings
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.progress.PerformInBackgroundOption
