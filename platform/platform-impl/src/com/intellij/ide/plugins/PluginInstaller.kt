@@ -418,6 +418,7 @@ object PluginInstaller {
 
   @ApiStatus.Internal
   @JvmStatic
+  @RequiresEdt
   fun installAndLoadDynamicPlugin(file: Path, descriptor: IdeaPluginDescriptorImpl): Boolean {
     return installAndLoadDynamicPlugin(file, null, descriptor)
   }
@@ -427,6 +428,7 @@ object PluginInstaller {
    */
   @ApiStatus.Internal
   @JvmStatic
+  @RequiresEdt
   fun installAndLoadDynamicPlugin(
     file: Path,
     parent: JComponent?,
