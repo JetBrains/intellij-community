@@ -3,12 +3,12 @@ package com.intellij.terminal.backend.hyperlinks.rpc
 import com.intellij.terminal.backend.hyperlinks.TerminalHyperlinksSessionsManager
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
 
 internal class TerminalHyperlinksSessionRemoteApiImpl : TerminalHyperlinksSessionRemoteApi {
   override suspend fun getInputEventsSink(sessionId: TerminalHyperlinksSessionId): SendChannel<TerminalHyperlinksInputEvent> {

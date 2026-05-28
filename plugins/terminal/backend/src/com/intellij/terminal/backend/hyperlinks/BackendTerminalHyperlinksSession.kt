@@ -2,11 +2,11 @@ package com.intellij.terminal.backend.hyperlinks
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
 
 internal class BackendTerminalHyperlinksSession(
   override val id: TerminalHyperlinksSessionId,

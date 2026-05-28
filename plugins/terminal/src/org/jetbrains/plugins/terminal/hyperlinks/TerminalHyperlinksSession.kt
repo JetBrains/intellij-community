@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
 
 @ApiStatus.Internal
 interface TerminalHyperlinksSession {

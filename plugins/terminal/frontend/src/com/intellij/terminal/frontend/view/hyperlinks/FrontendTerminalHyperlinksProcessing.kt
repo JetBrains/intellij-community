@@ -33,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
@@ -44,7 +45,6 @@ import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRe
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.toDto
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
