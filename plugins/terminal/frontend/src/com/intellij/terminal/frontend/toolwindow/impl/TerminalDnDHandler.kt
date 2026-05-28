@@ -41,24 +41,32 @@ internal object TerminalDnDHandler {
     val dataContext = getDataContext(event) ?: return@DnDDropHandler
     val terminalView = dataContext.getData(TerminalView.DATA_KEY)
     if (terminalView != null) {
-      val files = getDroppedFiles(event).ifEmpty { return@DnDDropHandler }
-
-      val textToInsert = files.joinToString(" ") { it.path }
-      terminalView.sendText(textToInsert)
+      handleDropOnTerminalView(event, terminalView)
     }
     else {
-      val contentManager = dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER) ?: return@DnDDropHandler
-      val files = getDroppedFiles(event)
-      val dir = getDirectory(files.firstOrNull()) ?: return@DnDDropHandler
-
-      val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
-      createTerminalTab(
-        window.project,
-        workingDirectory = dir.path,
-        contentManager = contentManager,
-        startupFusInfo = fusInfo
-      )
+      handleDropOnTab(event, dataContext, window)
     }
+  }
+
+  private fun handleDropOnTerminalView(event: DnDEvent, terminalView: TerminalView) {
+    val files = getDroppedFiles(event).ifEmpty { return }
+
+    val textToInsert = files.joinToString(" ") { it.path }
+    terminalView.sendText(textToInsert)
+  }
+
+  private fun handleDropOnTab(event: DnDEvent, dataContext: DataContext, window: ToolWindowEx) {
+    val contentManager = dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER) ?: return
+    val files = getDroppedFiles(event)
+    val dir = getDirectory(files.firstOrNull()) ?: return
+
+    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
+    createTerminalTab(
+      window.project,
+      workingDirectory = dir.path,
+      contentManager = contentManager,
+      startupFusInfo = fusInfo
+    )
   }
 
   private fun getDataContext(event: DnDEvent): DataContext? {
