@@ -68,7 +68,7 @@ import java.util.function.Function
 @ApiStatus.Internal
 class LookupElementCustomPreviewHolderDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
-    val customPreviewHolder = getLookupElementCustomPreviewHolder(element) ?: return null
+    val customPreviewHolder = element.getCustomPreviewHolder() ?: return null
     val anchorElement = if (offset >= 1) psiFile.findElementAt(offset - 1) else psiFile.findElementAt(offset)
     if (anchorElement == null) return null
     return CustomPreviewDocumentationTarget(anchorElement, customPreviewHolder, offset)
@@ -414,7 +414,7 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
         return@Function element as? LookupElement
       },
       Function { element: LookupElement? ->
-        val commandElement = getLookupElementCustomPreviewHolder(element)
+        val commandElement = element?.getCustomPreviewHolder()
         commandElement?.preview(ActionContext.from(lookup.editor, file)) ?: IntentionPreviewInfo.EMPTY
       }
     )
@@ -422,9 +422,7 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
   val listener = object : LookupListener {
     private var shown: Boolean = false
     override fun currentItemChanged(event: LookupEvent) {
-      val currentItem = event.lookup.currentItem
-      val element = getLookupElementCustomPreviewHolder(currentItem)
-      if (!shown && element != null) {
+      if (!shown && event.lookup.currentItem?.getCustomPreviewHolder() != null) {
         shown = true
         previewHandler.showInitially()
       }
@@ -452,11 +450,9 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
 }
 
 @ApiStatus.Internal
-fun getLookupElementCustomPreviewHolder(element: LookupElement?): LookupElementCustomPreviewHolder? {
-  if (element is CompletionItemLookupElement) {
-    return element.item() as? LookupElementCustomPreviewHolder
-  }
-  return element?.`as`(LookupElementCustomPreviewHolder::class.java)
+fun LookupElement.getCustomPreviewHolder(): LookupElementCustomPreviewHolder? {
+  return this.`as`(CompletionItemLookupElement::class.java)?.item() as? LookupElementCustomPreviewHolder
+         ?: this.`as`(LookupElementCustomPreviewHolder::class.java)
 }
 
 internal fun showJavaDocPreview(project: Project): Boolean =
