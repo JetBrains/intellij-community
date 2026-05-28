@@ -129,22 +129,29 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       }
 
       // Default to the current testCase parent id
-      Optional<TestData> parent = testCase.getId().getParentIdObject().map(results::get);
+      Optional<TestData> directParent = testCase.getId().getParentIdObject().map(results::get);
+      Optional<TestData> parent = directParent;
+      boolean foundClassSegment = false;
 
       // Loop over the segments in reverse to find this test case's class parent. We utilize the
       // closest parent that is either a class or nested class when nested classes are involved.
-      // If no parent exists that is a class, then we default to the current test case.
+      // Vintage descriptors use "test" segments for both suites and test cases, so if no class
+      // parent exists we keep the nearest suite parent instead of reporting each test as a suite.
       List<UniqueId.Segment> segments = testCase.getId().getUniqueIdObject().getSegments();
       for (int i = segments.size() - 2; i >= 0; i--) {
-        if (SegmentClassTypes.contains(segments.get(i).getType()) || parent.isEmpty()) {
+        if (SegmentClassTypes.contains(segments.get(i).getType())) {
+          foundClassSegment = true;
+          break;
+        }
+        if (parent.isEmpty()) {
           break;
         }
 
         parent = parent.get().getId().getParentIdObject().map(results::get);
       }
 
-      // If no class or nested-class segment was found, default to the current test case
-      knownSuites.computeIfAbsent(parent.orElse(testCase), id -> new ArrayList<>()).add(testCase);
+      TestData suite = foundClassSegment ? parent.orElse(testCase) : directParent.orElse(testCase);
+      knownSuites.computeIfAbsent(suite, id -> new ArrayList<>()).add(testCase);
     }
 
     // If a container (e.g. a whole test class) fails before any test method starts, there may be
