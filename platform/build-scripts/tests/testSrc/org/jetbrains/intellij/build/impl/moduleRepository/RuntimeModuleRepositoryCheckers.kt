@@ -1,11 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.runtimeModuleRepository.generator.tests
+package org.jetbrains.intellij.build.impl.moduleRepository
 
-import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleDetector
-import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleRegistrationData
-import com.intellij.devkit.runtimeModuleRepository.generator.JpsCompilationResourcePathsSchema
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
 import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
@@ -43,7 +38,7 @@ internal fun generateAndValidateRuntimeModuleRepository(project: JpsProject): Li
   val dummyContentModuleDetector = object : ContentModuleDetector {
     override fun findContentModuleData(jpsModule: JpsModule): ContentModuleRegistrationData {
       return ContentModuleRegistrationData(name = jpsModule.name,
-                                           namespace = RuntimeModuleId.DEFAULT_NAMESPACE,
+                                           namespace = DEFAULT_NAMESPACE,
                                            visibility = RuntimeModuleVisibility.PUBLIC)
     }
 

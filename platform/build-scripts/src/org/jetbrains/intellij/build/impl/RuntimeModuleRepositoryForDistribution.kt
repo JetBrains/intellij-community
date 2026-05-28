@@ -3,12 +3,12 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.generator.ResourcePathsSchema
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
-import com.intellij.devkit.runtimeModuleRepository.generator.isProjectLevel
+import org.jetbrains.intellij.build.impl.moduleRepository.ResourcePathsSchema
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryValidator
+import org.jetbrains.intellij.build.impl.moduleRepository.isProjectLevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimePluginHeader

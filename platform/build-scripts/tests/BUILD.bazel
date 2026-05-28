@@ -90,6 +90,8 @@ jvm_library(
     "//build/tasks:tasks-tests_test_lib",
     "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests",
     "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
+    "//platform/runtime/repository",
+    "//platform/runtime/repository:repository_test_lib",
   ],
   runtime_deps = [":tests"]
 )

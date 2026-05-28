@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleDetector
-import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleRegistrationData
+import org.jetbrains.intellij.build.impl.moduleRepository.ContentModuleDetector
+import org.jetbrains.intellij.build.impl.moduleRepository.ContentModuleRegistrationData
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId

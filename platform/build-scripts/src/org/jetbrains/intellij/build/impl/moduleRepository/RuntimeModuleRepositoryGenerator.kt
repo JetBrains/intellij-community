@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.runtimeModuleRepository.generator
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl.moduleRepository
 
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
@@ -145,7 +144,7 @@ private fun createProductionPartDescriptor(
 ): RawRuntimeModuleDescriptor {
   val dependencies = LinkedHashSet<RuntimeModuleId>()
   val resourcePaths = if (module.hasProductionSources) resourcePathsSchema.moduleOutputPaths(module).toMutableSet() else mutableSetOf()
-  enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
+  RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
     { dependencies.add(runtimeModuleIdGenerator(it, false)) },
     { library ->
       val projectLibraryId = getProjectLibraryId(library)
@@ -216,7 +215,7 @@ private fun collectProductionDependenciesForModule(
   productionDependenciesCache[module] = emptyDependenciesAndResources //to prevent StackOverflowError in case of circular dependencies
   val dependencies = LinkedHashSet<RuntimeModuleId>()
   val resourcePaths = LinkedHashSet<String>()
-  enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
+  RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
     { dependency ->
       collectProductionDependenciesForModule(
         dependency,
