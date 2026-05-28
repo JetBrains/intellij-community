@@ -2526,6 +2526,217 @@ public final class AllIconsKeys {
   }
 
   @GeneratedFromIntelliJSources
+  public static final class Modifiers {
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Arrow = new IntelliJIconKey("modifiers/arrow.svg", "modifiers/arrow.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Arrowright = new IntelliJIconKey("modifiers/arrowright.svg", "modifiers/arrowright.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Asterisk = new IntelliJIconKey("modifiers/asterisk.svg", "modifiers/asterisk.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Bean = new IntelliJIconKey("modifiers/bean.svg", "modifiers/bean.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Bench = new IntelliJIconKey("modifiers/bench.svg", "modifiers/bench.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Blocked = new IntelliJIconKey("modifiers/blocked.svg", "modifiers/blocked.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Braces = new IntelliJIconKey("modifiers/braces.svg", "modifiers/braces.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Build = new IntelliJIconKey("modifiers/build.svg", "modifiers/build.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Chat = new IntelliJIconKey("modifiers/chat.svg", "modifiers/chat.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Check = new IntelliJIconKey("modifiers/check.svg", "modifiers/check.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Client = new IntelliJIconKey("modifiers/client.svg", "modifiers/client.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Clock = new IntelliJIconKey("modifiers/clock.svg", "modifiers/clock.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Cloud = new IntelliJIconKey("modifiers/cloud.svg", "modifiers/cloud.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Code = new IntelliJIconKey("modifiers/code.svg", "modifiers/code.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Config = new IntelliJIconKey("modifiers/config.svg", "modifiers/config.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Console = new IntelliJIconKey("modifiers/console.svg", "modifiers/console.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Contexts = new IntelliJIconKey("modifiers/contexts.svg", "modifiers/contexts.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Cross = new IntelliJIconKey("modifiers/cross.svg", "modifiers/cross.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Cup = new IntelliJIconKey("modifiers/cup.svg", "modifiers/cup.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Data = new IntelliJIconKey("modifiers/data.svg", "modifiers/data.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey DB = new IntelliJIconKey("modifiers/db.svg", "modifiers/db.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Debug = new IntelliJIconKey("modifiers/debug.svg", "modifiers/debug.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Dot = new IntelliJIconKey("modifiers/dot.svg", "modifiers/dot.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Down = new IntelliJIconKey("modifiers/down.svg", "modifiers/down.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Edit = new IntelliJIconKey("modifiers/edit.svg", "modifiers/edit.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Embeddable = new IntelliJIconKey("modifiers/embeddable.svg", "modifiers/embeddable.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Factory = new IntelliJIconKey("modifiers/factory.svg", "modifiers/factory.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Failed = new IntelliJIconKey("modifiers/failed.svg", "modifiers/failed.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Flow = new IntelliJIconKey("modifiers/flow.svg", "modifiers/flow.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Gear = new IntelliJIconKey("modifiers/gear.svg", "modifiers/gear.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Generated = new IntelliJIconKey("modifiers/generated.svg", "modifiers/generated.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Git = new IntelliJIconKey("modifiers/git.svg", "modifiers/git.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Github = new IntelliJIconKey("modifiers/github.svg", "modifiers/github.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey GoTo = new IntelliJIconKey("modifiers/goTo.svg", "modifiers/goTo.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Group = new IntelliJIconKey("modifiers/group.svg", "modifiers/group.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Inside = new IntelliJIconKey("modifiers/inside.svg", "modifiers/inside.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Items = new IntelliJIconKey("modifiers/items.svg", "modifiers/items.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Jetbrains = new IntelliJIconKey("modifiers/jetbrains.svg", "modifiers/jetbrains.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey JS = new IntelliJIconKey("modifiers/js.svg", "modifiers/js.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Key = new IntelliJIconKey("modifiers/key.svg", "modifiers/key.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Kotlin = new IntelliJIconKey("modifiers/kotlin.svg", "modifiers/kotlin.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Library = new IntelliJIconKey("modifiers/library.svg", "modifiers/library.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey List = new IntelliJIconKey("modifiers/list.svg", "modifiers/list.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Locked = new IntelliJIconKey("modifiers/locked.svg", "modifiers/locked.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Memory = new IntelliJIconKey("modifiers/memory.svg", "modifiers/memory.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Module = new IntelliJIconKey("modifiers/module.svg", "modifiers/module.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Package = new IntelliJIconKey("modifiers/package.svg", "modifiers/package.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Plug = new IntelliJIconKey("modifiers/plug.svg", "modifiers/plug.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Plus = new IntelliJIconKey("modifiers/plus.svg", "modifiers/plus.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Record = new IntelliJIconKey("modifiers/record.svg", "modifiers/record.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Ref = new IntelliJIconKey("modifiers/ref.svg", "modifiers/ref.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Refresh = new IntelliJIconKey("modifiers/refresh.svg", "modifiers/refresh.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Replay = new IntelliJIconKey("modifiers/replay.svg", "modifiers/replay.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Resources = new IntelliJIconKey("modifiers/resources.svg", "modifiers/resources.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Run = new IntelliJIconKey("modifiers/run.svg", "modifiers/run.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Save = new IntelliJIconKey("modifiers/save.svg", "modifiers/save.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Schema = new IntelliJIconKey("modifiers/schema.svg", "modifiers/schema.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Search = new IntelliJIconKey("modifiers/search.svg", "modifiers/search.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Share = new IntelliJIconKey("modifiers/share.svg", "modifiers/share.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Snapshot = new IntelliJIconKey("modifiers/snapshot.svg", "modifiers/snapshot.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Spring = new IntelliJIconKey("modifiers/spring.svg", "modifiers/spring.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Star = new IntelliJIconKey("modifiers/star.svg", "modifiers/star.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Stop = new IntelliJIconKey("modifiers/stop.svg", "modifiers/stop.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Suspend = new IntelliJIconKey("modifiers/suspend.svg", "modifiers/suspend.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Table = new IntelliJIconKey("modifiers/table.svg", "modifiers/table.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Test = new IntelliJIconKey("modifiers/test.svg", "modifiers/test.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Watch = new IntelliJIconKey("modifiers/watch.svg", "modifiers/watch.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Web = new IntelliJIconKey("modifiers/web.svg", "modifiers/web.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Zip = new IntelliJIconKey("modifiers/zip.svg", "modifiers/zip.svg", AllIconsKeys.class);
+  }
+
+  @GeneratedFromIntelliJSources
   public static final class Modules {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
