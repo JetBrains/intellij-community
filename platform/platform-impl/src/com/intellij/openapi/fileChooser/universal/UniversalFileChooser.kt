@@ -140,7 +140,7 @@ object UniversalFileChooser {
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
       if (!toSelect.isEmpty()) {
         toSelect.first()?.let { runCatching { it.toNioPath() }.getOrNull() }?.let { nioPath ->
-          mainPanel.preselectFile(nioPath)
+          mainPanel.navigateToFile(nioPath)
         }
       }
       if (this.showAndGet()) {
@@ -151,7 +151,7 @@ object UniversalFileChooser {
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
       toSelect?.runCatching { toSelect.toNioPath() }?.getOrNull()?.let { nioPath ->
-        mainPanel.preselectFile(nioPath)
+        mainPanel.navigateToFile(nioPath)
       }
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
@@ -397,20 +397,13 @@ object UniversalFileChooser {
       }
     }
 
-    fun preselectFile(toSelect: Path?) {
-      if (toSelect == null) return
-      val index = fileViews.indexOfFirst { it.contributor.ownsPath(toSelect) }
-      if (index < 0) return
-      tabbedPane.selectedIndex = index
-      fileViews[index].fileToSelect = toSelect
-    }
 
     fun getSelectedFiles(): List<Path> {
       val fileView = (tabbedPane.selectedComponent as JComponent).getUserData(FILE_VIEW_KEY)
       return fileView?.getSelectedFiles() ?: emptyList()
     }
 
-    private fun navigateToFile(file: Path) {
+    fun navigateToFile(file: Path) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
       if (index < 0) return
       tabbedPane.selectedIndex = index

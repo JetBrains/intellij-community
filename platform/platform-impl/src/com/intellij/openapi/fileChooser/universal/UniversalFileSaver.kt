@@ -135,7 +135,7 @@ object UniversalFileSaver {
 
     override fun save(baseDir: Path?, filename: String?): VirtualFileWrapper? {
       if (baseDir != null) {
-        chooserPanel.preselectFile(baseDir)
+        chooserPanel.navigateToFile(baseDir)
       }
       if (filename != null) {
         fileNameField.text = filename
