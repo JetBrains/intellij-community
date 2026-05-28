@@ -55,6 +55,17 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
   open fun shouldRunCodeCompletion(parameters: CompletionParameters): Boolean = true
 
   /**
+   * Controls whether the IDE should try to resolve [completionItem] before updating its lookup element presentation.
+   *
+   * If this function returns `true`, and the LSP server advertises `CompletionOptions.resolveProvider`, the IDE sends the
+   * [completionItem/resolve](https://microsoft.github.io/language-server-protocol/specification/#completionItem_resolve) request.
+   *
+   * Override this function and return `false` for completion items that should use only the data returned by `textDocument/completion`,
+   * for example, to avoid expensive or redundant resolve requests.
+   */
+  open fun shouldResolveCompletionItem(completionItem: CompletionItem): Boolean = true
+
+  /**
    * A code completion prefix is a sequence of characters to the left of the caret in the editor,
    * which is used by the IDE to filter completion items.
    *
@@ -122,6 +133,11 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
     presentation.setTailText(getTailText(item), true)
     presentation.typeText = getTypeText(item)
     presentation.isTypeGrayed = true
+  }
+
+  @ApiStatus.Internal
+  open suspend fun expensiveRenderLookupElement(completionItem: CompletionItem, presentation: LookupElementPresentation) {
+    renderLookupElement(completionItem, presentation)
   }
 
   /**
