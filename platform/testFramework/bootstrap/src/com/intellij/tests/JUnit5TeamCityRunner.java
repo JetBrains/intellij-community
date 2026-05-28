@@ -668,7 +668,13 @@ public final class JUnit5TeamCityRunner {
             return className.endsWith(withDisplayName) ? className
                                                        : className + withDisplayName;
           }
-          return s instanceof MethodSource ? ((MethodSource)s).getClassName() + "." + displayName : null;
+          if (s instanceof MethodSource) {
+            String className = ((MethodSource)s).getClassName();
+            String methodName = ((MethodSource)s).getMethodName();
+            return displayName.startsWith(methodName) ? className + "." + displayName
+                                                      : className + "." + methodName + "[" + displayName + "]";
+          }
+          return null;
         }).orElse(displayName);
     }
 
