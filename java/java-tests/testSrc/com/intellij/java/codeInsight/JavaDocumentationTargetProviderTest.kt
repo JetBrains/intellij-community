@@ -16,7 +16,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiPackage
-import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -340,11 +339,10 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
   }
 
   fun testPackageInfo() {
-    val pack = assertSingleTargetElementInFile<PsiPackageStatement>(
+    assertSingleTargetElementInFile<PsiPackage>(
       "package-info.java",
       "/** test <caret> test */ package foo.bar;", // IJPL-32515
     )
-    assertEquals("foo.bar", pack.packageName)
   }
 
   fun testSubPackage() {
@@ -359,7 +357,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
       "class A { <caret> }",
       "void foo() <caret>{}",
       "void foo() { <caret> }",
-      "class A {} class B exte<caret>nds A {}",
     )
   }
 }

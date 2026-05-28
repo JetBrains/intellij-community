@@ -1041,6 +1041,8 @@
     <lang.importOptimizer language="JAVA" implementationClass="com.intellij.lang.java.JavaImportOptimizer"/>
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
 
+    <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
+
     <platform.backend.documentation.psiTargetProvider id="JavaPsiDocumentationTargetProvider"
                                                       implementation="com.intellij.lang.java.JavaPsiDocumentationTargetProvider" />
     <platform.backend.documentation.inlineDocumentationProvider id="JavaInlineDocumentationProvider"
