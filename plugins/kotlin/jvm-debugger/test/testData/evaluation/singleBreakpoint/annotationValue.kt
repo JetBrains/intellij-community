@@ -10,5 +10,5 @@ fun main(args: Array<String>) {
     val a = 5
 }
 
-// EXPRESSION: (SomeClass::class.java.annotations[0] as Anno).value
+// EXPRESSION: SomeClass::class.java.getAnnotation(Anno::class.java).value
 // RESULT: "abc": Ljava/lang/String;
