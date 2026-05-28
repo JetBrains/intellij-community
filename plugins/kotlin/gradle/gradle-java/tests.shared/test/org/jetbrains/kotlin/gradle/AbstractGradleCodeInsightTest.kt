@@ -150,7 +150,7 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
                         val dirsWithBuildScripts = file(path).listFiles()
                             ?.filter { File(it, "build.gradle.kts").exists() }
                         dirsWithBuildScripts?.forEach { subproject ->
-                            val relativePath = subproject.relativeTo(rootDir).path
+                            val relativePath = subproject.relativeTo(rootDir).invariantSeparatorsPath
                             include(":${relativePath.replace('/', ':')}")
                         }
                     }
