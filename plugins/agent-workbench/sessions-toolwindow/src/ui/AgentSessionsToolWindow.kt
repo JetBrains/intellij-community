@@ -200,7 +200,7 @@ internal class AgentSessionsToolWindowPanel(
     getSessionTreeModel = { sessionTreeModel },
     setSessionTreeModel = {
       sessionTreeModel = it
-      if (sessionTreeModelHasCostThreads(it)) {
+      if (sessionTreeModelShouldMarkCostHintEligible(it)) {
         service<AgentSessionCostHintStateService>().markEligible()
       }
     },
@@ -276,7 +276,13 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     installToolWindowVisibilityTracker()
-    stateController.setModelUpdatesVisible(isModelUpdateVisible())
+    val initiallyVisible = isModelUpdateVisible()
+    publishAgentSessionsToolWindowVisibility(
+      visible = initiallyVisible,
+      token = costHydrationVisibilityToken,
+      setModelUpdatesVisible = stateController::setModelUpdatesVisible,
+      visibilityService = service(),
+    )
     stateController.start()
     requestInitialRefreshIfVisible()
   }
@@ -324,8 +330,12 @@ internal class AgentSessionsToolWindowPanel(
 
   private fun applyToolWindowVisibility() {
     val visible = isModelUpdateVisible()
-    stateController.setModelUpdatesVisible(visible)
-    service<AgentSessionsToolWindowVisibilityService>().setVisible(costHydrationVisibilityToken, visible)
+    publishAgentSessionsToolWindowVisibility(
+      visible = visible,
+      token = costHydrationVisibilityToken,
+      setModelUpdatesVisible = stateController::setModelUpdatesVisible,
+      visibilityService = service(),
+    )
     requestInitialRefreshIfVisible()
   }
 
@@ -511,8 +521,18 @@ internal class AgentSessionsToolWindowPanel(
   }
 }
 
-private fun sessionTreeModelHasCostThreads(model: SessionTreeModel): Boolean {
+internal fun sessionTreeModelShouldMarkCostHintEligible(model: SessionTreeModel): Boolean {
   return model.entriesById.values.any { entry ->
-    (entry.node as? SessionTreeNode.Thread)?.thread?.cost != null
+    entry.node is SessionTreeNode.Thread
   }
+}
+
+internal fun publishAgentSessionsToolWindowVisibility(
+  visible: Boolean,
+  token: String,
+  setModelUpdatesVisible: (Boolean) -> Unit,
+  visibilityService: AgentSessionsToolWindowVisibilityService,
+) {
+  setModelUpdatesVisible(visible)
+  visibilityService.setVisible(token, visible)
 }
