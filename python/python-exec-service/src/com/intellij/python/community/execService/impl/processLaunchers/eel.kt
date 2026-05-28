@@ -1,23 +1,37 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl.processLaunchers
 
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.rootManager
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.project.stateStore
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.TtySize
+import com.intellij.python.community.execService.impl.PyExecBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import kotlin.io.path.pathString
+
+private val log = fileLogger()
 
 internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchRequest: LaunchRequest): ProcessLauncher {
   val exePath: EelPath = with(binOnEel) {
@@ -61,8 +75,24 @@ private class EelProcessCommands(
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
     var workDir = binOnEel.workDir
-    workDir = if (workDir != null && !workDir.isAbsolute) workDir.toRealPath() else workDir
+    workDir = withContext(Dispatchers.IO) { if (workDir != null && !workDir.isAbsolute) workDir.toRealPath() else workDir }
+
+    // If project is untrusted we should not execute anything there
+    val nioPathToExec = withContext(Dispatchers.IO) {
+      path.asNioPath().toAbsolutePath()
+    }
+    val prohibitedPaths = getProhibitedPaths()
+    val pathIsProhibited = prohibitedPaths == null || prohibitedPaths.any { prohibitedParent ->
+      nioPathToExec.startsWith(prohibitedParent) ||
+      (workDir != null && workDir.startsWith(prohibitedParent))
+    }
+    if (pathIsProhibited) {
+      log.trace { "Prohibited exec $nioPathToExec" }
+      return Result.failure(ExecErrorReason.CantStart(null, PyExecBundle.message("py.exec.error.not.trusted", nioPathToExec)))
+    }
+
     try {
+      log.trace { "Spawning $nioPathToExec" }
       val eelProcess = path.descriptor.toEelApi().exec.spawnProcess(path)
         .scope(scopeToBind)
         .args(args)
@@ -77,4 +107,19 @@ private class EelProcessCommands(
       return Result.failure(ExecErrorReason.CantStart(e.errno, e.message))
     }
   }
+}
+
+/**
+ * List of roots of all untrusted projects
+ */
+private suspend fun getProhibitedPaths(): List<Path>? = withContext(Dispatchers.Default) {
+  val untrustedProjects = ProjectManager.getInstance().openProjects.filter { !TrustedProjects.isProjectTrusted(it) }
+  if (untrustedProjects.isEmpty()) {
+    return@withContext emptyList()
+  }
+  val prohibitedRoots = untrustedProjects.flatMap { p -> p.modules.flatMap { it.rootManager.contentRoots.toList() } }.map { it.toNioPath() }
+  if (prohibitedRoots.isEmpty()) {
+    return@withContext null
+  }
+  return@withContext (prohibitedRoots + untrustedProjects.map { it.stateStore.projectBasePath }).map { it.toAbsolutePath() }
 }

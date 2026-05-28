@@ -3,6 +3,8 @@
   <dependencies>
     <module name="intellij.platform.testFramework.junit5.eel._test"/>
     <module name="intellij.python.community.execService"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.processOutput.common"/>
   </dependencies>

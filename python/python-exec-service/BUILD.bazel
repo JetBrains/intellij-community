@@ -45,6 +45,8 @@ jvm_library(
     "//python/python-process-output/common",
     "//python/impl.helperLocator:community-helpersLocator",
     "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-impl",
   ]
 )
 
@@ -84,6 +86,8 @@ jvm_library(
     "//python/python-process-output/common",
     "//python/impl.helperLocator:community-helpersLocator",
     "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.python.community.execService` end

@@ -56,5 +56,7 @@
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
   </component>
 </module>
