@@ -314,7 +314,6 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 f:com.intellij.ide.plugins.PluginInstaller
 - sf:INSTANCE:com.intellij.ide.plugins.PluginInstaller
-- sf:UNKNOWN_HOST_MARKER:java.lang.String
 - sf:addStateListener(com.intellij.ide.plugins.PluginStateListener):V
 - sf:rootEntryName(java.nio.file.Path):java.lang.String
 - sf:unpackPlugin(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path

@@ -55,8 +55,7 @@ object PluginInstaller {
   private val DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS =
     SystemProperties.getBooleanProperty("plugins.drop-disabled-flag-of-uninstalled-plugins", true)
 
-  @JvmField
-  val UNKNOWN_HOST_MARKER: String = "__unknown_repository__"
+  internal const val UNKNOWN_HOST_MARKER: String = "__unknown_repository__"
 
   @JvmField
   internal val ourLock: Any = Any()
