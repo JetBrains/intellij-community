@@ -29,6 +29,8 @@ import org.jetbrains.annotations.TestOnly
 object ExceptionAutoReportUtil {
   private const val EA_AUTO_REPORT_OFFERED_PROPERTY: String = "ea.auto.report.offered"
   private const val ENABLED_FOR_DEVELOPMENT = false
+  private const val BACKEND_THROWABLE_HEADER_PREFIX = "backend"
+  private const val BACKEND_EXCEPTION_CLASS_NAME = "com.jetbrains.rd.platform.diagnostics.BackendException"
 
   // may be queried before Application started
   val autoReportIsForbiddenForProduct: Boolean
@@ -200,6 +202,15 @@ object ExceptionAutoReportUtil {
   fun getThrowableFqn(throwable: Throwable): String? {
     if (throwable is RemoteSerializedThrowable) return throwable.classFqn
     return throwable::class.qualifiedName
+  }
+
+  fun getAutoReportSource(throwable: Throwable): String {
+    return if (isBackendThrowable(throwable)) "backend" else "frontend"
+  }
+
+  private fun isBackendThrowable(throwable: Throwable): Boolean {
+    return throwable is RemoteSerializedThrowable && throwable.headerPrefix == BACKEND_THROWABLE_HEADER_PREFIX
+           || throwable.javaClass.name == BACKEND_EXCEPTION_CLASS_NAME
   }
 
   @TestOnly
