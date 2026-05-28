@@ -52,7 +52,9 @@ internal object TerminalDnDHandler {
     val files = getDroppedFiles(event).ifEmpty { return }
 
     val textToInsert = files.joinToString(" ") { it.path }
-    terminalView.sendText(textToInsert)
+    terminalView.createSendTextBuilder()
+      .useBracketedPasteMode()
+      .send(textToInsert)
   }
 
   private fun handleDropOnTab(event: DnDEvent, dataContext: DataContext, window: ToolWindowEx) {
