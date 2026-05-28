@@ -312,7 +312,7 @@ private class CustomPreviewDocumentationTarget(
   }
 }
 
-private fun String.indexesOf(fragment: String): MutableList<Int> {
+private fun String.indexesOf(fragment: String): List<Int> {
   val result = mutableListOf<Int>()
   var index = indexOf(fragment)
   while (index >= 0) {
