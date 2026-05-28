@@ -144,6 +144,14 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     runTest("PrecariousAnchor", null); // See IDEA-389677
   }
 
+  public void testRawConstructorCall() {
+    runTest("RawConstructorCall", null);
+  }
+
+  public void testRawQualifiedInnerConstructorCall() {
+    runTest("RawQualifiedInnerConstructorCall", null);
+  }
+
   private void assertNotAvailable(String name) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + name + ".java");
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
@@ -152,12 +160,12 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     assertNull(presentation);
   }
 
-  private void runTest(final String testIndex, @NonNls String targetClassName) {
-    configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
+  private void runTest(final String testName, @NonNls String targetClassName) {
+    configureByFile("/refactoring/replaceConstructorWithFactory/before" + testName + ".java");
     setupEditorForInjectedLanguage();
     perform(targetClassName);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");
+    checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testName + ".java");
   }
 
   private void perform(String targetClassName) {
