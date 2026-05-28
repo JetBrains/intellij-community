@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
+import com.intellij.internal.statistic.SmartModeTransitionPhase
+import com.intellij.internal.statistic.SmartModeTransitionPhaseListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
@@ -10,7 +13,6 @@ import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.nio.file.Path
 
 /**
  * Abstract base class for TCP-based EEL machines providing IJent session management.
@@ -54,7 +56,25 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
   val isSessionRunning: Boolean
     get() = (state as? SessionState.Started)?.session?.isRunning == true
 
-  protected abstract suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy
+  protected abstract suspend fun createStrategy(): FusReportingStrategy
+
+  abstract class FusReportingStrategy : IjentIsolatedTcpDeployingStrategy() {
+    final override suspend fun phaseStarted(phase: Phase) {
+      publisher()?.phaseStarted(phase.toSmartModePhase())
+    }
+
+    final override suspend fun phaseFinished(phase: Phase) {
+      publisher()?.phaseFinished(phase.toSmartModePhase())
+    }
+
+    private fun publisher(): SmartModeTransitionPhaseListener? =
+      ApplicationManager.getApplication()?.messageBus?.syncPublisher(SmartModeTransitionPhaseListener.TOPIC)
+
+    private fun Phase.toSmartModePhase(): SmartModeTransitionPhase = when (this) {
+      Phase.DEPLOY -> SmartModeTransitionPhase.EEL_DEPLOY
+      Phase.CONNECT -> SmartModeTransitionPhase.EEL_CONNECT
+    }
+  }
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     return getOrCreateIjentSession().getIjentInstance(descriptor)
