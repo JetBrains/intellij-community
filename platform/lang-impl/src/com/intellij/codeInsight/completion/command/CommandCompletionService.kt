@@ -122,7 +122,8 @@ internal class CommandCompletionService : Disposable.Default {
     if (showIfMeaningless) {
       lookup.showIfMeaningless() // stop hiding
     }
-    lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup) // todo settings move frontend
+    lookup.arranger.additionalMatcher =
+      CommandCompletionLookupItemMatcher(PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup) // todo settings move frontend
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
     lookup.refreshUi(false, true)
@@ -137,7 +138,8 @@ internal class CommandCompletionService : Disposable.Default {
     val completionFactory = completionService.getFactory(psiFile.language) ?: return
     val fullSuffix = completionFactory.suffix() + completionFactory.filterSuffix().toString()
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val index = if (nonWrittenFiles) 0 else findActualIndex(fullSuffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
+    val index =
+      if (nonWrittenFiles) 0 else findActualIndex(fullSuffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val startOffset = lookup.lookupOriginalStart - index
     val endOffset = topLevelEditor.caretModel.offset
     if (endOffset - startOffset != 1) return
@@ -303,7 +305,13 @@ private class CommandCompletionHighlightingListener(
     }
     val previousHighlighting = lookup.getUserData(PROMPT_HIGHLIGHTING)
     previousHighlighting?.let { topLevelEditor.markupModel.removeHighlighter(it) }
-    val highlighter = topLevelEditor.markupModel.addRangeHighlighter(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES, startOffset, endOffset, PROMPT_LAYER, HighlighterTargetArea.EXACT_RANGE)
+    val highlighter = topLevelEditor.markupModel.addRangeHighlighter(
+      TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES,
+      startOffset,
+      endOffset,
+      PROMPT_LAYER,
+      HighlighterTargetArea.EXACT_RANGE
+    )
     lookup.putUserData(PROMPT_HIGHLIGHTING, highlighter)
   }
 
@@ -326,9 +334,10 @@ private class CommandCompletionHighlightingListener(
     val highlightManager = HighlightManager.getInstance(project)
     val previousHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
     previousHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
-    val diff = if (nonWrittenFiles) 0
-              else findActualIndex(element.suffix, topLevelEditor.document.immutableCharSequence,
-                         lookup.lookupOriginalStart)
+    val diff = when (nonWrittenFiles) {
+      true -> 0
+      false -> findActualIndex(element.suffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
+    }
     val startOffset = lookup.lookupOriginalStart - diff
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
