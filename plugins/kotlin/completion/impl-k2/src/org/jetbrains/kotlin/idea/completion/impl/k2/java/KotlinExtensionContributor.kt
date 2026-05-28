@@ -34,7 +34,6 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
@@ -55,7 +54,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -117,6 +115,7 @@ private class KotlinExtensionLookupItem(
     private val renderedParameters: String,
     private val methodWrapper: PsiMethod,
     private val containingClass: PsiClass,
+    private val qualifierInCopy: PsiExpression,
     private val renderedTail: String,
     private val renderedTypeText: String,
     private val couldInsertSemicolon: Boolean,
@@ -136,15 +135,8 @@ private class KotlinExtensionLookupItem(
         val document = context.document
         PsiDocumentManager.getInstance(context.project).commitDocument(document)
 
-        // We find the ref expression by checking at the position of the `.`
-        val refExpr = PsiTreeUtil.findElementOfClassAtOffset(
-            context.file, context.startOffset - 1, PsiReferenceExpression::class.java, false
-        )
-        val qualifier = refExpr?.qualifierExpression ?: return
-        val qualifierText = qualifier.text
-
-        val replaceStart = qualifier.textRange.startOffset
-        val replaceEnd = context.tailOffset
+        val qualifierText = qualifierInCopy.text
+        context.document.deleteString(qualifierInCopy.startOffset, qualifierInCopy.endOffset)
 
         // Note: If there are parameters beyond the receiver, i.e.,
         // if any parameter needs to be added by the user after.
@@ -162,14 +154,14 @@ private class KotlinExtensionLookupItem(
 
         val newCall = "${containingClass.name}.${methodName}($qualifierText$qualifierSuffix"
         document.replaceString(
-            replaceStart, replaceEnd,
+            qualifierInCopy.startOffset, context.tailOffset,
             newCall
         )
 
         // Now we finish the remaining statement. We are after the `tailOffset` so this will not affect where the
         // cursor will be placed in the end.
         if (hasExtraParams) {
-            document.insertString(replaceStart + newCall.length, ")$insertedSemicolon")
+            document.insertString(qualifierInCopy.startOffset + newCall.length, ")$insertedSemicolon")
         }
         context.commitDocument()
 
@@ -330,16 +322,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
         val parent = parameters.position.parent
         if (parent !is PsiReferenceExpression) return
         val qualifierInCopy = parent.qualifierExpression ?: return
-        // We need to go to the original file and run the Kotlin analysis there.
-        // Otherwise, types in the copied file would not be available to the Kotlin analysis session.
-        val qualifierInOriginal = PsiTreeUtil.findElementOfClassAtRange(
-            /* file = */ parameters.originalFile,
-            /* startOffset = */ qualifierInCopy.startOffset,
-            /* endOffset = */ qualifierInCopy.endOffset,
-            /* clazz = */ PsiExpression::class.java
-        ) ?: return
-
-        val qualifierType = qualifierInOriginal.type ?: return
+        val qualifierType = qualifierInCopy.type ?: return
 
         val kaModule = parameters.originalFile.getKaModule(parent.project, null)
 
@@ -348,7 +331,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
         }
 
         analyze(kaModule) {
-            val qualifierKaType = qualifierType.asKaType(qualifierInOriginal)?.lowerBoundIfFlexible() ?: return@analyze
+            val qualifierKaType = qualifierType.asKaType(parameters.originalFile)?.lowerBoundIfFlexible() ?: return@analyze
             qualifierKaType.processApplicableExtensions(parameters.originalFile, result.prefixMatcher) { extension, methodWrapper ->
                 val containingClass = methodWrapper.containingClass ?: return@processApplicableExtensions
 
@@ -369,6 +352,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
                     renderedParameters = renderedParameters,
                     renderedTypeText = getTypeTextForCallable(extension.asSignature(), treatAsFunctionCall = true),
                     renderedTail = TailTextProvider.getTailText(extension),
+                    qualifierInCopy = qualifierInCopy,
                     couldInsertSemicolon = couldInsertSemicolon,
                     originalFile = parameters.originalFile,
                     icon = extension.getExtensionIcon(),

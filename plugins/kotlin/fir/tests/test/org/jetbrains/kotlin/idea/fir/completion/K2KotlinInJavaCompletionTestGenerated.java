@@ -281,6 +281,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/SimpleFunction.java");
         }
 
+        @TestMetadata("SimpleFunctionAtTop.java")
+        public void testSimpleFunctionAtTop() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SimpleFunctionAtTop.java");
+        }
+
         @TestMetadata("SimpleFunctionWithPrefix.java")
         public void testSimpleFunctionWithPrefix() throws Exception {
             runTest("../../completion/testData/inJava/extensions/SimpleFunctionWithPrefix.java");

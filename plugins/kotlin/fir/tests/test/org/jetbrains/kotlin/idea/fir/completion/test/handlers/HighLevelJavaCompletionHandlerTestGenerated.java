@@ -97,6 +97,11 @@ public abstract class HighLevelJavaCompletionHandlerTestGenerated extends Abstra
             runTest("../../completion/testData/handlers/injava/extensions/SimpleFunction.java");
         }
 
+        @TestMetadata("SimpleFunctionAtTop.java")
+        public void testSimpleFunctionAtTop() throws Exception {
+            runTest("../../completion/testData/handlers/injava/extensions/SimpleFunctionAtTop.java");
+        }
+
         @TestMetadata("SimpleFunctionWithParam.java")
         public void testSimpleFunctionWithParam() throws Exception {
             runTest("../../completion/testData/handlers/injava/extensions/SimpleFunctionWithParam.java");
