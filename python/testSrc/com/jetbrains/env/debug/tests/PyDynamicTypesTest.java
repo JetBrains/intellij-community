@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tests;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,6 +19,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
 
@@ -64,7 +64,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
           myFixture.configureByFile(scriptName);
 
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorCaretTestUtil.CaretAndSelectionState(
-            Lists.newArrayList(new EditorCaretTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));
+            List.of(new EditorCaretTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));
           final IntentionAction action = myFixture.findSingleIntention(PyPsiBundle.message("INTN.insert.docstring.stub"));
           boolean saved = PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB;
           try {
