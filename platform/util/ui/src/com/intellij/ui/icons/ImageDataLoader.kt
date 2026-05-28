@@ -2,11 +2,11 @@
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.ParsedSvgDocument
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
+import java.awt.Shape
 import java.net.URL
 
 @ApiStatus.Internal
@@ -16,10 +16,7 @@ interface ImageDataLoader {
   val expUIPath: String?
     get() = null
 
-  fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
-
-  @Experimental
-  fun loadSvgDocument(parameters: LoadIconParameters, scaleContext: ScaleContext): ParsedSvgDocument? = null
+  fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>?
 
   val url: URL?
 
@@ -44,6 +41,12 @@ interface ImageDataLoader {
   val modificationCount: Int
     get() = -1
 }
+
+@ApiStatus.Internal
+data class ImageWithShape<out T : Image>(
+  val image: T,
+  val shape: Shape?,
+)
 
 @Serializable
 @ApiStatus.Internal

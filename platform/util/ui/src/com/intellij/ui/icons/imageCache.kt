@@ -226,7 +226,8 @@ private fun doLoadByDescriptor(path: String,
                                     scale = descriptor.scale,
                                     compoundCacheKey = descriptor.toSvgMapper(),
                                     colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
-                                    colorPatcher = colorPatcher) { stream.readAllBytes() }
+                                    colorPatcher = colorPatcher,
+                                    withShape = false) { stream.readAllBytes() }?.image
       }
       else {
         loadRasterImage(stream = stream)
@@ -242,9 +243,10 @@ private fun doLoadByDescriptor(path: String,
                                   scale = descriptor.scale,
                                   compoundCacheKey = descriptor.toSvgMapper(),
                                   colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
-                                  colorPatcher = colorPatcher) {
+                                  colorPatcher = colorPatcher,
+                                  withShape = false) {
         getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
-      }
+      }?.image
     }
     else {
       loadPngFromClassResource(path = path, classLoader = classLoader, resourceClass = resourceClass)

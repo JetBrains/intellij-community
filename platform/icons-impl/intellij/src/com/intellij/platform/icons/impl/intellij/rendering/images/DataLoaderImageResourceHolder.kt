@@ -17,7 +17,7 @@ internal class DataLoaderImageResourceHolder(
     return dataLoader.loadImage(
       parameters = imageModifiers.toLoadParameters(),
       scaleContext = scale
-    )
+    )?.image
   }
 
   override fun getExpectedDimensions(): Dimensions {

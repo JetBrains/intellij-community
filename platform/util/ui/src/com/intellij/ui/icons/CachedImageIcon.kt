@@ -83,7 +83,6 @@ open class CachedImageIcon private constructor(
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip, IconWithShape {
   private var pathTransformModCount = -1
   private var loaderModCount = -1
-  private var shape: Shape? = null
 
   override val originalPath: String?
     get() = originalLoader.path
@@ -226,17 +225,7 @@ open class CachedImageIcon private constructor(
   }
 
   override fun getShape(): Shape? {
-    var result = this.shape
-    if (result != null) return result
-    val svg = loader.loadSvgDocument(getLoadIconParameters(getEffectiveAttributes()), getEffectiveScaleContext())
-    if (svg == null) return null
-    result = computeShape(svg)
-    this.shape = result
-    return result
-  }
-
-  private fun getEffectiveScaleContext(): ScaleContext {
-    return scaleContext ?: ScaleContext.create(ScaleType.SYS_SCALE.of(JBUIScale.sysScale()))
+    return (resolveActualIcon() as? IconWithShape)?.getShape()
   }
 
   override fun toString(): String {
@@ -309,7 +298,6 @@ open class CachedImageIcon private constructor(
     )
     result.pathTransformModCount = pathTransformModCount
     result.loaderModCount = loaderModCount
-    result.shape = shape
     return result
   }
 
@@ -378,7 +366,7 @@ open class CachedImageIcon private constructor(
       this.loader.url
     }
 
-  internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
+  internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): ImageWithShape<Image>? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val loader = loader
     if (loader is EmptyImageDataLoader) return null

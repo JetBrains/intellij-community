@@ -18,6 +18,7 @@ import java.awt.Graphics
 import java.awt.GraphicsConfiguration
 import java.awt.GraphicsEnvironment
 import java.awt.Image
+import java.awt.Shape
 import java.lang.ref.SoftReference
 import java.util.concurrent.CancellationException
 import javax.swing.Icon
@@ -62,7 +63,7 @@ internal class ScaledIconCache {
   }
 
   private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long, attributes: IconAttributes): Icon {
-    val image = try {
+    val imageWithShape = try {
       host.loadImage(scaleContext = scaleContext, attributes = attributes) ?: return EMPTY_ICON
     }
     catch (e: CancellationException) {
@@ -80,7 +81,9 @@ internal class ScaledIconCache {
       return icon
     }
 
-    val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
+    val image = imageWithShape.image
+
+    val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat(), shape = imageWithShape.shape)
     val cache = getOrCreateCache()
     cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
     if (cache.size > SCALED_ICON_CACHE_LIMIT) {
@@ -104,7 +107,8 @@ internal class ScaledIconCache {
 
 internal class ScaledResultIcon(@JvmField internal val image: Image,
                                 private val original: CachedImageIcon,
-                                private val objectScale: Float) : Icon, ReplaceableIcon {
+                                private val objectScale: Float,
+                                private val shape: Shape?) : Icon, ReplaceableIcon, IconWithShape {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     StartupUiUtil.drawImage(g, image, x, y, sourceBounds = null, op = null, observer = c)
   }
@@ -112,6 +116,8 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
   override fun getIconWidth(): Int = image.getWidth(null)
 
   override fun getIconHeight(): Int = image.getHeight(null)
+
+  override fun getShape(): Shape? = shape
 
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)

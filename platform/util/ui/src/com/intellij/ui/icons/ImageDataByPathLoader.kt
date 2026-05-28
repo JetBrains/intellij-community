@@ -118,7 +118,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
 
   override fun getCoords(): Pair<String, ClassLoader> = path to classLoader
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
     return loadImage(path = path,
                      isDark = parameters.isDark,
                      filters = parameters.filters,
@@ -127,7 +127,9 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                      classLoader = classLoader,
                      isStroke = parameters.isStroke,
       // CachedImageIcon instance cache the resolved image
-                     useCache = false)
+                     useCache = false)?.let { result ->
+      ImageWithShape(result, null)
+    }
   }
 
   override val url: URL?
