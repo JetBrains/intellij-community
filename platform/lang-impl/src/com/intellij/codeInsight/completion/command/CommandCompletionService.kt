@@ -61,10 +61,6 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
  */
 @Service(Service.Level.PROJECT)
 internal class CommandCompletionService : Disposable.Default {
-  companion object {
-    private val EP_NAME: LanguageExtension<CommandCompletionFactory> = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
-  }
-
   internal fun filterLookupAfterChar(typed: Char, editor: Editor, file: PsiFile, lookup: LookupImpl): Boolean {
     if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return false
     val factory = getFactory(file.language)
@@ -188,6 +184,8 @@ internal class CommandCompletionService : Disposable.Default {
       !isPostfix(element)
   }
 }
+
+private val EP_NAME = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
 
 private val INSTALLED_HINT: Key<Inlay<HintRenderer?>> = Key.create("completion.command.installed.hint")
 private val INSTALLED_HINT_KEY: Key<Boolean> = Key.create("completion.command.installed.hint")
