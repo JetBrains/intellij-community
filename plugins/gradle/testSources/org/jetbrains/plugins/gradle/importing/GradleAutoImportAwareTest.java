@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class GradleAutoImportAwareTest extends GradleImportingTestCase {
 
@@ -51,8 +52,8 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
-                  new File(getProjectPath() + "/gradle/libs.versions.toml"));
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFilePaths(getProjectPath(), getMyProject()),
+                  Path.of(getProjectPath(), "gradle", "libs.versions.toml"));
   }
 
   @Test
@@ -82,8 +83,8 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
-                  new File(getProjectPath() + "/gradle/custom.versions.toml"));
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFilePaths(getProjectPath(), getMyProject()),
+                  Path.of(getProjectPath(), "gradle", "custom.versions.toml"));
   }
 
   @Test
@@ -96,7 +97,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
-                  new File(getProjectPath() + "/gradle/gradle-daemon-jvm.properties"));
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFilePaths(getProjectPath(), getMyProject()),
+                  Path.of(getProjectPath(), "gradle", "gradle-daemon-jvm.properties"));
   }
 }

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +39,11 @@ public class CachingExternalSystemAutoImportAware implements ExternalSystemAutoI
       myCache.put(changedFileOrDirPath, result);
     }
     return result;
+  }
+
+  @Override
+  public @NotNull List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+    return myDelegate.getAffectedExternalProjectFilePaths(projectPath, project);
   }
 
   @Override

@@ -116,18 +116,23 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   }
 
   @Override
-  public @NotNull List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
+  public @NotNull List<Path> getAffectedExternalProjectFilePaths(String externalProjectPath, @NotNull Project project) {
     var settings = GradleSettings.getInstance(project);
     var projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
     if (projectSettings == null) {
       return Collections.emptyList();
     }
-    var result = new SmartList<File>();
+    var result = new SmartList<Path>();
     GradleAutoReloadSettingsCollector.EP_NAME.forEachExtensionSafe(extension -> {
       var settingsFiles = extension.collectSettingsFiles(project, projectSettings);
-      result.addAll(ContainerUtil.map(settingsFiles, it -> it.toFile()));
+      result.addAll(settingsFiles);
     });
     return result;
+  }
+
+  @Override
+  public @NotNull List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
+    return ContainerUtil.map(getAffectedExternalProjectFilePaths(externalProjectPath, project), Path::toFile);
   }
 
   public static final class GradlePropertiesCollector implements GradleAutoReloadSettingsCollector {

@@ -5,11 +5,13 @@ import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,6 +44,14 @@ public interface ExternalSystemAutoImportAware {
   @Nullable
   String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
 
+  default @NotNull List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+    return ContainerUtil.map(getAffectedExternalProjectFiles(projectPath, project), File::toPath);
+  }
+
+  /**
+   * @deprecated Use and override {@link #getAffectedExternalProjectFilePaths(String, Project)}.
+   */
+  @Deprecated(since = "2026.2", forRemoval = true)
   default @NotNull List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return Collections.emptyList();
   }

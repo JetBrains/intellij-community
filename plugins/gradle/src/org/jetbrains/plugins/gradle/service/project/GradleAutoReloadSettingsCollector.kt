@@ -21,7 +21,7 @@ interface GradleAutoReloadSettingsCollector {
    * Result will be cached, so settings files should be equals between reloads.
    *
    * @see ExternalSystemProjectAware.settingsFiles
-   * @see GradleAutoImportAware.getAffectedExternalProjectFiles
+   * @see GradleAutoImportAware.getAffectedExternalProjectFilePaths
    */
   fun collectSettingsFiles(project: Project, projectSettings: GradleProjectSettings): List<Path>
 

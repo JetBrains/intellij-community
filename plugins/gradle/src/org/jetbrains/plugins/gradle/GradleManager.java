@@ -309,6 +309,11 @@ public final class GradleManager
   }
 
   @Override
+  public @NotNull List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+    return myAutoImportDelegate.getAffectedExternalProjectFilePaths(projectPath, project);
+  }
+
+  @Override
   public @NotNull List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return myAutoImportDelegate.getAffectedExternalProjectFiles(projectPath, project);
   }

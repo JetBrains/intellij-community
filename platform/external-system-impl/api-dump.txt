@@ -596,6 +596,7 @@ c:com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvide
 c:com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware
 - com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 - <init>(com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware):V
+- getAffectedExternalProjectFilePaths(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - getAffectedExternalProjectFiles(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - getAffectedExternalProjectPath(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
 - isApplicable(com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):Z

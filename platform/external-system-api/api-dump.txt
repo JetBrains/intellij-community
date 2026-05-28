@@ -1,4 +1,5 @@
 com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
+- getAffectedExternalProjectFilePaths(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - getAffectedExternalProjectFiles(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - a:getAffectedExternalProjectPath(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
 com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware
