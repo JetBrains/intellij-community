@@ -18,6 +18,39 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Free disk space
+      shell: bash
+      # language=bash
+      run: |
+        echo "Disk space before cleanup:"
+        df -h /
+        # Pre-installed toolchains the IDE build doesn't need (everything runs inside Docker).
+        sudo rm -rf \
+          /usr/share/dotnet \
+          /usr/share/swift \
+          /usr/share/miniconda \
+          /usr/local/lib/android \
+          /usr/local/share/boost \
+          /usr/local/share/powershell \
+          /usr/local/share/chromium \
+          /usr/local/lib/node_modules \
+          /opt/ghc \
+          /opt/hostedtoolcache/CodeQL \
+          /opt/hostedtoolcache/Ruby \
+          /opt/hostedtoolcache/PyPy \
+          /opt/hostedtoolcache/Python \
+          /opt/hostedtoolcache/go \
+          /opt/hostedtoolcache/node \
+          /opt/microsoft \
+          /opt/google \
+          /imagegeneration \
+          /var/cache/apt/archives
+        sudo apt-get -y clean
+        # Pre-pulled images on the hosted runner are unrelated to the build.
+        docker image prune --all --force || true
+        docker builder prune --all --force || true
+        echo "Disk space after cleanup:"
+        df -h /
     - name: Checkout JetBrains/android
       uses: actions/checkout@v6.0.2
       with:
