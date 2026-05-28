@@ -316,20 +316,19 @@ object DynamicPlugins {
    * @return non-null message explaining why unloading is not possible, null otherwise
    */
   @RequiresBackgroundThread(generateAssertion = false)
-  fun validateCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
+  fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
-      require(module is PluginMainDescriptor) { "PluginMainDescriptor expected" }
-      val newState = computeNewPluginsState(emptyList(), listOf(module))
+      val newState = computeNewPluginsState(emptyList(), listOf(plugin))
       // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
-      expectPluginsState(expectNotToLoad = listOf(module.pluginId)).validate(resolvedPluginSet)?.let {
+      expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
         return it
       }
       return runBlockingMaybeCancellable {
         instance.validateDynamicTransitionPossible(newState)?.reason?.logMessage
       }
     }
-    return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
+    return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(plugin)
   }
 
   /**
