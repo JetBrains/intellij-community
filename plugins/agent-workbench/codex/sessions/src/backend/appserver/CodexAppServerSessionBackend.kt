@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.codex.common.CodexSubAgent
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
+import com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex
+import com.intellij.agent.workbench.codex.sessions.InMemoryCodexThreadPathIndex
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThreadRefreshResult
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
@@ -29,7 +31,7 @@ private val LOG = logger<CodexAppServerSessionBackend>()
 private const val PREFETCH_FETCH_PARALLELISM = 4
 private const val MAX_TRACKED_ORPHAN_SUB_AGENT_IDS = 4_096
 
-class CodexAppServerSessionBackend(
+internal class CodexAppServerSessionBackend(
   private val listThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
     serviceAsync<SharedCodexAppServerService>().listThreads(projectPath)
   },
@@ -43,11 +45,13 @@ class CodexAppServerSessionBackend(
     serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
   },
   private val orphanArchiveAttemptRecorder: (String) -> Boolean = InMemoryOrphanArchiveAttemptRecorder()::markArchiveAttempted,
+  private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
 ) : CodexSessionBackend {
   override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
     val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
     val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
     val threads = listThreadsForProject(workingDirectory)
+    rememberThreadMetadata(threads)
     val byPath = buildThreadsByCwd(
       threads = threads,
       targetCwds = setOf(cwdFilter),
@@ -61,6 +65,7 @@ class CodexAppServerSessionBackend(
     val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
     val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
     val threads = listArchivedThreadsForProject(workingDirectory)
+    rememberThreadMetadata(threads)
     return buildThreadsByCwd(
       threads = threads,
       targetCwds = setOf(cwdFilter),
@@ -83,6 +88,7 @@ class CodexAppServerSessionBackend(
       if (thread.cwd != cwdFilter) {
         continue
       }
+      rememberThreadMetadata(listOf(thread))
       if (thread.shouldBeGroupedAsSubAgentChild()) {
         thread.parentThreadId?.trim()?.takeIf { it.isNotEmpty() }?.let(parentThreadIdsToFetch::add)
         fetchedThreadsById[thread.id] = thread
@@ -96,6 +102,7 @@ class CodexAppServerSessionBackend(
       }
       val parentThread = readThreadIfLoaded(parentThreadId) ?: continue
       if (parentThread.cwd == cwdFilter) {
+        rememberThreadMetadata(listOf(parentThread))
         fetchedThreadsById[parentThread.id] = parentThread
       }
     }
@@ -150,6 +157,7 @@ class CodexAppServerSessionBackend(
         continue
       }
       succeededCwds.add(cwdFilter)
+      rememberThreadMetadata(threads)
       prefetchedThreads.addAll(threads)
     }
 
@@ -168,9 +176,9 @@ class CodexAppServerSessionBackend(
     )
 
     val result = LinkedHashMap<String, List<CodexBackendThread>>(pathFilters.size)
-    for (filter in pathFilters) {
+    pathFilters.forEach { filter ->
       if (filter.cwdFilter !in succeededCwds) {
-        continue
+        return@forEach
       }
       result[filter.path] = threadsByCwd[filter.cwdFilter].orEmpty()
     }
@@ -181,6 +189,10 @@ class CodexAppServerSessionBackend(
     }
 
     return result
+  }
+
+  private fun rememberThreadMetadata(threads: Iterable<CodexThread>) {
+    threadPathIndex.recordThreads(threads)
   }
 
   private suspend fun readThreadIfLoaded(threadId: String): CodexThread? {
@@ -277,7 +289,7 @@ private suspend fun buildThreadsByCwd(
     val childrenByParent = childrenByCwdAndParent[cwd].orEmpty()
 
     val threadsForCwd = ArrayList<CodexBackendThread>(parents.size)
-    for (parent in parents.values) {
+    parents.values.forEach { parent ->
       val children = childrenByParent[parent.id]
         .orEmpty()
         .sortedByDescending { it.updatedAt }

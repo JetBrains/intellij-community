@@ -483,20 +483,22 @@ private fun applyArchivedResults(
 ): List<AgentProjectSessions> {
   return projects.map { project ->
     val result = resultsByPath[project.path]
+    val refreshedThreads = preserveThreadCosts(project.threads, result?.threads.orEmpty())
     project.copy(
       isLoading = false,
       hasLoaded = true,
       hasUnknownThreadCount = result?.hasUnknownThreadCount ?: false,
-      threads = result?.threads.orEmpty(),
+      threads = refreshedThreads,
       errorMessage = result?.errorMessage,
       providerWarnings = result?.providerWarnings ?: emptyList(),
       worktrees = project.worktrees.map { worktree ->
         val worktreeResult = resultsByPath[worktree.path]
+        val refreshedWorktreeThreads = preserveThreadCosts(worktree.threads, worktreeResult?.threads.orEmpty())
         worktree.copy(
           isLoading = false,
           hasLoaded = true,
           hasUnknownThreadCount = worktreeResult?.hasUnknownThreadCount ?: false,
-          threads = worktreeResult?.threads.orEmpty(),
+          threads = refreshedWorktreeThreads,
           errorMessage = worktreeResult?.errorMessage,
           providerWarnings = worktreeResult?.providerWarnings ?: emptyList(),
         )

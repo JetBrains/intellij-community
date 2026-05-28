@@ -962,9 +962,10 @@ private fun mergeThreadsForProvider(
   provider: AgentSessionProvider,
   newProviderThreads: List<AgentSessionThread>,
 ): List<AgentSessionThread> {
+  val providerThreadsWithPreservedCosts = preserveThreadCosts(existingThreads, newProviderThreads)
   val mergedThreads = ArrayList<AgentSessionThread>(existingThreads.size + newProviderThreads.size)
   existingThreads.filterTo(mergedThreads) { it.provider != provider }
-  mergedThreads.addAll(newProviderThreads)
+  mergedThreads.addAll(providerThreadsWithPreservedCosts)
   return mergeAgentSessionThreadsForDisplay(existingThreads, mergedThreads)
 }
 
@@ -998,18 +999,20 @@ private fun mergeThreadUpdatesForProvider(
 }
 
 private fun mergeThreadUpdate(existing: AgentSessionThread, update: AgentSessionThread): AgentSessionThread {
-  if (update.subAgents.isEmpty()) {
-    if (existing.subAgents.isEmpty()) return update
-    return update.copy(subAgents = existing.subAgents)
+  val mergedThread = if (update.subAgents.isEmpty()) {
+    if (existing.subAgents.isEmpty()) update else update.copy(subAgents = existing.subAgents)
   }
-  if (existing.subAgents.isEmpty()) {
-    return update
+  else if (existing.subAgents.isEmpty()) {
+    update
+  }
+  else {
+    val mergedSubAgents = LinkedHashMap<String, AgentSubAgent>(
+      existing.subAgents.size + update.subAgents.size
+    )
+    existing.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
+    update.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
+    update.copy(subAgents = ArrayList(mergedSubAgents.values))
   }
 
-  val mergedSubAgents = LinkedHashMap<String, AgentSubAgent>(
-    existing.subAgents.size + update.subAgents.size
-  )
-  existing.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
-  update.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
-  return update.copy(subAgents = ArrayList(mergedSubAgents.values))
+  return preserveThreadCost(existing = existing, updated = mergedThread)
 }

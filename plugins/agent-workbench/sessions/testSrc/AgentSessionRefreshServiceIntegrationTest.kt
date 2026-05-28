@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
+import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -23,13 +24,17 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.math.BigDecimal
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
@@ -37,9 +42,19 @@ import kotlin.time.Duration.Companion.milliseconds
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionRefreshServiceIntegrationTest {
+  @BeforeEach
+  fun setUp() {
+    AgentSessionCostPresentationSettings.setEnabled(true)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    AgentSessionCostPresentationSettings.setEnabled(false)
+  }
+
   @Test
   fun refreshHydratesCostsOnlyForVisibleThreadsAndShowMoreLoadsNewlyVisibleThread() = runBlocking(Dispatchers.Default) {
-    val costLoadRequests = mutableListOf<List<String>>()
+    val costLoadRequests = CopyOnWriteArrayList<List<String>>()
     val threads = listOf(
       thread(id = "thread-4", updatedAt = 400, provider = AgentSessionProvider.CODEX),
       thread(id = "thread-3", updatedAt = 300, provider = AgentSessionProvider.CODEX),
@@ -76,7 +91,7 @@ class AgentSessionRefreshServiceIntegrationTest {
         project.threads.take(3).all { thread -> thread.cost != null } && project.threads.drop(3).all { thread -> thread.cost == null }
       }
 
-      assertThat(costLoadRequests).containsExactly(listOf("thread-4", "thread-3", "thread-2"))
+      assertThat(costLoadRequests.toList()).containsExactly(listOf("thread-4", "thread-3", "thread-2"))
 
       service.showMoreThreads(PROJECT_PATH)
 
@@ -86,7 +101,7 @@ class AgentSessionRefreshServiceIntegrationTest {
           ?.all { thread -> thread.cost != null } == true
       }
 
-      assertThat(costLoadRequests).containsExactly(
+      assertThat(costLoadRequests.toList()).containsExactly(
         listOf("thread-4", "thread-3", "thread-2"),
         listOf("thread-1"),
       )
@@ -159,6 +174,117 @@ class AgentSessionRefreshServiceIntegrationTest {
         thread.updatedAt == 200L && thread.cost?.amountUsd == BigDecimal.valueOf(2)
       }
       assertThat(costLoadCount.get()).isEqualTo(2)
+    }
+  }
+
+  @Test
+  fun persistedWarmSnapshotCostSurvivesRefreshAndSkipsReload() = runBlocking(Dispatchers.Default) {
+    val persistedWarmState = AgentSessionWarmStateService()
+    persistedWarmState.setPathSnapshot(
+      PROJECT_PATH,
+      AgentSessionWarmPathSnapshot(
+        threads = listOf(
+          thread(
+            id = "claude-1",
+            updatedAt = 100L,
+            provider = AgentSessionProvider.CLAUDE,
+            cost = AgentSessionCost(
+              amountUsd = BigDecimal("1.50"),
+              kind = AgentSessionCostKind.EXACT,
+            ),
+          )
+        ),
+        hasUnknownThreadCount = false,
+        updatedAt = 100L,
+      ),
+    )
+    val reloadedWarmState = AgentSessionWarmStateService()
+    reloadedWarmState.loadState(persistedWarmState.state)
+    val costLoadCount = AtomicInteger(0)
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { _, _ ->
+              listOf(thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE))
+            },
+            loadThreadCostsProvider = { _, _ ->
+              costLoadCount.incrementAndGet()
+              emptyMap()
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      warmState = reloadedWarmState,
+    ) { service ->
+      service.refresh()
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        !project.isLoading && project.threads.singleOrNull()?.cost?.amountUsd == BigDecimal("1.50")
+      }
+
+      delay(300.milliseconds)
+      assertThat(costLoadCount.get()).isZero()
+    }
+  }
+
+  @Test
+  fun costHydrationStartsOnlyAfterToolWindowBecomesVisible() = runBlocking(Dispatchers.Default) {
+    val toolWindowVisibleFlow = MutableStateFlow(false)
+    val costLoadCount = AtomicInteger(0)
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromOpenProject = { _, _ ->
+              listOf(thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX))
+            },
+            loadThreadCostsProvider = { _, requestedThreads ->
+              costLoadCount.incrementAndGet()
+              requestedThreads.associate { thread ->
+                thread.id to AgentSessionCost(
+                  amountUsd = BigDecimal.ONE,
+                  kind = AgentSessionCostKind.ESTIMATED,
+                )
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      toolWindowVisibleFlow = toolWindowVisibleFlow,
+    ) { service ->
+      service.refresh()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.singleOrNull()?.id == "codex-1"
+      }
+      delay(300.milliseconds)
+
+      assertThat(costLoadCount.get()).isZero()
+      assertThat(service.state.value.projects.first { it.path == PROJECT_PATH }.threads.single().cost).isNull()
+
+      toolWindowVisibleFlow.value = true
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.cost
+          ?.amountUsd == BigDecimal.ONE
+      }
+
+      assertThat(costLoadCount.get()).isEqualTo(1)
     }
   }
 

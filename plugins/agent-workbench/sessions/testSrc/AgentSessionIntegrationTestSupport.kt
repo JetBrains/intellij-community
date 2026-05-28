@@ -48,6 +48,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import java.lang.reflect.InvocationHandler
@@ -346,6 +347,7 @@ internal suspend fun withTestServiceAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
@@ -361,6 +363,7 @@ internal suspend fun withTestServiceAndLaunch(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
     action = action,
   )
@@ -387,6 +390,7 @@ internal suspend fun withService(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
 ) {
@@ -402,6 +406,7 @@ internal suspend fun withService(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
   ) { service, _ ->
     action(service)
@@ -429,6 +434,7 @@ internal suspend fun withServiceAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
@@ -445,6 +451,7 @@ internal suspend fun withServiceAndLaunch(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
   ) { service, _, launchService ->
     action(service, launchService)
@@ -474,6 +481,7 @@ internal suspend fun withServiceAndArchive(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
 ) {
@@ -491,6 +499,7 @@ internal suspend fun withServiceAndArchive(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
   ) { service, archiveService, _ ->
     action(service, archiveService)
@@ -520,6 +529,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
@@ -556,6 +566,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       },
       openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
       providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
+      toolWindowVisibleFlow = toolWindowVisibleFlow,
       currentTimeMillis = currentTimeMillis,
       subscribeToProjectLifecycle = false,
     )

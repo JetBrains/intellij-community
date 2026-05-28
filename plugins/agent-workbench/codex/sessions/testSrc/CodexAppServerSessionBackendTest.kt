@@ -374,6 +374,43 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun prefetchRecordsRolloutPathsForParentAndSubAgentThreads() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-rollout-path-index")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val parentRolloutPath = "/tmp/codex/rollout-parent.jsonl"
+      val childRolloutPath = "/tmp/codex/rollout-child.jsonl"
+      val threadPathIndex = InMemoryCodexThreadPathIndex()
+
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = {
+          listOf(
+            parentThread(id = "parent-1", cwd = cwd, updatedAt = 200L, path = parentRolloutPath),
+            subAgentThread(
+              id = "child-1",
+              cwd = cwd,
+              parentThreadId = "parent-1",
+              updatedAt = 220L,
+              path = childRolloutPath,
+            ),
+          )
+        },
+        archiveThread = {},
+        orphanArchiveAttemptRecorder = { true },
+        threadPathIndex = threadPathIndex,
+      )
+
+      val prefetched = backend.prefetchThreads(listOf(projectDir.toString()))
+
+      assertThat(prefetched[projectDir.toString()].orEmpty().map { it.thread.id }).containsExactly("parent-1")
+      assertThat(threadPathIndex.entry("parent-1")?.rolloutPath).isEqualTo(parentRolloutPath)
+      assertThat(threadPathIndex.entry("child-1")?.rolloutPath).isEqualTo(childRolloutPath)
+      assertThat(threadPathIndex.entry("child-1")?.parentThreadId).isEqualTo("parent-1")
+    }
+  }
+
+  @Test
   fun prefetchOmitsFailedCwdSoCallerCanFallback() {
     runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-prefetch-a")
@@ -506,6 +543,7 @@ private fun parentThread(
   id: String,
   cwd: String,
   updatedAt: Long,
+  path: String? = null,
   statusKind: CodexThreadStatusKind = CodexThreadStatusKind.IDLE,
   activeFlags: List<CodexThreadActiveFlag> = emptyList(),
 ): CodexThread {
@@ -515,6 +553,7 @@ private fun parentThread(
     updatedAt = updatedAt,
     archived = false,
     cwd = cwd,
+    path = path,
     sourceKind = CodexThreadSourceKind.CLI,
     statusKind = statusKind,
     activeFlags = activeFlags,
@@ -527,6 +566,7 @@ private fun subAgentThread(
   parentThreadId: String?,
   sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
   updatedAt: Long,
+  path: String? = null,
   nickname: String? = null,
   role: String? = null,
   activeFlags: List<CodexThreadActiveFlag> = emptyList(),
@@ -537,6 +577,7 @@ private fun subAgentThread(
     updatedAt = updatedAt,
     archived = false,
     cwd = cwd,
+    path = path,
     sourceKind = sourceKind,
     parentThreadId = parentThreadId,
     agentNickname = nickname,

@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
+import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
@@ -53,9 +54,12 @@ internal class CodexSessionSource internal constructor(
   private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutBackend: CodexSessionBackend? = null,
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
+  private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
+  private val exactRolloutThreadLoader: CodexExactRolloutThreadLoader = CodexExactRolloutThreadLoader(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
   constructor(
-    backend: CodexSessionBackend = createDefaultCodexSessionBackend(),
+    threadPathIndex: CodexThreadPathIndex = service<CodexThreadPathIndexService>(),
+    backend: CodexSessionBackend = createDefaultCodexSessionBackend(threadPathIndex = threadPathIndex),
     sharedAppServerService: SharedCodexAppServerService = service(),
     rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
   ) : this(
@@ -67,6 +71,7 @@ internal class CodexSessionSource internal constructor(
     rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend),
     rolloutBackend = rolloutBackend,
     calculateCost = service<OpenRouterPriceCatalogService>()::calculateCost,
+    threadPathIndex = threadPathIndex,
   )
 
   override val supportsUpdates: Boolean
@@ -89,17 +94,23 @@ internal class CodexSessionSource internal constructor(
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
+    rememberThreadMetadata(threads)
     trackActiveThreadRead(threads)
-    return mapBackendThreadsWithRolloutFallback(mapOf(path to threads))[path].orEmpty()
+    return mapBackendThreads(threads)
   }
 
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val archivedThreads = backend.listArchivedThreads(path = path, openProject = openProject)
-    val rolloutThreadsById = loadArchivedRolloutThreads(path = path, archivedThreads = archivedThreads)
+    rememberThreadMetadata(archivedThreads)
     return archivedThreads.map { thread ->
-      val usageSnapshots = thread.usageSnapshots.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
-                         ?: rolloutThreadsById[thread.thread.id]?.usageSnapshots?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
-      toAgentSessionThread(thread = thread, cost = usageSnapshots?.toAgentSessionCost(calculateCost))
+      val cost = threadPathIndex.frozenCost(thread.thread.id, thread.thread.updatedAt)
+                 ?: thread.usageSnapshots.toFrozenThreadCost(
+                   threadId = thread.thread.id,
+                   updatedAt = thread.thread.updatedAt,
+                   calculateCost = calculateCost,
+                   threadPathIndex = threadPathIndex,
+                 )
+      toAgentSessionThread(thread = thread, cost = cost)
     }
   }
 
@@ -111,24 +122,65 @@ internal class CodexSessionSource internal constructor(
       return emptyMap()
     }
 
-    val requestedThreadIds = threads.asSequence()
-      .map(AgentSessionThread::id)
+    val requestedThreads = threads.map(AgentSessionThread::toRequestedCostThread)
+    val costsByThreadId = LinkedHashMap<String, AgentSessionCost?>()
+    val unresolvedThreads = ArrayList<RequestedCodexThreadCost>(requestedThreads.size)
+    for (thread in requestedThreads) {
+      val frozenCost = threadPathIndex.frozenCost(thread.threadId, thread.updatedAt)
+      if (frozenCost != null) {
+        costsByThreadId[thread.threadId] = frozenCost
+      }
+      else {
+        unresolvedThreads.add(thread)
+      }
+    }
+    if (unresolvedThreads.isEmpty()) {
+      return costsByThreadId
+    }
+
+    val exactRolloutThreadsById = loadExactRolloutThreads(path = path, threads = unresolvedThreads)
+    val threadsWithoutExactRollout = unresolvedThreads.filter { thread -> thread.threadId !in exactRolloutThreadsById }
+    val requestedThreadIds = threadsWithoutExactRollout.asSequence()
+      .map(RequestedCodexThreadCost::threadId)
       .toCollection(LinkedHashSet())
     val backendThreadsById = loadBackendThreads(path = path, threadIds = requestedThreadIds)
-    val rolloutThreadsById = loadRolloutThreads(path = path, threadIds = requestedThreadIds)
-    return requestedThreadIds.associateWith { threadId ->
-      val usageSnapshots = backendThreadsById[threadId]?.usageSnapshots?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
-                         ?: rolloutThreadsById[threadId]?.usageSnapshots?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
-      usageSnapshots?.toAgentSessionCost(calculateCost)
+    val threadsWithoutExactCost = threadsWithoutExactRollout.filter { thread ->
+      backendThreadsById[thread.threadId]?.usageSnapshots.isNullOrEmpty()
     }
+    val recoveredRolloutThreadsById = recoverRolloutThreads(path = path, threads = threadsWithoutExactCost)
+    unresolvedThreads.forEach { thread ->
+      val cost = exactRolloutThreadsById[thread.threadId]?.usageSnapshots.toFrozenThreadCost(
+        threadId = thread.threadId,
+        updatedAt = thread.updatedAt,
+        calculateCost = calculateCost,
+        threadPathIndex = threadPathIndex,
+      )
+                 ?: backendThreadsById[thread.threadId]?.usageSnapshots.toFrozenThreadCost(
+                   threadId = thread.threadId,
+                   updatedAt = thread.updatedAt,
+                   calculateCost = calculateCost,
+                   threadPathIndex = threadPathIndex,
+                 )
+                 ?: recoveredRolloutThreadsById[thread.threadId]?.usageSnapshots.toFrozenThreadCost(
+                   threadId = thread.threadId,
+                   updatedAt = thread.updatedAt,
+                   calculateCost = calculateCost,
+                   threadPathIndex = threadPathIndex,
+                 )
+                 ?: AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+                     .also { unavailableCost -> threadPathIndex.recordFrozenCost(thread.threadId, thread.updatedAt, unavailableCost) }
+      costsByThreadId[thread.threadId] = cost
+    }
+    return costsByThreadId
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
     val prefetched = backend.prefetchThreads(paths)
     if (prefetched.isEmpty()) return emptyMap()
 
+    prefetched.values.flatten().let(::rememberThreadMetadata)
     prefetched.values.forEach(::trackActiveThreadRead)
-    return mapBackendThreadsWithRolloutFallback(prefetched)
+    return prefetched.mapValues { (_, backendThreads) -> mapBackendThreads(backendThreads) }
   }
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
@@ -149,6 +201,7 @@ internal class CodexSessionSource internal constructor(
           continue
         }
 
+        rememberThreadMetadata(backendResult.threads)
         trackActiveThreadRead(backendResult.threads)
         val threads = mapBackendThreadsWithRolloutFallback(mapOf(path to backendResult.threads))[path].orEmpty()
         if (backendResult.isComplete) {
@@ -307,10 +360,21 @@ internal class CodexSessionSource internal constructor(
     return result
   }
 
+  private fun mapBackendThreads(backendThreads: List<CodexBackendThread>): List<AgentSessionThread> {
+    return backendThreads.map { backendThread ->
+      toAgentSessionThread(thread = backendThread)
+    }
+  }
+
   private suspend fun loadBackendThreads(path: String, threadIds: Set<String>): Map<String, CodexBackendThread> {
+    if (threadIds.isEmpty()) {
+      return emptyMap()
+    }
+
     return try {
       val refreshedThreads = backend.refreshThreads(path = path, threadIds = threadIds, openProject = null)?.threads
                            ?: backend.listThreads(path = path, openProject = null)
+      rememberThreadMetadata(refreshedThreads)
       refreshedThreads.asSequence()
         .filter { thread -> thread.thread.id in threadIds }
         .associateBy { thread -> thread.thread.id }
@@ -322,34 +386,58 @@ internal class CodexSessionSource internal constructor(
     }
   }
 
-  private suspend fun loadArchivedRolloutThreads(
+  private suspend fun recoverRolloutThreads(
     path: String,
-    archivedThreads: List<CodexBackendThread>,
+    threads: List<RequestedCodexThreadCost>,
   ): Map<String, CodexBackendThread> {
-    val missingUsageThreadIds = archivedThreads.asSequence()
-      .filter { thread -> thread.usageSnapshots.isEmpty() }
-      .map { thread -> thread.thread.id }
-      .toCollection(LinkedHashSet())
-    if (missingUsageThreadIds.isEmpty()) {
+    if (threads.isEmpty()) {
       return emptyMap()
     }
-    return loadRolloutThreads(path = path, threadIds = missingUsageThreadIds)
-  }
 
-  private suspend fun loadRolloutThreads(path: String, threadIds: Set<String>): Map<String, CodexBackendThread> {
+    val missingThreadIds = threads.mapTo(LinkedHashSet()) { thread -> thread.threadId }
+
     val rolloutBackend = rolloutBackend ?: return emptyMap()
-    return try {
-      val refreshedThreads = rolloutBackend.refreshThreads(path = path, threadIds = threadIds, openProject = null)?.threads
+    val recoveredThreads = try {
+      val refreshedThreads = rolloutBackend.refreshThreads(path = path, threadIds = missingThreadIds, openProject = null)?.threads
                            ?: rolloutBackend.listThreads(path = path, openProject = null)
       refreshedThreads.asSequence()
-        .filter { thread -> thread.thread.id in threadIds }
+        .filter { thread -> thread.thread.id in missingThreadIds }
         .associateBy { thread -> thread.thread.id }
     }
     catch (e: Throwable) {
       if (e is CancellationException) throw e
-      LOG.warn("Failed to load Codex rollout cost snapshot", e)
+      LOG.warn("Failed to recover Codex rollout cost snapshot", e)
       emptyMap()
     }
+    return recoveredThreads
+  }
+
+  private fun loadExactRolloutThreads(
+    path: String,
+    threads: List<RequestedCodexThreadCost>,
+  ): Map<String, CodexBackendThread> {
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyMap()
+    val cwdFilter = com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/'))
+    val fullyMappedThreads = threads.filter { thread ->
+      thread.relatedThreadIds().all { threadId -> threadPathIndex.entry(threadId)?.rolloutPath != null }
+    }
+    if (fullyMappedThreads.isEmpty()) {
+      return emptyMap()
+    }
+
+    val rolloutPaths = fullyMappedThreads.asSequence()
+      .flatMap { thread -> thread.relatedThreadIds().asSequence() }
+      .mapNotNull { threadId -> threadPathIndex.entry(threadId)?.rolloutPath }
+      .toCollection(LinkedHashSet())
+    if (rolloutPaths.isEmpty()) {
+      return emptyMap()
+    }
+
+    return exactRolloutThreadLoader.loadThreads(
+      cwdFilter = cwdFilter,
+      threadIds = fullyMappedThreads.mapTo(LinkedHashSet()) { thread -> thread.threadId },
+      rolloutPaths = rolloutPaths,
+    )
   }
 
   private suspend fun prefetchAppServerHintsWithRolloutVerification(
@@ -454,6 +542,10 @@ internal class CodexSessionSource internal constructor(
 
   private fun trackActiveThreadRead(threads: Iterable<CodexBackendThread>) {
     rememberActiveThreadRead(threads, { it.thread.id }, { it.thread.updatedAt })
+  }
+
+  private fun rememberThreadMetadata(threads: Iterable<CodexBackendThread>) {
+    threadPathIndex.recordThreads(threads.map(CodexBackendThread::thread))
   }
 
   /**
@@ -598,6 +690,40 @@ private fun mergeRebindCandidates(
     mergedByThreadId.putIfAbsent(candidate.threadId, candidate)
   }
   return mergedByThreadId.values.toList()
+}
+
+private data class RequestedCodexThreadCost(
+  @JvmField val threadId: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val subAgentIds: List<String> = emptyList(),
+)
+
+private fun AgentSessionThread.toRequestedCostThread(): RequestedCodexThreadCost {
+  return RequestedCodexThreadCost(
+    threadId = id,
+    updatedAt = updatedAt,
+    subAgentIds = subAgents.map(AgentSubAgent::id),
+  )
+}
+
+private fun RequestedCodexThreadCost.relatedThreadIds(): Set<String> {
+  return LinkedHashSet<String>(1 + subAgentIds.size).apply {
+    add(threadId)
+    addAll(subAgentIds)
+  }
+}
+
+private fun List<AgentSessionUsageSnapshot>?.toFrozenThreadCost(
+  threadId: String,
+  updatedAt: Long,
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
+  threadPathIndex: CodexThreadPathIndex,
+): AgentSessionCost? {
+  val usageSnapshots = this?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty) ?: return null
+  val cost = usageSnapshots.toAgentSessionCost(calculateCost)
+             ?: AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+  threadPathIndex.recordFrozenCost(threadId, updatedAt, cost)
+  return cost
 }
 
 private fun toAgentSessionThread(thread: CodexBackendThread, cost: AgentSessionCost? = null): AgentSessionThread {

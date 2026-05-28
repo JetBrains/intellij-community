@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -12,6 +13,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -23,6 +26,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
+  private val toolWindowVisibleFlow: StateFlow<Boolean>,
   private val currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
   private val costCache = ConcurrentHashMap<ThreadCacheKey, ThreadCostCacheEntry>()
@@ -30,7 +34,18 @@ internal class AgentSessionVisibleCostHydrationSupport(
 
   fun start() {
     serviceScope.launch(Dispatchers.Default) {
-      stateStore.state.collectLatest(::hydrateVisibleThreadCosts)
+      combine(stateStore.state, toolWindowVisibleFlow, AgentSessionCostPresentationSettings.enabledFlow) { state, toolWindowVisible, costEnabled ->
+        VisibleCostHydrationSnapshot(
+          state = state,
+          toolWindowVisible = toolWindowVisible,
+          costEnabled = costEnabled,
+        )
+      }.collectLatest { snapshot ->
+        if (!snapshot.toolWindowVisible || !snapshot.costEnabled) {
+          return@collectLatest
+        }
+        hydrateVisibleThreadCosts(snapshot.state)
+      }
     }
   }
 
@@ -101,7 +116,9 @@ internal class AgentSessionVisibleCostHydrationSupport(
               cost = loadedCost,
             )
           }
-          applyThreadCostUpdates(mapOf(path to updatesByProvider))
+          if (toolWindowVisibleFlow.value && AgentSessionCostPresentationSettings.isEnabled()) {
+            applyThreadCostUpdates(mapOf(path to updatesByProvider))
+          }
         }
         catch (t: Throwable) {
           LOG.debug(t) { "Failed to hydrate visible thread costs for ${source.provider.value} path=$path threads=${requestedThreads.size}" }
@@ -218,4 +235,10 @@ private data class ThreadCostCacheEntry(
   @JvmField val updatedAt: Long,
   @JvmField val refreshedAtMs: Long,
   @JvmField val cost: AgentSessionCost?,
+)
+
+private data class VisibleCostHydrationSnapshot(
+  @JvmField val state: AgentSessionsState,
+  @JvmField val toolWindowVisible: Boolean,
+  @JvmField val costEnabled: Boolean,
 )

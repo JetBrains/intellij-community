@@ -419,7 +419,7 @@ private fun assistantMessageEvent(text: String): SseEvent {
 
 private fun sse(vararg events: SseEvent): String {
   return buildString {
-    for (event in events) {
+    events.forEach { event ->
       append("event: ")
       append(event.type)
       append('\n')
@@ -513,7 +513,7 @@ internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
       generator.writeStartObject()
       generator.writeFieldName("threads")
       generator.writeStartArray()
-      for (thread in threads) {
+      threads.forEach { thread ->
         generator.writeStartObject()
         generator.writeStringField("id", thread.id)
         thread.title?.let { generator.writeStringField("title", it) }
@@ -521,6 +521,7 @@ internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
         thread.name?.let { generator.writeStringField("name", it) }
         thread.summary?.let { generator.writeStringField("summary", it) }
         thread.cwd?.let { generator.writeStringField("cwd", it) }
+        thread.path?.let { generator.writeStringField("path", it) }
         generator.writeStringField("sourceKind", thread.sourceKind)
         if (thread.sourceAsString) {
           generator.writeBooleanField("sourceAsString", true)
@@ -544,7 +545,7 @@ internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
         if (thread.readTurns.isNotEmpty()) {
           generator.writeFieldName("readTurns")
           generator.writeStartArray()
-          for (turn in thread.readTurns) {
+          thread.readTurns.forEach { turn ->
             generator.writeStartObject()
             generator.writeStringField("statusType", turn.statusType)
             if (turn.statusAsObject) {
@@ -585,6 +586,7 @@ internal data class ThreadSpec(
   @JvmField val name: String? = null,
   @JvmField val summary: String? = null,
   @JvmField val cwd: String? = null,
+  @JvmField val path: String? = null,
   @JvmField val updatedAt: Long? = null,
   @JvmField val createdAt: Long? = null,
   @JvmField val updatedAtField: String = "updated_at",

@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
@@ -101,6 +102,7 @@ internal class AgentSessionsToolWindowPanel(
   private val project: Project,
   private val toolWindow: ToolWindow,
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
+  private val costHydrationVisibilityToken = "${project.locationHash}:${System.identityHashCode(this)}"
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
   private var initialRefreshRequested = false
@@ -321,7 +323,9 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private fun applyToolWindowVisibility() {
-    stateController.setModelUpdatesVisible(isModelUpdateVisible())
+    val visible = isModelUpdateVisible()
+    stateController.setModelUpdatesVisible(visible)
+    service<AgentSessionsToolWindowVisibilityService>().setVisible(costHydrationVisibilityToken, visible)
     requestInitialRefreshIfVisible()
   }
 
@@ -502,6 +506,7 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   override fun dispose() {
+    service<AgentSessionsToolWindowVisibilityService>().release(costHydrationVisibilityToken)
     stateController.dispose()
   }
 }

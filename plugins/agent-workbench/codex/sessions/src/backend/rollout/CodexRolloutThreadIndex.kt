@@ -365,76 +365,91 @@ internal class CodexRolloutThreadIndex(
   ) {
     synchronized(threadsLock) {
       threadsByCwd.clear()
-      val parsedThreadsByCwd = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
-      for ((_, cachedFile) in cachedFilesByPath) {
-        val parsedThread = cachedFile.parsedValue ?: continue
-        parsedThreadsByCwd.getOrPut(parsedThread.normalizedCwd) { ArrayList() }.add(parsedThread)
-      }
-
-      for ((cwd, parsedThreads) in parsedThreadsByCwd) {
-        val topLevelThreads = ArrayList<CodexBackendThread>(parsedThreads.size)
-        val subAgentThreadsByParent = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
-        val subAgentThreads = ArrayList<ParsedRolloutThread>()
-
-        for (parsedThread in parsedThreads) {
-          val parentThreadId = parsedThread.parentThreadId
-          if (parentThreadId == null) {
-            topLevelThreads.add(parsedThread.thread)
-            continue
-          }
-
-          subAgentThreadsByParent.getOrPut(parentThreadId) { ArrayList() }.add(parsedThread)
-          subAgentThreads.add(parsedThread)
-        }
-
-        val resolvedParentIds = HashSet<String>()
-        for (index in topLevelThreads.indices) {
-          val parentThread = topLevelThreads[index]
-          val childThreads = subAgentThreadsByParent[parentThread.thread.id].orEmpty()
-          if (childThreads.isEmpty()) continue
-
-          val mergedSubAgents = LinkedHashMap<String, CodexSubAgent>(
-            parentThread.thread.subAgents.size + childThreads.size
-          )
-          parentThread.thread.subAgents.forEach { subAgent ->
-            mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
-          }
-          childThreads.forEach { childThread ->
-            val subAgent = CodexSubAgent(id = childThread.thread.thread.id, name = childThread.thread.thread.title)
-            mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
-          }
-
-          val mergedUsageSnapshots = ArrayList<AgentSessionUsageSnapshot>(
-            parentThread.usageSnapshots.size + childThreads.sumOf { childThread -> childThread.thread.usageSnapshots.size }
-          )
-          mergedUsageSnapshots.addAll(parentThread.usageSnapshots)
-          childThreads.forEach { childThread ->
-            mergedUsageSnapshots.addAll(childThread.thread.usageSnapshots)
-          }
-
-          topLevelThreads[index] = parentThread.copy(
-            thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)),
-            usageSnapshots = mergedUsageSnapshots,
-          )
-          resolvedParentIds.add(parentThread.thread.id)
-        }
-
-        // Preserve previous behavior when parent rollout is missing for a discovered sub-agent session.
-        for (parsedThread in subAgentThreads) {
-          val parentThreadId = parsedThread.parentThreadId ?: continue
-          if (resolvedParentIds.contains(parentThreadId)) continue
-          topLevelThreads.add(parsedThread.thread)
-        }
-
-        topLevelThreads.sortWith(Comparator { left, right ->
-          right.thread.updatedAt.compareTo(left.thread.updatedAt)
-        })
-
-        threadsByCwd[cwd] = ObjectArrayList(topLevelThreads)
+      val parsedThreads = cachedFilesByPath.values.mapNotNull { cachedFile -> cachedFile.parsedValue }
+      for ((cwd, threads) in mergeParsedRolloutThreadsByCwd(parsedThreads)) {
+        threadsByCwd[cwd] = ObjectArrayList(threads)
       }
     }
   }
 
+}
+
+internal fun mergeParsedRolloutThreadsByCwd(parsedThreads: Collection<ParsedRolloutThread>): Map<String, List<CodexBackendThread>> {
+  if (parsedThreads.isEmpty()) {
+    return emptyMap()
+  }
+
+  val parsedThreadsByCwd = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
+  for (parsedThread in parsedThreads) {
+    parsedThreadsByCwd.getOrPut(parsedThread.normalizedCwd) { ArrayList() }.add(parsedThread)
+  }
+
+  val threadsByCwd = LinkedHashMap<String, List<CodexBackendThread>>(parsedThreadsByCwd.size)
+  for ((cwd, cwdThreads) in parsedThreadsByCwd) {
+    val topLevelThreads = ArrayList<CodexBackendThread>(cwdThreads.size)
+    val subAgentThreadsByParent = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
+    val subAgentThreads = ArrayList<ParsedRolloutThread>()
+
+    for (parsedThread in cwdThreads) {
+      val parentThreadId = parsedThread.parentThreadId
+      if (parentThreadId == null) {
+        topLevelThreads.add(parsedThread.thread)
+        continue
+      }
+
+      subAgentThreadsByParent.getOrPut(parentThreadId) { ArrayList() }.add(parsedThread)
+      subAgentThreads.add(parsedThread)
+    }
+
+    val resolvedParentIds = HashSet<String>()
+    for (index in topLevelThreads.indices) {
+      val parentThread = topLevelThreads[index]
+      val childThreads = subAgentThreadsByParent[parentThread.thread.id].orEmpty()
+      if (childThreads.isEmpty()) {
+        continue
+      }
+
+      val mergedSubAgents = LinkedHashMap<String, CodexSubAgent>(parentThread.thread.subAgents.size + childThreads.size)
+      parentThread.thread.subAgents.forEach { subAgent ->
+        mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
+      }
+      childThreads.forEach { childThread ->
+        val subAgent = CodexSubAgent(id = childThread.thread.thread.id, name = childThread.thread.thread.title)
+        mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
+      }
+
+      val mergedUsageSnapshots = ArrayList<AgentSessionUsageSnapshot>(
+        parentThread.usageSnapshots.size + childThreads.sumOf { childThread -> childThread.thread.usageSnapshots.size }
+      )
+      mergedUsageSnapshots.addAll(parentThread.usageSnapshots)
+      childThreads.forEach { childThread ->
+        mergedUsageSnapshots.addAll(childThread.thread.usageSnapshots)
+      }
+
+      topLevelThreads[index] = parentThread.copy(
+        thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)),
+        usageSnapshots = mergedUsageSnapshots,
+      )
+      resolvedParentIds.add(parentThread.thread.id)
+    }
+
+    subAgentThreads.forEach { parsedThread ->
+      val parentThreadId = parsedThread.parentThreadId ?: return@forEach
+      if (resolvedParentIds.contains(parentThreadId)) {
+        return@forEach
+      }
+      topLevelThreads.add(parsedThread.thread)
+    }
+
+    topLevelThreads.sortByDescending { thread -> thread.thread.updatedAt }
+    threadsByCwd[cwd] = topLevelThreads
+  }
+
+  return threadsByCwd
+}
+
+internal fun CodexBackendThread.matchesRequestedThreadIds(threadIds: Set<String>): Boolean {
+  return thread.id in threadIds || thread.subAgents.any { subAgent -> subAgent.id in threadIds }
 }
 
 private data class RolloutRefreshPlan(

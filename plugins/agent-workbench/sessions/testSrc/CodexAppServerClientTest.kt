@@ -154,6 +154,42 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun listThreadsParsesRolloutPathFromAppServer(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-rollout-path")
+    Files.createDirectories(project)
+    val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
+    val rolloutPath = "$normalizedCwd/.codex/sessions/2026/05/28/rollout-thread-1.jsonl"
+    val configPath = tempDir.resolve("codex-rollout-path.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-1",
+          title = "Thread with rollout path",
+          cwd = normalizedCwd,
+          path = rolloutPath,
+          updatedAt = 1_700_000_000_000L,
+          archived = false,
+        )
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-rollout-path")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val thread = client.listThreads(archived = false).single()
+      assertThat(thread.path).isEqualTo(rolloutPath)
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun listSkillsParsesCodexAppServerSkills(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-skills.json")
     writeConfig(path = configPath, threads = emptyList())

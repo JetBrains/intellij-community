@@ -279,19 +279,27 @@ internal class AgentSessionRefreshCoordinator(
               cliAvailabilityByProvider = cliAvailabilityByProvider,
             ) { partial, isComplete ->
               stateStore.updateProject(normalizedEntryPath) { project ->
+                val refreshedThreads = preserveThreadCosts(
+                  existingThreads = project.threads,
+                  newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
+                )
                 project.copy(
-                  threads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
+                  threads = refreshedThreads,
                   providerWarnings = partial.providerWarnings,
                   isLoading = !isComplete,
                 )
               }
             }
             stateStore.updateProject(normalizedEntryPath) { project ->
+              val refreshedThreads = preserveThreadCosts(
+                existingThreads = project.threads,
+                newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
+              )
               project.copy(
                 isLoading = false,
                 hasLoaded = true,
                 hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                threads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
+                threads = refreshedThreads,
                 errorMessage = finalResult.errorMessage,
                 providerWarnings = finalResult.providerWarnings,
               )
@@ -319,19 +327,27 @@ internal class AgentSessionRefreshCoordinator(
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
               ) { partial, isComplete ->
                 stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                  val refreshedThreads = preserveThreadCosts(
+                    existingThreads = worktree.threads,
+                    newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
+                  )
                   worktree.copy(
-                    threads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
+                    threads = refreshedThreads,
                     providerWarnings = partial.providerWarnings,
                     isLoading = !isComplete,
                   )
                 }
               }
               stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                val refreshedThreads = preserveThreadCosts(
+                  existingThreads = worktree.threads,
+                  newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
+                )
                 worktree.copy(
                   isLoading = false,
                   hasLoaded = true,
                   hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                  threads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
+                  threads = refreshedThreads,
                   errorMessage = finalResult.errorMessage,
                   providerWarnings = finalResult.providerWarnings,
                 )

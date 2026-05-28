@@ -54,7 +54,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutTaskStartedOverridesReadyAppServerListActivity() {
+  fun startupListKeepsAppServerActivityWithoutRolloutFallback() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-list-processing")
       writeRollout(
@@ -73,7 +73,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -171,7 +171,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutTaskCompleteClearsStaleAppServerProcessingListActivityToReady() {
+  fun startupListKeepsStaleAppServerProcessingUntilHintRefreshRuns() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-list-complete-ready")
       writeRollout(
@@ -192,7 +192,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -227,7 +227,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutHintRefreshUpdatesReadyAppServerThreadWithoutAppServerNotification() {
+  fun unscopedRefreshKeepsAppServerActivityUntilHintsApply() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-refresh-processing")
       writeRollout(
@@ -252,12 +252,12 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(refreshResult.completeThreadsByPath[projectPath]).hasSize(1)
-      assertThat(refreshResult.completeThreadsByPath.getValue(projectPath).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(refreshResult.completeThreadsByPath.getValue(projectPath).single().activity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
   @Test
-  fun newerRolloutProcessingOverridesStaleAppServerResponseRequiredListActivity() {
+  fun startupListKeepsAppServerResponseRequiredActivityWithoutRolloutFallback() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-list-response-required")
       writeRollout(
@@ -279,7 +279,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
   }
 
