@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("NavigationUtil")
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
@@ -14,13 +14,16 @@ import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.CommandToken
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -32,8 +35,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -45,6 +50,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -53,6 +59,7 @@ import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.UIBundle
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
@@ -60,6 +67,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
@@ -173,6 +181,11 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
   // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
   CommandProcessor.getInstance().executeCommand(element.project, {
     if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+      //skip binary files if activatePsiElementIfOpen cannot open it
+      if (hasBinaryDecompiler(element)){
+        resultRef = false
+        return@executeCommand
+      }
       val navigationItem = element as NavigationItem
       if (navigationItem.canNavigate()) {
         navigationItem.navigate(requestFocus)
@@ -199,29 +212,132 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
 
+  // Decompiler-backed files (e.g. .class) load their content via a long read action.
+  // The blocking openFile(file, window, options) overload waits for the composite to become available
+  // via blockingWaitForCompositeFileOpen on the EDT, which keeps the document-load coroutine
+  // bound to the EDT pump and prevents the read action from being cancelled. For such files we
+  // route through the suspend openFile(file, options) overload, which releases the EDT while
+  // composite.waitForAvailable() suspends — so the decompile is genuinely cancellable.
+  val hasDecompiler = readAction { hasBinaryDecompiler(element) }
+
   val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
-  return withContext(Dispatchers.EDT) {
-    //readaction is not enough
-    writeIntentReadAction {
-      // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
-      val commandHandle = WriteIntentReadAction.compute<CommandToken> {
-        commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@compute null
-      } ?: return@writeIntentReadAction false
-      try {
-        if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
-          val navigationItem = element as NavigationItem
-          if (navigationItem.canNavigate()) {
-            navigationItem.navigate(requestFocus)
-            return@writeIntentReadAction true
+  return if (hasDecompiler) {
+    navigateWithoutOuterWriteIntent(element, openAsNative, searchForOpen, requestFocus, commandProcessor)
+  }
+  else {
+    withContext(Dispatchers.EDT) {
+      //readaction is not enough
+      writeIntentReadAction {
+        // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
+        val commandHandle = WriteIntentReadAction.compute<CommandToken> {
+          commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@compute null
+        } ?: return@writeIntentReadAction false
+        try {
+          if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+            val navigationItem = element as NavigationItem
+            if (navigationItem.canNavigate()) {
+              navigationItem.navigate(requestFocus)
+              return@writeIntentReadAction true
+            }
           }
         }
+        finally {
+          commandProcessor.finishCommand(commandHandle, null)
+          element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+        }
+        false
       }
-      finally {
-        commandProcessor.finishCommand(commandHandle, null)
-        element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
-      }
-      false
     }
+  }
+}
+
+/**
+ * Checks if a binary decompiler is available for the given element.
+ * Also, it checks the registry if we support open binary files differently
+ */
+private fun hasBinaryDecompiler(element: PsiElement): Boolean {
+  if(!Registry.`is`("hyperlink.ide.decompiler.open.file")) return false
+  if (!element.isValid) return false
+  val vFile = (element as? PsiFile)?.virtualFile ?: element.containingFile?.virtualFile ?: return false
+  return BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile)
+}
+
+private suspend fun navigateWithoutOuterWriteIntent(
+  element: PsiElement,
+  openAsNative: Boolean,
+  searchForOpen: Boolean,
+  requestFocus: Boolean,
+  commandProcessor: CommandProcessorEx,
+): Boolean {
+  val commandHandle = withContext(Dispatchers.EDT) {
+    WriteIntentReadAction.compute<CommandToken> {
+      commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT)
+    }
+  } ?: return false
+  try {
+    if (openAsNative || !activatePsiElementIfOpenAsync(element, searchForOpen, requestFocus)) {
+      val navigationItem = element as NavigationItem
+      val canNavigate = readAction { navigationItem.canNavigate() }
+      if (canNavigate) {
+        withContext(Dispatchers.EDT) {
+          navigationItem.navigate(requestFocus)
+        }
+        return true
+      }
+    }
+    else {
+      return true
+    }
+  }
+  finally {
+    withContext(NonCancellable + Dispatchers.EDT) {
+      WriteIntentReadAction.run {
+        commandProcessor.finishCommand(commandHandle, null)
+      }
+    }
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+  }
+  return false
+}
+
+private suspend fun activatePsiElementIfOpenAsync(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+  // IMPORTANT: do NOT resolve navigationElement.textRange here — for ClsElement-backed PSI
+  // (.class files) textRange calls getMirror(), which triggers the very decompilation we want
+  // to keep off the caller's path. Only resolve the file here; range is computed after openFile.
+  val resolved = readAction {
+    val navigationElement = element.takeIf { it.isValid }?.navigationElement ?: return@readAction null
+    val virtualFile = navigationElement.containingFile?.takeIf { it.isValid }?.virtualFile ?: return@readAction null
+    navigationElement to virtualFile
+  } ?: return false
+
+  val (navigationElement, vFile) = resolved
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(element.project)
+  val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
+  val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
+  if (!wasAlreadyOpen) {
+    // suspend overload — releases EDT while composite.waitForAvailable() suspends,
+    // so the readAction { getDocument } inside the composite is cancellable.
+    fileEditorManager.openFile(file = vFile, options = openOptions)
+  }
+
+  // After the file is opened (mirror is now available), compute textRange.
+  val range = readAction { navigationElement.takeIf { it.isValid }?.textRange } ?: return false
+
+  return withContext(Dispatchers.EDT) {
+    for (editor in fileEditorManager.getEditorList(vFile)) {
+      if (editor is TextEditor) {
+        val text = editor.editor
+        val offset = text.caretModel.offset
+        if (range.containsOffset(offset)) {
+          if (wasAlreadyOpen) {
+            // select the file — composite is already open, the blocking call returns immediately
+            fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
+          }
+          return@withContext true
+        }
+      }
+    }
+    false
   }
 }
 
@@ -247,15 +363,23 @@ private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boole
   @Suppress("NAME_SHADOWING")
   val element = element.takeIf { it.isValid }?.navigationElement ?: return false
   val vFile = element.containingFile?.takeIf { it.isValid }?.virtualFile ?: return false
-  val range = element.textRange ?: return false
 
   val fileEditorManager = FileEditorManagerEx.getInstanceEx(element.project)
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
   val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
+    if (hasBinaryDecompiler(element)) {
+      val success = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        {
+          ReadAction.computeCancellable<Document, Throwable> {  element.containingFile.viewProvider.document }
+        },
+        UIBundle.message("progress.decompiling.file", vFile.name), true, element.project)
+      if(!success) return false
+    }
     fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
   }
 
+  val range = element.textRange ?: return false
   for (editor in fileEditorManager.getEditorList(vFile)) {
     if (editor is TextEditor) {
       val text = editor.editor

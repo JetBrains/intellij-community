@@ -227,6 +227,17 @@ public abstract class FileDocumentManager implements SavingRequestor {
   }
 
   /**
+   * Determines if the specified virtual file can have an associated document.
+   *
+   * @param virtualFile the virtual file to check. Must not be null.
+   * @return true if the file can have an associated document, false otherwise.
+   */
+  @Internal
+  public boolean canHaveDocument(@NotNull VirtualFile virtualFile) {
+    return getDocument(virtualFile) != null;
+  }
+
+  /**
    * Stores the write access status (true if the document has the write access; false otherwise)
    * and a message about the reason for the read-only status.
    */

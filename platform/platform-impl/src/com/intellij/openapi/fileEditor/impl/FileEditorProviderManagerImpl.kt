@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -63,7 +63,9 @@ class FileEditorProviderManagerImpl
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
     val hasDocument by lazy {
       runReadActionBlocking {
-        FileDocumentManager.getInstance().getDocument(file) != null
+        // Use the cheap predicate instead of getDocument() to avoid forcing
+        // content load (e.g. .class file decompilation) on EDT-blocking paths.
+        FileDocumentManager.getInstance().canHaveDocument(file)
       }
     }
 
@@ -139,7 +141,7 @@ class FileEditorProviderManagerImpl
           if (item.isDocumentRequired) {
             if (hasDocument == null) {
               val fileDocumentManager = serviceAsync<FileDocumentManager>()
-              hasDocument = readAction { fileDocumentManager.getDocument(file) != null }
+              hasDocument = readAction { fileDocumentManager.canHaveDocument(file) }
             }
 
             if (hasDocument == false) {

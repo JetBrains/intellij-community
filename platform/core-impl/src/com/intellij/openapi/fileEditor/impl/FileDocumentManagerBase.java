@@ -213,6 +213,25 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) == null;
   }
 
+  /**
+   * Cheap predicate that mirrors the conditions under which {@link #getDocument(VirtualFile)} would return a non-null document,
+   * but without forcing content load (which may trigger expensive operations such as decompilation).
+   * <p>
+   * Useful for callers that only need to know whether a document could exist for the file (e.g. file editor provider resolution).
+   */
+  @Override
+  @ApiStatus.Internal
+  public boolean canHaveDocument(@NotNull VirtualFile file) {
+    if (getCachedDocument(file) != null) {
+      return true;
+    }
+    if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
+      boolean tooLarge = FileSizeLimit.isTooLargeForContentLoading(file.getLength(), file.getExtension());
+      return !tooLarge;
+    }
+    return getDocument(file) != null;
+  }
+
   @ApiStatus.Internal
   public static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
