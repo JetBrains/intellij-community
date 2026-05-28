@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.community.impl.nio.CloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
@@ -25,6 +27,7 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.asSafely
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -74,7 +77,9 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       it.getEelDescriptor() == eelDescriptor
     }
     return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
-      showCloseProjectDialog(eelDescriptor, projectsToClose)
+      showCloseProjectDialog(eelDescriptor, projectsToClose).also {
+        eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
+      }
     }
   }
 

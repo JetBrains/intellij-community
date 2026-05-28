@@ -30,6 +30,8 @@ interface IjentSession {
 
   fun getIjentInstance(descriptor: EelDescriptor): IjentApi
 
+  val eventBus: IjentEventBus
+
   enum class LogLevel {
     INFO, DEBUG, TRACE
   }
