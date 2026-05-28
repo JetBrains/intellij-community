@@ -69,7 +69,7 @@ import java.util.function.Function
 class LookupElementCustomPreviewHolderDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     val customPreviewHolder = getLookupElementCustomPreviewHolder(element) ?: return null
-    val anchorElement = if (offset - 1 >= 0) psiFile.findElementAt(offset - 1) else psiFile.findElementAt(offset)
+    val anchorElement = if (offset >= 1) psiFile.findElementAt(offset - 1) else psiFile.findElementAt(offset)
     if (anchorElement == null) return null
     return CustomPreviewDocumentationTarget(anchorElement, customPreviewHolder, offset)
   }
