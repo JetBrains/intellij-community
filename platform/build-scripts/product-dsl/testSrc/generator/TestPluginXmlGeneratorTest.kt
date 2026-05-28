@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetDependencyScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -280,7 +281,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `plugin-owned content dependency becomes plugin dependency in DSL test plugin`(@TempDir tempDir: Path) {
+  fun `compile plugin-owned content dependency becomes plugin dependency in DSL test plugin`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
@@ -293,7 +294,7 @@ class TestPluginXmlGeneratorTest {
         content("intellij.consumer.module")
       }
       target("intellij.consumer.test.plugin") {
-        dependsOn("intellij.owner.module")
+        dependsOn("intellij.owner.module", TargetDependencyScope.COMPILE)
       }
       linkPluginMainTarget("intellij.consumer.test.plugin")
     }
@@ -336,6 +337,69 @@ class TestPluginXmlGeneratorTest {
     assertThat(xml).contains("<dependencies>")
     assertThat(xml).contains("<plugin id=\"intellij.owner.plugin\"/>")
     assertThat(xml).doesNotContain("<module name=\"intellij.owner.module\"/>")
+    }
+  }
+
+  @Test
+  fun `runtime plugin-owned content dependency stays module dependency in DSL test plugin`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
+      plugin("intellij.owner.plugin") {
+        pluginId("intellij.owner.plugin")
+        content("intellij.owner.module")
+      }
+      testPlugin("intellij.consumer.test.plugin") {
+        pluginId("intellij.consumer.test.plugin")
+        content("intellij.consumer.module")
+      }
+      target("intellij.consumer.test.plugin") {
+        dependsOn("intellij.owner.module", TargetDependencyScope.RUNTIME)
+      }
+      linkPluginMainTarget("intellij.consumer.test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("intellij.consumer.test.plugin"),
+      name = "Consumer Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      spec = productModules {
+        requiredModule("intellij.consumer.module")
+      }
+    )
+
+    val fileUpdater = DeferredFileUpdater(tempDir)
+    val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater)
+    val discovery = baseModel.discovery.copy(
+      products = listOf(
+        DiscoveredProduct(
+          name = "TestProduct",
+          config = ProductConfiguration(modules = emptyList(), className = "TestProduct"),
+          properties = null,
+          spec = null,
+          pluginXmlPath = null,
+        )
+      )
+    )
+    val model = baseModel.copy(
+      discovery = discovery,
+      projectRoot = tempDir,
+      fileUpdater = fileUpdater,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val ctx = ComputeContextImpl(model)
+    runPlannerAndGenerator(ctx)
+
+    val diffs = fileUpdater.getDiffs()
+    assertThat(diffs).hasSize(1)
+    val xml = diffs.single().expectedContent
+    assertThat(xml).contains("<dependencies>")
+    assertThat(xml).contains("<module name=\"intellij.owner.module\"/>")
+    assertThat(xml).doesNotContain("<plugin id=\"intellij.owner.plugin\"/>")
+
+    val errors = ctx.getNodeErrors(TestPluginXmlGenerator.id)
+    assertThat(errors).isEmpty()
     }
   }
 

@@ -432,6 +432,11 @@ internal class GraphTargetBuilder(
     val depId = builder.getOrCreateTarget(TargetName(name))
     builder.addTargetDependencyEdge(targetId, depId, null)
   }
+
+  fun dependsOn(name: String, scope: TargetDependencyScope) {
+    val depId = builder.getOrCreateTarget(TargetName(name))
+    builder.addTargetDependencyEdge(targetId, depId, scope)
+  }
 }
 
 /**

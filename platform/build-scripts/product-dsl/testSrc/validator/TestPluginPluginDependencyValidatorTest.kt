@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetDependencyScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -251,6 +252,105 @@ class TestPluginPluginDependencyValidatorTest {
     )
 
     assertThat(errors.filterIsInstance<DslTestPluginDependencyError>()).hasSize(1)
+  }
+
+  @Test
+  fun `runtime plugin-owned content dependency with unresolvable owner reports error`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("TestProduct")
+      plugin("dep.plugin") {
+        pluginId("dep.plugin")
+        content("dep.module")
+      }
+      testPlugin("test.plugin") {
+        pluginId("test.plugin")
+        content("consumer.module")
+      }
+      target("test.plugin") {
+        dependsOn("dep.module", TargetDependencyScope.RUNTIME)
+      }
+      linkPluginMainTarget("test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("test.plugin"),
+      name = "Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      spec = productModules {
+        module("consumer.module")
+      }
+    )
+
+    writePluginXml(tempDir, spec.pluginXmlPath, pluginXml("test.plugin"))
+
+    val model = testGenerationModel(graph, fileUpdater = DeferredFileUpdater(tempDir)).copy(
+      projectRoot = tempDir,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val planOutput = buildPlanOutput(model, emptyList())
+    val plan = planOutput.plans.single()
+    assertThat(plan.moduleDependencies).doesNotContain(ContentModuleName("dep.module"))
+    assertThat(plan.pluginDependencies).doesNotContain(PluginId("dep.plugin"))
+
+    val errors = runValidationRule(
+      TestPluginPluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.TEST_PLUGIN_DEPENDENCY_PLAN to planOutput),
+    )
+
+    val unresolvedErrors = errors.filterIsInstance<DslTestPluginDependencyError>()
+    assertThat(unresolvedErrors).hasSize(1)
+    assertThat(unresolvedErrors.first().contentModuleDependencyId).isEqualTo(ContentModuleName("dep.module"))
+  }
+
+  @Test
+  fun `allowed missing suppresses unresolvable runtime plugin-owned content dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("TestProduct")
+      plugin("dep.plugin") {
+        pluginId("dep.plugin")
+        content("dep.module")
+      }
+      testPlugin("test.plugin") {
+        pluginId("test.plugin")
+        content("consumer.module")
+      }
+      target("test.plugin") {
+        dependsOn("dep.module", TargetDependencyScope.RUNTIME)
+      }
+      linkPluginMainTarget("test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("test.plugin"),
+      name = "Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      allowedMissingPluginIds = listOf(PluginId("dep.plugin")),
+      spec = productModules {
+        module("consumer.module")
+      }
+    )
+
+    writePluginXml(tempDir, spec.pluginXmlPath, pluginXml("test.plugin"))
+
+    val model = testGenerationModel(graph, fileUpdater = DeferredFileUpdater(tempDir)).copy(
+      projectRoot = tempDir,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val planOutput = buildPlanOutput(model, emptyList())
+    val plan = planOutput.plans.single()
+    assertThat(plan.moduleDependencies).doesNotContain(ContentModuleName("dep.module"))
+    assertThat(plan.pluginDependencies).doesNotContain(PluginId("dep.plugin"))
+
+    val errors = runValidationRule(
+      TestPluginPluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.TEST_PLUGIN_DEPENDENCY_PLAN to planOutput),
+    )
+
+    assertThat(errors).isEmpty()
   }
 
   private fun dependencyResult(moduleName: String, testDependencies: List<String>): DependencyFileResult {
