@@ -398,7 +398,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
       else {
         filteredIterableItems = JBIterable.from(items)
-          .filter(item -> !isCustomElements(item));
+          .filter(item -> !isCustomElement(item));
       }
 
       MultiMap<CompletionSorterImpl, LookupElement> sortedGroups = groupItemsBySorter(filteredIterableItems);
@@ -461,7 +461,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
    * @return true if the lookup element represents custom elements, false otherwise.
    */
   @ApiStatus.Internal
-  protected boolean isCustomElements(@NotNull LookupElement item) {
+  protected boolean isCustomElement(@NotNull LookupElement item) {
     return false;
   }
 
@@ -549,7 +549,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
                                              @NotNull LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (items.contains(lastSelection) && lastSelection != null && !isCustomElements(lastSelection)) {
+      if (items.contains(lastSelection) && lastSelection != null && !isCustomElement(lastSelection)) {
         model.add(lastSelection);
       }
     }

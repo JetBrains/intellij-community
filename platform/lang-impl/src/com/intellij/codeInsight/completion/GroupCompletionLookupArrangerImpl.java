@@ -35,7 +35,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
 
 
   @Override
-  protected boolean isCustomElements(@NotNull LookupElement item) {
+  protected boolean isCustomElement(@NotNull LookupElement item) {
     return CompletionGroup.get(item) != null;
   }
 
@@ -58,7 +58,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
       return;
     }
     LookupElement lastElement = model.getLast();
-    if (!isCustomElements(lastElement)) {
+    if (!isCustomElement(lastElement)) {
       super.customizeListModel(model);
       return;
     }
@@ -68,11 +68,11 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     List<Pair<Integer, CompletionGroup>> groups = new ArrayList<>();
     for (int i = model.size() - 2; i >= 0; i--) {
       LookupElement element = model.get(i);
-      if (!stopCustom && !isCustomElements(element)) {
+      if (!stopCustom && !isCustomElement(element)) {
         stopCustom = true;
         groups.add(Pair.create(i + 1, currentGroup));
       }
-      else if (stopCustom && isCustomElements(element)) {
+      else if (stopCustom && isCustomElement(element)) {
         super.customizeListModel(model);
         return;
       }

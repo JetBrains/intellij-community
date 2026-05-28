@@ -40,7 +40,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
     List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isCustomElements(item)) continue;
+      if (isCustomElement(item)) continue;
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
       if (isPrefixItem(item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
         if (item instanceof LiveTemplateLookupElement) {
