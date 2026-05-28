@@ -178,6 +178,12 @@ object DynamicPlugins {
         cancellation = TaskCancellation.nonCancellable()
       ) {
         val newState = computeNewPluginsState(plugins, emptyList())
+        // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+        val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        expectPluginsState(expectToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
+          LOG.info("new plugins state did not meet expectations: $it")
+          return@runWithModalProgressBlocking false
+        }
         val result = instance.performDynamicTransition(newState)
         result is DynamicPluginsTransitionResult.Success
       }
@@ -195,6 +201,12 @@ object DynamicPlugins {
         cancellation = TaskCancellation.nonCancellable()
       ) {
         val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList())
+        // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+        val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
+          LOG.info("new plugins state did not meet expectations: $it")
+          return@runWithModalProgressBlocking false
+        }
         val result = instance.performDynamicTransition(newState)
         result is DynamicPluginsTransitionResult.Success
       }
@@ -219,6 +231,12 @@ object DynamicPlugins {
         cancellation = TaskCancellation.nonCancellable()
       ) {
         val newState = computeNewPluginsState(emptyList(), plugins)
+        // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+        val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
+          LOG.info("new plugins state did not meet expectations: $it")
+          return@runWithModalProgressBlocking false
+        }
         val result = instance.performDynamicTransition(newState)
         result is DynamicPluginsTransitionResult.Success
       }
@@ -237,6 +255,12 @@ object DynamicPlugins {
         cancellation = TaskCancellation.nonCancellable()
       ) {
         val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+        // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+        val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
+          LOG.info("new plugins state did not meet expectations: $it")
+          return@runWithModalProgressBlocking false
+        }
         val result = instance.performDynamicTransition(newState)
         result is DynamicPluginsTransitionResult.Success
       }
@@ -256,6 +280,12 @@ object DynamicPlugins {
         cancellation = TaskCancellation.nonCancellable()
       ) {
         val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+        // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+        val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
+          LOG.info("new plugins state did not meet expectations: $it")
+          return@runWithModalProgressBlocking false
+        }
         val result = instance.performDynamicTransition(newState)
         result is DynamicPluginsTransitionResult.Success
       }
