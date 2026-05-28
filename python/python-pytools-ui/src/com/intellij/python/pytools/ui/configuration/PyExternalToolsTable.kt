@@ -232,6 +232,7 @@ internal class PyExternalToolsTable(
             when (pathIconAtHover(viewRow)) {
               PathIconKind.INSTALL -> uv.installViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
               PathIconKind.UPGRADE -> uv.upgradeViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
+              PathIconKind.RESET -> resetPathFor(rows[viewRow])
               else -> Unit
             }
           }
@@ -277,7 +278,9 @@ internal class PyExternalToolsTable(
         val overGear = effective >= 0 &&
                        rows[effective].tool.detailConfigurable != null &&
                        isOverGearIcon(e, effective)
-        val isIconWithAction = pathIconAtHover(pathEffective).let { it == PathIconKind.INSTALL || it == PathIconKind.UPGRADE }
+        val isIconWithAction = pathIconAtHover(pathEffective).let {
+          it == PathIconKind.INSTALL || it == PathIconKind.UPGRADE || it == PathIconKind.RESET
+        }
         val overActionableIcon = pathEffective >= 0 &&
                                  isOverPathIcon(e, pathEffective) &&
                                  isIconWithAction
@@ -441,6 +444,18 @@ internal class PyExternalToolsTable(
       if (rowIndex >= 0) {
         model.setValueAt(chosenPath.toString(), rowIndex, COL_PATH)
       }
+    }
+  }
+
+  /**
+   * Clear the row's staged custom path so the row falls back to auto-detection. Routed through
+   * the path column's setter — same code path as a successful browse — so the standard re-probe
+   * + validation + repaint flow takes over.
+   */
+  private fun resetPathFor(item: ToolRow) {
+    val rowIndex = rows.indexOf(item)
+    if (rowIndex >= 0) {
+      model.setValueAt("", rowIndex, COL_PATH)
     }
   }
 

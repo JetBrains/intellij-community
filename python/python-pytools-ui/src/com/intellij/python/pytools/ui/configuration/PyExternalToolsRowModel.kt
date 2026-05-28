@@ -83,6 +83,7 @@ internal enum class PathIconKind(val icon: Icon?) {
   INSTALL(PythonPytoolsUIIcons.Install),
   INFO(AllIcons.General.Information),
   UPGRADE(PythonPytoolsUIIcons.Upgrade),
+  RESET(AllIcons.Diff.Revert),
 }
 
 /**
@@ -98,6 +99,10 @@ internal fun iconKindFor(
   isUvManaged: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
+  // A manually-selected path overrides auto-detection entirely; the only meaningful hover
+  // action there is "revert to auto-detection". Skip install / upgrade / info — none of them
+  // apply to a user-pointed-at executable.
+  detected is PathFieldValue.Custom -> PathIconKind.RESET
   detected is PathFieldValue.NotFound && uvAvailable == true -> PathIconKind.INSTALL
   detected is PathFieldValue.NotFound -> PathIconKind.NONE
   toolRow.version == null -> PathIconKind.NONE

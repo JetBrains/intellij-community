@@ -232,9 +232,9 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
 
   override fun doLayout() {
     val leftPad = JBUI.scale(5)
-    // Reserve room on the right for both hover icons (edit + the optional install/
-    // upgrade/info action), so the inner JBLabel ellipsis kicks in before the text
-    // collides with either icon.
+    // Reserve room on the right for both hover icons (edit + the optional action icon —
+    // install / upgrade / info / reset), so the inner JBLabel ellipsis kicks in before the
+    // text collides with either icon.
     val rightReserve = AllIcons.General.OpenDisk.iconWidth + JBUI.scale(4) +
                        PythonPytoolsUIIcons.Install.iconWidth + JBUI.scale(10)
     val w = (width - leftPad - rightReserve).coerceAtLeast(0)
@@ -281,7 +281,7 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     // Icon order from the right edge: browse (always shown on hover) is rightmost; the
-    // optional install / upgrade / info icon sits immediately to its left.
+    // optional action icon (install / upgrade / info / reset) sits immediately to its left.
     val rightEdge = width - JBUI.scale(5)
     val browseLeft = if (paintEdit) {
       val browse = AllIcons.General.OpenDisk
