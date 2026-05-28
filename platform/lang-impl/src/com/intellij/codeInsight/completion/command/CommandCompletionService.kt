@@ -264,8 +264,12 @@ private class CommandCompletionHighlightingListener(
     if (!installed.get()) {
       return
     }
+
     val previousHighlighting = lookup.removeUserData(PROMPT_HIGHLIGHTING)
-    previousHighlighting?.let { topLevelEditor.markupModel.removeHighlighter(it) }
+    if (previousHighlighting != null) {
+      topLevelEditor.markupModel.removeHighlighter(previousHighlighting)
+    }
+
     topLevelEditor.removeHighlightingPredicate(SUPPRESS_PREDICATE_KEY)
   }
 
@@ -273,7 +277,9 @@ private class CommandCompletionHighlightingListener(
     clearPromptHighlighting()
     val highlightManager = HighlightManager.getInstance(project)
     val previousLookupHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
-    previousLookupHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
+    previousLookupHighlighting?.forEach { t ->
+      highlightManager.removeSegmentHighlighter(topLevelEditor, t)
+    }
   }
 
   override fun uiRefreshed() {
@@ -342,13 +348,16 @@ private class CommandCompletionHighlightingListener(
   private fun updateHighlighting(element: CommandCompletionLookupElement) {
     val highlightManager = HighlightManager.getInstance(project)
     val previousHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
-    previousHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
+    previousHighlighting?.forEach { t ->
+      highlightManager.removeSegmentHighlighter(topLevelEditor, t)
+    }
     val diff = when (nonWrittenFiles) {
       true -> 0
       false -> findActualIndex(element.suffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
     }
     val startOffset = lookup.lookupOriginalStart - diff
     val highlightInfo = element.highlighting ?: return
+
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
     val highlightedEndOffset = if (nonWrittenFiles) highlightInfo.range.endOffset else min(highlightInfo.range.endOffset, startOffset)
     if (highlightInfo.range.startOffset <= highlightedEndOffset) {
