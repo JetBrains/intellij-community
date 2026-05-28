@@ -10,6 +10,7 @@ import java.util.stream.Collectors
 
 private val PACKAGE_LINE = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
 private val QUALIFIED_ANNOTATION = Regex("""^@(\w+)\.(\w+)""")
+private val TAG_ANNOTATION = Regex("""^@(?:org\.junit\.jupiter\.api\.)?Tag\(\s*"([^"]+)"\s*\)""")
 private val CLASS_DECLARATION = Regex("""\bclass\s+(\w+)\b""")
 private val TEST_NAME_SUFFIX = Regex(""".*(Test|Tests|TestCase|TestSuite)$""")
 
@@ -17,6 +18,8 @@ private val ANNOTATION_QUALIFIERS = setOf(
   "Components", "Subsystems", "Layers",
   "Owners", "Features", "Stories",
 )
+
+private const val TAG_BUFFER_KEY = "Tags"
 
 private data class Variant(
   val name: String? = null,
@@ -43,6 +46,7 @@ private data class TestRecord(
   val owners: List<String>,
   val features: List<String>,
   val stories: List<String>,
+  val tags: List<String>,
   val lastRun: LastRun = LastRun(),
 )
 
@@ -107,7 +111,7 @@ private fun printUsage() {
     |
     |Scans .kt and .java files for class-level annotations from
     |com.intellij.ide.starter.extended.allure (Components, Subsystems, Layers, ...)
-    |and emits a JSON report.
+    |plus JUnit 5 @Tag("...") annotations, and emits a JSON report.
   """.trimMargin())
 }
 
@@ -187,6 +191,9 @@ private fun scanFile(file: Path, repoRoot: Path): ScanResult {
           buffer.add(qual to name)
         }
       }
+      TAG_ANNOTATION.find(line)?.let { m ->
+        buffer.add(TAG_BUFFER_KEY to m.groupValues[1])
+      }
       // Skip continuation lines for multi-line annotation arguments.
       var depth = parenBalance(line)
       while (depth > 0 && i < lines.size) {
@@ -234,6 +241,7 @@ private fun scanFile(file: Path, repoRoot: Path): ScanResult {
         owners = buffer.filter { it.first == "Owners" }.map { it.second },
         features = buffer.filter { it.first == "Features" }.map { it.second },
         stories = buffer.filter { it.first == "Stories" }.map { it.second },
+        tags = buffer.filter { it.first == TAG_BUFFER_KEY }.map { it.second },
       )
     )
   }
