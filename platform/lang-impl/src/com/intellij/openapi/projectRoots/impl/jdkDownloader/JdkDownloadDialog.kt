@@ -272,6 +272,7 @@ internal class JdkDownloadDialog(
       installDirTextField = textFieldWithBrowseButton(
         project,
         FileChooserDescriptorFactory.singleDir().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk"))
+          .withEnvironmentRestricted(true)
       ).apply {
         onTextChange { onTargetPathChanged(it) }
         textField.columns = 36
