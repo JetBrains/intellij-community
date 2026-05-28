@@ -1,0 +1,53 @@
+<root>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugNotificationMessage id'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugNotificationMessage java.lang.String getId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugNotificationMessage org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.debug.messages.Number&gt; getRawId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugNotificationMessage void setId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugNotificationMessage void setRawId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.debug.messages.Number&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage java.lang.String getMethod()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage java.lang.String getResponseId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage method'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.debug.messages.Number&gt; getRawResponseId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage responseId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage void setMethod(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage void setRawResponseId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.debug.messages.Number&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.debug.messages.DebugResponseMessage void setResponseId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

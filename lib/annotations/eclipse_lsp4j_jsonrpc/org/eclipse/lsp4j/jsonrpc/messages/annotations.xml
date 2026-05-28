@@ -1,0 +1,252 @@
+<root>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.CancelParams id'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.CancelParams java.lang.String getId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.CancelParams org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.messages.Number&gt; getRawId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.CancelParams void setId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.CancelParams void setRawId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.messages.Number&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either L getLeft()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either R getRight()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either T map(java.util.function.Function&lt;? super L,? extends T&gt;, java.util.function.Function&lt;? super R,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either T map(java.util.function.Function&lt;? super L,? extends T&gt;, java.util.function.Function&lt;? super R,? extends T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either java.lang.Object get()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either left'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.Either&lt;L,R&gt; forLeft(L) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.Either&lt;L,R&gt; forRight(R) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(java.lang.reflect.ParameterizedType) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(java.lang.reflect.Type) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(org.eclipse.lsp4j.jsonrpc.messages.&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either right'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T map(java.util.function.Function&lt;? super T1,? extends T&gt;, java.util.function.Function&lt;? super T2,? extends T&gt;, java.util.function.Function&lt;? super T3,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T map(java.util.function.Function&lt;? super T1,? extends T&gt;, java.util.function.Function&lt;? super T2,? extends T&gt;, java.util.function.Function&lt;? super T3,? extends T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T map(java.util.function.Function&lt;? super T1,? extends T&gt;, java.util.function.Function&lt;? super T2,? extends T&gt;, java.util.function.Function&lt;? super T3,? extends T&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T1 getFirst()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T2 getSecond()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 T3 getThird()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 java.lang.Object get()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 org.eclipse.lsp4j.jsonrpc.messages.Either3&lt;T1,T2,T3&gt; forFirst(T1) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 org.eclipse.lsp4j.jsonrpc.messages.Either3&lt;T1,T2,T3&gt; forLeft3(T1) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 org.eclipse.lsp4j.jsonrpc.messages.Either3&lt;T1,T2,T3&gt; forRight3(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;T2,T3&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 org.eclipse.lsp4j.jsonrpc.messages.Either3&lt;T1,T2,T3&gt; forSecond(T2) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either3 org.eclipse.lsp4j.jsonrpc.messages.Either3&lt;T1,T2,T3&gt; forThird(T3) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.IdentifiableMessage id'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.IdentifiableMessage java.lang.String getId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.IdentifiableMessage org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.messages.Number&gt; getRawId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.IdentifiableMessage void setId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.IdentifiableMessage void setRawId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.jsonrpc.messages.Number&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Message java.lang.String getJsonrpc()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Message jsonHandler'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Message jsonrpc'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Message void setJsonHandler(org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.Message void setJsonrpc(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue MessageIssue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue MessageIssue(java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue MessageIssue(java.lang.String, int, org.eclipse.lsp4j.jsonrpc.messages.Exception) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue MessageIssue(java.lang.String, int, org.eclipse.lsp4j.jsonrpc.messages.Exception) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue cause'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue org.eclipse.lsp4j.jsonrpc.messages.Exception getCause()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.MessageIssue text'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage java.lang.Object getParams()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage java.lang.String getMethod()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage method'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage params'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage void setMethod(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage void setParams(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage java.lang.Object getParams()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage java.lang.String getMethod()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage method'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage params'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage void setMethod(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.RequestMessage void setParams(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError ResponseError(int, java.lang.String, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError ResponseError(int, java.lang.String, java.lang.Object) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError ResponseError(org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode, java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError ResponseError(org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode, java.lang.String, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError ResponseError(org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode, java.lang.String, java.lang.Object) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError data'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError java.lang.Object getData()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError message'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError void setCode(org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError void setData(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseError void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage error'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage java.lang.Object getResult()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage org.eclipse.lsp4j.jsonrpc.messages.ResponseError getError()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage result'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage void setError(org.eclipse.lsp4j.jsonrpc.messages.ResponseError) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage void setResult(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

@@ -1,0 +1,3341 @@
+<root>
+  <item name='org.eclipse.lsp4j.debug.AttachRequestArguments __restart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.AttachRequestArguments java.lang.Object get__restart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.AttachRequestArguments void set__restart(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint id'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint instructionReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.String getInstructionReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint message'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint org.eclipse.lsp4j.debug.BreakpointNotVerifiedReason getReason()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint reason'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setInstructionReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setReason(org.eclipse.lsp4j.debug.BreakpointNotVerifiedReason) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Breakpoint void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments breakpoint'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments java.lang.String getReason()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments org.eclipse.lsp4j.debug.Breakpoint getBreakpoint()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments reason'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments void setBreakpoint(org.eclipse.lsp4j.debug.Breakpoint) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointEventArguments void setReason(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocation void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments source'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointLocationsArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode description'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode java.lang.String getDescription()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode java.lang.String getMode()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode mode'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode void setDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.BreakpointMode void setMode(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments java.lang.Integer getRequestId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments java.lang.String getProgressId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments progressId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments requestId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments void setProgressId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CancelArguments void setRequestId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportSuspendDebuggee()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportTerminateDebuggee()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsANSIStyling()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsBreakpointLocationsRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsCancelRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsClipboardContext()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsCompletionsRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsConditionalBreakpoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsConfigurationDoneRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsDataBreakpointBytes()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsDataBreakpoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsDelayedStackTraceLoading()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsDisassembleRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsEvaluateForHovers()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsExceptionFilterOptions()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsExceptionInfoRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsExceptionOptions()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsFunctionBreakpoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsGotoTargetsRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsHitConditionalBreakpoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsInstructionBreakpoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsLoadedSourcesRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsLogPoints()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsModulesRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsReadMemoryRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsRestartFrame()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsRestartRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsSetExpression()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsSetVariable()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsSingleThreadExecutionRequests()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsStepBack()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsStepInTargetsRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsSteppingGranularity()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsTerminateRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsTerminateThreadsRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsValueFormattingOptions()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities java.lang.Boolean getSupportsWriteMemoryRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportSuspendDebuggee'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportTerminateDebuggee'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsANSIStyling'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsBreakpointLocationsRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsCancelRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsClipboardContext'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsCompletionsRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsConditionalBreakpoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsConfigurationDoneRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsDataBreakpointBytes'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsDataBreakpoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsDelayedStackTraceLoading'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsDisassembleRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsEvaluateForHovers'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsExceptionFilterOptions'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsExceptionInfoRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsExceptionOptions'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsFunctionBreakpoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsGotoTargetsRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsHitConditionalBreakpoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsInstructionBreakpoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsLoadedSourcesRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsLogPoints'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsModulesRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsReadMemoryRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsRestartFrame'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsRestartRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsSetExpression'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsSetVariable'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsSingleThreadExecutionRequests'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsStepBack'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsStepInTargetsRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsSteppingGranularity'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsTerminateRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsTerminateThreadsRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsValueFormattingOptions'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities supportsWriteMemoryRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportSuspendDebuggee(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportTerminateDebuggee(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsANSIStyling(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsBreakpointLocationsRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsCancelRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsClipboardContext(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsCompletionsRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsConditionalBreakpoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsConfigurationDoneRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsDataBreakpointBytes(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsDataBreakpoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsDelayedStackTraceLoading(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsDisassembleRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsEvaluateForHovers(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsExceptionFilterOptions(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsExceptionInfoRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsExceptionOptions(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsFunctionBreakpoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsGotoTargetsRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsHitConditionalBreakpoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsInstructionBreakpoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsLoadedSourcesRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsLogPoints(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsModulesRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsReadMemoryRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsRestartFrame(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsRestartRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsSetExpression(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsSetVariable(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsSingleThreadExecutionRequests(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsStepBack(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsStepInTargetsRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsSteppingGranularity(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsTerminateRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsTerminateThreadsRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsValueFormattingOptions(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Capabilities void setSupportsWriteMemoryRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CapabilitiesEventArguments capabilities'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CapabilitiesEventArguments org.eclipse.lsp4j.debug.Capabilities getCapabilities()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CapabilitiesEventArguments void setCapabilities(org.eclipse.lsp4j.debug.Capabilities) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum algorithm'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum checksum'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum java.lang.String getChecksum()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum org.eclipse.lsp4j.debug.ChecksumAlgorithm getAlgorithm()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum void setAlgorithm(org.eclipse.lsp4j.debug.ChecksumAlgorithm) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Checksum void setChecksum(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor attributeName'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor java.lang.Integer getWidth()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor java.lang.String getAttributeName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor java.lang.String getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor org.eclipse.lsp4j.debug.ColumnDescriptorType getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor void setAttributeName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor void setFormat(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor void setType(org.eclipse.lsp4j.debug.ColumnDescriptorType) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor void setWidth(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ColumnDescriptor width'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem detail'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.Integer getLength()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.Integer getSelectionLength()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.Integer getSelectionStart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.Integer getStart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.String getDetail()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.String getSortText()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem length'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem org.eclipse.lsp4j.debug.CompletionItemType getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem selectionLength'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem selectionStart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem sortText'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem start'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem text'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setDetail(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setLength(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setSelectionLength(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setSelectionStart(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setSortText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setStart(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionItem void setType(org.eclipse.lsp4j.debug.CompletionItemType) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments frameId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments java.lang.Integer getFrameId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments text'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments void setFrameId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.CompletionsArguments void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueResponse allThreadsContinued'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueResponse java.lang.Boolean getAllThreadsContinued()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinueResponse void setAllThreadsContinued(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinuedEventArguments allThreadsContinued'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinuedEventArguments java.lang.Boolean getAllThreadsContinued()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ContinuedEventArguments void setAllThreadsContinued(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint accessType'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint condition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint dataId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint hitCondition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint java.lang.String getCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint java.lang.String getDataId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint java.lang.String getHitCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint org.eclipse.lsp4j.debug.DataBreakpointAccessType getAccessType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint void setAccessType(org.eclipse.lsp4j.debug.DataBreakpointAccessType) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint void setCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint void setDataId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpoint void setHitCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments asAddress'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments bytes'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments frameId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.Boolean getAsAddress()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.Integer getBytes()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.Integer getFrameId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.Integer getVariablesReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.String getMode()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments mode'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments variablesReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setAsAddress(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setBytes(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setFrameId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setMode(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoArguments void setVariablesReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse canPersist'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse dataId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse description'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse java.lang.Boolean getCanPersist()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse java.lang.String getDataId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse java.lang.String getDescription()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse void setCanPersist(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse void setDataId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DataBreakpointInfoResponse void setDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments instructionOffset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments java.lang.Boolean getResolveSymbols()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments java.lang.Integer getInstructionOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments memoryReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments resolveSymbols'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments void setInstructionOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembleArguments void setResolveSymbols(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction address'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction instruction'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction instructionBytes'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.String getAddress()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.String getInstruction()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.String getInstructionBytes()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction java.lang.String getSymbol()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction location'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction org.eclipse.lsp4j.debug.DisassembledInstructionPresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction org.eclipse.lsp4j.debug.Source getLocation()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction symbol'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setAddress(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setInstruction(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setInstructionBytes(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setLocation(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setPresentationHint(org.eclipse.lsp4j.debug.DisassembledInstructionPresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisassembledInstruction void setSymbol(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments java.lang.Boolean getRestart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments java.lang.Boolean getSuspendDebuggee()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments java.lang.Boolean getTerminateDebuggee()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments restart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments suspendDebuggee'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments terminateDebuggee'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments void setRestart(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments void setSuspendDebuggee(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.DisconnectArguments void setTerminateDebuggee(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments context'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments expression'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments frameId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments java.lang.Integer getFrameId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments java.lang.String getContext()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments java.lang.String getExpression()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments org.eclipse.lsp4j.debug.ValueFormat getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setContext(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setExpression(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setFormat(org.eclipse.lsp4j.debug.ValueFormat) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setFrameId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse indexedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.Integer getIndexedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.Integer getNamedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.Integer getValueLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.String getResult()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse java.lang.String getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse memoryReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse namedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse org.eclipse.lsp4j.debug.VariablePresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse result'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse valueLocationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setIndexedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setNamedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setPresentationHint(org.eclipse.lsp4j.debug.VariablePresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setResult(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.EvaluateResponse void setValueLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter conditionDescription'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter default_'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter description'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter filter'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.Boolean getDefault_()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.Boolean getSupportsCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.String getConditionDescription()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.String getDescription()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.String getFilter()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter supportsCondition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setConditionDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setDefault_(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setFilter(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionBreakpointsFilter void setSupportsCondition(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails evaluateName'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails fullTypeName'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails java.lang.String getEvaluateName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails java.lang.String getFullTypeName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails java.lang.String getStackTrace()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails java.lang.String getTypeName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails message'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails stackTrace'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails typeName'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails void setEvaluateName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails void setFullTypeName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails void setStackTrace(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionDetails void setTypeName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions condition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions filterId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions java.lang.String getCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions java.lang.String getFilterId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions java.lang.String getMode()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions mode'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions void setCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions void setFilterId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionFilterOptions void setMode(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse breakMode'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse description'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse details'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse exceptionId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse java.lang.String getDescription()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse java.lang.String getExceptionId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse org.eclipse.lsp4j.debug.ExceptionBreakMode getBreakMode()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse org.eclipse.lsp4j.debug.ExceptionDetails getDetails()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse void setBreakMode(org.eclipse.lsp4j.debug.ExceptionBreakMode) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse void setDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse void setDetails(org.eclipse.lsp4j.debug.ExceptionDetails) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionInfoResponse void setExceptionId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionOptions breakMode'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionOptions org.eclipse.lsp4j.debug.ExceptionBreakMode getBreakMode()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionOptions void setBreakMode(org.eclipse.lsp4j.debug.ExceptionBreakMode) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionPathSegment java.lang.Boolean getNegate()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionPathSegment negate'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ExceptionPathSegment void setNegate(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint condition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint hitCondition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint java.lang.String getCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint java.lang.String getHitCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint void setCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint void setHitCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.FunctionBreakpoint void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget instructionPointerReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget java.lang.String getInstructionPointerReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget void setInstructionPointerReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTarget void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments source'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.GotoTargetsArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments adapterID'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments clientID'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments clientName'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments columnsStartAt1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getColumnsStartAt1()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getLinesStartAt1()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsANSIStyling()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsArgsCanBeInterpretedByShell()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsInvalidatedEvent()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsMemoryEvent()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsMemoryReferences()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsProgressReporting()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsRunInTerminalRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsStartDebuggingRequest()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsVariablePaging()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.Boolean getSupportsVariableType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.String getAdapterID()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.String getClientID()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.String getClientName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.String getLocale()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments java.lang.String getPathFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments linesStartAt1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments locale'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments pathFormat'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsANSIStyling'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsArgsCanBeInterpretedByShell'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsInvalidatedEvent'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsMemoryEvent'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsMemoryReferences'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsProgressReporting'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsRunInTerminalRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsStartDebuggingRequest'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsVariablePaging'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments supportsVariableType'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setAdapterID(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setClientID(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setClientName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setColumnsStartAt1(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setLinesStartAt1(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setLocale(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setPathFormat(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsANSIStyling(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsArgsCanBeInterpretedByShell(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsInvalidatedEvent(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsMemoryEvent(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsMemoryReferences(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsProgressReporting(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsRunInTerminalRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsStartDebuggingRequest(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsVariablePaging(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InitializeRequestArguments void setSupportsVariableType(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint condition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint hitCondition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint instructionReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint java.lang.String getCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint java.lang.String getHitCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint java.lang.String getInstructionReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint java.lang.String getMode()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint mode'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint void setCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint void setHitCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint void setInstructionReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint void setMode(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InstructionBreakpoint void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments java.lang.Integer getStackFrameId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments java.lang.Integer getThreadId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments stackFrameId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments threadId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments void setStackFrameId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.InvalidatedEventArguments void setThreadId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments __restart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments java.lang.Boolean getNoDebug()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments java.lang.Object get__restart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments noDebug'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments void setNoDebug(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LaunchRequestArguments void set__restart(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments org.eclipse.lsp4j.debug.LoadedSourceEventArgumentsReason getReason()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments reason'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments source'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments void setReason(org.eclipse.lsp4j.debug.LoadedSourceEventArgumentsReason) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LoadedSourceEventArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsArguments java.lang.Integer getLocationReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsArguments locationReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsArguments void setLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse line'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse source'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.LocationsResponse void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.MemoryEventArguments java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.MemoryEventArguments memoryReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.MemoryEventArguments void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message format'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.lang.Boolean getSendTelemetry()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.lang.Boolean getShowUser()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.lang.String getFormat()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.lang.String getUrl()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.lang.String getUrlLabel()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message java.util.Map&lt;java.lang.String,java.lang.String&gt; getVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message sendTelemetry'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message showUser'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message url'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message urlLabel'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message variables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setFormat(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setSendTelemetry(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setShowUser(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setUrl(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setUrlLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Message void setVariables(java.util.Map&lt;java.lang.String,java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module addressRange'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module dateTimeStamp'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module id'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module isOptimized'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module isUserCode'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.Boolean getIsOptimized()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.Boolean getIsUserCode()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getAddressRange()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getDateTimeStamp()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getPath()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getSymbolFilePath()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getSymbolStatus()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module java.lang.String getVersion()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Integer,java.lang.String&gt; getId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module path'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module symbolFilePath'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module symbolStatus'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module version'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setAddressRange(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setDateTimeStamp(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Integer,java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setIsOptimized(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setIsUserCode(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setPath(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setSymbolFilePath(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setSymbolStatus(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Module void setVersion(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments module'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments org.eclipse.lsp4j.debug.Module getModule()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments org.eclipse.lsp4j.debug.ModuleEventArgumentsReason getReason()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments reason'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments void setModule(org.eclipse.lsp4j.debug.Module) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModuleEventArguments void setReason(org.eclipse.lsp4j.debug.ModuleEventArgumentsReason) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments java.lang.Integer getModuleCount()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments java.lang.Integer getStartModule()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments moduleCount'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments startModule'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments void setModuleCount(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesArguments void setStartModule(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesResponse java.lang.Integer getTotalModules()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesResponse totalModules'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ModulesResponse void setTotalModules(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments granularity'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments org.eclipse.lsp4j.debug.SteppingGranularity getGranularity()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments void setGranularity(org.eclipse.lsp4j.debug.SteppingGranularity) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.NextArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments category'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments data'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments group'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.Integer getLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.Integer getVariablesReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.Object getData()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.String getCategory()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments java.lang.String getOutput()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments locationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments org.eclipse.lsp4j.debug.OutputEventArgumentsGroup getGroup()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments output'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments variablesReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setCategory(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setData(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setGroup(org.eclipse.lsp4j.debug.OutputEventArgumentsGroup) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setOutput(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.OutputEventArguments void setVariablesReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments isLocalProcess'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments java.lang.Boolean getIsLocalProcess()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments java.lang.Integer getPointerSize()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments java.lang.Integer getSystemProcessId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments org.eclipse.lsp4j.debug.ProcessEventArgumentsStartMethod getStartMethod()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments pointerSize'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments startMethod'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments systemProcessId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments void setIsLocalProcess(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments void setPointerSize(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments void setStartMethod(org.eclipse.lsp4j.debug.ProcessEventArgumentsStartMethod) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProcessEventArguments void setSystemProcessId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments java.lang.String getProgressId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments message'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments progressId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressEndEventArguments void setProgressId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments cancellable'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments java.lang.Boolean getCancellable()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments java.lang.Integer getRequestId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments java.lang.String getProgressId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments java.lang.String getTitle()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments message'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments org.eclipse.lsp4j.debug.Double getPercentage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments percentage'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments progressId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments requestId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments title'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setCancellable(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setPercentage(org.eclipse.lsp4j.debug.Double) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setProgressId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setRequestId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressStartEventArguments void setTitle(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments java.lang.String getMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments java.lang.String getProgressId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments message'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments org.eclipse.lsp4j.debug.Double getPercentage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments percentage'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments progressId'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments void setPercentage(org.eclipse.lsp4j.debug.Double) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ProgressUpdateEventArguments void setProgressId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments memoryReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryArguments void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse address'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse data'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse java.lang.Integer getUnreadableBytes()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse java.lang.String getAddress()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse java.lang.String getData()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse unreadableBytes'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse void setAddress(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse void setData(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReadMemoryResponse void setUnreadableBytes(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RestartArguments arguments'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RestartArguments org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.debug.LaunchRequestArguments,org.eclipse.lsp4j.debug.AttachRequestArguments&gt; getArguments()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RestartArguments void setArguments(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.debug.LaunchRequestArguments,org.eclipse.lsp4j.debug.AttachRequestArguments&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReverseContinueArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReverseContinueArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ReverseContinueArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments argsCanBeInterpretedByShell'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments cwd'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments env'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments java.lang.Boolean getArgsCanBeInterpretedByShell()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments java.lang.String getCwd()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments java.lang.String getTitle()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments java.util.Map&lt;java.lang.String,java.lang.String&gt; getEnv()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments kind'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments org.eclipse.lsp4j.debug.RunInTerminalRequestArgumentsKind getKind()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments title'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments void setArgsCanBeInterpretedByShell(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments void setCwd(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments void setEnv(java.util.Map&lt;java.lang.String,java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments void setKind(org.eclipse.lsp4j.debug.RunInTerminalRequestArgumentsKind) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalRequestArguments void setTitle(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse java.lang.Integer getProcessId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse java.lang.Integer getShellProcessId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse processId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse shellProcessId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse void setProcessId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.RunInTerminalResponse void setShellProcessId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope indexedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getIndexedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.Integer getNamedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope java.lang.String getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope namedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setIndexedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setNamedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setPresentationHint(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Scope void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments java.lang.Boolean getSourceModified()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments source'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments sourceModified'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetBreakpointsArguments void setSourceModified(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments expression'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments frameId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments java.lang.Integer getFrameId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments java.lang.String getExpression()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments org.eclipse.lsp4j.debug.ValueFormat getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments void setExpression(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments void setFormat(org.eclipse.lsp4j.debug.ValueFormat) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments void setFrameId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionArguments void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse indexedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.Integer getIndexedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.Integer getNamedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.Integer getValueLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.Integer getVariablesReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.String getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse memoryReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse namedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse org.eclipse.lsp4j.debug.VariablePresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse valueLocationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse variablesReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setIndexedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setNamedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setPresentationHint(org.eclipse.lsp4j.debug.VariablePresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setValueLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetExpressionResponse void setVariablesReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments org.eclipse.lsp4j.debug.ValueFormat getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments void setFormat(org.eclipse.lsp4j.debug.ValueFormat) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableArguments void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse indexedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.Integer getIndexedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.Integer getNamedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.Integer getValueLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.Integer getVariablesReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.String getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse memoryReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse namedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse valueLocationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse variablesReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setIndexedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setNamedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setValueLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SetVariableResponse void setVariablesReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source adapterData'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source java.lang.Integer getSourceReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source java.lang.Object getAdapterData()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source java.lang.String getOrigin()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source java.lang.String getPath()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source name'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source org.eclipse.lsp4j.debug.SourcePresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source origin'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source path'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source sourceReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setAdapterData(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setOrigin(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setPath(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setPresentationHint(org.eclipse.lsp4j.debug.SourcePresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Source void setSourceReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceArguments org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceArguments source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceArguments void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint condition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint hitCondition'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint java.lang.String getCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint java.lang.String getHitCondition()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint java.lang.String getLogMessage()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint java.lang.String getMode()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint logMessage'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint mode'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint void setCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint void setHitCondition(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint void setLogMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceBreakpoint void setMode(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse content'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse java.lang.String getContent()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse java.lang.String getMimeType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse mimeType'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse void setContent(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.SourceResponse void setMimeType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame canRestart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame instructionPointerReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame java.lang.Boolean getCanRestart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame java.lang.String getInstructionPointerReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame moduleId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame org.eclipse.lsp4j.debug.Source getSource()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame org.eclipse.lsp4j.debug.StackFramePresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Integer,java.lang.String&gt; getModuleId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame source'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setCanRestart(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setInstructionPointerReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setModuleId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setModuleId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setModuleId(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Integer,java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setPresentationHint(org.eclipse.lsp4j.debug.StackFramePresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrame void setSource(org.eclipse.lsp4j.debug.Source) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat includeAll'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getIncludeAll()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getModule()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getParameterNames()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getParameterTypes()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getParameterValues()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat java.lang.Boolean getParameters()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat module'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat parameterNames'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat parameterTypes'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat parameterValues'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat parameters'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setIncludeAll(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setLine(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setModule(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setParameterNames(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setParameterTypes(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setParameterValues(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackFrameFormat void setParameters(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments java.lang.Integer getLevels()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments java.lang.Integer getStartFrame()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments levels'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments org.eclipse.lsp4j.debug.StackFrameFormat getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments startFrame'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments void setFormat(org.eclipse.lsp4j.debug.StackFrameFormat) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments void setLevels(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceArguments void setStartFrame(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceResponse java.lang.Integer getTotalFrames()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceResponse totalFrames'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StackTraceResponse void setTotalFrames(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StartDebuggingRequestArguments org.eclipse.lsp4j.debug.StartDebuggingRequestArgumentsType getRequest()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StartDebuggingRequestArguments request'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StartDebuggingRequestArguments void setRequest(org.eclipse.lsp4j.debug.StartDebuggingRequestArgumentsType) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments granularity'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments org.eclipse.lsp4j.debug.SteppingGranularity getGranularity()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments void setGranularity(org.eclipse.lsp4j.debug.SteppingGranularity) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepBackArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments granularity'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments java.lang.Integer getTargetId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments org.eclipse.lsp4j.debug.SteppingGranularity getGranularity()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments targetId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments void setGranularity(org.eclipse.lsp4j.debug.SteppingGranularity) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInArguments void setTargetId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget column'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget endColumn'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget endLine'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget java.lang.Integer getColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget java.lang.Integer getEndColumn()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget java.lang.Integer getEndLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget java.lang.Integer getLine()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget java.lang.String getLabel()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget label'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget line'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget void setColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget void setEndColumn(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget void setEndLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepInTarget void setLine(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments granularity'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments java.lang.Boolean getSingleThread()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments org.eclipse.lsp4j.debug.SteppingGranularity getGranularity()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments singleThread'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments void setGranularity(org.eclipse.lsp4j.debug.SteppingGranularity) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StepOutArguments void setSingleThread(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments allThreadsStopped'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments description'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.Boolean getAllThreadsStopped()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.Boolean getPreserveFocusHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.Integer getThreadId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.String getDescription()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.String getReason()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments preserveFocusHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments reason'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments text'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments threadId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setAllThreadsStopped(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setPreserveFocusHint(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setReason(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.StoppedEventArguments void setThreadId(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminateArguments java.lang.Boolean getRestart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminateArguments restart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminateArguments void setRestart(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminatedEventArguments java.lang.Object getRestart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminatedEventArguments restart'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.TerminatedEventArguments void setRestart(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Thread java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Thread name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Thread void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ThreadEventArguments java.lang.String getReason()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ThreadEventArguments reason'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ThreadEventArguments void setReason(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ValueFormat hex'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ValueFormat java.lang.Boolean getHex()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.ValueFormat void setHex(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable declarationLocationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable evaluateName'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable indexedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.Integer getDeclarationLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.Integer getIndexedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.Integer getNamedVariables()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.Integer getValueLocationReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.String getEvaluateName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.String getType()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable memoryReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable name'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable namedVariables'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable org.eclipse.lsp4j.debug.VariablePresentationHint getPresentationHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable presentationHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable type'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable valueLocationReference'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setDeclarationLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setEvaluateName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setIndexedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setNamedVariables(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setPresentationHint(org.eclipse.lsp4j.debug.VariablePresentationHint) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.Variable void setValueLocationReference(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint java.lang.Boolean getLazy()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint java.lang.String getKind()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint java.lang.String getVisibility()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint kind'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint lazy'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint visibility'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint void setKind(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint void setLazy(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablePresentationHint void setVisibility(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments count'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments filter'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments format'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments java.lang.Integer getCount()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments java.lang.Integer getStart()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments org.eclipse.lsp4j.debug.ValueFormat getFormat()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments org.eclipse.lsp4j.debug.VariablesArgumentsFilter getFilter()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments start'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments void setCount(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments void setFilter(org.eclipse.lsp4j.debug.VariablesArgumentsFilter) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments void setFormat(org.eclipse.lsp4j.debug.ValueFormat) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.VariablesArguments void setStart(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments allowPartial'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments data'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments java.lang.Boolean getAllowPartial()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments java.lang.String getData()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments java.lang.String getMemoryReference()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments memoryReference'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments void setAllowPartial(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments void setData(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments void setMemoryReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryArguments void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse bytesWritten'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse java.lang.Integer getBytesWritten()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse java.lang.Integer getOffset()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse offset'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse void setBytesWritten(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.debug.WriteMemoryResponse void setOffset(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>
