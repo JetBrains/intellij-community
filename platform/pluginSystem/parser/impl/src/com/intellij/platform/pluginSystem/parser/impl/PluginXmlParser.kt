@@ -10,10 +10,10 @@ import java.io.InputStream
  * @param locationSource human-readable source of the XML, used for error reporting
  */
 fun parsePluginXml(
-  readContext: PluginDescriptorReaderContext,
-  xIncludeLoader: XIncludeLoader?,
   input: InputStream,
   locationSource: String?,
+  readContext: PluginDescriptorReaderContext,
+  xIncludeLoader: XIncludeLoader?,
 ): PluginDescriptorBuilder {
   val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader)
   consumer.consume(input, locationSource)
@@ -25,10 +25,10 @@ fun parsePluginXml(
  * @param locationSource human-readable source of the XML, used for error reporting
  */
 fun parsePluginXml(
-  readContext: PluginDescriptorReaderContext,
-  xIncludeLoader: XIncludeLoader?,
   input: ByteArray,
   locationSource: String?,
+  readContext: PluginDescriptorReaderContext,
+  xIncludeLoader: XIncludeLoader?,
 ): PluginDescriptorBuilder {
   val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader)
   consumer.consume(input, locationSource)
@@ -39,9 +39,9 @@ fun parsePluginXml(
  * Parses plugin XML descriptor from [input].
  */
 fun parsePluginXml(
+  input: XMLStreamReader2,
   readContext: PluginDescriptorReaderContext,
   xIncludeLoader: XIncludeLoader?,
-  input: XMLStreamReader2,
 ): PluginDescriptorBuilder {
   val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader)
   consumer.consume(input)

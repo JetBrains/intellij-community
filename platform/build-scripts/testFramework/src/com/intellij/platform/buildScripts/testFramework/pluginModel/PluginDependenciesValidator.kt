@@ -487,7 +487,7 @@ class PluginDependenciesValidator private constructor(
         for (root in module.productionSourceRoots) {
           val file = root.findFile(path)
           if (file != null) {
-            return parsePluginXml(readContext, xIncludeLoader, file.inputStream(), null)
+            return parsePluginXml(file.inputStream(), null, readContext, xIncludeLoader)
           }
         }
       }
@@ -502,7 +502,7 @@ class PluginDependenciesValidator private constructor(
       val moduleDescriptor = findResourceFile(jpsModule, configFilePath)
       require(moduleDescriptor != null) { "Cannot find module descriptor '$configFilePath' in '$jpsModuleName' module" }
       val xIncludeLoader = PluginContentModuleFromSourceXIncludeLoader(jpsModule, xIncludeLoader)
-      return parsePluginXml(readContext, xIncludeLoader, moduleDescriptor.inputStream(), null)
+      return parsePluginXml(moduleDescriptor.inputStream(), null, readContext, xIncludeLoader)
     }
 
     override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {

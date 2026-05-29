@@ -47,7 +47,7 @@ class ClassPathXmlPathResolver(
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader),it, dataLoader.toString())
+        return parsePluginXml(it, dataLoader.toString(), readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader))
       }
       resource = null
     }
@@ -74,13 +74,13 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader), resource, dataLoader.toString())
+    return parsePluginXml(resource, dataLoader.toString(), readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader))
   }
 
   override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
     val path = LoadPathUtil.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
-    return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader), reader)
+    return parsePluginXml(reader, readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader))
   }
 
   private fun getXmlReader(classLoader: ClassLoader, path: String, dataLoader: DataLoader): XMLStreamReader2? {

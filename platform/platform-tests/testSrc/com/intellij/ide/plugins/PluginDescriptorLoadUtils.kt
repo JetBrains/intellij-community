@@ -17,13 +17,13 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
     override fun toString() = throw UnsupportedOperationException()
   }
   val rawBuilder = parsePluginXml(
+    input = input,
+    locationSource = path.toString(),
     readContext = object : PluginDescriptorReaderContext {
       override val interner = NoOpXmlInterner
       override val isMissingIncludeIgnored = false
     },
     xIncludeLoader = createXIncludeLoader(pathResolver, dataLoader),
-    input = input,
-    locationSource = path.toString(),
   )
   loadingContext.patchPlugin(rawBuilder)
   if (id != null) {
@@ -50,7 +50,7 @@ fun readDescriptorFromBytesForTest(
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): PluginMainDescriptor {
-  val raw = parsePluginXml(loadingContext.readContext, createXIncludeLoader(pathResolver, dataLoader), data, path.toString()).let {
+  val raw = parsePluginXml(data, path.toString(), loadingContext.readContext, createXIncludeLoader(pathResolver, dataLoader)).let {
     loadingContext.patchPlugin(it)
     it.build()
   }

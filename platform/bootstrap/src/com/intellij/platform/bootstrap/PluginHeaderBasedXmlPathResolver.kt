@@ -34,7 +34,7 @@ internal class PluginHeaderBasedXmlPathResolver(
       val moduleHeader = moduleRepository.findModuleHeader(includedModule.moduleId)
       if (moduleHeader != null) {
         val input = moduleHeader.readFile(path) ?: error("Cannot resolve $path in $moduleHeader")
-        return parsePluginXml(readContext, createXIncludeLoader(this, dataLoader), input, path)
+        return parsePluginXml(input, path, readContext, createXIncludeLoader(this, dataLoader))
       }
     }
     return fallbackResolver.resolveModuleFile(readContext, dataLoader, path)

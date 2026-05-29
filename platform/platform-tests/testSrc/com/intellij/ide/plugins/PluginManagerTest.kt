@@ -356,7 +356,7 @@ class PluginManagerTest {
             val url = child.getAttributeValue("descriptor-url")!!
             if (url.endsWith("/$relativePath")) {
               try {
-                return parsePluginXml(readContext, createXIncludeLoader(this, dataLoader), elementAsBytes(child), null)
+                return parsePluginXml(elementAsBytes(child), null, readContext, createXIncludeLoader(this, dataLoader))
               }
               catch (e: XMLStreamException) {
                 throw RuntimeException(e)
@@ -423,5 +423,5 @@ private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuild
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
   }
-  return parsePluginXml(readContext = readContext, xIncludeLoader = xIncludeLoader, input, null)
+  return parsePluginXml(input, null, readContext = readContext, xIncludeLoader = xIncludeLoader)
 }

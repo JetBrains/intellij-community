@@ -79,6 +79,6 @@ class PluginXmlParserTest {
       override val interner: XmlInterner = NoOpXmlInterner
       override val isMissingIncludeIgnored: Boolean = true
     }
-    return parsePluginXml(context, null, bytes, "test-plugin.xml").build()
+    return parsePluginXml(bytes, "test-plugin.xml", context, null).build()
   }
 }

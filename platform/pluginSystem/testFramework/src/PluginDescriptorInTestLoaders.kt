@@ -11,5 +11,5 @@ import kotlin.io.path.pathString
 
 fun loadRawPluginDescriptorInTest(file: Path, xIncludeLoader: XIncludeLoader): RawPluginDescriptor {
   val xmlInput = createNonCoalescingXmlStreamReader(file.inputStream(), file.pathString)
-  return parsePluginXml(ValidationPluginDescriptorReaderContext, xIncludeLoader, xmlInput).build()
+  return parsePluginXml(xmlInput, ValidationPluginDescriptorReaderContext, xIncludeLoader).build()
 }
