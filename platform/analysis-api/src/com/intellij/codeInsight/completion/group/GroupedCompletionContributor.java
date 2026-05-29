@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public interface GroupedCompletionContributor {
-  boolean groupIsEnabled(CompletionParameters parameters);
+  boolean groupIsEnabled(@NotNull CompletionParameters parameters);
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)

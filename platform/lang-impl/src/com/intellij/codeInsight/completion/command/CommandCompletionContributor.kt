@@ -13,7 +13,7 @@ import com.intellij.patterns.PlatformPatterns
 import org.jetbrains.annotations.Nls
 
 internal class CommandCompletionContributor : CompletionContributor(), DumbAware, GroupedCompletionContributor {
-  override fun groupIsEnabled(parameters: CompletionParameters?): Boolean {
+  override fun groupIsEnabled(parameters: CompletionParameters): Boolean {
     try {
       if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
       if (!ApplicationCommandCompletionService.getInstance().useGroupEnabled()) return false
