@@ -30,7 +30,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinGradleDependenciesAutoPopupHandlerTest : K2GradleCodeInsightTestCase() {
+class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   private val testCompletionService = object : DependencyCompletionService {
     override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
