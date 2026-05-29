@@ -1,9 +1,21 @@
 - name: lib/libraries-misc-plugin.jar
   modules:
   - name: intellij.libraries.misc.plugin
+- name: lib/modules/intellij.libraries.commons.text.jar
+  contentModules:
+  - name: intellij.libraries.commons.text
+    libraries:
+      commons-text:
+      - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
 - name: lib/modules/intellij.libraries.javax.activation.jar
   contentModules:
   - name: intellij.libraries.javax.activation
+- name: lib/modules/intellij.libraries.jettison.jar
+  contentModules:
+  - name: intellij.libraries.jettison
+    libraries:
+      jettison:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1/jettison-1.jar
 - name: lib/modules/intellij.libraries.kotlinx.document.store.mvstore.jar
   contentModules:
   - name: intellij.libraries.kotlinx.document.store.mvstore
@@ -36,3 +48,11 @@
     libraries:
       xml-rpc:
       - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+- name: lib/modules/intellij.libraries.xstream.jar
+  contentModules:
+  - name: intellij.libraries.xstream
+    libraries:
+      xstream:
+      - name: $MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1/xstream-1.jar
+      - name: $MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1/mxparser-1.jar
+      - name: $MAVEN_REPOSITORY$/xmlpull/xmlpull/1/xmlpull-1.jar

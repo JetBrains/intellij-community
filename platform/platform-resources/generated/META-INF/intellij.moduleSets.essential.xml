@@ -190,12 +190,6 @@
     <!-- endregion -->
     <!-- endregion -->
 
-    <!-- region nested: essential.minimal > core.lang > libraries.temporaryBundled -->
-    <module name="intellij.libraries.jettison" loading="embedded"/>
-    <module name="intellij.libraries.xstream" loading="embedded"/>
-    <module name="intellij.libraries.commons.text"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.macro" loading="embedded"/>
     <module name="intellij.platform.usageView.impl" loading="embedded"/>

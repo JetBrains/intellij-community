@@ -22,6 +22,7 @@ jvm_library(
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+    "//libraries/misc/plugin",
     "//platform/vcs-api:vcs",
   ]
 )
@@ -136,6 +137,7 @@ jvm_library(
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+    "//libraries/misc/plugin:plugin_test_lib",
     "//platform/ide-core:ide-core_test_lib",
   ]
 )

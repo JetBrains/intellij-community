@@ -37,5 +37,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang.todo" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
   </component>
 </module>

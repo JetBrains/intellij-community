@@ -14,5 +14,6 @@ import org.jetbrains.jps.model.module.JpsModule
 @ApiStatus.Internal
 fun JpsModule.isLibraryModule(): Boolean {
   return name.startsWith("intellij.libraries.") &&
+         !name.endsWith(".plugin") &&
          sourceRoots.none { it.rootType == JavaSourceRootType.SOURCE }
 }

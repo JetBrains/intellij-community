@@ -235,26 +235,6 @@ object CoreModuleSets {
     module("intellij.libraries.maven.resolver.provider")
   }
 
-  /**
-   * Temporarily bundled library modules (planned to be removed).
-   *
-   * **⚠️ WARNING:** These are product-specific dependencies that should NOT be in core platform.
-   *
-   * **Current users:** Only DBE (DataGrip) - see jettison/xstream comments below
-   * **Goal:** Remove from `corePlatform` and move to specific products that need them
-   * **Typical NON-users:** Most products don't need these legacy libraries
-   */
-  fun librariesTemporaryBundled(): ModuleSet = moduleSet("libraries.temporaryBundled") {
-    // Currently used only by DBE (see https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration).
-    // Declared as a dependency of xstream because xstream technically depends on it.
-    // Marked as `embedded`: since xstream depends on it, this module must be embedded as well.
-    // No other module should require jettison when using xstream; in general, avoid using xstream at all.
-    embeddedModule("intellij.libraries.jettison")
-    // lang-impl should not use it and embedded should be removed
-    embeddedModule("intellij.libraries.xstream")
-    module("intellij.libraries.commons.text")
-  }
-
   // endregion
 
   // region Platform
@@ -429,9 +409,6 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.diff.impl")
     embeddedModule("intellij.platform.util.diff")
     embeddedModule("fleet.andel")
-
-    // Temporary: lang.impl incorrectly depends on xstream (should be removed)
-    moduleSet(librariesTemporaryBundled())
   }
 
   // endregion

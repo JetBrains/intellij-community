@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.xstream"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.syntax.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

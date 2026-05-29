@@ -132,7 +132,7 @@ Pluginization can break narrow test modules even when product packaging tests pa
 
 ## Pre-TeamCity Canary Suite
 
-Run this suite before relying on TeamCity after pluginization or plugin dependency changes. The order is intentional: fix failures in checks 1-6 before interpreting downstream canary failures.
+Run this suite before relying on TeamCity after pluginization or plugin dependency changes. Run the listed commands in parallel when resources allow; the order is diagnostic priority, not execution order. Fix failures in checks 1-6 before interpreting downstream canary failures.
 
 1. Embedded dependency closure:
    `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='{"filter":"embeddedDependencyClosure","pluginSourceOnly":true}'`
@@ -146,19 +146,28 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
    `./tests.cmd --module intellij.clion.build.tests --test org.jetbrains.intellij.build.clion.CLionPackagingTest`
 6. Rider packaging baseline:
    `./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest`
-7. Database and SQL wrapper coverage:
+7. Database and SQL plugin loading:
+   `./tests.cmd --module intellij.database.tests --test com.intellij.database.DataGripLiteSuite`
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.SqlFileStructureViewTest`
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.editor.SqlMultiLineTodoTest`
-   `./tests.cmd --module intellij.database.tests --test com.intellij.database.view.DatabaseViewTest`
-8. Shell plus Markdown plugin loading:
+8. Code Server DB plugin loading:
+   `./tests.cmd --module intellij.codeServer.db.sql.tests --test com.intellij.database.SqlCompletionTest`
+   `./tests.cmd --module intellij.codeServer.db.csv.datagrid.tests --test com.intellij.codeServer.db.csv.datagrid.tests.CsvCoreGridTest`
+9. Package Checker plugin loading:
+   `./tests.cmd --module intellij.packageChecker.tests --test com.intellij.packageChecker.model.VulnerabilitiesRepositoryServerTest`
+10. Grazie and spellchecker plugin loading:
+   `./community/tests.cmd --module intellij.grazie.tests --test com.intellij.grazie.spellchecker.inspector.SuggestionTest`
+   `./community/tests.cmd --module intellij.grazie.tests --test com.intellij.grazie.spellchecker.inspection.CommentsWithMistakesInspectionTest`
+11. Shell plus Markdown plugin loading:
    `./community/tests.cmd --module intellij.sh.tests --test com.intellij.sh.highlighting.ShHighlightUsagesInMarkdownTest`
-9. Ruby plus SQL injection plugin loading:
+12. Ruby plugin loading:
+   `./tests.cmd --module intellij.ruby.tests --test org.jetbrains.plugins.ruby.gem.GemsProviderTest`
    `./tests.cmd --module intellij.ruby.tests --test org.jetbrains.plugins.ruby.ruby.psi.RubyHeredocInjectorTest#testSqlHeredoc`
-10. RustRover structure and SQL loading:
+13. RustRover structure and SQL loading:
    `./tests.cmd --module intellij.rustrover.core.test --test org.rust.ide.structure.RsStructureViewModelTest`
    `./tests.cmd --module intellij.rustrover.sql.tests --test com.jetbrains.rust.sql.SqlInjectorTest`
-11. ReSharper external services/DataGrip bridge:
-     `./tests.cmd --module intellij.resharper.external.services.test.cases.rd --test com.jetbrains.resharper.external.services.test.cases.ReSharperDataGripRdTest`
+14. ReSharper external services/DataGrip bridge:
+      `./tests.cmd --module intellij.resharper.external.services.test.cases.rd --test com.jetbrains.resharper.external.services.test.cases.ReSharperDataGripRdTest`
 
 ## Verification
 

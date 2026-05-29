@@ -6,6 +6,7 @@
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.json"/>
+    <module name="intellij.libraries.xstream"/>
     <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
@@ -50,7 +51,6 @@
                      implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
-    <registryKey defaultValue="10" description="How often system pythons must be refreshed (minutes)" key="python.system.refresh.minutes" restartRequired="true"/>
     <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)" key="python.conda.envs.refresh.seconds" restartRequired="true"/>
     <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds" restartRequired="true"/>
     <!-- Only modules with `baseDir` support Python SDKs -->
@@ -587,9 +587,6 @@
 
     <registryKey defaultValue="false" description="Don't run `lock` before listing dependencies when using Poetry"
                  restartRequired="false" key="python.poetry.list.packages.without.lock"/>
-
-    <registryKey defaultValue="false" description="Use legacy system python detection method based on flavors"
-                 restartRequired="false" key="python.use.system.legacy.provider"/>
 
     <registryKey defaultValue="false" description="Save preferences what type of data view will be used: the old data view or the new one."
                  restartRequired="false" key="python.data.view.allow.save.preferences.community.vs.powerful.data.view"/>
@@ -1265,10 +1262,4 @@
     <python.inspections.dependencies.dependenciesInspectionProvider
       implementation="com.jetbrains.python.conda.CondaDependenciesInspectionProvider"/>
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
-                    dynamic="true"
-                    interface="com.intellij.python.community.services.systemPython.SystemPythonProvider"/>
-  </extensionPoints>
 </idea-plugin>
