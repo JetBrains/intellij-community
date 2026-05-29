@@ -368,6 +368,10 @@ a:com.intellij.openapi.vfs.VirtualFileManager
 f:com.intellij.openapi.vfs.VirtualFileUtil
 - *sf:getCachedValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):java.lang.Object
 - *bs:getCachedValue$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+*c:com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapterBackgroundable
+- com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+- com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+- <init>(com.intellij.openapi.vfs.VirtualFileListener):V
 *:com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 - com.intellij.openapi.vfs.newvfs.BulkFileListener
 com.intellij.pom.Navigatable
