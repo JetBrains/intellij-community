@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass as kotlinContributorClass
 
 @ApiStatus.Internal
-class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
+class KotlinGradleCleanupCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), RemainingCompletionContributorsFilterer())
   }

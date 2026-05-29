@@ -3,10 +3,11 @@ package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.openapi.project.DumbAware
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class KotlinGradleScriptCompletionContributor : CompletionContributor() {
+class KotlinGradleScriptCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, insideBuildGradleKts(), KotlinGradleVersionCatalogCompletionProvider())
     extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), KotlinGradleDependenciesCompletionProvider())
