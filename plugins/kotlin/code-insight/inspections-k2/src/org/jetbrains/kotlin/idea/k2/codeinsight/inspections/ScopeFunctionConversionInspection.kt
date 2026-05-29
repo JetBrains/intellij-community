@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -13,10 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -118,6 +118,7 @@ class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
  * @param expression The call expression to check
  * @return List of counterpart function names that are valid conversions
  */
+@OptIn(KaExperimentalApi::class)
 private fun getCounterparts(expression: KtCallExpression): List<String> {
     val callee = expression.calleeExpression as? KtNameReferenceExpression ?: return emptyList()
     val calleeName = callee.getReferencedName()
@@ -134,8 +135,7 @@ private fun getCounterparts(expression: KtCallExpression): List<String> {
     }
 
     return analyze(callee) {
-        val resolvedCall = callee.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return@analyze emptyList()
-        val symbol = (resolvedCall as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.symbol ?: return@analyze emptyList()
+        val symbol = callee.resolveCall()?.symbol ?: return@analyze emptyList()
         if (symbol.receiverType == null && (symbol as? KaNamedFunctionSymbol)?.name?.asString() != "with") return@analyze emptyList()
 
         counterpartCandidates.filter { counterpartName ->
@@ -483,7 +483,7 @@ private class ParameterToReceiverVisitor(
         } else {
             // Handle implicit receiver references that need to be qualified
             val resolvedCall = with(session) { 
-                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() 
+                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             } ?: return
             val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
 

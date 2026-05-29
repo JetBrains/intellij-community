@@ -17,15 +17,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -81,12 +81,13 @@ private fun KtFile.importDirectivesToBeRemoved(): List<KtImportDirective> {
     return importDirectives.filter { it.isImportToBeRemoved() }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
     val suppressAnnotationEntry = annotationEntries.firstOrNull {
         val calleeExpression = it.calleeExpression ?: return@firstOrNull false
         if (it.shortName?.asString() != "Suppress") return@firstOrNull false
-        calleeExpression.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.importableFqName == StandardNames.FqNames.suppress
+        calleeExpression.resolveCall()?.symbol?.importableFqName == StandardNames.FqNames.suppress
     } ?: return false
 
     return suppressAnnotationEntry.valueArguments.any {

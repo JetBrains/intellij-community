@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 context(_: KaSession)
 internal fun collectPossibleCompanionReferenceShortenings(
@@ -91,6 +93,7 @@ fun KtSimpleNameExpression.canBeRedundantCompanionReference(): Boolean {
  *
  * For that, it is required to do resolve to ensure that the semantics of the code do not change.
  */
+@OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
@@ -126,15 +129,15 @@ fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
         parent.selectorExpression to parent.selectorExpression!!.text
     }
 
-    val oldTarget = oldTargetExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi ?: return false
+    val oldTarget = ((oldTargetExpression as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol?.psi ?: return false
     val fragment = KtPsiFactory(this.project).createExpressionCodeFragment(
         simplifiedText,
         this
     )
+
     val q = fragment.getContentElement() ?: return false
     return oldTarget == analyze(q) {
-        val partiallyAppliedSymbol = q.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-        partiallyAppliedSymbol?.symbol?.psi
+        ((q as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol?.psi
     }
 }
 

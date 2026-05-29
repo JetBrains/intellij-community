@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -174,9 +173,10 @@ object SpecifyRemainingArgumentsByNameUtil {
     /**
      * Calculates the [RemainingArgumentsData] for the [element].
      */
+    @OptIn(KaExperimentalApi::class)
     fun KaSession.findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null
-        val resolvedCall = functionCall.resolveToCall()?.singleFunctionCallOrNull()
+        val resolvedCall = functionCall.resolveCall()
         return if (resolvedCall != null) {
             // If we can unambiguously resolve the call, we get the data for it to avoid resolving all the candidates
             resolvedCall.getRemainingArgumentsData() ?: return null

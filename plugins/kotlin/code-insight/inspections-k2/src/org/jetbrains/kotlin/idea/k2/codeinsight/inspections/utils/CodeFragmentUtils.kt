@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils
 
@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -173,7 +172,7 @@ internal fun isCollectionLiteralSafeAsArgument(
         val literalType = literal.expressionType ?: return false
         if (!literalType.semanticallyEquals(restoredType)) return false
         val outerCall = literal.getParentOfType<KtCallExpression>(strict = true) ?: return true
-        outerCall.resolveToCall()?.successfulFunctionCallOrNull() != null
+        outerCall.resolveCall() != null
     }
 }
 

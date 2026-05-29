@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -6,9 +6,8 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -54,12 +53,13 @@ class ReplaceWithIgnoreCaseEqualsInspection : KotlinApplicableInspectionBase.Sim
     return caseConversionFunctionFqNames[leftCalleeText] != null
   }
 
+  @OptIn(KaExperimentalApi::class)
   override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
     val leftCall = element.left?.getCallExpressionIfCaseConversion() ?: return null
     val rightCall = element.right?.getCallExpressionIfCaseConversion() ?: return null
 
-    val leftCallFqName = leftCall.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?: return null
-    val rightCallFqName = rightCall.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?: return null
+    val leftCallFqName = leftCall.resolveSymbol()?.callableId?.asSingleFqName() ?: return null
+    val rightCallFqName = rightCall.resolveSymbol()?.callableId?.asSingleFqName() ?: return null
 
     if (leftCallFqName != rightCallFqName) return null
     if (leftCallFqName !in caseConversionFunctionFqNames.values) return null

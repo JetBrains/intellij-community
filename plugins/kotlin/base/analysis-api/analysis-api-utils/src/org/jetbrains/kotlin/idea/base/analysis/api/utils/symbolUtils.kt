@@ -1,19 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.components.withNullability
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -111,6 +110,7 @@ private fun createAnalyzableExpression(
 
     return copied to newCall
 }
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun canBeReplaced(
     parentCall: KtCallExpression,
@@ -129,12 +129,8 @@ private fun canBeReplaced(
     val contentElement = dotQualifiedExpression ?: callExpression ?: return false
 
     analyze(contentElement) {
-        val resolvedNewCall = contentElement.getPossiblyQualifiedCallExpression()?.resolveToCall()
-        val singleFunctionCallOrNull = resolvedNewCall?.successfulFunctionCallOrNull()
-        val newSymbol = singleFunctionCallOrNull?.partiallyAppliedSymbol?.symbol ?: return false
-
-        val resolveToCall = parentCall.resolveToCall()
-        val originalSymbol = resolveToCall?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return false
+        val newSymbol = contentElement.getPossiblyQualifiedCallExpression()?.resolveCall()?.symbol ?: return false
+        val originalSymbol = parentCall.resolveCall()?.symbol ?: return false
         return newSymbol.equalsOrEqualsByPsi(originalSymbol)
     }
 }
@@ -148,13 +144,14 @@ fun KaSymbol?.equalsOrEqualsByPsi(other: KaSymbol?): Boolean {
     return other != null && thisPsi == other.psi
 }
 
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection<KtCallExpression> {
     val valueArguments = functionCall.valueArguments
     if (valueArguments.none { canBeSamConstructorCall(it) }) return emptyList()
 
-    val resolvedFunctionCall = functionCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return emptyList()
+    val resolvedFunctionCall = functionCall.resolveCall() ?: return emptyList()
 
     /**
      * Checks that SAM conversion for [arg] and [call] in the argument position is possible
@@ -170,12 +167,11 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
      * SAM constructor will lead to passing object of different type.
      */
     fun samConversionIsPossible(arg: KtValueArgument, call: KtCallExpression): Boolean {
-        val resolvedCall = call.resolveToCall()
-        val simpleFunctionCall = resolvedCall?.successfulFunctionCallOrNull() as? KaSimpleFunctionCall
+        val functionCall = call.resolveCall()
         // we suppose that SAM constructors return type is always not nullable
-        (simpleFunctionCall?.symbol as? KaSamConstructorSymbol)?.takeUnless { it.returnType.nullability.isNullable }
+        (functionCall?.symbol as? KaSamConstructorSymbol)?.takeUnless { it.returnType.nullability.isNullable }
             ?: return false
-        val samConstructorReturnType = simpleFunctionCall.partiallyAppliedSymbol.signature.returnType
+        val samConstructorReturnType = functionCall.signature.returnType
 
         val argumentExpression = arg.getArgumentExpression()
 

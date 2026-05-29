@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -69,7 +67,7 @@ internal class BooleanLiteralArgumentInspection(
         if (diagnostics.any { it.severity == KaSeverity.ERROR }) return null
         val name = getStableNameFor(element) ?: return null
 
-        val symbol = call.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val symbol = call.resolveSymbol() ?: return null
         if ((symbol as? KaConstructorSymbol)?.importableFqName in ignoreConstructors) return null
         if (!symbol.hasStableParameterNames) return null
 
