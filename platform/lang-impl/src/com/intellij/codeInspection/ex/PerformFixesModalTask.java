@@ -70,7 +70,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   public int getNumberOfSucceededFixes() {
-    return myResultCount.get(Result.SUCCESS);
+    return myResultCount.getOrDefault(Result.SUCCESS, 0);
   }
 
   public void doRun(ProgressIndicator indicator) {
