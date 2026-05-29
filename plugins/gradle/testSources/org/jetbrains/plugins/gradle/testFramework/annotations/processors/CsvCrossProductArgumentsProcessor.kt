@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.support.ParameterDeclarations
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 class CsvCrossProductArgumentsProcessor : ArgumentsProcessor<CsvCrossProductSource> {
   private var value: List<String> = emptyList()
@@ -22,8 +23,7 @@ class CsvCrossProductArgumentsProcessor : ArgumentsProcessor<CsvCrossProductSour
 
   override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<out Arguments> {
     val values = value.map { evaluateValues(it, separator, delimiter) }
-    return crossProduct(values).stream()
-      .map { Arguments.of(*it.flatten().toTypedArray()) }
+    return crossProductArguments(values)
   }
 
   companion object {
@@ -35,8 +35,13 @@ class CsvCrossProductArgumentsProcessor : ArgumentsProcessor<CsvCrossProductSour
     ): Stream<out Arguments> {
       val parsedAdditionalValues = additionalValues.map { evaluateValues(it, separator, delimiter) }
       val allValues = listOf(firstValues) + parsedAdditionalValues
-      return crossProduct(allValues).stream()
+      return crossProductArguments(allValues)
+    }
+
+    internal fun crossProductArguments(values: List<List<*>>): Stream<out Arguments> {
+      return crossProduct(values).asSequence()
         .map { args -> Arguments.of(*args.flatMap { it as? List<*> ?: listOf(it) }.toTypedArray()) }
+        .asStream()
     }
 
     private fun <T> crossProduct(lists: List<List<T>>): List<List<T>> {

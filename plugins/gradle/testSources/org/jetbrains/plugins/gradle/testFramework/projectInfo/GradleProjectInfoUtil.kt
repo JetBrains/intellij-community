@@ -181,9 +181,10 @@ fun GradleModuleInfoBuilder.simpleSettingsFile(configure: GradleSettingScriptBui
 fun GradleProjectInfoBuilder.simpleJavaRootModuleInfo(
   groupId: String? = null,
   version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit = {},
 ): Unit =
   rootModuleInfo {
-    configureSimpleJavaModuleInfo(groupId, version)
+    configureSimpleJavaModuleInfo(groupId, version, configureBuildFile)
   }
 
 fun GradleProjectInfoBuilder.simpleJavaModuleInfo(
@@ -192,12 +193,17 @@ fun GradleProjectInfoBuilder.simpleJavaModuleInfo(
   gradleDsl: GradleDsl? = null,
   groupId: String? = null,
   version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit = {},
 ): Unit =
   moduleInfo(ideName, relativePath, gradleDsl) {
-    configureSimpleJavaModuleInfo(groupId, version)
+    configureSimpleJavaModuleInfo(groupId, version, configureBuildFile)
   }
 
-private fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo(groupId: String?, version: String?) {
+fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo(
+  groupId: String? = null,
+  version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit = {},
+) {
   if (groupId != null) {
     this.groupId = groupId
   }
@@ -211,6 +217,47 @@ private fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo(groupId: Strin
     addVersion(this@configureSimpleJavaModuleInfo.version)
     withJavaPlugin()
     withJUnit()
+    configureBuildFile()
+  }
+}
+
+fun GradleProjectInfoBuilder.simpleKotlinDslRootModuleInfo(
+  groupId: String? = null,
+  version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit,
+): Unit = rootModuleInfo {
+  configureSimpleKotlinDslRootModuleInfo(groupId, version, configureBuildFile)
+}
+
+fun GradleProjectInfoBuilder.simpleKotlinDslModuleInfo(
+  ideName: String,
+  relativePath: String,
+  gradleDsl: GradleDsl? = null,
+  groupId: String? = null,
+  version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit,
+): Unit = moduleInfo(ideName, relativePath, gradleDsl) {
+  configureSimpleKotlinDslRootModuleInfo(groupId, version, configureBuildFile)
+}
+
+fun GradleModuleInfoBuilder.configureSimpleKotlinDslRootModuleInfo(
+  groupId: String? = null,
+  version: String? = null,
+  configureBuildFile: GradleBuildScriptBuilder<*>.() -> Unit,
+) {
+  if (groupId != null) {
+    this.groupId = groupId
+  }
+  if (version != null) {
+    this.version = version
+  }
+  sourceSetInfo("main")
+  sourceSetInfo("test")
+  buildFile {
+    addGroup(this@configureSimpleKotlinDslRootModuleInfo.groupId)
+    addVersion(this@configureSimpleKotlinDslRootModuleInfo.version)
+    withKotlinDsl()
+    configureBuildFile()
   }
 }
 

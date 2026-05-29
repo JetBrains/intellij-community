@@ -15,6 +15,7 @@ import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
+import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
@@ -31,17 +32,39 @@ object GradleProjectInfoAssertions {
   }
 
   fun assertProjectStructure(project: Project, vararg projectsInfo: GradleProjectInfo) {
-    val settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID)
-    Assertions.assertEquals(projectsInfo.size, settings.linkedProjectsSettings.size)
-    val moduleInfos = projectsInfo.flatMap { it.collectModuleInfos() }
+    Assertions.assertEquals(projectsInfo.size, project.gradleSettings.linkedProjectsSettings.size)
+    assertProjectStructure(project, collectProjectInfo(projectsInfo.asList()))
+  }
+
+  fun assertPartialProjectStructure(project: Project, projectInfo: GradleProjectInfo, vararg expectedProjectNames: String) {
+    assertPartialProjectStructure(project, listOf(projectInfo), *expectedProjectNames)
+  }
+
+  fun assertPartialProjectStructure(project: Project, projectInfo: List<GradleProjectInfo>, vararg expectedProjectNames: String) {
+    Assertions.assertEquals(projectInfo.size, project.gradleSettings.linkedProjectsSettings.size)
+    assertProjectStructure(project, collectProjectInfo(projectInfo, *expectedProjectNames))
+  }
+
+  fun collectProjectInfo(projectInfo: List<GradleProjectInfo>): List<GradleProjectInfo> =
+    projectInfo + projectInfo.flatMap { collectProjectInfo(it.composites) }
+
+  fun collectProjectInfo(projectInfo: List<GradleProjectInfo>, vararg projectNames: String): List<GradleProjectInfo> {
+    val expectedProjectInfo = collectProjectInfo(projectInfo)
+      .associateBy { it.projectName }
+    return projectNames.map { expectedProjectName ->
+      requireNotNull(expectedProjectInfo[expectedProjectName]) {
+        "Cannot find project info with name: $expectedProjectName\n" +
+        "  projectInfos=" + expectedProjectInfo.keys
+      }
+    }
+  }
+
+  private fun assertProjectStructure(project: Project, projectInfos: List<GradleProjectInfo>) {
+    val moduleInfos = projectInfos.flatMap { it.modules }
     val holderModuleNames = moduleInfos.map { it.ideName }
     val sourceSetModuleNames = moduleInfos.flatMap { it.sourceSetModules }
     ModuleAssertions.assertModules(project, holderModuleNames + sourceSetModuleNames)
   }
-
-  private fun GradleProjectInfo.collectModuleInfos(): List<GradleModuleInfo> =
-    modules + composites.flatMap { it.collectModuleInfos() }
-
 
   fun assertProjectClasspathSaved(project: Project) {
     val cp = project.service<ProjectBuildClasspathManager>()
@@ -79,4 +102,3 @@ object GradleProjectInfoAssertions {
     }
   }
 }
-
