@@ -8,6 +8,7 @@ com.intellij.codeInsight.actions.AbstractLayoutCodeProcessorWriteInterceptor
 com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
 com.intellij.util.ui.RestartDialog
 com.intellij.openapi.options.newEditor.SettingsDialogFactory
+com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
 com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 com.intellij.openapi.editor.HoverDocPopupLocationProvider
