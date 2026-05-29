@@ -1065,6 +1065,7 @@ private fun getEventTypeString(eventType: Int): String {
  * Used for lightweight extraction without full descriptor parsing.
  */
 class ContentParseResult(
+  @JvmField val pluginId: String?,
   @JvmField val contentModules: List<ContentModuleElement>,
   @JvmField val xIncludePaths: List<String>,
   /** Module dependencies from <dependencies><module name="..."/> elements */
@@ -1105,7 +1106,7 @@ fun parseContentAndXIncludes(input: ByteArray, locationSource: String?): Content
       return parseElementForContentAndIncludes(reader = reader)
     }
     else {
-      return ContentParseResult(contentModules = emptyList(), xIncludePaths = emptyList())
+      return ContentParseResult(pluginId = null, contentModules = emptyList(), xIncludePaths = emptyList())
     }
   }
   finally {
@@ -1119,12 +1120,14 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   val moduleDependencies = ArrayList<String>()
   val pluginDependencies = ArrayList<String>()
   val pluginAliases = ArrayList<String>()
+  var pluginId: String? = null
   val registeredServiceKeys = HashSet<String>()
   val overridingServiceKeys = HashSet<String>()
   val declaredActionGroupIds = HashSet<String>()
   val referencedActionGroupIds = HashSet<String>()
   consumeChildElements(reader) { localName ->
     when (localName) {
+      PluginXmlConst.ID_ELEM -> pluginId = getNullifiedContent(reader)
       PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
         // Extract xi:include href
         val href = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.INCLUDE_HREF_ATTR)
@@ -1189,6 +1192,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
     }
   }
   return ContentParseResult(
+    pluginId = pluginId,
     contentModules = contentModules,
     xIncludePaths = xIncludePaths,
     moduleDependencies = moduleDependencies,

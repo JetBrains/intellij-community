@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl.moduleRepository
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
@@ -78,31 +80,28 @@ internal class ContentModuleDetectorImpl(
     additionalContainersForEmbeddedFrontend: List<ScopedCachedDescriptorContainer>,
     presentablePluginDescription: String,
   ): String {
-    val rootTag = JDOMUtil.load(fileContent)
-    val pluginId = rootTag.getChildText("id") ?: error("<id> tag is not set in plugin.xml for $presentablePluginDescription")
-    rootTag.getChildren("content").forEach { contentTag ->
-      val namespace = contentTag.getAttributeValue("namespace") ?: $$"$${pluginId}_$implicit"
-      contentTag.getChildren("module").forEach { moduleTag ->
-        val moduleName = moduleTag.getAttributeValue("name") ?: error("'name' attribute is missing for <module> tag in plugin.xml in $presentablePluginDescription")
-        if (moduleName.contains("/")) return@forEach //todo remove this check after all content modules are extracted to separate JPS modules (IJPL-165543)
+    val parsedContent = parseContentAndXIncludes(input = fileContent, locationSource = presentablePluginDescription)
+    val pluginId = parsedContent.pluginId ?: error("<id> tag is not set in plugin.xml for $presentablePluginDescription")
+    parsedContent.contentModules.forEach { contentModuleElement ->
+      val namespace = contentModuleElement.namespace ?: $$"$${pluginId}_$implicit"
+      if (contentModuleElement.name.contains("/")) return@forEach //todo remove this check after all content modules are extracted to separate JPS modules (IJPL-165543)
 
-        val descriptorName = "$moduleName.xml"
-        var moduleXmlData = descriptorContainer.getCachedFileData(descriptorName)
-        if (moduleXmlData == null && pluginId == "com.intellij") {
-          moduleXmlData = additionalContainersForEmbeddedFrontend.firstNotNullOfOrNull { it.getCachedFileData(descriptorName) }
-        }
-        require(moduleXmlData != null) { "Cannot find $descriptorName descriptor for $presentablePluginDescription" }
-        val moduleXmlRoot = JDOMUtil.load(moduleXmlData)
-        val visibility = parseVisibility(moduleXmlRoot)
-        val loadingRule = parseLoadingRule(moduleTag)
-        contentModules[moduleName] = ContentModuleRegistrationData(moduleName, namespace, visibility)
-        val requiredIfAvailableName = moduleTag.getAttributeValue("required-if-available")
-        val key = ContentModuleInPlugin(pluginId, moduleName)
-        if (requiredIfAvailableName != null) {
-          requiredIfAvailableAttributeForContentModules[key] = RuntimeModuleId.contentModule(requiredIfAvailableName, RuntimeModuleId.DEFAULT_NAMESPACE)
-        }
-        loadingRulesForContentModules[key] = loadingRule
+      val descriptorName = "${contentModuleElement.name}.xml"
+      var moduleXmlData = descriptorContainer.getCachedFileData(descriptorName)
+      if (moduleXmlData == null && pluginId == "com.intellij") {
+        moduleXmlData = additionalContainersForEmbeddedFrontend.firstNotNullOfOrNull { it.getCachedFileData(descriptorName) }
       }
+      require(moduleXmlData != null) { "Cannot find $descriptorName descriptor for $presentablePluginDescription" }
+      val moduleXmlRoot = JDOMUtil.load(moduleXmlData)
+      val visibility = parseVisibility(moduleXmlRoot)
+      val loadingRule = contentModuleElement.loadingRule.toRuntimeModuleLoadingRule()
+      contentModules[contentModuleElement.name] = ContentModuleRegistrationData(contentModuleElement.name, namespace, visibility)
+      val requiredIfAvailableName = contentModuleElement.requiredIfAvailable
+      val key = ContentModuleInPlugin(pluginId, contentModuleElement.name)
+      if (requiredIfAvailableName != null) {
+        requiredIfAvailableAttributeForContentModules[key] = RuntimeModuleId.contentModule(requiredIfAvailableName, RuntimeModuleId.DEFAULT_NAMESPACE)
+      }
+      loadingRulesForContentModules[key] = loadingRule
     }
     return pluginId
   }
@@ -200,13 +199,11 @@ private fun parseVisibility(moduleXmlRoot: Element): RuntimeModuleVisibility {
   }
 }
 
-private fun parseLoadingRule(moduleTag: Element): RuntimeModuleLoadingRule {
-  val loadingRuleString = moduleTag.getAttributeValue("loading")
-  return when (loadingRuleString) {
-    "required" -> RuntimeModuleLoadingRule.REQUIRED
-    "optional" -> RuntimeModuleLoadingRule.OPTIONAL
-    "embedded" -> RuntimeModuleLoadingRule.EMBEDDED
-    "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
-    else -> RuntimeModuleLoadingRule.OPTIONAL
+private fun ModuleLoadingRuleValue.toRuntimeModuleLoadingRule(): RuntimeModuleLoadingRule {
+  return when (this) {
+    ModuleLoadingRuleValue.REQUIRED -> RuntimeModuleLoadingRule.REQUIRED
+    ModuleLoadingRuleValue.OPTIONAL -> RuntimeModuleLoadingRule.OPTIONAL
+    ModuleLoadingRuleValue.EMBEDDED -> RuntimeModuleLoadingRule.EMBEDDED
+    ModuleLoadingRuleValue.ON_DEMAND -> RuntimeModuleLoadingRule.ON_DEMAND
   }
 }
