@@ -223,8 +223,12 @@ object McpClientDetector {
   private fun detectAir(): McpClient? {
     val configPath = when {
       SystemInfo.isMac -> "~/Library/Application Support/JetBrains/Air/mcp.json"
-      SystemInfo.isWindows -> null // todo support it in future
-      SystemInfo.isLinux -> null // todo support it in future
+      SystemInfo.isWindows -> System.getenv("APPDATA")?.let { "$it/JetBrains/Air/mcp.json" }
+      SystemInfo.isLinux -> {
+        val xdgConfigHome = System.getenv("XDG_CONFIG_HOME")
+        val base = if (xdgConfigHome.isNullOrEmpty()) "~/.config" else xdgConfigHome
+        "$base/JetBrains/Air/mcp.json"
+      }
       else -> null
     }
     if (configPath == null) return null
