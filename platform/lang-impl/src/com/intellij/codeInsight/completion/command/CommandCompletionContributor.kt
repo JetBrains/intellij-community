@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import org.jetbrains.annotations.Nls
@@ -15,17 +16,24 @@ import org.jetbrains.annotations.Nls
 internal class CommandCompletionContributor : CompletionContributor(), DumbAware, GroupedCompletionContributor {
   override fun groupIsEnabled(parameters: CompletionParameters): Boolean {
     try {
-      if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
-      if (!ApplicationCommandCompletionService.getInstance().useGroupEnabled()) return false
-      val commandCompletionService = parameters?.editor?.project?.service<CommandCompletionService>() ?: return false
+      val appService = ApplicationCommandCompletionService.getInstance()
+      if (!appService.commandCompletionEnabled()) return false
+      if (!appService.useGroupEnabled()) return false
+
+      val commandCompletionService = parameters.position.project.service<CommandCompletionService>()
       val factory = commandCompletionService.getFactory(parameters.originalFile.language) ?: return false
-      val supportFiltersWithDoublePrefix = factory.supportFiltersWithDoublePrefix()
-      val commandType = findCommandCompletionType(factory, !parameters.originalFile.isWritable, parameters.editor.caretModel.offset, parameters.editor)
-                        ?: return false
-      if (commandType is InvocationCommandType.FullSuffix && supportFiltersWithDoublePrefix) return false
-      return true
+
+      val commandType = findCommandCompletionType(
+        factory = factory,
+        isNonWritten = !parameters.originalFile.isWritable,
+        offset = parameters.editor.caretModel.offset,
+        editor = parameters.editor
+      ) ?: return false
+
+      return !(commandType is InvocationCommandType.FullSuffix && factory.supportFiltersWithDoublePrefix())
     }
-    catch (_: Exception) {
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
       return false
     }
   }
