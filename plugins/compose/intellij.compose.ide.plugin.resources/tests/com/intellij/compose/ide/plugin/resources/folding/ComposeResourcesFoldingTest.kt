@@ -7,7 +7,6 @@ import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.test.TestMetadata
@@ -17,14 +16,6 @@ import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
 
 class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
-
-  override fun tearDownFixtures() {
-    runAll(
-      { _codeInsightTestFixture?.tearDown() },
-      { _codeInsightTestFixture = null },
-      { resetTestFixture() },
-    )
-  }
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test

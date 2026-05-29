@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlTag
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -18,14 +17,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
-
-  override fun tearDownFixtures() {
-    runAll(
-      { _codeInsightTestFixture?.tearDown() },
-      { _codeInsightTestFixture = null },
-      { resetTestFixture() },
-    )
-  }
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
