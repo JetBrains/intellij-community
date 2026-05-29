@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/structure-view-impl:structureView-impl",
+        "//platform/structure-view-impl:structureView",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
         "//platform/util:util-ui",
@@ -57,7 +57,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util:util-ui_test_lib",

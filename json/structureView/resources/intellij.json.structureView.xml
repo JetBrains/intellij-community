@@ -3,7 +3,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json"/>
     <module name="intellij.json.backend"/>
-    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.structureView"/>
     <!-- endregion -->
   </dependencies>
 

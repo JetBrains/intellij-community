@@ -86,8 +86,8 @@ jvm_library(
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//platform/structure-view-impl:structureView-impl",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler` end
@@ -183,8 +183,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
-        "//platform/structure-view-impl:structureView-impl",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
     ],

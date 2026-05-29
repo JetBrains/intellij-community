@@ -74,7 +74,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/ui",
-    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView",
     ":libraries_cli-parser_provided",
   ]
 )
@@ -146,7 +146,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/ui:ui_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/structure-view-impl:structureView_test_lib",
   ]
 )
 
@@ -309,8 +309,8 @@ jvm_library(
         "//platform/xdebugger-impl/shared:shared_test_lib",
         "//platform/xdebugger-impl/ui",
         "//platform/xdebugger-impl/ui:ui_test_lib",
-        "//platform/structure-view-impl:structureView-impl",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/testFramework/teamCity",
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//plugins/performanceTesting/freezes",

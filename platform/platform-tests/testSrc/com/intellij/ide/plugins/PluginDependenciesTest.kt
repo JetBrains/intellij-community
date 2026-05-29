@@ -1132,7 +1132,7 @@ internal class PluginDependenciesTest {
     fun `external non bundled descriptors get implicit compatibility modules`() {
       val compatibilityModuleIds = listOf(
         "intellij.libraries.groovy",
-        "intellij.platform.structureView.impl",
+        "intellij.platform.structureView",
         "intellij.platform.todo",
       )
       plugin("compatibility.modules.provider") {

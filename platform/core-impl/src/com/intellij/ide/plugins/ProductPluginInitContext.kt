@@ -388,7 +388,7 @@ private val XDEBUGGER_MODULE_IDS = listOf(
 )
 private val externalNonBundledPluginCompatibilityDependencies = listOf(
   "intellij.libraries.groovy",
-  "intellij.platform.structureView.impl",
+  "intellij.platform.structureView",
   "intellij.platform.todo",
   "intellij.platform.bookmarks",
   "intellij.platform.smRunner",

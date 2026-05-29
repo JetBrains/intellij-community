@@ -4,9 +4,9 @@
 - name: lib/modules/intellij.platform.structureView.frontend.jar
   contentModules:
   - name: intellij.platform.structureView.frontend
-- name: lib/modules/intellij.platform.structureView.impl.jar
+- name: lib/modules/intellij.platform.structureView.jar
   contentModules:
-  - name: intellij.platform.structureView.impl
+  - name: intellij.platform.structureView
 - name: lib/platform-structureView-plugin.jar
   modules:
   - name: intellij.platform.structureView.plugin

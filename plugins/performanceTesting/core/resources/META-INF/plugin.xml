@@ -15,7 +15,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->
   <content namespace="jetbrains">

@@ -8,7 +8,7 @@
     <module name="intellij.json"/>
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.platform.smRunner"/>
-    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>

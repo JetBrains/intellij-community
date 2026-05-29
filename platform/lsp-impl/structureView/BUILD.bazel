@@ -31,7 +31,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/lsp",
         "//platform/lsp-impl",
-        "//platform/structure-view-impl:structureView-impl",
+        "//platform/structure-view-impl:structureView",
         "//platform/util:util-ui",
     ],
 )
@@ -57,7 +57,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lsp:lsp_test_lib",
         "//platform/lsp-impl:lsp-impl_test_lib",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
 )

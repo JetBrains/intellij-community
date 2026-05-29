@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.frontend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="RUNTIME" />

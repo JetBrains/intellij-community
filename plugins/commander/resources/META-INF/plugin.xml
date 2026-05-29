@@ -5,7 +5,7 @@
   <vendor>JetBrains</vendor>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->
   <resource-bundle>messages.CommanderBundle</resource-bundle>

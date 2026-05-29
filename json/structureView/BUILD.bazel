@@ -26,7 +26,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/lang-api:lang",
-        "//platform/structure-view-impl:structureView-impl",
+        "//platform/structure-view-impl:structureView",
         "//platform/util",
     ],
 )
@@ -48,7 +48,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
-        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/util:util_test_lib",
     ],
 )

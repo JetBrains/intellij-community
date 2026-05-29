@@ -1,9 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.structureView.impl` start
+### auto-generated section `build intellij.platform.structureView` start
 
 jvm_library(
-    name = "structureView-impl",
+    name = "structureView",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.structureView.impl",
+    module_name = "intellij.platform.structureView",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -55,13 +55,13 @@ jvm_library(
 )
 
 jvm_library(
-    name = "structureView-impl_test_lib",
+    name = "structureView_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.structureView.impl",
+    module_name = "intellij.platform.structureView",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -70,7 +70,7 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        ":structureView-impl",
+        ":structureView",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util:util_test_lib",
         "//platform/extensions:extensions_test_lib",
@@ -102,13 +102,13 @@ jvm_library(
         "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.structureView.impl` end
+### auto-generated section `build intellij.platform.structureView` end
 
-### auto-generated section `iml intellij.platform.structureView.impl` start
+### auto-generated section `iml intellij.platform.structureView` start
 exports_files(
     [
-        "intellij.platform.structureView.impl.iml",
+        "intellij.platform.structureView.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.structureView.impl` end
+### auto-generated section `iml intellij.platform.structureView` end

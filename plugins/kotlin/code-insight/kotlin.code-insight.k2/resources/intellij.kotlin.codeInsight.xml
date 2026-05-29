@@ -7,7 +7,7 @@
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.searching"/>
-    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->
 
