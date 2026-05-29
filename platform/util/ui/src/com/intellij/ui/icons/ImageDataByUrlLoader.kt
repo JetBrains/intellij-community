@@ -21,16 +21,14 @@ internal class ImageDataByUrlLoader internal constructor(
     get() = url.toString()
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
-    return loadImage(path = url.toString(),
+    return loadImageWithShape(path = url.toString(),
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
                      useCache = false,
-                     scaleContext = scaleContext)?.let { result ->
-      ImageWithShape(result, null)
-    }
+                     scaleContext = scaleContext)
   }
 
   override fun patch(transform: IconTransform): ImageDataLoader? {
@@ -68,16 +66,14 @@ internal class ImageDataByPathResourceLoader(
     }
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
-    return loadImage(path = path,
+    return loadImageWithShape(path = path,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
                      useCache = false,
-                     scaleContext = scaleContext)?.let { result ->
-      ImageWithShape(result, null)
-    }
+                     scaleContext = scaleContext)
   }
 
   override fun patch(transform: IconTransform): ImageDataLoader? {
@@ -138,16 +134,14 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
     get() = URL(path)
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
-    return loadImage(path = path,
+    return loadImageWithShape(path = path,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = null,
                      classLoader = null,
                      isDark = parameters.isDark,
                      useCache = false,
-                     scaleContext = scaleContext)?.let { result ->
-      ImageWithShape(result, null)
-    }
+                     scaleContext = scaleContext)
   }
 
   override fun getCoords(): Pair<String, ClassLoader>? = null
@@ -179,16 +173,14 @@ private class FinalImageDataLoader(override val path: String, classLoader: Class
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
     val classLoader = classLoaderRef.get() ?: return null
-    return loadImage(path = path,
+    return loadImageWithShape(path = path,
                      useCache = false,
                      isDark = parameters.isDark,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      scaleContext = scaleContext,
                      resourceClass = null,
-                     classLoader = classLoader)?.let { result ->
-      ImageWithShape(result, null)
-    }
+                     classLoader = classLoader)
   }
 
   override val url: URL?
