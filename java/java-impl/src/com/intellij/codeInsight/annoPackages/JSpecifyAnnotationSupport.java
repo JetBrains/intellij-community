@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
@@ -83,10 +82,11 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
   }
 
   static boolean resolvesToTypeParameter(@NotNull PsiElement context) {
+    if (context instanceof PsiJavaCodeReferenceElement ref) {
+      return ref.resolve() instanceof PsiTypeParameter;
+    }
     PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
-                         context instanceof PsiVariable variable ? variable.getType() :
-                         context instanceof PsiJavaCodeReferenceElement && context.getParent() instanceof PsiTypeElement typeElement ? typeElement.getType() :
-                         null;
+                         context instanceof PsiVariable variable ? variable.getType() : null;
     return PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter;
   }
 

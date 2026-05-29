@@ -108,19 +108,20 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                    33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
 
-        new Pair<>("DereferenceTypeVariable.java", 117),  // see: IDEA-377688
-        new Pair<>("TypeVariableToObject.java", 104), // see: IDEA-377688
-
         new Pair<>("NullLiteralToTypeVariable.java", 58), // see: IDEA-377691
         new Pair<>("NullLiteralToTypeVariable.java", 78), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 88), // see: IDEA-377691
         new Pair<>("NullLiteralToTypeVariable.java", 98), // see: IDEA-377691
         new Pair<>("NullLiteralToTypeVariable.java", 103), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 108), // see: IDEA-377691
         new Pair<>("NullLiteralToTypeVariable.java", 118), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToParent.java", 88), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToParent.java", 98), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToSelf.java", 58), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToSelf.java", 78), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 88), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToSelf.java", 103), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 108), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
         new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
 
