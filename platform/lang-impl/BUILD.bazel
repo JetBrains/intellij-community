@@ -544,6 +544,8 @@ jvm_library(
         "//platform/project-frame:project-frame_test_lib",
         "//platform/platform-impl:ide-impl-tests",
         "//platform/platform-impl:ide-impl-tests_test_lib",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

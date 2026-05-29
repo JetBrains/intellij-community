@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.target.TargetBasedSdkAdditionalData;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,7 +31,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelMachine;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelMachine;
@@ -59,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.roots.ui.configuration.projectRoot.SdkNameToolsKt.suggestSdkNamePostfix;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
@@ -606,10 +605,9 @@ public class ProjectSdksModel implements SdkModel {
     // model with an expectation it would be updated later on
     String suggestedName = downloadTask.getSuggestedSdkName();
     String homeDir = FileUtil.toSystemIndependentName(downloadTask.getPlannedHomeDir());
-    if (!Registry.is("ide.workspace.model.per.environment.model.separation", false)) {
-      if (WslPath.isWslUncPath(homeDir)) {
-        suggestedName += " (WSL)";
-      }
+    var postfix = suggestSdkNamePostfix(Path.of(downloadTask.getPlannedHomeDir()));
+    if (postfix != null) {
+      suggestedName += String.format(" (%s) ", postfix);
     }
 
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, sdks);

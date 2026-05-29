@@ -96,19 +96,18 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
       var isSameCallStack = true
 
       try {
-        model.setupInstallableSdk(type, object : SdkDownloadTask {
-          override fun getSuggestedSdkName() = sdkName
-          override fun getPlannedHomeDir() = plannedDir.pathString
-          override fun getPlannedVersion() = "1.2.3"
-          override fun doDownload(indicator: ProgressIndicator) {
-            ApplicationManager.getApplication().assertIsNonDispatchThread()
+        model.setupInstallableSdk(type, MyDownloadTask(
+          homeDir = plannedDir,
+          sdkName = sdkName,
+          onDownload = {indicator ->
+                ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-            //ProgressManager works in the same thread in tests
-            assertThat(isSameCallStack).withFailMessage("Is should be in the same call stack!").isTrue()
+                //ProgressManager works in the same thread in tests
+                assertThat(isSameCallStack).withFailMessage("Is should be in the same call stack!").isTrue()
 
-            actualDownload(indicator)
+                actualDownload(indicator)
           }
-        }, Consumer(onSdk))
+        ),  Consumer(onSdk))
       }
       finally {
         isSameCallStack = false
