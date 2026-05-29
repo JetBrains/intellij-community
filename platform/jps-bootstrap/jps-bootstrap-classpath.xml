@@ -123,7 +123,7 @@
           <arg value="-no-reflect"/>
           <arg value="-no-stdlib"/>
           <arg value="-jvm-target"/>
-          <arg value="17"/>
+          <arg value="25"/>
           <arg value="-classpath"/>
           <arg pathref="classpath.buildscripts"/>
           <arg path="${jps.bootstrap.dir}/src/main/java"/>
