@@ -248,17 +248,22 @@ private fun processHyperlinksUpdatedEvent(
 
   val modelStartOffset = outputModel.startOffset.toAbsolute()
   val firstChangedOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp).toAbsolute()
-  val hyperlinks = event.hyperlinks
+  val allHyperlinks = event.hyperlinks
     .asSequence()
     .map { it.toFilterResultInfo() }
     .filter { it.absoluteStartOffset >= modelStartOffset }  // Filter out trimmed hyperlinks
     .filter { it.absoluteEndOffset <= firstChangedOffset }   // Filter out hyperlinks in the range that was changed during links' calculation
     .toList()
-  hyperlinksModel.addHyperlinks(hyperlinks)
 
-  val decorations = hyperlinks.mapNotNull {
-    it.toEditorDecoration(outputModel, onLinkClicked)
+  // Add only hyperlinks that can be transformed into decorations
+  val hyperlinks = ArrayList<TerminalFilterResultInfo>(allHyperlinks.size)
+  val decorations = ArrayList<EditorTextDecoration>(allHyperlinks.size)
+  for (link in allHyperlinks) {
+    val decoration = link.toEditorDecoration(outputModel, onLinkClicked) ?: continue
+    decorations.add(decoration)
+    hyperlinks.add(link)
   }
+  hyperlinksModel.addHyperlinks(hyperlinks)
   applier.addDecorations(decorations)
 }
 
