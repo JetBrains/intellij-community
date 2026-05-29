@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeDeclarationTypeReference
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -56,7 +57,7 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
     override fun isApplicableByPsi(element: KtCollectionLiteralExpression): Boolean =
         element.getParentOfType<KtAnnotationEntry>(strict = true) == null
 
-    override fun getApplicableRanges(element: KtCollectionLiteralExpression) = ApplicabilityRange.single(element) { it }
+    override fun getApplicableRanges(element: KtCollectionLiteralExpression) = ApplicabilityRange.self(element)
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtCollectionLiteralExpression): Context? {
@@ -91,8 +92,8 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
             val property = element.getTopmostParenthesizedExpressionOrSelf().parent
             element.replace(expression)
 
-            if (context.shouldRemoveTypeRef && property != null) {
-                (property as KtProperty).removeDeclarationTypeReference()
+            if (context.shouldRemoveTypeRef && property != null && property is KtCallableDeclaration) {
+                property.removeDeclarationTypeReference()
             }
         }
     }

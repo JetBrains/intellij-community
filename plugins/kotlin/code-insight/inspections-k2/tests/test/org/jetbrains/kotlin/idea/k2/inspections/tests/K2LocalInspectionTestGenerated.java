@@ -14178,6 +14178,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToTypeOfExpression/any.kt");
             }
 
+            @TestMetadata("any2.kt")
+            public void testAny2() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToTypeOfExpression/any2.kt");
+            }
+
             @TestMetadata("defaultParameterValue.kt")
             public void testDefaultParameterValue() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToTypeOfExpression/defaultParameterValue.kt");
@@ -14186,6 +14191,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("functionBody.kt")
             public void testFunctionBody() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToTypeOfExpression/functionBody.kt");
+            }
+
+            @TestMetadata("functionBody2.kt")
+            public void testFunctionBody2() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToTypeOfExpression/functionBody2.kt");
             }
 
             @TestMetadata("parametrizedFunction.kt")
@@ -14961,6 +14971,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("any.kt")
             public void testAny() throws Exception {
                 runTest("testData/inspectionsLocal/convertTypeOfToCollectionLiteral/any.kt");
+            }
+
+            @TestMetadata("any2.kt")
+            public void testAny2() throws Exception {
+                runTest("testData/inspectionsLocal/convertTypeOfToCollectionLiteral/any2.kt");
             }
 
             @TestMetadata("chainCall.kt")

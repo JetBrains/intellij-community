@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,12 +26,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.setTypeReference
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.isCollectionLiteralSafeAsArgument
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.toCollectionLiteralString
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -66,7 +67,7 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
         return true
     }
 
-    override fun getApplicableRanges(element: KtDotQualifiedExpression) = ApplicabilityRange.single(element) { it }
+    override fun getApplicableRanges(element: KtDotQualifiedExpression) = ApplicabilityRange.self(element)
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
@@ -78,9 +79,8 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
         val expressionType = element.expressionType ?: return null
         val parent = element.getTopmostParenthesizedExpressionOrSelf().parent
         if (parent is KtValueArgument && !isCollectionLiteralSafeAsArgument(callExpr, expressionType)) return null
-
-        val returnType = element.expressionType ?: return null
-        val typeText = returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
+        if (isTypeChanged(parent, expressionType)) return null
+        val typeText = expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
 
         return Context(typeText)
     }
@@ -100,12 +100,17 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
             val psiFactory = KtPsiFactory(project)
             val collectionLiteral = psiFactory.createExpression(literalText) as KtCollectionLiteralExpression
 
-            val parent = element.getTopmostParenthesizedExpressionOrSelf().parent
-            if ((parent is KtProperty || parent is KtNamedFunction) && parent.typeReference == null) {
-                parent.setTypeReference(context.typeText)
-            }
+            (element.getTopmostParenthesizedExpressionOrSelf().parent as? KtCallableDeclaration)
+                ?.takeIf { it.typeReference == null }
+                ?.setTypeReference(context.typeText)
 
             element.replace(collectionLiteral)
         }
     }
+
+    private fun KaSession.isTypeChanged(element: PsiElement, expressionType: KaType): Boolean =
+        (element as? KtCallableDeclaration)
+            ?.typeReference
+            ?.type
+            ?.semanticallyEquals(expressionType) == false
 }
