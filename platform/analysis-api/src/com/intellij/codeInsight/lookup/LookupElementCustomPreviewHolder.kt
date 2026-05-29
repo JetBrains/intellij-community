@@ -26,7 +26,10 @@ interface LookupElementCustomPreviewHolder {
 @ApiStatus.Internal
 interface LookupMayHaveCustomPreviewProvider {
   companion object {
-    val EP_NAME: ExtensionPointName<LookupMayHaveCustomPreviewProvider> = ExtensionPointName("com.intellij.lookup.may.have.custom.preview.provider")
+    private val EP_NAME: ExtensionPointName<LookupMayHaveCustomPreviewProvider> = ExtensionPointName("com.intellij.lookup.may.have.custom.preview.provider")
+
+    fun mayHaveCustomPreview(lookup: Lookup): Boolean =
+      EP_NAME.findFirstSafe { it.mayHaveCustomPreview(lookup) } != null
   }
 
   fun mayHaveCustomPreview(lookup: Lookup): Boolean

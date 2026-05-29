@@ -383,10 +383,12 @@ internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHa
 internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     if (newLookup !is LookupImpl) return
+
     newLookup.addLookupListener(object : LookupListener {
       override fun lookupShown(event: LookupEvent) {
-        if (LookupMayHaveCustomPreviewProvider.EP_NAME.extensionList.none { it.mayHaveCustomPreview(newLookup) }) return
-        installLookupIntentionPreviewListener(newLookup)
+        if (LookupMayHaveCustomPreviewProvider.mayHaveCustomPreview(newLookup)) {
+          installLookupIntentionPreviewListener(newLookup)
+        }
       }
     })
   }
