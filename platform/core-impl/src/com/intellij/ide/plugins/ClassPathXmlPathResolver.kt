@@ -5,12 +5,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
-import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.isV2ModulePath
+import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
@@ -48,9 +47,7 @@ class ClassPathXmlPathResolver(
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader))
-        reader.consume(it, dataLoader.toString())
-        return reader.getBuilder()
+        return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader),it, dataLoader.toString())
       }
       resource = null
     }
@@ -77,18 +74,13 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader))
-    consumer.consume(resource, dataLoader.toString())
-    return consumer.getBuilder()
+    return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader), resource, dataLoader.toString())
   }
 
   override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
     val path = LoadPathUtil.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
-    return PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader)).let {
-      it.consume(reader)
-      it.getBuilder()
-    }
+    return parsePluginXml(readContext, createXIncludeLoader(this@ClassPathXmlPathResolver, dataLoader), reader)
   }
 
   private fun getXmlReader(classLoader: ClassLoader, path: String, dataLoader: DataLoader): XMLStreamReader2? {

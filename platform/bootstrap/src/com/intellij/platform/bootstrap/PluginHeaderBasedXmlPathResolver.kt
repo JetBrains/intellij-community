@@ -6,9 +6,8 @@ import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.createXIncludeLoader
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.pluginSystem.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
@@ -35,9 +34,7 @@ internal class PluginHeaderBasedXmlPathResolver(
       val moduleHeader = moduleRepository.findModuleHeader(includedModule.moduleId)
       if (moduleHeader != null) {
         val input = moduleHeader.readFile(path) ?: error("Cannot resolve $path in $moduleHeader")
-        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this, dataLoader))
-        reader.consume(input, path)
-        return reader.getBuilder()
+        return parsePluginXml(readContext, createXIncludeLoader(this, dataLoader), input, path)
       }
     }
     return fallbackResolver.resolveModuleFile(readContext, dataLoader, path)
