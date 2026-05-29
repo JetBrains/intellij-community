@@ -1,7 +1,6 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.fastutil"/>

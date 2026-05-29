@@ -3,7 +3,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.remoteServers"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.execution"/>
   </dependencies>

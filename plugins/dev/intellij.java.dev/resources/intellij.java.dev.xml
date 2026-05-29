@@ -2,11 +2,12 @@
   <resource-bundle>messages.JavaDevBundle</resource-bundle>
 
   <dependencies>
-    <module name="intellij.dev.psiViewer"/>
-    <module name="intellij.dev.codeInsight"/>
     <module name="intellij.java.backend"/>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.dev.psiViewer"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.dev">
