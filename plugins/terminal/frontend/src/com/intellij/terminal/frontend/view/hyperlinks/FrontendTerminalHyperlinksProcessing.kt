@@ -55,6 +55,7 @@ import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
@@ -150,7 +151,7 @@ private suspend fun trackOutputModelChanges(
       sink.send(TerminalHyperlinksInputEvent.ContentUpdated(update.toDto()))
     }
 
-    delay(20.milliseconds)
+    delay(HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY)
   }
 }
 
@@ -295,5 +296,8 @@ private class TerminalOutputModelChangesTracker(
     return line
   }
 }
+
+@ApiStatus.Internal
+val HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY: Duration = 20.milliseconds
 
 private val LOG = fileLogger()

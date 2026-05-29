@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.view.hyperlinks.HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
@@ -47,6 +48,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.event.MouseEvent
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(JUnit4::class)
@@ -349,13 +351,13 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
   fun `many links, slow filter, several updates`() = withFixture {
     filter.delayPerLine = 1
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
-    delay(50.milliseconds)
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
     updateModel(100L, generateLines(100, 199, links = (100..199).toList()))
-    delay(50.milliseconds)
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
     updateModel(200L, generateLines(200, 299, links = (200..299).toList()))
-    delay(50.milliseconds)
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
     updateModel(300L, generateLines(300, 399, links = (300..399).toList()))
-    delay(50.milliseconds)
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
     updateModel(400L, generateLines(400, 499, links = (400..499).toList()))
     assertLinks(
       *(0..499).map { link(at(it, "link${it}")) }.toTypedArray(),
@@ -458,6 +460,137 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
       )
       assertHighlightings()
     }
+  }
+
+  @Test
+  fun `separate submissions across the flush interval`() = withFixture {
+    updateModel(0L, generateLines(0, 2, links = (0..2).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    updateModel(3L, generateLines(3, 5, links = (3..5).toList()))
+    assertText(generateLines(0, 5, links = (0..5).toList()))
+    assertLinks(
+      *(0..5).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `coalesced submissions within the flush interval`() = withFixture {
+    // No suspension between the updates: both land in a single flush interval.
+    updateModel(0L, generateLines(0, 2, links = (0..2).toList()))
+    updateModel(3L, generateLines(3, 5, links = (3..5).toList()))
+    assertText(generateLines(0, 5, links = (0..5).toList()))
+    assertLinks(
+      *(0..5).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `re-edit a line across flush intervals`() = withFixture {
+    updateModel(0L, """
+      0: line0 link0
+      1: line1 link1
+    """.trimIndent())
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    updateModel(1L, "1: line1 link5")
+    assertText("""
+      0: line0 link0
+      1: line1 link5
+    """.trimIndent())
+    assertLinks(
+      link(at(0, "link0")),
+      link(at(1, "link5")),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `repeated edits of the same line across flushes`() = withFixture {
+    for (i in 0..9) {
+      updateModel(0L, "0: line0 link$i")
+      delay(30.milliseconds)
+    }
+    assertText("0: line0 link9")
+    assertLinks(
+      link(at(0, "link9")),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `link removed while filter is mid-task`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(0, 199, links = (0..199).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY) // the first task is still running
+    // Resend lines 100..199 with line 100 turned into a plain line.
+    updateModel(100L, generateLines(100, 199, links = (101..199).toList()))
+    assertLinks(
+      *((0..99) + (101..199)).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `link replaced while filter is mid-task`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(0, 199, links = (0..199).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    // Resend lines 100..199 with the link on line 100 changed to a different one.
+    val rewritten = (100..199).joinToString("\n") { line ->
+      if (line == 100) "100: link999" else "$line: link$line"
+    }
+    updateModel(100L, rewritten)
+    assertLinks(
+      *((0..99).map { link(at(it, "link$it")) } +
+        link(at(100, "link999")) +
+        (101..199).map { link(at(it, "link$it")) }).toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `link offset recomputed when a line changes length mid-task`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(0, 199, links = (0..199).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    // Resend lines 100..199, widening line 100 so the link on it and all following offsets shift.
+    val rewritten = (100..199).joinToString("\n") { line ->
+      if (line == 100) "100: xxxxx link100" else "$line: link$line"
+    }
+    updateModel(100L, rewritten)
+    assertLinks(
+      *(0..199).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `link removed then restored across mid-task edits`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(0, 199, links = (0..199).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    updateModel(100L, generateLines(100, 199, links = (101..199).toList())) // line 100 plain
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    updateModel(100L, generateLines(100, 199, links = (100..199).toList())) // line 100 link again
+    assertLinks(
+      *(0..199).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `multiple overlapping updates while filter is mid-task`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(0, 299, links = (0..299).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
+    updateModel(100L, generateLines(100, 299, links = (100..299).toList()))
+    delay(20.milliseconds)
+    updateModel(200L, generateLines(200, 299, links = (200..299).toList()))
+    assertLinks(
+      *(0..299).map { link(at(it, "link$it")) }.toTypedArray(),
+    )
+    assertHighlightings()
   }
 
   private fun generateLines(from: Int, toInclusive: Int, links: List<Int>): String {
@@ -820,6 +953,8 @@ private val HIGHLIGHT4 =
   EditorColorsManager.getInstance().globalScheme.getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES)
 
 private const val MAX_LENGTH = 10000 // filters are processed in 200-line chunks, this should be enough to have multiple chunks
+
+private val OUTPUT_MODEL_FLUSH_AWAIT_DELAY: Duration = HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY * 2
 
 private fun String.indexOfSingle(substring: String): Int {
   val indexOfFirst = indexOf(substring)
