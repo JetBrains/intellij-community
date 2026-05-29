@@ -12,8 +12,7 @@ import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlin
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -43,10 +42,8 @@ class BackendTerminalHyperlinkFacade(
     }
   }
 
-  fun applyContentUpdate(update: TerminalOutputUpdate) {
-    if (update is TerminalOutputTrimmingUpdate) {
-      trimOffset.set(update.startOffset)
-    }
+  fun applyContentUpdate(update: TerminalOutputContentUpdate) {
+    trimOffset.set(update.trimStartOffset)
     highlighter.applyUpdate(update)
   }
 

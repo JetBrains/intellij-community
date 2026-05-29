@@ -39,8 +39,6 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksRemoteApi
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
@@ -138,17 +136,17 @@ private suspend fun trackOutputModelChanges(
 
   // Send content updates to the backend periodically.
   while (true) {
-    val updates = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    val update = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       try {
-        getContentUpdates(outputModel, tracker)
+        getContentUpdate(outputModel, tracker)
       }
       catch (e: Exception) {
-        LOG.error("Error when collecting content updates", e)
-        emptyList()
+        LOG.error("Error when collecting content update", e)
+        null
       }
     }
 
-    for (update in updates) {
+    if (update != null) {
       sink.send(TerminalHyperlinksInputEvent.ContentUpdated(update.toDto()))
     }
 
@@ -157,30 +155,21 @@ private suspend fun trackOutputModelChanges(
 }
 
 @RequiresEdt
-private fun getContentUpdates(
+private fun getContentUpdate(
   outputModel: TerminalOutputModel,
   tracker: TerminalOutputModelChangesTracker,
-): List<TerminalOutputUpdate> {
-  val firstChangedLine = tracker.getFirstChangedLineAndReset()
-  return if (firstChangedLine != null) {
-    val trimmingUpdate = TerminalOutputTrimmingUpdate(
-      firstLine = outputModel.firstLineIndex,
-      startOffset = outputModel.startOffset,
-      endOffset = outputModel.endOffset,
-      modificationStamp = outputModel.modificationStamp,
-    )
-
-    val startOffset = outputModel.getStartOfLine(firstChangedLine)
-    val contentUpdate = TerminalOutputContentUpdate(
-      charsSequence = outputModel.getText(startOffset, outputModel.endOffset),
-      startLine = firstChangedLine,
-      endLine = outputModel.lastLineIndex,
-      startOffset = startOffset,
-      modificationStamp = outputModel.modificationStamp,
-    )
-    listOf(trimmingUpdate, contentUpdate)
-  }
-  else emptyList()
+): TerminalOutputContentUpdate? {
+  val firstChangedLine = tracker.getFirstChangedLineAndReset() ?: return null
+  val startOffset = outputModel.getStartOfLine(firstChangedLine)
+  return TerminalOutputContentUpdate(
+    charsSequence = outputModel.getText(startOffset, outputModel.endOffset),
+    startLine = firstChangedLine,
+    endLine = outputModel.lastLineIndex,
+    startOffset = startOffset,
+    trimStartLine = outputModel.firstLineIndex,
+    trimStartOffset = outputModel.startOffset,
+    modificationStamp = outputModel.modificationStamp,
+  )
 }
 
 private suspend fun processHyperlinkResults(
