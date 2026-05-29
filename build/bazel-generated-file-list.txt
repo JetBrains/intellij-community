@@ -396,7 +396,6 @@ libraries/commons/text
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
-libraries/detekt-compose-rules
 libraries/dokka
 libraries/download-pgp-verifier
 libraries/fastutil
@@ -693,7 +692,6 @@ platform/inspect
 platform/instanceContainer
 platform/jbr
 platform/jewel/decorated-window
-platform/jewel/detekt-plugin
 platform/jewel/foundation
 platform/jewel/ide-laf-bridge
 platform/jewel/int-ui/int-ui-decorated-window

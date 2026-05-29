@@ -169,6 +169,7 @@ public class ContextMenuItemOption(
 }
 
 /** The predefined actions for [ContextMenuItemOption]s. */
+@Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
 public sealed class ContextMenuItemOptionAction {
     /** Represents a "Copy" action. */
     public data object CopyMenuItemOptionAction : ContextMenuItemOptionAction()

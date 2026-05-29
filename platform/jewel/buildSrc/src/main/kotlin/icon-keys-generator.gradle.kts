@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-import io.gitlab.arturbosch.detekt.Detekt
+import dev.detekt.gradle.Detekt
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.tasks.DokkaGenerateModuleTask
 import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask

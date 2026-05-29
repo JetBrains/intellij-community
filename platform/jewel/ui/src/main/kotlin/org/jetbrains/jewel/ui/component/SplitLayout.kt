@@ -225,11 +225,11 @@ private fun SplitLayoutImpl(
             )
 
             Box(
-                Modifier.let { modifier ->
+                Modifier.let { dragModifier ->
                         if (strategy.isHorizontal()) {
-                            modifier.fillMaxHeight().width(draggableWidth)
+                            dragModifier.fillMaxHeight().width(draggableWidth)
                         } else {
-                            modifier.fillMaxWidth().height(draggableWidth)
+                            dragModifier.fillMaxWidth().height(draggableWidth)
                         }
                     }
                     .draggable(

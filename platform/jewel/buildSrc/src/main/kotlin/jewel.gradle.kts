@@ -36,15 +36,30 @@ version =
     }
 
 val jdkLevel = project.property("jdk.level") as String
+val jdkLevelInt = jdkLevel.toIntOrNull() ?: 8
+// Kotlin may not yet support the JVM target matching jdkLevel; cap at the highest available.
+val maxSupportedKotlinTarget = JvmTarget.entries
+    .filter { it != JvmTarget.DEFAULT }
+    .mapNotNull { it.target.toIntOrNull() }
+    .max()
+val kotlinJvmTarget = JvmTarget.fromTarget(minOf(jdkLevelInt, maxSupportedKotlinTarget).toString())
 
 kotlin {
     jvmToolchain { languageVersion = JavaLanguageVersion.of(jdkLevel) }
 
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
-        jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
+        jvmTarget.set(kotlinJvmTarget)
     }
+}
 
+// Keep Java bytecode target aligned with Kotlin when the toolchain JDK version exceeds what
+// Kotlin supports — avoids the "Inconsistent JVM-target compatibility" build error.
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(minOf(jdkLevelInt, maxSupportedKotlinTarget))
+}
+
+kotlin {
     sourceSets.all {
         languageSettings {
             optIn("androidx.compose.foundation.ExperimentalFoundationApi")

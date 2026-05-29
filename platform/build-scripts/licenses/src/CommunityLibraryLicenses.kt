@@ -330,12 +330,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
       .mit("https://github.com/microsoft/debugpy/blob/main/LICENSE"),
 
-    LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
-      .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
-
-    LibraryLicense("Detekt Compose Rules", libraryName = "io.nlopez.compose.rules.detekt", url = "https://github.com/mrmans0n/compose-rules")
-      .apache("https://github.com/mrmans0n/compose-rules/blob/main/LICENSE.md"),
-
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),
 
@@ -1489,7 +1483,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
-    jetbrainsLibrary("jetbrains.kotlin.compiler.embeddable"),
     jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),

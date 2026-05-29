@@ -1,13 +1,15 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("io.gitlab.arturbosch.detekt")
+    id("dev.detekt")
     id("org.jmailen.kotlinter")
     id("com.ncorti.ktfmt.gradle")
 }
 
 detekt {
-    autoCorrect = true
+    // TODO: JEWEL-1329 standalone analysis API initialises PSI documents as read-only, Detekt tries to open in writing mode.
+    //  enable it once it has been fixed.
+    autoCorrect = false
     config.from(files(rootProject.file("detekt.yml")))
     buildUponDefaultConfig = true
 }
@@ -15,7 +17,7 @@ detekt {
 dependencies {
     // Use the Jewel custom rules
     detektPlugins(project(":detekt-plugin"))
-    detektPlugins("io.nlopez.compose.rules:detekt:0.4.27")
+    detektPlugins("io.nlopez.compose.rules:detekt:0.5.8")
 }
 
 ktfmt {
