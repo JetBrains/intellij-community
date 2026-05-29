@@ -104,6 +104,50 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
         )
     }
 
+    fun testInjectKotlinInKDocCodeBlockWithTildes() {
+        assertKDocInjectionPresent(
+            """
+            /**
+             * ~~~~
+             * val foo = 42<caret>
+             * println(foo)
+             * ~~~~
+             */
+            fun usage() {}
+            """,
+            KotlinLanguage.INSTANCE
+        )
+    }
+
+    fun testInjectKotlinInIndentation() {
+        assertKDocInjectionPresent(
+            """
+            /**
+             * Regular text
+             *
+             *    val foo = 42<caret>
+             *    println(foo)
+             *
+             * some text
+             */
+            fun usage() {}
+            """,
+            KotlinLanguage.INSTANCE
+        )
+    }
+
+    fun testInjectKotlinInCodeSpanText() {
+        assertKDocInjectionPresent(
+            """
+            /**
+             * ````fun fo<caret>o(){}````
+             */
+            fun usage() {}
+            """,
+            KotlinLanguage.INSTANCE
+        )
+    }
+
     fun testInjectKotlinInKDocCodeSpan() {
         assertKDocInjectionPresent(
             """
