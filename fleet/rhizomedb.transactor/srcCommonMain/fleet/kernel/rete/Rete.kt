@@ -229,8 +229,7 @@ suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): Wi
   }
 
 /**
- * Ensures [Rete] has processed all changes up until the timestamp of the [targetDb] or,
- * if not given, until the timestamp of the currently bound db.
+ * Ensures [Rete] has processed all changes up until the timestamp of the [targetDb].
  * It rarely makes sense to use this, see [Match.withMatch] instead
  * */
 suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
