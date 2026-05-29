@@ -128,7 +128,7 @@ internal object JDialogRenderer : PopupRenderer {
             }
         }
 
-        if (!isJBREnvironment && !supportBlending || window == null) {
+        if ((!isJBREnvironment && !supportBlending) || window == null) {
             ComposePopup(
                 popupPositionProvider = popupPositionProvider,
                 properties = properties,
