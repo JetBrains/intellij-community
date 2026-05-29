@@ -24,31 +24,48 @@ internal class MutableShellExecOptionsImpl(
   private val translator: TerminalLocalPathTranslator = TerminalLocalPathTranslator(eelDescriptor)
 
   override fun setEnvironmentVariable(name: String, value: String?) {
-    if (value == null) {
-      mutableEnvs.remove(name)
-      LOG.debug { "$requester removed environment variable '$name'" }
-    }
-    else {
-      mutableEnvs[name] = value
-      LOG.debug { "$requester: setEnvironmentVariable('$name', '$value')" }
-    }
+    doSetEnvironmentVariable(name, value, "setEnvironmentVariable")
   }
 
   override fun setEnvironmentVariableToPath(name: String, path: Path?) {
     if (path == null) {
-      mutableEnvs.remove(name)
-      LOG.debug { "$requester removed environment variable '$name'" }
+      doSetEnvironmentVariable(name, null, "setEnvironmentVariableToPath")
     }
     else {
       val translatedPath = translatePathToRemote(path)
       if (translatedPath != null) {
-        mutableEnvs[name] = translatedPath
-        LOG.debug { "$requester: setEnvironmentVariableToPath('$name', '$translatedPath')" }
+        LOG.debug { "$requester: path translated: '$path' -> '$translatedPath'" }
+        doSetEnvironmentVariable(name, translatedPath, "setEnvironmentVariableToPath")
       }
       else {
         LOG.debug { "$requester: path translation failed for setEnvironmentVariableToPath('$name', '$path'), skipping" }
       }
     }
+  }
+
+  private fun doSetEnvironmentVariable(name: String, value: String?, context: String) {
+    if (value == null) {
+      removeEnv(name, context)
+      if (shellIntegration != null) {
+        removeEnv(name.ensureStartsWith(INTELLIJ_FORCE_SET_PREFIX), context)
+      }
+    }
+    else {
+      setEnv(name, value, context)
+      if (shellIntegration != null) {
+        setEnv(name.ensureStartsWith(INTELLIJ_FORCE_SET_PREFIX), value, context)
+      }
+    }
+  }
+
+  private fun removeEnv(name: String, context: String) {
+    val success = mutableEnvs.remove(name) != null
+    LOG.debug { "$requester: $context: removed environment variable: $name ($success)" }
+  }
+
+  private fun setEnv(name: String, value: String, context: String) {
+    mutableEnvs[name] = value
+    LOG.debug { "$requester: $context: set environment variable: $name='$value'" }
   }
 
   override fun appendEntryToPATH(entry: Path) {
@@ -131,4 +148,5 @@ private fun String.ensureEndsWith(suffix: String): String = if (this.endsWith(su
 
 private const val PATH: String = "PATH"
 private const val INTELLIJ_FORCE_PREPEND_PREFIX: String = "_INTELLIJ_FORCE_PREPEND_"
+private const val INTELLIJ_FORCE_SET_PREFIX: String = "_INTELLIJ_FORCE_SET_"
 private val LOG: Logger = logger<MutableShellExecOptionsImpl>()

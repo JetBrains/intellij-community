@@ -209,6 +209,36 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
     Assertions.assertThat(result.getEnvVarValue(customEnvName)).isNull()
   }
 
+  @TestFactory
+  fun `setEnvironmentVariable also sets (removes) twin under shell integration`() = withShellIntegration { shellIntegration, testDisposable ->
+    val dir = tempDir.asDirectory()
+    val customEnvName = "MY_ENV"
+    register(customizer {
+      it.setEnvironmentVariable(customEnvName, "foo")
+      Assertions.assertThat(it.envs[customEnvName]).isEqualTo("foo")
+      Assertions.assertThat(it.envs[IJ_FORCE_SET_PREFIX + customEnvName]).isEqualTo("foo".takeIf { shellIntegration })
+      it.setEnvironmentVariable(customEnvName, null)
+    }, parentDisposable = testDisposable)
+    val result = configureStartupOptions(dir, shellIntegration, testDisposable)
+    Assertions.assertThat(result.getEnvVarValue(customEnvName)).isNull()
+    Assertions.assertThat(result.getEnvVarValue(IJ_FORCE_SET_PREFIX + customEnvName)).isNull()
+  }
+
+  @TestFactory
+  fun `setEnvironmentVariableToPath also sets (removes) twin under shell integration`() = withShellIntegration { shellIntegration, testDisposable ->
+    val dir = tempDir.asDirectory()
+    val customEnvName = "MY_ENV"
+    register(customizer {
+      it.setEnvironmentVariableToPath(customEnvName, dir.nioDir)
+      Assertions.assertThat(it.envs[customEnvName]).isEqualTo(dir.remoteDir)
+      Assertions.assertThat(it.envs[IJ_FORCE_SET_PREFIX + customEnvName]).isEqualTo(if (shellIntegration) dir.remoteDir else null)
+      it.setEnvironmentVariableToPath(customEnvName, null)
+    }, parentDisposable = testDisposable)
+    val result = configureStartupOptions(dir, shellIntegration, testDisposable)
+    Assertions.assertThat(result.getEnvVarValue(customEnvName)).isNull()
+    Assertions.assertThat(result.getEnvVarValue(IJ_FORCE_SET_PREFIX + customEnvName)).isNull()
+  }
+
   @Test
   fun `translate JEDITERM_SOURCE to remote`(): Unit = timeoutRunBlocking(TIMEOUT) {
     val dir = tempDir.asDirectory()
@@ -374,6 +404,7 @@ private fun joinEntries(path1: String?, path2: String?, descriptor: EelDescripto
 }
 
 private const val PATH: String = "PATH"
+private const val IJ_FORCE_SET_PREFIX: String = "_INTELLIJ_FORCE_SET_"
 private const val IJ_FORCE_PREPEND_PREFIX: String = "_INTELLIJ_FORCE_PREPEND_"
 private const val IJ_FORCE_PREPEND_PATH: String = IJ_FORCE_PREPEND_PREFIX + PATH
 private const val JEDITERM_SOURCE: String = "JEDITERM_SOURCE"

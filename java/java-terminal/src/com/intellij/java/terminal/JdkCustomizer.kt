@@ -12,14 +12,12 @@ import java.nio.file.Path
 
 /** Customizer to override the JDK from the terminal with the project one */
 internal class JdkCustomizer : ShellExecOptionsCustomizer {
-  /** Override the values despite rc configs from users */
-  private val FORCE_PREFIX = "_INTELLIJ_FORCE_SET_"
-  
+
   override fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions) {
     if (!JavaTerminalSettings.instance.overrideJavaHome) return
 
     ProjectRootManager.getInstance(project).getProjectSdk()?.getSdkBinPath()?.let {
-      shellExecOptions.setEnvironmentVariableToPath(FORCE_PREFIX + "JAVA_HOME", it.parent)
+      shellExecOptions.setEnvironmentVariableToPath("JAVA_HOME", it.parent)
       shellExecOptions.prependEntryToPATH(it)
     }
   }

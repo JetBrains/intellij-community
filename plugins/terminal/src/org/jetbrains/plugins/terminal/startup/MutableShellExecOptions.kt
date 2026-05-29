@@ -24,7 +24,9 @@ sealed interface MutableShellExecOptions {
    * * [appendEntryToPathLikeEnv] / [prependEntryToPathLikeEnv]
    * 
    * The change is immediately reflected in [envs].
-   * 
+   *
+   * When shell integration is enabled, the set value won't be overwritten by shell init scripts.
+   *
    * @param name The name of the environment variable to set.
    * @param value The value of the environment variable to set. It should be in the format
    *              understood by the remote environment [eelDescriptor].
@@ -40,6 +42,8 @@ sealed interface MutableShellExecOptions {
    *
    * If the path cannot be converted, the environment variable remains unchanged.
    * Otherwise, the change is immediately reflected in [envs].
+   *
+   * When shell integration is enabled, the set value won't be overwritten by shell init scripts.
    *
    * @param name The name of the environment variable to set (for example, `JAVA_HOME` / `GOROOT`).
    * @param path An absolute path to set as the variable value, or `null` to remove the variable
