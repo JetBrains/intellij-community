@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClientProperty;
@@ -32,9 +33,12 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.util.List;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -257,6 +261,10 @@ final class ProcessPopup {
     builder.setLocateWithinScreenBounds(false);
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
+
+    builder.setKeyboardActions(List.of(
+      Pair.create(_ -> myProgressPanel.hideProcessPopup(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0))
+    ));
 
     myPopup = builder.createPopup();
   }
