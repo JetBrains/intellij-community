@@ -50,16 +50,15 @@ internal class MavenDependencySearchContributorImpl : MavenDependencySearchContr
     request: DependencyCompletionRequest,
     consumerAccept: (String, String, List<String>) -> Unit,
   ) {
-    val grouped = mutableMapOf<String, MutableList<String>>()
-    val coords = mutableMapOf<String, Pair<String, String>>()
+    val grouped = mutableMapOf<Pair<String, String>, MutableList<String>>()
+
     service<DependencyCompletionService>().suggestCompletions(request).collect { r ->
-      val key = "${r.groupId}:${r.artifactId}"
-      coords[key] = r.groupId to r.artifactId
+      val key = r.groupId to r.artifactId
       grouped.getOrPut(key) { mutableListOf() }.add(r.version)
     }
-    for ((key, versions) in grouped) {
-      val (gId, aId) = coords[key]!!
-      consumerAccept(gId, aId, versions)
+    for ((coords, versions) in grouped) {
+      val (groupId, artifactId) = coords
+      consumerAccept(groupId, artifactId, versions)
     }
   }
 }
