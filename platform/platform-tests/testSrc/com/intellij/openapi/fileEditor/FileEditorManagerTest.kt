@@ -43,6 +43,7 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.TestApplication
@@ -60,6 +61,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.IOException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -424,14 +426,25 @@ class FileEditorManagerTest {
   @Test
   fun testMustNotAllowToTypeIntoFileRenamedToUnknownExtension(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val ioFile = IoTestUtil.createTestFile("test.txt", "")
-    FileUtil.writeToFile(ioFile, byteArrayOf(1, 2, 3, 4, 29)) // to convince IDEA it's binary when renamed to an unknown extension
-    val file = assertThatNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile))
-    assertThat(file.fileType).isEqualTo(PlainTextFileType.INSTANCE)
-    FileEditorManager.getInstance(project).openFile(file, true)
-    //noinspection SpellCheckingInspection
-    HeavyPlatformTestCase.rename(file, "test.unkneownExtensiosn")
-    assertThat(file.fileType).isEqualTo(UnknownFileType.INSTANCE)
-    assertThat(FileEditorManager.getInstance(project).isFileOpen(file)).isFalse() // must close
+    var file: VirtualFile? = null
+    try {
+      FileUtil.writeToFile(ioFile, byteArrayOf(1, 2, 3, 4, 29)) // to convince IDEA it's binary when renamed to an unknown extension
+      file = assertThatNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile))
+      assertThat(file.fileType).isEqualTo(PlainTextFileType.INSTANCE)
+      FileEditorManager.getInstance(project).openFile(file, true)
+      //noinspection SpellCheckingInspection
+      HeavyPlatformTestCase.rename(file, "test.unkneownExtensiosn")
+      assertThat(file.fileType).isEqualTo(UnknownFileType.INSTANCE)
+      assertThat(FileEditorManager.getInstance(project).isFileOpen(file)).isFalse() // must close
+    }
+    finally {
+      try {
+        ioFile.delete()
+      }
+      catch (_: IOException) {
+      }
+      VfsTestUtil.deleteFile(file!!)
+    }
   }
 
   private fun registerProvider(provider: FileEditorProvider) {
