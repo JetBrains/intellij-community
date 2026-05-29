@@ -28,6 +28,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import javax.accessibility.Accessible
+import javax.accessibility.AccessibleAction
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -269,9 +270,21 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     return accessibleContext
   }
 
-  private inner class AccessibleTextPanel : AccessibleJComponent() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+  protected open inner class AccessibleTextPanel : AccessibleJComponent() {
+    private val accessibleAction = StatusBarAccessibilityUtil.createAccessibleAction(this@TextPanel)
 
-    override fun getAccessibleName(): String? = text
+    override fun getAccessibleRole(): AccessibleRole =
+      if (this@TextPanel.isFocusable) AccessibleRole.PUSH_BUTTON else AccessibleRole.LABEL
+
+    override fun getAccessibleName(): String? {
+      return StatusBarAccessibilityUtil.getTextOrTooltipAccessibleName(this@TextPanel, text)
+    }
+
+    override fun getAccessibleAction(): AccessibleAction? =
+      if (this@TextPanel.isFocusable) accessibleAction else null
+
+    override fun getAccessibleDescription(): @Nls String? {
+      return StatusBarAccessibilityUtil.getTooltipAccessibleDescription(this@TextPanel, text)
+    }
   }
 }

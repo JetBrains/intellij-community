@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.JComponent;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -209,6 +210,22 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         return new Rectangle(0, JBUI.scale(3), getWidth(), getHeight() - JBUI.scale(8));
       }
       return new Rectangle(0, 0, getWidth(), getHeight());
+    }
+
+    @Override
+    public @NotNull AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleTextPanel() {
+          @Override
+          public String getAccessibleName() {
+            String text = getText();
+            return text != null
+                   ? UIBundle.message("memory.usage.panel.accessible.name.with.text", text)
+                   : UIBundle.message("memory.usage.panel.accessible.name");
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     @Override

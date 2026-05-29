@@ -916,7 +916,6 @@ open class IdeStatusBarImpl @Internal constructor(
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleIdeStatusBarImpl()
-      accessibleContext.accessibleName = UIBundle.message("status.bar.accessible.group.name")
     }
     return accessibleContext
   }
@@ -962,9 +961,16 @@ open class IdeStatusBarImpl @Internal constructor(
       })
   }
 
-  @Suppress("RedundantInnerClassModifier")
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
+
+    override fun getAccessibleName(): String {
+      val shortcut = KeymapUtil.getFirstKeyboardShortcutText("FocusStatusBar")
+      return if (shortcut.isNotEmpty()) UIBundle.message("status.bar.accessible.group.name.with.shortcut", shortcut)
+      else UIBundle.message("status.bar.accessible.group.name")
+    }
+
+    override fun getAccessibleDescription(): String? = getInfo()
   }
 }
 
@@ -1058,7 +1064,18 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
 
   // wrap with a panel, so it will fill the entire status bar height
   val result = if (component is JLabel) {
-    val panel = JPanel(BorderLayout())
+    val panel = object : JPanel(BorderLayout()) {
+      override fun getAccessibleContext(): AccessibleContext {
+        if (accessibleContext == null) {
+          val defaultAccessibleContext = super.getAccessibleContext()
+          accessibleContext = object : AccessibleContextDelegate(component.accessibleContext) {
+            override fun getDelegateParent(): Container? = parent
+            override fun getAccessibleIndexInParent(): Int = defaultAccessibleContext.accessibleIndexInParent
+          }
+        }
+        return accessibleContext
+      }
+    }
     panel.add(component, BorderLayout.CENTER)
     panel.isOpaque = false
     panel

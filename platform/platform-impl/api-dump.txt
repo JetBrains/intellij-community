@@ -1202,6 +1202,16 @@ com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - a:createTabActions(com.intellij.ui.content.Content):java.util.List
 c:com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 - paintBorder(java.awt.Graphics,javax.swing.JComponent,I):V
+pf:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl$AccessibleIdeStatusBarImpl
+- getAccessibleDescription():java.lang.String
+- getAccessibleName():java.lang.String
+pc:com.intellij.openapi.wm.impl.status.TextPanel$AccessibleTextPanel
+- javax.swing.JComponent$AccessibleJComponent
+- <init>(com.intellij.openapi.wm.impl.status.TextPanel):V
+- getAccessibleAction():javax.accessibility.AccessibleAction
+- getAccessibleDescription():java.lang.String
+- getAccessibleName():java.lang.String
+- getAccessibleRole():javax.accessibility.AccessibleRole
 f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 - f:updateWidget(com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext):V
 - bs:updateWidget$default(com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager,com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext,I,java.lang.Object):V
@@ -1567,6 +1577,8 @@ f:com.intellij.ui.components.Badge$Companion
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+f:com.intellij.ui.components.IconLabelButton
+- getAccessibleContext():javax.accessibility.AccessibleContext
 f:com.intellij.ui.components.SearchFieldWithExtension
 - <init>(com.intellij.ui.SearchTextField,java.awt.Color):V
 - <init>(com.intellij.ui.components.JBTextField,java.awt.Color):V

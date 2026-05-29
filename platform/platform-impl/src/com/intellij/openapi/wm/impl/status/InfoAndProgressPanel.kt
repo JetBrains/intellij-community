@@ -90,6 +90,11 @@ import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.accessibility.AccessibleState
+import javax.accessibility.AccessibleStateSet
+import javax.accessibility.AccessibleValue
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -945,6 +950,7 @@ class InfoAndProgressPanel internal constructor(
       progress.isVisible = !PowerSaveMode.isEnabled() || !isPaintingIndeterminate
       super.updateProgressNow()
       if (presentationModeProgressPanel != null) presentationModeProgressPanel!!.update()
+      if (isCompact) mainPanel.inlinePanel.fireAccessibleValueChanged()
     }
 
     fun showInPresentationMode(): Boolean {
@@ -1299,6 +1305,7 @@ class InfoAndProgressPanel internal constructor(
         doLayout()
         revalidate()
         repaint()
+        fireAccessibleValueChanged()
       }
       else {
         add(indicator.component)
@@ -1340,6 +1347,7 @@ class InfoAndProgressPanel internal constructor(
       doLayout()
       revalidate()
       repaint()
+      fireAccessibleValueChanged()
     }
 
     fun fireAccessibleValueChanged() {
@@ -1368,6 +1376,38 @@ class InfoAndProgressPanel internal constructor(
         }
       }
       super.paintComponent(g)
+    }
+
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = AccessibleInlineProgressPanel()
+      }
+      return accessibleContext
+    }
+
+    private inner class AccessibleInlineProgressPanel : AccessibleJComponent(), AccessibleValue {
+      override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PROGRESS_BAR
+
+      override fun getAccessibleName(): @NlsContexts.Label String {
+        val baseName = IdeBundle.message("progress.accessible.name")
+        val ind = indicator ?: return baseName
+        val visibleCounterText = counterComponent.takeIf { it.isVisible }?.text?.takeIf(String::isNotEmpty)
+        val text = (listOfNotNull(ind.title ?: ind.indicatorModel.title, ind.textPanel.text, ind.getText2())
+                      .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+                      .distinct() + listOfNotNull(visibleCounterText))
+          .joinToString(". ")
+        return if (text.isEmpty()) baseName
+        else IdeBundle.message("progress.accessible.name.with.progress", text)
+      }
+
+      override fun getAccessibleValue(): AccessibleValue = this
+      override fun getCurrentAccessibleValue(): Number = indicator?.progress?.value ?: 0
+      override fun getMinimumAccessibleValue(): Number = indicator?.progress?.minimum ?: 0
+      override fun getMaximumAccessibleValue(): Number = indicator?.progress?.maximum ?: 100
+      override fun setCurrentAccessibleValue(n: Number?): Boolean = false
+
+      override fun getAccessibleStateSet(): AccessibleStateSet =
+        super.getAccessibleStateSet().also { it.add(AccessibleState.HORIZONTAL) }
     }
   }
 }
