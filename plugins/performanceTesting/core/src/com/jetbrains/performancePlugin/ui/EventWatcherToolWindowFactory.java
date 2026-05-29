@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic.ui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.performancePlugin.ui;
 
-import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.icons.AllIcons;
@@ -18,6 +17,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.jetbrains.performancePlugin.PerformanceTestingBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
 
   @Override
   public void init(@NotNull ToolWindow toolWindow) {
-    toolWindow.setStripeTitle(DiagnosticBundle.message("event.watcher.tab.title"));
+    toolWindow.setStripeTitle(PerformanceTestingBundle.message("event.watcher.tab.title"));
   }
 
   @Override
@@ -73,7 +73,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
 
-    private final @NotNull Map<@PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String, ? extends ListTableModel<?>> myModels;
+    private final @NotNull Map<@PropertyKey(resourceBundle = PerformanceTestingBundle.BUNDLE) String, ? extends ListTableModel<?>> myModels;
 
     TableProvidingListener() {
       myInvocationsModel = createDescendingTableModel(
@@ -118,7 +118,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     @NotNull Stream<Map.Entry<@Nls String, JPanel>> createNamedPanels() {
       return myModels.entrySet()
         .stream()
-        .map(entry -> Map.entry(DiagnosticBundle.message(entry.getKey()),
+        .map(entry -> Map.entry(PerformanceTestingBundle.message(entry.getKey()),
                                 createPanel(entry.getValue())));
     }
 
@@ -150,7 +150,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
         .disableAddAction()
         .disableRemoveAction()
         .setToolbarPosition(ActionToolbarPosition.RIGHT)
-        .addExtraAction(new DumbAwareAction(DiagnosticBundle.message("event.watcher.clear.button.title"), null,
+        .addExtraAction(new DumbAwareAction(PerformanceTestingBundle.message("event.watcher.clear.button.title"), null,
                                             AllIcons.Actions.GC) {
 
           @Override
@@ -169,17 +169,17 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       private final @NotNull Function<? super Item, ? extends Aspect> myExtractor;
       private final @NotNull Comparator<Item> myComparator;
 
-      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
+      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = PerformanceTestingBundle.BUNDLE) String nameKey,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor,
                                       @NotNull Comparator<Item> comparator) {
-        super(DiagnosticBundle.message(nameKey));
+        super(PerformanceTestingBundle.message(nameKey));
         myColumnClass = columnClass;
         myExtractor = extractor;
         myComparator = comparator;
       }
 
-      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
+      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = PerformanceTestingBundle.BUNDLE) String nameKey,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor) {
         this(nameKey, columnClass, extractor, Comparator.comparing(extractor));
@@ -200,7 +200,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
         return myComparator;
       }
 
-      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
+      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull @PropertyKey(resourceBundle = PerformanceTestingBundle.BUNDLE) String nameKey,
                                                                                                                @NotNull Function<? super Item, String> extractor) {
         return new FunctionBasedColumnInfo<Item, String>(nameKey,
                                                          String.class,

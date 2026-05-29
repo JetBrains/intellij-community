@@ -89,6 +89,9 @@
 
     <backgroundPostStartupActivity implementation="com.jetbrains.performancePlugin.promo.ErrorReportPromoterActivity"/>
     <diagnostic.freezeNotifier implementation="com.jetbrains.performancePlugin.promo.FreezeCounterListener"/>
+
+    <toolWindow id="EventQueue Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
+                factoryClass="com.jetbrains.performancePlugin.ui.EventWatcherToolWindowFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains">

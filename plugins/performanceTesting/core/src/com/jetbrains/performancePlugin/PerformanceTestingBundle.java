@@ -2,6 +2,7 @@
 package com.jetbrains.performancePlugin;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -9,8 +10,9 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PerformanceTestingBundle {
-  private static final @NonNls String BUNDLE = "messages.PerformanceTestingBundle";
+  public static final @NonNls String BUNDLE = "messages.PerformanceTestingBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(PerformanceTestingBundle.class, BUNDLE);
 
   private PerformanceTestingBundle() {}
