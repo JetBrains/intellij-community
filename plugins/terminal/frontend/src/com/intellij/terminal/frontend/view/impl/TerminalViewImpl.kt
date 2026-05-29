@@ -187,8 +187,8 @@ class TerminalViewImpl(
   override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> =
     CompletableDeferred(coroutineScope.coroutineContext.job)
 
-  private val outputBufferHyperlinksFacade: FrontendTerminalHyperlinkFacade
-  private val alternateBufferHyperlinksFacade: FrontendTerminalHyperlinkFacade
+  private var outputBufferHyperlinksFacade: FrontendTerminalHyperlinkFacade? = null
+  private var alternateBufferHyperlinksFacade: FrontendTerminalHyperlinkFacade? = null
 
   init {
     sessionModel = TerminalSessionModelImpl()
@@ -338,19 +338,6 @@ class TerminalViewImpl(
       sessionModel.updateTerminalState(currentState.copy(isCursorVisible = false))
     }
 
-    outputBufferHyperlinksFacade = installHyperlinksProcessing(
-      project = project,
-      outputModel = outputModel,
-      editor = outputEditor,
-      coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks")
-    )
-    alternateBufferHyperlinksFacade = installHyperlinksProcessing(
-      project = project,
-      outputModel = alternateBufferModel,
-      editor = alternateBufferEditor,
-      coroutineScope = coroutineScope.childScope("Alternate Buffer Hyperlinks")
-    )
-
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
     listenSearchController()
@@ -367,6 +354,27 @@ class TerminalViewImpl(
       terminalView = this,
       coroutineScope.childScope("Terminal VFS refresh on command finish")
     )
+
+    // Configure hyperlinks' processing
+    coroutineScope.launch {
+      val eelDescriptor = sessionDeferred.await().eelDescriptor
+      outputBufferHyperlinksFacade = installHyperlinksProcessing(
+        project = project,
+        outputModel = outputModel,
+        editor = outputEditor,
+        sessionModel = sessionModel,
+        eelDescriptor = eelDescriptor,
+        coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks")
+      )
+      alternateBufferHyperlinksFacade = installHyperlinksProcessing(
+        project = project,
+        outputModel = alternateBufferModel,
+        editor = alternateBufferEditor,
+        sessionModel = sessionModel,
+        eelDescriptor = eelDescriptor,
+        coroutineScope = coroutineScope.childScope("Alternate Buffer Hyperlinks")
+      )
+    }
 
     shellIntegrationFeaturesInitJob = coroutineScope.launch(
       Dispatchers.EDT +
@@ -779,7 +787,7 @@ class TerminalViewImpl(
       sink[TerminalSessionId.KEY] = null // TODO: session ID is required for hyperlinks - need to be reworked.
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinksFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinksFacade else outputBufferHyperlinksFacade
-      sink[TerminalHyperlinkId.KEY] = hyperlinksFacade.getHoveredHyperlinkId()
+      sink[TerminalHyperlinkId.KEY] = hyperlinksFacade?.getHoveredHyperlinkId()
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
 
       // Add selection text to the data context, so features like Search Everywhere and Find in Files

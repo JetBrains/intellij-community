@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.hyperlinks.HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
@@ -645,6 +647,8 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
       project = project,
       outputModel = outputModel,
       editor = editor,
+      sessionModel = TerminalSessionModelImpl(),
+      eelDescriptor = LocalEelDescriptor,
       coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
     )
 

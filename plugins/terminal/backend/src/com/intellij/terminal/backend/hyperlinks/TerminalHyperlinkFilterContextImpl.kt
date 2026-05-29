@@ -8,37 +8,18 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 
-internal class TerminalHyperlinkFilterContextImpl(
-  sessionModel: TerminalSessionModel,
-  override val eelDescriptor: EelDescriptor,
-  coroutineScope: CoroutineScope,
-) : TerminalHyperlinkFilterContext {
-
+internal class TerminalHyperlinkFilterContextImpl(override val eelDescriptor: EelDescriptor) : TerminalHyperlinkFilterContext {
   @Volatile
-  private var currentDirectoryInfo: DirectoryInfo = DirectoryInfo(null, null)
-
-  private class DirectoryInfo(val path: String?, val virtualFile: VirtualFile?)
-
-  init {
-    coroutineScope.launch(Dispatchers.IO + CoroutineName(TerminalHyperlinkFilterContextImpl::class.java.simpleName)) {
-      sessionModel.terminalState.collect {
-        val currentDirectory = it.currentDirectory
-        if (currentDirectory != currentDirectoryInfo.path) {
-          currentDirectoryInfo = DirectoryInfo(currentDirectory, findVirtualDirectory(currentDirectory))
-        }
-      }
-    }
-  }
+  private var workingDirectory: VirtualFile? = null
 
   override val currentWorkingDirectory: VirtualFile?
-    get() = currentDirectoryInfo.virtualFile?.takeIf { it.isValid }
+    get() = workingDirectory?.takeIf { it.isValid }
+
+  fun updateCurrentDirectory(directory: @NativePath String?) {
+    workingDirectory = findVirtualDirectory(directory)
+  }
 
   private fun findVirtualDirectory(directory: @NativePath String?): VirtualFile? {
     if (directory.isNullOrBlank()) return null

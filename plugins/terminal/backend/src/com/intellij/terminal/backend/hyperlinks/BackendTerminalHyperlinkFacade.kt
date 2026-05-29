@@ -2,12 +2,13 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.annotations.NativePath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
@@ -23,9 +24,10 @@ import kotlin.time.Duration.Companion.milliseconds
 class BackendTerminalHyperlinkFacade(
   private val debugName: String,
   private val project: Project,
+  eelDescriptor: EelDescriptor,
   coroutineScope: CoroutineScope,
-  filterContext: TerminalHyperlinkFilterContext?,
 ) {
+  private val filterContext = TerminalHyperlinkFilterContextImpl(eelDescriptor)
   private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, filterContext)
   private val trimOffset = AtomicReference(TerminalOffset.of(0))
   private val model = TerminalHyperlinksModel(
@@ -45,6 +47,13 @@ class BackendTerminalHyperlinkFacade(
   fun applyContentUpdate(update: TerminalOutputContentUpdate) {
     trimOffset.set(update.trimStartOffset)
     highlighter.applyUpdate(update)
+  }
+
+  /**
+   * [newDirectory] - native path inside the environment of [filterContext]'s [EelDescriptor].
+   */
+  fun updateWorkingDirectory(newDirectory: @NativePath String?) {
+    filterContext.updateCurrentDirectory(newDirectory)
   }
 
   fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {

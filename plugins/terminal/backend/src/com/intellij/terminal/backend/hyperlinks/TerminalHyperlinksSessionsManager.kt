@@ -3,6 +3,7 @@ package com.intellij.terminal.backend.hyperlinks
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,10 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
     sessions[sessionId]?.coroutineScope?.cancel()
   }
 
-  fun createNewSession(project: Project): TerminalHyperlinksSession {
+  /**
+   * @param eelDescriptor environment where the terminal process is running.
+   */
+  fun createNewSession(project: Project, eelDescriptor: EelDescriptor): TerminalHyperlinksSession {
     val newId = TerminalHyperlinksSessionId(sessionIdCounter.getAndIncrement())
 
     val sessionScope = coroutineScope.childScope("BackendTerminalHyperlinksSession#$newId")
@@ -39,21 +43,22 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
       sessions.remove(newId)
     }
 
-    val session = startHyperlinksSession(project, newId, sessionScope)
+    val session = startHyperlinksSession(project, eelDescriptor, newId, sessionScope)
     sessions[newId] = session
     return session
   }
 
   private fun startHyperlinksSession(
     project: Project,
+    eelDescriptor: EelDescriptor,
     id: TerminalHyperlinksSessionId,
     scope: CoroutineScope,
   ): BackendTerminalHyperlinksSession {
     val hyperlinksFacade = BackendTerminalHyperlinkFacade(
       debugName = "Backend#${id.id}",
       project = project,
+      eelDescriptor = eelDescriptor,
       coroutineScope = scope.childScope("BackendTerminalHyperlinkFacade"),
-      filterContext = null  // TODO: Specify filter context
     )
 
     val inputEventsSink = Channel<TerminalHyperlinksInputEvent>()

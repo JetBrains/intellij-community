@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.impl.toRelative
@@ -34,11 +35,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalCreateHyperlinksSessionRequest
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksRemoteApi
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
@@ -58,11 +61,16 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * @param eelDescriptor environment where the terminal process is running.
+ */
 @ApiStatus.Internal
 fun installHyperlinksProcessing(
   project: Project,
   outputModel: TerminalOutputModel,
   editor: EditorEx,
+  sessionModel: TerminalSessionModel,
+  eelDescriptor: EelDescriptor,
   coroutineScope: CoroutineScope,
 ): FrontendTerminalHyperlinkFacade {
   // The modification stamp of the most recent highlighting task whose
@@ -71,7 +79,7 @@ fun installHyperlinksProcessing(
   val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
   coroutineScope.launch {
-    processHyperlinks(project, outputModel, applier, lastFinishedTaskStamp)
+    processHyperlinks(project, outputModel, sessionModel, eelDescriptor, applier, lastFinishedTaskStamp)
   }
 
   return FrontendTerminalHyperlinkFacade(applier, lastFinishedTaskStamp)
@@ -80,15 +88,21 @@ fun installHyperlinksProcessing(
 private suspend fun processHyperlinks(
   project: Project,
   outputModel: TerminalOutputModel,
+  sessionModel: TerminalSessionModel,
+  eelDescriptor: EelDescriptor,
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
 ) = coroutineScope {
   val scope = this
-  val session = createHyperlinksSession(project, scope.childScope("FrontendTerminalHyperlinksSession"))
+  val session = createHyperlinksSession(
+    project = project,
+    eelDescriptor = eelDescriptor,
+    coroutineScope = scope.childScope("FrontendTerminalHyperlinksSession")
+  )
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
   launch(CoroutineName("Output model tracking")) {
-    trackOutputModelChanges(outputModel, outputModelChangesTracker, session.inputEventsSink)
+    trackOutputModelChanges(outputModel, sessionModel, outputModelChangesTracker, session.inputEventsSink)
   }
   // Can't use Dispatchers.UI because editor can require locks
   launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Results processing")) {
@@ -109,9 +123,14 @@ private suspend fun processHyperlinks(
 }
 
 @OptIn(AwaitCancellationAndInvoke::class)
-private suspend fun createHyperlinksSession(project: Project, coroutineScope: CoroutineScope): TerminalHyperlinksSession {
+private suspend fun createHyperlinksSession(
+  project: Project,
+  eelDescriptor: EelDescriptor,
+  coroutineScope: CoroutineScope,
+): TerminalHyperlinksSession {
   val sessionId = durable {
-    TerminalHyperlinksRemoteApi.getInstance().createNewSession(project.projectId())
+    val request = TerminalCreateHyperlinksSessionRequest(project.projectId(), eelDescriptor)
+    TerminalHyperlinksRemoteApi.getInstance().createNewSession(request)
   }
   coroutineScope.awaitCancellationAndInvoke(Dispatchers.Default) {
     TerminalHyperlinksRemoteApi.getInstance().closeSession(sessionId)
@@ -133,9 +152,22 @@ private suspend fun createHyperlinksSession(project: Project, coroutineScope: Co
 
 private suspend fun trackOutputModelChanges(
   outputModel: TerminalOutputModel,
+  sessionModel: TerminalSessionModel,
   tracker: TerminalOutputModelChangesTracker,
   sink: SendChannel<TerminalHyperlinksInputEvent>,
 ) = coroutineScope {
+  // Send working directory change events
+  launch {
+    var currentDirectory: String? = null
+    sessionModel.terminalState.collect { state ->
+      val newDirectory = state.currentDirectory ?: return@collect
+      if (newDirectory != currentDirectory) {
+        currentDirectory = newDirectory
+        sink.send(TerminalHyperlinksInputEvent.WorkingDirectoryChanged(newDirectory))
+      }
+    }
+  }
+
   // Send content updates to the backend periodically.
   while (true) {
     val update = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {

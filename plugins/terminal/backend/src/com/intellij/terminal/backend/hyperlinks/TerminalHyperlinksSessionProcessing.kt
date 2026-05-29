@@ -56,6 +56,9 @@ private fun processInputEvent(
       val update = event.update.toUpdate()
       hyperlinkFacade.applyContentUpdate(update)
     }
+    is TerminalHyperlinksInputEvent.WorkingDirectoryChanged -> {
+      hyperlinkFacade.updateWorkingDirectory(event.workingDirectory)
+    }
   }
 }
 
