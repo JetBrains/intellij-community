@@ -14,6 +14,7 @@ interface LintProblem {
 interface LintFileResult {
   filePath: string
   problems: LintProblem[]
+  notAnalyzedReason?: string
   timedOut?: boolean
 }
 

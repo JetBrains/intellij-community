@@ -645,6 +645,82 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun lint_files_includes_not_analyzed_files() = runBlocking(Dispatchers.Default) {
+    val mainPath = project.projectDirectory.relativizeIfPossible(mainJavaFile)
+    val classPath = project.projectDirectory.relativizeIfPossible(classJavaFile)
+
+    withLintFilesCollector(
+      collector = { _, onFileResult ->
+        onFileResult(lintFileResultWithProblem(mainPath))
+        onFileResult(AnalysisToolset.LintFileResult(filePath = classPath, notAnalyzedReason = "File is outside project content roots or in an excluded directory"))
+      },
+    ) {
+      testMcpTool(
+        AnalysisToolset::lint_files.name,
+        buildJsonObject {
+          put("files", buildJsonArray {
+            add(JsonPrimitive(mainPath))
+            add(JsonPrimitive(classPath))
+          })
+        },
+      ) { result ->
+        val text = result.textContent.text
+        assertThat(text).containsOnlyOnce(""""filePath":"src/Main.java"""")
+        assertThat(text).containsOnlyOnce(""""filePath":"src/Class.java"""")
+        assertThat(text).contains(""""notAnalyzedReason":"File is outside project content roots or in an excluded directory"""")
+      }
+    }
+  }
+
+  @Test
+  fun lint_files_omits_not_analyzed_fields_for_clean_files() = runBlocking(Dispatchers.Default) {
+    val mainPath = project.projectDirectory.relativizeIfPossible(mainJavaFile)
+
+    withLintFilesCollector(
+      collector = { _, onFileResult ->
+        onFileResult(lintFileResultWithProblem(mainPath))
+      },
+    ) {
+      testMcpTool(
+        AnalysisToolset::lint_files.name,
+        buildJsonObject {
+          put("files", buildJsonArray {
+            add(JsonPrimitive(mainPath))
+          })
+        },
+      ) { result ->
+        val text = result.textContent.text
+        assertThat(text).containsOnlyOnce(""""filePath":"src/Main.java"""")
+        assertThat(text).doesNotContain(""""notAnalyzed"""")
+        assertThat(text).doesNotContain(""""notAnalyzedReason"""")
+      }
+    }
+  }
+
+  @Test
+  fun get_file_problems_fails_for_not_analyzed_file() = runBlocking(Dispatchers.Default) {
+    val mainPath = project.projectDirectory.relativizeIfPossible(mainJavaFile)
+
+    withLintFilesCollector(
+      collector = { _, onFileResult ->
+        onFileResult(AnalysisToolset.LintFileResult(filePath = mainPath, notAnalyzedReason = "File is outside project content roots or in an excluded directory"))
+      },
+    ) {
+      testMcpTool(
+        AnalysisToolset::get_file_problems.name,
+        buildJsonObject {
+          put("filePath", JsonPrimitive(mainPath))
+          put("errorsOnly", JsonPrimitive(false))
+        },
+      ) { result ->
+        assertThat(result.isError).isTrue()
+        assertThat(result.textContent.text).contains("File cannot be analyzed")
+        assertThat(result.textContent.text).contains("File is outside project content roots or in an excluded directory")
+      }
+    }
+  }
+
+  @Test
   fun prepareLintFiles_handles_cached_and_uncached_files(): Unit = runBlocking(Dispatchers.Default) {
     val localFileSystem = LocalFileSystem.getInstance()
     val cachedPath = mainJavaFile.toNioPath()

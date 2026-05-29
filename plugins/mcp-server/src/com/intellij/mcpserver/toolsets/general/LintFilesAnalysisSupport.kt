@@ -42,9 +42,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Function
@@ -261,28 +261,32 @@ private suspend fun collectLintFileResult(
   val fileContext = readAction {
     val virtualFile = resolvedFile.virtualFile
     if (!virtualFile.isValid) {
-      return@readAction null
+      return@readAction LintFileContextStatus.NotAnalyzed("File is not valid or has been deleted")
     }
 
-    val psiFile = psiManager.findFile(virtualFile) ?: return@readAction null
+    val psiFile = psiManager.findFile(virtualFile)
+    if (psiFile == null) {
+      return@readAction LintFileContextStatus.NotAnalyzed("File type is not recognized or not supported for analysis")
+    }
     if (!ProblemHighlightFilter.shouldProcessFileInBatch(psiFile)) {
-      return@readAction null
+      return@readAction LintFileContextStatus.NotAnalyzed("File is outside project content roots or in an excluded directory")
     }
 
     val document = fileDocumentManager.getDocument(virtualFile) ?: mcpFail("Cannot get document: ${resolvedFile.relativePath}")
-    LintFileContext(psiFile, document)
+    LintFileContextStatus.Ready(psiFile, document)
   }
-  if (fileContext == null) {
-    return createEmptyLintFileResult(resolvedFile.relativePath)
+  if (fileContext is LintFileContextStatus.NotAnalyzed) {
+    return createNotAnalyzedLintFileResult(resolvedFile.relativePath, fileContext.reason)
   }
+  val context = fileContext as LintFileContextStatus.Ready
 
   getLintFilesAnalysisSupportState(project).beforeMainPassesOverride?.invoke(resolvedFile.relativePath)
 
   val highlightInfos = runLintMainPasses(
     project = project,
     relativePath = resolvedFile.relativePath,
-    psiFile = fileContext.psiFile,
-    document = fileContext.document,
+    psiFile = context.psiFile,
+    document = context.document,
     minSeverity = minSeverity,
     inspectionProfile = inspectionProfile,
     codeAnalyzer = codeAnalyzer,
@@ -290,7 +294,7 @@ private suspend fun collectLintFileResult(
     timeoutContext = timeoutContext,
   ) ?: return createTimedOutLintFileResult(resolvedFile.relativePath)
   LOG.trace { "Main passes completed for ${resolvedFile.relativePath}, found ${highlightInfos.size} highlights" }
-  return createLintFileResult(resolvedFile.relativePath, fileContext.document, highlightInfos, minSeverity)
+  return createLintFileResult(resolvedFile.relativePath, context.document, highlightInfos, minSeverity)
 }
 
 /**
@@ -497,9 +501,10 @@ private fun createLintFileResult(
   return AnalysisToolset.LintFileResult(filePath = filePath, problems = problems, timedOut = false)
 }
 
-private fun createEmptyLintFileResult(filePath: String): AnalysisToolset.LintFileResult {
-  LOG.trace { "Processed highlights for $filePath, found 0 problems" }
-  return AnalysisToolset.LintFileResult(filePath = filePath, problems = emptyList(), timedOut = false)
+private fun createNotAnalyzedLintFileResult(filePath: String, reason: String): AnalysisToolset.LintFileResult {
+  LOG.trace { "File not analyzed: $filePath, reason: $reason" }
+  return AnalysisToolset.LintFileResult(filePath = filePath, notAnalyzedReason = reason,
+                                         problems = emptyList(), timedOut = false)
 }
 
 private fun createTimedOutLintFileResult(filePath: String): AnalysisToolset.LintFileResult {
@@ -570,10 +575,10 @@ internal suspend fun prepareLintFiles(requestedFiles: List<RequestedLintFile>): 
   return resolvedFiles.map(::requireNotNull)
 }
 
-private data class LintFileContext(
-  @JvmField val psiFile: PsiFile,
-  @JvmField val document: Document,
-)
+private sealed class LintFileContextStatus {
+  data class Ready(val psiFile: PsiFile, val document: Document) : LintFileContextStatus()
+  data class NotAnalyzed(val reason: String) : LintFileContextStatus()
+}
 
 private fun LintFilesTimeoutContext.fileTimeoutMs(currentTimeMs: Long = System.currentTimeMillis()): Int {
   val remainingRequestBudgetMs = (requestDeadlineMs - currentTimeMs).coerceAtLeast(0L)
