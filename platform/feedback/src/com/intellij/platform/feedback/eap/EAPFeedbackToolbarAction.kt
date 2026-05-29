@@ -2,6 +2,7 @@
 package com.intellij.platform.feedback.eap
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -27,8 +28,8 @@ class EAPFeedbackToolbarAction : AnAction(), CustomComponentAction {
     presentation.isEnabledAndVisible = isVisible
     if (isVisible) {
       presentation.icon = AllIcons.Ide.FeedbackRatingOn
-      presentation.text = EAPFeedbackBundle.message("action.EAPFeedbackToolbarAction.text")
-      presentation.description = EAPFeedbackBundle.message("action.EAPFeedbackToolbarAction.description")
+      presentation.text = ActionsBundle.message("action.EAPFeedbackToolbarAction.text")
+      presentation.description = ActionsBundle.message("action.EAPFeedbackToolbarAction.description")
     }
   }
 
