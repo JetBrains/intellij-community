@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.debugger.streams.core"/>
     <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.debugger"/>
   </dependencies>

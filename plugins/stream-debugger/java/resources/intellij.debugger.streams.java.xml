@@ -1,12 +1,17 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.java"/>
     <module name="intellij.java.backend"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.backend"/>
     <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.platform.debugger.streams">
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
