@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleRepository
 
-import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import org.jetbrains.jps.model.module.JpsModule
 
 /**
@@ -9,17 +8,12 @@ import org.jetbrains.jps.model.module.JpsModule
  * This is needed to generate proper information about the module in the runtime module repository.
  */
 interface ContentModuleDetector {
-  fun findContentModuleData(jpsModule: JpsModule): ContentModuleRegistrationData?
+  fun findContentModuleData(jpsModule: JpsModule): ContentModuleRegistrationDataForHeader?
 
   /**
    * A separate method is needed because content module descriptors for test sources use a special `._test` suffix.
    * This method won't be needed after IJPL-242652 is implemented.
    */
-  fun findContentModuleDataForTests(jpsModule: JpsModule): ContentModuleRegistrationData?
+  fun findContentModuleDataForTests(jpsModule: JpsModule): ContentModuleRegistrationDataForHeader?
 }
 
-data class ContentModuleRegistrationData(
-  val name: String,
-  val namespace: String,
-  val visibility: RuntimeModuleVisibility,
-)

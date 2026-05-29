@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.moduleRepository
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
 import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -36,13 +37,15 @@ internal fun generateAndCheck(project: JpsProject, basePath: Path, expected: Raw
 internal fun generateAndValidateRuntimeModuleRepository(project: JpsProject): List<RawRuntimeModuleDescriptor> {
   val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
   val dummyContentModuleDetector = object : ContentModuleDetector {
-    override fun findContentModuleData(jpsModule: JpsModule): ContentModuleRegistrationData {
-      return ContentModuleRegistrationData(name = jpsModule.name,
-                                           namespace = DEFAULT_NAMESPACE,
-                                           visibility = RuntimeModuleVisibility.PUBLIC)
+    override fun findContentModuleData(jpsModule: JpsModule): ContentModuleRegistrationDataForHeader {
+      return ContentModuleRegistrationDataForHeader(name = jpsModule.name,
+                                                    namespace = DEFAULT_NAMESPACE,
+                                                    loadingRule = RuntimeModuleLoadingRule.EMBEDDED,
+                                                    requiredIfAvailable = null,
+                                                    visibility = RuntimeModuleVisibility.PUBLIC)
     }
 
-    override fun findContentModuleDataForTests(jpsModule: JpsModule): ContentModuleRegistrationData? = null
+    override fun findContentModuleDataForTests(jpsModule: JpsModule): ContentModuleRegistrationDataForHeader? = null
   }
   val generatedDescriptors =
     RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project,
