@@ -925,14 +925,19 @@ public class JavaStructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
   }
 
-  public void testContextScriptConstraintCompilation() {
+  public void testContextScriptConstraintMatching() {
     // IJPL-245794: dialog validation compiles Complete Match scripts before inspection matching starts.
     options.fillSearchCriteria("class '_Record {} ");
     options.setFileType(JavaFileType.INSTANCE);
     final MatchVariableConstraint constraint = options.addNewVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     constraint.setScriptCodeConstraint("__context__.getName() == 'NeedsToString'");
 
-    PatternCompiler.compilePattern(getProject(), options, true, true);
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), options, true, true);
+    final Matcher matcher = new Matcher(getProject(), options, compiledPattern);
+    assertEquals(1, matcher.testFindMatches("""
+                   class NeedsToString {}
+                   class LeaveItAlone {}
+                   """, true, JavaFileType.INSTANCE, false).size());
   }
 
   public void testCheckScriptValidation() {
