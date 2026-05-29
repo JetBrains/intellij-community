@@ -31,7 +31,6 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.swingx"/>
     <module name="intellij.libraries.velocity"/>
-    <module name="intellij.libraries.xstream"/>
     <module name="intellij.libraries.xz"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
