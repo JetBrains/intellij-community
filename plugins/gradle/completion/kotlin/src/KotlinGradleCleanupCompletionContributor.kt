@@ -89,6 +89,7 @@ private val ignoredContributors = setOf(
   "com.intellij.codeInsight.completion.LegacyCompletionContributor",          // `java`, `javax`, `jdk`, `META-INF`, etc.
   "com.intellij.lang.properties.references.PropertiesCompletionContributor",  // properties from */src/main/resources/*.properties file
   "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor", // interface, ifn, fun, etc.
+  "org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor", // keywords in dumb mode
 )
 
 private fun getContributorClass(lookupElement: LookupElement): Class<CompletionContributor>? =
