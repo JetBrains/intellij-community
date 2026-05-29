@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.completion
+package com.intellij.maven.completion.legacy
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Consumer
 import kotlinx.coroutines.flow.toList
+import kotlin.collections.iterator
 
 internal class MavenDependencySearchContributorImpl : MavenDependencySearchContributor {
 

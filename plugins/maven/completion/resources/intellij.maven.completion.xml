@@ -36,12 +36,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <contributor implementation="com.intellij.maven.completion.MavenIndexBasedCompletionContributor"/>
-    <contributor implementation="com.intellij.maven.completion.MavenProjectModulesCompletionContributor"/>
+    <contributor implementation="com.intellij.maven.completion.local.MavenIndexBasedCompletionContributor"/>
+    <contributor implementation="com.intellij.maven.completion.local.MavenProjectModulesCompletionContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <dependencySearchContributor implementation="com.intellij.maven.completion.MavenDependencySearchContributorImpl"/>
+    <dependencySearchContributor implementation="com.intellij.maven.completion.legacy.MavenDependencySearchContributorImpl"/>
   </extensions>
 
 </idea-plugin>

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.completion
+package com.intellij.maven.completion.local
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -13,13 +13,11 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import kotlin.math.min
 
-@ApiStatus.Internal
 internal class MavenIndexBasedCompletionContributor : DependencyCompletionContributor {
   override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
 

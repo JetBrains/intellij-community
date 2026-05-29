@@ -1,23 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.completion
+package com.intellij.maven.completion.local
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
-import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-@ApiStatus.Internal
 internal class MavenProjectModulesCompletionContributor : DependencyCompletionContributor {
   override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
 
