@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.PlatformMemoryUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
@@ -14,19 +13,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.io.DirectByteBufferAllocator;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.StorageLockContext;
-import com.intellij.util.system.OS;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.JBR;
-import com.jetbrains.SystemUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +31,7 @@ import javax.swing.JComponent;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.management.ManagementFactory;
@@ -104,7 +101,7 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
     myComponent.get().removeMouseListener(l);
   }
 
-  private final class MemoryUsagePanelImpl extends TextPanel {
+  private final class MemoryUsagePanelImpl extends TextPanel implements WidgetEffectBoundsProvider {
 
     private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
     private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
@@ -204,6 +201,14 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
       //text
       super.paintComponent(g);
+    }
+
+    @Override
+    public Rectangle getWidgetEffectBounds() {
+      if (IslandsState.Companion.isEnabled()) {
+        return new Rectangle(0, JBUI.scale(3), getWidth(), getHeight() - JBUI.scale(8));
+      }
+      return new Rectangle(0, 0, getWidth(), getHeight());
     }
 
     @Override
