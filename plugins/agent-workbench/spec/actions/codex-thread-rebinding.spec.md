@@ -29,9 +29,10 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue post-start dispatch steps: `/plan`, then prompt body.
+- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue one atomic post-start dispatch step: `/plan <prompt body>`.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
 
 - Title-based rebind must preserve queued post-start dispatch metadata, but startup-command fallback prompts must not be snapshotted after the startup command has been used.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -17,6 +18,36 @@ import kotlin.time.Duration.Companion.seconds
 class CodexSessionSourceRealTuiIntegrationTest {
   @TempDir
   lateinit var tempDir: Path
+
+  @Test
+  fun atomicPlanPromptRealTuiTurnExposesThreadIdInTerminalTitle() {
+    runBlocking(Dispatchers.IO) {
+      val codexBinary = requireRealCodexBinary()
+      val planPrompt = "Plan this refactor"
+      CodexRealTuiHarness(
+        codexBinary = codexBinary,
+        tempRoot = tempDir.resolve("atomic-plan-prompt"),
+        responsePlans = listOf(MockResponsesPlan.completedAssistantMessage("Plan ready")),
+      ).use { harness ->
+        harness.startInteractive(extraConfigArgs = listOf(CODEX_TERMINAL_TITLE_THREAD_CONFIG)).use { session ->
+          val terminalTitleThreadId = session.awaitTerminalThreadId()
+          session.submitPrompt("$AGENT_PROMPT_PLAN_MODE_COMMAND $planPrompt")
+
+          val threadId = session.awaitThreadId()
+          val request = eventually(timeout = 30.seconds) {
+            session.requests().firstOrNull { request -> planPrompt in request }
+          }
+          val terminalTitle = session.awaitTerminalTitleContaining(threadId)
+
+          assertThat(request)
+            .withFailMessage("Timed out waiting for mocked Responses request from atomic /plan prompt.\n%s", session.diagnostics())
+            .isNotNull
+          assertThat(threadId).isEqualTo(terminalTitleThreadId)
+          assertThat(terminalTitle).contains(threadId)
+        }
+      }
+    }
+  }
 
   @Test
   fun completedRealTuiTurnUnreadHintClearsAfterReadTracking() {
@@ -156,3 +187,5 @@ class CodexSessionSourceRealTuiIntegrationTest {
     return codexBinary!!
   }
 }
+
+private const val CODEX_TERMINAL_TITLE_THREAD_CONFIG: String = "tui.terminal_title=[\"thread\"]"
