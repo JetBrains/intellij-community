@@ -89,10 +89,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     gutterActions.add(new MyToggleExpandByDefaultAction());
     gutterActions.add(new MyToggleAutoScrollAction());
 
-    List<AnAction> diffActions = new ArrayList<>(gutterActions);
+    List<AnAction> diffActions = new ArrayList<>();
+    diffActions.add(new MyToggleAutoScrollAction());
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
     myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
 
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyEditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
