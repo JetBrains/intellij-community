@@ -1,0 +1,8 @@
+@RequiresOptIn
+annotation class ReqOptinAnnotation
+
+@RequiresOptIn
+annotation class ReqOptinAnnotation2
+
+class A @OptIn(ReqOptinAnnotation2::class, ReqOptinAnnotation::class) constructor() {
+}

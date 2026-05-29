@@ -6614,6 +6614,164 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 }
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertOptinMarkerToRequirement")
+        public static class ConvertOptinMarkerToRequirement extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/class.kt");
+            }
+
+            @TestMetadata("constructor.kt")
+            public void testConstructor() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/constructor.kt");
+            }
+
+            @TestMetadata("constructor2.kt")
+            public void testConstructor2() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/constructor2.kt");
+            }
+
+            @TestMetadata("expression.kt")
+            public void testExpression() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/expression.kt");
+            }
+
+            @TestMetadata("file.kt")
+            public void testFile() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/file.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/function.kt");
+            }
+
+            @TestMetadata("function2.kt")
+            public void testFunction2() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/function2.kt");
+            }
+
+            @TestMetadata("localVariable.kt")
+            public void testLocalVariable() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/localVariable.kt");
+            }
+
+            @TestMetadata("parameter.kt")
+            public void testParameter() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/parameter.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/property.kt");
+            }
+
+            @TestMetadata("propertyGetter.kt")
+            public void testPropertyGetter() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/propertyGetter.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/propertySetter.kt");
+            }
+
+            @TestMetadata("typealias.kt")
+            public void testTypealias() throws Exception {
+                runTest("testData/intentions/convertOptinMarkerToRequirement/typealias.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertRequirementToOptinMarker")
+        public static class ConvertRequirementToOptinMarker extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/class.kt");
+            }
+
+            @TestMetadata("constructor.kt")
+            public void testConstructor() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/constructor.kt");
+            }
+
+            @TestMetadata("constructor2.kt")
+            public void testConstructor2() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/constructor2.kt");
+            }
+
+            @TestMetadata("expression.kt")
+            public void testExpression() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/expression.kt");
+            }
+
+            @TestMetadata("file.kt")
+            public void testFile() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/file.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/function.kt");
+            }
+
+            @TestMetadata("function2.kt")
+            public void testFunction2() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/function2.kt");
+            }
+
+            @TestMetadata("localVariable.kt")
+            public void testLocalVariable() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/localVariable.kt");
+            }
+
+            @TestMetadata("parameter.kt")
+            public void testParameter() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/parameter.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/property.kt");
+            }
+
+            @TestMetadata("propertyGetter.kt")
+            public void testPropertyGetter() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/propertyGetter.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/propertySetter.kt");
+            }
+
+            @TestMetadata("typealias.kt")
+            public void testTypealias() throws Exception {
+                runTest("testData/intentions/convertRequirementToOptinMarker/typealias.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

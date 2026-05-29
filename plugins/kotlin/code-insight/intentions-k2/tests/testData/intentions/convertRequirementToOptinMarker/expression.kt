@@ -1,0 +1,10 @@
+// K2_ERROR: This annotation is not applicable to target 'expression'. Applicable targets: class, annotation class, property, field, local variable, value parameter, constructor, function, getter, setter, backing field
+@RequiresOptIn
+annotation class ReqOptinAnnotation
+
+fun f() {
+    @<caret>ReqOptinAnnotation
+    g()
+}
+
+fun g() {}

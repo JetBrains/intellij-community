@@ -1,0 +1,6 @@
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+annotation class RequiresOptInAnnotation
+
+<spot>@RequiresOptInAnnotation</spot>
+fun foo() {
+}

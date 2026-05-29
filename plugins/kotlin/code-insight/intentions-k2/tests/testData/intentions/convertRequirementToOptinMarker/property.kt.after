@@ -1,0 +1,7 @@
+@RequiresOptIn
+annotation class ReqOptinAnnotation
+
+abstract class A {
+    @OptIn(ReqOptinAnnotation::class)
+    abstract val x: Int
+}
