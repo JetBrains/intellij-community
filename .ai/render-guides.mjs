@@ -183,13 +183,24 @@ async function loadPartials() {
   return partials;
 }
 
-function applyPartials(text, partials) {
+function getPartialContent(name, partials) {
+  const partial = partials.get(name);
+  if (partial === undefined) {
+    throw new Error(`Unknown partial: ${name}`);
+  }
+
+  const extensionPrefix = `${name}.`;
+  const extensionContents = Array.from(partials.entries())
+    .filter(([extensionName]) => extensionName.startsWith(extensionPrefix))
+    .sort(([leftName], [rightName]) => leftName.localeCompare(rightName))
+    .map(([, extensionContent]) => extensionContent);
+
+  return [partial, ...extensionContents].join("\n");
+}
+
+export function applyPartials(text, partials) {
   return text.replace(partialPattern, (match, name) => {
-    const partial = partials.get(name);
-    if (partial === undefined) {
-      throw new Error(`Unknown partial: ${name}`);
-    }
-    return partial;
+    return getPartialContent(name, partials);
   });
 }
 
