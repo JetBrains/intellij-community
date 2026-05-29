@@ -19,6 +19,7 @@ import java.awt.GraphicsConfiguration
 import java.awt.GraphicsEnvironment
 import java.awt.Image
 import java.awt.Shape
+import java.awt.geom.AffineTransform
 import java.lang.ref.SoftReference
 import java.util.concurrent.CancellationException
 import javax.swing.Icon

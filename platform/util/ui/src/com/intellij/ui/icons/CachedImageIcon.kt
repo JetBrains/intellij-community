@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
@@ -30,6 +31,7 @@ import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.awt.Shape
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
@@ -376,7 +378,9 @@ open class CachedImageIcon private constructor(
     if (start != -1L) {
       IconLoadMeasurer.findIconLoad.end(start)
     }
-    return image
+    if (image == null) return null
+    // The shape is in the user-space, so SYS_SCALE isn't used here, only the user scale and the object scale.
+    return ImageWithShape(image.image, image.shape?.scale(scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat()))
   }
 
   private fun getLoadIconParameters(attributes: IconAttributes): LoadIconParameters =
@@ -523,4 +527,10 @@ private fun computeGraphicsScale(g: Graphics, gc: GraphicsConfiguration?): Doubl
   val graphicsScale = getTransformScaleX(transform) / defaultScale
   if (abs(graphicsScale - 1.0) < 0.001) return null
   return graphicsScale
+}
+
+private fun Shape.scale(scale: Float): Shape {
+  val transform = AffineTransform()
+  transform.scale(scale.toDouble(), scale.toDouble())
+  return transform.createTransformedShape(this)
 }
