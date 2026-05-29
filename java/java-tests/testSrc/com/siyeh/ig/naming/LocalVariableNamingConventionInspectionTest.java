@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,9 +15,8 @@ public class LocalVariableNamingConventionInspectionTest extends LightJavaInspec
     doTest();
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
+  protected @NotNull InspectionProfileEntry getInspection() {
     final LocalVariableNamingConventionInspection inspection = new LocalVariableNamingConventionInspection();
     inspection.m_minLength = 3;
     inspection.m_maxLength = 8;
