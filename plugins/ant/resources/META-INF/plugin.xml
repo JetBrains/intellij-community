@@ -13,6 +13,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.dom.impl"/>

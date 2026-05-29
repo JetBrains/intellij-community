@@ -2,6 +2,9 @@
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.debugger.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.debugger.impl"/>
+    <!-- endregion -->
   </dependencies>
   <resource-bundle>messages.DevKitDebuggerBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">

@@ -1,6 +1,9 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.execution.impl"/>
+    <!-- endregion -->
   </dependencies>
 
 

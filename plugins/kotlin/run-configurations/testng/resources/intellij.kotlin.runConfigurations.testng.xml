@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="TestNG-J"/>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
     <module name="intellij.platform.smRunner"/>

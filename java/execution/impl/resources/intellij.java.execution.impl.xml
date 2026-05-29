@@ -2,22 +2,17 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.platform.smRunner"/>
-    <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.platform.diff"/>
-    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.lang"/>

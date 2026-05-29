@@ -1,11 +1,12 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.coverage">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Coverage"/>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <javaCoverageEngineExtension implementation="org.jetbrains.kotlin.idea.coverage.KotlinCoverageExtension"/>

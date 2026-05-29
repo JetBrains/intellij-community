@@ -1,10 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.debugger" visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight.inspections"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
  <extensions defaultExtensionNs="com.intellij">
    <debugger.dfaAssistProvider
            language="kotlin"

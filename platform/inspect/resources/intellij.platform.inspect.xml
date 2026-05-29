@@ -12,6 +12,7 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.diff"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>

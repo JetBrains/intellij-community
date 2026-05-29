@@ -184,16 +184,6 @@
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
-
-    <group id="JavaCompileGroup">
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-
-      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
-      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
-    </group>
-
     <group id="AnalyzeJavaMenu">
       <separator/>
       <group id="ShowPackageDepsGroup">

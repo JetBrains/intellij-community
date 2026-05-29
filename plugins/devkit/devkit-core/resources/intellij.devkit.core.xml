@@ -4,6 +4,8 @@
     <plugin id="com.intellij.properties"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.json.backend"/>
     <module name="intellij.libraries.xerces"/>
