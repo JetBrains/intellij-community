@@ -1151,18 +1151,29 @@ public final class BuildManager implements Disposable {
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, processed -> {
+    return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, (processed, highestRejectedFromProject) -> {
       // build's fallback SDK choosing policy: select among unprocessed SDKs in the SDK table the oldest possible one that can be used
       // if the project is located within an Eel machine, consider only SDKs configured in the same Eel machine
       var sdkFilter = getSdkFilter(project);
-      return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
+      var jdks = StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
         .filter(sdk -> !processed.contains(sdk) && sdkFilter.test(sdk))
-        .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
-        .filterValues(version -> version != null && version.isAtLeast(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION))
-        .min(Map.Entry.comparingByValue())
-        .map(p -> new Pair<>(p.getKey(), JavaSdkVersion.fromJavaVersion(requireNonNull(p.getValue()))))
-        .filter(p -> p.second != null)
-        .orElseGet(() -> getIDERuntimeSdkOrErrorIfRemote(project));
+        .map(BuildManager::tryParseJdkVersion)
+        .nonNull() // guarantees non-nullness of elements
+        .toList();
+      var threshold = thresholdSdkVersion(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION);
+      // Pick the oldest compatible JDK among the SDK-table candidates (build's fallback policy).
+      var oldestCompatible = jdks.stream()
+        .filter(jdk -> jdk.second.isAtLeast(threshold))
+        .min(Pair.comparingBySecond())
+        .orElse(null);
+      if (oldestCompatible != null) return oldestCompatible;
+      // No compatible JDK in the SDK table either - find the highest rejected JDK here too and pass the best hint.
+      var fromTable = jdks.stream()
+        .filter(jdk -> !jdk.second.isAtLeast(threshold))
+        .max(Pair.comparingBySecond())
+        .orElse(null);
+      var highestRejected = pickHigherJdk(highestRejectedFromProject, fromTable);
+      return getIDERuntimeSdkOrErrorIfRemote(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, highestRejected);
     });
   }
 
@@ -1171,12 +1182,14 @@ public final class BuildManager implements Disposable {
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION, processed -> getIDERuntimeSdkOrErrorIfRemote(project));
+    return getRuntimeSdk(project, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION,
+                         (_, highestRejected) ->
+                           getIDERuntimeSdkOrErrorIfRemote(project, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION, highestRejected));
   }
 
   private static @NotNull Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project,
                                                                   int oldestPossibleVersion,
-                                                                  Function<Set<? extends Sdk>, Pair<Sdk, JavaSdkVersion>> fallbackSdkProvider) {
+                                                                  @NotNull MissingCompatibleSdkFallback fallbackSdkProvider) {
     Map<Sdk, Integer> candidates = new HashMap<>();
     Consumer<Sdk> addSdk = sdk -> {
       if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
@@ -1216,14 +1229,13 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    // now select the latest version from the sdks that are used in the project, but not older than <oldestPossibleVersion>
-    return StreamEx.ofKeys(candidates)
-      .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
-      .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
-      .max(Map.Entry.comparingByValue())
-      .map(p -> new Pair<>(p.getKey(), JavaSdkVersion.fromJavaVersion(requireNonNull(p.getValue()))))
-      .filter(p -> p.second != null)
-      .orElseGet(() -> fallbackSdkProvider.apply(candidates.keySet()));
+    // Parse every project candidate exactly once, then find the JDK with the highest version.
+    // If it satisfies the threshold we use it; otherwise we hand it to the fallback as the "highest rejected" hint.
+    var parsed = ContainerUtil.mapNotNull(candidates.keySet(), BuildManager::tryParseJdkVersion);
+    var threshold = thresholdSdkVersion(oldestPossibleVersion);
+    var highest = parsed.stream().max(Pair.comparingBySecond()).orElse(null);
+    if (highest != null && highest.second.isAtLeast(threshold)) return highest;
+    return fallbackSdkProvider.resolve(candidates.keySet(), highest);
   }
 
   private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(Project project) {
@@ -1238,13 +1250,75 @@ public final class BuildManager implements Disposable {
       .orElse(null);
   }
 
-  private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdkOrErrorIfRemote(@NotNull Project project) {
+  private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdkOrErrorIfRemote(
+    @NotNull Project project, int requiredFeatureVersion, @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> highestRejected
+  ) {
     if (!EelPathUtils.isProjectLocal(project)) {
-      throw new IllegalStateException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.find.compatible.jdk"));
+      var environmentName = EelProviderUtil.getEelDescriptor(project).getName();
+      var rejectedSdk = highestRejected == null ? null : highestRejected.first;
+      LOG.info("Failed to find compatible JDK for the build process. Required JDK " + requiredFeatureVersion + "+" +
+               ", environment: " + environmentName +
+               ", highest rejected: " + (rejectedSdk == null ? "<none>" :
+                                         rejectedSdk.getName() +
+                                         " (version=" + rejectedSdk.getVersionString() +
+                                         ", home=" + rejectedSdk.getHomePath() + ")") +
+               ". " + describeAvailableJdks(project));
+      if (rejectedSdk != null) {
+        throw new IllegalStateException(JavaCompilerBundle.message(
+          "build.manager.launch.build.process.failed.to.find.compatible.jdk.found.too.old",
+          rejectedSdk.getName() + " (" + rejectedSdk.getVersionString() + ")", environmentName, requiredFeatureVersion));
+      }
+      else {
+        throw new IllegalStateException(JavaCompilerBundle.message(
+          "build.manager.launch.build.process.failed.to.find.compatible.jdk.required.version",
+          environmentName, requiredFeatureVersion));
+      }
     }
     @SuppressWarnings("removal")
     var sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     return new Pair<>(sdk, JavaSdk.getInstance().getVersion(sdk));
+  }
+
+  private static @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> pickHigherJdk(
+    @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> a,
+    @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> b
+  ) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.second.compareTo(b.second) >= 0 ? a : b;
+  }
+
+  private static @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> tryParseJdkVersion(@NotNull Sdk sdk) {
+    var v = JavaVersion.tryParse(sdk.getVersionString());
+    if (v == null) return null;
+    var sv = JavaSdkVersion.fromJavaVersion(v);
+    return sv == null ? null : new Pair<>(sdk, sv);
+  }
+
+  private static @NotNull JavaSdkVersion thresholdSdkVersion(int featureVersion) {
+    var v = JavaSdkVersion.fromJavaVersion(JavaVersion.compose(featureVersion));
+    if (v == null) throw new IllegalArgumentException("Unknown JDK feature version: " + featureVersion);
+    return v;
+  }
+
+  @FunctionalInterface
+  private interface MissingCompatibleSdkFallback {
+    @NotNull Pair<Sdk, JavaSdkVersion> resolve(@NotNull Set<? extends Sdk> processed,
+                                               @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> highestRejected);
+  }
+
+  private static @NotNull String describeAvailableJdks(@NotNull Project project) {
+    var sdks = ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance());
+    if (sdks.isEmpty()) {
+      return "No JDKs registered in the project SDK table.";
+    }
+    var description = StreamEx.of(sdks)
+      .map(sdk -> "name=" + sdk.getName() +
+                  ", version=" + sdk.getVersionString() +
+                  ", home=" + sdk.getHomePath() +
+                  ", compatibleWithProject=" + JdkUtil.isCompatible(sdk, project))
+      .joining("; ", "[", "]");
+    return "Available JDKs in the project SDK table: " + description;
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(
