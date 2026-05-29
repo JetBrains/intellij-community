@@ -266,7 +266,8 @@ object InternalThreading {
     exceptionRef.get()?.let { throw it }
   }
 
-  private val transferredWriteActionBackgroundDispatcher = Dispatchers.IO.limitedParallelism(1, "Transferred Write Action Background Dispatcher")
+  private val transferredWriteActionBackgroundDispatcher =
+    Dispatchers.IO.limitedParallelism(parallelism = Int.MAX_VALUE, "Transferred Write Action Background Dispatcher")
 
   @ApiStatus.Internal
   class TransferredWriteActionEvent private constructor(
