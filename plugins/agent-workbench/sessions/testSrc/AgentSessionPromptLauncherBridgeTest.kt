@@ -975,13 +975,9 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "/plan",
+              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-            ),
-            AgentInitialMessageDispatchStep(
-              text = "Refactor selected code",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -1042,16 +1038,12 @@ class AgentSessionPromptLauncherBridgeTest {
               "--",
               "Refactor selected code",
             )
-          assertThat(openRequest.initialComposedMessage).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code")
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "/plan",
+              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-            ),
-            AgentInitialMessageDispatchStep(
-              text = "Refactor selected code",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -1195,16 +1187,12 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
-          assertThat(openRequest.initialComposedMessage).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code")
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "/plan",
+              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-            ),
-            AgentInitialMessageDispatchStep(
-              text = "Refactor selected code",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -2304,23 +2292,14 @@ private class RecordingPromptLaunchProviderBridge(
     }
 
     val message = initialMessagePlan.message.orEmpty()
-    return buildList {
-      add(
-        AgentInitialMessageDispatchStep(
-          text = AGENT_PROMPT_PLAN_MODE_COMMAND,
-          timeoutPolicy = initialMessagePlan.timeoutPolicy,
-          completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-        )
+    val planCommand = if (message.isEmpty()) AGENT_PROMPT_PLAN_MODE_COMMAND else "$AGENT_PROMPT_PLAN_MODE_COMMAND $message"
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = planCommand,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       )
-      if (message.isNotEmpty()) {
-        add(
-          AgentInitialMessageDispatchStep(
-            text = message,
-            timeoutPolicy = initialMessagePlan.timeoutPolicy,
-          )
-        )
-      }
-    }
+    )
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {

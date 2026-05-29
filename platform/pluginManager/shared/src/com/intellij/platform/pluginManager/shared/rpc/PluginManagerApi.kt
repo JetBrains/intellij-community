@@ -2,6 +2,7 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InitSessionResult
@@ -43,6 +44,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult
+  suspend fun disablePluginsWithDependencies(pluginIds: List<PluginId>, projectId: ProjectId?): ApplyPluginsStateResult
   suspend fun markPluginsAsDisabled(pluginIds: List<PluginId>)
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   suspend fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean

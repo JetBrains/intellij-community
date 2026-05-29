@@ -2,15 +2,27 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocCommentBase;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.DocCommentSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +32,38 @@ public final class CodeDocumentationUtil {
   private CodeDocumentationUtil() {
   }
 
+  /// @deprecated Prefer using [#createDocCommentLineGenericElement(String, PsiElement, CodeDocumentationAwareCommenter)] to take into account
+  /// potential line doc comments
+  @Deprecated
   public static String createDocCommentLine(String lineData, PsiFile file, CodeDocumentationAwareCommenter commenter) {
-    DocCommentSettings settings = CodeStyleManager.getInstance(file.getProject()).getDocCommentSettings(file);
-    return createLine(lineData, commenter, settings);
+    return createDocCommentLineGenericElement(lineData, file, commenter);
   }
 
-  private static @NotNull String createLine(String lineData, CodeDocumentationAwareCommenter commenter, DocCommentSettings settings) {
+  /// @param lineData The content of the commented line
+  /// @param element  The doc comment that is being worked on.
+  public static String createDocCommentLine(String lineData, @NotNull PsiComment element, CodeDocumentationAwareCommenter commenter) {
+    return createDocCommentLineGenericElement(lineData, element, commenter);
+  }
+
+  private static String createDocCommentLineGenericElement(String lineData,
+                                                           @NotNull PsiElement element,
+                                                           CodeDocumentationAwareCommenter commenter) {
+    boolean isLineComment = element instanceof PsiComment comment && commenter.isDocumentationLineComment(comment);
+    PsiFile file = element.getContainingFile();
+    DocCommentSettings settings = CodeStyleManager.getInstance(file.getProject()).getDocCommentSettings(file);
+    return createLine(lineData, isLineComment, commenter, settings);
+  }
+
+  private static @NotNull String createLine(String lineData,
+                                            boolean isLineComment,
+                                            CodeDocumentationAwareCommenter commenter,
+                                            DocCommentSettings settings) {
+    if (isLineComment) {
+      return lineData.isEmpty()
+             ? commenter.getDocumentationLineCommentPrefix() + " "
+             : commenter.getDocumentationLineCommentPrefix() + " " + lineData + " ";
+    }
+
     if (!settings.isLeadingAsteriskEnabled()) {
       return " " + lineData + " ";
     }
@@ -36,7 +74,6 @@ public final class CodeDocumentationUtil {
       else {
         return commenter.getDocumentationCommentLinePrefix() + " " + lineData + " ";
       }
-
     }
   }
 
@@ -101,6 +138,48 @@ public final class CodeDocumentationUtil {
     boolean docAsterisk = commenter.getDocumentationCommentLinePrefix() != null
                           && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getDocumentationCommentLinePrefix());
     return new CommentContext(commenter, docStart, docAsterisk, commentStartOffset);
+  }
+
+  /// @return The formatted comment
+  @ApiStatus.Internal
+  public static @Nullable PsiComment formatComment(PsiFile psiFile, PsiComment comment, CodeStyleManager codeStyleManager) {
+    RangeMarker commentMarker = psiFile.getFileDocument().createRangeMarker(comment.getTextRange().getStartOffset(),
+                                                                            comment.getTextRange().getEndOffset());
+    codeStyleManager.reformatNewlyAddedElement(comment.getNode().getTreeParent(), comment.getNode());
+    PsiComment result = PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class);
+    commentMarker.dispose();
+    return result;
+  }
+
+  /// @return The [CodeDocumentationProvider] for the given [Language], if any
+  @ApiStatus.Internal
+  public static @Nullable CodeDocumentationProvider getCodeProvider(Language language) {
+    final DocumentationProvider langDocumentationProvider =
+      LanguageDocumentation.INSTANCE.forLanguage(language);
+
+    if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
+      return ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
+    }
+    return langDocumentationProvider instanceof CodeDocumentationProvider ?
+           (CodeDocumentationProvider)langDocumentationProvider : null;
+  }
+
+  /// @return The prefered line prefix type (for the given comment), or `null` if the language commenter is not code aware
+  @ApiStatus.Internal
+  public static @Nullable CharSequence preferredDocumentationLinePrefix(@NotNull PsiFile file, @Nullable PsiDocCommentBase comment) {
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
+    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
+      if (comment == null) {
+        return CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED
+               ? docCommenter.getDocumentationLineCommentPrefix()
+               : docCommenter.getDocumentationCommentLinePrefix();
+      }
+      return docCommenter.isDocumentationLineComment(comment)
+             ? comment.getFirstChild().getText() // Assume the first psi element contains the prefix
+             : docCommenter.getDocumentationCommentLinePrefix();
+    }
+
+    return null;
   }
 
   /**

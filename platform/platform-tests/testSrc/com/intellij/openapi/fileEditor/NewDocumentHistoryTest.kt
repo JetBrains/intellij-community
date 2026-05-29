@@ -7,11 +7,9 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
-import org.junit.Assert
 
 class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
   override fun tearDown() {
@@ -27,8 +25,8 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
   }
 
   fun testBackNavigationBetweenEditors() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(FileEditorManagerTest.MyFileEditorProvider(),
-                                                                       myFixture.testRootDisposable)
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(MockFileEditorProvider(),
+                                                                        myFixture.testRootDisposable)
     val file = getFile("/src/1.txt")!!
     val manager = FileEditorManagerEx.getInstanceEx(project)
     val editors = manager.openFile(file = file, window = null, options = FileEditorOpenOptions(requestFocus = true)).allEditors
@@ -38,10 +36,10 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     manager.setSelectedEditor(file, "mock")
 
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
-    assertThat(manager.getSelectedEditor(file)!!.name).isEqualTo(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+    assertThat(manager.getSelectedEditor(file)!!.name).isEqualTo(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
     manager.closeAllFiles()
     IdeDocumentHistory.getInstance(project).back()
-    assertThat(manager.getSelectedEditor(file)?.name).isEqualTo(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+    assertThat(manager.getSelectedEditor(file)?.name).isEqualTo(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
   }
 
   fun testSelectFileOnNavigation() {
@@ -52,8 +50,8 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     manager.openFile(file2!!, true)
     activateFileWithPsiElement(PsiManager.getInstance(project).findFile(file1)!!)
     val files = manager.selectedFiles
-    assertEquals(1, files.size)
-    assertEquals("1.txt", files[0].name)
+    assertThat(files).hasSize(1)
+    assertThat(files[0].name).isEqualTo("1.txt")
   }
 
   fun testMergingCommands() {
@@ -70,6 +68,6 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     }, null, group)
     IdeDocumentHistory.getInstance(project).back()
     val selectedFiles = manager.selectedFiles
-    Assert.assertArrayEquals(arrayOf<VirtualFile?>(file2), selectedFiles)
+    assertThat(selectedFiles).containsExactly(file2)
   }
 }

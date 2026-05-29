@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.Nullability
@@ -50,7 +50,10 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
     val result = call.resolveMethodGenerics()
     val targetMethod = result.element as? PsiMethod? ?: return emptyList()
-    if (targetMethod == method) return emptyList()
+    if (targetMethod == method ||
+        JavaSourceInference.INFERENCE_RECURSION_GUARD.currentStack().contains(targetMethod)) {
+      return emptyList()
+    }
 
     val parameters = targetMethod.parameterList.parameters
     val arguments = call.argumentList.expressions
@@ -197,6 +200,9 @@ internal data class MethodCallContract(internal val call: ExpressionRange, inter
 
   override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> {
     val target = call.restoreExpression<PsiMethodCallExpression>(body()).resolveMethod()
+    if (target != null && JavaSourceInference.INFERENCE_RECURSION_GUARD.currentStack().contains(target)) {
+      return emptyList()
+    }
     if (target != null && target != method && NullableNotNullManager.isNotNull(target)) {
       return ContractInferenceInterpreter.toContracts(states.map { it.toTypedArray() }, ContractReturnValue.returnNotNull())
     }

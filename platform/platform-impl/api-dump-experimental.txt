@@ -115,10 +115,10 @@ f:com.intellij.ide.startup.StartupActionScriptManager
 - onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
 - onProjectUntrusted(com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject):V
 - onProjectUntrusted(com.intellij.openapi.project.Project):V
-- s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
-- s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- s:onceWhenProjectTrusted(java.util.function.Consumer):V
-- s:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
+- *s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
+- *s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *s:onceWhenProjectTrusted(java.util.function.Consumer):V
+- *s:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
 *f:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
 - f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
 - f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
@@ -393,8 +393,8 @@ f:com.intellij.openapi.project.impl.P3SupportKt
 - java.util.function.Function
 - *sf:Companion:com.intellij.openapi.util.io.CancellableComputation$Companion
 - apply(java.lang.Object):java.lang.Object
-- sf:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- sf:wrapAsCancellable(java.util.function.Function):java.util.function.Function
+- *sf:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- *sf:wrapAsCancellable(java.util.function.Function):java.util.function.Function
 *f:com.intellij.openapi.util.io.CancellableComputation$Companion
 - f:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - f:wrapAsCancellable(java.util.function.Function):java.util.function.Function
@@ -427,7 +427,7 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - <init>():V
 - a:assignTo(com.intellij.openapi.actionSystem.Presentation,kotlin.jvm.functions.Function2):V
 - a:canShow():Z
-- sf:followToolbarComponent(com.intellij.openapi.actionSystem.Presentation,javax.swing.JComponent,javax.swing.JComponent):V
+- *sf:followToolbarComponent(com.intellij.openapi.actionSystem.Presentation,javax.swing.JComponent,javax.swing.JComponent):V
 - p:followToolbarComponent(javax.swing.JComponent,javax.swing.JComponent,kotlin.jvm.functions.Function2):V
 - pf:getPointProvider():kotlin.jvm.functions.Function2
 - a:hideOrRepaint(javax.swing.JComponent):V
@@ -569,9 +569,9 @@ c:com.intellij.ui.popup.list.PopupListElementRenderer
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V
-- sf:restartWithConfirmation():V
+- *sf:restartWithConfirmation():V
 - showRestartRequired():V
-- sf:showRestartRequired(Z,Z):I
+- *sf:showRestartRequired(Z,Z):I
 *f:com.intellij.util.ui.RestartDialogImpl$Companion
 - f:restartWithConfirmation():V
 - f:showRestartRequired(Z,Z):I

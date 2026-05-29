@@ -33,7 +33,7 @@ import kotlin.io.path.pathString
 class ExecutionToolset : McpToolset {
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
-  @McpTool
+  @McpTool(name = ExecutionToolNames.GET_RUN_CONFIGURATIONS)
   @McpDescription("""
     |Returns either project run configurations or executable code locations, depending on the input.
     |
@@ -95,7 +95,7 @@ class ExecutionToolset : McpToolset {
     return GetRunConfigurationsResult(configurations = configurations)
   }
 
-  @McpTool
+  @McpTool(name = ExecutionToolNames.EXECUTE_RUN_CONFIGURATION)
   @McpDescription("""
     |Run either an existing run configuration by name or a temporary run configuration created from a code location
     |(`filePath` + `line`) in the current project, then wait up to specified timeout for it to finish.

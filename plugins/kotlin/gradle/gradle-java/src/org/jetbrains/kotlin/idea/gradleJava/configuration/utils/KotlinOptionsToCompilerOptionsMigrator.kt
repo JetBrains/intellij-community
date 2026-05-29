@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.util.function.Function
@@ -40,11 +42,7 @@ fun KtBinaryExpression.containsNonReplaceableOperation(): Boolean {
 private fun KtBinaryExpression.containsMinusOperator(): Boolean {
     if (this.operationToken == KtTokens.MINUS) return true
     val leftPartOfBinaryExpression = this.left ?: return true
-    return if (leftPartOfBinaryExpression is KtBinaryExpression) {
-        leftPartOfBinaryExpression.containsMinusOperator()
-    } else {
-        false
-    }
+    return leftPartOfBinaryExpression is KtBinaryExpression && leftPartOfBinaryExpression.containsMinusOperator()
 }
 
 @ApiStatus.Internal
@@ -54,7 +52,7 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 
     val leftPartOfBinaryExpression = binaryExpression.left ?: return null
 
-    val (optionName, replacementOfKotlinOptionsIfNeeded) = getOptionName(leftPartOfBinaryExpression)
+    val (optionName, prefixWithCompilerOptions) = getOptionName(leftPartOfBinaryExpression)
         ?: return null
 
     if (rightPartOfBinaryExpression is KtBinaryExpression && !optionName.contains("freeCompilerArgs")) {
@@ -67,7 +65,7 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 
     val expressionForCompilerOption =
         getReplacementForOldKotlinOptionIfNeeded(
-            replacementOfKotlinOptionsIfNeeded,
+            prefixWithCompilerOptions,
             optionName,
             optionValue,
             operationToken,
@@ -80,6 +78,13 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
     return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression)
 }
 
+/**
+ * Returns the source-faithful textual form of [this] expression suitable for splicing into a
+ * generated replacement expression. This is the only PSI→text bridge used by the migrator: every
+ * other code path operates on [KtExpression] PSI instances.
+ */
+private fun KtExpression.asReplacementSource(): String = text
+
 private fun getOptionValue(expression: KtExpression, optionName: String): Pair<String, Boolean>? {
     val optionValue: String
     val valueContainsMultipleValues: Boolean
@@ -90,24 +95,19 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
         if (optionName == "freeCompilerArgs") {
             val leftPart = expression.left ?: return null
             val rightPart = expression.right ?: return null
-            /*
-              rightPart.text might be:
-              "-Xopt-in=kotlin.RequiresOptIn" OR
-              project.compilerArgs OR
-              listOf(
-                  "-Xopt-in=kotlin.RequiresOptIn",
-                  "-Xopt-in=kotlin.ExperimentalStdlibApi"), etc.
-
-              That's why using `rightPart.text` is ok
-             */
-            val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.text)) ?: return null
+            // The right-hand side of a `+` chain may be a string literal (KtStringTemplateExpression),
+            // a qualified reference (e.g. `project.compilerArgs`), a `listOf(...)` call, or any other
+            // expression. We collect their source-faithful representations via PSI and later splice
+            // them into the generated replacement.
+            val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.asReplacementSource()))
+                ?: return null
             optionValue = StringUtil.join(optionValues.reversed(), ", ")
             valueContainsMultipleValues = true
         } else {
             return null
         }
     } else {
-        optionValue = expression.text // The same reason of using `.text` as above for `rightPart.text`
+        optionValue = expression.asReplacementSource()
         valueContainsMultipleValues = false
     }
     return Pair(optionValue, valueContainsMultipleValues)
@@ -119,34 +119,41 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
 private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, optionValues: MutableSet<String>): Set<String>? {
     if (expression is KtBinaryExpression) {
         if (expression.operationToken != KtTokens.PLUS) return null
-        optionValues.add(expression.right?.text ?: return null) // `expression.right?.text` looks like `"-Xopt-in=kotlin.RequiresOptIn"`
+        // Each `+` operand is collected via PSI; the textual form is its source-faithful representation
+        // (e.g. a quoted string literal such as `"-Xopt-in=kotlin.RequiresOptIn"`).
+        val rightOperand = expression.right ?: return null
+        optionValues.add(rightOperand.asReplacementSource())
         getOptionsFromFreeCompilerArgsExpression(expression.left ?: return null, optionValues)
     } else {
-        /*
-        expression.text can be `project.benchmark.compilerOpts` OR
-        `allLibraries.map { listOf("-include-binary", it) }.flatten()` OR
-         a recursion bottom like "-Xexport-kdoc"
-         */
-        val expressionText = expression.text ?: return null
-        if (expressionText != "freeCompilerArgs") {
-            optionValues.add(expressionText)
+        // expression.getReferencedName() may be `project.benchmark.compilerOpts`,
+        // `allLibraries.map { listOf("-include-binary", it) }.flatten()`,
+        // or a leaf identifier/literal (e.g. `"-Xexport-kdoc"`).
+        // The leaf `freeCompilerArgs` receiver itself is detected via PSI and skipped.
+        if ((expression as? KtNameReferenceExpression)?.getReferencedName() != "freeCompilerArgs") {
+            optionValues.add(expression.asReplacementSource())
         }
     }
     return optionValues
 }
 
-private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>? {
-    val replacementOfKotlinOptionsIfNeeded = StringBuilder()
+/**
+ * Returns the name of the compiler option being assigned and whether the replacement expression
+ * should be prefixed with `compilerOptions.` (i.e. the original expression's leftmost receiver
+ * was `kotlinOptions`).
+ */
+private fun getOptionName(expression: KtExpression): Pair<String, Boolean>? {
+    var prefixWithCompilerOptions = false
     val optionName = when (expression) {
         is KtDotQualifiedExpression -> {
             val receiver = expression.getLeftMostReceiverExpression()
             if (receiver !is KtNameReferenceExpression) return null
 
-            val leftmostReceiverName = receiver.getReferencedName()
-            if (leftmostReceiverName == "kotlinOptions") {
-                replacementOfKotlinOptionsIfNeeded.append("compilerOptions.")
-            } else if (leftmostReceiverName != "options") {
-                return null // We don't know what to do with such an option
+            when (receiver.getReferencedName()) {
+                "kotlinOptions" -> prefixWithCompilerOptions = true
+                "options" -> { /* no prefix needed */
+                }
+
+                else -> return null // We don't know what to do with such an option
             }
             (expression.getCalleeExpressionIfAny() as? KtNameReferenceExpression)?.getReferencedName() ?: return null
         }
@@ -159,7 +166,7 @@ private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>
             return null
         }
     }
-    return Pair(optionName, replacementOfKotlinOptionsIfNeeded)
+    return Pair(optionName, prefixWithCompilerOptions)
 }
 
 fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFile, kotlinVersion: IdeKotlinVersion? = null): Boolean {
@@ -205,7 +212,7 @@ private fun getOperationReplacer(
 }
 
 private fun getReplacementForOldKotlinOptionIfNeeded(
-    replacement: StringBuilder,
+    prefixWithCompilerOptions: Boolean,
     optionName: String,
     optionValue: String,
     operationToken: IElementType,
@@ -213,13 +220,14 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
 ): CompilerOption? {
     val operationReplacer =
         getOperationReplacer(operationToken, optionValue, valueContainsMultipleValues) ?: return null
+    val prefix = if (prefixWithCompilerOptions) "compilerOptions." else ""
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
     return if (versionOptionData != null) {
         getCompilerOptionForVersionValue(
             versionOptionData,
             optionValue,
-            replacement,
+            prefix,
             optionName,
             operationReplacer
         )
@@ -228,18 +236,17 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
         val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
         val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
         jsOptionValue?.let {
-            getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
+            getCompilerOptionForJsValue(jsOptionValue, prefix, optionName, operationReplacer)
         }
     } else {
-        replacement.append("$optionName.$operationReplacer($optionValue)")
-        CompilerOption(replacement.toString())
+        CompilerOption("$prefix$optionName.$operationReplacer($optionValue)")
     }
 }
 
 private fun getCompilerOptionForVersionValue(
     versionOptionData: VersionOption,
     optionValue: String,
-    replacement: StringBuilder,
+    prefix: String,
     optionName: String,
     operationReplacer: String,
 ): CompilerOption {
@@ -252,28 +259,33 @@ private fun getCompilerOptionForVersionValue(
     } else {
         "KotlinVersion.fromVersion(${optionValue})"
     }
-    replacement.append(
-        "$optionName.$operationReplacer($compilerOptionValue)"
+    return CompilerOption(
+        expression = "$prefix$optionName.$operationReplacer($compilerOptionValue)",
+        classToImport = versionOptionData.fqClassName,
+        compilerOptionValue = compilerOptionValue,
     )
-    return CompilerOption(replacement.toString(), versionOptionData.fqClassName, compilerOptionValue)
 }
 
 private fun getCompilerOptionForJsValue(
     jsOptionValue: JsOptionValue,
-    replacement: StringBuilder,
+    prefix: String,
     optionName: String,
     operationReplacer: String,
 ): CompilerOption {
-    replacement.append(
-        "$optionName.$operationReplacer(${jsOptionValue.className}.${jsOptionValue.optionValue})"
+    return CompilerOption(
+        expression = "$prefix$optionName.$operationReplacer(${jsOptionValue.className}.${jsOptionValue.optionValue})",
+        classToImport = jsOptionValue.fqClassName,
     )
-    return CompilerOption(replacement.toString(), jsOptionValue.fqClassName)
 }
 
 @ApiStatus.Internal
 fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
-    val replacement = StringBuilder()
-    val compilerOption = getReplacementForOldKotlinOptionIfNeeded(replacement, optionName, optionValue, operationToken = KtTokens.EQ)
+    val compilerOption = getReplacementForOldKotlinOptionIfNeeded(
+        prefixWithCompilerOptions = false,
+        optionName = optionName,
+        optionValue = optionValue,
+        operationToken = KtTokens.EQ,
+    )
     return compilerOption ?: CompilerOption("$optionName = $optionValue")
 }
 
@@ -285,11 +297,30 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
     val leftPartOfBinaryExpression = binaryExpression.left ?: return null
     return if (leftPartOfBinaryExpression is KtDotQualifiedExpression) {
         if (!expressionStartsWithKotlinOptionsReference(leftPartOfBinaryExpression)) return null
-        val replacement = binaryExpression.text.replace("kotlinOptions", "compilerOptions")
+        val replacement = renameKotlinOptionsToCompilerOptions(binaryExpression)
         Replacement(binaryExpression, replacement)
     } else {
         null
     }
+}
+
+/**
+ * Returns the source-faithful text of [binaryExpression] with every `KtNameReferenceExpression`
+ * named `kotlinOptions` renamed to `compilerOptions`. Operates on a PSI clone using a tree
+ * visitor so that the original [binaryExpression] is left intact and only the final textual form is produced at the API boundary
+ * (the [Replacement.replacement] field, consumed by `KtPsiFactory.createExpression(...)` in the inspection's quick fix).
+ */
+private fun renameKotlinOptionsToCompilerOptions(binaryExpression: KtBinaryExpression): String {
+    val clone = binaryExpression.copy() as KtBinaryExpression
+    val factory = KtPsiFactory(binaryExpression.project)
+    // Collect first, then mutate to avoid concurrent modification of the PSI tree we are walking.
+    val references = clone.collectDescendantsOfType<KtNameReferenceExpression> {
+        it.getReferencedName() == "kotlinOptions"
+    }
+    for (reference in references) {
+        reference.replace(factory.createExpression("compilerOptions"))
+    }
+    return clone.text
 }
 
 private fun expressionStartsWithKotlinOptionsReference(expression: KtDotQualifiedExpression): Boolean {

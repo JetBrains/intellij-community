@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -738,6 +739,31 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
                                           }
 
                                           private native Boolean getBoolean();""");
+    assertTrue(c.isEmpty());
+  }
+
+  public void testCommonOrderedEqualsOverloadCycleRepro() {
+    // This test intentionally leaves BiPredicate unresolved (no import, no qualification) to reproduce
+    // the overload mis-resolution cycle (3-arg <-> vararg) in contract inference.
+    List<String> c = inferContracts("""
+                                      public static <T> void assertOrderedEquals(String errorMsg,
+                                                                                 Iterable<? extends T> actual,
+                                                                                 Iterable<? extends T> expected) {
+                                        assertOrderedEquals(errorMsg, actual, expected, (t, t2) -> true);
+                                      }
+
+                                      @SafeVarargs
+                                      public static <T> void assertOrderedEquals(String errorMsg,
+                                                                                 Iterable<? extends T> actual,
+                                                                                 T... expected) {
+                                        assertOrderedEquals(errorMsg, actual, java.util.Arrays.asList(expected));
+                                      }
+
+                                      public static <T> void assertOrderedEquals(String errorMsg,
+                                                                                 Iterable<? extends T> actual,
+                                                                                 Iterable<? extends T> expected,
+                                                                                 BiPredicate<? super T, ? super T> comparator) {
+                                      }""");
     assertTrue(c.isEmpty());
   }
 

@@ -481,6 +481,60 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun parseJsonlFileTracksCompletedMutatingTool() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-mutating-tool")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("mutating-tool-session.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        claudeUserLine("2026-02-08T01:00:00.000Z", "mutating-tool-session", "/work/project-mutating-tool", "Write file"),
+        claudeAssistantToolUseLine("2026-02-08T01:00:01.000Z",
+                                   "mutating-tool-session",
+                                   "/work/project-mutating-tool",
+                                   "writing",
+                                   toolUseId = "tool-write-1",
+                                   toolName = "Write"),
+        claudeToolResultLine("2026-02-08T01:00:02.000Z", "mutating-tool-session", "/work/project-mutating-tool", "tool-write-1"),
+        claudeAssistantLine("2026-02-08T01:00:03.000Z", "mutating-tool-session", "/work/project-mutating-tool", "Done"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.projectFilesChangedAt).isEqualTo(Instant.parse("2026-02-08T01:00:02.000Z").toEpochMilli())
+  }
+
+  @Test
+  fun parseJsonlFileIgnoresNonMutatingToolForProjectFileChange() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-non-mutating-tool")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("non-mutating-tool-session.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        claudeUserLine("2026-02-08T01:00:00.000Z", "non-mutating-tool-session", "/work/project-non-mutating-tool", "Ask me"),
+        claudeAssistantUserInteractionToolLine("2026-02-08T01:00:01.000Z",
+                                               "non-mutating-tool-session",
+                                               "/work/project-non-mutating-tool",
+                                               "AskUserQuestion"),
+        claudeToolResultLine("2026-02-08T01:00:02.000Z", "non-mutating-tool-session", "/work/project-non-mutating-tool"),
+        claudeAssistantLine("2026-02-08T01:00:03.000Z", "non-mutating-tool-session", "/work/project-non-mutating-tool", "Done"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.projectFilesChangedAt).isEqualTo(Long.MIN_VALUE)
+  }
+
+  @Test
   fun parseJsonlFileParsesOversizedFinalEventFromFullLastLine() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)

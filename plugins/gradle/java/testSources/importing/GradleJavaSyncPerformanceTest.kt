@@ -33,6 +33,7 @@ class GradleJavaSyncPerformanceTest(private val gradleVersion: GradleVersion) {
   private val gradleFixture = gradleFixture(gradleVersion)
   private val gradle by gradleFixture
 
+  @PerformanceUnitTest
   @Nested
   // The benchmark measures repeated syncProject calls, so each attempt must reuse the warm Gradle daemon.
   // IDE-side sync processing after a Tooling API call can take longer than the test TTL before the next attempt starts.

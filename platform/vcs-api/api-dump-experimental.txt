@@ -5,7 +5,7 @@
 - pa:isRBrace(com.intellij.psi.PsiElement):Z
 *:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext
 - *sf:Companion:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
-- sf:EXTENSION:java.lang.String
+- *sf:EXTENSION:java.lang.String
 - computeEffectiveRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - a:handleClick(java.awt.event.MouseEvent,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):V
 - a:isAccepted(com.intellij.psi.PsiElement):Z

@@ -3,7 +3,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.groovy</categoryKey>
+      <categoryKey>intention.category.groovy.other</categoryKey>
       <className>org.jetbrains.plugins.groovy.grape.GrabDependencies</className>
     </intentionAction>
 
@@ -124,7 +124,7 @@
     <!-- comments -->
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.comments</categoryKey>
+      <categoryKey>intention.category.groovy.other</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToCStyleCommentIntention</className>
     </intentionAction>
 
@@ -201,7 +201,7 @@
     </intentionAction>
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.conversions</categoryKey>
+      <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.GrSplitDeclarationIntention</className>
     </intentionAction>
     <intentionAction>
@@ -226,17 +226,17 @@
     </intentionAction>
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.conversions</categoryKey>
+      <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.RenameFileWithClassIntention</className>
     </intentionAction>
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.conversions</categoryKey>
+      <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.RenameClassToFileNameIntention</className>
     </intentionAction>
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.conversions</categoryKey>
+      <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.MoveClassToNewFileIntention</className>
     </intentionAction>
     <intentionAction>
@@ -372,7 +372,7 @@
     <!--other-->
     <intentionAction>
       <language>Groovy</language>
-      <categoryKey>intention.category.groovy.other</categoryKey>
+      <categoryKey>intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.other.GrCreateMissingSwitchBranchesIntention</className>
     </intentionAction>
     <intentionAction>

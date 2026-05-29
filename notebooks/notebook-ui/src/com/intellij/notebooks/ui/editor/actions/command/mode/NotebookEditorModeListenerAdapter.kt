@@ -94,23 +94,27 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
 
   private fun saveCaretPositions() {
     val caretTracker = NotebookCellCaretTracker.getInstance() ?: return
-    val caretPositions = caretTracker.saveCaretPositions(editor)
-    if (caretPositions != null) {
-      editor.putUserData(SAVED_CARET_POSITIONS_KEY, caretPositions)
-    }
+    val caretSnapshot = caretTracker.saveCaretPositions(editor) ?: return
+    val allSavedPositions = LinkedHashMap(editor.getUserData(SAVED_CARET_POSITIONS_KEY).orEmpty())
+    allSavedPositions.remove(caretSnapshot.cellId)
+    allSavedPositions[caretSnapshot.cellId] = caretSnapshot
+    editor.putUserData(SAVED_CARET_POSITIONS_KEY, allSavedPositions)
   }
 
   private fun restoreSavedCaretPositions() {
-    val savedPositions = editor.getUserData(SAVED_CARET_POSITIONS_KEY)
-    editor.putUserData(SAVED_CARET_POSITIONS_KEY, null)
-    if (savedPositions.isNullOrEmpty()) return
     val caretTracker = NotebookCellCaretTracker.getInstance() ?: return
-    caretTracker.restoreCaretPositions(editor, savedPositions)
+    val currentCellId = caretTracker.getCurrentCellId(editor) ?: return
+    val allSavedPositions = LinkedHashMap(editor.getUserData(SAVED_CARET_POSITIONS_KEY).orEmpty())
+    val savedSnapshot = allSavedPositions.remove(currentCellId) ?: return
+    if (!caretTracker.restoreCaretPositions(editor, savedSnapshot.positions)) {
+      allSavedPositions[savedSnapshot.cellId] = savedSnapshot
+    }
+    editor.putUserData(SAVED_CARET_POSITIONS_KEY, allSavedPositions.ifEmpty { null })
   }
 
   companion object {
     private val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT, CaretVisualAttributes.Weight.NORMAL)
-    private val SAVED_CARET_POSITIONS_KEY = Key.create<List<NotebookCellCaretTracker.CellCaretPosition>>("NOTEBOOK_SAVED_CARET_POSITIONS")
+    private val SAVED_CARET_POSITIONS_KEY = Key.create<Map<NotebookCellCaretTracker.CellId, NotebookCellCaretTracker.CellCaretSnapshot>>("NOTEBOOK_SAVED_CARET_POSITIONS")
 
     fun setupForEditor(editor: Editor) {
       val listener = NotebookEditorModeListenerAdapter(editor)

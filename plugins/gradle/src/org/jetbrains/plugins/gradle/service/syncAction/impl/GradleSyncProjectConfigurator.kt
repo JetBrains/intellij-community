@@ -41,16 +41,6 @@ object GradleSyncProjectConfigurator {
   }
 
   @JvmStatic
-  fun runScriptBasePhase(context: ProjectResolverContext) {
-    require(!application.isWriteAccessAllowed) {
-      "Must not execute inside write action"
-    }
-    runBlockingCancellable {
-      GradleSyncActionRunner().performSyncContributors(context) { it is GradleSyncPhase.BaseScript }
-    }
-  }
-
-  @JvmStatic
   fun createModelFetchResultHandler(context: ProjectResolverContext): GradleModelFetchActionListener {
     return object : GradleModelFetchActionListener {
 

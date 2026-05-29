@@ -22,7 +22,8 @@ class AllGradleVersionArgumentsProcessor : ArgumentsProcessor<AllGradleVersionsS
   }
 
   override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<out Arguments> {
-    val targetVersions = context.testMethod.orNull()?.getAnnotation(TargetVersions::class.java)
+    val targetVersions = (context.testMethod.orNull() ?: context.testClass.orNull())
+      ?.getAnnotation(TargetVersions::class.java)
     val allGradleVersions = VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
       .map { GradleVersion.version(it) }
       .filter { VersionMatcher(it).isVersionMatch(targetVersions) }
@@ -33,7 +34,7 @@ class AllGradleVersionArgumentsProcessor : ArgumentsProcessor<AllGradleVersionsS
       gradleVersionsToRunProp == "FIRST_LAST" -> listOfNotNull(
         allGradleVersions.firstOrNull(),
         allGradleVersions.lastOrNull()
-      )
+      ).distinct()
       gradleVersionsToRunProp.startsWith("LAST:") -> {
         val last = gradleVersionsToRunProp.removePrefix("LAST:").toInt()
         allGradleVersions.takeLast(last)

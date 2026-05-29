@@ -41,6 +41,7 @@ data class CodexThread(
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
+  @JvmField val path: String? = null,
   // Populated when backend data includes subagent hierarchy (for example, rollout thread_spawn metadata).
   @JvmField val subAgents: List<CodexSubAgent> = emptyList(),
   @JvmField val gitBranch: String? = null,

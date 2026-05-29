@@ -11,9 +11,11 @@ import java.util.Arrays;
 
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
+  private final long version;
 
   public ASTStructure(@NotNull ASTNode root) {
     myRoot = root;
+    version = root instanceof TreeElement ? ((TreeElement)root).getVersionForReading() : -1;
   }
 
   @Override
@@ -62,11 +64,13 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
 
   @Override
   public int getStartOffset(@NotNull ASTNode node) {
-    return node.getStartOffset();
+    return node instanceof TreeElement ? ((TreeElement)node).getStartOffsetVersioned(version) : node.getStartOffset();
   }
 
   @Override
   public int getEndOffset(@NotNull ASTNode node) {
-    return node.getStartOffset() + node.getTextLength();
+    return node instanceof TreeElement
+           ? ((TreeElement)node).getStartOffsetVersioned(version) + ((TreeElement)node).getTextLengthVersioned(version)
+           : node.getStartOffset() + node.getTextLength();
   }
 }

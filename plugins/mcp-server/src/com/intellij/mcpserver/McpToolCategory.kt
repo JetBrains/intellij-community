@@ -5,8 +5,8 @@ import com.intellij.openapi.util.NlsSafe
 /**
  * Represents a category for MCP tools.
  *
- * @property shortName Simple name of the class where the tool is declared (e.g., "TextToolset")
- * @property fullyQualifiedName Fully qualified name of the class including package (e.g., "com.intellij.mcpserver.toolsets.general.TextToolset")
+ * @property shortName Simple name of the class where the tool is declared (e.g., "PatchToolset")
+ * @property fullyQualifiedName Fully qualified name of the class including package (e.g., "com.intellij.mcpserver.toolsets.general.PatchToolset")
  * @property isExperimental Whether this category contains experimental tools
  * @property alwaysIncluded Whether this category contains tools that should always be included as directly accessible MCP tools
  */

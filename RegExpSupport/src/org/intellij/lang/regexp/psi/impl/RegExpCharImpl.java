@@ -47,6 +47,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.NAMED;
         } else if (t == RegExpTT.CTRL) {
             return Type.CONTROL;
+        } else if (t == RegExpTT.ESC_CTRL_CHARACTER) {
+            return Type.ESCAPE;
         } else {
             return Type.CHAR;
         }
@@ -97,7 +99,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
           yield UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
         }
         case 'x' -> {
-          if (length <= 2) yield -1;
+          if (length == 2) yield -1;
           if (s.charAt(2) == '{') {
             yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
           }
@@ -107,7 +109,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
           yield length == 4 ? parseNumber(s, 2, 16) : -1;
         }
         case 'u' -> {
-          if (length <= 2) yield 'u';
+          if (length == 2) yield 'u';
           if (s.charAt(2) == '{') {
             yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
           }

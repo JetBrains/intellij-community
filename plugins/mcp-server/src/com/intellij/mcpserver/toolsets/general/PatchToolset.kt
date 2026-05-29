@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.currentCoroutineContext
@@ -52,17 +53,33 @@ class PatchToolset : McpToolset {
       awaitExternalChangesAndIndexing(project)
     }
 
+    var applied = 0
+    val errors = mutableListOf<String>()
     for (operation in operations) {
-      when (operation) {
-        is AddPatchOperation -> applyAdd(project, operation)
-        is DeletePatchOperation -> applyDelete(this, project, localFileSystem, operation)
-        is UpdatePatchOperation -> applyUpdate(this, project, localFileSystem, fileDocumentManager, operation)
+      runCatching {
+        when (operation) {
+          is AddPatchOperation -> applyAdd(project, operation)
+          is DeletePatchOperation -> applyDelete(this, project, localFileSystem, operation)
+          is UpdatePatchOperation -> applyUpdate(this, project, localFileSystem, fileDocumentManager, operation)
+        }
+      }.onSuccess {
+        applied++
+      }.onFailure {
+        errors += "${operation.path}: ${it.message}"
       }
     }
 
-    val touched = operations.size
-    val suffix = if (touched == 1) "" else "s"
-    return "Applied patch to $touched file$suffix."
+    FileDocumentManager.getInstance().saveAllDocuments()
+    ManagingFS.getInstance().flushPendingUpdates()
+
+    val total = operations.size
+    val failed = errors.size
+
+    var result = "$applied out of $total operations applied."
+    if (failed != 0) {
+      result += " $failed operations failed to be applied due to errors:\n${errors.joinToString("\n")}"
+    }
+    return result
   }
 }
 

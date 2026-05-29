@@ -216,6 +216,6 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   public static void markGenerated(PsiElement element) {
     TreeElement node = (TreeElement)element.getNode();
     assert node != null;
-    node.acceptTree(new GeneratedMarkerVisitor());
+    node.acceptTree(new GeneratedMarkerVisitor(node));
   }
 }

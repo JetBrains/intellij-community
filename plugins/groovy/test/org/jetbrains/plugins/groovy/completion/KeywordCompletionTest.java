@@ -187,6 +187,10 @@ public class KeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testDoWhile() { doTest(); }
 
   public void testDoWhile2() { doTest(); }
+  
+  public void testNoVarInFrontOfMethod() { doTest(); }
+  
+  public void testNoVarInFrontOfMethod2() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

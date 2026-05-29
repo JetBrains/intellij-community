@@ -6,9 +6,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.bookmarks.BreakpointListUpdaterService
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
-import com.intellij.xdebugger.impl.breakpoints.BreakpointListUpdaterService
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem

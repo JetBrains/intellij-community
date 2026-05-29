@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
+import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
@@ -12,24 +15,31 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivity
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedContextHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedRangeHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsShowActiveThreadsHeaderAction
+import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsNorthComponents
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsTitleActions
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createArchivedRangeHeaderPopupGroup
 import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverlayQuickCreate
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -37,6 +47,9 @@ class AgentSessionsToolWindowFactorySwingTest {
   companion object {
     private const val SEPARATOR_MARKER = "<separator>"
   }
+
+  @TempDir
+  lateinit var tempDir: Path
 
   @Test
   fun descriptorPointsToolWindowToSwingFactoryWithoutComposeEntries() {
@@ -60,12 +73,61 @@ class AgentSessionsToolWindowFactorySwingTest {
       "AgentWorkbenchSessions.ShowArchivedThreads",
       "AgentWorkbenchSessions.Refresh",
       SEPARATOR_MARKER,
+      "AgentWorkbenchSessions.ToggleSessionCost",
+      "AgentWorkbenchSessions.ToggleJbCentralQuotaWidget",
       "AgentWorkbenchSessions.ToggleClaudeQuotaWidget",
       "AgentWorkbenchSessions.ToggleDedicatedFrame",
     )
     assertThat(entries)
       .contains("AgentWorkbenchSessions.TogglePreventSleepWhileWorking")
       .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+  }
+
+  @Test
+  fun northComponentsIncludeGlobalHintBanners(@TestDisposable disposable: Disposable) {
+    val components = createAgentSessionsNorthComponents(
+      project = ProjectManager.getInstance().defaultProject,
+      parentDisposable = disposable,
+      refreshSessions = {},
+    )
+
+    assertThat(components.any { it is AgentSessionCostHintBanner }).isTrue()
+    assertThat(components.any { it is JbCentralQuotaHintBanner }).isTrue()
+  }
+
+  @Test
+  fun northComponentsClearJbCentralEligibilityWhenCliIsUnavailable(@TestDisposable disposable: Disposable) {
+    val hintStateService = service<JbCentralQuotaHintStateService>()
+    hintStateService.loadState(JbCentralQuotaHintStateService.State(eligible = true, acknowledged = false))
+
+    withJbCentralPath(tempDir.resolve("missing-jbcentral").resolve(jbCentralExecutableName())) {
+      createAgentSessionsNorthComponents(
+        project = ProjectManager.getInstance().defaultProject,
+        parentDisposable = disposable,
+        refreshSessions = {},
+      )
+    }
+
+    assertThat(hintStateService.eligibleFlow.value).isFalse()
+  }
+
+  @Test
+  fun northComponentsMarkJbCentralEligibleWhenCliIsAvailable(@TestDisposable disposable: Disposable) {
+    val hintStateService = service<JbCentralQuotaHintStateService>()
+    hintStateService.loadState(JbCentralQuotaHintStateService.State())
+    val executable = tempDir.resolve("jbcentral-cli").resolve(jbCentralExecutableName())
+    Files.createDirectories(executable.parent)
+    Files.writeString(executable, "stub")
+
+    withJbCentralPath(executable) {
+      createAgentSessionsNorthComponents(
+        project = ProjectManager.getInstance().defaultProject,
+        parentDisposable = disposable,
+        refreshSessions = {},
+      )
+    }
+
+    assertThat(hintStateService.eligibleFlow.value).isTrue()
   }
 
   @Test
@@ -276,6 +338,27 @@ class AgentSessionsToolWindowFactorySwingTest {
     finally {
       service.setArchivedRangePreset(previousState.archivedRangePreset)
       service.setMode(previousState.mode)
+    }
+  }
+}
+
+private fun jbCentralExecutableName(): String {
+  return if (SystemInfoRt.isWindows) "jbcentral.exe" else "jbcentral"
+}
+
+private fun withJbCentralPath(path: java.nio.file.Path, action: () -> Unit) {
+  val propertyName = "agent.workbench.sessions.jbcentral.path"
+  val previous = System.getProperty(propertyName)
+  System.setProperty(propertyName, path.toAbsolutePath().toString())
+  try {
+    action()
+  }
+  finally {
+    if (previous == null) {
+      System.clearProperty(propertyName)
+    }
+    else {
+      System.setProperty(propertyName, previous)
     }
   }
 }

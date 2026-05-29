@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.enumerator;
 
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -13,10 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -24,29 +28,44 @@ import static org.junit.Assert.assertTrue;
 /**
  * Just to compare 'classic' strict enumerator against non-strict
  */
+@RunWith(Parameterized.class)
 public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<PersistentStringEnumerator> {
 
-  private StorageLockContext recentLockContext;
+  @Parameterized.Parameters(name = "{0}")
+  public static Iterable<Object[]> parameters() {
+    return List.of(
+      new Object[]{"standard StorageLockContext",
+        new StorageLockContext(/*useRWLock: */true, /*cacheChannels: */ true, /*disableAssertions: */ false)
+      },
+      new Object[]{"indexes (+WriteAheadLog?) StorageLockContext",
+        DefaultIndexStorageLayoutProviderKt.newStorageLockContext()
+      }
+    );
+  }
 
-  public PersistentStringEnumeratorTest() {
+  private final StorageLockContext recentLockContext;
+
+  @SuppressWarnings("unused")
+  public PersistentStringEnumeratorTest(@NotNull String name,
+                                        @NotNull StorageLockContext lockContext) {
     super(/*valuesToTestOn: */ 1_000_000);
+    this.recentLockContext = lockContext;
   }
 
   @Override
-  public void nullValue_EnumeratedTo_NULL_ID() throws IOException {
+  public void nullValue_EnumeratedTo_NULL_ID() {
     throw new AssumptionViolatedException("Not satisfied now -- need to investigate");
     //super.nullValue_EnumeratedTo_NULL_ID();
   }
 
   @Override
   @Ignore
-  public void runningMultiThreaded_valuesListedByForEach_alwaysKnownToTryEnumerate() throws Exception {
+  public void runningMultiThreaded_valuesListedByForEach_alwaysKnownToTryEnumerate() {
     throw new AssumptionViolatedException("Not satisfied now -- need to investigate");
   }
 
   @Override
-  protected PersistentStringEnumerator openEnumeratorImpl(final @NotNull Path storagePath) throws IOException {
-    recentLockContext = new StorageLockContext(true, true, false);
+  protected PersistentStringEnumerator openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
     return new PersistentStringEnumerator(storagePath, recentLockContext);
   }
 
@@ -85,7 +104,6 @@ public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<Per
       assertEquals(id, enumerator.tryEnumerate(value));
     }
   }
-
 
 
   //RUBY-32416:

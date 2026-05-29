@@ -9,11 +9,26 @@ import org.eclipse.lsp4j.CodeActionKind
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.jetbrains.annotations.ApiStatus
 
 data class DiagnosticAndQuickFixes(
   val diagnostic: Diagnostic,
   val quickFixes: List<IntentionAction>,
-)
+) {
+  @ApiStatus.Internal
+  companion object {
+    fun build(
+      server: LspServerImpl,
+      virtualFile: VirtualFile,
+      diagnostic: Diagnostic,
+      documentId: TextDocumentIdentifier,
+    ): DiagnosticAndQuickFixes {
+      return DiagnosticAndQuickFixes(diagnostic, LspDiagnosticAndLazyQuickFixes(diagnostic, documentId)
+        .getQuickFixes(server, virtualFile)
+      )
+    }
+  }
+}
 
 internal fun copyDiagnosticWithRange(diagnostic: Diagnostic, range: Range): Diagnostic = Diagnostic().apply {
   this.range = range

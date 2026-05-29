@@ -257,6 +257,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPreTagInJavadocTag() { doTestClass();}
   public void testLinkTagMalformed() { doTestClass(); }
   public void testCursedCodeBlock() { doTestClass(); }
+  public void testCursedCodeBlock2() { doTestClass(); }
   public void testSnippetMarkup() { doTestClass(); }
   public void testSealedClass() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "sealedClasses");
@@ -264,6 +265,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavadocFor("SecondSealer");
   }
  public void testParameterizedLinks() { doTestClass(); }
+ public void testWrongfulInnerClassReferences() { doTestClass(); }
+ public void testImplicitConstructor() { doTestClass(); }
+ public void testCommatHtmlEntity() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

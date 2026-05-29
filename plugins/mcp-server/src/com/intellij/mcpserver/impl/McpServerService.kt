@@ -17,6 +17,7 @@ import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
+import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.mcpserver.widget.enableIfNotExplicitlyDisabled
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -363,17 +364,23 @@ open class McpServerService(val cs: CoroutineScope) {
           )
         )
 
+        val transportType = when {
+          applicationCall.request.local.uri.startsWith("/sse") -> TransportType.SSE
+          else -> TransportType.STREAMABLE_HTTP
+        }
+
         // Create session-specific MCP tools manager
         val sessionToolsManager = McpSessionHandler(
           parentScope = cs,
           sessionOptions = sessionOptions,
           mcpServerService = this@McpServerService,
           mcpServer = mcpServer,
+          transportType = transportType,
           projectPathFromInitialRequest = projectPath,
           useFiltersFromEP = useFiltersFromEP,
         )
 
-        val session = sessionToolsManager.createAndInitializeSession(transport)
+        val session = sessionToolsManager.createAndInitializeSession(transport, applicationCall)
         //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
         //  // Workaround inspector failure
         //  return@setRequestHandler EmptyRequestResult()

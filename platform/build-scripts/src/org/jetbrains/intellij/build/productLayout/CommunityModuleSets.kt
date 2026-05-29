@@ -145,10 +145,6 @@ object CommunityModuleSets {
     module("intellij.platform.managed.cache.backend")
     embeddedModule("intellij.platform.feedback")
 
-    embeddedModule("intellij.platform.bookmarks")
-    module("intellij.platform.bookmarks.backend")
-    module("intellij.platform.bookmarks.frontend")
-
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
     module("intellij.platform.pluginManager.frontend")

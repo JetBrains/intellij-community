@@ -16,12 +16,25 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 public class GeneratedMarkerVisitor extends RecursiveTreeElementWalkingVisitor {
+
+  public GeneratedMarkerVisitor() {
+    super(null, true);
+  }
+
+  @ApiStatus.Experimental
+  public GeneratedMarkerVisitor(@NotNull ASTNode node) {
+    super(node);
+  }
+
   @Override
   protected void visitNode(TreeElement element) {
     CodeEditUtil.setNodeGenerated(element, true);
@@ -29,6 +42,6 @@ public class GeneratedMarkerVisitor extends RecursiveTreeElementWalkingVisitor {
   }
 
   public static void markGenerated(PsiElement element) {
-    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor(element.getNode()));
   }
 }

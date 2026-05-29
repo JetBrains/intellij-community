@@ -203,5 +203,7 @@ private class MockLocalHistory(val bytes: ByteArray) : LocalHistory() {
   override fun putEventLabel(project: Project, name: String, activityId: ActivityId): Label = Label.NULL_INSTANCE
   override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label = Label.NULL_INSTANCE
   override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label = Label.NULL_INSTANCE
+  override suspend fun isLabelValid(project: Project, labelId: String): Boolean = false
+  override suspend fun revertToLabel(project: Project, labelId: String, file: VirtualFile) = Unit
   override fun isUnderControl(file: VirtualFile): Boolean = false
 }

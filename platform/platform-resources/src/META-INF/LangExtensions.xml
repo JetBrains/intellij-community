@@ -886,7 +886,7 @@
       <language/>
       <className>com.intellij.psi.templateLanguages.ChooseTemplateDataLanguageIntention</className>
       <bundleName>messages.LangBundle</bundleName>
-      <categoryKey>template.data.language.chooser.intention.title</categoryKey>
+      <categoryKey>intention.category.other</categoryKey>
       <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
 

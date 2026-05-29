@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil.getReviewChangesTextAttribute
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
@@ -44,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.datatransfer.StringSelection
@@ -65,12 +65,7 @@ open class CodeReviewEditorGutterChangesRenderer(
                                           lineStatusMarkerColorScheme, 0)
   }
 
-  override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = ReviewChangesTextAttributes()
-
-  private inner class ReviewChangesTextAttributes : TextAttributes() {
-    override fun getErrorStripeColor(): Color = ReviewInEditorUtil.REVIEW_CHANGES_STATUS_COLOR
-  }
-
+  override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = getReviewChangesTextAttribute(lineStatusMarkerColorScheme)
 
   override fun createPopupPanel(editor: Editor,
                                 range: Range,

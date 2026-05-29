@@ -23,7 +23,6 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
-import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -36,6 +35,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
@@ -48,7 +48,6 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
@@ -107,6 +106,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -119,7 +119,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -1149,12 +1148,16 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       val windowAddedDeferred = CompletableDeferred<Unit>()
       try {
         window = windowDeferred.await()
-        fileEditorManager.openFilesOnStartup(
+        val openedFiles = fileEditorManager.prepareFilesOnStartupForOpen(
           items = items,
           window = window,
-          requestFocus = requestFocus,
           isLazyComposite = isLazyComposite,
+        )
+        fileEditorManager.openTabsOnStartup(
+          window = window,
+          requestFocus = requestFocus,
           windowAdded = suspend { windowAddedDeferred.await() },
+          openedFiles = openedFiles.filterNotNull(),
         )
         window.updateTabsVisibility()
         addChild(window.component)
@@ -1219,27 +1222,47 @@ private fun computeFileEntry(
       notFullyPreparedFile
     }
 
-  val fileProvider = suspend { fileProviderDeferred.await() }
-
-  // In the case of the JetBrains client, the model isn't used since the editor composite is requested from the backend
-  val model = if (PlatformUtils.isJetBrainsClient()) {
-    emptyFlow()
+  val hint = when {
+    PlatformUtils.isJetBrainsClient() -> {
+      null // In the case of the JetBrains client, the model isn't used since the editor composite is requested from the backend
+    }
+    else -> {
+      val model = fileEditorManager.createEditorCompositeModelOnStartup(
+        compositeCoroutineScope = compositeCoroutineScope,
+        fileProvider = suspend { fileProviderDeferred.await() },
+        fileEntry = fileEntry,
+        isLazy = !fileEntry.currentInTab && isLazyComposite,
+      )
+      StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
+    }
   }
-  else {
-    fileEditorManager.createEditorCompositeModelOnStartup(
-      compositeCoroutineScope = compositeCoroutineScope,
-      fileProvider = fileProvider,
-      fileEntry = fileEntry,
-      isLazy = !fileEntry.currentInTab && isLazyComposite,
-    )
-  }
 
+  return setupFileTab(compositeCoroutineScope,
+                      fileEditorManager,
+                      fileProviderDeferred,
+                      fileEntry,
+                      delayedTasks,
+                      notFullyPreparedFile,
+                      placeholderIcon,
+                      hint)
+}
+
+private fun setupFileTab(
+  compositeCoroutineScope: CoroutineScope,
+  fileEditorManager: FileEditorManagerImpl,
+  fileDeferred: Deferred<VirtualFile>,
+  fileEntry: FileEntry,
+  delayedTasks: MutableCollection<Job>,
+  notFullyPreparedFile: VirtualFile,
+  placeholderIcon: EmptyIcon,
+  hint: FileEditorOpenOptionsHint?,
+): FileToOpen {
   val tabTitleTask = compositeCoroutineScope.async(context = CoroutineName("editor tab title compute"), start = CoroutineStart.LAZY) {
-    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider())
+    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileDeferred.await())
   }
   val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
     compositeCoroutineScope.async(context = CoroutineName("editor tab icon compute"), start = CoroutineStart.LAZY) {
-      val file = fileProvider()
+      val file = fileDeferred.await()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
       }
@@ -1251,7 +1274,7 @@ private fun computeFileEntry(
 
   val tabFileColorTask = compositeCoroutineScope.async(CoroutineName("editor tab file status color compute")) {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
-    val file = fileProvider()
+    val file = fileDeferred.await()
     readAction {
       (fileStatusManager.getStatus(file).color ?: UIUtil.getLabelForeground()) to
         getForegroundColorForFile(fileEditorManager.project, file)
@@ -1322,9 +1345,8 @@ private fun computeFileEntry(
 
   return FileToOpen(
     fileEntry = fileEntry,
-    scope = compositeCoroutineScope,
     file = notFullyPreparedFile,
-    model = model,
+    hint = hint,
     customizer = { tab ->
       tab.setText(initialTabTitle)
       tab.setIcon(initialTabIcon)
@@ -1370,9 +1392,8 @@ private fun computeFileEntry(
 }
 
 internal data class FileToOpen(
-  @JvmField val scope: CoroutineScope,
   @JvmField val file: VirtualFile,
-  @JvmField val model: Flow<EditorCompositeModel>,
+  @JvmField val hint: FileEditorOpenOptionsHint?,
   @JvmField val fileEntry: FileEntry,
   @JvmField val customizer: (TabInfo) -> Unit,
 )
@@ -1550,5 +1571,29 @@ internal fun stopOpenFilesActivity(project: Project) {
   project.getUserData(OPEN_FILES_ACTIVITY)?.let { activity ->
     project.putUserData(OPEN_FILES_ACTIVITY, null)
     activity.end()
+  }
+}
+
+internal class StartupFileEditorOpenOptionsHint(
+  val compositeScope: CoroutineScope,
+  val model: Flow<EditorCompositeModel>,
+) : FileEditorOpenOptionsHint
+
+internal class StartupEditorCompositeProvider : EditorCompositeProvider {
+  override fun createComposite(
+    project: Project,
+    file: VirtualFile,
+    window: EditorWindow,
+    fileEntry: FileEntry?,
+    hint: FileEditorOpenOptionsHint?,
+  ): EditorComposite? {
+    if (hint !is StartupFileEditorOpenOptionsHint) return null
+
+    val feManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    return feManager.createCompositeInstance(
+      file = file,
+      model = hint.model,
+      coroutineScope = hint.compositeScope,
+    )
   }
 }

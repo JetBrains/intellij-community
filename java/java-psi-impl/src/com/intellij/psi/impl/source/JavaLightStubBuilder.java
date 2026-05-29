@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
   @Override
@@ -48,7 +49,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
   }
 
   private static boolean isCodeBlockWithoutStubs(@NotNull ASTNode node) {
-    CodeBlockVisitor visitor = new CodeBlockVisitor();
+    CodeBlockVisitor visitor = new CodeBlockVisitor(node);
     if (TreeUtil.isCollapsedChameleon(node)) {
       Lexer lexer = JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(node.getPsi()));
       TokenList tokens = TokenSequence.performLexing(node.getChars(), lexer);
@@ -68,7 +69,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   public static boolean isCodeBlockWithoutStubs(@NotNull LighterASTNode node) {
     if (node.getTokenType() == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
-      CodeBlockVisitor visitor = new CodeBlockVisitor();
+      CodeBlockVisitor visitor = new CodeBlockVisitor(null);
       ((LighterLazyParseableNode)node).accept(visitor);
       return visitor.result;
     }
@@ -102,6 +103,10 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       JavaTokenType.ARROW, JavaTokenType.DOUBLE_COLON, JavaTokenType.AT);
 
     private boolean result = true;
+
+    CodeBlockVisitor(@Nullable ASTNode node) {
+      super(node, true);
+    }
 
     @Override
     protected void visitNode(TreeElement element) {

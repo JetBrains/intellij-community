@@ -261,6 +261,9 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
   public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
   public boolean LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION = false;
 
+  /// Whether to prefer documentation line comments (In languages like Java, Rust, Dart)
+  public boolean DOCUMENTATION_LINE_COMMENT_PREFERRED = false;
+
   public boolean KEEP_LINE_BREAKS = true;
 
   /**

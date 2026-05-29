@@ -24,6 +24,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.TailTypeFactory"
                         serviceImplementation="com.intellij.codeInsight.completion.FrontendFriendlyTailTypeFactory"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.group.GroupedCompletion"
+                        serviceImplementation="com.intellij.codeInsight.completion.group.GroupedCompletionImpl"/>
+
     <registryKey defaultValue="300000"
                  description="Maximum combined size of all precalculated roots for ModulesWithDependencies cache."
                  key="module.with.dependencies.scope.cache.max.total.entries.count"

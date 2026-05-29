@@ -76,6 +76,7 @@ internal class ContentModuleDependencyResolutionTest {
       plugin("core") {
         content(namespace = "jetbrains") {
           module("platform") {}
+          module("util") {}
         }
       }
       plugin("foo") {
@@ -83,18 +84,25 @@ internal class ContentModuleDependencyResolutionTest {
           module("foo") {
             dependencies {
               module("platform")
+              module("util")
             }
           }
           module("platform") {}
         }
+        content(namespace = "custom") {
+          module("util") {}
+        }
       }
     }
     val foo = pluginSet.getEnabledModule("foo")
-    val dependency = foo.moduleDependencies.modules.single()
-    assertThat(dependency.name).isEqualTo("platform")
-    assertThat(dependency.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
+    assertThat(foo.moduleDependencies.modules).hasSize(2)
+    val (dependency1, dependency2) = foo.moduleDependencies.modules
+    assertThat(dependency1.name).isEqualTo("platform")
+    assertThat(dependency1.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
     val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.name == "platform" }
-    assertThat(dependency.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    assertThat(dependency1.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    assertThat(dependency2.name).isEqualTo("util")
+    assertThat(dependency2.namespace).isEqualTo("custom")
   }
 
   @Test
@@ -131,7 +139,7 @@ internal class ContentModuleDependencyResolutionTest {
   fun `modules with same name in different namespaces`() {
     val pluginSet = buildPluginSet {
       plugin("foo") {
-        content(namespace = "foo.ns") {
+        content(namespace = "foo_ns") {
           module("foo") {
             dependencies {
               module("common")
@@ -141,7 +149,7 @@ internal class ContentModuleDependencyResolutionTest {
         }
       }
       plugin("bar") {
-        content(namespace = "bar.ns") {
+        content(namespace = "bar_ns") {
           module("bar") {
             dependencies {
               module("common")
@@ -152,23 +160,23 @@ internal class ContentModuleDependencyResolutionTest {
       }
     }
     val fooModule = pluginSet.getEnabledModule("foo")
-    assertThat(fooModule.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("common", "foo.ns"))
+    assertThat(fooModule.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("common", "foo_ns"))
     val barModule = pluginSet.getEnabledModule("bar")
-    assertThat(barModule.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("common", "bar.ns"))
+    assertThat(barModule.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("common", "bar_ns"))
   }
 
   @Test
   fun `modules with same name and different namespaces in the same plugin`() {
     val pluginSet = buildPluginSet {
       plugin("foo") {
-        content(namespace = "ns1") {
+        content(namespace = "namespace1") {
           module("foo1") {
             dependencies {
               module("foo2")
             }
           }
         }
-        content(namespace = "ns2") {
+        content(namespace = "namespace2") {
           module("foo2") {
             dependencies {
               module("foo3")

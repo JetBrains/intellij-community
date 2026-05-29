@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 
 private const val DEFAULT_READ_LIMIT = 2000
 private const val MAX_READ_LIMIT = 5000
-private const val MAX_LINE_LENGTH = 500
+private const val MAX_LINE_LENGTH = 2000
 
 internal class ReadToolset : McpToolset {
   /*
@@ -90,7 +90,34 @@ private fun renderSlice(document: Document, startLine: Int, maxLines: Int): Stri
     return "L1: "
   }
   if (startLine > lineCount) mcpFail("offset exceeds file length")
-  val endLine = minOf(startLine.toLong() + maxLines.toLong() - 1, lineCount.toLong()).toInt()
+  val availableLines = lineCount - startLine + 1
+
+  if (availableLines <= maxLines) {
+    return buildLineRange(document, startLine, lineCount)
+  }
+
+  // codex-style head+tail truncation: keep first half and last half of the budget,
+  // replace the middle with a truncation marker.
+  val headCount = maxLines / 2
+  val tailCount = maxLines - headCount
+  val headEnd = startLine + headCount - 1
+  val tailStart = lineCount - tailCount + 1
+  val truncatedCount = tailStart - headEnd - 1
+
+  val output = StringBuilder()
+  if (headCount > 0) {
+    output.append(buildLineRange(document, startLine, headEnd))
+    output.append('\n')
+  }
+  output.append("\u2026${truncatedCount} lines truncated\u2026")
+  if (tailCount > 0) {
+    output.append('\n')
+    output.append(buildLineRange(document, tailStart, lineCount))
+  }
+  return output.toString()
+}
+
+private fun buildLineRange(document: Document, startLine: Int, endLine: Int): String {
   val output = StringBuilder()
   for (lineNumber in startLine..endLine) {
     if (output.isNotEmpty()) output.append('\n')

@@ -110,7 +110,10 @@ internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allC
 
 private fun getAllProblems(texts: List<TextContent>, checkedDomains: Set<TextDomain>, allCheckers: List<TextChecker>): List<TextProblem> =
   buildProblemMap(allCheckers, texts, checkedDomains)
-    .flatMap { (text, problems) -> TextProblemAggregator.aggregate(problems, SentenceTokenizer.toTokens(text), false) }
+    .flatMap { (text, problems) ->
+      val sentences = SentenceTokenizer.toTokens(text).map { it.token }
+      TextProblemAggregator.aggregate(problems, sentences, false)
+    }
 
 private fun buildProblemMap(
   allCheckers: List<TextChecker>,
@@ -280,7 +283,7 @@ private fun ProofreadingContext.toParagraph(): Paragraph {
   this.text.unknownOffsets().forEach { exclusions.add(Exclusion(it, Exclusion.Kind.Unknown)) }
   return Paragraph(
     text = this.text.toString(),
-    exclusions = exclusions,
+    exclusions = exclusions.sortedBy { it.offset },
     forcedLanguage = this.language
   )
 }

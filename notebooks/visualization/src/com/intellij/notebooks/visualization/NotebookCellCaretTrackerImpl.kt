@@ -4,12 +4,21 @@ import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookCellCaretTr
 import com.intellij.openapi.editor.Editor
 
 class NotebookCellCaretTrackerImpl : NotebookCellCaretTracker {
+  private data class CellId(
+    private val intervalPointer: NotebookIntervalPointer,
+  ) : NotebookCellCaretTracker.CellId
+
   private data class SavedPosition(
     val intervalPointer: NotebookIntervalPointer,
     val offsetInCell: Int,
   ) : NotebookCellCaretTracker.CellCaretPosition
 
-  override fun saveCaretPositions(editor: Editor): List<NotebookCellCaretTracker.CellCaretPosition>? {
+  private data class SavedSnapshot(
+    override val cellId: NotebookCellCaretTracker.CellId,
+    override val positions: List<NotebookCellCaretTracker.CellCaretPosition>,
+  ) : NotebookCellCaretTracker.CellCaretSnapshot
+
+  override fun saveCaretPositions(editor: Editor): NotebookCellCaretTracker.CellCaretSnapshot? {
     if (!NotebookCellLines.hasSupport(editor.document)) return null
     val cellLines = NotebookCellLines.get(editor.document)
     val pointerFactory = NotebookIntervalPointerFactory.getOrNull(editor) ?: return null
@@ -24,7 +33,14 @@ class NotebookCellCaretTrackerImpl : NotebookCellCaretTracker {
       positions.add(SavedPosition(pointer, offsetInCell))
     }
 
-    return positions
+    if (positions.isEmpty()) return null
+    val currentCellId = getCurrentCellId(editor) ?: return null
+    return SavedSnapshot(currentCellId, positions)
+  }
+
+  override fun getCurrentCellId(editor: Editor): NotebookCellCaretTracker.CellId? {
+    val pointer = getCurrentCellPointer(editor) ?: return null
+    return CellId(pointer)
   }
 
   override fun restoreCaretPositions(editor: Editor, positions: List<NotebookCellCaretTracker.CellCaretPosition>): Boolean {
@@ -57,5 +73,14 @@ class NotebookCellCaretTrackerImpl : NotebookCellCaretTracker {
       editor.caretModel.addCaret(editor.offsetToVisualPosition(validOffsets[i]))
     }
     return true
+  }
+
+  private fun getCurrentCellPointer(editor: Editor): NotebookIntervalPointer? {
+    if (!NotebookCellLines.hasSupport(editor.document)) return null
+    val cellLines = NotebookCellLines.get(editor.document)
+    val pointerFactory = NotebookIntervalPointerFactory.getOrNull(editor) ?: return null
+    val currentLine = editor.document.getLineNumber(editor.caretModel.offset)
+    val currentCell = cellLines.getCellByLineNumber(currentLine) ?: return null
+    return pointerFactory.create(currentCell)
   }
 }

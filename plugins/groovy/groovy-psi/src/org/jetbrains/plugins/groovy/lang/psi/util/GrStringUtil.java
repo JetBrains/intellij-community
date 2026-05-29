@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiVersioningService;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -498,7 +499,7 @@ public final class GrStringUtil {
     final GrExpression expression = injection.getExpression();
     LOG.assertTrue(expression != null);
     final GroovyPsiElementFactory instance = GroovyPsiElementFactory.getInstance(injection.getProject());
-    final GrClosableBlock closure = instance.createClosureFromText("{foo}");
+    final GrClosableBlock closure = PsiVersioningService.createVersionedPsiElements(expression.getNode(), () -> instance.createClosureFromText("{foo}"));
     closure.getNode().replaceChild(closure.getStatements()[0].getNode(), expression.getNode());
     injection.getNode().addChild(closure.getNode());
     CodeEditUtil.setNodeGeneratedRecursively(expression.getNode(), true);

@@ -16,9 +16,6 @@
   ]]></description>
   <vendor>JetBrains</vendor>
 
-  <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
-  <depends config-file="mcpServer-vcs.xml" optional="true">Git4Idea</depends>
-
   <dependencies>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.libraries.ktor.client"/>
@@ -27,16 +24,13 @@
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.compose"/>
-    <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.terminal.frontend"/>
     <!-- endregion -->
   </dependencies>
-  <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
-    <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.ktor.client, intellij.libraries.ktor.io, intellij.libraries.kotlinx.io), so it's required to set the namespace for it
-         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+    <module name="intellij.mcpserver.vcs"/>
+    <module name="intellij.mcpserver.terminal"/>
+    <module name="intellij.mcpserver.terminal.frontend"/>
   </content>
 
   <extensionPoints>
@@ -50,6 +44,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+
+    <toolWindow id="MCP Server"
+                anchor="bottom"
+                icon="AllIcons.Nodes.McpServerWidget"
+                factoryClass="com.intellij.mcpserver.toolwindow.McpServerToolWindowFactory"
+                canCloseContents="false"
+                doNotActivateOnStart="true"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
@@ -73,7 +74,6 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.UniversalToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ReadToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.PatchToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.SearchToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />

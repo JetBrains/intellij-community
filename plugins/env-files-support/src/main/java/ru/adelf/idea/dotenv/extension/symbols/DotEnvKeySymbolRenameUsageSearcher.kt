@@ -5,7 +5,8 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage.Companion.defaultPsiModifiableRenameUsage
 import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
@@ -28,20 +29,19 @@ class DotEnvKeySymbolRenameUsageSearcher : RenameUsageSearcher {
         val selfUsage = DotEnvKeySymbolUsageQuery(
             defaultPsiModifiableRenameUsage(targetSymbol.declarationUsage())
         )
-        return listOf(usages.mapping {
-            defaultPsiModifiableRenameUsage(
-                PsiUsage.textUsage(it.element.containingFile, it.element.textRange)
-            )
-        }, selfUsage)
+        return listOf(usages, selfUsage)
     }
 
-    private fun validateRenameUsageSearchReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence): Collection<DotEnvKeyReference> {
-        return validateReferences(symbol, leafOccurrence, true)
+    private fun validateRenameUsageSearchReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence): Collection<RenameUsage> {
+        if (validateReferences(symbol, leafOccurrence, true).isEmpty()) return emptyList()
+
+        val range = TextRange.from(leafOccurrence.start.textRange.startOffset + leafOccurrence.offsetInStart, symbol.name.length)
+        return listOf(defaultPsiModifiableRenameUsage(PsiUsage.textUsage(leafOccurrence.start.containingFile, range)))
     }
 
     internal class DotEnvKeySymbolUsageQuery<T>(private val targetDeclaration: T) : AbstractQuery<T>() {
         override fun processResults(processor: Processor<in T>): Boolean {
-            return runReadAction {
+            return runReadActionBlocking {
                 processor.process(targetDeclaration)
             }
         }

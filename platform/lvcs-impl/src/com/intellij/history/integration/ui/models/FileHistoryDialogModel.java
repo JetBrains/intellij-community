@@ -27,7 +27,7 @@ public abstract class FileHistoryDialogModel extends HistoryDialogModel {
   public Reverter createReverter() {
     Revision l = getLeftRevision();
     Revision r = getRightRevision();
-    return new DifferenceReverter(myProject, myVcs, myGateway, Revision.getDifferencesBetween(l, r), l);
+    return new DifferenceReverter(myProject, myGateway, Revision.getDifferencesBetween(l, r), l);
   }
 
   public @NotNull Set<Long> filterContents(@NotNull String filter) {

@@ -363,7 +363,7 @@ From [`AnalysisToolset.kt:463-472`](src/com/intellij/mcpserver/toolsets/general/
 A mutating tool that has no meaningful result can just return `Unit`:
 
 ```kotlin
-suspend fun replace_text_in_file(/* … */) {
+suspend fun create_new_file(/* … */) {
   /* perform mutation */
 }
 ```
@@ -428,15 +428,11 @@ catch (e: Throwable) { /* log, maybe mcpFail */
 }
 ```
 
-Inside tight loops use cooperative checks from [`TextToolset.kt:86`](src/com/intellij/mcpserver/toolsets/general/TextToolset.kt):
+Recursive or tight loops should use cooperative checks, as in [`fs.util.kt:233-234`](src/com/intellij/mcpserver/util/fs.util.kt):
 
 ```kotlin
-while (true) {
-  Cancellation.checkCancelled()
-  val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
-  if (occurrenceStart < 0) break
-  /* … */
-}
+if (maxDepth <= 0) return
+currentCoroutineContext().ensureActive()
 ```
 
 ### 6.3 Structured errors for machine consumers
@@ -535,18 +531,15 @@ platform can interrupt between phases.
 Document mutations that the user should be able to undo must run inside a write command:
 
 ```kotlin
-writeCommandAction(project, commandName = FindBundle.message("find.replace.text.dialog.title")) {
-  for (marker in rangeMarkers.reversed()) {
-    if (!marker.isValid) continue
-    val textRange = marker.textRange
-    document.replaceString(textRange.startOffset, textRange.endOffset, newText)
-    marker.dispose()
+writeCommandAction(project, commandName) {
+  val psiDocumentManager = PsiDocumentManager.getInstance(project)
+  for (document in documents) {
+    psiDocumentManager.commitDocument(document)
   }
-  FileDocumentManager.getInstance().saveDocument(document)
 }
 ```
 
-From [`TextToolset.kt:100-108`](src/com/intellij/mcpserver/toolsets/general/TextToolset.kt). The command name appears in the undo history.
+From [`FormattingToolset.kt:66-71`](src/com/intellij/mcpserver/toolsets/general/FormattingToolset.kt). The command name appears in the undo history.
 For project-model mutations that are not user-visible, use `edtWriteAction`; for writes outside the EDT, use `backgroundWriteAction`; for
 read-then-edit flows use `readAndEdtWriteAction { …; value(…) }`.
 
@@ -560,27 +553,6 @@ val file = withContext(Dispatchers.IO) { resolveReadFile(project, file_path) }
 ```
 
 From [`ReadToolset.kt:98`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt).
-
-### 8.5 `RangeMarker` across read + write phases
-
-When you compute offsets inside a read action and mutate in a write action, the document may change between the two. [
-`RangeMarker`](https://plugins.jetbrains.com/docs/intellij/documents.html#working-with-text) bridges them:
-
-```kotlin
-val (document, rangeMarkers) = readAction {
-  Cancellation.ensureActive()
-  val rangeMarkers = mutableListOf<RangeMarker>()
-  val document = FileDocumentManager.getInstance().getDocument(file)
-    ?: mcpFail("Could not get document for $file")
-  /* …build markers… */
-  val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
-  rangeMarkers.add(rangeMarker)
-  document to rangeMarkers.toList()
-}
-```
-
-From [`TextToolset.kt:66-93`](src/com/intellij/mcpserver/toolsets/general/TextToolset.kt). Mutate in reverse order (
-`rangeMarkers.reversed()`) so earlier offsets remain valid; always call `marker.dispose()` when you're done with each marker.
 
 ---
 
@@ -652,7 +624,7 @@ Trimmed from [`AnalysisToolset.kt:141-271`](src/com/intellij/mcpserver/toolsets/
 ### 9.4 Cooperative cancellation
 
 Inside tight loops call `Cancellation.checkCancelled()` or `currentCoroutineContext().ensureActive()` so the client can cancel and timeouts
-fire promptly — see the `while` loop in [`TextToolset.kt:85-93`](src/com/intellij/mcpserver/toolsets/general/TextToolset.kt).
+fire promptly — see the indexed filename processing in [`SearchToolset.kt:346-348`](src/com/intellij/mcpserver/toolsets/general/SearchToolset.kt).
 
 ---
 
@@ -670,12 +642,12 @@ Accepts project-relative paths, `..`, absolute paths, `file://` / `jar://` / `jr
 When `throwWhenOutside = true` (the default), paths that escape the project root trigger an `McpExpectedError`. Usage:
 
 ```kotlin
-val resolvedPath = project.resolveInProject(pathInProject)
-val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-  ?: mcpFail("file not found: $pathInProject")
+val sourcePath = project.resolveInProject(operation.path)
+val sourceFile = findFile(localFileSystem, sourcePath, operation.path)
+if (sourceFile.isDirectory) mcpFail("Path is not a file: ${operation.path}")
 ```
 
-From [`TextToolset.kt:63-65`](src/com/intellij/mcpserver/toolsets/general/TextToolset.kt).
+From [`PatchToolset.kt:104-106`](src/com/intellij/mcpserver/toolsets/general/PatchToolset.kt).
 
 ### 10.2 `VirtualFile` resolution
 
@@ -758,7 +730,7 @@ registered in [`plugin.xml:61-64`](resources/META-INF/plugin.xml).
 ### 13.1 Tool names
 
 - The Kotlin method name becomes the wire name. Override via `@McpTool(name="...")` only when unavoidable.
-- Prefer snake_case verbs for new tools: `build_project`, `get_symbol_info`, `replace_text_in_file`.
+- Prefer snake_case verbs for new tools: `build_project`, `get_symbol_info`, `apply_patch`.
 - Add `@file:Suppress("FunctionName")` at the top of the file (see [
   `ReadToolset.kt:1`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt)) so Kotlin style warnings don't fire.
 

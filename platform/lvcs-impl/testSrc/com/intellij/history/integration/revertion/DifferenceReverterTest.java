@@ -273,7 +273,7 @@ public class DifferenceReverterTest extends IntegrationTestCase {
       toRevert.add(diffs.get(i));
     }
     if (diffsIndices.length == 0) toRevert = diffs;
-    new DifferenceReverter(myProject, getVcs(), myGateway, toRevert, () -> {
+    new DifferenceReverter(myProject, myGateway, toRevert, () -> {
       return "Revert";
     }).revert();
   }

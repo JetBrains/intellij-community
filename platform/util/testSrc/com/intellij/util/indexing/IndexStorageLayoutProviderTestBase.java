@@ -352,6 +352,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
         diffBuilder.differentiate(
           expectedInputData,
           (kind, key, value, _inputId) -> {
+            //it doesn't mean this is the only difference!
             fail("Shouldn't be any difference, but: " + kind + "(" + key + ", " + value + ")[" + _inputId + "]");
           });
       }

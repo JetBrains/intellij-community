@@ -6,13 +6,13 @@ import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.lspServerSupportFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Color
 import org.eclipse.lsp4j.ColorInformation
@@ -91,14 +91,10 @@ internal class LspDocumentColorTest {
   }
 
   private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {
-    repeat(3) {
+    waitUntilAssertSucceeds(message = "Inlays don't match expected") {
       codeInsightFixture.doHighlighting()
-      delay(100)
-      val actual = dumpInlays(sourceText)
-      if (actual.trim() == expected.trim()) return
+      assertEquals(expected.trim(), dumpInlays(sourceText).trim())
     }
-    val actual = dumpInlays(sourceText)
-    assertEquals(expected.trim(), actual.trim())
   }
 
   private fun dumpInlays(sourceText: String): String {

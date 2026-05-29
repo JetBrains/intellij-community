@@ -431,6 +431,10 @@ MarkdownFile
     PsiElement(Markdown:Markdown:HTML_BLOCK_CONTENT)('</table>')
   PsiWhiteSpace('\n')
   PsiWhiteSpace('\n')
+  ASTWrapperPsiElement(Markdown:Markdown:HTML_BLOCK)
+    PsiElement(Markdown:Markdown:HTML_BLOCK_CONTENT)('<!-- This is an HTML comment -->')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
   markdown: Markdown:SETEXT_2
     MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
       PsiElement(Markdown:Markdown:TEXT)('Horizontal rules')

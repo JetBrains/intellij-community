@@ -547,6 +547,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
+    <localInspection language="UAST" shortName="DebugOnlyTestExtension"
+                     groupPathKey="inspections.group.path"
+                     key="inspections.debug.only.test.extension.display.name" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.DebugOnlyTestExtensionInspection"/>
+
     <localInspection language="UAST"
                      key="inspection.potential.deadlock.during.service.init.display.name"
                      shortName="PotentialDeadlockInServiceInitialization"
@@ -622,6 +628,13 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.OptionalDependencyViaDependsTagInspection"
                      key="inspection.optional.dependency.declared.by.depends.tag.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.EmptyPluginXmlTagInspection"
+                     key="inspection.empty.plugin.xml.tag.name"/>
 
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
@@ -820,6 +833,10 @@
     <postStartupActivity implementation="org.jetbrains.idea.devkit.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
     <projectSettings service="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
     <applicationSettings service="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmCommandLinePatcher"/>
+    <executor implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmExecutor"/>
+    <programRunner implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmRunner"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

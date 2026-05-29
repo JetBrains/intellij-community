@@ -3,7 +3,6 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.EDT
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -18,7 +17,7 @@ internal class TrustedProjectStartupDialogTest {
   private val testRoot by tempPathFixture()
 
   @Test
-  @RegistryKey("trusted.project.dialog.has.cancel.button", "false")
+  @SystemProperty(TrustedProjectStartupDialog.TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY, "false")
   fun `trust project startup dialog ignores implicit cancel when cancel button is disabled`() = runBlocking(Dispatchers.EDT) {
     val dialog = createStartupDialog()
     try {
@@ -36,7 +35,7 @@ internal class TrustedProjectStartupDialogTest {
   }
 
   @Test
-  @RegistryKey("trusted.project.dialog.has.cancel.button", "true")
+  @SystemProperty(TrustedProjectStartupDialog.TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY, "true")
   fun `trust project startup dialog supports implicit cancel when cancel button is enabled`() = runBlocking(Dispatchers.EDT) {
     val dialog = createStartupDialog()
     try {

@@ -134,10 +134,6 @@ internal class ContentModuleDetectorImpl(
       when (entry) {
         is ModuleOutputEntry -> {
           val moduleName = entry.owner.moduleName
-          if (moduleName == "intellij.platform.commercial.verifier") {
-            // verifier is injected into every commercial plugin JAR, it doesn't belong to any specific plugin
-            return@mapNotNull null
-          }
           val key = ContentModuleInPlugin(pluginId, moduleName)
           val loadingRule = loadingRulesForContentModules[key] ?: RuntimeModuleLoadingRule.EMBEDDED
           val requiredIfAvailableId = requiredIfAvailableAttributeForContentModules[key]

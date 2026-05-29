@@ -1,10 +1,10 @@
 *:com.intellij.codeInsight.multiverse.EditorContextManager
 - *sf:Companion:com.intellij.codeInsight.multiverse.EditorContextManager$Companion
 - a:getCachedEditorContexts(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.multiverse.EditorSelectedContexts
-- s:getEditorContext(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContext
+- *s:getEditorContext(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContext
 - a:getEditorContexts(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.multiverse.EditorSelectedContexts
 - a:getEventFlow():kotlinx.coroutines.flow.Flow
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.EditorContextManager
+- *s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.EditorContextManager
 - a:setEditorContext(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.multiverse.EditorSelectedContexts):V
 *f:com.intellij.codeInsight.multiverse.EditorContextManager$ChangeEvent
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.multiverse.EditorSelectedContexts):V
@@ -34,7 +34,7 @@
 - a:closeEditorWindow():Z
 - a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
 - a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
-- s:getInstance():com.intellij.ide.lightEdit.LightEditService
+- *s:getInstance():com.intellij.ide.lightEdit.LightEditService
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
 - a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
@@ -99,9 +99,9 @@ com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
 *:com.intellij.ide.ui.ToolbarSettings
 - com.intellij.openapi.components.PersistentStateComponent
 - *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
-- sf:INCLUSION_STATE:java.lang.String
-- sf:ROLLBACK_ACTION_ID:java.lang.String
-- s:getInstance():com.intellij.ide.ui.ToolbarSettings
+- *sf:INCLUSION_STATE:java.lang.String
+- *sf:ROLLBACK_ACTION_ID:java.lang.String
+- *s:getInstance():com.intellij.ide.ui.ToolbarSettings
 - a:isAvailable():Z
 - a:isEnabled():Z
 - a:isVisible():Z
@@ -149,7 +149,7 @@ f:com.intellij.openapi.actionSystem.Presentation
 - a:getWrapsAtOffset(I):java.util.List
 - a:getWrapsInRange(I,I):java.util.List
 - a:hasWraps():Z
-- s:isCustomWrapsSupportEnabled():Z
+- *s:isCustomWrapsSupportEnabled():Z
 - a:runBatchMutation(kotlin.jvm.functions.Function1):java.lang.Object
 *f:com.intellij.openapi.editor.CustomWrapModel$Companion
 - f:isCustomWrapsSupportEnabled():Z
@@ -180,12 +180,12 @@ com.intellij.openapi.editor.EditorSettings
 - s:values():com.intellij.openapi.editor.EditorSettings$CaretEasing[]
 *:com.intellij.openapi.editor.EditorThreading
 - *sf:Companion:com.intellij.openapi.editor.EditorThreading$Companion
-- s:assertInteractionAllowed():V
-- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- *s:assertInteractionAllowed():V
+- *s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - a:doAssertInteractionAllowed():V
 - a:doCompute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - a:doRun(java.lang.Runnable):V
-- s:run(java.lang.Runnable):V
+- *s:run(java.lang.Runnable):V
 *f:com.intellij.openapi.editor.EditorThreading$Companion
 - f:assertInteractionAllowed():V
 - f:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object

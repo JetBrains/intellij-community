@@ -369,6 +369,34 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PEP 810: lazy import that is used must be preserved as-is.
+  public void testLazyImportPreserved() {
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
+  // PEP 810: unused lazy import is removed just like a regular one.
+  public void testLazyImportUnusedRemoved() {
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
+  // PEP 810: splitting `lazy from X import a, b` preserves the lazy prefix on every produced statement.
+  public void testLazyFromImportSplit() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
+  // PEP 810: two `lazy from X import ...` with the same source may be joined into one lazy statement.
+  public void testLazyFromImportsJoined() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
+  // PEP 810: lazy and non-lazy `from X import ...` with the same source must NOT be joined (different semantics).
+  public void testLazyAndNonLazyNotJoined() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
   private void doMultiFileTest() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

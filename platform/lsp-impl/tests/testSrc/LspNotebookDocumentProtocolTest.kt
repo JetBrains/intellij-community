@@ -34,6 +34,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.extensionPointFixture
@@ -42,8 +43,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.CodeActionKind
@@ -811,14 +810,10 @@ internal class LspNotebookDocumentProtocolTest {
     }
 
     private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {
-      repeat(3) {
+      waitUntilAssertSucceeds(message = "Inlays don't match expected") {
         codeInsightFixture.doHighlighting()
-        delay(100.milliseconds)
-        val actual = dumpInlays(sourceText)
-        if (actual.trim() == expected.trim()) return
+        assertEquals(expected.trim(), dumpInlays(sourceText).trim())
       }
-      val actual = dumpInlays(sourceText)
-      assertEquals(expected.trim(), actual.trim())
     }
 
     private fun dumpInlays(sourceText: String): String {
@@ -831,23 +826,12 @@ internal class LspNotebookDocumentProtocolTest {
     }
 
     private suspend fun checkFoldRegionsRetrying(expectedCount: Int, check: ((Array<FoldRegion>) -> Unit)? = null) {
-      repeat(30) {
-        delay(100.milliseconds)
-        val success = readAction {
+      waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
+        readAction {
           val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-          if (regions.size == expectedCount) {
-            check?.invoke(regions)
-            true
-          }
-          else {
-            false
-          }
+          assertEquals(expectedCount, regions.size)
+          check?.invoke(regions)
         }
-        if (success) return
-      }
-      readAction {
-        val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-        assertEquals(expectedCount, regions.size)
       }
     }
   }

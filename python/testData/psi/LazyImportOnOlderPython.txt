@@ -1,0 +1,26 @@
+PyFile:LazyImportOnOlderPython.py
+  PyImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:os
+      PyReferenceExpression: os
+        PsiElement(Py:IDENTIFIER)('os')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: path
+      PyReferenceExpression: os
+        PsiElement(Py:IDENTIFIER)('os')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('path')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:join
+      PyReferenceExpression: join
+        PsiElement(Py:IDENTIFIER)('join')

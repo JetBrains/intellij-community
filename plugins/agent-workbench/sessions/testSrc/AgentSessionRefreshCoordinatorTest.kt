@@ -121,7 +121,7 @@ class AgentSessionRefreshCoordinatorTest {
       provider = AgentSessionProvider.CODEX,
       supportsUpdates = true,
       updateEvents = flow {
-        emit(threadsChangedEvent())
+        emit(threadsChangedEvent(mayHaveChangedProjectFiles = true))
         emit(hintsChangedEvent(activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.NEEDS_INPUT)))
       },
     )
@@ -141,7 +141,80 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun sourceUpdateSchedulesVfsRefreshByDefault(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+  fun hintSourceUpdateWithProjectFileChangeEvidenceSchedulesVfsRefresh() = runBlocking(Dispatchers.Default) {
+    val vfsRefreshInvocations = AtomicInteger(0)
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(
+          hintsChangedEvent(
+            scopedPaths = setOf(PROJECT_PATH),
+            activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.READY),
+            mayHaveChangedProjectFiles = true,
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { vfsRefreshInvocations.get() == 1 }
+
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun sourceUpdateWithProjectFileChangeEvidenceSchedulesVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    val vfsRefreshInvocations = AtomicInteger(0)
+    val closedRefreshInvocations = AtomicInteger(0)
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow { emit(threadsChangedEvent(mayHaveChangedProjectFiles = true)) },
+      listFromClosedProject = { path ->
+        if (path == projectPath.toString()) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { closedRefreshInvocations.get() == 1 }
+
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun sourceUpdateWithoutProjectFileChangeEvidenceSkipsVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
     val projectPath = tempDir.resolve("project")
     Files.createDirectories(projectPath)
     val vfsRefreshInvocations = AtomicInteger(0)
@@ -179,7 +252,7 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition { closedRefreshInvocations.get() == 1 }
 
-      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(0)
     }
   }
 
@@ -192,7 +265,7 @@ class AgentSessionRefreshCoordinatorTest {
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       supportsUpdates = true,
-      updateEvents = flow { emit(threadsChangedEvent()) },
+      updateEvents = flow { emit(threadsChangedEvent(mayHaveChangedProjectFiles = true)) },
       listFromClosedProject = { path ->
         if (path == projectPath.toString()) {
           closedRefreshInvocations.incrementAndGet()

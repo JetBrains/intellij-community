@@ -1,13 +1,4 @@
 inputs:
-  os:
-    description: 'linux, windows or mac'
-    required: true
-  arch:
-    description: 'x64 or aarch64'
-    required: true
-  extension:
-    description: 'tar.gz, exe or sit'
-    required: true
   product:
     description: 'a product, available options: intellij_idea, pycharm'
     required: true
@@ -15,11 +6,61 @@ inputs:
     default: ''
     description: 'any custom system properties'
     required: false
+  swap_size:
+    default: '30G'
+    description: 'swap file size (e.g. 16G, 30G)'
+    required: false
 runs:
   using: composite
   steps:
+    - name: Free disk space
+      shell: bash
+      # language=bash
+      run: |
+        echo "Disk space before cleanup:"
+        df -h /
+        # Pre-installed toolchains the IDE build doesn't need (everything runs inside Docker).
+        sudo rm -rf \
+          /usr/share/dotnet \
+          /usr/share/swift \
+          /usr/share/miniconda \
+          /usr/local/lib/android \
+          /usr/local/share/boost \
+          /usr/local/share/powershell \
+          /usr/local/share/chromium \
+          /usr/local/lib/node_modules \
+          /opt/ghc \
+          /opt/hostedtoolcache/CodeQL \
+          /opt/hostedtoolcache/Ruby \
+          /opt/hostedtoolcache/PyPy \
+          /opt/hostedtoolcache/Python \
+          /opt/hostedtoolcache/go \
+          /opt/hostedtoolcache/node \
+          /opt/microsoft \
+          /opt/google \
+          /imagegeneration \
+          /var/cache/apt/archives
+        sudo apt-get -y clean
+        # Pre-pulled images on the hosted runner are unrelated to the build.
+        docker image prune --all --force || true
+        docker builder prune --all --force || true
+        echo "Disk space after cleanup:"
+        df -h /
+    - name: Expand swap
+      shell: bash
+      # language=bash
+      run: |
+        # The IDE build may hit OOM (exit 137) with the default 16 GB RAM and 4 GB swap.
+        # /mnt on hosted runners has ~70 GB free, so move swap there and grow it.
+        sudo swapoff -a || true
+        sudo rm -f /mnt/swapfile /swapfile
+        sudo fallocate -l ${{inputs.swap_size}} /mnt/swapfile
+        sudo chmod 600 /mnt/swapfile
+        sudo mkswap /mnt/swapfile
+        sudo swapon /mnt/swapfile
+        free -h
     - name: Checkout JetBrains/android
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         repository: JetBrains/android
         path: android
@@ -28,7 +69,7 @@ runs:
       shell: bash
       # language=bash
       run: docker build . --target ${{inputs.product}} --tag ${{inputs.product}}
-    - name: Build ${{inputs.arch}}.${{inputs.extension}}
+    - name: Build
       shell: bash
       # language=bash
-      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}} -Dintellij.build.target.arch=${{inputs.arch}} ${{inputs.system_properties}}
+      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} ${{inputs.system_properties}}

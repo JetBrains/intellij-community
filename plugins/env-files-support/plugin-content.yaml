@@ -4,6 +4,7 @@
   - name: intellij.dotenv.php
   - name: intellij.dotenv.go
   - name: intellij.dotenv.ruby
+  - name: intellij.dotenv.rust
   - name: intellij.dotenv.docker
   - name: intellij.dotenv.ultimate
   contentModules:

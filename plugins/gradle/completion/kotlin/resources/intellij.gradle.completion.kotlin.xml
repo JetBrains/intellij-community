@@ -12,8 +12,12 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin"
-                            id="KotlinGradleScriptCompletionContributor"
+                            id="KotlinGradleCleanupCompletionContributor"
                             order="first, before KotlinCompletionContributor, before liveTemplates"
+                            implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleCleanupCompletionContributor"/>
+    <completion.contributor language="kotlin"
+                            id="KotlinGradleScriptCompletionContributor"
+                            order="first, after KotlinGradleCleanupCompletionContributor"
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
     <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleDependenciesAutoPopupHandler"
                   id="KotlinGradleDependenciesAutoPopupHandler"/>

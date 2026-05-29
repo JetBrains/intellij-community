@@ -13,8 +13,6 @@ import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 
-private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
-
 internal suspend fun inferModuleSources(
   layout: PluginLayout,
   addedModules: MutableSet<String>,
@@ -28,7 +26,7 @@ internal suspend fun inferModuleSources(
   // for now, check only direct dependencies of the main plugin module
   val childPrefix = "${layout.mainModule.removeSuffix(".plugin")}."
   for (name in helper.getModuleDependencies(layout.mainModule)) {
-    if ((!name.startsWith(childPrefix) && name != VERIFIER_MODULE)) {
+    if (!name.startsWith(childPrefix)) {
       continue
     }
 
@@ -42,23 +40,6 @@ internal suspend fun inferModuleSources(
     }
 
     jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
-  }
-
-  // check verifier in all included modules
-  val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
-  layout.includedModules.mapTo(effectiveIncludedNonMainModules) { it.moduleName }
-  effectiveIncludedNonMainModules.remove(layout.mainModule)
-  effectiveIncludedNonMainModules.addAll(addedModules)
-  for (moduleName in effectiveIncludedNonMainModules) {
-    for (name in helper.getModuleDependencies(moduleName)) {
-      if (name != VERIFIER_MODULE || addedModules.contains(name)) {
-        continue
-      }
-
-      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
-      addedModules.add(name)
-      jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
-    }
   }
 }
 
@@ -203,7 +184,6 @@ private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontend
 
 private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, layout: PluginLayout, moduleName: String, context: BuildContext): Boolean {
   return when {
-    moduleName == VERIFIER_MODULE -> false
     platformLayout.includedModules.contains(moduleItem) -> true
     platformLayout.includedModules.any { it.moduleName == moduleName } -> true
     else -> context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->

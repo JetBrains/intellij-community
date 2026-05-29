@@ -2,7 +2,6 @@
 package com.intellij.history.core
 
 import com.intellij.history.ActivityId
-import com.intellij.history.ByteContent
 import com.intellij.history.core.changes.Change
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.ChangeVisitor
@@ -134,17 +133,6 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
   @TestOnly
   fun putLabelInTests(c: PutLabelChange) {
     addChange(c)
-  }
-
-  @ApiStatus.Internal
-  fun getByteContentBefore(root: RootEntry, path: String, changeId: Long): ByteContent {
-    val rootCopy = root.copy()
-    val newPath = revertUpToChange(rootCopy, changeId, path, false, false)
-    val entry = rootCopy.findEntry(newPath)
-    if (entry == null) return ByteContent(false, null)
-    if (entry.isDirectory) return ByteContent(true, null)
-
-    return ByteContent(false, entry.content.bytesIfAvailable)
   }
 
   @ApiStatus.Internal

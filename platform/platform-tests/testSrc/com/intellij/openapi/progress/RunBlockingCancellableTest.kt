@@ -96,7 +96,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `with indicator non-cancellable context`() {
-    val modalityState = ModalityStateEx()
+    val modalityState = ModalityStateEx(listOf<Any>())
     withIndicator(EmptyProgressIndicator(modalityState)) {
       ProgressManager.getInstance().computeInNonCancelableSection<_, Nothing> {
         assertSame(modalityState, ProgressManager.getInstance().currentProgressModality)

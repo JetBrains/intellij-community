@@ -9,6 +9,9 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
@@ -19,6 +22,10 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.Time
 import com.intellij.util.application
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val PROMO_SHOWN_KEY = "promo.notification.automatic.error.report.shown"
 internal const val FREEZE_THRESHOLD = 3
@@ -29,7 +36,7 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (!isEligibleAsync()) {
+    if (!isEligible()) {
       thisLogger().debug("User is not eligible for promo, do not wait for idle")
       return
     }
@@ -37,41 +44,36 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
     lateinit var token: AccessToken
     val idleTimeoutMs = Registry.intValue("platform.feedback.time.to.show.notification", 600) * Time.SECOND
     token = IdleTracker.getInstance().addIdleListener(idleTimeoutMs) {
-      if (showNotification(project)) {
-        token.finish()
-      }
+      project.service<ErrorReportPromoterService>().processIdleEvent(project, token)
+    }
+  }
+}
+
+private suspend fun isEligible(): Boolean {
+  return ExceptionAutoReportUtil.isAutoReportVisible()
+         && !ExceptionAutoReportUtil.isAutoReportAllowedByUser()
+         && !isAlreadyShown()
+}
+
+private fun isAlreadyShown(): Boolean {
+  return PropertiesComponent.getInstance().getBoolean(PROMO_SHOWN_KEY, false)
+}
+
+@Service(Service.Level.PROJECT)
+private class ErrorReportPromoterService(private val coroutineScope: CoroutineScope) {
+  fun processIdleEvent(project: Project, token: AccessToken) {
+    coroutineScope.launch {
+      showNotification(project, token)
     }
   }
 
-  private suspend fun isEligibleAsync(): Boolean {
-    return ExceptionAutoReportUtil.isAutoReportVisibleAsync()
-           && isEligibleAfterVisibilityCheck()
-  }
+  private suspend fun showNotification(project: Project, token: AccessToken) {
+    if (!isEligible()) {
+      token.finish()
+      return
+    }
 
-  private fun isEligible(): Boolean {
-    return ExceptionAutoReportUtil.isAutoReportVisible
-           && isEligibleAfterVisibilityCheck()
-  }
-
-  private fun isEligibleAfterVisibilityCheck(): Boolean {
-    return !ExceptionAutoReportUtil.isAutoReportAllowedByUser()
-           && !isAlreadyShown()
-  }
-
-  private fun isAlreadyShown(): Boolean {
-    return PropertiesComponent.getInstance().getBoolean(PROMO_SHOWN_KEY, false)
-  }
-
-  private fun shouldOfferReporting(): Boolean {
-    val freezeCount = PropertiesComponent.getInstance().getInt(FREEZE_COUNT_KEY, 0)
-    thisLogger().debug("Freeze count: $freezeCount, threshold: $FREEZE_THRESHOLD")
-
-    return freezeCount >= FREEZE_THRESHOLD
-  }
-
-  private fun showNotification(project: Project): Boolean {
-    if (project.isDisposed || !isEligible()) return true
-    if (!shouldOfferReporting()) return false // not yet, try again later
+    if (!shouldOfferReporting()) return // not yet, try again later
 
     PropertiesComponent.getInstance().setValue(PROMO_SHOWN_KEY, true)
 
@@ -82,20 +84,31 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
       .setIcon(AllIcons.Debugger.AttachToProcess)
       .setSuggestionType(true)
       .addAction(NotificationAction.createExpiring(PerformanceTestingBundle.message("promo.error.report.action.enable")) { _, _ ->
-        ExceptionAutoReportUtil.enablingAutoReportOffered(true)
+        coroutineScope.launch {
+          ExceptionAutoReportUtil.enablingAutoReportOffered(true)
 
-        Notification("Error Report",
-                     PerformanceTestingBundle.message("auto.report.enabled.title"),
-                     PerformanceTestingBundle.message("auto.report.enabled.text"),
-                     NotificationType.INFORMATION)
-          .addAction(NotificationAction.createSimple(PerformanceTestingBundle.message("auto.report.enabled.settings.action")) {
-            AppUIUtil.confirmConsentOptions(AppUIUtil.loadConsentsForEditing())
-          })
-          .notify(project)
+          withContext(Dispatchers.EDT) {
+            Notification("Error Report",
+                         PerformanceTestingBundle.message("auto.report.enabled.title"),
+                         PerformanceTestingBundle.message("auto.report.enabled.text"),
+                         NotificationType.INFORMATION)
+              .addAction(NotificationAction.createSimple(PerformanceTestingBundle.message("auto.report.enabled.settings.action")) {
+                AppUIUtil.confirmConsentOptions(AppUIUtil.loadConsentsForEditing())
+              })
+              .notify(project)
+          }
+        }
       })
       .addAction(NotificationAction.createExpiring(PerformanceTestingBundle.message("promo.error.report.action.no.thanks")) { _, _ -> })
 
     notification.notify(project)
-    return true
+    token.finish()
+  }
+
+  private fun shouldOfferReporting(): Boolean {
+    val freezeCount = PropertiesComponent.getInstance().getInt(FREEZE_COUNT_KEY, 0)
+    thisLogger().debug("Freeze count: $freezeCount, threshold: $FREEZE_THRESHOLD")
+
+    return freezeCount >= FREEZE_THRESHOLD
   }
 }

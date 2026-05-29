@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.main.kts.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />

@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports class references that will resolve to a <b>different class at runtime</b> than at compile time.
+<br><br>
+<b>Example:</b>
+<pre>
+  MainModule
+  ├── DepModule
+  │   └── Av1.jar  ← my.example.A (will be used at runtime!)
+  └── Av2.jar      ← my.example.A (used at compile time)
+</pre>
+The IDE resolves <code>A</code> from <code>Av2</code>, but the JVM loads it from <code>Av1</code>.
+Calling a method that exists only in <code>Av2</code> causes <code>NoSuchMethodError</code>.
+<br><br>
+<b>Fix:</b> move <code>Av2</code> before <code>DepModule</code> so both compile and runtime use the same class.
+</body>
+</html>

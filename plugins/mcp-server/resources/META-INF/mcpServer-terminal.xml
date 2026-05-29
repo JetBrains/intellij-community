@@ -1,9 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-      <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.terminal.TerminalToolset" />
-    </extensions>
-    <projectListeners>
-      <listener class="com.intellij.mcpserver.impl.McpServerTerminalPromotionNotifier"
-                topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
-    </projectListeners>
-</idea-plugin>

@@ -140,6 +140,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
 import com.intellij.psi.javadoc.PsiMarkdownReferenceLabel;
 import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
@@ -1944,7 +1945,8 @@ public class JavaDocInfoGenerator {
             StringBuilder value = new StringBuilder();
             generateLiteralValue(value, tag, false);
             int offset = !value.isEmpty() && value.charAt(0) == ' ' ? 1 : 0;
-            htmlCodeBlockContents.append(value, offset, value.length());
+            String escapedValue = StringUtil.escapeXmlEntities(value.toString());
+            htmlCodeBlockContents.append(escapedValue, offset, escapedValue.length());
             continue;
           }
           else {
@@ -1986,6 +1988,9 @@ public class JavaDocInfoGenerator {
       }
       else if (element instanceof PsiMarkdownReferenceLink link) {
         generateMarkdownLinkValue(link, subBuffer);
+      }
+      else if (element instanceof PsiMarkdownLink link) {
+        collectElementText(subBuffer, link);
       }
       else {
         String text;
@@ -2437,7 +2442,7 @@ public class JavaDocInfoGenerator {
     PsiElement label = referenceLink.getLabel();
 
     String referenceText = reference != null ? reference.getText() : "";
-    String labelText = label instanceof PsiMarkdownReferenceLabel ? label.getText() : null;
+    String labelText = label instanceof PsiMarkdownReferenceLabel referenceLabel ? referenceLabel.getLabelText() : null;
 
     // JEP 467 requires reference brackets to be escaped, remove the escape to match the reference
     referenceText = referenceText.replace("\\[", "[").replace("\\]", "]");

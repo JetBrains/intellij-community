@@ -24,6 +24,15 @@ class ClassWithApiInternalCompanion private constructor() {
   companion object
 }
 
+interface InterfaceWithApiInternalCompanionJvmStatic {
+  @Internal
+  companion object {
+    @JvmStatic
+    fun foo() {
+    }
+  }
+}
+
 class ClassWithApiExperimentalCompanion private constructor() {
   @Experimental
   companion object

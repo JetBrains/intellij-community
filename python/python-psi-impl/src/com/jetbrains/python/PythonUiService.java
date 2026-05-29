@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -86,6 +87,10 @@ public class PythonUiService {
   }
 
   public @Nullable LocalQuickFix createPyRenameElementQuickFix(final @NotNull PsiElement element) {
+    return null;
+  }
+
+  public @Nullable LocalQuickFix createInterpreterSettingsQuickFix(@Nullable Module module) {
     return null;
   }
 

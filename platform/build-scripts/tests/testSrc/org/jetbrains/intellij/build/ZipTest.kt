@@ -38,6 +38,7 @@ import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.io.path.createDirectories
 import kotlin.io.path.name
 import kotlin.random.Random
@@ -602,6 +603,42 @@ class ZipTest {
   }
 
   @Test
+  fun `jdk and hash map zip file read large deflated entry equally`(@TempDir tempDir: Path) {
+    val archiveFile = tempDir.resolve("archive.zip")
+    val largeEntryName = "native/linux-x86_64/libtest.so"
+    val smallerEntryName = "native/win-x86_64/OpenConsole.exe"
+    val random = Random(42)
+    val largeData = random.nextBytes(1_464_896)
+    largeData.fill(0, 0, largeData.size / 5)
+    val smallerData = random.nextBytes(1_162_112)
+    smallerData.fill(0, 0, smallerData.size / 5)
+
+    ZipOutputStream(Files.newOutputStream(archiveFile)).use { outputStream ->
+      outputStream.putNextEntry(ZipEntry(largeEntryName))
+      outputStream.write(largeData)
+      outputStream.closeEntry()
+
+      outputStream.putNextEntry(ZipEntry(smallerEntryName))
+      outputStream.write(smallerData)
+      outputStream.closeEntry()
+    }
+
+    java.util.zip.ZipFile(archiveFile.toString()).use { jdkZipFile ->
+      val largeEntry = jdkZipFile.getEntry(largeEntryName)
+      val smallerEntry = jdkZipFile.getEntry(smallerEntryName)
+      assertThat(largeEntry).isNotNull()
+      assertThat(smallerEntry).isNotNull()
+      assertThat(jdkZipFile.getInputStream(largeEntry).readAllBytes()).isEqualTo(largeData)
+      assertThat(jdkZipFile.getInputStream(smallerEntry).readAllBytes()).isEqualTo(smallerData)
+    }
+
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.readEntry(largeEntryName)).isEqualTo(largeData)
+      assertThat(zipFile.readEntry(smallerEntryName)).isEqualTo(smallerData)
+    }
+  }
+
+  @Test
   fun `write all dir entries`(@TempDir tempDir: Path) {
     val dir = tempDir.resolve("dir")
     Files.createDirectories(dir)
@@ -752,6 +789,17 @@ private fun computeZipEntryCrc32(zipFile: java.util.zip.ZipFile, entry: ZipEntry
     }
   }
   return crc.value
+}
+
+private fun HashMapZipFile.readEntry(name: String): ByteArray {
+  val byteBuffer = getByteBuffer(name)
+  assertThat(byteBuffer).describedAs("Entry $name").isNotNull()
+  try {
+    return byteBuffer!!.toByteArray()
+  }
+  finally {
+    releaseBuffer(byteBuffer!!)
+  }
 }
 
 internal class TestEntryItem(

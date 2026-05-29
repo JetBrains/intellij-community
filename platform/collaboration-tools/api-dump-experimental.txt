@@ -727,7 +727,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *f:com.intellij.collaboration.ui.codereview.details.CommitRenderer
 - javax.swing.ListCellRenderer
 - *sf:Companion:com.intellij.collaboration.ui.codereview.details.CommitRenderer$Companion
-- sf:createCommitRenderer(I,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
+- *sf:createCommitRenderer(I,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 *f:com.intellij.collaboration.ui.codereview.details.CommitRenderer$Companion
 - f:createCommitRenderer(I,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
@@ -1235,7 +1235,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - s:values():com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment[]
 *:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion
-- sf:ERROR_ACTION_HREF:java.lang.String
+- *sf:ERROR_ACTION_HREF:java.lang.String
 - a:getErrorAction(java.lang.Object):javax.swing.Action
 - a:getErrorTitle(java.lang.Object):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion

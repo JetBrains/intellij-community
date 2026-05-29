@@ -134,7 +134,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
     List<CompositeElement> result = new ArrayList<>();
     result.add(this);
 
-    acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    acceptTree(new RecursiveTreeElementWalkingVisitor(this) {
       @Override
       public void visitComposite(CompositeElement node) {
         CompositeElement parent = node.getTreeParent();

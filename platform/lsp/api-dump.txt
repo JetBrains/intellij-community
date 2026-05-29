@@ -198,6 +198,7 @@ c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
 - p:isStrikeout(org.eclipse.lsp4j.CompletionItem):Z
 - isTriggerCharacterRespected(C):Z
 - renderLookupElement(org.eclipse.lsp4j.CompletionItem,com.intellij.codeInsight.lookup.LookupElementPresentation):V
+- shouldResolveCompletionItem(org.eclipse.lsp4j.CompletionItem):Z
 - shouldRunCodeCompletion(com.intellij.codeInsight.completion.CompletionParameters):Z
 c:com.intellij.platform.lsp.api.customization.LspCustomization
 - <init>():V

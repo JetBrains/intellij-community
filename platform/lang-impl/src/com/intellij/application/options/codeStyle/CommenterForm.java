@@ -34,6 +34,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
   private final JBCheckBox myLineCommentAddSpaceOnReformatCb;
   private final JBCheckBox myBlockCommentAtFirstJBCheckBox;
   private final JBCheckBox myBlockCommentAddSpaceCb;
+  private final JBCheckBox myDocumentationLineCommentPrefered;
 
   private final Language myLanguage;
 
@@ -48,7 +49,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
       // >>> IMPORTANT!! <<<
       // DO NOT EDIT OR ADD ANY CODE HERE!
       myCommenterPanel = new JPanel();
-      myCommenterPanel.setLayout(new GridLayoutManager(6, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myCommenterPanel.setLayout(new GridLayoutManager(7, 1, new Insets(0, 0, 0, 0), -1, -1));
       myLineCommentAtFirstColumnCb = new JBCheckBox();
       this.$$$loadButtonText$$$(myLineCommentAtFirstColumnCb,
                                 this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "checkbox.line.comment.at.first.column"));
@@ -57,7 +58,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
                                                GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
                                                false));
       final Spacer spacer1 = new Spacer();
-      myCommenterPanel.add(spacer1, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+      myCommenterPanel.add(spacer1, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                         GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
       myLineCommentAddSpaceCb = new JBCheckBox();
       this.$$$loadButtonText$$$(myLineCommentAddSpaceCb,
@@ -80,11 +81,19 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
                                                GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
                                                false));
       myBlockCommentAddSpaceCb = new JBCheckBox();
+      myBlockCommentAddSpaceCb.setEnabled(true);
       this.$$$loadButtonText$$$(myBlockCommentAddSpaceCb,
                                 this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "checkbox.block.comment.add.space"));
       myCommenterPanel.add(myBlockCommentAddSpaceCb, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                                                          GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
                                                                          null, null, null, 0, false));
+      myDocumentationLineCommentPrefered = new JBCheckBox();
+      this.$$$loadButtonText$$$(myDocumentationLineCommentPrefered,
+                                this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "checkbox.documentation.line.comment"));
+      myCommenterPanel.add(myDocumentationLineCommentPrefered,
+                           new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                               GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                               false));
     }
     if (title != null) {
       myCommenterPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
@@ -166,6 +175,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
     myLineCommentAddSpaceOnReformatCb.setSelected(langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT);
 
     myBlockCommentAddSpaceCb.setSelected(langSettings.BLOCK_COMMENT_ADD_SPACE);
+    myDocumentationLineCommentPrefered.setSelected(langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED);
   }
 
 
@@ -176,6 +186,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
     langSettings.LINE_COMMENT_ADD_SPACE = myLineCommentAddSpaceCb.isSelected();
     langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT = myLineCommentAddSpaceOnReformatCb.isSelected();
     langSettings.BLOCK_COMMENT_ADD_SPACE = myBlockCommentAddSpaceCb.isSelected();
+    langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED = myDocumentationLineCommentPrefered.isSelected();
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
@@ -185,6 +196,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
            || myLineCommentAddSpaceCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE
            || myBlockCommentAddSpaceCb.isSelected() != langSettings.BLOCK_COMMENT_ADD_SPACE
            || myLineCommentAddSpaceOnReformatCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT
+           || myDocumentationLineCommentPrefered.isSelected() != langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED
       ;
   }
 
@@ -215,6 +227,9 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
       else if (CommenterOption.BLOCK_COMMENT_ADD_SPACE.name().equals(optionName)) {
         myBlockCommentAddSpaceCb.setVisible(true);
       }
+      else if (CommenterOption.DOCUMENTATION_LINE_COMMENT_PREFERRED.name().equals(optionName)) {
+        myDocumentationLineCommentPrefered.setVisible(true);
+      }
     }
   }
 
@@ -224,6 +239,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
     myBlockCommentAtFirstJBCheckBox.setVisible(isVisible);
     myBlockCommentAddSpaceCb.setVisible(isVisible);
     myLineCommentAddSpaceOnReformatCb.setVisible(isVisible);
+    myDocumentationLineCommentPrefered.setVisible(isVisible);
   }
 
   private void customizeSettings() {
@@ -238,6 +254,7 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
       || myLineCommentAddSpaceOnReformatCb.isVisible()
       || myBlockCommentAtFirstJBCheckBox.isVisible()
       || myBlockCommentAddSpaceCb.isVisible()
+      || myDocumentationLineCommentPrefered.isVisible()
     );
   }
 }

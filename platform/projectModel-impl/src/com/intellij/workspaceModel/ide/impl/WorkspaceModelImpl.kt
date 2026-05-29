@@ -46,6 +46,7 @@ import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.ui.EDT
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -479,7 +480,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
   override suspend fun awaitSynchronizationWithJpsModel() {
-    if (ModalityState.current() != ModalityState.nonModal()) {
+    if (EDT.isCurrentThreadEdt() && ModalityState.current() != ModalityState.nonModal()) {
       throw IllegalStateException("awaitSynchronizationWithJpsModel() can only be called in non-modal context. Current context: ${ModalityState.current()}")
     }
     GlobalWorkspaceModel.getInstance(LocalEelMachine).awaitSynchronizationWithJpsModel()

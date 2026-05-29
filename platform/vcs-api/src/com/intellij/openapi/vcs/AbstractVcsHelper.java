@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
@@ -79,27 +79,27 @@ public abstract class AbstractVcsHelper {
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
    * Assumes all files are under the same VCS.
-   *
-   * @param files the files to show in the merge dialog.
-   * @param provider MergeProvider to be used for merging.
-   * @param mergeDialogCustomizer custom container of titles, descriptions and messages for the merge dialog.
-   * @return changed files for which the merge was actually performed.
+   * <p>
+   * Returns a result containing both the processed files and
+   * whether the user explicitly accepted and finished the merge (vs just closing the dialog).
    */
-  public abstract @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
+  public abstract @NotNull MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files,
+                                                                       @NotNull MergeProvider provider,
+                                                                       @NotNull MergeDialogCustomizer mergeDialogCustomizer);
 
   /**
-   * {@link #showMergeDialog(List, MergeProvider, MergeDialogCustomizer)} without description.
+   * {@link #showMergeDialogWithResult(List, MergeProvider, MergeDialogCustomizer)} with a default customizer.
    */
-  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
-    return showMergeDialog(files, provider, provider.createDefaultMergeDialogCustomizer());
+  public final @NotNull MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files,
+                                                                    @NotNull MergeProvider provider) {
+    return showMergeDialogWithResult(files, provider, provider.createDefaultMergeDialogCustomizer());
   }
 
   /**
-   * {@link #showMergeDialog(java.util.List, MergeProvider)} without description and with default merge provider
-   * for the current VCS.
+   * {@link #showMergeDialogWithResult(List, MergeProvider)} with a default merge provider for the current VCS.
    */
-  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files) {
-    if (files.isEmpty()) return Collections.emptyList();
+  public final @NotNull MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files) {
+    if (files.isEmpty()) return EmptyMergeDialogResult.INSTANCE;
     MergeProvider provider = null;
     for (VirtualFile virtualFile : files) {
       final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
@@ -108,8 +108,40 @@ public abstract class AbstractVcsHelper {
         if (provider != null) break;
       }
     }
-    if (provider == null) return Collections.emptyList();
-    return showMergeDialog(files, provider);
+    if (provider == null) return EmptyMergeDialogResult.INSTANCE;
+    return showMergeDialogWithResult(files, provider);
+  }
+
+  /**
+   * @deprecated Use {@link #showMergeDialogWithResult(List, MergeProvider)} instead.
+   */
+  @Deprecated
+  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
+    return showMergeDialogWithResult(files, provider).getProcessedFiles();
+  }
+
+  /**
+   * @deprecated Use {@link #showMergeDialogWithResult(List)} instead.
+   */
+  @Deprecated
+  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files) {
+    return showMergeDialogWithResult(files).getProcessedFiles();
+  }
+
+  public interface MergeDialogResult {
+    @NotNull List<VirtualFile> getProcessedFiles();
+
+    boolean shouldFinishMerge();
+  }
+
+  private enum EmptyMergeDialogResult implements MergeDialogResult {
+    INSTANCE;
+
+    @Override
+    public @NotNull List<VirtualFile> getProcessedFiles() { return Collections.emptyList(); }
+
+    @Override
+    public boolean shouldFinishMerge() { return true; }
   }
 
   public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs);

@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Files
@@ -88,8 +89,10 @@ internal class CodexRolloutParser(
     }
 
     return ParsedRolloutThread(
+      path = path,
       normalizedCwd = normalizedCwd,
       parentThreadId = state.parentThreadId,
+      projectFilesChangedAt = state.projectFilesChangedAt,
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -104,6 +107,7 @@ internal class CodexRolloutParser(
         activity = activity,
         requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
         summaryActivity = summaryActivity,
+        usageSnapshots = listOfNotNull(state.usageSnapshot),
       ),
     )
   }
@@ -138,6 +142,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   }
   parseState.parentThreadId = parseState.parentThreadId ?: event.parentThreadId
   parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
+  parseState.modelId = event.payloadModel ?: parseState.modelId
 
   val eventTimestamp = event.timestampMs
   when (event.topLevelType) {
@@ -170,6 +175,17 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
         }
 
+        "tokencount" -> {
+          event.payloadTokenUsage?.let { usageSnapshot ->
+            parseState.usageSnapshot = if (usageSnapshot.modelId != null || parseState.modelId == null) {
+              usageSnapshot
+            }
+            else {
+              usageSnapshot.copy(modelId = parseState.modelId)
+            }
+          }
+        }
+
         "agentmessage" -> {
           parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
         }
@@ -186,12 +202,18 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           parseState.markPendingApproval(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
         }
 
-        "execcommandbegin", "patchapplybegin" -> {
+        in PROJECT_MUTATING_BEGIN_EVENT_TYPES -> {
           parseState.clearPendingApprovalForStartedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+          parseState.markPendingFunctionCall(
+            eventTimestamp = eventTimestamp,
+            callId = event.payloadCallId,
+            turnId = event.payloadTurnId,
+            projectMutating = true,
+          )
         }
 
-        "execcommandend", "patchapplyend" -> {
+        in PROJECT_MUTATING_END_EVENT_TYPES -> {
+          parseState.markProjectFilesChanged(eventTimestamp)
           parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
         }
 
@@ -235,17 +257,24 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
                 eventTimestamp = eventTimestamp,
                 callId = event.payloadCallId,
                 turnId = event.payloadTurnId,
+                projectMutating = isProjectMutatingFunctionCall(event),
               )
             }
           }
           else {
-            parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+            parseState.markPendingFunctionCall(
+              eventTimestamp = eventTimestamp,
+              callId = event.payloadCallId,
+              turnId = event.payloadTurnId,
+              projectMutating = isProjectMutatingFunctionCall(event),
+            )
           }
         }
 
         "functioncalloutput" -> {
           event.payloadCallId?.let(parseState.pendingUserInputByCallId::remove)
           event.payloadCallId?.let(parseState.pendingApprovalByCallId::remove)
+          parseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
       }
@@ -268,6 +297,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var payloadItemType: String? = null
     var payloadThreadName: String? = null
     var payloadTurnId: String? = null
+    var payloadModel: String? = null
+    var payloadTokenUsage: AgentSessionUsageSnapshot? = null
     var sessionId: String? = null
     var sessionCwd: String? = null
     var sessionTimestampMs: Long? = null
@@ -292,6 +323,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "item" -> payloadItemType = parseRolloutItemType(parser)
                 "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
                 "turn_id", "turnId" -> payloadTurnId = readStringOrNull(parser)
+                "model" -> payloadModel = readStringOrNull(parser)
+                "info" -> payloadTokenUsage = parseTokenUsageSnapshot(parser, payloadModel)
                 "id" -> sessionId = readStringOrNull(parser)
                 "cwd" -> sessionCwd = readStringOrNull(parser)
                 "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
@@ -334,6 +367,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       payloadItemType = payloadItemType,
       payloadThreadName = payloadThreadName,
       payloadTurnId = payloadTurnId,
+      payloadModel = payloadModel,
+      payloadTokenUsage = payloadTokenUsage,
       sessionId = sessionId,
       sessionCwd = sessionCwd,
       sessionTimestampMs = sessionTimestampMs,
@@ -348,8 +383,10 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
 }
 
 internal data class ParsedRolloutThread(
+  @JvmField val path: Path,
   @JvmField val normalizedCwd: String,
   @JvmField val parentThreadId: String?,
+  @JvmField val projectFilesChangedAt: Long,
   @JvmField val thread: CodexBackendThread,
 )
 
@@ -365,6 +402,8 @@ private data class RolloutEvent(
   @JvmField val payloadItemType: String?,
   @JvmField val payloadThreadName: String?,
   @JvmField val payloadTurnId: String?,
+  @JvmField val payloadModel: String?,
+  @JvmField val payloadTokenUsage: AgentSessionUsageSnapshot?,
   @JvmField val sessionId: String?,
   @JvmField val sessionCwd: String?,
   @JvmField val sessionTimestampMs: Long?,
@@ -380,6 +419,7 @@ private data class RolloutParseState(
   @JvmField var parentThreadId: String? = null,
   @JvmField var gitBranch: String? = null,
   @JvmField var title: String? = null,
+  @JvmField var modelId: String? = null,
   @JvmField var updatedAt: Long = 0L,
   @JvmField var processing: Boolean = false,
   @JvmField var processingTurnId: String? = null,
@@ -387,6 +427,8 @@ private data class RolloutParseState(
   @JvmField var latestUserMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
+  @JvmField var usageSnapshot: AgentSessionUsageSnapshot? = null,
+  @JvmField var projectFilesChangedAt: Long = Long.MIN_VALUE,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
   @JvmField val pendingApprovalByCallId: LinkedHashMap<String, PendingApproval> = LinkedHashMap(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
@@ -403,6 +445,7 @@ private data class PendingApproval(
 private data class PendingFunctionCall(
   @JvmField val updatedAt: Long,
   @JvmField val turnId: String?,
+  @JvmField val projectMutating: Boolean,
 )
 
 private fun shouldClearProcessingTurn(parseState: RolloutParseState, completedTurnId: String?): Boolean {
@@ -429,12 +472,27 @@ private fun RolloutParseState.markPendingApproval(eventTimestamp: Long?, callId:
   }
 }
 
-private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?) {
+private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?, projectMutating: Boolean) {
   val resolvedTimestamp = eventTimestamp ?: updatedAt
   val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
   val previous = pendingFunctionCallByCallId[resolvedCallId]
   if (previous == null || resolvedTimestamp >= previous.updatedAt) {
-    pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(updatedAt = resolvedTimestamp, turnId = turnId)
+    pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(
+      updatedAt = resolvedTimestamp,
+      turnId = turnId,
+      projectMutating = projectMutating || previous?.projectMutating == true,
+    )
+  }
+}
+
+private fun RolloutParseState.markProjectFilesChanged(eventTimestamp: Long?) {
+  projectFilesChangedAt = maxTimestamp(projectFilesChangedAt, eventTimestamp ?: updatedAt)
+}
+
+private fun RolloutParseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp: Long?, callId: String?) {
+  val pendingFunctionCall = callId?.let(pendingFunctionCallByCallId::get) ?: return
+  if (pendingFunctionCall.projectMutating) {
+    markProjectFilesChanged(eventTimestamp)
   }
 }
 
@@ -498,6 +556,17 @@ private fun isToolFunctionCall(event: RolloutEvent): Boolean {
   return normalizeToken(event.payloadName) != "requestpermissions"
 }
 
+private fun isProjectMutatingFunctionCall(event: RolloutEvent): Boolean {
+  return normalizeToken(event.payloadName) in PROJECT_MUTATING_FUNCTION_CALL_NAMES
+}
+
+// Centralized so renames in the Codex CLI event taxonomy break in one place rather than silently
+// causing the project-file-change evidence path to no-op. Tokens are normalized: lowercased with
+// underscores/dashes removed by normalizeToken().
+private val PROJECT_MUTATING_BEGIN_EVENT_TYPES = setOf("execcommandbegin", "patchapplybegin")
+private val PROJECT_MUTATING_END_EVENT_TYPES = setOf("execcommandend", "patchapplyend")
+private val PROJECT_MUTATING_FUNCTION_CALL_NAMES = setOf("execcommand", "applypatch")
+
 private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
   val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return false
   return try {
@@ -515,6 +584,64 @@ private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
   }
   catch (_: Throwable) {
     false
+  }
+}
+
+private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): AgentSessionUsageSnapshot? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var totalInputTokens: Long? = null
+  var cachedInputTokens = 0L
+  var outputTokens = 0L
+  var reasoningOutputTokens = 0L
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "total_token_usage" -> {
+        if (parser.currentToken == JsonToken.START_OBJECT) {
+          forEachObjectField(parser) { usageField ->
+            when (usageField) {
+              "input_tokens" -> totalInputTokens = readLongOrNull(parser)
+              "cached_input_tokens" -> cachedInputTokens = readLongOrNull(parser) ?: 0L
+              "output_tokens" -> outputTokens = readLongOrNull(parser) ?: 0L
+              "reasoning_output_tokens" -> reasoningOutputTokens = readLongOrNull(parser) ?: 0L
+              else -> parser.skipChildren()
+            }
+            true
+          }
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val resolvedTotalInputTokens = totalInputTokens ?: return null
+  val resolvedInputTokens = maxOf(resolvedTotalInputTokens - cachedInputTokens, 0L)
+  return AgentSessionUsageSnapshot(
+    modelId = modelId,
+    inputTokens = resolvedInputTokens,
+    outputTokens = outputTokens + reasoningOutputTokens,
+    cacheReadTokens = cachedInputTokens,
+  )
+}
+
+private fun readLongOrNull(parser: JsonParser): Long? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_NUMBER_INT -> parser.longValue
+    JsonToken.VALUE_NUMBER_FLOAT -> parser.valueAsLong
+    JsonToken.VALUE_STRING -> parser.text.toLongOrNull()
+    JsonToken.VALUE_NULL -> null
+    else -> {
+      parser.skipChildren()
+      null
+    }
   }
 }
 

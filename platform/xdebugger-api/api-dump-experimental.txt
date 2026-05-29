@@ -17,7 +17,7 @@
 *:com.intellij.xdebugger.XBreakpointBehaviorPolicy
 - *sf:Companion:com.intellij.xdebugger.XBreakpointBehaviorPolicy$Companion
 - a:chooseBreakpointErrorAction(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.BreakpointErrorData):com.intellij.xdebugger.XBreakpointBehaviorPolicy$BreakpointErrorAction
-- s:doChooseBreakpointErrorAction(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.BreakpointErrorData):com.intellij.xdebugger.XBreakpointBehaviorPolicy$BreakpointErrorAction
+- *s:doChooseBreakpointErrorAction(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.BreakpointErrorData):com.intellij.xdebugger.XBreakpointBehaviorPolicy$BreakpointErrorAction
 *e:com.intellij.xdebugger.XBreakpointBehaviorPolicy$BreakpointErrorAction
 - java.lang.Enum
 - sf:PAUSE:com.intellij.xdebugger.XBreakpointBehaviorPolicy$BreakpointErrorAction

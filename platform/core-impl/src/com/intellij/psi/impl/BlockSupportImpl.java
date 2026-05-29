@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.CustomLanguageASTComparator;
@@ -45,6 +46,7 @@ import com.intellij.psi.tree.IReparseableElementTypeBase;
 import com.intellij.psi.tree.IReparseableLeafElementType;
 import com.intellij.psi.tree.OuterLanguageElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -212,8 +214,11 @@ public final class BlockSupportImpl extends BlockSupport {
     if (chameleon == null) {
       return null;
     }
-    DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
-    holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+    InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
+      DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
+      holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+      return null;
+    });
     if (!reparseable.isValidReparse(node, chameleon)) {
       return null;
     }
@@ -272,7 +277,7 @@ public final class BlockSupportImpl extends BlockSupport {
                                                       viewProvider.getModificationStamp());
     lightFile.setOriginalFile(virtualFile);
 
-    FileViewProvider providerCopy = viewProvider.createCopy(lightFile);
+    FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
     if (providerCopy.isEventSystemEnabled()) {
       throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
     }
@@ -282,7 +287,7 @@ public final class BlockSupportImpl extends BlockSupport {
 
     newFile.setOriginalFile(fileImpl);
 
-    ASTNode newFileElement = newFile.getNode();
+    ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
       throw new IncorrectOperationException(viewProvider.toString());
     }

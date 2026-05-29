@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 /**
@@ -11,9 +12,11 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class PluginLoadingError(
     val reason: PluginNonLoadReason?,
-    private val htmlMessageSupplier: Supplier<HtmlChunk>,
+    private val messageSupplier: Supplier<@Nls String>,
     val error: Throwable?,
 ) {
+  val message: @Nls String
+    get() = messageSupplier.get()
   val htmlMessage: HtmlChunk
-    get() = htmlMessageSupplier.get()
+    get() = HtmlChunk.text(messageSupplier.get())
 }

@@ -578,6 +578,7 @@ object PyNames {
   const val AWAIT: String = "await"
   const val MATCH: String = "match"
   const val CASE: String = "case"
+  const val LAZY: String = "lazy"
 
   /**
    * Contains keywords as of CPython 2.5.

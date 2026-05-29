@@ -1,15 +1,12 @@
 package com.intellij.grazie.ide.language.markdown.semantics.analyzer
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
-import ai.grazie.model.llm.profile.LLMProfileID
 import ai.grazie.rules.promptAnalysis.AmbiguityAnalyzer
 import ai.grazie.rules.promptAnalysis.AmbiguityAnalyzer.Ambiguity
 import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer
 import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.Contradiction
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
-import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
-import ai.grazie.rules.promptAnalysis.LlmTextOffsetResolver
 import ai.grazie.rules.promptAnalysis.SecurityAnalyzer
 import ai.grazie.rules.promptAnalysis.SecurityAnalyzer.SecurityVulnerability
 import ai.grazie.rules.promptAnalysis.SemanticCoverageAnalyzer
@@ -18,7 +15,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
@@ -33,7 +29,6 @@ import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,8 +39,6 @@ private typealias AnalyzerCacheKey<T> = Key<CachedValue<AtomicReference<Cached<L
 private val log = Logger.getInstance(Analyzer::class.java)
 
 internal object Analyzer {
-  private val DEFAULT_MODEL = LLMProfileID("gemini-3.1-flash-lite")
-
   private val CONTRADICTION_ANALYZER_KEY: AnalyzerCacheKey<LlmIssue<Contradiction>> =
     Key.create("ml.llm.markdown.semantics.contradictionAnalyzer")
   private val SECURITY_ANALYZER_KEY: AnalyzerCacheKey<LlmIssue<SecurityVulnerability>> =
@@ -70,7 +63,8 @@ internal object Analyzer {
       if (cached == null || cached.text != text) {
         return executeRequestWithLock(analyzer, file) {
           val start = System.currentTimeMillis()
-          val analysis = analyze(analyzer, text, client)
+          log.info("${analyzer::class.simpleName} starts executing request with lock")
+          val analysis = analyzer.analyze(text, client)
           val done = System.currentTimeMillis()
           log.info("""
             Analyzing text with ${analyzer::class.simpleName} took ${done - start}ms on
@@ -89,20 +83,6 @@ internal object Analyzer {
       }
       throw e
     }
-  }
-
-  private suspend fun <T> analyze(analyzer: LlmAnalyzer<T>, text: String, client: SuspendableAPIGatewayClient): WithSpending<List<LlmIssue<T>>> {
-    val streamData = LlmAnalyzer
-      .callChat(DEFAULT_MODEL, analyzer.analysisPrompt + text, client, null)
-      .toList()
-    val response = LlmAnalyzer.collectChat(streamData)
-    val data = analyzer.parseResponse(response.data).map { it.adjustOffset(text) }
-    return WithSpending(data, response.spentCredits())
-  }
-
-  private fun <T> LlmIssue<T>.adjustOffset(text: String): LlmIssue<T> {
-    val offset = LlmTextOffsetResolver.resolveOffsets(text, this.text)
-    return this.withOffsets(offset.startOffset, offset.endOffset)
   }
 
   private fun <T> getAnalyzerKey(analyzer: LlmAnalyzer<T>): AnalyzerCacheKey<T> {
@@ -125,11 +105,12 @@ internal object Analyzer {
     }
   }
 
-  private suspend fun restartInspections(file: PsiFile) {
+  private suspend fun restartInspections(analyzer: LlmAnalyzer<*>, file: PsiFile) {
     withContext(Dispatchers.EDT) {
       val project = file.project
       if (project.isInitialized && project.isOpen) {
-        DaemonCodeAnalyzer.getInstance(project).restart(file, "SpecificationInspectionRestart")
+        DaemonCodeAnalyzer.getInstance(project).restart(file, "${analyzer.javaClass.simpleName} restart")
+        log.info("${analyzer.javaClass.simpleName} restarted inspections")
       }
     }
   }
@@ -152,9 +133,10 @@ internal object Analyzer {
               action()
             } finally {
               if (!this@computeDetached.isActive) {
+                log.info("${analyzer.javaClass.simpleName} was cancelled")
                 withContext(NonCancellable) {
-                  log.debug { "Restarting inspections after cancellation event" }
-                  restartInspections(file)
+                  log.info("${analyzer.javaClass.simpleName} will schedule inspections restart")
+                  restartInspections(analyzer, file)
                 }
               }
             }

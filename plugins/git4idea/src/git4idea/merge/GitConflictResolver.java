@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -55,6 +56,7 @@ public class GitConflictResolver {
   protected final @NotNull Project myProject;
   private final @Unmodifiable @NotNull Collection<? extends VirtualFile> myRoots;
   private final @NotNull Params myParams;
+  protected boolean myShouldFinishMergeAfterDialog;
 
   public static class Params {
     private boolean reverse;
@@ -176,7 +178,7 @@ public class GitConflictResolver {
         MergeConflictManager.getInstance(myProject).showMergeConflicts(initiallyUnmergedFiles);
       }
       else {
-        showMergeDialog(initiallyUnmergedFiles);
+        myShouldFinishMergeAfterDialog = showMergeDialog(initiallyUnmergedFiles);
       }
 
       Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myProject, myRoots);
@@ -200,13 +202,16 @@ public class GitConflictResolver {
     }
   }
 
-  private void showMergeDialog(@NotNull Collection<? extends VirtualFile> initiallyUnmergedFiles) {
+  private boolean showMergeDialog(@NotNull Collection<? extends VirtualFile> initiallyUnmergedFiles) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    Ref<Boolean> shouldFinish = Ref.create(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
-      AbstractVcsHelper.getInstance(myProject)
-        .showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
+      AbstractVcsHelper.MergeDialogResult result = AbstractVcsHelper.getInstance(myProject)
+        .showMergeDialogWithResult(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
+      shouldFinish.set(result.shouldFinishMerge());
     });
+    return shouldFinish.get();
   }
 
   /**

@@ -26,6 +26,8 @@ import java.awt.Graphics2D
 import javax.swing.Icon
 import javax.swing.JTree
 
+private const val SESSION_TREE_MIDDLE_TEXT_CACHE_LIMIT = 1024
+
 internal class SessionTreeCellRenderer(
   private val nowProvider: () -> Long,
   private val rowActionsProvider: (row: Int, node: SessionTreeNode, selected: Boolean) -> SessionTreeRowActionPresentation?,
@@ -36,6 +38,13 @@ internal class SessionTreeCellRenderer(
   private data class SharedTimeColumnWidthCacheKey(
     @JvmField val fontHash: Int,
     @JvmField val labelsSignature: @NlsSafe String,
+  )
+
+  private data class MiddleTextCacheKey(
+    @JvmField val fontHash: Int,
+    @JvmField val text: @NlsSafe String,
+    @JvmField val availTextWidth: Int,
+    @JvmField val rightReservedWidth: Int,
   )
 
   private data class ThreadCompositeIconCacheKey(
@@ -55,6 +64,8 @@ internal class SessionTreeCellRenderer(
   private var cachedThreadIconSize: Int = -1
   private val threadCompositeIconCache = LinkedHashMap<ThreadCompositeIconCacheKey, Icon>()
   private val projectCompositeIconCache = LinkedHashMap<ProjectCompositeIconCacheKey, Icon>()
+  private val middleTextCache = LinkedHashMap<MiddleTextCacheKey, @NlsSafe String>()
+  private val middleTextClipper = SessionTreeMiddleTextClipper(::clipMiddleText)
 
   internal val trailingThreadPaintForTest: SessionTreeThreadTrailingPaint?
     get() = threadTrailingPaint
@@ -102,7 +113,7 @@ internal class SessionTreeCellRenderer(
         }
         else {
           metaRightPadding = baseFontMetrics.stringWidth(branchText)
-          appendWithClipping(projectName, titleAttributes, SessionTreeMiddleTextClipper)
+          appendWithClipping(projectName, titleAttributes, middleTextClipper)
           append(branchText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
         if (treeNode.project.isLoading) {
@@ -125,17 +136,15 @@ internal class SessionTreeCellRenderer(
       is SessionTreeNode.Thread -> {
         val baseFontMetrics = getFontMetrics(getBaseFont())
         val sharedTimeColumnWidth = computeSharedTimeColumnWidth(baseFontMetrics)
-        val threadRowPresentation = buildSessionTreeThreadRowPresentation(
-          treeNode = treeNode,
-          now = nowProvider(),
-        )
+        val threadRowPresentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = nowProvider())
         icon = threadCompositeIcon(treeNode.thread.provider, treeNode.thread.activity)
         val threadTitle: @NlsSafe String = threadRowPresentation.title
-        appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, SessionTreeMiddleTextClipper)
+        appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, middleTextClipper)
         threadTrailingPaint = computeSessionTreeThreadTrailingPaint(
           tree = tree,
           actionRightPadding = actionRightPadding,
           timeLabel = threadRowPresentation.timeLabel,
+          statusLabel = threadRowPresentation.costLabel,
           fontMetrics = baseFontMetrics,
           sharedTimeColumnWidth = sharedTimeColumnWidth,
         )
@@ -230,8 +239,14 @@ internal class SessionTreeCellRenderer(
       selectionRightInset = trailing.selectionRightInset,
       timeTextWidth = trailing.timeTextWidth,
       timeColumnWidth = trailing.timeColumnWidth,
+      statusTextWidth = trailing.statusTextWidth,
+      statusColumnWidth = trailing.statusColumnWidth,
     )
 
+    trailing.statusLabel?.let { statusLabel ->
+      g.color = trailingTextColor()
+      g.drawString(statusLabel, horizontalLayout.statusX, baseline)
+    }
     g.color = trailingTextColor()
     g.drawString(trailing.timeLabel, horizontalLayout.timeX, baseline)
   }
@@ -241,6 +256,29 @@ internal class SessionTreeCellRenderer(
       return UIUtil.getTreeSelectionForeground(true)
     }
     return getActiveTextColor(SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor)
+  }
+
+  private fun clipMiddleText(
+    text: @NlsSafe String,
+    fontMetrics: FontMetrics,
+    availTextWidth: Int,
+    rightReservedWidth: Int,
+  ): @NlsSafe String {
+    val cacheKey = MiddleTextCacheKey(
+      fontHash = fontMetrics.font.hashCode(),
+      text = text,
+      availTextWidth = availTextWidth,
+      rightReservedWidth = rightReservedWidth,
+    )
+    middleTextCache[cacheKey]?.let { return it }
+    val clippedText = clipSessionTreeMiddleText(
+      text = text,
+      fontMetrics = fontMetrics,
+      availTextWidth = availTextWidth,
+      rightReservedWidth = rightReservedWidth,
+    )
+    middleTextCache.putBounded(cacheKey, clippedText, SESSION_TREE_MIDDLE_TEXT_CACHE_LIMIT)
+    return clippedText
   }
 
   private fun computeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {
@@ -345,7 +383,9 @@ internal fun clipSessionTreeMiddleText(
   return best.ifBlank { ellipsis }
 }
 
-private object SessionTreeMiddleTextClipper : FragmentTextClipper {
+private class SessionTreeMiddleTextClipper(
+  private val clipTextProvider: (String, FontMetrics, Int, Int) -> String,
+) : FragmentTextClipper {
   override fun clipText(
     component: com.intellij.ui.SimpleColoredComponent,
     g: Graphics2D,
@@ -357,11 +397,13 @@ private object SessionTreeMiddleTextClipper : FragmentTextClipper {
     // area so thread titles don't paint into the trailing time/actions column.
     val rightReservedWidth = component.ipad.right + component.insets.right
     val fontMetrics = component.getFontMetrics(g.font)
-    return clipSessionTreeMiddleText(
-      text = text,
-      fontMetrics = fontMetrics,
-      availTextWidth = availTextWidth,
-      rightReservedWidth = rightReservedWidth,
-    )
+    return clipTextProvider(text, fontMetrics, availTextWidth, rightReservedWidth)
+  }
+}
+
+private fun <K, V> LinkedHashMap<K, V>.putBounded(key: K, value: V, limit: Int) {
+  put(key, value)
+  while (size > limit) {
+    remove(entries.iterator().next().key)
   }
 }

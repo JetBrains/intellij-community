@@ -111,7 +111,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
                     cell(ExpandableTextField(templateInputParser, templateInputJoiner))
                         .align(AlignX.FILL)
                         .bindText(explicitTemplateClassNamesProperty)
-                        .applyToComponent { emptyText.text = "com.example.MyDefinition" }
+                        .applyToComponent { emptyText.text = "com.example.CustomScript" }
                 }
 
                 row {
@@ -125,23 +125,26 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
                 }
 
                 row {
-                    button(KotlinBaseScriptingBundle.message("button.search.definitions")) {
-                        runWithModalProgressBlocking(
-                            project,
-                            KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")
-                        ) {
-                            scanClasspath()
-                        }
-                    }
-                }
-
-                row {
                     label("").bindText(definitionsFromClassPathTitle)
-                    rowComment(KotlinBaseScriptingBundle.message("text.searches.project.classpath.for.known.script.definition.classes.or.marker.files"))
+                    rowComment(KotlinBaseScriptingBundle.message("info.text.kotlin.scripting.update.definitions.on.apply"))
                 }
             }
         }
     }
+
+    override fun apply() {
+        if (isModified) {
+            runWithModalProgressBlocking(
+                project,
+                KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")
+            ) {
+                scanClasspath()
+            }
+
+            previousModificationStamp = currentModificationStamp
+        }
+    }
+
 
     private suspend fun scanClasspath() {
         val explicitTemplateClassNames = explicitTemplateClassNamesProperty.get()
@@ -152,9 +155,12 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         service.updateWorkspaceModel(discoveredTemplates)
 
         ScriptDefinitionSettingsStateComponent.getInstance(project).updateSettings {
-            it.copy(
-                explicitTemplateClassNames = explicitTemplateClassNames,
-                explicitTemplateClasspath = explicitTemplateClasspath,
+            ScriptDefinitionSettingsStateComponent.State(
+                currentModels.map { model ->
+                    ScriptDefinitionSettingsStateComponent.DefinitionSetting(model.name, model.id, model.isEnabled)
+                },
+                explicitTemplateClassNames,
+                explicitTemplateClasspath,
             )
         }
 
@@ -173,22 +179,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
             ) {
                 "<code>$it</code>"
             })
-    }
-
-    override fun apply() {
-        if (isModified) {
-            ScriptDefinitionSettingsStateComponent.getInstance(project).updateSettings {
-                ScriptDefinitionSettingsStateComponent.State(
-                    currentModels.map {
-                        ScriptDefinitionSettingsStateComponent.DefinitionSetting(it.name, it.id, it.isEnabled)
-                    },
-                    explicitTemplateClassNamesProperty.get(),
-                    explicitTemplateClasspathProperty.get(),
-                )
-            }
-
-            previousModificationStamp = currentModificationStamp
-        }
     }
 
     override fun getDisplayName(): String = message("script.name.kotlin.scripting")

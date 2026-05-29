@@ -3,16 +3,19 @@ package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import java.io.File
 import java.nio.file.Path
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 val ProjectResolverContext.virtualFileUrlManager: VirtualFileUrlManager
   get() = project.workspaceModel.getVirtualFileUrlManager()
@@ -21,7 +24,8 @@ fun ProjectResolverContext.virtualFileUrl(path: Path): VirtualFileUrl {
   return path.toVirtualFileUrl(virtualFileUrlManager)
 }
 
-fun ProjectResolverContext.virtualFileUrl(file: File): VirtualFileUrl {
+@Suppress("IO_FILE_USAGE")
+fun ProjectResolverContext.virtualFileUrl(file: java.io.File): VirtualFileUrl {
   return virtualFileUrl(file.toPath())
 }
 
@@ -33,19 +37,38 @@ internal val ProjectResolverContext.externalProjectEntityId: ExternalProjectEnti
   get() = ExternalProjectEntityId(externalProjectPath)
 
 internal fun GradleLightBuild.buildUrl(context: ProjectResolverContext): VirtualFileUrl {
-  val buildRootPath = buildIdentifier.rootDir.toPath()
-  return buildRootPath.toVirtualFileUrl(context.virtualFileUrlManager)
+  return context.virtualFileUrl(buildIdentifier.rootDir)
 }
 
 internal fun GradleLightBuild.buildEntityId(context: ProjectResolverContext): GradleBuildEntityId {
   return GradleBuildEntityId(context.externalProjectEntityId, buildUrl(context))
 }
 
+@Suppress("IO_FILE_USAGE")
 internal fun GradleLightProject.projectUrl(context: ProjectResolverContext): VirtualFileUrl {
-  val projectRootPath = projectDirectory.toPath()
-  return projectRootPath.toVirtualFileUrl(context.virtualFileUrlManager)
+  return context.virtualFileUrl(projectDirectory)
 }
 
 internal fun GradleLightProject.projectEntityId(context: ProjectResolverContext): GradleProjectEntityId {
   return GradleProjectEntityId(build.buildEntityId(context), identityPath)
+}
+
+@Experimental
+inline fun <reified E : GradleEntitySource> gradleEntitySource(
+  context: ProjectResolverContext,
+  crossinline filter: (E) -> Boolean = { true },
+): (EntitySource) -> Boolean = {
+  isGradleEntitySource<E>(context, it) && filter(it)
+}
+
+@Experimental
+@OptIn(ExperimentalContracts::class)
+inline fun <reified E : GradleEntitySource> isGradleEntitySource(
+  context: ProjectResolverContext,
+  entitySource: EntitySource,
+): Boolean {
+  contract {
+    returns(true) implies (entitySource is E)
+  }
+  return entitySource is E && entitySource.projectPath == context.projectPath
 }

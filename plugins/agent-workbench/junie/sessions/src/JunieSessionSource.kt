@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -189,13 +190,20 @@ internal class JunieSessionIndexStore(
 
 internal class JunieSessionSource(
   internal val sessionIndexStore: JunieSessionIndexStore = JunieSessionIndexStore(),
+  private val costLoader: JunieSessionCostLoader = JunieSessionCostLoader(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.JUNIE) {
   constructor(
     sessionIndexPathProvider: () -> Path,
     jsonFactory: JsonFactory = JsonFactory(),
     timeProvider: () -> Long = System::currentTimeMillis,
     archiveStatePathProvider: () -> Path = { defaultJunieArchiveStatePath(sessionIndexPathProvider()) },
-  ) : this(JunieSessionIndexStore(sessionIndexPathProvider, jsonFactory, timeProvider, archiveStatePathProvider))
+  ) : this(
+    sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider, jsonFactory, timeProvider, archiveStatePathProvider),
+    costLoader = JunieSessionCostLoader(
+      sessionsRootPathProvider = { sessionIndexPathProvider().parent ?: defaultJunieSessionsRootPath() },
+      jsonFactory = jsonFactory,
+    ),
+  )
 
   override val supportsArchivedThreads: Boolean get() = true
 
@@ -216,6 +224,19 @@ internal class JunieSessionSource(
       .filter { it.archived == true }
       .sortedByDescending(JunieSessionIndexEntry::updatedAt)
     return matchingEntries.map { it.toAgentSessionThread(readTracker) }
+  }
+
+  override suspend fun loadThreadCosts(
+    path: String,
+    threads: List<AgentSessionThread>,
+  ): Map<String, AgentSessionCost?> {
+    if (threads.isEmpty()) {
+      return emptyMap()
+    }
+
+    return threads.associate { thread ->
+      thread.id to costLoader.loadCost(thread.id)
+    }
   }
 }
 

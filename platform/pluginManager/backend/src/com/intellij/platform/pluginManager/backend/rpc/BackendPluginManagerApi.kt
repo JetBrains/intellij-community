@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InitSessionResult
@@ -159,6 +160,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return withContext(Dispatchers.EDT) {
       DefaultUiPluginManagerController.enablePlugins(sessionId, ids, bool, id?.findProjectOrNull())
     }
+  }
+
+  override suspend fun disablePluginsWithDependencies(pluginIds: List<PluginId>, projectId: ProjectId?): ApplyPluginsStateResult {
+    return DefaultUiPluginManagerController.disablePluginsWithDependencies(pluginIds, projectId?.findProjectOrNull())
   }
 
   override suspend fun markPluginsAsDisabled(pluginIds: List<PluginId>) {

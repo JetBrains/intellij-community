@@ -296,6 +296,7 @@ java/idea-ui
 java/java-analysis-api
 java/java-analysis-impl
 java/java-backend
+java/java-bookmarks
 java/java-copyright
 java/java-features-trainer
 java/java-frontback-impl
@@ -553,6 +554,7 @@ platform/bazel-runfiles
 platform/bookmarks
 platform/bookmarks/backend
 platform/bookmarks/frontend
+platform/bookmarks/plugin
 platform/boot
 platform/bootstrap
 platform/bootstrap/coroutine
@@ -915,6 +917,7 @@ platform/vcs-log/api
 platform/vcs-log/graph
 platform/vcs-log/graph-api
 platform/vcs-log/impl
+platform/vcs-log/impl/bookmarks
 platform/vcs-tests
 platform/warmup
 platform/warmup/performanceTesting
@@ -930,6 +933,7 @@ platform/wsl-impl
 platform/xdebugger-api
 platform/xdebugger-impl
 platform/xdebugger-impl/backend
+platform/xdebugger-impl/bookmarks
 platform/xdebugger-impl/frontend
 platform/xdebugger-impl/rpc
 platform/xdebugger-impl/shared
@@ -1220,6 +1224,7 @@ plugins/kotlin/base/psi
 plugins/kotlin/base/resources
 plugins/kotlin/base/scripting/scripting.k1
 plugins/kotlin/base/scripting/scripting.k2
+plugins/kotlin/base/scripting/scripting.main.kts
 plugins/kotlin/base/scripting/scripting.scratch.definition
 plugins/kotlin/base/scripting/scripting.shared
 plugins/kotlin/base/statistics
@@ -1508,6 +1513,11 @@ plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
 plugins/mcp-server/mcpserver.stdio
+plugins/mcp-server/mcpserver.terminal
+plugins/mcp-server/mcpserver.terminal.frontend
+plugins/mcp-server/mcpserver.terminal.frontend/tests
+plugins/mcp-server/mcpserver.terminal/tests
+plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/ml-local-models

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.core.providers
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
@@ -53,6 +54,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
   @JvmField val summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+  @JvmField val mayHaveChangedProjectFiles: Boolean = false,
 )
 
 data class AgentSessionSourceRefreshRequest(
@@ -103,6 +105,8 @@ interface AgentSessionSource {
    */
   val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = emptyFlow()
+
+  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> = emptyFlow()
 
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 
@@ -175,6 +179,11 @@ interface AgentSessionSource {
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> = emptyMap()
+
+  suspend fun loadThreadCosts(
+    path: String,
+    threads: List<AgentSessionThread>,
+  ): Map<String, AgentSessionCost?> = emptyMap()
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}
 

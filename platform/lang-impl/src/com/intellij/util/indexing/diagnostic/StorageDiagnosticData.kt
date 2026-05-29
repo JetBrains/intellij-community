@@ -16,6 +16,7 @@ import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.Storage
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
+import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -32,6 +33,7 @@ import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
+import com.intellij.util.io.writeaheadlog.FileChannelWithWAL
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -291,6 +293,7 @@ object StorageDiagnosticData {
     }
 
     setupFilePageCacheReporting(storageOtelMeter)
+    setupWriteAheadLogReporting(storageOtelMeter)
 
     if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       setupFilePageCacheLockFreeReporting(storageOtelMeter)
@@ -455,6 +458,41 @@ object StorageDiagnosticData {
       housekeeperTurnsDone, housekeeperTurnsSkipped, housekeeperTimeSpentMs
     )
 
+  }
+
+  private fun setupWriteAheadLogReporting(otelMeter: Meter) {
+    val bytesQueued = otelMeter.counterBuilder("FilePageCache.WAL.bytesQueued")
+      .setUnit("bytes")
+      .buildObserver()
+    val flushesForcedByOverflow = otelMeter.counterBuilder("FilePageCache.WAL.flushesForcedByOverflow").buildObserver()
+    val totalEntriesFlushed = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushed").buildObserver()
+    val bytesCopiedByApplyUnfinished = otelMeter.counterBuilder("FilePageCache.WAL.bytesCopiedByApplyUnfinished")
+      .setUnit("bytes")
+      .buildObserver()
+
+    val entriesFlushedOnRead = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnRead").buildObserver()
+    val entriesFlushedOnForce = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnForce").buildObserver()
+    val entriesFlushedOnTruncate = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnTruncate").buildObserver()
+    val entriesFlushedOnClose = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnClose").buildObserver()
+
+    otelMeter.batchCallback(
+      {
+        val statistics = WriteAheadLogOverCircularBuffer.getAggregatedStatistics()
+        bytesQueued.record(statistics.bytesQueued)
+        flushesForcedByOverflow.record(statistics.flushesForcedByOverflow)
+        totalEntriesFlushed.record(statistics.entriesFlushed)
+        bytesCopiedByApplyUnfinished.record(statistics.bytesCopiedByApplyUnfinished)
+
+        val flushStatistics = FileChannelWithWAL.getFlushStatistics()
+        entriesFlushedOnRead.record(flushStatistics.entriesFlushedOnRead)
+        entriesFlushedOnForce.record(flushStatistics.entriesFlushedOnForce)
+        entriesFlushedOnTruncate.record(flushStatistics.entriesFlushedOnTruncate)
+        entriesFlushedOnClose.record(flushStatistics.entriesFlushedOnClose)
+
+      },
+      bytesQueued, flushesForcedByOverflow, totalEntriesFlushed, bytesCopiedByApplyUnfinished,
+      entriesFlushedOnRead, entriesFlushedOnTruncate, entriesFlushedOnForce, entriesFlushedOnClose
+    )
   }
 
   private fun setupFilePageCacheReporting(otelMeter: Meter) {

@@ -30,7 +30,7 @@ class McpToolFilterSettingsTest {
 
     assertThat(tools).isNotEmpty()
     assertThat(tools).anyMatch { it.descriptor.name == "read_file" }
-    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
+    assertThat(tools).anyMatch { it.descriptor.name == "apply_patch" }
   }
 
   @Test
@@ -56,7 +56,7 @@ class McpToolFilterSettingsTest {
 
     assertThat(tools).isNotEmpty()
     assertThat(tools).noneMatch { it.descriptor.name == "read_file" }
-    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
+    assertThat(tools).anyMatch { it.descriptor.name == "apply_patch" }
   }
 
   @Test
@@ -73,7 +73,7 @@ class McpToolFilterSettingsTest {
     }
     // But not read_file
     assertThat(tools).noneMatch { it.descriptor.name == "read_file" }
-    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
+    assertThat(tools).anyMatch { it.descriptor.name == "apply_patch" }
   }
 
   @Test
@@ -88,21 +88,21 @@ class McpToolFilterSettingsTest {
   }
 
   @Test
-  fun `filter includes only TextToolset tools`() {
-    McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.TextToolset.*"
+  fun `filter includes only PatchToolset tools`() {
+    McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.PatchToolset.*"
 
     val tools = McpServerService.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
       val isRouterTool = tool.descriptor.name == "execute_tool"
-      val isTextToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
-      assertThat(isRouterTool || isTextToolsetTool).isTrue()
+      val isPatchToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.PatchToolset.")
+      assertThat(isRouterTool || isPatchToolsetTool).isTrue()
     }
-    // Router tool (execute_tool) is always available, plus TextToolset tool
+    // Router tool (execute_tool) is always available, plus PatchToolset tool
     assertThat(tools).hasSize(2)
     assertThat(tools).anyMatch { it.descriptor.name == "execute_tool" }
-    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
+    assertThat(tools).anyMatch { it.descriptor.name == "apply_patch" }
   }
 
   @Test
@@ -124,15 +124,15 @@ class McpToolFilterSettingsTest {
   @Test
   fun `filter with spaces is trimmed correctly`() {
     // Test that spaces around commas are handled correctly
-    McpToolFilterSettings.getInstance().toolsFilter = "-*, +com.intellij.mcpserver.toolsets.general.TextToolset.*"
+    McpToolFilterSettings.getInstance().toolsFilter = "-*, +com.intellij.mcpserver.toolsets.general.PatchToolset.*"
 
     val tools = McpServerService.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
       val isRouterTool = tool.descriptor.name == "execute_tool"
-      val isTextToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
-      assertThat(isRouterTool || isTextToolsetTool).isTrue()
+      val isPatchToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.PatchToolset.")
+      assertThat(isRouterTool || isPatchToolsetTool).isTrue()
     }
   }
 

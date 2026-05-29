@@ -8,7 +8,12 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
+import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaCliSupport
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
@@ -18,6 +23,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
@@ -49,6 +55,7 @@ import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.BoxLayout
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
@@ -75,10 +82,27 @@ internal fun dispatchTreeRowOverlayQuickCreate(
   )
 }
 
+internal fun createAgentSessionsNorthComponents(
+  project: Project,
+  parentDisposable: Disposable,
+  refreshSessions: () -> Unit,
+): List<JComponent> {
+  val providerContributions = AgentSessionProviders.allProvidersById()
+    .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
+  service<JbCentralQuotaHintStateService>().setEligible(JbCentralQuotaCliSupport.isAvailable())
+  return buildList {
+    add(AgentProviderCliStatusBanner(project, parentDisposable, refreshSessions = refreshSessions))
+    add(AgentSessionCostHintBanner())
+    add(JbCentralQuotaHintBanner())
+    addAll(providerContributions)
+  }
+}
+
 internal class AgentSessionsToolWindowPanel(
   private val project: Project,
   private val toolWindow: ToolWindow,
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
+  private val costHydrationVisibilityToken = "${project.locationHash}:${System.identityHashCode(this)}"
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
   private var initialRefreshRequested = false
@@ -174,7 +198,12 @@ internal class AgentSessionsToolWindowPanel(
     ensureArchivedSessionsLoaded = { service<AgentArchivedSessionsService>().ensureLoaded() },
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
-    setSessionTreeModel = { sessionTreeModel = it },
+    setSessionTreeModel = {
+      sessionTreeModel = it
+      if (sessionTreeModelShouldMarkCostHintEligible(it)) {
+        service<AgentSessionCostHintStateService>().markEligible()
+      }
+    },
     onLastUsedProviderChanged = { provider ->
       lastUsedProvider = provider
       if (isModelUpdateVisible()) {
@@ -247,7 +276,13 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     installToolWindowVisibilityTracker()
-    stateController.setModelUpdatesVisible(isModelUpdateVisible())
+    val initiallyVisible = isModelUpdateVisible()
+    publishAgentSessionsToolWindowVisibility(
+      visible = initiallyVisible,
+      token = costHydrationVisibilityToken,
+      setModelUpdatesVisible = stateController::setModelUpdatesVisible,
+      visibilityService = service(),
+    )
     stateController.start()
     requestInitialRefreshIfVisible()
   }
@@ -294,7 +329,13 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private fun applyToolWindowVisibility() {
-    stateController.setModelUpdatesVisible(isModelUpdateVisible())
+    val visible = isModelUpdateVisible()
+    publishAgentSessionsToolWindowVisibility(
+      visible = visible,
+      token = costHydrationVisibilityToken,
+      setModelUpdatesVisible = stateController::setModelUpdatesVisible,
+      visibilityService = service(),
+    )
     requestInitialRefreshIfVisible()
   }
 
@@ -309,12 +350,17 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private fun buildNorthPanel(): JPanel {
-    val contributions = AgentSessionProviders.allProvidersById()
-      .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
+    val contributions = createAgentSessionsNorthComponents(
+      project = project,
+      parentDisposable = this,
+      refreshSessions = {
+        service<AgentSessionRefreshService>().refresh()
+        service<AgentArchivedSessionsService>().refreshIfLoaded()
+      },
+    )
     return JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       isOpaque = false
-      add(AgentProviderCliStatusBanner(project, this@AgentSessionsToolWindowPanel))
       contributions.forEach(::add)
     }
   }
@@ -470,6 +516,23 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   override fun dispose() {
+    service<AgentSessionsToolWindowVisibilityService>().release(costHydrationVisibilityToken)
     stateController.dispose()
   }
+}
+
+internal fun sessionTreeModelShouldMarkCostHintEligible(model: SessionTreeModel): Boolean {
+  return model.entriesById.values.any { entry ->
+    entry.node is SessionTreeNode.Thread
+  }
+}
+
+internal fun publishAgentSessionsToolWindowVisibility(
+  visible: Boolean,
+  token: String,
+  setModelUpdatesVisible: (Boolean) -> Unit,
+  visibilityService: AgentSessionsToolWindowVisibilityService,
+) {
+  setModelUpdatesVisible(visible)
+  visibilityService.setVisible(token, visible)
 }

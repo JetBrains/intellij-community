@@ -3,10 +3,13 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
+import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import java.nio.file.Path
 
 interface GradleTestFixture {
+
+  val gradleVersion: GradleVersion
 
   val gradleJvm: String
 

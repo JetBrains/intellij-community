@@ -74,6 +74,7 @@ import kotlin.io.path.outputStream
 import kotlin.io.path.readLines
 import kotlin.random.Random
 
+private const val EXIT_FAILURE = 41  // prevent ignoring any System.exit(1) as test failures
 private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
@@ -590,6 +591,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule.name)
       .takeIf { runContextModule.name != "intellij.clion.main.tests" }  // TODO: remove this after fixing clion tests build types
+      .takeIf { runContextModule.name != "intellij.idea.community.main.tests" }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(module = outputProvider.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false)
       .mapTo(mutableListOf()) { it.toString() }
     @Suppress("NAME_SHADOWING")
@@ -939,7 +941,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         )
       }
 
-      if (exitCode == 1) throw RuntimeException("Tests failed")
+      if (exitCode == EXIT_FAILURE) throw RuntimeException("Tests failed")
       else if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
       else if (exitCode != 0) throw RuntimeException("Unexpected exit code $exitCode when running tests w/ simple patterns")
     }
@@ -993,7 +995,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               devBuildSettings = devBuildServerSettings,
             )
           }
-          if (exitCode == 1) hasFailures = true  // reported as test failure or assertNoUnhandledExceptions if exception
+          if (exitCode == EXIT_FAILURE) hasFailures = true  // reported as test failure or assertNoUnhandledExceptions if exception
           else if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
           else if (exitCode != 0) throw RuntimeException("Unexpected exit code $exitCode when running tests in dedicated runtime (class mode)")
         }
@@ -1038,7 +1040,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               devBuildSettings = devBuildServerSettings,
             )
           }
-          if (exitCode == 1) hasFailures = true  // reported as test failure or assertNoUnhandledExceptions if exception
+          if (exitCode == EXIT_FAILURE) hasFailures = true  // reported as test failure or assertNoUnhandledExceptions if exception
           else if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
           else if (exitCode != 0) throw RuntimeException("Unexpected exit code $exitCode when running tests in dedicated runtime (package mode)")
         }
@@ -1135,13 +1137,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               options.bucketsCount < 2) {
             throw NoTestsFound()
           }
-          if (exitCode != 0 && exitCode != 1 && exitCode != NO_TESTS_ERROR) {
+          if (exitCode != 0 && exitCode != EXIT_FAILURE && exitCode != NO_TESTS_ERROR) {
             throw RuntimeException("Unexpected exit code $exitCode when running tests")
           }
 
           if (options.attemptCount > 1) {
             if (failedClasses!!.isNotEmpty()) {
-              if (exitCode != 1) throw RuntimeException("Unexpected exit code $exitCode when running tests but found failed tests to retry")
+              if (exitCode != EXIT_FAILURE) throw RuntimeException("Unexpected exit code $exitCode when running tests but found failed tests to retry")
               messages.warning("Will rerun tests: $failedClasses")
             }
             else {
@@ -1160,7 +1162,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           messages.warning("Can't delete config or system path: ${e.stackTraceToString()}")
         }
 
-        val hadRunFailures = exitCode == 1
+        val hadRunFailures = exitCode == EXIT_FAILURE
         hadAnyFailures = hadAnyFailures || hadRunFailures
 
         // On TeamCity test failures themselves control the build status, no need to report them as additional errors

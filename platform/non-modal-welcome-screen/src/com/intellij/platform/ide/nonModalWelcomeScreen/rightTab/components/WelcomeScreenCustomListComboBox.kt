@@ -61,6 +61,7 @@ internal fun WelcomeScreenCustomListComboBox(
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
   style: ComboBoxStyle = JewelTheme.comboBoxStyle,
   textStyle: TextStyle = JewelTheme.defaultTextStyle,
+  externalUpdateListener: ((Int) -> Unit) -> Unit,
   onSelectedItemChange: (Int, String) -> Unit = { _, _ -> },
   onPopupVisibleChange: (visible: Boolean) -> Unit = {},
   itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
@@ -98,6 +99,8 @@ internal fun WelcomeScreenCustomListComboBox(
             JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
         }
     }
+
+    externalUpdateListener(::setSelectedItem)
 
     val contentPadding = JewelTheme.comboBoxStyle.metrics.popupContentPadding
     val popupMaxHeight =

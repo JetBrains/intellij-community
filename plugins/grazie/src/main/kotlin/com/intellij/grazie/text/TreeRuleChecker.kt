@@ -369,7 +369,7 @@ class TreeRuleChecker private constructor() {
 
     private fun findSentence(doc: List<SentenceWithContent>, docStart: Int, docEnd: Int): SentenceWithContent {
       ProgressManager.checkCanceled()
-      val sentence = doc.firstOrNull {
+      val sentence = doc.lastOrNull {
         it.docSentenceOffset <= docStart && docEnd <= it.docSentenceOffset + it.sentence.text.length
       }
       assert(sentence != null)

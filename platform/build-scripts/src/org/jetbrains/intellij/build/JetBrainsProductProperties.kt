@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Companion.Suppliers
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
@@ -19,8 +21,6 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.verifiers.DEFAULT_ILLEGAL_PREFIXES
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -42,8 +42,6 @@ val knownMissingModuleDependencies: List<String> = listOf(
   "kotlin.plugin.k2",
   "kotlin-ultimate.common-native",
   "kotlin-ultimate.native-debugger",
-  // todo special module (make it not special)
-  "intellij.platform.commercial.verifier",
   // included using `withModule`
   "intellij.libraries.groovy",
   "intellij.python.frontend",

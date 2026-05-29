@@ -3,6 +3,7 @@ package com.jetbrains.python.ast;
 
 
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,13 @@ public interface PyAstImportStatement extends PyAstImportStatementBase, PyAstImp
   @Override
   default @NotNull List<String> getFullyQualifiedObjectNames() {
     return getImportElementNames(getImportElements());
+  }
+
+  /**
+   * @return {@code true} iff this is a {@code lazy import ...} statement (PEP 810, Python 3.15+).
+   */
+  default boolean isLazy() {
+    return getNode().findChildByType(PyTokenTypes.LAZY_KEYWORD) != null;
   }
 
   /**

@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.completion.group;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +22,10 @@ public interface GroupedCompletionContributor {
 
   /**
    * Determines whether the grouped code completion feature is enabled at the application level.
+   *
    * @return true if grouped code completion is enabled at the application level, otherwise false.
    */
   static boolean isGroupEnabledInApp() {
-    return (AppMode.isRemoteDevHost() || !AppMode.isHeadless() ||
-            (ApplicationManager.getApplication().isUnitTestMode() && Registry.is("ide.completion.group.mode.enabled", false))) &&
-           PlatformUtils.isIntelliJ() &&
-           Registry.is("ide.completion.group.enabled", false);
+    return ApplicationManager.getApplication().getService(GroupedCompletion.class).isEnabled();
   }
 }

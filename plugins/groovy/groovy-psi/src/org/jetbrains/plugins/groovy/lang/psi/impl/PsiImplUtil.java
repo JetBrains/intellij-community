@@ -474,13 +474,13 @@ public final class PsiImplUtil {
     final TreeElement treeElement = (TreeElement)node;
     final int length;
     {
-      final GroovyBufferVisitor lengthVisitor = new GroovyBufferVisitor(true, true, 0, null);
+      final GroovyBufferVisitor lengthVisitor = new GroovyBufferVisitor(node,true, true, 0, null);
       treeElement.acceptTree(lengthVisitor);
       length = lengthVisitor.getEnd();
     }
     final char[] buffer = new char[length];
     {
-      final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(true, true, 0, buffer);
+      final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(node,true, true, 0, buffer);
       treeElement.acceptTree(textVisitor);
     }
     return new String(buffer);
@@ -490,8 +490,8 @@ public final class PsiImplUtil {
 
     private final boolean mySkipWhiteSpace;
 
-    GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
-      super(skipWhitespace, skipComments, offset, buffer);
+    GroovyBufferVisitor(@NotNull ASTNode element, boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+      super(element, skipWhitespace, skipComments, offset, buffer);
       mySkipWhiteSpace = skipWhitespace;
     }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionItemLookupElement
 import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.completion.command.RemDevCommandCompletionHelpers
+import com.intellij.codeInsight.completion.group.CompletionGroup
 import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
@@ -31,6 +32,7 @@ data class RpcCompletionItem(
   val hasModCommand: Boolean = false,
   val isTopPriorityItem: Boolean = false,
   val isNeverAutoselectTopPriorityItem: Boolean = false,
+  val completionGroup: RpcCompletionGroup? = null,
 ) {
   override fun toString(): String = buildToString("RpcCompletionItem") {
     field("id", id)
@@ -75,6 +77,7 @@ fun CompletionResult.toRpc(): RpcCompletionItem {
     hasModCommand = element is CompletionItemLookupElement,
     isTopPriorityItem = TopPriorityLookupElement.isTopPriorityItem(element),
     isNeverAutoselectTopPriorityItem = TopPriorityLookupElement.isNeverAutoselectTopPriorityItem(element),
+    completionGroup = CompletionGroup.get(lookupElement)?.toRpc()
   )
 }
 

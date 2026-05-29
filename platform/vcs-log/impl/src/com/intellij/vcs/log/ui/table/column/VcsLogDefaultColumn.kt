@@ -18,7 +18,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.onPropertyChange
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
-import com.intellij.vcs.log.ui.VcsLogBookmarkReferenceProvider.Companion.getBookmarkRefs
+import com.intellij.vcs.log.ui.VcsLogBookmarkSupport
 import com.intellij.vcs.log.ui.VcsLogBookmarksListener
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
@@ -44,7 +44,7 @@ internal fun getDefaultDynamicColumns() = listOf<VcsLogDefaultColumn<*>>(Author,
 
 @ApiStatus.Internal
 sealed class VcsLogDefaultColumn<T>(
-  @NonNls override val id: String,
+  @param:NonNls override val id: String,
   override val localizedName: @Nls String,
   override val isDynamic: Boolean = true,
 ) : VcsLogColumn<T> {
@@ -96,7 +96,7 @@ object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBu
       commitId,
       getValue(model, metadata),
       model.getRefsAtRow(row),
-      if (metadata !is LoadingDetails) getBookmarkRefs(model.logData.project, metadata.id, metadata.root) else emptyList(),
+      if (metadata !is LoadingDetails) VcsLogBookmarkSupport.getBookmarkRefs(model.logData.project, metadata.id, metadata.root) else emptyList(),
       printElements,
       metadata is LoadingDetails
     )

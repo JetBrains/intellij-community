@@ -18,23 +18,41 @@ internal class CodexRolloutRefreshHintsProvider(
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = rolloutBackend.sessionUpdates
 
+  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
+    return rolloutBackend.activeThreadFileChangeEvents(path = path, threadId = threadId)
+  }
+
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, CodexRefreshHints> {
     if (paths.isEmpty()) return emptyMap()
 
-    val rolloutThreadsByPath = rolloutBackend.prefetchThreads(paths)
-    if (rolloutThreadsByPath.isEmpty()) return emptyMap()
+    val hintsByPath = LinkedHashMap<String, CodexRefreshHints>(paths.size)
+    for (path in paths) {
+      val knownThreadIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { it.threadId }.toCollection(LinkedHashSet())
+      val rolloutThreads = if (knownThreadIds.isEmpty()) {
+        rolloutBackend.prefetchThreads(listOf(path))[path].orEmpty()
+      }
+      else {
+        rolloutBackend.prefetchThreads(listOf(path))[path].orEmpty()
+      }
+      if (rolloutThreads.isEmpty()) {
+        continue
+      }
 
-    val hintsByPath = LinkedHashMap<String, CodexRefreshHints>(rolloutThreadsByPath.size)
-    for ((path, rolloutThreads) in rolloutThreadsByPath) {
+      val activityThreads = if (knownThreadIds.isEmpty()) {
+        rolloutThreads
+      }
+      else {
+        rolloutBackend.refreshThreads(path = path, threadIds = knownThreadIds, openProject = null)?.threads.orEmpty()
+      }
+
       val rebindCandidatesById = LinkedHashMap<String, AgentSessionRebindCandidate>()
       val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
       val activityUpdatedAtByThreadId = HashMap<String, Long>()
-      val knownThreadIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { it.threadId }.toCollection(LinkedHashSet())
 
-      for (rolloutThread in rolloutThreads) {
+      for (rolloutThread in activityThreads) {
         val threadId = rolloutThread.thread.id
         if (threadId.isBlank()) continue
 
@@ -53,7 +71,11 @@ internal class CodexRolloutRefreshHintsProvider(
             )
           }
         }
+      }
 
+      for (rolloutThread in rolloutThreads) {
+        val threadId = rolloutThread.thread.id
+        if (threadId.isBlank()) continue
         if (
           threadId in knownThreadIds ||
           rolloutThread.thread.sourceKind != CodexThreadSourceKind.CLI
@@ -65,7 +87,7 @@ internal class CodexRolloutRefreshHintsProvider(
           threadId = threadId,
           title = rolloutThread.thread.title,
           updatedAt = rolloutThread.thread.updatedAt,
-          activity = threadActivity,
+          activity = rolloutThread.activity.toAgentThreadActivity(),
         )
         val previousCandidate = rebindCandidatesById[threadId]
         if (previousCandidate == null || candidate.updatedAt >= previousCandidate.updatedAt) {

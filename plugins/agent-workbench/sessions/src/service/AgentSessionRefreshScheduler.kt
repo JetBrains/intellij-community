@@ -270,7 +270,7 @@ internal class AgentSessionRefreshScheduler(
       }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
-        if (mergedUpdate.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
+        if (mergedUpdate.mayHaveChangedProjectFiles) {
           scheduleVfsRefreshFromSourceUpdate(provider, mergedUpdate)
         }
         enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate, applyActivityHints = false)
@@ -360,6 +360,7 @@ internal class AgentSessionRefreshScheduler(
       ),
       summaryActivityHintsByThreadId = normalizeSummaryActivityHints(updateEvent.summaryActivityHintsByThreadId),
       activityHintPolicy = updateEvent.activityHintPolicy,
+      mayHaveChangedProjectFiles = updateEvent.mayHaveChangedProjectFiles,
     )
   }
 
@@ -439,6 +440,7 @@ internal class AgentSessionRefreshScheduler(
         activityHintsByThreadId = mergedActivityHintsByThreadId,
         summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
         activityHintPolicy = mergedActivityHintPolicy,
+        mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
       )
     }
 
@@ -449,6 +451,7 @@ internal class AgentSessionRefreshScheduler(
       activityHintsByThreadId = mergedActivityHintsByThreadId,
       summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
       activityHintPolicy = mergedActivityHintPolicy,
+      mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
     )
   }
 
@@ -593,6 +596,9 @@ internal class AgentSessionRefreshScheduler(
 }
 
 private fun requiresQueuedProviderRefresh(updateEvent: AgentSessionSourceUpdateEvent): Boolean {
+  if (updateEvent.mayHaveChangedProjectFiles) {
+    return true
+  }
   if (updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
     return true
   }

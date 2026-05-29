@@ -8,8 +8,6 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -172,32 +170,25 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
   }
 
   public void testRunnerIgnoresJUnit6FromRuntimeScopeOnlyLib() throws Exception {
-    final RegistryValue scope = Registry.get("junit.version.detection.scope");
-    String defaultValue = scope.getSelectedOption();
-    try {
-      scope.setSelectedOption("withDependenciesAndLibraries");
-      Collection<File> junit6Files =
-        getRepoManager().resolveDependency("org.junit.jupiter", "junit-jupiter-api", "6.0.0", false, List.of());
+    Collection<File> junit6Files =
+      getRepoManager().resolveDependency("org.junit.jupiter", "junit-jupiter-api", "6.0.0", false, List.of());
 
-      LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-      List<@NotNull String> classesUrls = junit6Files.stream().map(localFileSystem::findFileByIoFile)
-        .map(jarFileSystem::getJarRootForLocalFile)
-        .map(VirtualFile::getUrl).toList();
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+    List<@NotNull String> classesUrls = junit6Files.stream().map(localFileSystem::findFileByIoFile)
+      .map(jarFileSystem::getJarRootForLocalFile)
+      .map(VirtualFile::getUrl).toList();
 
-      ModuleRootModificationUtil.addModuleLibrary(myModule, "junit6-runtime-only", classesUrls, List.of(), DependencyScope.RUNTIME);
-      IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "junit6-runtime-only", classesUrls, List.of(), DependencyScope.RUNTIME);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
-      // Package-level run must select -junit5, not -junit6
-      PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("org.example");
-      assertNotNull("Package org.example not found", aPackage);
-      JUnitConfiguration configuration = createConfiguration(aPackage);
-      configuration.getConfigurationModule().setModule(myModule);
-      ProcessOutput output = doStartTestsProcess(configuration);
-      assertTrue("Expected -junit5 in output, but got: " + output.sys, output.sys.toString().contains("-junit5"));
-    } finally {
-      scope.setSelectedOption(defaultValue);
-    }
+    // Package-level run must select -junit5, not -junit6
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("org.example");
+    assertNotNull("Package org.example not found", aPackage);
+    JUnitConfiguration configuration = createConfiguration(aPackage);
+    configuration.getConfigurationModule().setModule(myModule);
+    ProcessOutput output = doStartTestsProcess(configuration);
+    assertTrue("Expected -junit5 in output, but got: " + output.sys, output.sys.toString().contains("-junit5"));
   }
 
   private static void replaceJUnitVersion(@NotNull JavaParameters parameters, @NotNull String version) {

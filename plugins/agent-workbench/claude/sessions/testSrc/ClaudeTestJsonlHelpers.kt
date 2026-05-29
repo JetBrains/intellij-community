@@ -24,8 +24,15 @@ internal fun claudeAssistantPartialLine(timestamp: String, sessionId: String, cw
   return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"}],"stop_reason":null}}"""
 }
 
-internal fun claudeAssistantToolUseLine(timestamp: String, sessionId: String, cwd: String, content: String): String {
-  return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"tu_1","name":"edit","input":{}}],"stop_reason":"tool_use"}}"""
+internal fun claudeAssistantToolUseLine(
+  timestamp: String,
+  sessionId: String,
+  cwd: String,
+  content: String,
+  toolUseId: String = "tu_1",
+  toolName: String = "edit",
+): String {
+  return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"$toolUseId","name":"$toolName","input":{}}],"stop_reason":"tool_use"}}"""
 }
 
 internal fun claudeAssistantUserInteractionToolLine(timestamp: String, sessionId: String, cwd: String, toolName: String): String {
@@ -42,6 +49,16 @@ internal fun claudeProgressLine(timestamp: String, sessionId: String, cwd: Strin
 
 internal fun claudeBackgroundToolResultLine(timestamp: String, sessionId: String, cwd: String, backgroundTaskId: String): String {
   return """{"type":"user","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"Command running in background with ID: $backgroundTaskId","is_error":false}]},"toolUseResult":{"backgroundTaskId":"$backgroundTaskId","stdout":"","stderr":"","interrupted":false}}"""
+}
+
+internal fun claudeToolResultLine(
+  timestamp: String,
+  sessionId: String,
+  cwd: String,
+  toolUseId: String = "tu_1",
+  content: String = "ok",
+): String {
+  return """{"type":"user","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"user","content":[{"tool_use_id":"$toolUseId","type":"tool_result","content":"$content","is_error":false}]}}"""
 }
 
 internal fun claudeTaskNotificationLine(timestamp: String, sessionId: String, cwd: String, taskId: String): String {

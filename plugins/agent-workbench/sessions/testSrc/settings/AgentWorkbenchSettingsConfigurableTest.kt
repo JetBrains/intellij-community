@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.settings
 
+import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaStatusBarWidgetSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
@@ -47,6 +49,8 @@ class AgentWorkbenchSettingsConfigurableTest {
   private fun resetSettings() {
     service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.CODEX, true)
     AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
+    AgentSessionCostPresentationSettings.setEnabled(false)
+    JbCentralQuotaStatusBarWidgetSettings.setEnabled(false)
   }
 
   @Test
@@ -120,6 +124,54 @@ class AgentWorkbenchSettingsConfigurableTest {
         configurable.disposeUIResources()
       }
     }
+  }
+
+  @Test
+  fun configurableRendersAndAppliesSessionCostSetting() {
+    runInEdtAndWait {
+      val configurable = AgentWorkbenchSettingsConfigurable()
+      try {
+        val component = configurable.createComponent()
+        configurable.reset()
+
+        val checkbox = component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.session.cost"))
+        assertThat(checkbox.isSelected).isFalse()
+
+        checkbox.isSelected = true
+        assertThat(configurable.isModified).isTrue()
+
+        configurable.apply()
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+    assertThat(AgentSessionCostPresentationSettings.isEnabled()).isTrue()
+  }
+
+  @Test
+  fun configurableRendersAndAppliesJbCentralQuotaSetting() {
+    runInEdtAndWait {
+      val configurable = AgentWorkbenchSettingsConfigurable()
+      try {
+        val component = configurable.createComponent()
+        configurable.reset()
+
+        val checkbox = component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.jbcentral.quota.status.bar.widget"))
+        assertThat(checkbox.isSelected).isFalse()
+
+        checkbox.isSelected = true
+        assertThat(configurable.isModified).isTrue()
+
+        configurable.apply()
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+
+    assertThat(JbCentralQuotaStatusBarWidgetSettings.isEnabled()).isTrue()
   }
 
   @Test

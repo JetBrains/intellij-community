@@ -44,6 +44,13 @@ detect_platform() {
         *) die "Unsupported macOS architecture: $arch" ;;
       esac
       ;;
+    MINGW*|MSYS*|CYGWIN*)
+      case "$arch" in
+        x86_64) echo "WINDOWS_X64" ;;
+        aarch64|arm64) echo "WINDOWS_ARM64" ;;
+        *) die "Unsupported Windows architecture: $arch" ;;
+      esac
+      ;;
     *)
       die "Unsupported OS: $os"
       ;;
@@ -58,6 +65,16 @@ get_cache_dir() {
       ;;
     Darwin)
       echo "${HOME}/Library/Caches/JetBrains/monorepo-tools"
+      ;;
+    MINGW*|MSYS*|CYGWIN*)
+      local localappdata="${LOCALAPPDATA:-}"
+      if [ -z "$localappdata" ]; then
+        die "LOCALAPPDATA not set; required to locate Windows cache directory"
+      fi
+      if command -v cygpath >/dev/null 2>&1; then
+        localappdata=$(cygpath -u "$localappdata")
+      fi
+      echo "${localappdata}/JetBrains/monorepo-tools"
       ;;
     *)
       die "Unsupported OS for cache directory"
@@ -314,9 +331,11 @@ Actual:   $actual_checksum"
   extract_archive "$temp_archive" "$target_dir" "$download_url" "$structure"
 
   # Validate binary exists
-  local binary_path="$target_dir/$TOOL_BINARY_UNIX"
+  local platform_binary
+  platform_binary=$(get_binary_for_platform "$platform")
+  local binary_path="$target_dir/$platform_binary"
   if [ ! -f "$binary_path" ]; then
-    die "Binary not found after extraction: $TOOL_BINARY_UNIX"
+    die "Binary not found after extraction: $platform_binary"
   fi
   chmod +x "$binary_path"
 
@@ -444,7 +463,9 @@ is_cached() {
   # Check flag file contains correct checksum
   if [ -f "$flag_file" ] && grep -qx "$expected_checksum" "$flag_file" 2>/dev/null; then
     # Verify binary exists
-    local binary_path="$target_dir/$TOOL_BINARY_UNIX"
+    local platform_binary
+    platform_binary=$(get_binary_for_platform "$platform")
+    local binary_path="$target_dir/$platform_binary"
     if [ -x "$binary_path" ]; then
       return 0
     fi
@@ -488,7 +509,9 @@ main() {
   fi
 
   # Get binary path and execute
-  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION/$TOOL_BINARY_UNIX"
+  local platform_binary
+  platform_binary=$(get_binary_for_platform "$platform")
+  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION/$platform_binary"
 
   if [ ! -x "$binary_path" ]; then
     die "Binary not found or not executable: $binary_path"

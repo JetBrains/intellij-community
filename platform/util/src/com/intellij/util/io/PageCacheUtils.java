@@ -89,25 +89,19 @@ public final class PageCacheUtils {
   static final float HEAP_CAPACITY_FRACTION = getFloatProperty("vfs.lock-free-impl.heap-capacity-ratio", 0.1f);
 
 
-  private static final int CHANNELS_CACHE_CAPACITY = getIntProperty("paged.file.storage.open.channel.cache.capacity", 400);
+  public static final int CHANNELS_CACHE_CAPACITY = getIntProperty("paged.file.storage.open.channel.cache.capacity", 400);
 
   //@formatter:on
 
-  private static final ChannelsAccessor.FileChannelOpener RESILIENT_CHANNEL_OPENER = (path, readOnly) -> {
+  public static final ChannelsAccessor.FileChannelOpener RESILIENT_CHANNEL_OPENER = (path, readOnly) -> {
     return new ResilientFileChannel(path, readOnly ? new OpenOption[]{READ} : new OpenOption[]{READ, WRITE, CREATE});
   };
 
-
-  /** Shared channels cache */
-  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
-    CHANNELS_CACHE_CAPACITY,
-    RESILIENT_CHANNEL_OPENER
-  );
-
   /** Channels cache-bypassing accessor */
-  static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
+  public static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
 
     private final AtomicInteger operationsExecuted = new AtomicInteger(0);
+
     @Override
     public <T> T executeOp(@NotNull Path path,
                            @NotNull FileChannelOperation<T> operation,
@@ -129,10 +123,20 @@ public final class PageCacheUtils {
     }
 
     @Override
+    public void closeChannel(@NotNull Path path) {
+    }
+
+    @Override
     public @NotNull CachedChannelsStatistics getStatistics() {
       return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */ operationsExecuted.get(), 0);
     }
   };
+
+  /** Shared channels cache */
+  public static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
+    CHANNELS_CACHE_CAPACITY,
+    RESILIENT_CHANNEL_OPENER
+  );
 
   static {
     LOG.info(

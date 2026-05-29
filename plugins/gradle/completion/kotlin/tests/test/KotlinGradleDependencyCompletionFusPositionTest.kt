@@ -13,7 +13,10 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
@@ -73,10 +76,19 @@ class KotlinGradleDependencyCompletionFusPositionTest : K2GradleCodeInsightTestC
         expression: String,
         expectedPosition: GradleScriptDependencyCompletionPosition
     ) {
-        testKotlinDslEmptyProject(gradleVersion) {
+        test(gradleVersion, GRADLE_KTS_JAVA_PLUGIN_FIXTURE) {
             configureLocalIndex()
             testCompletionPosition(expression, expectedPosition)
         }
+    }
+
+    companion object {
+        private val GRADLE_KTS_JAVA_PLUGIN_FIXTURE = GradleTestFixtureBuilder
+            .create("KotlinGradleDependencyCompletionFusPositionTest") { gradleVersion ->
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    withJavaPlugin()
+                }
+            }
     }
 
     // GAV position tests

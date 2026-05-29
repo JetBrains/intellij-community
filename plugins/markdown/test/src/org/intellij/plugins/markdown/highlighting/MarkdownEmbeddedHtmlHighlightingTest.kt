@@ -16,6 +16,8 @@ class MarkdownEmbeddedHtmlHighlightingTest : BasePlatformTestCase() {
         <section class="hero">
           <div id="main">Hello</div>
         </section>
+        
+        <!--comment-->
       """.trimIndent()
     val file = myFixture.configureByText("test.md", text)
     myFixture.checkHighlighting()

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion
+package com.intellij.gradle.completion.tests
 
+import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
 import com.intellij.util.text.matching.MatchedFragment
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest

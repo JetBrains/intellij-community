@@ -123,8 +123,13 @@ a:com.intellij.openapi.vcs.AbstractVcsHelper
 - a:showFileHistory(com.intellij.openapi.vcs.history.VcsHistoryProvider,com.intellij.openapi.vcs.annotate.AnnotationProvider,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.AbstractVcs):V
 - f:showMergeDialog(java.util.List):java.util.List
 - f:showMergeDialog(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider):java.util.List
-- a:showMergeDialog(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):java.util.List
+- f:showMergeDialogWithResult(java.util.List):com.intellij.openapi.vcs.AbstractVcsHelper$MergeDialogResult
+- f:showMergeDialogWithResult(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider):com.intellij.openapi.vcs.AbstractVcsHelper$MergeDialogResult
+- a:showMergeDialogWithResult(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):com.intellij.openapi.vcs.AbstractVcsHelper$MergeDialogResult
 - a:showWhatDiffersBrowser(java.util.Collection,java.lang.String):V
+com.intellij.openapi.vcs.AbstractVcsHelper$MergeDialogResult
+- a:getProcessedFiles():java.util.List
+- a:shouldFinishMerge():Z
 e:com.intellij.openapi.vcs.ActionType
 - java.lang.Enum
 - sf:checkin:com.intellij.openapi.vcs.ActionType

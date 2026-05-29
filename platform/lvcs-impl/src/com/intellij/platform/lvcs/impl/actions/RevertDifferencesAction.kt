@@ -43,7 +43,7 @@ internal class RevertDifferencesAction : DumbAwareAction() {
 
     LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.RevertChanges, activityScope)
 
-    val reverter = facade.createDifferenceReverter(project, gateway, selection, differences, USE_OLD_CONTENT)
+    val reverter = createDifferenceReverter(project, gateway, selection, differences, USE_OLD_CONTENT)
     if (reverter == null || reverter.checkCanRevert().isNotEmpty()) return
     reverter.revert()
   }

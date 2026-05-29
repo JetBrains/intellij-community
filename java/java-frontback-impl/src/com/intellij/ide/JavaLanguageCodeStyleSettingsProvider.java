@@ -350,7 +350,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
         "LINE_COMMENT_ADD_SPACE_ON_REFORMAT",
         "LINE_COMMENT_AT_FIRST_COLUMN",
         "BLOCK_COMMENT_AT_FIRST_COLUMN",
-        "BLOCK_COMMENT_ADD_SPACE"
+        "BLOCK_COMMENT_ADD_SPACE",
+        "DOCUMENTATION_LINE_COMMENT_PREFERRED"
       );
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {

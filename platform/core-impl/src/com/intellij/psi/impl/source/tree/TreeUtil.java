@@ -13,6 +13,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,11 @@ public final class TreeUtil {
 
   public static boolean isCollapsedChameleon(ASTNode node) {
     return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
+  }
+
+  @ApiStatus.Internal
+  public static boolean isCollapsedChameleonVersioned(ASTNode node, long version) {
+    return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsedVersioned(version);
   }
 
   public static @Nullable ASTNode findChildBackward(@NotNull ASTNode parent, @NotNull IElementType type) {
@@ -162,6 +168,31 @@ public final class TreeUtil {
     return null;
   }
 
+  /**
+   * Efficient way of traversing the syntax tree up to its root.
+   * Efficiency comes from the removal of repeated querying of versions.
+   */
+  @ApiStatus.Internal
+  public static @NotNull ASTNode findTopmostParent(@NotNull ASTNode element) {
+    if (element instanceof TreeElement) {
+      TreeElement treeElement = (TreeElement)element;
+      long readingVersion = treeElement.getVersionForReading();
+      TreeElement parent = treeElement.getTreeParentVersioned(readingVersion);
+      while (parent != null) {
+        treeElement = parent;
+        parent = treeElement.getTreeParentVersioned(readingVersion);
+      }
+      return treeElement;
+    } else {
+      ASTNode parent = element.getTreeParent();
+      while (parent != null) {
+        element = parent;
+        parent = parent.getTreeParent();
+      }
+      return element;
+    }
+  }
+
   public static @NotNull Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
     if (one == two) return Couple.of(null, null);
 
@@ -186,7 +217,7 @@ public final class TreeUtil {
   }
 
   public static void clearCaches(@NotNull TreeElement tree) {
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+    tree.acceptTree(new RecursiveTreeElementWalkingVisitor(tree, false) {
       @Override
       protected void visitNode(TreeElement element) {
         element.clearCaches();
@@ -285,7 +316,7 @@ public final class TreeUtil {
       private TreeElement result;
 
       private MyVisitor(boolean doTransform) {
-        super(doTransform);
+        super(element, doTransform);
       }
 
       @Override
@@ -364,7 +395,7 @@ public final class TreeUtil {
 
   public static boolean containsOuterLanguageElements(@NotNull ASTNode node) {
     AtomicBoolean result = new AtomicBoolean(false);
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor(node) {
       @Override
       protected void visitNode(TreeElement element) {
         if (element instanceof OuterLanguageElement) {

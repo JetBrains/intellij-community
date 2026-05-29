@@ -218,7 +218,11 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
       int offset = editor.getCaretModel().getOffset();
 
       PsiElement lastElement = file.findElementAt(offset - 1);
-      return lastElement != null && StringUtil.endsWithChar(lastElement.getText(), '@');
+      if (lastElement != null) {
+        String lastElementText = lastElement.getText();
+        return StringUtil.endsWithChar(lastElementText, '@') || StringUtil.endsWith(lastElementText, "///");
+      }
+      return false;
     });
   }
 

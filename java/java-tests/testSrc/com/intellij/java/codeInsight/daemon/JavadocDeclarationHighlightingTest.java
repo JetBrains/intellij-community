@@ -136,6 +136,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testCommentsInModifierList() { doTest(); }
   public void testCommentsBeforeType() { doTest(); }
   public void testCommentsBeforeName() { doTest(); }
+  public void testWrongfulInnerClassReferences() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

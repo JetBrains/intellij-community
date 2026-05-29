@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.writeText
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.buildScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 
@@ -22,11 +22,12 @@ fun GradleImportingTestCase.importProject(
 
 fun GradleImportingTestCase.createSettingsFile(
   relativeModulePath: String = ".",
+  gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
     myProjectRoot.findOrCreateDirectory(relativeModulePath)
-      .findOrCreateFile(getSettingsScriptName(GradleDsl.GROOVY)).apply {
+      .findOrCreateFile(gradleDsl.settingsScriptName).apply {
         writeText(settingsScript(configure))
       }
   }
@@ -34,11 +35,12 @@ fun GradleImportingTestCase.createSettingsFile(
 
 fun GradleImportingTestCase.createBuildFile(
   relativeModulePath: String = ".",
+  gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: TestGradleBuildScriptBuilder.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
     myProjectRoot.findOrCreateDirectory(relativeModulePath)
-      .findOrCreateFile(getBuildScriptName(GradleDsl.GROOVY)).apply {
+      .findOrCreateFile(gradleDsl.buildScriptName).apply {
         writeText(script(configure))
       }
   }

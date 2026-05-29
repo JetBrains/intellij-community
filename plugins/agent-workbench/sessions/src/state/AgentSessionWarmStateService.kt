@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions.state
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
@@ -15,6 +17,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 internal interface SessionWarmState {
   fun getPathSnapshot(path: String): AgentSessionWarmPathSnapshot?
@@ -143,6 +146,14 @@ internal class AgentSessionWarmStateService
     @JvmField val subAgents: List<WarmSubAgentState> = emptyList(),
     @JvmField val originBranch: String? = null,
     @JvmField val summaryActivity: String? = activity,
+    @JvmField val cost: WarmThreadCostState? = null,
+  )
+
+  @Serializable
+  internal data class WarmThreadCostState(
+    @JvmField val amountUsd: String? = null,
+    @JvmField val kind: String = AgentSessionCostKind.UNAVAILABLE.name,
+    @JvmField val matchedModelId: String? = null,
   )
 
   @Serializable
@@ -182,6 +193,7 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
         subAgents = thread.subAgents.map { subAgent -> AgentSubAgent(id = subAgent.id, name = subAgent.name) },
         originBranch = thread.originBranch,
         summaryActivity = parseWarmStateThreadSummaryActivity(thread.summaryActivity),
+        cost = thread.cost?.toCost(),
       )
     },
     hasUnknownThreadCount = hasUnknownThreadCount,
@@ -203,6 +215,7 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
         },
         originBranch = thread.originBranch,
         summaryActivity = thread.summaryActivity?.name,
+        cost = thread.cost?.toState(),
       )
     },
     hasUnknownThreadCount = hasUnknownThreadCount,
@@ -217,4 +230,22 @@ private fun parseWarmStateThreadActivity(value: String): AgentThreadActivity {
 
 private fun parseWarmStateThreadSummaryActivity(value: String?): AgentThreadActivity? {
   return value?.let { runCatching { AgentThreadActivity.valueOf(it) }.getOrNull() }
+}
+
+private fun AgentSessionWarmStateService.WarmThreadCostState.toCost(): AgentSessionCost? {
+  val kind = runCatching { AgentSessionCostKind.valueOf(kind) }.getOrNull() ?: return null
+  val amountUsd = amountUsd?.let { value -> runCatching { BigDecimal(value) }.getOrNull() }
+  return AgentSessionCost(
+    amountUsd = amountUsd,
+    kind = kind,
+    matchedModelId = matchedModelId,
+  )
+}
+
+private fun AgentSessionCost.toState(): AgentSessionWarmStateService.WarmThreadCostState {
+  return AgentSessionWarmStateService.WarmThreadCostState(
+    amountUsd = amountUsd?.toPlainString(),
+    kind = kind.name,
+    matchedModelId = matchedModelId,
+  )
 }

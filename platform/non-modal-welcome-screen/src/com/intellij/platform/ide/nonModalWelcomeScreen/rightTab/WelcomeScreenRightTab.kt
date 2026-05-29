@@ -259,7 +259,7 @@ class WelcomeScreenRightTab(
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 12.dp)) {
         for (model in row) {
           when (model) {
-            is ComboBoxInfoPanelModel -> InfoPanelItem(model.iconKey, model.itemPrefix, model.model)
+            is ComboBoxInfoPanelModel -> InfoPanelItem(model.iconKey, model.itemPrefix, model.model, project)
             is ButtonInfoPanelModel -> InfoPanelButton(model.iconKey, model.itemPrefix, model.onClick, coroutineScope)
           }
         }
@@ -290,7 +290,12 @@ class WelcomeScreenRightTab(
   }
 
   @Composable
-  internal fun InfoPanelItem(iconKey: IconKey, itemPrefix: String, model: WelcomeScreenRightTabComboBoxModel<out Any>) {
+  internal fun InfoPanelItem(
+    iconKey: IconKey,
+    itemPrefix: String,
+    model: WelcomeScreenRightTabComboBoxModel<out Any>,
+    project: Project,
+  ) {
     Box {
       WelcomeScreenCustomListComboBox(
         iconKey = iconKey,
@@ -299,6 +304,7 @@ class WelcomeScreenRightTab(
         style = CustomComboBoxStyle(),
         maxPopupHeight = 300.dp,
         minPopupWidth = 200.dp,
+        externalUpdateListener = model.externalUpdateListener(project),
         initialSelectedIndex = model.currentItemIndex(),
         onSelectedItemChange = { index, newSelection ->
           model.setByIndex(index, newSelection)

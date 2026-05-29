@@ -2,8 +2,11 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -49,6 +52,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.awt.Rectangle
+import java.math.BigDecimal
 import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -61,6 +65,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     clearAgentSessionThreadStatusIconCacheForTests()
     IconLoader.activate()
     IconManager.activate(null)
+    AgentSessionCostPresentationSettings.setEnabled(false)
   }
 
   @AfterEach
@@ -68,6 +73,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     clearAgentSessionThreadStatusIconCacheForTests()
     IconManager.deactivate()
     IconLoader.deactivate()
+    AgentSessionCostPresentationSettings.setEnabled(false)
   }
 
   @Test
@@ -1005,6 +1011,48 @@ class AgentSessionsSwingTreeCellRendererTest {
     )
 
     assertThat(presentation.timeLabel).isEqualTo(AgentSessionsBundle.message("toolwindow.time.unknown"))
+  }
+
+  @Test
+  fun threadPresentationRendersEstimatedCostWithTildePrefixWhenEnabled() {
+    AgentSessionCostPresentationSettings.setEnabled(true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "abcdef123456",
+      title = "How much time",
+      updatedAt = 0L,
+      archived = false,
+      cost = AgentSessionCost(amountUsd = BigDecimal("0.42"), kind = AgentSessionCostKind.ESTIMATED),
+    )
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+
+    val presentation = buildSessionTreeThreadRowPresentation(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = 0L,
+    )
+
+    assertThat(presentation.costLabel).isEqualTo("~$0.42")
+  }
+
+  @Test
+  fun threadPresentationOmitsCostWhenSettingDisabled() {
+    AgentSessionCostPresentationSettings.setEnabled(false)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "abcdef123456",
+      title = "How much time",
+      updatedAt = 0L,
+      archived = false,
+      cost = AgentSessionCost(amountUsd = BigDecimal("1.23"), kind = AgentSessionCostKind.EXACT),
+    )
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+
+    val presentation = buildSessionTreeThreadRowPresentation(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = 0L,
+    )
+
+    assertThat(presentation.costLabel).isNull()
   }
 
   @Test

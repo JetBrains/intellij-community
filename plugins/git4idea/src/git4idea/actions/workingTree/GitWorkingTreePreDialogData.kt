@@ -3,7 +3,6 @@ package git4idea.actions.workingTree
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitBranch
 import git4idea.repo.GitRepository
 import java.nio.file.Path
@@ -13,7 +12,7 @@ internal data class GitWorkingTreePreDialogData(
   val repository: GitRepository,
   val ideActivity: StructuredIdeActivity,
   val initialExistingBranch: GitBranch?,
-  val initialParentPath: VirtualFile?,
+  val initialParentPath: String?,
   //should be the main repo root in case of working in a worktree
   val projectNameBase: Path = repository.repositoryFiles.configFile.toPath().parent.parent,
 )

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.findElementsOfTypeInRange
 import org.jetbrains.kotlin.idea.debugger.base.util.getRangeOfLine
 import org.jetbrains.kotlin.idea.debugger.base.util.hasInterface
 import org.jetbrains.kotlin.idea.debugger.base.util.hasSuperClass
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -77,7 +79,7 @@ object FileApplicabilityChecker : KotlinFileSelector {
         if (sourceLineNumber < 0) return Applicability.NO
         val declaringType = location.declaringType()
         val typeName = declaringType.name()
-        val methodName = location.method().name()
+        val methodName = DebuggerUtilsEx.getLocationMethodName(location)
         val isCallableReferenceClass = declaringType is ClassType && isCallableReferenceClass(declaringType)
         val isFunctionLiteralClass = declaringType is ClassType && isFunctionLiteralClass(declaringType)
 
@@ -102,6 +104,8 @@ object FileApplicabilityChecker : KotlinFileSelector {
             return getApplicabilityByClassName(rangeOfLine, typeName, KtClassOrObject::class.java)
         }
 
+        val isLambda = methodName.isGeneratedIrBackendLambdaMethodName()
+
         val lineStartOffset = file.getLineStartOffset(sourceLineNumber) ?: return Applicability.NO
         val elementAt = file.findElementAt(lineStartOffset) ?: return Applicability.NO
         val callableParents = elementAt.parents(withSelf = true).filter {
@@ -113,6 +117,9 @@ object FileApplicabilityChecker : KotlinFileSelector {
             if (typeName !in classNames.getCandidatesForElement(classParent)) {
                 return Applicability.NO
             }
+
+            // For lambdas, only check class name
+            if (isLambda) continue
 
             val name = when (declaration) {
                 is KtPropertyAccessor -> CallableNameCalculator.getAccessorName(declaration.property, declaration.isSetter)

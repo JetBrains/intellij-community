@@ -963,7 +963,11 @@ internal object DynamicPluginsLegacyImpl {
 
     val pluginSet = PluginManagerCore.getPluginSet()
       .withPlugin(pluginDescriptor)
-      .createPluginSetWithEnabledModulesMap()
+      ?.createPluginSetWithEnabledModulesMap()
+    if (pluginSet == null) {
+      LOG.info("plugin substitution creates a conflict: $pluginDescriptor")
+      return false
+    }
 
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
 

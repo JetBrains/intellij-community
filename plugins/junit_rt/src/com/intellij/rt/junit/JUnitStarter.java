@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.CodeSource;
@@ -326,7 +327,9 @@ public final class JUnitStarter {
     private static String getClassLocation(String className) {
       try {
         CodeSource cs = Class.forName(className).getProtectionDomain().getCodeSource();
-        return cs != null ? cs.getLocation().toExternalForm() : null;
+        if (cs == null) return null;
+        URL location = cs.getLocation();
+        return location != null ? location.toExternalForm() : null;
       }
       catch (ClassNotFoundException | SecurityException e) {
         return null;

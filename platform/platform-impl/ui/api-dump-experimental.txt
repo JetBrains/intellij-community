@@ -28,7 +28,7 @@
 - f:getShowValues():kotlin.jvm.functions.Function1
 - f:getStacked():Z
 - f:getValues():java.lang.Iterable
-- sf:of(java.lang.Number[]):com.intellij.ui.charts.BarDataset
+- *sf:of(java.lang.Number[]):com.intellij.ui.charts.BarDataset
 - f:setShowValues(kotlin.jvm.functions.Function1):V
 - f:setStacked(Z):V
 - f:setValues(java.lang.Iterable):V
@@ -106,7 +106,7 @@
 - f:getX():java.lang.Number
 - f:getY():java.lang.Number
 - hashCode():I
-- sf:of(java.lang.Number,java.lang.Number):com.intellij.ui.charts.Coordinates
+- *sf:of(java.lang.Number,java.lang.Number):com.intellij.ui.charts.Coordinates
 *f:com.intellij.ui.charts.Coordinates$Companion
 - f:of(java.lang.Number,java.lang.Number):com.intellij.ui.charts.Coordinates
 *c:com.intellij.ui.charts.Dataset
@@ -202,10 +202,10 @@
 - f:getDataset(java.lang.String):com.intellij.ui.charts.LineDataset
 - f:getDatasets():java.util.List
 - getRanges():com.intellij.ui.charts.Grid
-- sf:of(com.intellij.ui.charts.CategoryLineDataset[]):com.intellij.ui.charts.CategoryLineChart
-- sf:of(com.intellij.ui.charts.Coordinates[]):com.intellij.ui.charts.XYLineChart
-- sf:of(com.intellij.ui.charts.XYLineDataset[]):com.intellij.ui.charts.XYLineChart
-- sf:of(java.lang.Number[]):com.intellij.ui.charts.CategoryLineChart
+- *sf:of(com.intellij.ui.charts.CategoryLineDataset[]):com.intellij.ui.charts.CategoryLineChart
+- *sf:of(com.intellij.ui.charts.Coordinates[]):com.intellij.ui.charts.XYLineChart
+- *sf:of(com.intellij.ui.charts.XYLineDataset[]):com.intellij.ui.charts.XYLineChart
+- *sf:of(java.lang.Number[]):com.intellij.ui.charts.CategoryLineChart
 - paintComponent(java.awt.Graphics2D):V
 - f:setBorderPainted(Z):V
 - f:setDatasets(java.util.List):V
@@ -224,9 +224,9 @@
 - f:getStacked():Z
 - f:getStepped():com.intellij.ui.charts.LineStepped
 - f:getStroke():java.awt.BasicStroke
-- sf:of(com.intellij.ui.charts.Coordinates[]):com.intellij.ui.charts.XYLineDataset
-- sf:of(java.lang.Number[]):com.intellij.ui.charts.CategoryLineDataset
-- sf:of(java.lang.Number[],java.lang.Number[]):com.intellij.ui.charts.XYLineDataset
+- *sf:of(com.intellij.ui.charts.Coordinates[]):com.intellij.ui.charts.XYLineDataset
+- *sf:of(java.lang.Number[]):com.intellij.ui.charts.CategoryLineDataset
+- *sf:of(java.lang.Number[],java.lang.Number[]):com.intellij.ui.charts.XYLineDataset
 - f:setModificationFirst(Z):V
 - f:setSmooth(Z):V
 - f:setStacked(Z):V

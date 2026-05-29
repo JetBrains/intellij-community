@@ -135,7 +135,13 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
                                          final @NotNull FileType fileType) {
     if (!isJavaFile(file)) return Result.CONTINUE;
 
-    if (c == '@') {
+    if (c == '/') {
+      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+      if (element != null && element.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT && element.getTextLength() == 2) {
+        autoPopupJavadocLookup(project, editor);
+      }
+    }
+    else if (c == '@') {
       autoPopupJavadocLookup(project, editor);
     }
     else if (c == '#' || c == '.') {

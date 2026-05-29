@@ -117,6 +117,8 @@ And this is an html block.
   </tr>
 </table>
 
+<!-- This is an HTML comment -->
+
 <hh2>Horizontal rules
 ----------------</hh2>
 

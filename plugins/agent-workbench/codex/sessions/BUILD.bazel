@@ -11,6 +11,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
+    "//libraries/kotlinx/serialization/core",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
@@ -39,6 +40,7 @@ jvm_library(
   runtime_deps = [
     ":sessions",
     "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util:util_test_lib",
@@ -88,6 +90,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   associates = [
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",

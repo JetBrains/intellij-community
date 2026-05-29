@@ -23,6 +23,8 @@ e:git4idea.config.GitVersionSpecialty
 - f:existsIn(git4idea.repo.GitRepository):Z
 - s:getEntries():kotlin.enums.EnumEntries
 - f:getVersion():git4idea.config.GitVersion
+c:git4idea.merge.GitConflictResolver
+- p:myShouldFinishMergeAfterDialog:Z
 f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String

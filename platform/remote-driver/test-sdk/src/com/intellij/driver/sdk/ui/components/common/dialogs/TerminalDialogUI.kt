@@ -5,7 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.common.ideFrame
+import com.intellij.driver.sdk.ui.components.common.currentIdeFrame
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
@@ -40,7 +40,7 @@ class TerminalPanelUi(data: ComponentData) : UiComponent(data) {
 class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
   init {
     if (notPresent()) {
-      driver.ui.ideFrame().leftToolWindowToolbar.terminalButton.click()
+      driver.ui.currentIdeFrame().leftToolWindowToolbar.terminalButton.click()
     }
     waitFound()
   }

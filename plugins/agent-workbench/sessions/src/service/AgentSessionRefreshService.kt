@@ -44,6 +44,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -77,6 +79,8 @@ class AgentSessionRefreshService internal constructor(
     agentChatScopedRefreshSignals(provider)
   },
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
+  private val toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
+  private val currentTimeMillis: () -> Long = System::currentTimeMillis,
   subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -88,6 +92,7 @@ class AgentSessionRefreshService internal constructor(
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
     warmState = service<AgentSessionWarmStateService>(),
+    toolWindowVisibleFlow = service<AgentSessionsToolWindowVisibilityService>().visibleFlow,
     subscribeToProjectLifecycle = true,
   )
 
@@ -113,8 +118,18 @@ class AgentSessionRefreshService internal constructor(
     providerDescriptorProvider = providerDescriptorProvider,
   )
 
+  private val visibleCostHydrationSupport = AgentSessionVisibleCostHydrationSupport(
+    serviceScope = serviceScope,
+    stateStore = stateStore,
+    contentRepository = contentRepository,
+    sessionSourcesProvider = sessionSourcesProvider,
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
+    currentTimeMillis = currentTimeMillis,
+  )
+
   init {
     loadingCoordinator.observeSessionSourceUpdates()
+    visibleCostHydrationSupport.start()
 
     if (subscribeToProjectLifecycle) {
       val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)

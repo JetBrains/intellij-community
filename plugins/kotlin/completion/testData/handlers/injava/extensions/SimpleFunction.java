@@ -1,0 +1,13 @@
+package a;
+public class Testing {
+    public static void test() {
+        Greeter greeter = new Greeter("World");
+        greeter.<caret>
+    }
+}
+
+// ELEMENT: greet
+// AUTOCOMPLETE_SETTING: true
+// FIR_IDENTICAL
+// FIR_COMPARISON
+// IGNORE_K1

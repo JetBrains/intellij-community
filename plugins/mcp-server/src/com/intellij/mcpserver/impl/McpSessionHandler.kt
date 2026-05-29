@@ -24,9 +24,13 @@ import com.intellij.mcpserver.mcpCallInfoOrNull
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.toolwindow.McpDiagnosticService
+import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
@@ -105,6 +109,7 @@ internal class McpSessionHandler(
     private val sessionOptions: McpServerService.McpSessionOptions,
     mcpServerService: McpServerService,
     private val mcpServer: Server,
+    private val transportType: TransportType,
     private val projectPathFromInitialRequest: String?,
     useFiltersFromEP: Boolean,
 ) {
@@ -193,12 +198,20 @@ internal class McpSessionHandler(
    * Creates and configures a new session with the given transport.
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
-  suspend fun createAndInitializeSession(transport: Transport): ServerSession {
+  suspend fun createAndInitializeSession(transport: Transport, scope: CoroutineScope): ServerSession {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
 
-    session.onClose {
+    serviceAsync<McpDiagnosticService>().sessionStarted(
+      sessionId = session.sessionId,
+      transportType = transportType,
+      startTimeMs = System.currentTimeMillis(),
+      localAgentId = sessionOptions.localAgentId,
+    )
+
+    transport.onClose {
       sessionScope.cancel()
+      service<McpDiagnosticService>().sessionEnded(session.sessionId)
     }
 
     sessionScope.launch {
@@ -218,6 +231,10 @@ internal class McpSessionHandler(
       if (clientVersion != null) {
         // Update session tools manager with client info
         updateClientInfo(clientVersion)
+        service<McpDiagnosticService>().sessionInitialized(
+          session.sessionId,
+          ClientInfo(clientVersion.name, clientVersion.version),
+        )
       }
 
       val clientCapabilities = session.clientCapabilities

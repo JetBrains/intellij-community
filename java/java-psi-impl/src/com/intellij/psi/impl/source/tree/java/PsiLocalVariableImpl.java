@@ -47,6 +47,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
@@ -207,7 +208,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
         CodeEditUtil.removeChild(statement, variable);
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(statement);
-        CompositeElement statement1 = Factory.createCompositeElement(JavaElementType.DECLARATION_STATEMENT, charTableByTree, getManager());
+        CompositeElement statement1 = PsiVersioningService.createVersionedPsiElements((ASTNode)this, () -> Factory.createCompositeElement(JavaElementType.DECLARATION_STATEMENT, charTableByTree, getManager()));
         statement1.addChild(variable, null);
 
         ASTNode space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());

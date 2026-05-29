@@ -50,6 +50,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
@@ -110,7 +112,7 @@ open class MultipleFileMergeDialog(
       override fun onDoubleClick(event: MouseEvent): Boolean {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, event)) return false
         showMergeDialog()
-        return true
+        return false
       }
     }.installOn(this)
     TableSpeedSearch.installOn(this, Convertor { (it as? VirtualFile)?.name })
@@ -140,6 +142,7 @@ open class MultipleFileMergeDialog(
     rootPane = rootPane,
     files = files,
     onClose = ::doCancelAction,
+    onAcceptAndFinish = ::acceptAndFinish,
     acceptForResolution = ::acceptForResolution,
     showMergeDialog = ::showMergeDialog,
     toggleGroupByDirectory = ::toggleGroupByDirectory,
@@ -243,28 +246,35 @@ open class MultipleFileMergeDialog(
     project: Project,
     iterativeDataHolder: MergeConflictIterativeDataHolder,
   ) {
-    val files = getUnresolvedFiles()
+    // Resolve in the order shown in the table, makes the UX a bit better
+    val files = getUnresolvedFiles().sortedWith(fileComparator)
     if (files.isEmpty()) return
     if (!beforeResolve(files)) return
 
     runWithErrorHandling {
       runWithModalProgressBlocking(getModalTaskOwner(),
-                                   VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-        for (file in files) {
-          val request = createMergeRequest(file, DiffRequestFactory.getInstance(), callback = null)
-          val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: continue
+                                   "") {
+        withProgressText(VcsBundle.message("multiple.file.merge.modal.progress.title.resolving.conflicts")) {
+          reportSequentialProgress(files.size) { reporter ->
+            for ((index, file) in files.withIndex()) {
+              reporter.itemStep(VcsBundle.message("multiple.file.merge.modal.progress.resolving.file", index + 1, files.size)) {
+                val request = mergeRequestBuilder(file).build()
+                val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
-          edtWriteAction {
-            model.resolveAllChangesAutomatically()
+                edtWriteAction {
+                  model.resolveAllChangesAutomatically()
 
-            saveDocument(file)
-            checkMarkModifiedProject(project, file)
+                  saveDocument(file)
+                  checkMarkModifiedProject(project, file)
+                  updateModelFromFiles()
+                }
+              }
+            }
           }
         }
       }
     }
     updateTree(SetDefaultTreeStateStrategy())
-    updateModelFromFiles()
   }
 
   @RequiresEdt
@@ -284,7 +294,7 @@ open class MultipleFileMergeDialog(
           val iterativeFilesWithModels = mutableListOf<Pair<VirtualFile, MergeConflictModel>>()
           val nonIterativeFiles = mutableListOf<VirtualFile>()
           for (file in textFiles) {
-            val request = createMergeRequest(file, DiffRequestFactory.getInstance(), callback = null)
+            val request = mergeRequestBuilder(file).build()
             // Need to make sure that the iterative is actually possible for that given request
             val model = iterativeDataHolder.prepareModelIfSupported(file, request)
             if (model != null) {
@@ -353,7 +363,7 @@ open class MultipleFileMergeDialog(
     theirsLabel: @Nls String,
   ) {
     if (filesWithModel.isEmpty()) return
-    if (filesWithModel.any { (_,model) ->
+    if (filesWithModel.any { (_, model) ->
         model.getResolvedChanges().isNotEmpty()
       }) {
       val confirmed = MessageDialogBuilder
@@ -449,11 +459,17 @@ open class MultipleFileMergeDialog(
     super.doCancelAction()
   }
 
-  @RequiresEdt
-  fun handoffToAgent() {
+  var shouldFinishMergeAfterClosing: Boolean = false
+    private set
+
+  fun acceptAndFinish() {
+    shouldFinishMergeAfterClosing = true
     finishResolution()
     super.doCancelAction()
   }
+
+  @RequiresEdt
+  fun handoffToAgent(): Unit = acceptAndFinish()
 
   private fun finishResolution() {
     val iterativelyResolved =
@@ -463,7 +479,7 @@ open class MultipleFileMergeDialog(
       checkMarkModifiedProject(project, file)
     }
     runWithModalProgressBlocking(getModalTaskOwner(),
-                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
+                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.applying.resolutions")) {
       iterativelyResolved.forEach { (file, model) ->
         markFileProcessed(file, model.chosenSide.toMergeResolution())
       }
@@ -495,7 +511,7 @@ open class MultipleFileMergeDialog(
     var mergeResult: MergeResult? = null
     val request = runWithModalProgressBlocking(getModalTaskOwner(),
                                                VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
-      createMergeRequest(file, DiffRequestFactory.getInstance()) { result: MergeResult ->
+      mergeRequestBuilder(file).withTitles().withCallback { result: MergeResult ->
         mergeResult = result
         saveDocument(file)
         checkMarkModifiedProject(project, file)
@@ -518,7 +534,7 @@ open class MultipleFileMergeDialog(
             }
           }
         }
-      }.also { request ->
+      }.build().also { request ->
         iterativeDataHolder?.prepareModelIfSupported(file, request)
       }
     }
@@ -530,7 +546,7 @@ open class MultipleFileMergeDialog(
   private fun getFilesToOpen(): List<VirtualFile> {
     if (!MergeConflictFileSuggestion.isEnabled()) return table.selectedFiles
 
-    val comparator = ChangesComparator.getVirtualFileComparator(!groupByDirectory)
+    val comparator = fileComparator
     // 1. Selected files (sorted)
     val selected = table.selectedFiles.sortedWith(comparator)
 
@@ -592,49 +608,48 @@ open class MultipleFileMergeDialog(
     }
   }
 
-  private suspend fun createMergeRequest(
-    file: VirtualFile,
-    requestFactory: DiffRequestFactory,
-    callback: ((MergeResult) -> Unit)?,
-  ): MergeRequest {
-    val conflictData = loadConflictData(file)
-    val mergeData = conflictData.mergeData
-    val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-    val contentTitles = conflictData.contentTitles
-    val title = conflictData.title
+  private suspend fun mergeRequestBuilder(file: VirtualFile): MultipleFileMergeDialog.MergeRequestBuilder {
+    val mergeData = withContext(Dispatchers.IO) { mergeProvider.loadRevisions(file) }
+    return MergeRequestBuilder(file, mergeData)
+  }
 
-    return if (mergeProvider.isBinary(file)) { // respect MIME-types in svn
-      requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
+  private inner class MergeRequestBuilder(private val file: VirtualFile, private val mergeData: MergeData) {
+    private var title: @NlsContexts.DialogTitle String? = null
+    private var contentTitles: List<@NlsContexts.Label String?> = listOf(null, null, null)
+    private var titleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList? = null
+    private var callback: ((MergeResult) -> Unit)? = null
+
+    fun withTitles() = apply {
+      val filePath = VcsUtil.getFilePath(file)
+      title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
+      contentTitles = listOf(
+        tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
+        tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
+        tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
+      )
+      titleCustomizers = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
+                         ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
     }
-    else {
-      requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
-    }.also {
-      MergeUtils.putRevisionInfos(it, mergeData)
-      conflictData.contentTitleCustomizers.run {
-        DiffUtil.addTitleCustomizers(it, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+
+    fun withCallback(cb: (MergeResult) -> Unit) = apply { callback = cb }
+
+    fun build(requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance()): MergeRequest {
+      val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
+      return if (mergeProvider.isBinary(file)) {
+        requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
+      }
+      else {
+        requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
+      }.also {
+        MergeUtils.putRevisionInfos(it, mergeData)
+        titleCustomizers?.run {
+          DiffUtil.addTitleCustomizers(it, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+        }
       }
     }
   }
 
-  private suspend fun loadConflictData(file: VirtualFile): ConflictData {
-    val filePath = VcsUtil.getFilePath(file)
-    val mergeData = withContext(Dispatchers.IO) {
-      mergeProvider.loadRevisions(file)
-    }
-
-    val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
-
-    val conflictTitles = listOf(
-      tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
-      tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
-      tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
-    )
-
-    val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
-                          ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
-
-    return ConflictData(mergeData, title, conflictTitles, titleCustomizer)
-  }
+  private val fileComparator get() = ChangesComparator.getVirtualFileComparator(!groupByDirectory)
 }
 
 private fun <T> tryCompute(task: () -> T): T? {
@@ -791,12 +806,6 @@ private class OnModelChangeTreeStateStrategy : TreeTableStateStrategy<OnModelCha
   class SelectionState(val treeState: TreeState, val firstSelectedIndex: Int)
 }
 
-private data class ConflictData(
-  val mergeData: MergeData,
-  val title: @NlsContexts.DialogTitle String?,
-  val contentTitles: List<@NlsContexts.Label String?>,
-  val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList,
-)
 
 private val MergeSession.Resolution.presentableName: @Nls String
   get() = when (this) {

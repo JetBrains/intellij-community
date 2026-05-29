@@ -26,7 +26,7 @@ private const val NOTIFICATION_ENABLED_KEY = "devkit.uiDsl.usage.notification.en
 private const val NOTIFICATION_ENABLED_DEFAULT = true
 
 private val isNotificationFeatureEnabled: Boolean
-  get() = Registry.`is`("devkit.uiDsl.usage.notification.feature.enabled")
+  get() = Registry.`is`("devkit.uiDsl.usage.notification.feature.enabled", true)
 
 private var isNotificationEnabled: Boolean
   get() = PropertiesComponent.getInstance().getBoolean(NOTIFICATION_ENABLED_KEY, NOTIFICATION_ENABLED_DEFAULT)

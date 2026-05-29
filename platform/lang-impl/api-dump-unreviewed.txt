@@ -16075,10 +16075,6 @@ f:com.intellij.uiDesigner.SerializedComponentData
 - getSerializedComponents():java.lang.String
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
-- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
-- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.execution.ui.RunContentDescriptor
-- sf:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
 f:com.intellij.usageView.impl.UsageViewContentManagerImpl
 - com.intellij.usageView.UsageViewContentManager
 - <init>(com.intellij.openapi.project.Project):V

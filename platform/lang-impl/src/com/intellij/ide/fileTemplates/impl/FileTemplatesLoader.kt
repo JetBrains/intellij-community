@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.l10n.LocalizationUtil
@@ -182,7 +183,7 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
   val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   for (module in PluginManagerCore.getPluginSet().getEnabledModules()) {
     val loader = module.classLoader
-    if (module is ContentModuleDescriptor && module.ownClassPath.isNullOrEmpty()) {
+    if (module is ContentModuleDescriptor && (module.ownClassPath.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED)) {
       // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }

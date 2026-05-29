@@ -104,6 +104,6 @@ public class SelectionReverterTest extends IntegrationTestCase {
     List<RevisionId> revisions = getRevisionIdsFor(f);
     String entryPath = myGateway.getPathOrUrl(f);
     SelectionCalculator c = SelectionCalculator.create(getVcs(), myGateway, getRootEntry(), entryPath, revisions, from, to);
-    return new SelectionReverter(myProject, getVcs(), myGateway, c, revisions.get(1), entryPath, from, to, () -> COMMAND_NAME);
+    return new SelectionReverter(myProject, myGateway, c, revisions.get(1), entryPath, from, to, () -> COMMAND_NAME);
   }
 }

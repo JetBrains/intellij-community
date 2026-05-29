@@ -200,7 +200,10 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       // (mbo) Not the proudest of this one but some combinations of Javadoc tag and HTML cannot reasonnably be handled with jsoup
       // unescape element between internal HTML tags. It is expected that internal tags are not nested.
       Matcher internalTagMatcher = Pattern.compile(
-          "<%s>(.*?)</%s>".formatted(HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW, HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW),
+          "<(?:%s|%s)>(.*?)</(?:%s|%s)>".formatted(
+            HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW, HtmlToMarkdownVisitor.INTERNAL_CODE_BLOCK_TAG,
+            HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW, HtmlToMarkdownVisitor.INTERNAL_CODE_BLOCK_TAG
+          ),
           Pattern.UNICODE_CASE | Pattern.DOTALL | Pattern.MULTILINE)
         .matcher(result);
 

@@ -98,8 +98,10 @@ open class NonIndexableFileSearchPerformanceTest {
     val searchPattern = "ProjectRootEntity"
     val contributor = createContributor()
     newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
-      contributor.search(searchPattern, MockProgressIndicator())
-      nonIndexableFilesCount
+      runReadActionBlocking { // improve performance of this benchmark by avoiding repeated acquisition of read locks
+        contributor.search(searchPattern, MockProgressIndicator())
+        nonIndexableFilesCount
+      }
     }.start()
   }
 

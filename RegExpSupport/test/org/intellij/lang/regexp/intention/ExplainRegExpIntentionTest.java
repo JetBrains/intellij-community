@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -38,6 +39,24 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                  y – matches the LATIN SMALL LETTER Y character
                  e – matches the LATIN SMALL LETTER E character
                  d – matches the LATIN SMALL LETTER D character
+             """);
+  }
+  
+  public void testEscapes() {
+    doTest("\041 \u0032\\041 \\u0032\\n\\w\\c@\\x61\\e",
+           """
+             ! 2\\041 \\u0032\\n\\w\\c@\\x61\\e – matches elements in order
+               ! – matches the EXCLAMATION MARK character
+                 – matches the SPACE character
+               2 – matches the DIGIT TWO character
+               \\041 Octal Escape (https://www.regular-expressions.info/nonprint.html#octal) – matches the EXCLAMATION MARK (!) character
+                 – matches the SPACE character
+               \\u0032 Unicode Escape (https://www.regular-expressions.info/nonprint.html) – matches the DIGIT TWO (2) character
+               \\n Escape Character (https://www.regular-expressions.info/nonprint.html) – matches the LINE FEED (LF) character
+               \\w Shorthand Character Class (https://www.regular-expressions.info/shorthand.html) – matches a word character (letter, digit or underscore)
+               \\c@ Control Character Escape (https://www.regular-expressions.info/nonprint.html) – matches the NULL character
+               \\x61 Hexadecimal Escape (https://www.regular-expressions.info/nonprint.html) – matches the LATIN SMALL LETTER A (a) character
+               \\e Escape Character (https://www.regular-expressions.info/nonprint.html) – matches the ESCAPE character
              """);
   }
 
@@ -80,6 +99,36 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                    \\b Word Boundary (https://www.regular-expressions.info/wordboundaries.html) – matches between a word character and a non-word character
                      – matches the SPACE character
                    \\) – matches the RIGHT PARENTHESIS character
+             """);
+  }
+
+  public void testExactlyNTimes() {
+    Registry.get("explain.regexp.intention.nested.quantifiers").setValue(true, myFixture.getTestRootDisposable());
+    doTest("[0-9]{3}-[0-9]{4}",
+           """
+             [0-9]{3}-[0-9]{4} – matches elements in order
+               [0-9]{3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 3 times
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               - – matches the HYPHEN-MINUS character
+               [0-9]{4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 4 times
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+             """);
+  }
+
+  public void testExactlyNTimesFlat() {
+    Registry.get("explain.regexp.intention.nested.quantifiers").setValue(false, myFixture.getTestRootDisposable());
+    doTest("[0-9]{3}-[0-9]{4}",
+           """
+             [0-9]{3}-[0-9]{4} – matches elements in order
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               {3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 3 times
+               - – matches the HYPHEN-MINUS character
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               {4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 4 times
              """);
   }
 

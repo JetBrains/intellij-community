@@ -25,6 +25,7 @@ private data class ThreadEntry(
   @JvmField var name: String?,
   @JvmField val summary: String?,
   @JvmField val cwd: String?,
+  @JvmField val path: String?,
   @JvmField val sourceKind: String,
   @JvmField val sourceAsString: Boolean,
   @JvmField val sourceSubAgentFieldName: String,
@@ -825,6 +826,7 @@ internal object CodexTestAppServer {
     var name: String? = null
     var summary: String? = null
     var cwd: String? = null
+    var path: String? = null
     var sourceKind = "cli"
     var sourceAsString = false
     var sourceSubAgentFieldName = "subAgent"
@@ -849,6 +851,7 @@ internal object CodexTestAppServer {
         "name" -> name = readStringOrNull(parser)
         "summary" -> summary = readStringOrNull(parser)
         "cwd" -> cwd = readStringOrNull(parser)
+        "path" -> path = readStringOrNull(parser)
         "sourceKind" -> sourceKind = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: sourceKind
         "sourceAsString" -> sourceAsString = readBooleanOrNull(parser) ?: false
         "sourceSubAgentFieldName" -> sourceSubAgentFieldName =
@@ -906,6 +909,7 @@ internal object CodexTestAppServer {
       name = name,
       summary = summary,
       cwd = cwd,
+      path = path,
       sourceKind = sourceKind,
       sourceAsString = sourceAsString,
       sourceSubAgentFieldName = sourceSubAgentFieldName,
@@ -1055,6 +1059,7 @@ internal object CodexTestAppServer {
     thread.name?.let { generator.writeStringField("name", it) }
     thread.summary?.let { generator.writeStringField("summary", it) }
     thread.cwd?.let { generator.writeStringField("cwd", it) }
+    thread.path?.let { generator.writeStringField("path", it) }
     generator.writeFieldName("source")
     writeThreadSource(generator, thread)
     thread.agentNickname?.let { generator.writeStringField("agentNickname", it) }
@@ -1200,6 +1205,7 @@ internal object CodexTestAppServer {
       name = null,
       summary = null,
       cwd = cwd,
+      path = null,
       sourceKind = "appServer",
       sourceAsString = false,
       sourceSubAgentFieldName = "subAgent",

@@ -214,7 +214,7 @@ object McpClientDetector {
     return null
   }
 
-  internal fun preferredCodexConfigPath(): Path? {
+  fun preferredCodexConfigPath(): Path? {
     return resolveCodexConfigPath() ?: codexConfigCandidates().firstOrNull()
   }
 

@@ -44,6 +44,9 @@ Codex rollout files are parsed for refresh hints only: pending/concrete tab rebi
 - Path-scoped invalidation reparses dirty rollout paths even when file size and mtime are unchanged; overflow or ambiguous directory events may trigger a full rescan.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
 
+- Path-scoped rollout updates must carry project-file-change evidence when they observe a newly completed native mutating Codex tool call (`exec_command` or `apply_patch`); later status-only appends after the same completed tool must not repeat that evidence. JetBrains MCP tool calls observed as rollout `mcp_tool_call_end` events are not Codex mutation evidence: MCP mutations own their IDE/VFS refresh behavior through the tool implementation, and rollout parsing must not add a second session-source VFS refresh for them.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
 - Local-gated real TUI integration verifies production rollout ingestion when a real `codex` CLI and PTY support are available; deterministic parser/backend tests remain the CI owner for event-shape matrices.
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
 

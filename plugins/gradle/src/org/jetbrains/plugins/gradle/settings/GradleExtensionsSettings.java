@@ -334,7 +334,8 @@ public class GradleExtensionsSettings {
         configuration.isVisible(),
         configuration.isScriptClasspathConfiguration(),
         configuration.getDescription(),
-        configuration.getDeclarationAlternatives()
+        configuration.getDeclarationAlternatives(),
+        configuration.getCanBeDeclared()
       );
     }
   }
@@ -435,17 +436,20 @@ public class GradleExtensionsSettings {
     private final boolean scriptClasspath;
     private final @Nullable String description;
     private final @NotNull List<String> declarationAlternatives;
+    private final @Nullable Boolean canDeclareDependencies;
 
     public GradleConfiguration(@NotNull String name,
                                boolean visible,
                                boolean scriptClasspath,
                                @Nullable String description,
-                               @NotNull List<String> declarationAlternatives) {
+                               @NotNull List<String> declarationAlternatives,
+                               @Nullable Boolean canDeclareDependencies) {
       this.name = name;
       this.visible = visible;
       this.scriptClasspath = scriptClasspath;
       this.description = description;
       this.declarationAlternatives = declarationAlternatives;
+      this.canDeclareDependencies = canDeclareDependencies;
     }
 
     public @NotNull String getName() {
@@ -466,6 +470,15 @@ public class GradleExtensionsSettings {
 
     public @NotNull List<String> getDeclarationAlternatives() {
       return declarationAlternatives;
+    }
+
+    /**
+     * @return `true` if a configuration can have dependencies declared. For example, if it's a scope or an annotation processor.
+     * For Gradle < 8.2, returns null because it's unclear whether a configuration could declare dependencies or not.
+     * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/is-can-be-declared.html">Gradle Documentation</a>
+     */
+    public @Nullable Boolean getCanDeclareDependencies() {
+      return canDeclareDependencies;
     }
   }
 

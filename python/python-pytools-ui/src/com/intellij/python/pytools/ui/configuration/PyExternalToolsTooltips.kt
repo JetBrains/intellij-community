@@ -77,7 +77,7 @@ private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, 
     if (eventX in browseLeft..rightEdge) {
       return PyToolsUiBundle.message("settings.external.tools.path.edit.tooltip")
     }
-    // Action icon (install / upgrade / info) sits immediately to the left of browse.
+    // Action icon (install / upgrade / info / reset) sits immediately to the left of browse.
     val iconKind = host.iconKindFor(toolRow, pathFieldValue)
     val actionIcon = iconKind.icon
     if (actionIcon != null) {
@@ -158,6 +158,7 @@ private fun actionHintFor(kind: PathIconKind): String? = when (kind) {
   PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
   PathIconKind.INFO -> null
   PathIconKind.UPGRADE -> PyToolsUiBundle.message("settings.external.tools.path.upgrade.tooltip")
+  PathIconKind.RESET -> PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")
 }
 
 /** True if [eventX] (in table coordinates) lies within the right-edge icon hit-zone of [cellRect]. */

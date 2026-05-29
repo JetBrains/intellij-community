@@ -91,7 +91,6 @@ class CommandCompletionSettingsService {
   }
 }
 
-@ApiStatus.Internal
 internal class AppCommandCompletionSettings(
   var showCounts: Int = 0,
   var myEnabled: CommandCompletionEnabled = CommandCompletionEnabled.FROM_REGISTRY,
@@ -118,6 +117,9 @@ internal class AppCommandCompletionSettings(
     myEnabled = if (enabled) CommandCompletionEnabled.ENABLED else CommandCompletionEnabled.DISABLED
   }
 
+  /**
+   * @see com.intellij.codeInsight.completion.group.GroupedCompletionImpl.isEnabled
+   */
   private fun calculateFromRegistry(): Boolean {
     // unit tests
     if (ApplicationManager.getApplication().isUnitTestMode() &&

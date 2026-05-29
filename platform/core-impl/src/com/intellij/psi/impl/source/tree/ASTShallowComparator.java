@@ -79,7 +79,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   // have to perform tree walking by hand here to be able to interrupt ourselves
   private boolean compareTreeToText(@NotNull TreeElement root, @NotNull String text) {
     int[] curOffset = {0};
-    root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    root.acceptTree(new RecursiveTreeElementWalkingVisitor(root) {
       @Override
       public void visitLeaf(LeafElement leaf) {
         matchText(leaf);

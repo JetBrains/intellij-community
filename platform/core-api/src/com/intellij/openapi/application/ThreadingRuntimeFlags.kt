@@ -55,6 +55,10 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
 
+
+@get:ApiStatus.Internal
+val assertTreeElementVersioningCompatibility: Boolean = System.getProperty("ide.assert.tree.element.versioning.compatibility", "true").toBoolean()
+
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
  */

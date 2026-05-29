@@ -172,15 +172,13 @@ public final class JUnit5TeamCityRunner {
 
     // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code
     int exitCode;
-    if (caughtException != null) {
-      exitCode = 1;
+    if (caughtException != null || listener.hasFailures()) {
+      // see org.jetbrains.intellij.build.impl.TestingTasksImpl.EXIT_FAILURE
+      exitCode = 41;
     }
     else if (!listener.smthExecuted()) {
       // see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
       exitCode = 42;
-    }
-    else if (listener.hasFailures()) {
-      exitCode = 1;
     }
     else {
       exitCode = 0;

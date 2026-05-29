@@ -4,9 +4,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 
 interface NotebookCellCaretTracker {
+  interface CellId
   interface CellCaretPosition
+  interface CellCaretSnapshot {
+    val cellId: CellId
+    val positions: List<CellCaretPosition>
+  }
 
-  fun saveCaretPositions(editor: Editor): List<CellCaretPosition>?
+  fun saveCaretPositions(editor: Editor): CellCaretSnapshot?
+
+  fun getCurrentCellId(editor: Editor): CellId?
 
   fun restoreCaretPositions(editor: Editor, positions: List<CellCaretPosition>): Boolean
 

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nls
  *
  * For all APIs but full interactive mode (which is a very low-level custom mode) stdout/stderr is reported as progress.
  */
+@ApiStatus.NonExtendable
 @ApiStatus.Internal
 interface ExecService {
 

@@ -133,4 +133,11 @@ class MarkdownSupportTest : GrazieTestBase() {
     """.trimIndent())
     myFixture.checkHighlighting()
   }
+
+  fun `test grammar check in html comment`() {
+    myFixture.configureByText("a.md", """
+      <!-- It is <GRAMMAR_ERROR <TYPO descr="Typo: In word 'descr'">descr</TYPO>=\"EN_A_VS_AN\">an</GRAMMAR_ERROR> friend there -->
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
 }

@@ -50,6 +50,65 @@ public abstract class JavaCompletionHandlerTestGenerated extends AbstractJavaCom
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/injava/extensions")
+    public static class Extensions extends AbstractJavaCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AutoImport.java")
+        public void testAutoImport() throws Exception {
+            runTest("../testData/handlers/injava/extensions/AutoImport.java");
+        }
+
+        @TestMetadata("ComplexQualifier.java")
+        public void testComplexQualifier() throws Exception {
+            runTest("../testData/handlers/injava/extensions/ComplexQualifier.java");
+        }
+
+        @TestMetadata("ComplexQualifierInExpression.java")
+        public void testComplexQualifierInExpression() throws Exception {
+            runTest("../testData/handlers/injava/extensions/ComplexQualifierInExpression.java");
+        }
+
+        @TestMetadata("ExtensionProperty.java")
+        public void testExtensionProperty() throws Exception {
+            runTest("../testData/handlers/injava/extensions/ExtensionProperty.java");
+        }
+
+        @TestMetadata("ExtensionSetter.java")
+        public void testExtensionSetter() throws Exception {
+            runTest("../testData/handlers/injava/extensions/ExtensionSetter.java");
+        }
+
+        @TestMetadata("MultipleFunctionParams.java")
+        public void testMultipleFunctionParams() throws Exception {
+            runTest("../testData/handlers/injava/extensions/MultipleFunctionParams.java");
+        }
+
+        @TestMetadata("SimpleFunction.java")
+        public void testSimpleFunction() throws Exception {
+            runTest("../testData/handlers/injava/extensions/SimpleFunction.java");
+        }
+
+        @TestMetadata("SimpleFunctionAtTop.java")
+        public void testSimpleFunctionAtTop() throws Exception {
+            runTest("../testData/handlers/injava/extensions/SimpleFunctionAtTop.java");
+        }
+
+        @TestMetadata("SimpleFunctionWithParam.java")
+        public void testSimpleFunctionWithParam() throws Exception {
+            runTest("../testData/handlers/injava/extensions/SimpleFunctionWithParam.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/injava")
     public static class Uncategorized extends AbstractJavaCompletionHandlerTest {
         @java.lang.Override

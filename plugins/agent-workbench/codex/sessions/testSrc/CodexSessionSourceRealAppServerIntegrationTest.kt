@@ -144,22 +144,24 @@ class CodexSessionSourceRealAppServerIntegrationTest {
     client: CodexWebSocketAppServerClient,
     notifications: Flow<CodexAppServerNotification>,
   ): CodexSessionSource {
+    val backend = CodexAppServerSessionBackend(
+      listThreadsForProject = { projectPath ->
+        client.listThreads(
+          archived = false,
+          cwdFilter = normalizeRootPath(projectPath.invariantSeparatorsPathString),
+        )
+      },
+      readThread = client::readThread,
+      archiveThread = {},
+    )
+    val appServerRefreshHintsProvider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = client::readThreadActivitySnapshot,
+      notifications = notifications,
+    )
     return CodexSessionSource(
-      backend = CodexAppServerSessionBackend(
-        listThreadsForProject = { projectPath ->
-          client.listThreads(
-            archived = false,
-            cwdFilter = normalizeRootPath(projectPath.invariantSeparatorsPathString),
-          )
-        },
-        readThread = client::readThread,
-        archiveThread = {},
-      ),
-      appServerRefreshHintsProvider = CodexAppServerRefreshHintsProvider(
-        readThreadActivitySnapshot = client::readThreadActivitySnapshot,
-        notifications = notifications,
-      ),
-      rolloutRefreshHintsProvider = EmptyCodexRefreshHintsProvider,
+      backend,
+      appServerRefreshHintsProvider,
+      EmptyCodexRefreshHintsProvider,
     )
   }
 

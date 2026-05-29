@@ -1,6 +1,8 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
@@ -8,6 +10,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -28,6 +31,11 @@ class AgentSessionWarmStateServiceTest {
               provider = AgentSessionProvider.CLAUDE,
               activity = AgentThreadActivity.UNREAD,
               subAgents = listOf(AgentSubAgent(id = "claude-sub-1", name = "Sub-agent 1")),
+              cost = AgentSessionCost(
+                amountUsd = BigDecimal("1.25"),
+                kind = AgentSessionCostKind.EXACT,
+                matchedModelId = "anthropic/claude-sonnet-4",
+              ),
             ).copy(originBranch = "feature/x"),
             thread(
               id = "codex-thread",
@@ -49,6 +57,13 @@ class AgentSessionWarmStateServiceTest {
     assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
     assertThat(snapshot?.threads?.first()?.subAgents?.map { it.id }).isEqualTo(listOf("claude-sub-1"))
     assertThat(snapshot?.threads?.first()?.originBranch).isEqualTo("feature/x")
+    assertThat(snapshot?.threads?.first()?.cost).isEqualTo(
+      AgentSessionCost(
+        amountUsd = BigDecimal("1.25"),
+        kind = AgentSessionCostKind.EXACT,
+        matchedModelId = "anthropic/claude-sonnet-4",
+      )
+    )
   }
 
   @Test
@@ -102,11 +117,21 @@ class AgentSessionWarmStateServiceTest {
     val original = AgentSessionWarmStateService()
     original.setPathSnapshot(
       "/work/project-a/",
-      AgentSessionWarmPathSnapshot(
-        threads = listOf(
-          thread(id = "claude-thread", updatedAt = 20, provider = AgentSessionProvider.CLAUDE, activity = AgentThreadActivity.UNREAD),
-          thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.CODEX),
-        ),
+        AgentSessionWarmPathSnapshot(
+          threads = listOf(
+            thread(
+              id = "claude-thread",
+              updatedAt = 20,
+              provider = AgentSessionProvider.CLAUDE,
+              activity = AgentThreadActivity.UNREAD,
+              cost = AgentSessionCost(
+                amountUsd = BigDecimal("2.50"),
+                kind = AgentSessionCostKind.ESTIMATED,
+                matchedModelId = "openai/o3",
+              ),
+            ),
+            thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.CODEX),
+          ),
         hasUnknownThreadCount = true,
         updatedAt = 200,
       ),
@@ -120,6 +145,13 @@ class AgentSessionWarmStateServiceTest {
     assertThat(snapshot?.threads?.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
     assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
     assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
+    assertThat(snapshot?.threads?.first()?.cost).isEqualTo(
+      AgentSessionCost(
+        amountUsd = BigDecimal("2.50"),
+        kind = AgentSessionCostKind.ESTIMATED,
+        matchedModelId = "openai/o3",
+      )
+    )
   }
 
   @Test

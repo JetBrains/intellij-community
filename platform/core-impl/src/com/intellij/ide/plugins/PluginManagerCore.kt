@@ -346,9 +346,9 @@ object PluginManagerCore {
       for (descriptorLoadingError in descriptorLoadingErrors) {
         add(PluginLoadingError(
           reason = null,
-          htmlMessageSupplier = Supplier {
-            HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
-                                              PluginUtils.pluginPathToUserString(descriptorLoadingError.path)))
+          messageSupplier = Supplier {
+            CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+                                              PluginUtils.pluginPathToUserString(descriptorLoadingError.path))
           },
           error = descriptorLoadingError.error,
         ))
@@ -376,7 +376,7 @@ object PluginManagerCore {
   private fun mapForUserNotification(loadingErrors: Collection<PluginNonLoadReason>): List<PluginLoadingError> =
     loadingErrors.asSequence()
       .filter { it.shouldNotifyUser }
-      .map { reason -> PluginLoadingError(reason, htmlMessageSupplier = { HtmlChunk.text(reason.detailedMessage) }, error = null) }
+      .map { reason -> PluginLoadingError(reason, messageSupplier = { reason.detailedMessage }, error = null) }
       .toList()
 
   @ApiStatus.Internal

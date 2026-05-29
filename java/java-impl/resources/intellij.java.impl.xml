@@ -8,7 +8,6 @@
     <module name="intellij.regexp"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.frontback.impl"/>

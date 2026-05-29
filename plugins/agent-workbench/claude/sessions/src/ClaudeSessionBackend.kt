@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ data class ClaudeBackendThread(
   @JvmField val gitBranch: String? = null,
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
   @JvmField val awaitingAssistantTurn: Boolean = false,
+  @JvmField val usageSnapshots: List<AgentSessionUsageSnapshot> = emptyList(),
 )
 
 interface ClaudeSessionBackend {
@@ -29,6 +31,8 @@ interface ClaudeSessionBackend {
 
   val updates: Flow<Unit>
     get() = emptyFlow()
+
+  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> = emptyFlow()
 }
 
 data class ClaudeBackendThreadRefreshResult(

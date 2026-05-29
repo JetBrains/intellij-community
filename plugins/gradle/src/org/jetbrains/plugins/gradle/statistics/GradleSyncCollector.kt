@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gradle.statistics
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.ADDITIONAL_MODEL_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.BASE_SCRIPT_MODEL_PHASE
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_LOADED_PHASE
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_MODEL_PHASE
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_SOURCE_SET_DEPENDENCY_PHASE
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_SOURCE_SET_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.SCRIPT_MODEL_PHASE
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.LongEventField
@@ -22,7 +24,7 @@ object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("gradle.sync", 4)
+  private val GROUP = EventLogGroup("gradle.sync", 5)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
 
@@ -31,17 +33,21 @@ object GradleSyncCollector : CounterUsagesCollector() {
   private val MODEL_FETCH_ERROR_COUNT = EventFields.Int("model_fetch_error_count")
   private val MODEL_FETCH_COMPLETION_STAMP = EventFields.Long("model_fetch_completion_stamp_ms")
 
+  private val BASE_SCRIPT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("base_script_model_phase_completion_stamp_ms")
   private val PROJECT_LOADED_PHASE_COMPLETION_STAMP = EventFields.Long("project_loaded_phase_completion_stamp_ms")
   private val PROJECT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("project_model_phase_completion_stamp_ms")
   private val PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_phase_completion_stamp_ms")
   private val PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_dependency_phase_completion_stamp_ms")
+  private val SCRIPT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("script_model_phase_completion_stamp_ms")
   private val ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("additional_model_phase_completion_stamp_ms")
 
   val PHASE_COMPLETION_STAMPS: Array<LongEventField> = arrayOf(
+    BASE_SCRIPT_MODEL_PHASE_COMPLETION_STAMP,
     PROJECT_LOADED_PHASE_COMPLETION_STAMP,
     PROJECT_MODEL_PHASE_COMPLETION_STAMP,
     PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP,
     PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP,
+    SCRIPT_MODEL_PHASE_COMPLETION_STAMP,
     ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP
   )
 
@@ -89,10 +95,12 @@ object GradleSyncCollector : CounterUsagesCollector() {
         add(MODEL_FETCH_FOR_BUILD_SRC with context.isBuildSrcProject)
         add(MODEL_FETCH_ERROR_COUNT with exceptions.size)
         add(MODEL_FETCH_COMPLETION_STAMP with getModelFetchCompletionStamp())
+        add(BASE_SCRIPT_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(BASE_SCRIPT_MODEL_PHASE))
         add(PROJECT_LOADED_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_LOADED_PHASE))
         add(PROJECT_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_MODEL_PHASE))
         add(PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_SOURCE_SET_PHASE))
         add(PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_SOURCE_SET_DEPENDENCY_PHASE))
+        add(SCRIPT_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(SCRIPT_MODEL_PHASE))
         add(ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(ADDITIONAL_MODEL_PHASE))
       }
     }

@@ -14,7 +14,10 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.DocumentTracker
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
@@ -28,15 +31,29 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 object ReviewInEditorUtil {
+
+  internal val REVIEW_CHANGED_LINES_COLOR: ColorKey = ColorKey.createColorKey("REVIEW_CHANGED_LINES_COLOR")
+
   val REVIEW_CHANGES_STATUS_COLOR: JBColor =
     JBColor.namedColor("Review.Editor.Line.Status.Marker", JBColor(0xF8A0DF, 0x8A4175))
 
   val REVIEW_STATUS_MARKER_COLOR_SCHEME: LineStatusMarkerColorScheme =
     object : LineStatusMarkerColorScheme() {
-      override fun getColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
-      override fun getIgnoredBorderColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
-      override fun getErrorStripeColor(type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
+      override fun getColor(editor: Editor, type: Byte): Color {
+        return editor.colorsScheme.getColor(REVIEW_CHANGED_LINES_COLOR) ?: REVIEW_CHANGES_STATUS_COLOR
+      }
+      override fun getIgnoredBorderColor(editor: Editor, type: Byte): Color {
+        return editor.colorsScheme.getColor(REVIEW_CHANGED_LINES_COLOR) ?: REVIEW_CHANGES_STATUS_COLOR
+      }
+      override fun getErrorStripeColor(type: Byte): Color {
+        return EditorColorsManager.getInstance().getGlobalScheme().getColor(REVIEW_CHANGED_LINES_COLOR)
+               ?: REVIEW_CHANGES_STATUS_COLOR
+      }
     }
+
+  internal fun getReviewChangesTextAttribute(lineStatusMarkerColorScheme: LineStatusMarkerColorScheme): TextAttributes = object : TextAttributes() {
+    override fun getErrorStripeColor(): Color = lineStatusMarkerColorScheme.getErrorStripeColor(0) ?: REVIEW_CHANGES_STATUS_COLOR
+  }
 
   fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
     if (ranges.isEmpty()) return line

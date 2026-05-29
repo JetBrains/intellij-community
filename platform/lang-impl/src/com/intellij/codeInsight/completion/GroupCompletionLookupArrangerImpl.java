@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.group.CompletionGroup;
@@ -20,8 +20,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInsight.completion.group.CompletionGroup.COMPLETION_GROUP_KEY;
-
 /**
  * Implementation of {@link LookupGroupArranger} designed to handle grouping of completion items within lookup components.
  * This class extends {@code CompletionLookupArrangerImpl} to add behavior for managing grouped elements.
@@ -31,14 +29,14 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
   private boolean mySupportGroups = true;
   private final MultiMap<CompletionGroup, LookupElement> myGroupCache = new MultiMap<>();
 
-  public GroupCompletionLookupArrangerImpl(CompletionProcessEx process) {
+  public GroupCompletionLookupArrangerImpl(@NotNull CompletionProcessEx process) {
     super(process);
   }
 
 
   @Override
   protected boolean isCustomElements(@NotNull LookupElement item) {
-    return item.getUserData(COMPLETION_GROUP_KEY) != null;
+    return CompletionGroup.get(item) != null;
   }
 
   @Override
@@ -66,7 +64,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     }
     boolean stopCustom = false;
     Set<CompletionGroup> visitedGroup = new HashSet<>();
-    CompletionGroup currentGroup = lastElement.getUserData(COMPLETION_GROUP_KEY);
+    CompletionGroup currentGroup = CompletionGroup.get(lastElement);
     List<Pair<Integer, CompletionGroup>> groups = new ArrayList<>();
     for (int i = model.size() - 2; i >= 0; i--) {
       LookupElement element = model.get(i);
@@ -78,8 +76,8 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
         super.customizeListModel(model);
         return;
       }
-      else if(!stopCustom) {
-        CompletionGroup group = element.getUserData(COMPLETION_GROUP_KEY);
+      else if (!stopCustom) {
+        CompletionGroup group = CompletionGroup.get(element);
         if (group == null) {
           super.customizeListModel(model);
           return;
@@ -132,10 +130,10 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
   protected boolean supportCustomCaches(@Nullable LookupElement item) {
     if (item == null) return false;
     if (mySupportGroups) {
-      CompletionGroup group = item.getUserData(COMPLETION_GROUP_KEY);
+      CompletionGroup group = CompletionGroup.get(item);
       if (group != null) {
         if (isPrefixItem(item, true)) {
-          item.putUserData(COMPLETION_GROUP_KEY, null);
+          CompletionGroup.drop(item);
           return false;
         }
         myGroupCache.putValue(group, item);

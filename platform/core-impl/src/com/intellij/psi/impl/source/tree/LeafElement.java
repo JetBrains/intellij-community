@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -8,6 +8,7 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
@@ -127,7 +128,7 @@ public abstract class LeafElement extends TreeElement implements LighterASTToken
   }
 
   public @NotNull LeafElement rawReplaceWithText(@NotNull String newText) {
-    LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
+    LeafElement newLeaf = InternalPsiVersioning.inVersionedEnvironment(this.isVersioned(), () -> ASTFactory.leaf(getElementType(), newText));
     copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
     newLeaf.clearCaches();
@@ -135,9 +136,11 @@ public abstract class LeafElement extends TreeElement implements LighterASTToken
   }
 
   public @NotNull LeafElement replaceWithText(@NotNull String newText) {
-    LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
-    getTreeParent().replaceChild(this, newLeaf);
-    return newLeaf;
+    return InternalPsiVersioning.inVersionedEnvironment(this.isVersioned(), () -> {
+      LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
+      getTreeParent().replaceChild(this, newLeaf);
+      return newLeaf;
+    });
   }
 
   @Override

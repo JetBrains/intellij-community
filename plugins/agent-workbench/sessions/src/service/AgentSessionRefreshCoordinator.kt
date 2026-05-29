@@ -200,6 +200,12 @@ internal class AgentSessionRefreshCoordinator(
   }
 
   private fun scheduleVfsRefreshForSourceUpdate(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    if (!updateEvent.mayHaveChangedProjectFiles) {
+      LOG.debug {
+        "Skipped VFS refresh for ${provider.value} source update: no project file change evidence"
+      }
+      return
+    }
     val candidatePaths = collectVfsRefreshCandidatePaths(
       state = stateStore.snapshot(),
       provider = provider,
@@ -279,19 +285,27 @@ internal class AgentSessionRefreshCoordinator(
               cliAvailabilityByProvider = cliAvailabilityByProvider,
             ) { partial, isComplete ->
               stateStore.updateProject(normalizedEntryPath) { project ->
+                val refreshedThreads = preserveThreadCosts(
+                  existingThreads = project.threads,
+                  newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
+                )
                 project.copy(
-                  threads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
+                  threads = refreshedThreads,
                   providerWarnings = partial.providerWarnings,
                   isLoading = !isComplete,
                 )
               }
             }
             stateStore.updateProject(normalizedEntryPath) { project ->
+              val refreshedThreads = preserveThreadCosts(
+                existingThreads = project.threads,
+                newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
+              )
               project.copy(
                 isLoading = false,
                 hasLoaded = true,
                 hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                threads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
+                threads = refreshedThreads,
                 errorMessage = finalResult.errorMessage,
                 providerWarnings = finalResult.providerWarnings,
               )
@@ -319,19 +333,27 @@ internal class AgentSessionRefreshCoordinator(
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
               ) { partial, isComplete ->
                 stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                  val refreshedThreads = preserveThreadCosts(
+                    existingThreads = worktree.threads,
+                    newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
+                  )
                   worktree.copy(
-                    threads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
+                    threads = refreshedThreads,
                     providerWarnings = partial.providerWarnings,
                     isLoading = !isComplete,
                   )
                 }
               }
               stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                val refreshedThreads = preserveThreadCosts(
+                  existingThreads = worktree.threads,
+                  newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
+                )
                 worktree.copy(
                   isLoading = false,
                   hasLoaded = true,
                   hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                  threads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
+                  threads = refreshedThreads,
                   errorMessage = finalResult.errorMessage,
                   providerWarnings = finalResult.providerWarnings,
                 )

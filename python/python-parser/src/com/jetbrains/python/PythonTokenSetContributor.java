@@ -110,6 +110,7 @@ import static com.jetbrains.python.PyTokenTypes.IMPORT_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.IN_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.IS_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.LAMBDA_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.LAZY_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.MATCH_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.NONE_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.NONLOCAL_KEYWORD;
@@ -161,7 +162,7 @@ public final class PythonTokenSetContributor extends PythonDialectsTokenSetContr
       LAMBDA_KEYWORD, NOT_KEYWORD, OR_KEYWORD, PASS_KEYWORD, PRINT_KEYWORD,
       RAISE_KEYWORD, RETURN_KEYWORD, TRY_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD,
       YIELD_KEYWORD,
-      MATCH_KEYWORD, CASE_KEYWORD,
+      MATCH_KEYWORD, CASE_KEYWORD, LAZY_KEYWORD,
       NONE_KEYWORD, ELLIPSIS_LITERAL, TRUE_KEYWORD, FALSE_KEYWORD, NONLOCAL_KEYWORD, DEBUG_KEYWORD, ASYNC_KEYWORD, AWAIT_KEYWORD, TYPE_KEYWORD);
   }
 

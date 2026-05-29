@@ -1,0 +1,13 @@
+<idea-plugin package="com.intellij.java.bookmarks">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.bookmarks"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <bookmarkProvider implementation="com.intellij.java.bookmarks.PackageBookmarkProvider"/>
+  </extensions>
+</idea-plugin>

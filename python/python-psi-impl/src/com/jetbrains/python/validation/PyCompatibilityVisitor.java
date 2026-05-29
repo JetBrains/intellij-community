@@ -7,6 +7,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.CompatibilityPrintCallQuickFix;
@@ -68,6 +71,7 @@ import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyKeywordArgument;
@@ -174,6 +178,13 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
   @Override
   public void visitPyImportStatement(@NotNull PyImportStatement node) {
     super.visitPyImportStatement(node);
+
+    if (node.isLazy()) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
+                                     node.getFirstChild(),
+                                     LocalQuickFix.notNullElements(createInterpreterSettingsQuickFix(node)));
+    }
 
     final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
     if (ifParent != null) return;
@@ -639,6 +650,11 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
+  private static @Nullable LocalQuickFix createInterpreterSettingsQuickFix(@NotNull PsiElement element) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    return PythonUiService.getInstance().createInterpreterSettingsQuickFix(module);
+  }
+
   @Override
   public void visitPyNonlocalStatement(final @NotNull PyNonlocalStatement node) {
     registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
@@ -876,6 +892,17 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"),
                                    matchStatement.getFirstChild());
+  }
+
+  @Override
+  public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
+    super.visitPyFromImportStatement(node);
+    if (node.isLazy()) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
+                                     node.getFirstChild(),
+                                     LocalQuickFix.notNullElements(createInterpreterSettingsQuickFix(node)));
+    }
   }
 
   @Override

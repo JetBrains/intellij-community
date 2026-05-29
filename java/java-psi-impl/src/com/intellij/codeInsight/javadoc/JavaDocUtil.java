@@ -175,12 +175,19 @@ public final class JavaDocUtil {
     return null;
   }
 
+  /// Find a field or method referenced by `refClass`
+  ///
+  /// @param poundIndex the index where `#` is in `refTextCorrected`.
   private static @Nullable PsiElement findReference(@NotNull PsiClass refClass,
                                                     PsiElement context,
                                                     boolean useNavigationElement,
                                                     String refTextCorrected,
                                                     int poundIndex) {
     PsiElement member = findReferencedMember(refClass, refTextCorrected.substring(poundIndex + 1), context);
+    if (poundIndex >= 0 && member instanceof PsiClass && member != refClass) {
+      // Psi subclasses class cannot be referred through `#` but the same class implicit constructor can
+      return null;
+    }
     return useNavigationElement && member != null ? member.getNavigationElement() : member;
   }
 
@@ -239,6 +246,9 @@ public final class JavaDocUtil {
       for (PsiMethod method : methods) {
         if (method.getName().equals(name)) return method;
       }
+      // Implicit constructor is not part of the methods
+      if (memberRefText.equals(aClass.getName())) return aClass;
+
       return null;
     }
     else {
@@ -282,7 +292,13 @@ public final class JavaDocUtil {
 
       PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, aClass, name, allMethods);
 
-      if (methods.length == 0) return null;
+      if (methods.length == 0) {
+        // Check for implicit constructor
+        if (types.length == 0 && name.equals(aClass.getName())) {
+          return aClass;
+        }
+        return null;
+      }
 
       PsiMethod found = methods[0];
 

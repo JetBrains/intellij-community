@@ -96,7 +96,6 @@ f:com.intellij.openapi.actionSystem.UiDataProvider$Companion
 f:com.intellij.openapi.actionSystem.UiDataProviderKt
 - sf:get(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.UiDataRule
-- s:forEachRule(java.util.function.Consumer):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 com.intellij.openapi.ui.popup.BalloonHandler
 - a:hide():V

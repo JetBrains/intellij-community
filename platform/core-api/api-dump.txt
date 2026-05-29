@@ -154,9 +154,14 @@ com.intellij.lang.CodeDocumentationAwareCommenter
 - a:getDocumentationCommentPrefix():java.lang.String
 - a:getDocumentationCommentSuffix():java.lang.String
 - a:getDocumentationCommentTokenType():com.intellij.psi.tree.IElementType
+- getDocumentationLineCommentPrefix():java.lang.String
+- getDocumentationLineCommentPrefixes():java.util.List
+- getDocumentationLineCommentTokenType():com.intellij.psi.tree.IElementType
+- getDocumentationLineCommentTokenTypes():java.util.List
 - a:getLineCommentTokenType():com.intellij.psi.tree.IElementType
 - getLineCommentTokenTypes():java.util.List
 - a:isDocumentationComment(com.intellij.psi.PsiComment):Z
+- isDocumentationLineComment(com.intellij.psi.PsiComment):Z
 com.intellij.lang.CodeDocumentationAwareCommenterEx
 - com.intellij.lang.CodeDocumentationAwareCommenter
 - a:isDocumentationCommentText(com.intellij.psi.PsiElement):Z
@@ -946,8 +951,6 @@ f:com.intellij.openapi.vfs.DiskQueryRelay
 - <init>(java.util.function.Function):V
 - <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
 - f:accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
-- sf:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- sf:compute(com.intellij.openapi.util.ThrowableComputable,java.util.concurrent.ExecutorService):java.lang.Object
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 com.intellij.openapi.vfs.SavingRequestor
 com.intellij.openapi.vfs.VersionManagingFileSystem
@@ -1893,6 +1896,11 @@ com.intellij.util.CharTable
 - sf:CHAR_TABLE_KEY:com.intellij.openapi.util.Key
 - a:intern(java.lang.CharSequence):java.lang.CharSequence
 - a:intern(java.lang.CharSequence,I,I):java.lang.CharSequence
+f:com.intellij.util.PathsList
+- add(java.nio.file.Path):V
+- addAllPaths(java.util.List):V
+- addAllPaths(java.nio.file.Path[]):V
+- addFirst(java.nio.file.Path):V
 f:com.intellij.util.QueriesKt$sam$i$java_util_function_Predicate$0
 - java.util.function.Predicate
 - <init>(kotlin.jvm.functions.Function1):V

@@ -203,6 +203,8 @@ jvm_library(
     "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting-tests",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting-tests_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.main.kts:kotlin-base-scripting-main-kts-tests",
+    "//plugins/kotlin/base/scripting/scripting.main.kts:kotlin-base-scripting-main-kts-tests_test_lib",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests_test_lib",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",

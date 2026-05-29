@@ -174,7 +174,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     @NonNls StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
     traces.append("My creation trace:\n").append(getUserData(CREATION_TRACE));
     traces.append("AST creation traces:\n");
-    fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+    fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor(fileElement, false) {
       @Override
       public void visitComposite(CompositeElement composite) {
         PsiElement psi = composite.getPsi();

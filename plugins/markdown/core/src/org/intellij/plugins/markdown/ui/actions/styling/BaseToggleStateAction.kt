@@ -56,6 +56,10 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       event.presentation.isEnabled = false
       return false
     }
+    if (shouldIgnoreLinkElement(selectionElements)) {
+      event.presentation.isEnabled = false
+      return false
+    }
 
     val commonParents = selectionElements.map { (left, right) -> getCommonParentOfType(left, right, targetNodeType) }
     val hasMissingParents = commonParents.any { it == null }
@@ -164,6 +168,11 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   private fun shouldIgnoreCodeSpanElement(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
     targetNodeType != MarkdownElementTypes.CODE_SPAN
     && selectionElements.any { getCommonParentOfType(it.first, it.second, MarkdownElementTypes.CODE_SPAN) != null }
+
+  private fun shouldIgnoreLinkElement(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
+    selectionElements.any { (left, right) ->
+      elementsToIgnore.any { type -> getCommonParentOfType(left, right, type) != null }
+    }
 
   companion object {
     private val elementsToIgnore = setOf(

@@ -3,7 +3,6 @@ package com.intellij.platform.find
 
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
-import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
@@ -58,7 +57,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     disposableParent: Disposable,
     onUpdateModelCallback: Consumer<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter) -> Boolean,
-    onFinish: () -> Unit?
+    onFinish: () -> Unit?,
+    maxUsages: Int,
   ) {
     if (FindKey.isEnabled) {
       findUsagesJob?.cancel("new find request is started")
@@ -80,13 +80,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
             initScope.cancel("search disposed")
           }
         }
-        val maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
         FindRemoteApi.getInstance().findByModel(
           findModel = findModel,
           projectId = project.projectId(),
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-          maxUsagesCount = maxUsagesCount
-        ).take(maxUsagesCount)
+          maxUsagesCount = maxUsages
+        ).take(maxUsages)
           .let {
             if (shouldThrottle) it.throttledWithAccumulation()
             else it.map { event -> ThrottledOneItem(event) }

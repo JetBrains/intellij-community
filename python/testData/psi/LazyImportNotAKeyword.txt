@@ -1,0 +1,31 @@
+PyFile:LazyImportNotAKeyword.py
+  PyAssignmentStatement
+    PyTargetExpression: lazy
+      PsiElement(Py:IDENTIFIER)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyCallExpression: print
+      PyReferenceExpression: print
+        PsiElement(Py:IDENTIFIER)('print')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PyReferenceExpression: lazy
+          PsiElement(Py:IDENTIFIER)('lazy')
+        PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: foo
+      PsiElement(Py:IDENTIFIER)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:lazy
+      PyReferenceExpression: lazy
+        PsiElement(Py:IDENTIFIER)('lazy')

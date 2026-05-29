@@ -631,6 +631,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return it
     }
 
+    // Use name cached from the previous IDE session to avoid I/O on non-local paths (e.g., WSL)
+    synchronized(stateLock) {
+      state.additionalInfo.get(path)?.customProjectName
+    }?.let { return it }
+
     synchronized(namesToResolve) {
       namesToResolve.add(path)
     }
@@ -924,6 +929,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           }
         }
         info.displayName = getProjectDisplayName(project)
+        info.customProjectName = project.name.takeIf { path == null || it != getProjectNameOnlyByPath(path) }
         info.projectWorkspaceId = workspaceId
         info.projectFrameTypeId = frameHelper.projectFrameTypeId
         info.frameTitle = frame.title

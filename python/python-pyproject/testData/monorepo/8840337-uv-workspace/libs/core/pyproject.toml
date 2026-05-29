@@ -1,0 +1,11 @@
+[project]
+name = "myorg-core"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/myorg"]

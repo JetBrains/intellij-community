@@ -24,6 +24,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.lvcs.impl.diff.DiffUtilsKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,12 +75,7 @@ public final class ChangeRevision extends Revision {
 
   @Override
   public Entry findEntry() {
-    RootEntry rootCopy = myRoot.copy();
-
-    boolean revertThis = myBefore;
-    String path = myFacade.revertUpToChange(rootCopy, myChangeToRevert.getId(), myEntryPath, revertThis, true);
-
-    return rootCopy.findEntry(path);
+    return DiffUtilsKt.findEntry(myFacade, myRoot, myChangeToRevert.getId(), myEntryPath, myBefore);
   }
 
   @Override

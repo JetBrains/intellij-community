@@ -33,7 +33,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   public Reverter createRevisionReverter(List<Difference> diffs) {
-    return new DifferenceReverter(myProject, myVcs, myGateway, diffs, getLeftRevision());
+    return new DifferenceReverter(myProject, myGateway, diffs, getLeftRevision());
   }
 
   @ApiStatus.Internal

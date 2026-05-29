@@ -74,7 +74,7 @@ public final class JavaSourceUtil {
   public static @NotNull String getReferenceText(@NotNull PsiJavaCodeReferenceElement ref) {
     final StringBuilder buffer = new StringBuilder();
 
-    ((TreeElement)ref.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    ((TreeElement)ref.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor(ref.getNode()) {
       @Override
       public void visitLeaf(LeafElement leaf) {
         if (!REF_FILTER.contains(leaf.getElementType())) {

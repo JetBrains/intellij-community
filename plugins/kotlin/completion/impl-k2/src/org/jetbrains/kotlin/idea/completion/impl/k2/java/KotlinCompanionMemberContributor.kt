@@ -124,20 +124,6 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
         return visibility
     }
 
-    /**
-     * Checks if the given companion object's declaration symbol is visible at the [positionFile].
-     * The checks here are simpler because companion object symbols cannot be abstract for example.
-     */
-    context(_: KaSession)
-    private fun KaDeclarationSymbol.isVisibleAtPosition(positionFile: PsiFile): Boolean = when (getEffectiveVisibility()) {
-        KaSymbolVisibility.PUBLIC -> true
-        KaSymbolVisibility.INTERNAL -> {
-            val positionModule = positionFile.getKaModule(positionFile.project, useSiteModule)
-            positionModule == useSiteModule || positionModule in useSiteModule.directFriendDependencies
-        }
-        else -> false
-    }
-
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -168,7 +154,7 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
             for (declaration in allMembers.declarations) {
                 // If the declaration is marked as static or JvmField, it will already appear without `.Companion`.
                 if (declaration.isMarkedAsStatic() || declaration.isJvmField()) continue
-                if (!declaration.isVisibleAtPosition(parameters.originalFile)) continue
+                if (!declaration.isVisibleIgnoringProtected(parameters.originalFile)) continue
                 // Hide suspend functions because they cannot easily be called from Java
                 if (declaration is KaNamedFunctionSymbol && declaration.isSuspend) continue
 
@@ -197,4 +183,32 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
             result.passResult(completionResult)
         }
     }
+}
+
+
+/**
+ * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
+ */
+context(_: KaSession)
+private fun KaDeclarationSymbol.getEffectiveVisibility(): KaSymbolVisibility {
+    val visibility = visibility
+    val containingSymbol = containingSymbol as? KaDeclarationSymbol
+    if (containingSymbol != null) {
+        return maxOf(visibility, containingSymbol.getEffectiveVisibility())
+    }
+    return visibility
+}
+
+/**
+ * Checks if the given declaration symbol is visible at the [positionFile].
+ * The check assumes protected members are not visible for simplicity.
+ */
+context(_: KaSession)
+internal fun KaDeclarationSymbol.isVisibleIgnoringProtected(positionFile: PsiFile): Boolean = when (getEffectiveVisibility()) {
+    KaSymbolVisibility.PUBLIC -> true
+    KaSymbolVisibility.INTERNAL -> {
+        val positionModule = positionFile.getKaModule(positionFile.project, useSiteModule)
+        positionModule == useSiteModule || positionModule in useSiteModule.directFriendDependencies
+    }
+    else -> false
 }

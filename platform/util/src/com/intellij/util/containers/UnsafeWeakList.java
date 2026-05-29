@@ -244,14 +244,14 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
       return Collections.emptyList();
     }
 
-    List<T> result = new ArrayList<>(myList.size());
+    FreezableArrayList<T> result = new FreezableArrayList<>(myList.size());
     for (MyReference<T> t : myList) {
       T o = t == null ? null : t.get();
       if (o != null) {
         result.add(o);
       }
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   /**

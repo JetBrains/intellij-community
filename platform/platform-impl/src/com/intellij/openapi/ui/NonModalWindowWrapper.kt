@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -356,7 +357,18 @@ abstract class NonModalWindowWrapper(
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  override fun uiDataSnapshot(sink: DataSink) {}  // override in subclass
+  /**
+   * Default data exposed by every non-modal window. Always includes [CommonDataKeys.PROJECT]
+   * so actions invoked over this window (e.g. Search Everywhere, action search) resolve the
+   * owning project correctly — regardless of mode (Float [JDialog] / Window [JFrame]) and
+   * regardless of whether an [com.intellij.openapi.wm.IdeFrame] is reachable via AWT ownership.
+   *
+   * Subclasses overriding this method MUST call `super.uiDataSnapshot(sink)` to keep the
+   * project available
+   */
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.PROJECT] = project
+  }
 
   /** Shows the window. If already visible, brings it to front. Un-iconifies a minimised [JFrame]. */
   fun show() {

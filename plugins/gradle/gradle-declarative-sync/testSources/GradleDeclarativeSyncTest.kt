@@ -4,18 +4,23 @@ package com.intellij.gradle.declarativeSync
 import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
+import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
@@ -24,11 +29,57 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
     DeclarativeStudioSupport.override(true) // enable android gradle declarative flag
   }
 
+  override fun tearDown() {
+    runAll(
+      { DeclarativeStudioSupport.clearOverride() },
+      { super.tearDown() },
+    )
+  }
+
+  @Test
+  @TargetVersions("8.9+")
+  fun `test declarative sync phase order`() {
+    // This test checks phase scheduling, not static DCL import.
+    DeclarativeStudioSupport.override(false)
+
+    createSettingsFile {
+      setProjectName("test")
+    }
+    createBuildFile {
+      withJavaPlugin()
+    }
+
+    Disposer.newDisposable().use { disposable ->
+      val expectedPhases = listOf(
+        GradleSyncPhase.INITIAL_PHASE,
+        GradleSyncPhase.DECLARATIVE_PHASE,
+        GradleSyncPhase.PROJECT_MODEL_PHASE
+      )
+      val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
+      val phaseOrderAssertion = ListenerAssertion()
+      for (phase in expectedPhases) {
+        whenSyncPhaseCompleted(phase, disposable) {
+          phaseOrderAssertion.trace {
+            completedPhases.add(phase)
+          }
+        }
+      }
+
+      ExternalSystemTestObservation.waitForProjectActivity(myProject) {
+        ExternalSystemUtil.linkExternalProject(GradleProjectSettings(projectPath), createImportSpec())
+      }
+
+      phaseOrderAssertion.assertListenerFailures()
+      phaseOrderAssertion.assertListenerState(expectedPhases.size) {
+        "The expected Gradle sync phases should be completed."
+      }
+      CollectionAssertions.assertEqualsOrdered(expectedPhases, completedPhases)
+    }
+  }
+
   @Test
   @TargetVersions("8.9+")
   fun `test declarative model creation in a simple Gradle project`() {
-    val projectRoot = myProjectRoot.toNioPath()
-
     createProjectSubFile("settings.gradle.dcl", """
       pluginManagement {
           repositories {
@@ -108,9 +159,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         projectRootContributorAssertion.trace {
           // this should contain more stuff
           ModuleAssertions.assertModules(myProject, "project", "project.main", "project.test")
-          ContentRootAssertions.assertContentRoots(myProject, "project", projectRoot)
-          ContentRootAssertions.assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          ContentRootAssertions.assertContentRoots(myProject, "project", projectNioPath)
+          ContentRootAssertions.assertContentRoots(myProject, "project.main", projectNioPath.resolve("src/main"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.test", projectNioPath.resolve("src/test"))
 
           ModuleAssertions.assertModuleEntity(myProject, "project.main") { module ->
             DependencyAssertions.assertLibraryDependency(module, "Gradle: com.google.guava:guava:32.1.3-jre")
@@ -123,11 +174,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      val settings = GradleSettings.getInstance(myProject)
-      val projectSettings = GradleProjectSettings(projectRoot.toCanonicalPath())
-      settings.linkProject(projectSettings)
-
-      ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
+      ExternalSystemTestObservation.waitForProjectActivity(myProject) {
+        ExternalSystemUtil.linkExternalProject(GradleProjectSettings(projectPath), createImportSpec())
+      }
 
       ModuleAssertions.assertModules(myProject, "test-dcl", "test-dcl.main", "test-dcl.test")
 
@@ -136,9 +185,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
       assertModuleLibDep("test-dcl.test", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
 
-      ContentRootAssertions.assertContentRoots(myProject, "test-dcl", projectRoot)
-      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.main", projectRoot.resolve("src/main"))
-      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.test", projectRoot.resolve("src/test"))
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl", projectNioPath)
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.main", projectNioPath.resolve("src/main"))
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.test", projectNioPath.resolve("src/test"))
 
       projectRootContributorAssertion.assertListenerFailures()
       projectRootContributorAssertion.assertListenerState(1) {
@@ -150,8 +199,6 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   //TODO @Test
   @TargetVersions("8.9+")
   fun `test declarative model creation in multi-module Gradle project`() {
-    val projectRoot = myProjectRoot.toNioPath()
-
     Disposer.newDisposable().use { disposable ->
       createProjectSubFile("settings.gradle.dcl", """
         pluginManagement {
@@ -278,15 +325,15 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         declarativeContributorAssertion.trace {
           ModuleAssertions.assertModules(myProject, "project", "project.app", "project.app.main", "project.app.test", "project.list",
                         "project.list.main", "project.list.test", "project.utilities", "project.utilities.main", "project.utilities.test")
-          ContentRootAssertions.assertContentRoots(myProject, "project.app", projectRoot.resolve("app"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.app.main", projectRoot.resolve("app/src/main"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.app.test", projectRoot.resolve("app/src/test"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.utilities", projectRoot.resolve("utilities"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.utilities.main", projectRoot.resolve("utilities/src/main"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.utilities.test", projectRoot.resolve("utilities/src/test"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.list", projectRoot.resolve("list"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.list.main", projectRoot.resolve("list/src/main"))
-          ContentRootAssertions.assertContentRoots(myProject, "project.list.test", projectRoot.resolve("list/src/test"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.app", projectNioPath.resolve("app"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.app.main", projectNioPath.resolve("app/src/main"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.app.test", projectNioPath.resolve("app/src/test"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.utilities", projectNioPath.resolve("utilities"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.utilities.main", projectNioPath.resolve("utilities/src/main"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.utilities.test", projectNioPath.resolve("utilities/src/test"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.list", projectNioPath.resolve("list"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.list.main", projectNioPath.resolve("list/src/main"))
+          ContentRootAssertions.assertContentRoots(myProject, "project.list.test", projectNioPath.resolve("list/src/test"))
 
           ModuleAssertions.assertModuleEntity(myProject, "project.app.main") { module ->
             DependencyAssertions.assertLibraryDependency(module, "Gradle: org.apache.commons:commons-text:1.11.0")
@@ -319,11 +366,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      val settings = GradleSettings.getInstance(myProject)
-      val projectSettings = GradleProjectSettings(projectRoot.toCanonicalPath())
-      settings.linkProject(projectSettings)
-
-      ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
+      ExternalSystemTestObservation.waitForProjectActivity(myProject) {
+        ExternalSystemUtil.linkExternalProject(GradleProjectSettings(projectPath), createImportSpec())
+      }
 
       //TODO this currently fails because the settings file parser does not work properly
       //ModuleAssertions.assertModules(myProject, "test-dcl", "test-dcl.app", "test-dcl.app.main", "test-dcl.app.test", "test-dcl.list",

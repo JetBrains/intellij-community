@@ -75,9 +75,24 @@ public final class JavaCommenter implements CodeDocumentationAwareCommenterEx {
   }
 
   @Override
+  public boolean isDocumentationLineComment(PsiComment element) {
+    return isDocumentationComment(element) && ((PsiDocComment)element).isMarkdownComment();
+  }
+
+  @Override
   public boolean isDocumentationCommentText(final PsiElement element) {
     if (element == null) return false;
     final ASTNode node = element.getNode();
     return node != null && (node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA || node.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+  }
+
+  @Override
+  public IElementType getDocumentationLineCommentTokenType() {
+    return JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
+  }
+
+  @Override
+  public String getDocumentationLineCommentPrefix() {
+    return "///";
   }
 }

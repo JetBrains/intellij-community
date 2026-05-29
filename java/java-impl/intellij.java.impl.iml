@@ -132,7 +132,6 @@
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.platform.bookmarks" />
     <orderEntry type="module" module-name="intellij.platform.todo" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />

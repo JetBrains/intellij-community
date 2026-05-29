@@ -10,7 +10,6 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.bookmarks"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -115,7 +114,6 @@
 
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager"/>
 
-    <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedStacksSerializer"/>
     <projectSettings service="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>

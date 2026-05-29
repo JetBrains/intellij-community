@@ -233,6 +233,52 @@ internal class AgentSessionContentRepository(
     return changed
   }
 
+  fun updateThreadCosts(
+    path: String,
+    provider: AgentSessionProvider,
+    costUpdatesByThreadId: Map<String, ThreadCostUpdate>,
+  ): Boolean {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    var changed = false
+    stateStore.update { state ->
+      val nextProjects = state.projects.map { project ->
+        if (project.path == normalizedPath) {
+          val nextThreads = updateThreadCosts(project.threads, provider, costUpdatesByThreadId)
+          if (nextThreads != project.threads) {
+            changed = true
+            project.copy(threads = nextThreads)
+          }
+          else {
+            project
+          }
+        }
+        else {
+          val nextWorktrees = project.worktrees.map { worktree ->
+            if (worktree.path == normalizedPath) {
+              val nextThreads = updateThreadCosts(worktree.threads, provider, costUpdatesByThreadId)
+              if (nextThreads != worktree.threads) {
+                changed = true
+                worktree.copy(threads = nextThreads)
+              }
+              else {
+                worktree
+              }
+            }
+            else {
+              worktree
+            }
+          }
+          if (nextWorktrees == project.worktrees) project else project.copy(worktrees = nextWorktrees)
+        }
+      }
+      if (!changed) state else state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
+    }
+    if (changed) {
+      syncWarmSnapshotFromRuntime(normalizedPath)
+    }
+    return changed
+  }
+
   private fun updateWarmSnapshot(
     path: String,
     transform: (AgentSessionWarmPathSnapshot) -> AgentSessionWarmPathSnapshot?,
@@ -316,6 +362,26 @@ private fun List<AgentSessionThread>.resolveArchivedTargetThread(target: Archive
       firstOrNull { thread -> thread.provider == target.provider && thread.id == target.parentThreadId }
     }
   }
+}
+
+private fun updateThreadCosts(
+  threads: List<AgentSessionThread>,
+  provider: AgentSessionProvider,
+  costUpdatesByThreadId: Map<String, ThreadCostUpdate>,
+): List<AgentSessionThread> {
+  var changed = false
+  val updatedThreads = threads.map { thread ->
+    if (thread.provider != provider) {
+      return@map thread
+    }
+    val costUpdate = costUpdatesByThreadId[thread.id] ?: return@map thread
+    if (thread.updatedAt != costUpdate.expectedUpdatedAt || thread.cost == costUpdate.cost) {
+      return@map thread
+    }
+    changed = true
+    thread.copy(cost = costUpdate.cost)
+  }
+  return if (changed) updatedThreads else threads
 }
 
 private fun restoreArchivedThread(

@@ -44,4 +44,8 @@ object GradleVersionSpecificsUtil {
   @JvmStatic
   fun isJavaToolchainSupported(gradleVersion: GradleVersion): Boolean =
     GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.7")
+
+  @JvmStatic
+  fun isBaseScriptModelSupported(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.2")
 }

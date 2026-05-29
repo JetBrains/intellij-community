@@ -40,6 +40,17 @@
     <!--<diff.actions.ShowStandaloneDiffAction.ExtensionProvider
       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>-->
 
+    <colorAndFontPanelFactory implementation="com.intellij.collaboration.ui.codereview.ReviewColorsPageFactory"/>
+    <colorAndFontDescriptorProvider implementation="com.intellij.collaboration.ui.codereview.ReviewColorsPageFactory"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/CollaborationToolsDefault.xml"/>
+    <additionalTextAttributes scheme="Light" file="colorSchemes/CollaborationToolsDefault.xml"/>
+    <additionalTextAttributes scheme="Classic Light" file="colorSchemes/CollaborationToolsDefault.xml"/>
+    <additionalTextAttributes scheme="Dark" file="colorSchemes/CollaborationToolsDark.xml"/>
+    <additionalTextAttributes scheme="Islands Dark" file="colorSchemes/CollaborationToolsDark.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/CollaborationToolsDark.xml"/>
+    <additionalTextAttributes scheme="Darcula Contrast" file="colorSchemes/CollaborationToolsDark.xml"/>
+
     <advancedSetting id="enable.combined.diff.for.codereview"
                      default="false"
                      bundle="messages.CollaborationToolsBundle"
@@ -48,6 +59,7 @@
                      default="true"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
+
   </extensions>
 
   <applicationListeners>

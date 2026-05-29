@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +30,9 @@ public class CompositeInputFilter implements InputFilter {
 
   @Override
   public @Nullable List<Pair<String, ConsoleViewContentType>> applyFilter(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
-    boolean dumb = myDumbService.isDumb();
+    var dumb = NotNullLazyValue.lazy(myDumbService::isDumb);
     for (InputFilterWrapper filter : myFilters) {
-      if (!dumb || filter.isDumbAware) {
+      if (filter.isDumbAware || !dumb.get()) {
         long t0 = System.currentTimeMillis();
         List<Pair<String, ConsoleViewContentType>> result = filter.applyFilter(text, contentType);
         t0 = System.currentTimeMillis() - t0;

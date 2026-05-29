@@ -25,7 +25,7 @@ class CoroutineToIndicatorTest : CancellationTest() {
     assertEquals(coroutineContext.job, Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
 
-    val modality = ModalityStateEx()
+    val modality = ModalityStateEx(listOf<Any>())
 
     withContext(modality.asContextElement()) {
       assertSame(modality, ModalityState.defaultModalityState())

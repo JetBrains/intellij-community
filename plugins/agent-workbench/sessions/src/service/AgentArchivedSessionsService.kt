@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -19,6 +20,7 @@ import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageK
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
@@ -27,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +37,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val ARCHIVED_LOG = logger<AgentArchivedSessionsService>()
@@ -57,6 +61,8 @@ class AgentArchivedSessionsService internal constructor(
   private val mutableState = MutableStateFlow(AgentArchivedSessionsState())
   private val refreshMutex = Mutex()
   private val loadRequested = AtomicBoolean(false)
+  private val costCache = ConcurrentHashMap<ArchivedThreadCacheKey, ArchivedThreadCostCacheEntry>()
+  private val inFlightCostLoads = ConcurrentHashMap.newKeySet<ArchivedThreadLoadKey>()
 
   init {
     ApplicationManager.getApplication().messageBus.connect(serviceScope)
@@ -65,6 +71,9 @@ class AgentArchivedSessionsService internal constructor(
           refreshIfLoaded()
         }
       })
+    serviceScope.launch(Dispatchers.Default) {
+      mutableState.collectLatest(::hydrateVisibleThreadCosts)
+    }
   }
 
   fun stateFlow(): StateFlow<AgentArchivedSessionsState> = mutableState.asStateFlow()
@@ -240,6 +249,170 @@ class AgentArchivedSessionsService internal constructor(
       }.awaitAll().toMap()
     }
   }
+
+  private fun hydrateVisibleThreadCosts(state: AgentArchivedSessionsState) {
+    val visibleThreads = collectVisibleThreads(state)
+    if (visibleThreads.isEmpty()) {
+      return
+    }
+
+    val sourcesByProvider = sessionSourcesProvider()
+      .asSequence()
+      .filter(AgentSessionSource::supportsArchivedThreads)
+      .associateBy(AgentSessionSource::provider)
+    val cachedUpdatesByPath = LinkedHashMap<String, MutableMap<AgentSessionProvider, MutableMap<String, ArchivedThreadCostUpdate>>>()
+    val loadRequests = LinkedHashMap<Pair<AgentSessionSource, String>, MutableList<ArchivedVisibleThreadSnapshot>>()
+
+    for (visibleThread in visibleThreads) {
+      val cacheKey = visibleThread.cacheKey
+      val cacheEntry = costCache[cacheKey]
+      if (visibleThread.cost != null && (cacheEntry == null || cacheEntry.updatedAt != visibleThread.updatedAt)) {
+        costCache[cacheKey] = ArchivedThreadCostCacheEntry(
+          updatedAt = visibleThread.updatedAt,
+          cost = visibleThread.cost,
+        )
+      }
+
+      val effectiveCacheEntry = costCache[cacheKey]
+      if (effectiveCacheEntry != null && effectiveCacheEntry.updatedAt == visibleThread.updatedAt) {
+        if (visibleThread.cost != effectiveCacheEntry.cost) {
+          cachedUpdatesByPath
+            .getOrPut(visibleThread.path) { LinkedHashMap() }
+            .getOrPut(visibleThread.provider) { LinkedHashMap() }[visibleThread.threadId] = ArchivedThreadCostUpdate(
+            expectedUpdatedAt = visibleThread.updatedAt,
+            cost = effectiveCacheEntry.cost,
+          )
+        }
+        continue
+      }
+
+      val source = sourcesByProvider[visibleThread.provider] ?: continue
+      val loadKey = visibleThread.loadKey
+      if (!inFlightCostLoads.add(loadKey)) {
+        continue
+      }
+      loadRequests.getOrPut(source to visibleThread.path) { ArrayList() }.add(visibleThread)
+    }
+
+    applyArchivedThreadCostUpdates(cachedUpdatesByPath)
+
+    for ((requestKey, requestedThreads) in loadRequests) {
+      val (source, path) = requestKey
+      serviceScope.launch(Dispatchers.IO) {
+        try {
+          val requestedAgentThreads = requestedThreads.map(ArchivedVisibleThreadSnapshot::thread)
+          val loadedCostsByThreadId = source.loadThreadCosts(path = path, threads = requestedAgentThreads)
+          val updatesByProvider = LinkedHashMap<AgentSessionProvider, MutableMap<String, ArchivedThreadCostUpdate>>()
+          for (visibleThread in requestedThreads) {
+            val loadedCost = loadedCostsByThreadId[visibleThread.threadId]
+            costCache[visibleThread.cacheKey] = ArchivedThreadCostCacheEntry(
+              updatedAt = visibleThread.updatedAt,
+              cost = loadedCost,
+            )
+            updatesByProvider
+              .getOrPut(visibleThread.provider) { LinkedHashMap() }[visibleThread.threadId] = ArchivedThreadCostUpdate(
+              expectedUpdatedAt = visibleThread.updatedAt,
+              cost = loadedCost,
+            )
+          }
+          applyArchivedThreadCostUpdates(mapOf(path to updatesByProvider))
+        }
+        catch (t: Throwable) {
+          ARCHIVED_LOG.debug(t) {
+            "Failed to hydrate archived visible thread costs for ${source.provider.value} path=$path threads=${requestedThreads.size}"
+          }
+        }
+        finally {
+          requestedThreads.forEach { visibleThread ->
+            inFlightCostLoads.remove(visibleThread.loadKey)
+          }
+        }
+      }
+    }
+  }
+
+  private fun applyArchivedThreadCostUpdates(
+    updatesByPath: Map<String, Map<AgentSessionProvider, Map<String, ArchivedThreadCostUpdate>>>,
+  ) {
+    if (updatesByPath.isEmpty()) {
+      return
+    }
+
+    mutableState.update { state ->
+      var changed = false
+      val nextProjects = state.projects.map { project ->
+        val projectUpdates = updatesByPath[project.path]
+        val nextProjectThreads = if (projectUpdates != null) {
+          updateArchivedThreadCosts(project.threads, projectUpdates).also { updatedThreads ->
+            if (updatedThreads !== project.threads) changed = true
+          }
+        }
+        else {
+          project.threads
+        }
+        val nextWorktrees = project.worktrees.map { worktree ->
+          val worktreeUpdates = updatesByPath[worktree.path]
+          val nextThreads = if (worktreeUpdates != null) {
+            updateArchivedThreadCosts(worktree.threads, worktreeUpdates).also { updatedThreads ->
+              if (updatedThreads !== worktree.threads) changed = true
+            }
+          }
+          else {
+            worktree.threads
+          }
+          if (nextThreads === worktree.threads) worktree else worktree.copy(threads = nextThreads)
+        }
+        if (nextProjectThreads === project.threads && nextWorktrees == project.worktrees) {
+          project
+        }
+        else {
+          project.copy(threads = nextProjectThreads, worktrees = nextWorktrees)
+        }
+      }
+      if (changed) state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis()) else state
+    }
+  }
+
+  private fun collectVisibleThreads(state: AgentArchivedSessionsState): List<ArchivedVisibleThreadSnapshot> {
+    val visibleThreads = ArrayList<ArchivedVisibleThreadSnapshot>()
+    state.projects.forEach { project ->
+      collectVisibleThreadsForPath(
+        path = project.path,
+        threads = project.threads,
+        visibleThreadCounts = state.visibleThreadCounts,
+        collector = visibleThreads,
+      )
+      project.worktrees.forEach { worktree ->
+        collectVisibleThreadsForPath(
+          path = worktree.path,
+          threads = worktree.threads,
+          visibleThreadCounts = state.visibleThreadCounts,
+          collector = visibleThreads,
+        )
+      }
+    }
+    return visibleThreads
+  }
+
+  private fun collectVisibleThreadsForPath(
+    path: String,
+    threads: List<AgentSessionThread>,
+    visibleThreadCounts: Map<String, Int>,
+    collector: MutableList<ArchivedVisibleThreadSnapshot>,
+  ) {
+    val visibleCount = visibleThreadCounts[path] ?: DEFAULT_VISIBLE_THREAD_COUNT
+    threads.asSequence()
+      .take(visibleCount)
+      .forEach { thread ->
+        collector.add(
+          ArchivedVisibleThreadSnapshot(
+            path = path,
+            provider = thread.provider,
+            thread = thread,
+          )
+        )
+      }
+  }
 }
 
 private data class ArchivedPathRequest(
@@ -310,20 +483,22 @@ private fun applyArchivedResults(
 ): List<AgentProjectSessions> {
   return projects.map { project ->
     val result = resultsByPath[project.path]
+    val refreshedThreads = preserveThreadCosts(project.threads, result?.threads.orEmpty())
     project.copy(
       isLoading = false,
       hasLoaded = true,
       hasUnknownThreadCount = result?.hasUnknownThreadCount ?: false,
-      threads = result?.threads.orEmpty(),
+      threads = refreshedThreads,
       errorMessage = result?.errorMessage,
       providerWarnings = result?.providerWarnings ?: emptyList(),
       worktrees = project.worktrees.map { worktree ->
         val worktreeResult = resultsByPath[worktree.path]
+        val refreshedWorktreeThreads = preserveThreadCosts(worktree.threads, worktreeResult?.threads.orEmpty())
         worktree.copy(
           isLoading = false,
           hasLoaded = true,
           hasUnknownThreadCount = worktreeResult?.hasUnknownThreadCount ?: false,
-          threads = worktreeResult?.threads.orEmpty(),
+          threads = refreshedWorktreeThreads,
           errorMessage = worktreeResult?.errorMessage,
           providerWarnings = worktreeResult?.providerWarnings ?: emptyList(),
         )
@@ -341,6 +516,23 @@ private fun retainVisibleThreadCounts(knownPaths: Set<String>, visibleThreadCoun
     }
   }
   return result
+}
+
+private fun updateArchivedThreadCosts(
+  threads: List<AgentSessionThread>,
+  updatesByProvider: Map<AgentSessionProvider, Map<String, ArchivedThreadCostUpdate>>,
+): List<AgentSessionThread> {
+  var changed = false
+  val updatedThreads = threads.map { thread ->
+    val providerUpdates = updatesByProvider[thread.provider] ?: return@map thread
+    val costUpdate = providerUpdates[thread.id] ?: return@map thread
+    if (thread.updatedAt != costUpdate.expectedUpdatedAt || thread.cost == costUpdate.cost) {
+      return@map thread
+    }
+    changed = true
+    thread.copy(cost = costUpdate.cost)
+  }
+  return if (changed) updatedThreads else threads
 }
 
 private fun List<AgentProjectSessions>.anyPathLoading(): Boolean {
@@ -374,6 +566,50 @@ private fun resolveProviderLabel(provider: AgentSessionProvider): String {
   return if (descriptor != null) AgentSessionsBundle.message(descriptor.displayNameKey) else provider.value
 }
 
+private data class ArchivedThreadCostUpdate(
+  @JvmField val expectedUpdatedAt: Long,
+  @JvmField val cost: AgentSessionCost?,
+)
+
+private data class ArchivedVisibleThreadSnapshot(
+  @JvmField val path: String,
+  val provider: AgentSessionProvider,
+  @JvmField val thread: AgentSessionThread,
+) {
+  val threadId: String
+    get() = thread.id
+
+  val updatedAt: Long
+    get() = thread.updatedAt
+
+  val cost: AgentSessionCost?
+    get() = thread.cost
+
+  val cacheKey: ArchivedThreadCacheKey
+    get() = ArchivedThreadCacheKey(path = path, provider = provider, threadId = threadId)
+
+  val loadKey: ArchivedThreadLoadKey
+    get() = ArchivedThreadLoadKey(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
+}
+
+private data class ArchivedThreadCacheKey(
+  @JvmField val path: String,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
+)
+
+private data class ArchivedThreadLoadKey(
+  @JvmField val path: String,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
+  @JvmField val updatedAt: Long,
+)
+
+private data class ArchivedThreadCostCacheEntry(
+  @JvmField val updatedAt: Long,
+  @JvmField val cost: AgentSessionCost?,
+)
+
 @Suppress("DuplicatedCode")
 private fun findThreadIndex(
   projects: List<AgentProjectSessions>,
@@ -405,7 +641,7 @@ private fun AgentSessionThread.matchesProviderAndThreadOrSubAgent(provider: Agen
 @Suppress("DuplicatedCode")
 private fun requiredVisibleClosedProjectCount(projects: List<AgentProjectSessions>, normalizedPath: String): Int? {
   var closedProjectCount = 0
-  for (project in projects) {
+  projects.forEach { project ->
     val isAlwaysVisible = project.isOpen || project.worktrees.any { worktree -> worktree.isOpen }
     if (!isAlwaysVisible) {
       closedProjectCount++

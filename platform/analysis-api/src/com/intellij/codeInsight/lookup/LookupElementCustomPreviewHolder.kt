@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents an entity that can provide or indicate the availability of a custom preview for a lookup element.
- *
+ * @see LookupElement
  */
 @ApiStatus.Experimental
 interface LookupElementCustomPreviewHolder {

@@ -24,7 +24,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/tests">
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" packagePrefix="com.intellij.gradle.completion" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" packagePrefix="com.intellij.gradle.completion.tests" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

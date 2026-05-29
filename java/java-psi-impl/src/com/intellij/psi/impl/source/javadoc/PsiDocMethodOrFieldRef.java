@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /// PsiElement that is a _guarantee_ to reference either a **method** or a **field**.
+/// Implicit constructors will resolve to the referring class
 ///
 /// @see PsiDocReferenceHolder PsiDocReferenceHolder for other ways to reference methods and fields
 public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue, Constants {
@@ -280,8 +281,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     final MethodSignature methodSignature;
+    List<PsiType> types = null;
     if (signature != null) {
-      final List<PsiType> types = new ArrayList<>(signature.length);
+      types = new ArrayList<>(signature.length);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
       for (String s : signature) {
         try {
@@ -301,7 +303,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     PsiMethod[] methods = findMethods(methodSignature, scope, name, getAllMethods(scope, referringElement));
 
-    if (methods.length == 0) return null;
+    if (methods.length == 0) {
+      // Implicit constructor resolves to the class since we can't point to missing code
+      if (name.equals(scope.getName()) && (types == null || types.isEmpty())) {
+        return new MethodOrFieldReference(referringElement, new PsiElement[]{scope});
+      }
+      return null;
+    }
 
     return new MethodOrFieldReference(referringElement, methods) {
 

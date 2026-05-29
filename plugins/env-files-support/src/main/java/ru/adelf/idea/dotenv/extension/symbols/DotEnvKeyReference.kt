@@ -7,14 +7,17 @@ import org.jetbrains.annotations.Unmodifiable
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi
 import ru.adelf.idea.dotenv.psi.DotEnvProperty
 
-class DotEnvKeyReference(private val element: PsiElement): PsiSymbolReference {
+class DotEnvKeyReference(
+    private val element: PsiElement,
+    private val key: String = element.text,
+) : PsiSymbolReference {
 
     override fun getElement(): PsiElement = element
 
     override fun getRangeInElement(): TextRange = TextRange(0, element.getTextLength())
 
     override fun resolveReference(): @Unmodifiable Collection<DotEnvKeySymbol> {
-        return EnvironmentVariablesApi.getKeyDeclarations(element.getProject(), element.getText())
+        return EnvironmentVariablesApi.getKeyDeclarations(element.getProject(), key)
             .map { (it as? DotEnvProperty)?.key ?: it }
             .map { DotEnvKeySymbol(it.text, it.containingFile, it.textRange) }
             .toList()

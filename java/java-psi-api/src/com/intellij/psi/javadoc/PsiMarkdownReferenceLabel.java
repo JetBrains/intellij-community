@@ -7,4 +7,8 @@ import com.intellij.psi.PsiElement;
  * Container element for link labels in Markdown JavaDoc.
  * It can contain multiple elements, for instance in {@code [label with `inline code`][java.lang.String]}.
  */
-public interface PsiMarkdownReferenceLabel extends PsiElement {}
+public interface PsiMarkdownReferenceLabel extends PsiElement {
+
+  /// @return The label text without superfluous markup
+  String getLabelText();
+}

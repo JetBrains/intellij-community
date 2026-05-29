@@ -110,6 +110,7 @@ public final @NonNls class JUnitCommonClassNames {
             ORG_JUNIT_PLATFORM_SUITE_API_SELECT_FILE, ORG_JUNIT_PLATFORM_SUITE_API_SELECT_FILES,
             ORG_JUNIT_PLATFORM_SUITE_API_SELECT_METHOD, ORG_JUNIT_PLATFORM_SUITE_API_SELECT_METHODS,
             ORG_JUNIT_PLATFORM_SUITE_API_SELECT_URIS);
+  public static final String ORG_JUNIT_JUPITER_API_METHOD_ORDERER = "org.junit.jupiter.api.MethodOrderer";
   // junit 6
   public static final String ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT = "org.junit.jupiter.api.MethodOrderer.Default";
 }

@@ -34,7 +34,8 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private final StringBuilder catLeafs;
   private final StringBuilder tempLeafBuffer = new StringBuilder();
 
-  LeafPatcher(@NotNull List<? extends PlaceInfo> placeInfos, int approxTextLength) {
+  LeafPatcher(@NotNull ASTNode node, @NotNull List<? extends PlaceInfo> placeInfos, int approxTextLength) {
+    super(node);
     myPlaceInfos = placeInfos;
     catLeafs = new StringBuilder(approxTextLength);
   }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey
 
 const val BUNDLE: @NonNls String = "messages.McpServerBundle"
 
-internal object McpServerBundle {
+object McpServerBundle {
   private val INSTANCE = DynamicBundle(McpServerBundle::class.java, BUNDLE)
 
   @Nls

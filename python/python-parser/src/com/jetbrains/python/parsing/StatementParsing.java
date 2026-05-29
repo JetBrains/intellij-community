@@ -45,6 +45,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected static final @NonNls String TOK_FROM = PyNames.FROM;
   protected static final @NonNls String TOK_MATCH = PyNames.MATCH;
   protected static final @NonNls String TOK_CASE = PyNames.CASE;
+  protected static final @NonNls String TOK_LAZY = PyNames.LAZY;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
@@ -128,6 +129,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     if (atToken(PyTokenTypes.IDENTIFIER, TOK_MATCH)) {
       if (parseMatchStatement()) {
+        return;
+      }
+    }
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_LAZY)) {
+      IElementType nextToken = myBuilder.lookAhead(1);
+      if (nextToken == PyTokenTypes.IMPORT_KEYWORD || nextToken == PyTokenTypes.FROM_KEYWORD) {
+        parseLazyImport();
         return;
       }
     }
@@ -499,12 +507,32 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   protected void parseImportStatement(IElementType statementType, IElementType elementType) {
+    final SyntaxTreeBuilder.Marker importStatement = myContext.getBuilder().mark();
+    parseImportStatementAfterMark(importStatement, statementType, elementType);
+  }
+
+  private void parseImportStatementAfterMark(SyntaxTreeBuilder.Marker importStatement,
+                                             IElementType statementType,
+                                             IElementType elementType) {
     final SyntaxTreeBuilder builder = myContext.getBuilder();
-    final SyntaxTreeBuilder.Marker importStatement = builder.mark();
     builder.advanceLexer();
     parseImportElements(elementType, true, false, false);
     checkEndOfStatement();
     importStatement.done(statementType);
+  }
+
+  private void parseLazyImport() {
+    assert atToken(PyTokenTypes.IDENTIFIER, TOK_LAZY);
+    final SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+    myBuilder.remapCurrentToken(PyTokenTypes.LAZY_KEYWORD);
+    myBuilder.advanceLexer();
+    final IElementType firstToken = myBuilder.getTokenType();
+    if (firstToken == PyTokenTypes.IMPORT_KEYWORD) {
+      parseImportStatementAfterMark(mark, PyElementTypes.IMPORT_STATEMENT, PyElementTypes.IMPORT_ELEMENT);
+    }
+    else {
+      parseFromImportStatementAfterMark(mark);
+    }
   }
 
   /*
@@ -513,10 +541,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   from . import identifier -- only relative
    */
   private void parseFromImportStatement() {
+    final SyntaxTreeBuilder.Marker fromImportStatement = myContext.getBuilder().mark();
+    parseFromImportStatementAfterMark(fromImportStatement);
+  }
+
+  private void parseFromImportStatementAfterMark(SyntaxTreeBuilder.Marker fromImportStatement) {
     SyntaxTreeBuilder builder = myContext.getBuilder();
     assertCurrentToken(PyTokenTypes.FROM_KEYWORD);
     myFutureImportPhase = Phase.FROM;
-    final SyntaxTreeBuilder.Marker fromImportStatement = builder.mark();
     builder.advanceLexer();
     boolean from_future = false;
     boolean had_dots = parseRelativeImportDots();

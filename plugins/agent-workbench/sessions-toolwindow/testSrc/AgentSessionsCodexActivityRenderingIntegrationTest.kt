@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -207,37 +209,100 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     val refreshHintsProviderClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider")
     val backendClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend")
     val sourceClass = Class.forName("com.intellij.agent.workbench.codex.sessions.CodexSessionSource")
-    val constructor = sourceClass.getDeclaredConstructor(
-      backendClass,
-      refreshHintsProviderClass,
-      refreshHintsProviderClass,
-    )
+    val constructor = sourceClass.declaredConstructors.firstOrNull { candidate ->
+      val parameterTypes = candidate.parameterTypes
+      !candidate.isSynthetic &&
+      parameterTypes.size >= 3 &&
+      parameterTypes[0] == backendClass &&
+      parameterTypes[1] == refreshHintsProviderClass &&
+      parameterTypes[2] == refreshHintsProviderClass &&
+      parameterTypes.drop(3).all { parameterType ->
+        parameterType == backendClass ||
+        Function1::class.java.isAssignableFrom(parameterType) ||
+        parameterType.name == "com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex" ||
+        parameterType.name == "com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader"
+      }
+    } ?: error("Unsupported CodexSessionSource constructor shape")
     constructor.isAccessible = true
-    return constructor.newInstance(
-      createStaticBackend(backendClass, backendThreads),
-      createAppServerRefreshHintsProvider(snapshotsByThreadId),
-      createEmptyRefreshHintsProvider(refreshHintsProviderClass),
-    ) as AgentSessionSource
+    val backend = createStaticBackend(backendClass, backendThreads)
+    val appServerRefreshHintsProvider = createAppServerRefreshHintsProvider(snapshotsByThreadId)
+    val rolloutRefreshHintsProvider = createEmptyRefreshHintsProvider(refreshHintsProviderClass)
+    val constructorArgs = buildList {
+      add(backend)
+      add(appServerRefreshHintsProvider)
+      add(rolloutRefreshHintsProvider)
+      constructor.parameterTypes.drop(3).forEach { parameterType ->
+        add(
+          when {
+            parameterType == backendClass -> null
+            Function1::class.java.isAssignableFrom(parameterType) -> { _: Any? ->
+              AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+            }
+            parameterType.name == "com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex" -> createInMemoryCodexThreadPathIndex()
+            parameterType.name == "com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader" -> {
+              createExactRolloutThreadLoader()
+            }
+            else -> error("Unsupported CodexSessionSource constructor parameter: ${parameterType.name}")
+          }
+        )
+      }
+    }
+    return constructor.newInstance(*constructorArgs.toTypedArray()) as AgentSessionSource
+  }
+
+  private fun createInMemoryCodexThreadPathIndex(): Any {
+    val indexClass = Class.forName("com.intellij.agent.workbench.codex.sessions.InMemoryCodexThreadPathIndex")
+    val constructor = indexClass.declaredConstructors.firstOrNull { candidate -> !candidate.isSynthetic && candidate.parameterCount == 0 }
+                      ?: error("Unsupported InMemoryCodexThreadPathIndex constructor shape")
+    constructor.isAccessible = true
+    return constructor.newInstance()
+  }
+
+  private fun createExactRolloutThreadLoader(): Any {
+    val loaderClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader")
+    val constructor = loaderClass.declaredConstructors.firstOrNull { candidate -> !candidate.isSynthetic && candidate.parameterCount == 0 }
+                      ?: loaderClass.declaredConstructors.firstOrNull { candidate ->
+                        !candidate.isSynthetic && candidate.parameterCount == 1 && Function1::class.java.isAssignableFrom(candidate.parameterTypes[0])
+                      }
+                      ?: error("Unsupported CodexExactRolloutThreadLoader constructor shape")
+    constructor.isAccessible = true
+    return if (constructor.parameterCount == 0) {
+      constructor.newInstance()
+    }
+    else {
+      val parserStub: (Any?) -> Nothing? = { null }
+      constructor.newInstance(parserStub)
+    }
   }
 
   private fun createCodexBackendThread(thread: CodexThread): Any {
     val backendThreadClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread")
     val activityClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity")
     val readyActivity = activityClass.enumConstants.single { constant -> (constant as Enum<*>).name == "READY" }
-    val constructor = backendThreadClass.getDeclaredConstructor(
-      CodexThread::class.java,
-      activityClass,
-      Boolean::class.javaPrimitiveType,
-      activityClass,
-    )
+    val constructor = backendThreadClass.declaredConstructors.firstOrNull { candidate ->
+      val parameterTypes = candidate.parameterTypes
+      parameterTypes.size in 4..5 &&
+      parameterTypes[0] == CodexThread::class.java &&
+      parameterTypes[1] == activityClass &&
+      parameterTypes[2] == Boolean::class.javaPrimitiveType &&
+      parameterTypes[3] == activityClass &&
+      (parameterTypes.size == 4 || List::class.java.isAssignableFrom(parameterTypes[4]))
+    } ?: error("Unsupported CodexBackendThread constructor shape")
     constructor.isAccessible = true
-    return constructor.newInstance(thread, readyActivity, false, readyActivity)
+    return if (constructor.parameterCount == 5) {
+      constructor.newInstance(thread, readyActivity, false, readyActivity, emptyList<Any>())
+    }
+    else {
+      constructor.newInstance(thread, readyActivity, false, readyActivity)
+    }
   }
 
   private fun createStaticBackend(backendClass: Class<*>, backendThreads: List<Any>): Any {
     return Proxy.newProxyInstance(backendClass.classLoader, arrayOf(backendClass)) { proxy, method, args ->
       when (method.name) {
         "listThreads" -> if (args?.firstOrNull() == PROJECT_PATH) backendThreads else emptyList<Any?>()
+        "listArchivedThreads" -> emptyList<Any?>()
+        "refreshThreads" -> null
         "getUpdates" -> emptyFlow<Unit>()
         "prefetchThreads" -> emptyMap<String, List<Any>>()
         "toString" -> "StaticCodexSessionBackend"

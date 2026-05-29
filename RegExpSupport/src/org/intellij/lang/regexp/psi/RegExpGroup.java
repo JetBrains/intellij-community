@@ -62,6 +62,7 @@ public interface RegExpGroup extends RegExpAtom, PsiNameIdentifierOwner {
 
     /** (?<!pattern) */
     NEGATIVE_LOOKBEHIND,
+
     /** (?|pattern) */
     PCRE_BRANCH_RESET,
 

@@ -18,8 +18,10 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
@@ -48,6 +50,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ArrayUtil;
@@ -62,9 +65,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
 
 public final class JUnitUtil {
@@ -428,7 +433,20 @@ public final class JUnitUtil {
     return ReadAction.nonBlocking(() -> {
       DumbService dumbService = DumbService.getInstance(project);
       ThrowableComputable<Boolean, RuntimeException> computable =
-        () -> JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT, scope) != null;
+        () -> {
+          PsiClass junit6SpecificClass = JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT, scope);
+          if (junit6SpecificClass == null) return false;
+          PsiClass junitCommonClass = JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER, scope);
+          if (junitCommonClass == null) return false;
+          // the specific class must be from the same root as the common class
+          VirtualFile file1 = PsiUtilCore.getVirtualFile(junit6SpecificClass);
+          VirtualFile file2 = PsiUtilCore.getVirtualFile(junitCommonClass);
+          if (file1 == null || file2 == null) return false;
+          ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+          VirtualFile root1 = index.getClassRootForFile(file1);
+          VirtualFile root2 = index.getClassRootForFile(file2);
+          return Objects.equals(root1, root2);
+        };
 
       return dumbService.isAlternativeResolveEnabled()
              ? computable.compute()

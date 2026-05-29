@@ -547,6 +547,7 @@ private fun createCodexThread(payload: ThreadPayload, archived: Boolean): CodexT
   val threadId = resolveThreadId(payload) ?: return null
   return CodexThread(
     id = threadId, title = resolveThreadTitle(payload, threadId), updatedAt = resolveThreadUpdatedAt(payload), archived = archived,
+    path = payload.path?.trimToNull()?.let(::normalizeRootPath),
     gitBranch = payload.gitBranch,
     cwd = payload.cwd?.let(::normalizeRootPath),
     sourceKind = payload.sourceKind,

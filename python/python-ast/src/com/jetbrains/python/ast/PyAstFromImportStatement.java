@@ -89,6 +89,13 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
   }
 
   /**
+   * @return {@code true} iff this is a {@code lazy from ... import ...} statement (PEP 810, Python 3.15+).
+   */
+  default boolean isLazy() {
+    return getNode().findChildByType(PyTokenTypes.LAZY_KEYWORD) != null;
+  }
+
+  /**
    * If the from ... import statement uses an import list in parentheses, returns the opening parenthesis.
    *
    * @return opening parenthesis token or null

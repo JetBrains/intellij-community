@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ public final class AstBufferUtil {
   }
 
   public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset, boolean skipWhitespaceAndComments) {
-    BufferVisitor visitor = new BufferVisitor(skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
+    BufferVisitor visitor = new BufferVisitor(element, skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
     ((TreeElement)element).acceptTree(visitor);
     return visitor.end;
   }
@@ -39,12 +40,13 @@ public final class AstBufferUtil {
     protected final char[] buffer;
 
     public BufferVisitor(PsiElement element, boolean skipWhitespace, boolean skipComments) {
-      this(skipWhitespace, skipComments, 0, new char[element.getTextLength()]);
+      this(element.getNode(), skipWhitespace, skipComments, 0, new char[element.getTextLength()]);
       ((TreeElement)element.getNode()).acceptTree(this);
     }
 
-    public BufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
-      super(false);
+    @ApiStatus.Experimental
+    public BufferVisitor(@NotNull ASTNode element, boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+      super(element, false);
 
       this.skipWhitespace = skipWhitespace;
       this.skipComments = skipComments;

@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.util.ReflectionUtilRt;
@@ -15,6 +16,7 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.dsl.GradleDslBaseScriptModel;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -120,15 +122,21 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myProjectLoadedAction = myModels == null && myUseProjectsLoadedPhase;
 
     if (myProjectLoadedAction || !myUseProjectsLoadedPhase) {
+      if (myUseStreamedValues && GradleVersionSpecificsUtil.isBaseScriptModelSupported(getGradleVersion())) {
+        GradleOpenTelemetry.runWithSpan("SendBaseScriptModelState", __ ->
+          sendBaseScriptModelState(controller)
+        );
+      }
       myModels = GradleOpenTelemetry.callWithSpan("InitAction", __ ->
         initAction(controller, converterExecutor, getGradleVersion())
       );
     }
 
-    assert myModels != null;
+    GradleDaemonModelHolder models = myModels;
+    assert models != null;
 
     GradleOpenTelemetry.runWithSpan("ExecuteAction", __ ->
-      executeAction(controller, converterExecutor, myModels)
+      executeAction(controller, converterExecutor, models)
     );
 
     if (myProjectLoadedAction) {
@@ -137,7 +145,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
       );
     }
 
-    return myModels.pollPendingState();
+    return models.pollPendingState();
   }
 
   private void configureAdditionalTypes(BuildController controller) {
@@ -159,6 +167,19 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     }
     catch (Exception ignore) {
     }
+  }
+
+  private static void sendBaseScriptModelState(@NotNull BuildController controller) {
+    GradleModelId modelId = GradleModelId.createRootModelId(GradleDslBaseScriptModel.class);
+    GradleDslBaseScriptModel model = GradleOpenTelemetry.callWithSpan("GetBaseScriptModelState", ___ ->
+      controller.findModel(GradleDslBaseScriptModel.class)
+    );
+    controller.send(new GradleModelHolderState(
+      /* rootBuild = */ null,
+      /* nestedBuilds = */ Collections.emptyList(),
+      /* models = */ model == null ? Collections.emptyMap() : Collections.singletonMap(modelId, model),
+      /* phase = */ GradleModelFetchPhase.BASE_SCRIPT_MODEL_PHASE
+    ));
   }
 
   private static @NotNull GradleDaemonModelHolder initAction(

@@ -22,9 +22,12 @@ public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon EXPECT = KotlinBaseResourcesIcons.Expect;
     Icon EXTENSION_FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinBaseResourcesIcons.Field_value;
+    /** 16x16 */ @NotNull Icon FIELD_VAL_KOTLIN = KotlinBaseResourcesIcons.FieldValueKotlin;
     /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinBaseResourcesIcons.Field_variable;
+    /** 16x16 */ @NotNull Icon FIELD_VAR_KOTLIN = KotlinBaseResourcesIcons.FieldVariableKotlin;
     /** 16x16 */ @NotNull Icon FIR = KotlinBaseResourcesIcons.Fir;
     Icon FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
+    /** 16x16 */ @NotNull Icon FUNCTION_KOTLIN = KotlinBaseResourcesIcons.FunctionKotlin;
     /** 16x16 */ @NotNull Icon INTERFACE = KotlinBaseResourcesIcons.InterfaceKotlin;
     /** 16x16 */ @NotNull Icon FILE = KotlinBaseResourcesIcons.Kotlin_file;
     /** 16x16 */ @NotNull Icon GRADLE_SCRIPT = KotlinBaseResourcesIcons.Kotlin_gradle_script;

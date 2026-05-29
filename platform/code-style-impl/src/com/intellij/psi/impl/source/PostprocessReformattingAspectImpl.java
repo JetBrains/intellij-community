@@ -14,6 +14,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteActionListener;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -63,6 +65,7 @@ import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.util.Function;
 import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,10 +129,14 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
   public PostprocessReformattingAspectImpl(@NotNull Project project) {
     myProject = project;
     myTreeAspect = NotNullLazyValue.createValue(() -> TreeAspect.getInstance(myProject));
+    // we must register versioning listeners BEFORE the postprocess reformatting listeners
+    // because postprocess reformatting performs modification of PSI
+    InternalPsiVersioning.PsiVersioningWriteActionActivity.addListeners();
 
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+    ApplicationManagerEx.getApplicationEx().addWriteActionListener(new WriteActionListener() {
+
       @Override
-      public void writeActionStarted(@NotNull Object action) {
+      public void writeActionStarted(@NotNull Class<?> action) {
         CommandProcessor processor = CommandProcessor.getInstance();
         if (processor != null && processor.getCurrentCommandProject() == myProject) {
           incrementPostponedCounter();
@@ -137,7 +144,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
       }
 
       @Override
-      public void writeActionFinished(@NotNull Object action) {
+      public void writeActionFinished(@NotNull Class<?> action) {
         Application app = ApplicationManager.getApplication();
         CommandProcessor processor = app == null ? null : app.getServiceIfCreated(CommandProcessor.class);
         if (processor != null && processor.getCurrentCommandProject() == myProject) {
@@ -262,7 +269,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
           case Added, Replaced -> postponeFormatting(viewProvider, affectedChild);
           case ContentsChanged -> {
             if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
-              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor(affectedChild) {
                 @Override
                 protected void visitNode(TreeElement element) {
                   if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
@@ -705,7 +712,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
       return;
     }
     for (final FileASTNode fileElement : ((AbstractFileViewProvider)key).getKnownTreeRoots()) {
-      ((TreeElement) fileElement).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      ((TreeElement) fileElement).acceptTree(new RecursiveTreeElementWalkingVisitor(fileElement, true) {
         @Override
         protected void visitNode(TreeElement element) {
           if (CodeEditUtil.isMarkedToReformatBefore(element)) {

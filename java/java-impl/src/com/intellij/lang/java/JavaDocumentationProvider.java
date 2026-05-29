@@ -637,6 +637,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         attributes.put("CONTAINING_CLASS", psiClass.getName());
       }
     }
+
+    if (commentOwner.getDocComment() != null) {
+      attributes.put("COMMENT_PREFIX", commentOwner.getDocComment().isMarkdownComment() ? "///" : "*");
+    }
+
     return attributes;
   }
 
@@ -697,16 +702,16 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
       final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
       if (typeParameterList != null) {
-        createTypeParamsListComment(builder, commenter, typeParameterList);
+        createTypeParamsListComment(builder, commenter, typeParameterList, _comment);
       }
       if (psiMethod.getReturnType() != null && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment.getContainingFile(), commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment, commenter));
         builder.append(LINE_SEPARATOR);
       }
 
       final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
       for (PsiJavaCodeReferenceElement reference : references) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, _comment.getContainingFile(), commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, _comment, commenter));
         builder.append(reference.getText());
         builder.append(LINE_SEPARATOR);
       }
@@ -714,14 +719,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     else if (commentOwner instanceof PsiClass) {
       if (((PsiClass)commentOwner).isRecord()) {
         for (PsiRecordComponent component : ((PsiClass)commentOwner).getRecordComponents()) {
-          builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, commentOwner.getContainingFile(), commenter));
+          builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, _comment, commenter));
           builder.append(component.getName());
           builder.append(LINE_SEPARATOR);
         }
       }
       final PsiTypeParameterList typeParameterList = ((PsiClass)commentOwner).getTypeParameterList();
       if (typeParameterList != null) {
-        createTypeParamsListComment(builder, commenter, typeParameterList);
+        createTypeParamsListComment(builder, commenter, typeParameterList, _comment);
       }
     }
     return !builder.isEmpty() ? builder.toString() : null;
@@ -732,10 +737,16 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                                  PsiMethod psiMethod) {
     PsiParameterList parameterList = psiMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
+
+    PsiDocComment docComment = psiMethod.getDocComment();
     final Map<Integer, String> index2Description = collectParentParameterDescriptions(psiMethod, parameters);
 
     for (int i = 0; i < parameters.length; i++) {
-      builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
+      builder.append(
+        docComment == null
+        ? CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter)
+        : CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, docComment, commenter)
+      );
       builder.append(parameters[i].getName());
       String description = index2Description.get(i);
       if (description != null) {
@@ -745,8 +756,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
+  /// @return A "sparse array" of each parameter that is documented
   private static @NotNull Map<Integer, String> collectParentParameterDescriptions(PsiMethod psiMethod, PsiParameter[] parameters) {
     final Map<Integer, String> index2Description = new HashMap<>();
+    CharSequence prefix = CodeDocumentationUtil.preferredDocumentationLinePrefix(psiMethod.getContainingFile(), psiMethod.getDocComment());
 
     for (int i = 0; i < parameters.length; i++) {
       PsiDocTag param = JavaDocInfoGenerator.findInheritDocTag(psiMethod, i);
@@ -763,7 +776,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
       if (paramName != null) {
-        String description = param.getText().substring(endOffset).replaceFirst("(\\s*\\*)?\\s*$", "");
+        String description = param.getText().substring(endOffset).replaceFirst("(\\s*(?:\\*|///))?\\s*$", "");
+        // Remove the leading chars, since we don't know the final comment type.
+        description = description.replaceAll("(\\n\\s*)(?:\\*|///)", "$1" + prefix);
         index2Description.put(i, description);
       }
     }
@@ -772,10 +787,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   public static void createTypeParamsListComment(final StringBuilder buffer,
                                                  final CodeDocumentationAwareCommenter commenter,
-                                                 final PsiTypeParameterList typeParameterList) {
+                                                 final PsiTypeParameterList typeParameterList,
+                                                 final PsiComment comment) {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
-      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, typeParameterList.getContainingFile(), commenter));
+      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, comment, commenter));
       buffer.append("<").append(typeParameter.getName()).append(">");
       buffer.append(LINE_SEPARATOR);
     }

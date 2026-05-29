@@ -169,7 +169,7 @@ e:com.intellij.diff.tools.util.base.IgnorePolicy
 - *sf:IGNORE_LANGUAGE_SPECIFIC_CHANGES:com.intellij.diff.tools.util.base.IgnorePolicy
 *:com.intellij.diff.util.CombinedDiffToggle
 - *sf:Companion:com.intellij.diff.util.CombinedDiffToggle$Companion
-- s:getDEFAULT():com.intellij.diff.util.CombinedDiffToggle
+- *s:getDEFAULT():com.intellij.diff.util.CombinedDiffToggle
 - a:isCombinedDiffEnabled():Z
 - a:setCombinedDiffEnabled(Z):V
 *f:com.intellij.diff.util.CombinedDiffToggle$Companion

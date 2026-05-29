@@ -1,8 +1,8 @@
 *:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 - *sf:Companion:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
-- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
-- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
-- s:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+- *s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- *s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- *s:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
 - a:filterEvents(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 - a:ignoreParameters():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
 - a:mapParameters(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher

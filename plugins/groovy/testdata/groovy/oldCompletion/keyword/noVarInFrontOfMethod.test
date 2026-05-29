@@ -1,0 +1,30 @@
+class Foo {
+  <caret> foo() {
+  
+  }
+}
+-----
+abstract
+boolean
+byte
+char
+def
+double
+final
+float
+if
+int
+long
+native
+non-sealed
+private
+protected
+public
+sealed
+short
+static
+strictfp
+synchronized
+transient
+void
+volatile

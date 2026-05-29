@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -31,8 +31,7 @@ public final class Factory  {
 
   public static @NotNull LeafElement createSingleLeafElement(@NotNull IElementType type, @NotNull CharSequence buffer, int startOffset, int endOffset, CharTable table, @NotNull PsiManager manager, boolean generatedFlag) {
     FileElement holderElement = DummyHolderFactory.createHolder(manager, table, type.getLanguage()).getTreeElement();
-    LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(
-      buffer, startOffset, endOffset));
+    LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(buffer, startOffset, endOffset));
     holderElement.rawAddChildren(newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;

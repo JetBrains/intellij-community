@@ -18,6 +18,7 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
+  - name: intellij.java.bookmarks
   - name: intellij.platform.jps.build.javac.rt
   - name: intellij.java.guiForms.compiler
   - name: intellij.java.compiler.antTasks

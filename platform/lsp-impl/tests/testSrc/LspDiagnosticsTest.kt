@@ -20,6 +20,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.problems.ProblemListener
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -382,11 +383,9 @@ internal class LspDiagnosticsTest {
       checkHighlightingByPolling()
 
       // reportErrorsToWolf runs asynchronously after highlights are applied to the editor
-      repeat(20) {
-        delay(50)
-        if (wolf.isProblemFile(virtualFile)) return@repeat
+      waitUntilAssertSucceeds(message = "File with error diagnostics should be reported as a problem file") {
+        assertTrue(wolf.isProblemFile(virtualFile))
       }
-      assertTrue(wolf.isProblemFile(virtualFile), "File with error diagnostics should be reported as a problem file")
     }
 
     @Test
@@ -433,11 +432,9 @@ internal class LspDiagnosticsTest {
 
       checkHighlightingByPolling()
 
-      repeat(20) {
-        delay(50)
-        if (wolf.isProblemFile(virtualFile)) return@repeat
+      waitUntilAssertSucceeds(message = "Wolf must register the file after the first error diagnostic") {
+        assertTrue(wolf.isProblemFile(virtualFile))
       }
-      assertTrue(wolf.isProblemFile(virtualFile), "Wolf must register the file after the first error diagnostic")
 
       // Phase 2: edit the document and have the server reply with no diagnostics.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
@@ -449,11 +446,9 @@ internal class LspDiagnosticsTest {
       val noErrors = createExpectedDataFromText(" hello world")
       (codeInsightFixture as CodeInsightTestFixtureImpl).checkHighlightingRetrying(noErrors, initialCheck = true)
 
-      repeat(20) {
-        delay(50)
-        if (!wolf.isProblemFile(virtualFile)) return@repeat
+      waitUntilAssertSucceeds(message = "Wolf must unregister the file once the LSP errors are cleared") {
+        assertFalse(wolf.isProblemFile(virtualFile))
       }
-      assertFalse(wolf.isProblemFile(virtualFile), "Wolf must unregister the file once the LSP errors are cleared")
     }
 
     /**
@@ -480,11 +475,9 @@ internal class LspDiagnosticsTest {
 
       checkHighlightingByPolling()
 
-      repeat(20) {
-        delay(50)
-        if (wolf.isProblemFile(virtualFile)) return@repeat
+      waitUntilAssertSucceeds(message = "Wolf must register the file after the initial pull") {
+        assertTrue(wolf.isProblemFile(virtualFile))
       }
-      assertTrue(wolf.isProblemFile(virtualFile), "Wolf must register the file after the initial pull")
 
       // Phase 2: delete the document. Do NOT register a second pull response — the next pull returns null,
       // which short-circuits the cache before any refresh / gen bump. The only remaining
@@ -495,12 +488,11 @@ internal class LspDiagnosticsTest {
       val noErrors = createExpectedDataFromText("")
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(noErrors)
 
-      repeat(20) {
-        delay(50)
-        if (!wolf.isProblemFile(virtualFile)) return@repeat
+      waitUntilAssertSucceeds(
+        message = "Wolf must unregister the file from the pass's pending-edit-driven write, without a new server response"
+      ) {
+        assertFalse(wolf.isProblemFile(virtualFile))
       }
-      assertFalse(wolf.isProblemFile(virtualFile),
-                  "Wolf must unregister the file from the pass's pending-edit-driven write, without a new server response")
     }
   }
 
@@ -610,18 +602,9 @@ internal class LspDiagnosticsTest {
     val data = ExpectedHighlightingData(document, true, true, false)
     data.init()
 
-    var lastFailure: Throwable? = null
-    repeat(5) { attempt ->
-      if (attempt > 0) delay(200)
-      try {
-        fixture.collectAndCheckHighlighting(data)
-        return
-      }
-      catch (e: AssertionError) {
-        lastFailure = e
-      }
+    waitUntilAssertSucceeds {
+      fixture.collectAndCheckHighlighting(data)
     }
-    throw lastFailure!!
   }
 }
 

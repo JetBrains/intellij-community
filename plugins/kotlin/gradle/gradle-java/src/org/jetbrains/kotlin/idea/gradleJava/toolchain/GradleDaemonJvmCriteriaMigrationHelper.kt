@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSuppor
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptSettingsPsiFile
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
@@ -96,7 +96,7 @@ object GradleDaemonJvmCriteriaMigrationHelper {
 
     private fun createSettingsFileWithAppliedFoojayPlugin(projectPath: Path, gradleVersion: GradleVersion) {
         val gradleDsl = GradleDsl.valueOf(projectPath.resolve(KOTLIN_DSL_SCRIPT_NAME).exists())
-        val settingsScriptName = GradleSettingScriptBuilder.getSettingsScriptName(gradleDsl)
+        val settingsScriptName = gradleDsl.settingsScriptName
         val settingsScriptPath = projectPath.resolve(settingsScriptName)
         val settingsScriptContent = settingsScript(gradleVersion, gradleDsl) {
             setProjectName(projectPath.name)

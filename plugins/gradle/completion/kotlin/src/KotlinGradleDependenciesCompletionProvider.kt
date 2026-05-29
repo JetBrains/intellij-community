@@ -30,14 +30,13 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.T
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
+import com.intellij.gradle.completion.kotlin.insertHandler.KotlinGradleConfigurationInsertHandler
+import com.intellij.gradle.completion.lookup.DependencyReturningMethodLookupProvider
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -49,33 +48,35 @@ import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
+import icons.GradleIcons
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-    if (!useDependencyCompletionService()) {
-      return
-    }
-
-    if (parameters.isAndroidProject()) {
-      return
-    }
+    if (!isGradleDependenciesCompletionEnabled(parameters)) return
 
     val positionElement = parameters.position
     when {
-      // server-side completion only
-      // dependencies { juni<caret> }
-      !isFreeMode() && positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> suggestDependencyCompletions(
-        result,
-        parameters,
-        DependencyConfigurationInsertHandler,
-        TopLevelLookupStringProvider,
-        invokePosition = TOP_LEVEL
-      )
+
+      positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> {
+        // dependencies { implementatio<caret> }
+        suggestConfigurations(result, parameters)
+
+        // server-side completion only
+        if (!isFreeMode()) {
+          // dependencies { juni<caret> }
+          suggestDependencyCompletions(
+            result,
+            parameters,
+            DependencyConfigurationInsertHandler,
+            TopLevelLookupStringProvider,
+            invokePosition = TOP_LEVEL
+          )
+        }
+      }
 
       // dependencies { implementation(...) { exclude("<caret>") } }
-      positionElement.isDependencyArgument(exclude) -> {
+      positionElement.isExcludeArgument() -> {
         suggestCoordinateCompletions(
           result,
           parameters,
@@ -98,14 +99,19 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         )
       }
 
-      // dependencies { implementation("juni<caret>") }
-      positionElement.isSingleDependencyArgument() -> suggestDependencyCompletions(
-        result,
-        parameters,
-        FullStringInsertHandler,
-        SimpleLookupStringProvider,
-        invokePosition = GAV
-      )
+      // dependencies { implementation("juni<caret>") }, dependencies { implementation(platform("juni<caret>")) }
+      positionElement.isSingleDependencyArgumentInsideQuotes() ->
+        suggestDependencyCompletions(
+          result,
+          parameters,
+          FullStringInsertHandler,
+          SimpleLookupStringProvider,
+          invokePosition = GAV
+        )
+
+      // implementation(pl<caret>) -> implementation(platform(<caret>))
+      positionElement.isSingleDependencyArgumentWithoutQuotesAndDots() ->
+        result.addAllElements(DependencyReturningMethodLookupProvider.getElements())
     }
   }
 
@@ -139,11 +145,20 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     }
   }
 
-  private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {
-    result.runRemainingContributors(parameters) { _ ->
-      // don't call other contributors
-      result.stopHere()
+  private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
+    val dependencyConfigurations = getConfigurationsForDependencies(parameters.originalFile)
+    val lookup = dependencyConfigurations.map { configurationName ->
+      LookupElementBuilder.create(configurationName)
+        .withInsertHandler(KotlinGradleConfigurationInsertHandler(
+          isConfigurationNamePsiResolvable(configurationName, parameters.position)
+        ))
+        .withIcon(GradleIcons.Gradle)
+        .withTypeText("Gradle Configuration")
+        .also {
+          it.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+        }
     }
+    result.addAllElements(lookup)
   }
 
   private fun suggestDependencyCompletions(
@@ -155,8 +170,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
-
-    filterResultsFromOtherContributors(result, parameters)
 
     val documentText = parameters.editor.document.text
     val offset = parameters.offset
@@ -209,8 +222,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
-
-    filterResultsFromOtherContributors(result, parameters)
 
     val dummyText = parameters.position.parent.text
     val text = removeDummySuffix(dummyText)
@@ -272,11 +283,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   }
 
   private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
-
-  private fun CompletionParameters.isAndroidProject(): Boolean {
-    val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
-    return snapshot.entities<FacetEntity>().any { it.name == "Android" }
-  }
 
   private fun isFreeMode(): Boolean {
     return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)

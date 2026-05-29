@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -374,7 +375,7 @@ class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
   val sortedTabVms: List<SeTabVm> = tabVms.sortedBy { -it.priority }
 
   val selectedTabIndexFlow: MutableStateFlow<Int> = MutableStateFlow(sortedTabVms.indexOfFirst { it.tabId == selectedTabId })
-  val selectedTabFlow: Flow<SeTabVm> = selectedTabIndexFlow.map { sortedTabVms[it] }
+  val selectedTabFlow: Flow<SeTabVm> = selectedTabIndexFlow.filter { it in sortedTabVms.indices }.map { sortedTabVms[it] }
   val selectedTab: SeTabVm get() = sortedTabVms[selectedTabIndexFlow.value]
 
   init {

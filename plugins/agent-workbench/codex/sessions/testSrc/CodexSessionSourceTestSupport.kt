@@ -10,6 +10,9 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -25,34 +28,39 @@ internal fun testCreateSource(
   threadIds: List<String>,
   appServerHints: Map<String, CodexRefreshHints> = emptyMap(),
   backendThreadCustomizer: (CodexBackendThread) -> CodexBackendThread = { it },
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
 ): CodexSessionSource {
   val projectPath = projectDir.toString()
-  return CodexSessionSource(
-    backend = object : CodexSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
-        return if (path == projectPath) {
-          threadIds.mapIndexed { index, threadId ->
-            backendThreadCustomizer(
-              CodexBackendThread(
-                thread = CodexThread(
-                  id = threadId,
-                  title = "Thread ${index + 1}",
-                  updatedAt = 100L + index,
-                  archived = false,
-                )
+  val rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { codexHome })
+  val backend = object : CodexSessionBackend {
+    override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+      return if (path == projectPath) {
+        threadIds.mapIndexed { index, threadId ->
+          backendThreadCustomizer(
+            CodexBackendThread(
+              thread = CodexThread(
+                id = threadId,
+                title = "Thread ${index + 1}",
+                updatedAt = 100L + index,
+                archived = false,
               )
             )
-          }
-        }
-        else {
-          emptyList()
+          )
         }
       }
-    },
-    appServerRefreshHintsProvider = testStaticHintsProvider(appServerHints),
-    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(
-      rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { codexHome })
-    ),
+      else {
+        emptyList()
+      }
+    }
+  }
+  val appServerRefreshHintsProvider = testStaticHintsProvider(appServerHints)
+  val rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend)
+  return CodexSessionSource(
+    backend,
+    appServerRefreshHintsProvider,
+    rolloutRefreshHintsProvider,
+    rolloutBackend,
+    calculateCost,
   )
 }
 

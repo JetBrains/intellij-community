@@ -49,7 +49,6 @@ public final class OpenChannelsCache
 
   private final @NotNull FileChannelOpener channelOpener;
 
-  @VisibleForTesting
   public OpenChannelsCache(int capacity,
                            @NotNull FileChannelOpener channelOpener) {
     this.capacity = capacity;
@@ -147,8 +146,9 @@ public final class OpenChannelsCache
     }
   }
 
+  @Override
   @VisibleForTesting
-  public void closeChannel(Path path) throws IOException {
+  public void closeChannel(@NotNull Path path) throws IOException {
     synchronized (cacheLock) {
       ChannelDescriptor descriptor = cachedChannels.remove(path);
 

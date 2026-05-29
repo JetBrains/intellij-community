@@ -11,8 +11,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -212,8 +212,7 @@ public final class PluginXmlExtensionRegistrationInspection extends DevKitPlugin
     var project = file.getProject();
     if (!isIntelliJPlatformProject(project)) return false;
 
-    var roots = ProjectRootManager.getInstance(project).getContentRoots();
-    for (VirtualFile root : roots) {
+    for (VirtualFile root : BaseProjectDirectories.getBaseDirectories(project)) {
       VirtualFile communityPlatformDir = root.findFileByRelativePath("community/platform");
       VirtualFile platformDir = communityPlatformDir != null ? communityPlatformDir : root.findFileByRelativePath("platform");
 

@@ -49,7 +49,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
       dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text));
     }
 
-    dummyParent.acceptTree(new GeneratedMarkerVisitor());
+    dummyParent.acceptTree(new GeneratedMarkerVisitor(dummyParent));
     return dummyParent.getFirstChildNode();
   }
 

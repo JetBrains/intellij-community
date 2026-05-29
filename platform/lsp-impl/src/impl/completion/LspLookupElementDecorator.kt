@@ -47,9 +47,12 @@ internal class LspLookupElementDecorator(
   private object LspExpensiveRenderer : SuspendingLookupElementRenderer<LspLookupElementDecorator>() {
 
     override suspend fun renderElementSuspending(element: LspLookupElementDecorator, presentation: LookupElementPresentation) {
-      val lspCompletionObject = element.lspCompletionObject
-      lspCompletionObject.resolveCompletionItem()
-      LspInstantRenderer.renderLookupElement(lspCompletionObject, presentation)
+      val completionObject = element.lspCompletionObject
+      val completionSupport = completionObject.lspServer.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: return
+      if (completionSupport.shouldResolveCompletionItem(completionObject.completionItem)) {
+        completionObject.resolveCompletionItem()
+      }
+      completionSupport.expensiveRenderLookupElement(completionObject.completionItem, presentation)
     }
   }
 }

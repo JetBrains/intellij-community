@@ -139,7 +139,7 @@ abstract class McpClient(
     }
   }
 
-  internal fun hasPromotionCandidateConfig(expectedPort: Int = expectedPromotionPort()): Boolean {
+  fun hasPromotionCandidateConfig(expectedPort: Int = expectedPromotionPort()): Boolean {
     return promotionCandidateServers(expectedPort).isNotEmpty()
   }
 

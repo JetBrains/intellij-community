@@ -38,6 +38,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.inspections.PyLazyImportInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -430,6 +431,26 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     new FilterPattern(new PyKeywordCompletionContributor.LanguageLevelAtLeastFilter(LanguageLevel.PYTHON30));
   private static final FilterPattern PY35 = new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON35));
   private static final FilterPattern PY310 = new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON310));
+  private static final FilterPattern PY315 = new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON315));
+
+  /**
+   * Matches places where a {@code lazy} import (PEP 810) is allowed: outside of any function, class,
+   * try/except/finally body, or match statement.
+   */
+  private static class ValidLazyImportContextFilter implements ElementFilter {
+    @Override
+    public boolean isAcceptable(Object element, PsiElement context) {
+      if (!(element instanceof PsiElement p)) return false;
+      return PsiTreeUtil.getParentOfType(p, PyLazyImportInspection.FORBIDDEN_LAZY_IMPORT_CONTAINERS) == null;
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
+  private static final FilterPattern VALID_LAZY_IMPORT_CONTEXT = new FilterPattern(new ValidLazyImportContextFilter());
 
   // ======
 
@@ -568,6 +589,22 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
         .and(IN_BEGIN_STMT)
         .and(psiElement().withSuperParent(4, PyMatchStatement.class)),
       new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.CASE));
+  }
+
+  private void addLazy() {
+    extend(
+      CompletionType.BASIC, psiElement()
+        .withLanguage(PythonLanguage.getInstance())
+        .and(PY315)
+        .and(IN_BEGIN_STMT)
+        .and(VALID_LAZY_IMPORT_CONTEXT)
+        .andNot(IN_IMPORT_STMT)
+        .andNot(IN_PARAM_LIST)
+        .andNot(IN_ARG_LIST)
+        .andNot(BEFORE_COND)
+        .andNot(AFTER_QUALIFIER)
+        .andNot(IN_STRING_LITERAL),
+      new PyKeywordCompletionProvider(TailTypes.spaceType(), PyNames.LAZY));
   }
 
   private void addWithinFuncs() {
@@ -904,6 +941,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     addBreak();
     addContinue();
     addCase();
+    addLazy();
     addWithinFuncs();
     addWithinTry();
     addInfixOperators();

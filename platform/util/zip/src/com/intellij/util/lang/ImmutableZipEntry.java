@@ -67,23 +67,20 @@ public final class ImmutableZipEntry {
     return name.hashCode();
   }
 
+  @SuppressWarnings("resource")
   public byte[] getData(@NotNull HashMapZipFile file) throws IOException {
     if (uncompressedSize < 0) {
       throw new IOException("no data");
     }
 
-    if (file.fileSize < (dataOffset + compressedSize)) {
-      throw new EOFException();
-    }
-
     switch (method) {
       case STORED:
-        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer, false);
         byte[] result = new byte[uncompressedSize];
         inputBuffer.get(result);
         return result;
       case DEFLATED:
-        ByteBuffer inputBuf = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        ByteBuffer inputBuf = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer, true);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuf);
         int count = uncompressedSize;
@@ -122,20 +119,17 @@ public final class ImmutableZipEntry {
    * Release returned buffer using {@link ZipFile#releaseBuffer} after use.
    */
   @ApiStatus.Internal
+  @SuppressWarnings("resource")
   public ByteBuffer getByteBuffer(@NotNull HashMapZipFile file, @Nullable IntFunction<ByteBuffer> allocator) throws IOException {
     if (uncompressedSize < 0) {
       throw new IOException("no data");
     }
 
-    if (file.fileSize < (dataOffset + compressedSize)) {
-      throw new EOFException();
-    }
-
     switch (method) {
       case STORED:
-        return computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        return computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer, false);
       case DEFLATED:
-        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer, true);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
         try {
@@ -162,15 +156,21 @@ public final class ImmutableZipEntry {
     }
   }
 
-  private @NotNull ByteBuffer computeDataOffsetIfNeededAndReadInputBuffer(ByteBuffer mappedBuffer) {
+  private @NotNull ByteBuffer computeDataOffsetIfNeededAndReadInputBuffer(ByteBuffer mappedBuffer, boolean addDummyByte) throws EOFException {
     int dataOffset = this.dataOffset;
     if (dataOffset == -1) {
       dataOffset = computeDataOffset(mappedBuffer);
     }
 
+    int dataEnd = dataOffset + compressedSize;
+    if (mappedBuffer.limit() < dataEnd) {
+      throw new EOFException();
+    }
+
     ByteBuffer inputBuffer = mappedBuffer.asReadOnlyBuffer();
     inputBuffer.position(dataOffset);
-    inputBuffer.limit(dataOffset + compressedSize);
+    // Inflater in nowrap mode requires one readable byte after the raw deflate stream.
+    inputBuffer.limit(addDummyByte && dataEnd < mappedBuffer.limit() ? dataEnd + 1 : dataEnd);
     return inputBuffer;
   }
 
