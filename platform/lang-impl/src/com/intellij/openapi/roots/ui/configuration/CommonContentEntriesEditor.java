@@ -431,6 +431,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
         }
       };
       myDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModule());
+      myDescriptor.setEnvironmentRestricted(true);
       myDescriptor.setTitle(ProjectBundle.message("module.paths.add.content.title"));
       myDescriptor.setDescription(ProjectBundle.message("module.paths.add.content.prompt"));
       myDescriptor.putUserData(FileChooserKeys.DELETE_ACTION_AVAILABLE, false);

@@ -463,6 +463,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
       final String name = getLibraryEditor().getName();
       final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor(name);
+      chooserDescriptor.setEnvironmentRestricted(true);
       if (myContextModule != null) {
         chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myContextModule);
       }
