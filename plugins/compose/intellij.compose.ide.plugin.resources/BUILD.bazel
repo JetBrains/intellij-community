@@ -284,6 +284,8 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android_test_lib",
         "@lib//:studio-test-platform",
         "//platform/ide-core",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.tests` end

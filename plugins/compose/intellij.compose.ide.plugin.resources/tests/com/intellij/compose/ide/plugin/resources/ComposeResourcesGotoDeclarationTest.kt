@@ -30,19 +30,23 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test common composeResources are accessible`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `test common composeResources are accessible`() {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
-    files.openInEditor(sourceSetName = sourceSetName)
 
-    doTestNavigation(qualifiedName = "Res.drawable.test", expectedSize = 1, expectedType = ResourceType.DRAWABLE)
-    doTestNavigation(qualifiedName = "Res.drawable.compose_multiplatform", expectedSize = 2, expectedType = ResourceType.DRAWABLE)
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      files.openInEditor(sourceSetName = sourceSetName)
 
-    doTestNavigation(qualifiedName = "Res.string.test", expectedSize = 4, expectedType = ResourceType.STRING)
-    doTestNavigation(qualifiedName = "Res.array.test", expectedSize = 4, expectedType = ResourceType.STRING_ARRAY)
-    doTestNavigation(qualifiedName = "Res.plurals.test", expectedSize = 4, expectedType = ResourceType.PLURAL_STRING)
+      doTestNavigation(qualifiedName = "Res.drawable.test", expectedSize = 1, expectedType = ResourceType.DRAWABLE)
+      doTestNavigation(qualifiedName = "Res.drawable.compose_multiplatform", expectedSize = 2, expectedType = ResourceType.DRAWABLE)
 
-    doTestNavigation(qualifiedName = "Res.font.test", expectedSize = 1, expectedType = ResourceType.FONT)
+      doTestNavigation(qualifiedName = "Res.string.test", expectedSize = 4, expectedType = ResourceType.STRING)
+      doTestNavigation(qualifiedName = "Res.array.test", expectedSize = 4, expectedType = ResourceType.STRING_ARRAY)
+      doTestNavigation(qualifiedName = "Res.plurals.test", expectedSize = 4, expectedType = ResourceType.PLURAL_STRING)
+
+      doTestNavigation(qualifiedName = "Res.font.test", expectedSize = 1, expectedType = ResourceType.FONT)
+    }
+
   }
 
   private fun List<VirtualFile>.openInEditor(sourceSetName: String) =

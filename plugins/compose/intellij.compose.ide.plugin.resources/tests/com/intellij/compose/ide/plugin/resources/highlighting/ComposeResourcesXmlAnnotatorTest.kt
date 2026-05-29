@@ -22,13 +22,12 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test highlighting in strings xml`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `test highlighting in strings xml`() {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val stringsFile = files.findStringsFile("commonMain")
 
-    runWriteAction {
-      val content = $$"""
+    val content = $$"""
         <resources>
           <string name="test_special">Special characters: \n, \t, \u0020</string>
           <string name="test_placeholder">Placeholder: %1$s, %2$d</string>
@@ -37,42 +36,52 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
           </string-array>
         </resources>
       """.trimIndent()
-      codeInsightTestFixture.saveText(stringsFile, content)
+
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+
+      runWriteAction {
+
+        codeInsightTestFixture.saveText(stringsFile, content)
+      }
+
+      codeInsightTestFixture.configureFromExistingVirtualFile(stringsFile)
+      val highlights = codeInsightTestFixture.doHighlighting()
+
+      assertHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
+      assertHighlight(highlights, "\\t", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
+      assertHighlight(highlights, "\\u0020", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
+      assertHighlight(highlights, $$"%1$s", DefaultLanguageHighlighterColors.CONSTANT)
+      assertHighlight(highlights, $$"%2$d", DefaultLanguageHighlighterColors.CONSTANT)
+      assertHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, 2)
     }
-
-    codeInsightTestFixture.configureFromExistingVirtualFile(stringsFile)
-    val highlights = codeInsightTestFixture.doHighlighting()
-
-    assertHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
-    assertHighlight(highlights, "\\t", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
-    assertHighlight(highlights, "\\u0020", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
-    assertHighlight(highlights, $$"%1$s", DefaultLanguageHighlighterColors.CONSTANT)
-    assertHighlight(highlights, $$"%2$d", DefaultLanguageHighlighterColors.CONSTANT)
-    assertHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, 2)
   }
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test no highlighting in other xml files`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `test no highlighting in other xml files`() {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val otherFile = files.findOtherXmlFile("commonMain")
 
-    runWriteAction {
-      val content = $$"""
+    val content = $$"""
         <resources>
           <string name="test_special">Not highlighted: \n, %1$s</string>
         </resources>
       """.trimIndent()
-      codeInsightTestFixture.saveText(otherFile, content)
+
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+
+    runWriteAction {
+        codeInsightTestFixture.saveText(otherFile, content)
+      }
+
+      codeInsightTestFixture.configureFromExistingVirtualFile(otherFile)
+      val highlights = codeInsightTestFixture.doHighlighting()
+
+      assertNoHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
+      assertNoHighlight(highlights, $$"%1$s", DefaultLanguageHighlighterColors.CONSTANT)
     }
-
-    codeInsightTestFixture.configureFromExistingVirtualFile(otherFile)
-    val highlights = codeInsightTestFixture.doHighlighting()
-
-    assertNoHighlight(highlights, "\\n", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
-    assertNoHighlight(highlights, $$"%1$s", DefaultLanguageHighlighterColors.CONSTANT)
   }
 
   private fun List<VirtualFile>.findStringsFile(sourceSetName: String): VirtualFile {
