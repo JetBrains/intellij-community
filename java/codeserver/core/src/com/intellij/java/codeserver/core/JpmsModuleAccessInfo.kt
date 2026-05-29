@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.core
 
 import com.intellij.openapi.module.Module
@@ -309,5 +309,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     const val ADD_EXPORTS_OPTION: String = "--add-exports"
     const val ADD_MODULES_OPTION: String = "--add-modules"
     const val ADD_READS_OPTION: String = "--add-reads"
+    const val ADD_OPENS_OPTION: String = "--add-opens"
+    const val PATCH_MODULE_OPTION: String = "--patch-module"
   }
 }

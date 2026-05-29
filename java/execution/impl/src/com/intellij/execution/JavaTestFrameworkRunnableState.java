@@ -83,7 +83,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
@@ -107,9 +110,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
+import static com.intellij.java.codeserver.core.JpmsModuleAccessInfo.ADD_MODULES_OPTION;
+import static com.intellij.java.codeserver.core.JpmsModuleAccessInfo.ADD_OPENS_OPTION;
+import static com.intellij.java.codeserver.core.JpmsModuleAccessInfo.ADD_READS_OPTION;
+import static com.intellij.java.codeserver.core.JpmsModuleAccessInfo.ALL_UNNAMED;
+import static com.intellij.java.codeserver.core.JpmsModuleAccessInfo.PATCH_MODULE_OPTION;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -555,7 +566,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           .addParamsGroup(JIGSAW_OPTIONS)
           .getParametersList();
 
-        vmParametersList.add("--add-modules");
+        vmParametersList.add(ADD_MODULES_OPTION);
         vmParametersList.add(testModule.getName());
         //setup module path
         JavaParametersUtil.putDependenciesOnModulePath(javaParameters, testModule, true);
@@ -587,30 +598,64 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     //ensure test output is merged to the production module
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
-      vmParametersList.add("--patch-module");
+      vmParametersList.add(PATCH_MODULE_OPTION);
       vmParametersList.add(new CompositeParameterTargetedValue().addLocalPart(prodModuleName + "=").addPathPart(testOutput.getPath()));
     }
 
     //ensure test dependencies missing from production module descriptor are available in tests
     //todo enumerate all test dependencies explicitly
-    vmParametersList.add("--add-reads");
-    vmParametersList.add(prodModuleName + "=ALL-UNNAMED");
+    vmParametersList.add(ADD_READS_OPTION);
+    vmParametersList.add(prodModuleName + "=" + ALL_UNNAMED);
 
-    //open packages with tests to test runner
     List<String> opensOptions = new ArrayList<>();
     collectPackagesToOpen(opensOptions);
-    for (String option : opensOptions) {
-      if (option.isEmpty()) continue;
-      vmParametersList.add("--add-opens");
-      vmParametersList.add(prodModuleName + "/" + option + "=ALL-UNNAMED");
+    if (!opensOptions.isEmpty()) {
+      Set<String> runtimeModuleNames = DumbService.getInstance(prodModule.getProject())
+        .computeWithAlternativeResolveEnabled(() -> getRuntimeModules(prodModule));
+      // open packages with tests to test runner
+      for (String option : opensOptions) {
+        if (option.isEmpty()) continue;
+        vmParametersList.add(ADD_OPENS_OPTION);
+        vmParametersList.add(prodModuleName + "/" + option + "=" + ALL_UNNAMED);
+        // open packages with tests to all transitively RUNTIME-required named modules
+        for (String runtimeModuleName : runtimeModuleNames) {
+          vmParametersList.add(ADD_OPENS_OPTION);
+          vmParametersList.add(prodModuleName + "/" + option + "=" + runtimeModuleName);
+        }
+      }
     }
 
     //ensure production module is explicitly added as test starter in `idea-rt` doesn't depend on it
-    vmParametersList.add("--add-modules");
+    vmParametersList.add(ADD_MODULES_OPTION);
     vmParametersList.add(prodModuleName);
   }
 
   protected void collectPackagesToOpen(List<String> options) { }
+
+  private static @NotNull Set<String> getRuntimeModules(@NotNull PsiJavaModule module) {
+    Set<String> result = new HashSet<>();
+    collectRuntimeModules(module, result, new HashSet<>());
+    return result;
+  }
+
+  // skipping 'requires static' deps and JDK platform modules, which are not in the runtime module graph
+  private static void collectRuntimeModules(@NotNull PsiJavaModule module,
+                                            @NotNull Set<String> names,
+                                            @NotNull Set<String> visited) {
+    for (PsiRequiresStatement req : module.getRequires()) {
+      if (req.hasModifierProperty(PsiModifier.STATIC)) continue;
+      PsiJavaModuleReference ref = req.getModuleReference();
+      if (ref == null) continue;
+      String moduleName = ref.getCanonicalText();
+      if (PsiJavaModule.JAVA_BASE.equals(moduleName)) continue;
+      if (moduleName.startsWith("java.") || moduleName.startsWith("jdk.")) continue;
+      if (!visited.add(moduleName)) continue;
+      names.add(moduleName);
+      if (ref.resolve() instanceof PsiJavaModule javaModule) {
+        collectRuntimeModules(javaModule, names, visited);
+      }
+    }
+  }
 
   /**
    * called on EDT
