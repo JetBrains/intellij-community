@@ -1572,7 +1572,6 @@ plugins/stream-debugger
 plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
-plugins/stream-debugger/kotlin
 plugins/stream-debugger/shared
 plugins/stream-debugger/testFramework
 plugins/svn4idea

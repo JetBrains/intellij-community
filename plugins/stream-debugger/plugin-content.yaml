@@ -10,9 +10,6 @@
 - name: lib/modules/intellij.debugger.streams.java.jar
   contentModules:
   - name: intellij.debugger.streams.java
-- name: lib/modules/intellij.debugger.streams.kotlin.k1.jar
-  contentModules:
-  - name: intellij.debugger.streams.kotlin.k1
 - name: lib/modules/intellij.debugger.streams.shared.jar
   contentModules:
   - name: intellij.debugger.streams.shared

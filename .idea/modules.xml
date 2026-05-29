@@ -429,8 +429,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/kotlin/intellij.debugger.streams.kotlin.k1.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/kotlin/intellij.debugger.streams.kotlin.k1.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/kotlin/intellij.debugger.streams.kotlin.k1.tests.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/kotlin/intellij.debugger.streams.kotlin.k1.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/shared/intellij.debugger.streams.shared.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/shared/intellij.debugger.streams.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/testFramework/intellij.debugger.streams.testFramework.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/testFramework/intellij.debugger.streams.testFramework.iml" />
