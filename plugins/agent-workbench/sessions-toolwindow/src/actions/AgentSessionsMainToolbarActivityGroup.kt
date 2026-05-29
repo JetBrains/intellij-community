@@ -25,6 +25,9 @@ internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   private val activitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
     if (project.isInitialized) project.service<AgentSessionsActivityService>().latestMainToolbarSummary() else AgentSessionsActivitySummary.EMPTY
   },
+  private val chromeActivitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
+    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestChromeSummary() else AgentSessionsActivitySummary.EMPTY
+  },
   private val projectProvider: (AnActionEvent) -> Project? = ::mainToolbarProject,
 ) : ActionGroup(), DumbAware {
   private val children: Array<AnAction> = AgentSessionsActivityBucket.entries.map { bucket ->
@@ -46,15 +49,17 @@ internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun isVisibleForProject(project: Project?): Boolean {
-    return project != null &&
-           isToolbarActivityEnabled() &&
-           !isDedicatedProject(project) &&
+    if (project == null) return false
+    if (isDedicatedProject(project)) return true
+    return isToolbarActivityEnabled() &&
            sourceProjectPath(project) != null &&
            activitySummary(project).attentionRows.isNotEmpty()
   }
 
   private fun activityRowsFor(project: Project?, bucket: AgentSessionsActivityBucket) = when {
-    project == null || isDedicatedProject(project) || sourceProjectPath(project) == null -> emptyList()
+    project == null -> emptyList()
+    isDedicatedProject(project) -> chromeActivitySummary(project).rowsFor(bucket)
+    sourceProjectPath(project) == null -> emptyList()
     else -> activitySummary(project).rowsFor(bucket)
   }
 }
