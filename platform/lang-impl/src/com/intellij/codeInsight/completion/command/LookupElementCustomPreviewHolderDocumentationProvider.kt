@@ -367,18 +367,16 @@ fun combineFragments(
 
 internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHaveCustomPreviewProvider {
   override fun mayHaveCustomPreview(lookup: Lookup): Boolean {
+    if (lookup !is LookupImpl) return false
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
-    val editor = lookup.editor
     val psiFile = lookup.psiFile ?: return false
     val project = lookup.project
-    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile)
-    if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
+    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile) ?: return false
+    if (topLevelFile.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
       return false
     }
-    if (lookup !is LookupImpl) return false
-    val completionService = editor.project?.getService(CommandCompletionService::class.java)
-    completionService?.getFactory(psiFile.language) ?: return false
-    return true
+    val completionService = project.getService(CommandCompletionService::class.java)
+    return completionService.getFactory(psiFile.language) != null
   }
 }
 
