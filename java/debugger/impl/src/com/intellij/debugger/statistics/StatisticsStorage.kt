@@ -12,6 +12,7 @@ private val KEY: Key<StatisticsStorage> = Key.create("DEBUGGER_STATISTICS_STORAG
 
 class StatisticsStorage {
   private val data = ConcurrentHashMap<StatisticElement, Long>()
+  private val counters = ConcurrentHashMap<Key<*>, Long>()
   private val timeBucketCounts = IntArray(DebuggerStatistics.bucketUpperLimits.size)
 
   private fun append(key: StatisticElement, timeMs: Long) = data.merge(key, timeMs, Long::plus)
@@ -75,6 +76,16 @@ class StatisticsStorage {
         return
       }
       storage.timeBucketCounts[bucketIndex]++
+    }
+
+    @JvmStatic
+    fun incrementCounter(debugProcess: DebugProcess, key: Key<*>) {
+      getStorage(debugProcess).counters.merge(key, 1, Long::plus)
+    }
+
+    @JvmStatic
+    fun collectAndClearCounter(debugProcess: DebugProcess, key: Key<*>): Long {
+      return getStorage(debugProcess).counters.remove(key) ?: 0
     }
 
     @Synchronized
