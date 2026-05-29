@@ -21,9 +21,13 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    * Install commands provided by a Python package.
    *
    * @param name Package name (or PEP 508 spec) to install persistently.
+   * @param reinstall Pass `true` to force a reinstall even when the tool is already installed.
+   *  Useful for breaking out of a previously pinned install (uv leaves the existing entry alone
+   *  otherwise, and `uv tool upgrade` is bounded by the original constraints so it cannot help).
    */
-  suspend fun install(name: String): PyResult<String> {
-    return executeAndHandleErrors("install", name, transformer = ZeroCodeStdoutTransformer)
+  suspend fun install(name: String, reinstall: Boolean? = null): PyResult<String> {
+    val options = listOf(reinstall to "--reinstall").makeOptions()
+    return executeAndHandleErrors("install", name, *options, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
@@ -38,10 +42,11 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
   /**
    * List installed tools
    */
-  suspend fun list(showVersionSpecifiers: Boolean? = null, showPaths: Boolean? = null): PyResult<String> {
+  suspend fun list(showVersionSpecifiers: Boolean? = null, showPaths: Boolean? = null, outdated: Boolean? = null): PyResult<String> {
     val options = listOf(
       showVersionSpecifiers to "--show-version-specifiers",
       showPaths to "--show-paths",
+      outdated to "--outdated",
     ).makeOptions()
     return executeAndHandleErrors("list", *options, transformer = ZeroCodeStdoutTransformer)
   }
@@ -56,6 +61,21 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
     val tools = stdout.lineSequence()
       .mapNotNull { headerRegex.matchEntire(it.trim()) }
       .map { UvInstalledTool(name = it.groupValues[1], version = it.groupValues[2], envPath = Path.of(it.groupValues[3])) }
+      .toList()
+    return Result.success(tools)
+  }
+
+  /**
+   * Parsed form of `uv tool list --outdated` (available since uv 0.10.10). Each header line
+   * `name vCURRENT [latest: NEWER]` becomes one entry; subordinate `- executable` lines are ignored.
+   * Returns only tools that have a newer release available.
+   */
+  suspend fun listOutdated(): PyResult<List<UvOutdatedTool>> {
+    val stdout = list(outdated = true).getOr { return it }
+    val headerRegex = Regex("""^(\S+) v(\S+) \[latest:\s*(\S+)]$""")
+    val tools = stdout.lineSequence()
+      .mapNotNull { headerRegex.matchEntire(it.trim()) }
+      .map { UvOutdatedTool(name = it.groupValues[1], currentVersion = it.groupValues[2], latestVersion = it.groupValues[3]) }
       .toList()
     return Result.success(tools)
   }
@@ -88,3 +108,5 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
 }
 
 data class UvInstalledTool(val name: String, val version: String, val envPath: Path)
+
+data class UvOutdatedTool(val name: String, val currentVersion: String, val latestVersion: String)

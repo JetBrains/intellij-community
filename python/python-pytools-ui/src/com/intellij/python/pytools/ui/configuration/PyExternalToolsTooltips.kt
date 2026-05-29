@@ -77,14 +77,17 @@ private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, 
     if (eventX in browseLeft..rightEdge) {
       return PyToolsUiBundle.message("settings.external.tools.path.edit.tooltip")
     }
-    // Action icon (install / upgrade / info / reset) sits immediately to the left of browse.
-    val iconKind = host.iconKindFor(toolRow, pathFieldValue)
-    val actionIcon = iconKind.icon
+    // The slot to the left of browse holds one of: the regular install / upgrade / reset
+    // action icon, or — when the row has [ToolRow.lastSuccessMessage] from a recent action —
+    // a ✓. The success message wins so hovering the ✓ tells the user exactly what happened.
+    val successMessage = toolRow.lastSuccessMessage
+    val iconKind = if (successMessage == null) host.iconKindFor(toolRow, pathFieldValue) else PathIconKind.NONE
+    val actionIcon = if (successMessage != null) AllIcons.Actions.Checked else iconKind.icon
     if (actionIcon != null) {
       val actionRight = browseLeft - JBUI.scale(4)
       val actionLeft = actionRight - actionIcon.iconWidth
       if (eventX in actionLeft..actionRight) {
-        val hint = actionHintFor(iconKind)
+        val hint = successMessage ?: actionHintFor(iconKind, host.latestVersionFor(toolRow))
         if (hint != null) return hint
       }
     }
@@ -152,13 +155,23 @@ private fun buildPathTooltip(
   append("</html>")
 }
 
-/** Action hint shown when the pointer is over the Path column's hover icon. */
-private fun actionHintFor(kind: PathIconKind): String? = when (kind) {
+/**
+ * Action hint shown when the pointer is over the Path column's hover action icon. The upgrade
+ * hint has two wordings: when modern uv reports a [latestVersion] for the tool we surface it
+ * ("Upgrade to X.Y.Z"); when we have no way to know in advance (legacy uv before `--outdated`)
+ * we fall back to the hedged "Try to upgrade".
+ */
+private fun actionHintFor(kind: PathIconKind, latestVersion: String?): String? = when (kind) {
   PathIconKind.NONE -> null
   PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
-  PathIconKind.INFO -> null
-  PathIconKind.UPGRADE -> PyToolsUiBundle.message("settings.external.tools.path.upgrade.tooltip")
   PathIconKind.RESET -> PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")
+  PathIconKind.UPGRADE -> if (latestVersion != null) {
+    PyToolsUiBundle.message("settings.external.tools.path.upgrade.to.version.tooltip", latestVersion)
+  }
+  else {
+    // Legacy uv: we can't promise the click will do anything, so hedge the wording.
+    PyToolsUiBundle.message("settings.external.tools.path.upgrade.unknown.tooltip")
+  }
 }
 
 /** True if [eventX] (in table coordinates) lies within the right-edge icon hit-zone of [cellRect]. */

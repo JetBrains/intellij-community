@@ -4,6 +4,7 @@ package com.intellij.python.pytools.ui.configuration
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.util.SlowOperations
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version as PlatformVersion
@@ -58,6 +59,20 @@ internal class ToolRow(
    * its presence as a signal to switch the path text to an attention color.
    */
   var belowMinVersionMessage: String? = null,
+  /**
+   * True between the moment a uv install/upgrade is kicked off on this row and the moment the
+   * modal closes. While set, the hover action-icon slot renders a spinner frame instead of the
+   * regular install/upgrade icon, so the user sees that the click registered before the modal
+   * comes up.
+   */
+  var actionInProgress: Boolean = false,
+  /**
+   * Set after a successful `uv tool install` / `uv tool upgrade` on this row to a short status
+   * message (e.g. "ruff upgraded to 0.15.6"). While non-null the hover action icon switches to
+   * a ✓ that, when hovered, surfaces this message — giving the user a quiet but visible cue
+   * that the action did something. Cleared on next panel show via [PyExternalToolsTable.onShown].
+   */
+  var lastSuccessMessage: String? = null,
 )
 
 internal sealed interface PathFieldValue {
@@ -77,11 +92,14 @@ internal fun detect(tool: PyTool, customPath: Path?): PathFieldValue {
   return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 
-/** Right-edge hover icon kinds for the Path column. */
+/**
+ * Right-edge action icon kinds for the Path column. After a successful install / upgrade the
+ * renderer paints a ✓ in this slot instead, driven by [ToolRow.lastSuccessMessage]; the ✓ path
+ * is not modeled here because it is purely a visual swap and uses no different hit-test.
+ */
 internal enum class PathIconKind(val icon: Icon?) {
   NONE(null),
   INSTALL(PythonPytoolsUIIcons.Install),
-  INFO(AllIcons.General.Information),
   UPGRADE(PythonPytoolsUIIcons.Upgrade),
   RESET(AllIcons.Diff.Revert),
 }
@@ -97,6 +115,7 @@ internal fun iconKindFor(
   detected: PathFieldValue?,
   uvAvailable: Boolean?,
   isUvManaged: (ToolRow) -> Boolean,
+  isUpgradeAvailable: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
   // A manually-selected path overrides auto-detection entirely; the only meaningful hover
@@ -106,8 +125,9 @@ internal fun iconKindFor(
   detected is PathFieldValue.NotFound && uvAvailable == true -> PathIconKind.INSTALL
   detected is PathFieldValue.NotFound -> PathIconKind.NONE
   toolRow.version == null -> PathIconKind.NONE
-  isUvManaged(toolRow) -> PathIconKind.UPGRADE
-  else -> PathIconKind.INFO
+  isUvManaged(toolRow) && isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE
+  // Otherwise no actionable icon — the path text + version tooltip already conveys the state.
+  else -> PathIconKind.NONE
 }
 
 /**
@@ -212,7 +232,13 @@ internal fun ToolRow.browseExecutablePath(
   val descriptor = FileChooserDescriptorFactory.singleFile()
     .withTitle(PyToolsUiBundle.message("select.path.to.executable"))
   descriptor.isForcedToUseIdeaFileChooser = true
-  FileChooser.chooseFile(descriptor, project, parent, toSelect) { file ->
-    onPathChosen(file.toNioPath())
+  // The IDEA chooser does synchronous VFS lookups (UniversalFileChooser.toVirtualFiles →
+  // VfsUtil.findFile) inside its EDT-bound modal loop, which trips the slow-ops assertion.
+  // The lookup is unavoidable for converting the picked file back to a VirtualFile, and the
+  // chooser keeps the EDT busy by design, so wrap the call in a known-issue suppression.
+  SlowOperations.knownIssue("PY-89945").use {
+    FileChooser.chooseFile(descriptor, project, parent, toSelect) { file ->
+      onPathChosen(file.toNioPath())
+    }
   }
 }

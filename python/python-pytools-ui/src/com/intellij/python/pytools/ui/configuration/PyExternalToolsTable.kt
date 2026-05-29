@@ -14,6 +14,7 @@ import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.TableView
@@ -78,7 +79,9 @@ internal class PyExternalToolsTable(
     private set
 
   override fun iconKindFor(toolRow: ToolRow?, pathFieldValue: PathFieldValue?): PathIconKind =
-    iconKindFor(toolRow, pathFieldValue, uv.uvAvailable.get(), uv::isUvManaged)
+    iconKindFor(toolRow, pathFieldValue, uv.uvAvailable.get(), uv::isUvManaged, uv::isUpgradeAvailable)
+
+  override fun latestVersionFor(toolRow: ToolRow): String? = uv.latestVersionFor(toolRow)
 
   // ---------- Renderers, columns, model, view ----------
 
@@ -178,6 +181,9 @@ internal class PyExternalToolsTable(
     // below the last row doesn't show the parent panel's grey.
     fillsViewportHeight = true
     putClientProperty("JTable.autoStartsEdit", true)
+    // Lets AnimatedIcon keep ticking once it lands in a cell renderer — without this client
+    // property the spinner painted by [PathCellRenderer] freezes on the first frame.
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     // Register with ToolTipManager so it polls our `getToolTipText(MouseEvent)` override.
     // An empty placeholder is enough — actual text comes from the override.
     setToolTipText(HtmlChunk.text(""))
@@ -229,6 +235,9 @@ internal class PyExternalToolsTable(
             browsePathFor(rows[viewRow])
           }
           else if (isOverPathIcon(e, viewRow)) {
+            // The ✓ overlay (after a successful action) takes over the action-icon slot; it
+            // shouldn't trigger another install/upgrade when clicked.
+            if (rows[viewRow].lastSuccessMessage != null) return
             when (pathIconAtHover(viewRow)) {
               PathIconKind.INSTALL -> uv.installViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
               PathIconKind.UPGRADE -> uv.upgradeViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
@@ -316,6 +325,9 @@ internal class PyExternalToolsTable(
    */
   fun onShown(scope: CoroutineScope) {
     this.scope = scope
+    // Clear any leftover ✓ from a previous settings session — keeping it would mislead the
+    // user about whether the underlying tool state is still up to date.
+    rows.forEach { it.lastSuccessMessage = null }
     rows.forEach { probeRow(it) }
   }
 
