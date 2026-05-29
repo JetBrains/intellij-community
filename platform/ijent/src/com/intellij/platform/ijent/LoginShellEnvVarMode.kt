@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.eel.provider
+package com.intellij.platform.ijent
 
 import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 
 /**
- * How the login shell should be invoked when collecting environment variables for an Eel process.
+ * How the login shell should be invoked when collecting environment variables for an IJent process.
  */
 @ApiStatus.Internal
 enum class LoginShellEnvVarMode {
@@ -18,7 +18,7 @@ enum class LoginShellEnvVarMode {
 
 /**
  * SPI for resolving the current [LoginShellEnvVarMode]. The default impl in
- * `intellij.platform.eel.impl` reads it from the `container.environments.env.var.shell.mode`
+ * `intellij.platform.ijent.community.ui` reads it from the `container.environments.env.var.shell.mode`
  * advanced setting.
  */
 @ApiStatus.Internal

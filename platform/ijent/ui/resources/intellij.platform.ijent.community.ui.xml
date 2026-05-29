@@ -33,5 +33,12 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
+    <advancedSetting
+      id="container.environments.env.var.shell.mode"
+      enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
+      default="LOGIN_INTERACTIVE"
+      bundle="messages.IjentImplBundle"
+      groupKey="advanced.settings.container.environments"
+    />
   </extensions>
 </idea-plugin>

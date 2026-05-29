@@ -11,15 +11,6 @@
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting
-      id="container.environments.env.var.shell.mode"
-      enumClass="com.intellij.platform.eel.impl.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
-      default="LOGIN_INTERACTIVE"
-      bundle="messages.EelImplBundle"
-      groupKey="advanced.settings.container.environments"
-    />
-  </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.eel.impl.portAccessibleLocally"
                     dynamic="false"
