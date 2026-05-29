@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
@@ -8,6 +8,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -77,13 +77,14 @@ internal class ConvertToForEachFunctionCallIntention :
     }
 
 
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtForExpression): Unit? {
         val loopRange = element.loopRange ?: return null
 
-        val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
-        if (calleeExpression?.text == WITH_INDEX_NAME) {
+        val callExpression = loopRange.getPossiblyQualifiedCallExpression()
+        if (callExpression?.calleeExpression?.text == WITH_INDEX_NAME) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
-            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return null
+            val symbol = callExpression.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
             if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 

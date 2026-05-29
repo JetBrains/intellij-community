@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -14,9 +15,10 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.isMovableToConstructorByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.resolution.KtResolvable
 
 internal class CanBePrimaryConstructorPropertyInspection :
     KotlinApplicableInspectionBase.Simple<KtProperty, MovePropertyToConstructorInfo>() {
@@ -40,9 +42,10 @@ internal class CanBePrimaryConstructorPropertyInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null
-        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
+        val paramSymbol = (initializer as? KtResolvable)?.resolveSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null
         val propertyType = element.returnType
         val isMergeableType = if (paramSymbol.isVararg) {
