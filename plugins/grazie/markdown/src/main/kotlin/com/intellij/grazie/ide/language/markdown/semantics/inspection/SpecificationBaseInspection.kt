@@ -36,7 +36,10 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
     return object : PsiElementVisitor() {
       override fun visitFile(file: PsiFile) {
-        if (!isAgentMarkdownFile(file)) return
+        if (!isAgentMarkdownFile(file)) {
+          thisLogger().info("${file.name} is not agent-like")
+          return
+        }
         val analyzer = getAnalyzer(file) ?: return
         Analyzer.analyze(analyzer, file, client)
           .forEach { problem -> reportProblem(holder, file, problem) }
@@ -66,10 +69,16 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
   private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
-    if (!isOnTheFly) return null
-    if (!Registry.`is`("grazie.specification.semantics.enabled")) return null
-    if (!hasAdditionalConnectors() || !seemsCloudConnected() || !hasQuota()) return null
-    return GrazieCloudConnector.api()
+    if (!isOnTheFly)
+    if (!Registry.`is`("grazie.specification.semantics.enabled")) {
+      thisLogger().warn("Specification semantics inspection is disabled")
+      return null
+    }
+    if (!hasAdditionalConnectors() || !seemsCloudConnected() || !hasQuota()) {
+      thisLogger().warn("Additional connectors = ${hasAdditionalConnectors()}, seemsCloudConnected = ${seemsCloudConnected()}, hasQuota = ${hasQuota()}")
+      return null
+    }
+    return GrazieCloudConnector.api()?.also { thisLogger().info("API client is not null") }
   }
 
   companion object {
