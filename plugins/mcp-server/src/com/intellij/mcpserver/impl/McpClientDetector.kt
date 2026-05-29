@@ -2,6 +2,7 @@ package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
+import com.intellij.mcpserver.clients.impl.AirClient
 import com.intellij.mcpserver.clients.impl.ClaudeClient
 import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
 import com.intellij.mcpserver.clients.impl.CodexClient
@@ -13,11 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.containers.addIfNotNull
-import kotlinx.serialization.ExperimentalSerializationApi
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
@@ -56,6 +57,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectCodex())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectAir())
+    }
 
     return globalClients
   }
@@ -78,6 +82,9 @@ object McpClientDetector {
     runCatching {
       projectClients.addIfNotNull(detectCodex(project))
     }
+    runCatching {
+      projectClients.addIfNotNull(detectAirInProject(project))
+    }
 
     return projectClients
   }
@@ -90,7 +97,6 @@ object McpClientDetector {
     return false
   }
 
-  @OptIn(ExperimentalSerializationApi::class)
   private fun detectVSCode(): McpClient? {
     val configPath = when {
       SystemInfo.isMac -> "~/Library/Application Support/Code/User/mcp.json"
@@ -126,7 +132,7 @@ object McpClientDetector {
     if (configPath == null) return null
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
-    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
+    if (path.parent.exists() && path.isDirectory()) {
       return ClaudeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
@@ -151,7 +157,7 @@ object McpClientDetector {
 
   private fun detectCursorGlobal(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.cursor/mcp.json"))
-    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
+    if (path.parent.exists() && path.isDirectory()) {
       return CursorClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
@@ -159,7 +165,7 @@ object McpClientDetector {
 
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
-    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
+    if (path.parent.exists() && path.isDirectory()) {
       return WindsurfClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
@@ -205,11 +211,35 @@ object McpClientDetector {
     val projectBasePath = project.basePath ?: return null
     val configPath = Paths.get(projectBasePath, ".codex", "config.toml")
     val parent = configPath.parent
-    if (configPath.exists() && configPath.isRegularFile() || parent != null && parent.exists() && parent.toFile().isDirectory()) {
+    if (configPath.exists() && configPath.isRegularFile() || parent != null && parent.exists() && parent.isDirectory()) {
       return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
     }
     if (parent != null && !parent.exists()) {
       return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
+  }
+
+  private fun detectAir(): McpClient? {
+    val configPath = when {
+      SystemInfo.isMac -> "~/Library/Application Support/JetBrains/Air/mcp.json"
+      SystemInfo.isWindows -> null // todo support it in future
+      SystemInfo.isLinux -> null // todo support it in future
+      else -> null
+    }
+    if (configPath == null) return null
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
+    if (path.parent.exists() && Files.isDirectory(path.parent)) {
+      return AirClient(McpClientInfo.Scope.GLOBAL, path)
+    }
+    return null
+  }
+
+  private fun detectAirInProject(project: Project): McpClient? {
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, ".air", "mcp.json")
+    if (looksLikeMcpJson(configPath)) {
+      return AirClient(McpClientInfo.Scope.PROJECT, configPath)
     }
     return null
   }
@@ -226,7 +256,7 @@ object McpClientDetector {
     candidates.firstOrNull { it.exists() && it.isRegularFile() }?.let { return it }
     candidates.firstOrNull { path ->
       val parent = path.parent
-      parent != null && parent.exists() && parent.toFile().isDirectory()
+      parent != null && parent.exists() && parent.isDirectory()
     }?.let { return it }
     return null
   }

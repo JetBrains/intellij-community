@@ -18,7 +18,8 @@ data class McpClientInfo(
     CURSOR("Cursor"),
     CLAUDE_CODE("Claude Code"),
     JUNIE("Junie"),
-    CODEX("Codex");
+    CODEX("Codex"),
+    AIR("Air"),
   }
 
   enum class Scope {

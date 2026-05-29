@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.clients
 
+import com.intellij.mcpserver.clients.impl.AirClient
 import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
 import com.intellij.mcpserver.clients.impl.CodexClient
 import com.intellij.mcpserver.clients.impl.CursorClient
@@ -173,6 +174,26 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    runBlocking(Dispatchers.Default) {
+      client.autoConfigure()
+    }
+
+    val servers = readServers(client, configPath)
+    val config = servers["test"]
+    requireNotNull(config)
+    assertEquals("http://localhost:7777/stream", config.url!!)
+    assertEquals("http", config.type!!)
+  }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  @Test
+  fun `Air autoConfigure with HTTP Stream succeeds`() {
+    val configPath = tempDir.resolve("config.json")
+    configPath.writeText("""{"mcpServers": {}}""")
+
+    McpClient.overrideProductSpecificServerKeyForTests("test")
+
+    val client = AirClient(McpClientInfo.Scope.GLOBAL, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
