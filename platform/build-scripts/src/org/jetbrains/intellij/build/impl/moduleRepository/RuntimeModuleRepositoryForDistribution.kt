@@ -12,6 +12,7 @@ import com.intellij.util.containers.MultiMap
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
@@ -525,7 +526,8 @@ private fun removeSkippedDistributionDependencies(moduleName: String, dependency
   return actualDependencyIds.map(dependencyIdsByName::getValue)
 }
 
-private fun removeSkippedDistributionDependencyIds(moduleName: String, dependencyIds: List<String>): List<String> {
+@VisibleForTesting
+fun removeSkippedDistributionDependencyIds(moduleName: String, dependencyIds: List<String>): List<String> {
   val dependenciesToSkip = dependenciesToSkip.get(moduleName) ?: return dependencyIds
   if (dependencyIds.none { it in dependenciesToSkip }) {
     return dependencyIds
