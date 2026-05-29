@@ -1454,7 +1454,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public @Unmodifiable List<String> getAdvertisements() {
+  public @Unmodifiable @NotNull List<String> getAdvertisements() {
     return myAdComponent.getAdvertisements();
   }
 
