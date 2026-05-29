@@ -20,7 +20,7 @@ import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 internal class PluginDescriptorDataForHeader(
   val pluginId: String,
   val pluginDescriptorJpsModuleName: String,
-  val contentModules: List<ContentModuleRegistrationDataForHeader>,
+  val contentModules: Map<String, ContentModuleRegistrationDataForHeader>,
 )
 
 data class ContentModuleRegistrationDataForHeader(
@@ -99,7 +99,7 @@ private fun fetchPluginDescriptorDataForHeader(
     val requiredIfAvailable = contentModuleElement.requiredIfAvailable?.let { RuntimeModuleId.contentModule(it, RuntimeModuleId.DEFAULT_NAMESPACE) }
     ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility)
   }
-  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, contentModules)
+  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, contentModules.associateBy { it.name })
 }
 
 private fun parseVisibility(moduleXmlRoot: Element): RuntimeModuleVisibility {

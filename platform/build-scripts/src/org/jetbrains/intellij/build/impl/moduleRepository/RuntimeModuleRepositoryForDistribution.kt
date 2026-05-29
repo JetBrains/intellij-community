@@ -264,14 +264,21 @@ private suspend fun generateRepositoryForDistribution(
   val additionalFrontendPlugins = computeDescriptorsForAdditionalFrontendPlugins(context, platformLayout)
   val corePluginDescriptorModuleName = context.productProperties.applicationInfoModule
   val embeddedFrontendDescriptorModuleName = context.getEmbeddedFrontendProductContext()?.productProperties?.applicationInfoModule
-  val contentModuleDetector = ContentModuleDetectorImpl(
+  val allBundledPlugins = bundledPlugins + additionalFrontendPlugins
+  val pluginDescriptorsData = fetchPluginDescriptorsData(
     platformLayout,
     corePluginDescriptorModuleName,
-    platformEntries.map { it.origin },
-    bundledPlugins + additionalFrontendPlugins,
     embeddedFrontendDescriptorModuleName,
-    context.project
+    allBundledPlugins,
   )
+  val pluginConfigurationModuleToDistributionEntries = allBundledPlugins.associateByTo(HashMap(), { it.layout.mainModule }, { it.distribution })
+  pluginConfigurationModuleToDistributionEntries[corePluginDescriptorModuleName] = platformEntries.map { it.origin }
+  val sharedContentModuleData = pluginDescriptorsData.asSequence().flatMap { it.contentModules.values }.associateBy({  it.name })
+  val pluginHeaders = pluginDescriptorsData.map { pluginDescriptorsData ->
+    val distributionEntries = pluginConfigurationModuleToDistributionEntries.getValue(pluginDescriptorsData.pluginDescriptorJpsModuleName)
+    generateRuntimePluginHeader(pluginDescriptorsData, distributionEntries, sharedContentModuleData, context.project)
+  }
+  val contentModuleDetector = ContentModuleDetectorImpl(pluginDescriptorsData)
   val distDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(
     includedProduction = moduleProductionPaths.keySet(),
     includedTests = moduleTestPaths.keySet(),
@@ -286,7 +293,6 @@ private suspend fun generateRepositoryForDistribution(
       errors.add(errorMessage)
     }
   }
-  val pluginHeaders = contentModuleDetector.pluginHeaders
   RuntimeModuleRepositoryValidator.validate(distDescriptors, pluginHeaders, errorReporter)
   if (errors.isNotEmpty()) {
     context.messages.logErrorAndThrow(
