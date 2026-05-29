@@ -1,17 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion.toml.tests
+package com.intellij.gradle.completion.toml
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
@@ -20,46 +21,57 @@ import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
-internal class GradleTomlInsertionTest : GradleCodeInsightTestCase() {
+@ParameterizedClass
+@BaseGradleVersionSource("true,false")
+internal class GradleTomlInsertionTest(
+  private val myGradleVersion: GradleVersion,
+  private val runInDumbMode: Boolean,
+) : GradleCodeInsightTestCase() {
   @TestDisposable
   private lateinit var disposable: Disposable
 
   private fun testInsertion(
-    gradleVersion: GradleVersion,
     service: DependencyCompletionService,
     before: String,
     expectedAfter: String,
     lookupString: String,
   ) {
-    testEmptyProject(gradleVersion) {
+    testEmptyProject(myGradleVersion) {
       ApplicationManager.getApplication().replaceService(DependencyCompletionService::class.java, service, disposable)
       checkCaret(before)
       writeTextAndCommit("gradle/libs.versions.toml", before)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
-        // completeBasic() returns null when only one item is available and it is auto-inserted
-        val elements = codeInsightFixture.completeBasic()
-        if (elements != null) {
-          val item = elements.find { it.lookupString == lookupString }
-                     ?: error("Lookup element '$lookupString' not found. Available: ${elements.map { it.lookupString }}")
-          codeInsightFixture.lookup.currentItem = item
-          codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      val completeAndCheck = {
+        runInEdtAndWait {
+          codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+          // completeBasic() returns null when only one item is available and it is auto-inserted
+          val elements = codeInsightFixture.completeBasic()
+          if (elements != null) {
+            val item = elements.find { it.lookupString == lookupString }
+                       ?: error("Lookup element '$lookupString' not found. Available: ${elements.map { it.lookupString }}")
+            codeInsightFixture.lookup.currentItem = item
+            codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+          }
+          codeInsightFixture.checkResult(expectedAfter)
         }
-        codeInsightFixture.checkResult(expectedAfter)
+      }
+      if (runInDumbMode) {
+        DumbModeTestUtils.runInDumbModeSynchronously(project) { completeAndCheck() }
+      }
+      else {
+        completeAndCheck()
       }
     }
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `group completion replaces full string content`(gradleVersion: GradleVersion) {
+  @Test
+  fun `group completion replaces full string content`() {
     testInsertion(
-      gradleVersion,
       service = object : DependencyCompletionService {
         override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("org.jetbrains.kotlin", DependencyCompletionContributionSource.SERVER))
+          flowOf(DependencyPartCompletionResult("org.jetbrains.kotlin", SERVER))
       },
       before = """
         [libraries]
@@ -73,14 +85,12 @@ internal class GradleTomlInsertionTest : GradleCodeInsightTestCase() {
     )
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `artifact completion replaces full string content`(gradleVersion: GradleVersion) {
+  @Test
+  fun `artifact completion replaces full string content`() {
     testInsertion(
-      gradleVersion,
       service = object : DependencyCompletionService {
         override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("kotlin-stdlib", DependencyCompletionContributionSource.SERVER))
+          flowOf(DependencyPartCompletionResult("kotlin-stdlib", SERVER))
       },
       before = """
         [libraries]
@@ -94,14 +104,12 @@ internal class GradleTomlInsertionTest : GradleCodeInsightTestCase() {
     )
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `version completion replaces full string content`(gradleVersion: GradleVersion) {
+  @Test
+  fun `version completion replaces full string content`() {
     testInsertion(
-      gradleVersion,
       service = object : DependencyCompletionService {
         override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("2.1.0", DependencyCompletionContributionSource.SERVER))
+          flowOf(DependencyPartCompletionResult("2.1.0", SERVER))
       },
       before = """
         [libraries]
@@ -115,17 +123,12 @@ internal class GradleTomlInsertionTest : GradleCodeInsightTestCase() {
     )
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `module completion replaces full string content`(gradleVersion: GradleVersion) {
+  @Test
+  fun `module completion replaces full string content`() {
     testInsertion(
-      gradleVersion,
       service = object : DependencyCompletionService {
         override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
-          flowOf(DependencyCompletionResult("org.jetbrains.kotlin",
-                                            "kotlin-stdlib",
-                                            "2.1.0",
-                                            source = DependencyCompletionContributionSource.SERVER))
+          flowOf(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.1.0", source = SERVER))
       },
       before = """
         [libraries]
@@ -139,17 +142,12 @@ internal class GradleTomlInsertionTest : GradleCodeInsightTestCase() {
     )
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `GAV completion replaces full string content`(gradleVersion: GradleVersion) {
+  @Test
+  fun `GAV completion replaces full string content`() {
     testInsertion(
-      gradleVersion,
       service = object : DependencyCompletionService {
         override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
-          flowOf(DependencyCompletionResult("org.jetbrains.kotlin",
-                                            "kotlin-stdlib",
-                                            "2.1.0",
-                                            source = DependencyCompletionContributionSource.SERVER))
+          flowOf(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.1.0", source = SERVER))
       },
       before = """
         [libraries]
