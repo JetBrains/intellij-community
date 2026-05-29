@@ -39,8 +39,8 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
     doTestNavigation(qualifiedName = "Res.drawable.compose_multiplatform", expectedSize = 2, expectedType = ResourceType.DRAWABLE)
 
     doTestNavigation(qualifiedName = "Res.string.test", expectedSize = 4, expectedType = ResourceType.STRING)
-    doTestNavigation(qualifiedName = "Res.array.test", expectedSize = 1, expectedType = ResourceType.STRING_ARRAY)
-    doTestNavigation(qualifiedName = "Res.plurals.test", expectedSize = 1, expectedType = ResourceType.PLURAL_STRING)
+    doTestNavigation(qualifiedName = "Res.array.test", expectedSize = 4, expectedType = ResourceType.STRING_ARRAY)
+    doTestNavigation(qualifiedName = "Res.plurals.test", expectedSize = 4, expectedType = ResourceType.PLURAL_STRING)
 
     doTestNavigation(qualifiedName = "Res.font.test", expectedSize = 1, expectedType = ResourceType.FONT)
   }
