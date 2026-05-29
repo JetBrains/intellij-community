@@ -40,6 +40,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
   private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
+  private static final Map<Document, Boolean> nonPhysicalFilesDocumentsCache = CollectionFactory.createConcurrentWeakMap();
 
   @ApiStatus.Experimental
   public static boolean isTrackable(@NotNull VirtualFile file) {
@@ -154,6 +155,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       if (manager instanceof FileDocumentManagerBase) {
         ((FileDocumentManagerBase)manager).myDocumentCache.remove(virtualFile);
       }
+      nonPhysicalFilesDocumentsCache.put(document, Boolean.TRUE);
     }
 
     if (fireBindingChangedEvent) {
@@ -201,6 +203,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   @ApiStatus.Internal
   protected void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.remove(file);
+    nonPhysicalFilesDocumentsCache.remove(document);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
     DocumentImpl.processQueue(); // document maybe stuck in RangeMarkerTree queue
@@ -261,5 +264,6 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   @ApiStatus.Internal
   public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
     myDocumentCache.values().forEach(consumer);
+    nonPhysicalFilesDocumentsCache.keySet().forEach(consumer);
   }
 }
