@@ -16,4 +16,14 @@ class LocalVariableNamingConvention {
     String <warning descr="Local variable name 'a' is too short (1 < 3)">a</warning>;
     String correct;
   }
+  
+  boolean patternVariables(Number a) {
+    return switch (a) {
+      case Integer <warning descr="Local variable name 'i' is too short (1 < 3)">i</warning> -> {
+        System.out.println(i);
+        yield true;
+      }
+      default -> false;
+    };
+  }
 }

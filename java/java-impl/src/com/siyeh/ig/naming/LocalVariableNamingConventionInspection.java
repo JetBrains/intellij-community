@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public final class LocalVariableNamingConventionInspection extends ConventionInspection {
@@ -40,12 +42,20 @@ public final class LocalVariableNamingConventionInspection extends ConventionIns
    * @noinspection PublicField
    */
   public boolean m_ignoreCatchParameters = false;
+  public boolean ignorePatternVariables = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignorePatternVariables");
+    writeBooleanOption(node, "ignorePatternVariables", false);
+  }
 
   @Override
   public OptRegularComponent @NotNull [] createExtraOptions() {
     return new OptRegularComponent[] {
       OptPane.checkbox("m_ignoreForLoopParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option")),
-      OptPane.checkbox("m_ignoreCatchParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"))
+      OptPane.checkbox("m_ignoreCatchParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option")),
+      OptPane.checkbox("ignorePatternVariables", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.pattern.variables.option"))
     };
   }
 
@@ -105,13 +115,17 @@ public final class LocalVariableNamingConventionInspection extends ConventionIns
       final PsiElement scope = variable.getDeclarationScope();
       final boolean isCatchParameter = scope instanceof PsiCatchSection;
       final boolean isForeachParameter = scope instanceof PsiForeachStatement;
-      if (!isCatchParameter && !isForeachParameter) {
+      final boolean isPatternVariable = variable instanceof PsiPatternVariable;
+      if (!isCatchParameter && !isForeachParameter && !isPatternVariable) {
         return;
       }
       if (m_ignoreCatchParameters && isCatchParameter) {
         return;
       }
       if (m_ignoreForLoopParameters && isForeachParameter) {
+        return;
+      }
+      if (ignorePatternVariables && isPatternVariable) {
         return;
       }
       final String name = variable.getName();
