@@ -44,7 +44,8 @@ public final class FileChooserUtil {
     return last != null ? LocalFileSystem.getInstance().findFileByPath(last) : null;
   }
 
-  private static @NonNls @Nullable String getLastOpenedFilePath(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NonNls @Nullable String getLastOpenedFilePath(@Nullable Project project) {
     return (project != null ? PropertiesComponent.getInstance(project) : PropertiesComponent.getInstance()).getValue(LAST_OPENED_FILE);
   }
 

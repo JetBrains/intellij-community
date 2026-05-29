@@ -17,7 +17,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.PathChooserDialog
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
@@ -38,6 +40,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredListCellRenderer
@@ -138,11 +141,8 @@ object UniversalFileChooser {
     override fun getDimensionServiceKey(): String = "UniversalFileChooserDialog"
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
-      if (!toSelect.isEmpty()) {
-        toSelect.first()?.let { runCatching { it.toNioPath() }.getOrNull() }?.let { nioPath ->
-          mainPanel.navigateToFile(nioPath)
-        }
-      }
+      val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
+      mainPanel.preselect(explicit)
       if (this.showAndGet()) {
         return toVirtualFiles(mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
       }
@@ -150,9 +150,8 @@ object UniversalFileChooser {
     }
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
-      toSelect?.runCatching { toSelect.toNioPath() }?.getOrNull()?.let { nioPath ->
-        mainPanel.navigateToFile(nioPath)
-      }
+      val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
+      mainPanel.preselect(explicit)
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
         mutableList.addAll(toVirtualFiles(mainPanel.getSelectedFiles()).filterNotNull())
@@ -166,6 +165,13 @@ object UniversalFileChooser {
     }
 
     fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
+
+    override fun doOKAction() {
+      getSelectedFiles().firstOrNull()?.let { lastSelected ->
+        FileChooserUtil.setLastOpenedFile(project, lastSelected)
+      }
+      super.doOKAction()
+    }
   }
 
   private fun toVirtualFiles(paths: List<Path>): List<VirtualFile?> {
@@ -176,7 +182,7 @@ object UniversalFileChooser {
 
   class Panel @JvmOverloads constructor(
     disposable: Disposable,
-    descriptor: FileChooserDescriptor,
+    private val descriptor: FileChooserDescriptor,
     private val project: Project,
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
@@ -224,7 +230,7 @@ object UniversalFileChooser {
       }
       tabbedPane.addChangeListener { updateOkEnabled() }
 
-      preselectProjectTab(project)
+      preselect(null)
       updateOkEnabled()
 
       if (leftPanel) {
@@ -396,6 +402,44 @@ object UniversalFileChooser {
         tabbedPane.indexOfTab(contributor.tabTitle)
           .takeIf { it >= 0 }?.let { tabbedPane.selectedIndex = it }
       }
+    }
+
+    fun preselect(toSelect: Path?) {
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          val target = pathToSelect(toSelect)
+          val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
+            target.parent ?: target
+          }
+          else {
+            target
+          }
+          runOnEdt {
+            navigateToFile(effective)
+            if (toSelect == null) {
+              preselectProjectTab(project)
+            }
+          }
+        }
+      }
+    }
+
+    private suspend fun pathToSelect(toSelect: Path?): Path {
+      val last = NioFileChooserUtil.getLastOpenedPath(project)
+      if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
+        return last
+      }
+      if (toSelect != null) {
+        return toSelect
+      }
+      if (!project.isDefault) {
+        val eelDescriptor = project.getEelDescriptor()
+        val basePath = project.basePath ?: project.projectFilePath
+        if (basePath != null) {
+          return runCatching { Path.of(basePath) }.getOrNull() ?: eelDescriptor.toEelApi().userInfo.home.asNioPath()
+        }
+      }
+      return Path.of(SystemProperties.getUserHome())
     }
 
 
@@ -842,7 +886,7 @@ object UniversalFileChooser {
 
       private fun isUnmountedRoot(nioPath: Path): Boolean? {
         val rootPath = findRootPath(nioPath) ?: return false
-        return mountStatusCache.get(rootPath)?.let{ it == MountStatus.Unmounted }
+        return mountStatusCache[rootPath]?.let{ it == MountStatus.Unmounted }
       }
 
       private fun isUnderUnmountedRoot(treePath: TreePath): Boolean? {
