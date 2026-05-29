@@ -143,6 +143,15 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
     override fun createPointer(): Pointer<HtmlEventDescriptorBasedSymbol> =
       Pointer.hardPointer(this)
 
+    override fun equals(other: Any?): Boolean =
+      other === this
+      || other is HtmlEventDescriptorBasedSymbol
+      && other.descriptor == descriptor
+
+    override fun hashCode(): Int {
+      return descriptor.hashCode()
+    }
+
   }
 
 }

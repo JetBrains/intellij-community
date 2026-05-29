@@ -25,4 +25,16 @@ internal class HtmlAttributeEnumConstValueSymbol(
     }
   }
 
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is HtmlAttributeEnumConstValueSymbol
+    && other.name == name
+    && other.source == source
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + source.hashCode()
+    return result
+  }
+
 }

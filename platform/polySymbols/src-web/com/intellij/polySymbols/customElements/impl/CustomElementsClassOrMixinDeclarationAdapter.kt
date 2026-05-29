@@ -110,6 +110,18 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       }
     }
 
+    override fun equals(other: Any?): Boolean =
+      other === this
+      || other is CustomElementClassOrMixinDeclarationSymbol
+      && other.base == base
+      && other.queryExecutor == queryExecutor
+
+    override fun hashCode(): Int {
+      var result = base.hashCode()
+      result = 31 * result + queryExecutor.hashCode()
+      return result
+    }
+
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolNameMatchQueryParams,
