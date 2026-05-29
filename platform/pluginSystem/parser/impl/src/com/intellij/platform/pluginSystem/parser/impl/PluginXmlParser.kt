@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginSystem.parser.impl
 
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import java.io.InputStream
 
@@ -16,7 +17,7 @@ fun parsePluginXml(
   xIncludeLoader: XIncludeLoader?,
 ): PluginDescriptorBuilder {
   val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader)
-  consumer.consume(input, locationSource)
+  consumer.consume(createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource))
   return consumer.getBuilder()
 }
 
@@ -31,7 +32,7 @@ fun parsePluginXml(
   xIncludeLoader: XIncludeLoader?,
 ): PluginDescriptorBuilder {
   val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader)
-  consumer.consume(input, locationSource)
+  consumer.consume(createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource))
   return consumer.getBuilder()
 }
 

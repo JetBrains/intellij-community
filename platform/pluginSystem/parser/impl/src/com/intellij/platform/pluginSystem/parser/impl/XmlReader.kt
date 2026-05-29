@@ -888,7 +888,9 @@ private fun readInclude(
   if (loadedXInclude != null) {
     consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
-      consumer.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)
+      val includedXmlReader = createNonCoalescingXmlStreamReader(input = loadedXInclude.inputStream,
+                                                                 locationSource = loadedXInclude.diagnosticReferenceLocation)
+      consumer.consume(includedXmlReader)
     }
     finally {
       consumer.popIncludeBase()
