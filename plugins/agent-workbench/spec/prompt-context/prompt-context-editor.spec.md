@@ -25,6 +25,9 @@ Editor context contributes the current file, symbol, and snippet around the invo
 - Explicit selection is preferred for snippet content; otherwise the contributor uses the caret-centered line window with truncation metadata when needed.
   [@test] ../../prompt/ui/testSrc/context/AgentPromptEditorContextContributorTest.kt
 
+- Symbol context prefers the reference/name segment at the caret and falls back to the enclosing named PSI element when no caret reference is available.
+  [@test] ../../prompt/ui/testSrc/context/AgentPromptEditorContextContributorTest.kt
+
 - Symbol and file context must render through built-in renderers so envelope text and chips stay consistent with other prompt-context sources.
   [@test] ../../prompt/ui/testSrc/context/AgentPromptEditorContextContributorTest.kt
 
