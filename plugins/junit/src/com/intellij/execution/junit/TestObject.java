@@ -706,7 +706,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       ThrowableComputable<Void, ExecutionException> downloader = () -> {
         appendJUnitLauncherClasses(preferredRunner, javaParameters, project,
                                    getScopeForJUnit(module, project),
-                                   useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true)) != null);
+                                   useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true) != null || findJavaModule(module, false) != null));
         if (forkPerModule()) {
           for (Module packageModule : ReadAction.compute(() -> collectPackageModules(configuration.getPackage()))) {
             JavaParameters parameters = new JavaParameters();
@@ -717,7 +717,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             parameters.setJdk(javaParameters.getJdk());
             appendJUnitLauncherClasses(preferredRunner, parameters, project,
                                        getScopeForJUnit(packageModule, project),
-                                       useModulePath() && packageModule != null && ReadAction.compute(() -> findJavaModule(packageModule, true)) != null);
+                                       useModulePath() && packageModule != null && ReadAction.compute(() -> findJavaModule(packageModule, true) != null || findJavaModule(packageModule, false) != null));
             myAdditionalJarsForModuleFork.put(packageModule, parameters);
           }
         }
