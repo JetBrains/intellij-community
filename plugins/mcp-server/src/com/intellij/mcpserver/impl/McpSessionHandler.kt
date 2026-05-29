@@ -10,6 +10,8 @@ import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.ToolCallListener
+import com.intellij.mcpserver.elicitation.McpElicitationKind
+import com.intellij.mcpserver.elicitation.McpSessionElement
 import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpToolFilterSettings
@@ -80,6 +82,7 @@ internal class McpSessionHandler(
   private val mcpServer: Server,
   private val transportType: TransportType,
   private val projectPathFromInitialRequest: String?,
+  private val elicitationKind: McpElicitationKind,
   useFiltersFromEP: Boolean,
 ) {
   val sessionScope = parentScope.childScope("SessionMcpToolsManager")
@@ -315,7 +318,7 @@ internal class McpSessionHandler(
         sessionHandler = this@McpSessionHandler
       }
 
-      val callResult = withContext(McpCallAdditionalDataElement(additionalData)) {
+      val callResult = withContext(McpCallAdditionalDataElement(additionalData) + McpSessionElement(session, elicitationKind)) {
         val toolExecution: suspend CoroutineScope.() -> McpToolCallResult = toolExecution@{
           val span = getTracer().spanBuilder("mcp.tool.call", TracerLevel.DEFAULT)
             .setAllAttributes(

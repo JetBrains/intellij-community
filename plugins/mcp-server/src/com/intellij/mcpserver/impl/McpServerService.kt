@@ -6,6 +6,9 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.elicitation.McpElicitationKind
+import com.intellij.mcpserver.elicitation.McpElicitationKind.CLI
+import com.intellij.mcpserver.elicitation.McpElicitationKind.IDE
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
 import com.intellij.mcpserver.impl.util.network.installHostValidation
@@ -148,7 +151,7 @@ open class McpServerService(val cs: CoroutineScope) {
     val server = privateServerMutex.withLock {
       if (privateServer.server == null) {
         logger.trace { "No active private server. Starting private MCP server..." }
-        privateServer.server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true)
+        privateServer.server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true, elicitationKind = IDE)
       }
       privateServer.userCount++
       logger.trace { "Current private server user count before session $uuid: ${privateServer.userCount}" }
@@ -250,7 +253,7 @@ open class McpServerService(val cs: CoroutineScope) {
     }
     val requireExactPort = forcePortState is ForcedPortState.Valid
     val server = try {
-      startServer(desiredPort = desiredPort, authCheck = false, requireExactPort = requireExactPort)
+      startServer(desiredPort = desiredPort, authCheck = false, elicitationKind = CLI, requireExactPort = requireExactPort)
     }
     catch (t: Throwable) {
       if (!hasMcpServerRuntimeOverrides()) throw t
@@ -298,6 +301,7 @@ open class McpServerService(val cs: CoroutineScope) {
   private fun startServer(
     desiredPort: Int,
     authCheck: Boolean,
+    elicitationKind: McpElicitationKind,
     requireExactPort: Boolean = false,
   ): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
     val resolvedPort = if (requireExactPort) {
@@ -377,6 +381,7 @@ open class McpServerService(val cs: CoroutineScope) {
           mcpServer = mcpServer,
           transportType = transportType,
           projectPathFromInitialRequest = projectPath,
+          elicitationKind = elicitationKind,
           useFiltersFromEP = useFiltersFromEP,
         )
 

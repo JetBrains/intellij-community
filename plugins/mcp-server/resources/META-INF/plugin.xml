@@ -39,6 +39,7 @@
     <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
     <extensionPoint name="mcpProjectPathCustomizer" interface="com.intellij.mcpserver.McpProjectPathCustomizer" dynamic="true" />
     <extensionPoint name="mcpManagedSessionSupport" interface="com.intellij.mcpserver.McpManagedSessionSupport" dynamic="true" />
+    <extensionPoint name="elicitationProvider" interface="com.intellij.mcpserver.elicitation.McpElicitationProvider" dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -57,6 +58,7 @@
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+    <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpElicitationCliProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.RegistryKeyMcpToolFilterProvider" />

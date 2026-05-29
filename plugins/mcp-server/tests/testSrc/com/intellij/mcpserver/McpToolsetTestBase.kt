@@ -101,8 +101,13 @@ abstract class McpToolsetTestBase {
 
   /**
    * Runs the provided MCP client action inside an authorized MCP session bound to [project].
+   *
+   * Pass a customized [client] with some capabilities to override the default plain client.
    */
-  protected suspend fun <T> withConnection(action: suspend (Client) -> T) {
+  protected suspend fun <T> withConnection(
+    client: Client = Client(Implementation(name = "test client", version = "1.0")),
+    action: suspend (Client) -> T,
+  ) {
     var result: Result<T>? = null
     val projectBasePath = project.basePath
 
@@ -121,7 +126,6 @@ abstract class McpToolsetTestBase {
         projectBasePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
         header(authTokenName, authTokenValue)
       })
-      val client = Client(Implementation(name = "test client", version = "1.0"))
 
       try {
         client.connect(transport)
