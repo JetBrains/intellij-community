@@ -33,6 +33,9 @@
                  description="Maven local index-based dependency completion contributor enabled"/>
     <registryKey key="maven.dependency.completion.contributor.local.modules" defaultValue="true"
                  description="Maven project modules dependency completion contributor enabled"/>
+
+    <typedHandler implementation="com.intellij.maven.completion.MavenDependenciesAutoPopupHandler"
+                  id="MavenDependenciesAutoPopupHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">

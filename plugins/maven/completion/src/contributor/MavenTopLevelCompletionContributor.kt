@@ -38,10 +38,15 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
       return
     }
 
+    val searchString = MavenCoordinateCompletionContributor.trimDummy(xmlText.value)
+    if (parameters.invocationCount == 0 && searchString.length < 3) {
+      // autocomplete only 3 or more chars
+      return
+    }
+
     result.stopHere()
     result.restartCompletionWhenNothingMatches()
 
-    val searchString = MavenCoordinateCompletionContributor.trimDummy(xmlText.value)
     val request = DependencyCompletionRequest(searchString, parameters.getCompletionContext())
     val resultSet = result.withPrefixMatcher(DependencyCompletionFuzzyMatcher(searchString))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
