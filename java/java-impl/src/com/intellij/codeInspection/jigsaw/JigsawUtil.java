@@ -4,7 +4,7 @@ package com.intellij.codeInspection.jigsaw;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,14 +22,14 @@ public final class JigsawUtil {
   private JigsawUtil() { }
 
   /**
-   * Adds a provider static method to a target class (java service) at the specified start offset in the editor.
+   * Adds a provider static method to a target class (java service) at the specified start offset in the navigator.
    * The provider method returns the target class instance.
    *
    * @param targetClass The class to which the provider method will be added.
-   * @param editor      The editor in which the changes will be made.
-   * @param startOffset The start offset in the editor where the provider method will be inserted.
+   * @param navigator   The navigator in which the changes will be made.
+   * @param startOffset The start offset in the navigator where the provider method will be inserted.
    */
-  public static void addProviderMethod(@NotNull PsiClass targetClass, @NotNull Editor editor, int startOffset) {
+  public static void addProviderMethod(@NotNull PsiClass targetClass, @NotNull ModNavigator navigator, int startOffset) {
     String className = targetClass.getName();
     if (className == null) return;
 
@@ -37,19 +37,17 @@ public final class JigsawUtil {
                                       "return new " + className + "(";
     String methodStringAfterCursor = ");}";
 
-    Document document = editor.getDocument();
+    Document document = navigator.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(targetClass.getProject());
 
-    editor.getDocument().insertString(startOffset, methodStringBeforeCursor + methodStringAfterCursor);
+    document.insertString(startOffset, methodStringBeforeCursor + methodStringAfterCursor);
 
-    editor.getCaretModel().moveToOffset(startOffset + methodStringBeforeCursor.length());
+    navigator.moveCaretTo(startOffset + methodStringBeforeCursor.length());
     documentManager.commitDocument(document);
 
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    if (psiFile != null) {
-      CodeStyleManager.getInstance(targetClass.getProject())
-        .reformatText(psiFile, startOffset, startOffset + methodStringBeforeCursor.length() + methodStringAfterCursor.length() + 1);
-    }
+    PsiFile psiFile = navigator.getPsiFile();
+    CodeStyleManager.getInstance(targetClass.getProject())
+      .reformatText(psiFile, startOffset, startOffset + methodStringBeforeCursor.length() + methodStringAfterCursor.length() + 1);
   }
 
   /**
