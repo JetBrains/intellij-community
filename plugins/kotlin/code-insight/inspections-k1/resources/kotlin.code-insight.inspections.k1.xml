@@ -1,10 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k1.codeinsight.inspections">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.inspections.KDocUnresolvedReferenceInspection"
                      groupPath="Kotlin"

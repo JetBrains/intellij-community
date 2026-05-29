@@ -140,7 +140,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.codeInsight.utils",
       "kotlin.code-insight.intentions.shared",
       "kotlin.code-insight.inspections.shared",
-      "intellij.kotlin.codeInsight.shared",
       "intellij.kotlin.codeInsight.descriptions",
       "intellij.kotlin.codeInsight.fixes",
       "intellij.kotlin.codeInsight.intentions",
@@ -178,7 +177,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     )
 
     private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
-      "intellij.kotlin.base.resources",
       "intellij.kotlin.base.codeInsight.minimal",
       "intellij.kotlin.highlighting.minimal",
       "intellij.kotlin.formatter.minimal"

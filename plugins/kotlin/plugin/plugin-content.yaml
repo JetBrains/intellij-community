@@ -11,6 +11,12 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
+- name: lib/intellij.kotlin.base.resources.jar
+  contentModules:
+  - name: intellij.kotlin.base.resources
+- name: lib/intellij.kotlin.codeInsight.shared.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.shared
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -40,7 +46,6 @@
   - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:
-  - name: intellij.kotlin.base.resources
   - name: intellij.kotlin.base.codeInsight.minimal
   - name: intellij.kotlin.highlighting.minimal
   - name: intellij.kotlin.formatter.minimal
@@ -213,7 +218,6 @@
   - name: intellij.kotlin.codeInsight.utils
   - name: kotlin.code-insight.intentions.shared
   - name: kotlin.code-insight.inspections.shared
-  - name: intellij.kotlin.codeInsight.shared
   - name: intellij.kotlin.codeInsight.descriptions
   - name: intellij.kotlin.codeInsight.fixes
   - name: intellij.kotlin.codeInsight.intentions
