@@ -11,15 +11,27 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass as kotlinContributorClass
 
 @ApiStatus.Internal
 class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), RemainingCompletionContributorsFilterer())
+  }
+
+  override fun handleEmptyLookup(parameters: CompletionParameters, editor: Editor): @Nls String? {
+    if (parameters.invocationCount != 1) return null
+    if (!isGradleDependenciesCompletionEnabled(parameters)) return null
+    if (!isCaseCoveredByGradleCompletion(parameters.position)) return null
+    val shortcut = KeymapUtil.getFirstKeyboardShortcutText("CodeCompletion")
+    return GradleBundle.message("gradle.dependency.completion.no.suggestions.first.invocation", shortcut)
   }
 }
 
@@ -38,13 +50,13 @@ private class RemainingCompletionContributorsFilterer : CompletionProvider<Compl
       sortedResult.passResult(otherResult)
     }
   }
+}
 
-  private fun isCaseCoveredByGradleCompletion(element: PsiElement): Boolean {
-    return element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES)
-           || element.isDependencyArgumentInsideQuotes()
-           || element.isDependencyArgumentWithoutQuotes()
-           || element.isExcludeArgument()
-  }
+private fun isCaseCoveredByGradleCompletion(element: PsiElement): Boolean {
+  return element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES)
+         || element.isDependencyArgumentInsideQuotes()
+         || element.isDependencyArgumentWithoutQuotes()
+         || element.isExcludeArgument()
 }
 
 private fun prioritizeGradleCompletion(result: CompletionResultSet): CompletionResultSet {
