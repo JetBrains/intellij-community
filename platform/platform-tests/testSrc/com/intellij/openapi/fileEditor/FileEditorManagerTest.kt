@@ -547,7 +547,8 @@ class FileEditorManagerTest {
 
   private class MyDefaultEditorProvider(editorTypeId: String, fileEditorName: String) :
     MockFileEditorProvider(editorTypeId, fileEditorName, FileEditorPolicy.NONE),
-    DefaultPlatformFileEditorProvider
+    DefaultPlatformFileEditorProvider,
+    DumbAware
 
   private class MyTextEditorProvider(
     private val id: String,
