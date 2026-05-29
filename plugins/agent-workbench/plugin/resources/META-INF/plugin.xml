@@ -58,6 +58,7 @@
     <module name="intellij.agent.workbench.ai.review"/>
     <module name="intellij.agent.workbench.ai.review.agents"/>
     <module name="intellij.agent.workbench.ai.review.llm.plugin.integration"/>
+    <module name="intellij.agent.workbench.ai.code.review.integration" loading="optional"/>
     <module name="intellij.agent.workbench.ai.review.space"/>
     <module name="intellij.agent.workbench.vcs.merge"/>
     <module name="intellij.agent.workbench.container"/>
