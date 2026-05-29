@@ -3,9 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
-import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
-import com.intellij.util.xml.dom.NoOpXmlInterner
+import com.intellij.platform.pluginSystem.testFramework.ValidationPluginDescriptorReaderContext
 import java.nio.file.Path
 
 
@@ -19,10 +18,7 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
   val rawBuilder = parsePluginXml(
     input = input,
     locationSource = path.toString(),
-    readContext = object : PluginDescriptorReaderContext {
-      override val interner = NoOpXmlInterner
-      override val isMissingIncludeIgnored = false
-    },
+    readContext = ValidationPluginDescriptorReaderContext,
     xIncludeLoader = createXIncludeLoader(pathResolver, dataLoader),
   )
   loadingContext.patchPlugin(rawBuilder)
