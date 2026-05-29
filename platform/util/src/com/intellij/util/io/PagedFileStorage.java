@@ -111,10 +111,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     throws IOException {
     synchronized (myInputStreamLock) {
       try {
-        return executeOp(ch -> {
-          ch.position(0);
-          return consumer.fun(Channels.newInputStream(ch));
-        }, /*readOnly: */ true);
+        return executeOp(ch -> consumer.fun(Channels.newInputStream(ch.position(0))));
       }
       catch (NoSuchFileException ignored) {
         return consumer.fun(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY));
@@ -126,10 +123,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     throws IOException {
     synchronized (myInputStreamLock) {
       try {
-        return executeOp(ch -> {
-          ch.position(0);
-          return consumer.fun(ch);
-        }, /*readOnly: */ true);
+        return executeOp(ch -> consumer.fun(ch.position(0)));
       }
       catch (NoSuchFileException ignored) {
         return consumer.fun(Channels.newChannel(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY)));
@@ -137,14 +131,22 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     }
   }
 
-  <R> R executeOp(@NotNull FileChannelOperation<R> operation,
-                  boolean readOnly) throws IOException {
-    return myStorageLockContext.executeOp(myFile, operation, readOnly);
+  <R> R executeOp(@NotNull FileChannelOperation<R> operation) throws IOException {
+    //it is important to always use the same 'readOnly' param in executeOp(), because different 'readOnly' params
+    // corresponds to different cached FileChannels -- for the same path, but different instances. And it is
+    // generally not guaranteed those different FileChannels instances always share the same data -- they generally
+    // do, but because of caching there could be some temporary difference in the content visible via readOnly
+    // and !readOnly FileChannel => better not to step on this trap
+    return myStorageLockContext.executeOp(myFile, operation, myReadOnly);
   }
 
-  <R> R executeIdempotentOp(@NotNull FileChannelIdempotentOperation<R> operation,
-                            boolean readOnly) throws IOException {
-    return myStorageLockContext.executeIdempotentOp(myFile, operation, readOnly);
+  <R> R executeIdempotentOp(@NotNull FileChannelIdempotentOperation<R> operation) throws IOException {
+    //it is important to always use the same 'readOnly' param in executeIdempotentOp(), because different 'readOnly' params
+    // corresponds to different cached FileChannels -- for the same path, but different instances. And it is
+    // generally not guaranteed those different FileChannels instances always share the same data -- they generally
+    // do, but because of caching there could be some temporary difference in the content visible via readOnly
+    // and !readOnly FileChannel => better not to step on this trap
+    return myStorageLockContext.executeIdempotentOp(myFile, operation, myReadOnly);
   }
 
   public void putInt(long addr, int value) throws IOException {
@@ -350,7 +352,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     long oldSize;
 
     if (Files.exists(myFile)) {
-      oldSize = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
+      oldSize = executeOp(FileChannel::size);
     }
     else {
       Files.createDirectories(myFile.getParent());
@@ -365,19 +367,19 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     long delta = newSize - oldSize;
     mySize = -1;
     if (delta > 0) {
-      myStorageLockContext.executeOp(myFile, channel -> {
+      executeOp(channel -> {
         channel.write(ByteBuffer.allocate(1), newSize - 1);
         return null;
-      }, false);
+      });
 
       mySize = newSize;
       fillWithZeros(oldSize, delta);
     }
     else {
-      myStorageLockContext.executeOp(myFile, channel -> {
+      executeOp(channel -> {
         channel.truncate(newSize);
         return null;
-      }, false);
+      });
       mySize = newSize;
     }
   }
@@ -410,7 +412,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     if (size == -1) {
       if (Files.exists(myFile)) {
         try {
-          mySize = size = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
+          mySize = size = executeOp(FileChannel::size);
         }
         catch (IOException e) {
           LOG.error(e);

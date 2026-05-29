@@ -272,7 +272,7 @@ public final class DirectBufferWrapper {
         }
       }
       return buffer;
-    }, owningStorage.isReadOnly());
+    });
   }
 
   boolean tryRelease(boolean force) throws IOException {
@@ -316,7 +316,7 @@ public final class DirectBufferWrapper {
       owningStorage.executeIdempotentOp(ch -> {
         ch.write(buffer, offsetInFile + modifiedFrom);
         return null;
-      }, /*readOnly: */ false);
+      });
 
       modifiedRegionPacked = EMPTY_MODIFIED_REGION;
 

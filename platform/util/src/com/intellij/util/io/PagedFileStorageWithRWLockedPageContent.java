@@ -551,13 +551,11 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     return pages;
   }
 
-  <R> R executeOp(final @NotNull FileChannelOperation<R> operation,
-                  final boolean readOnly) throws IOException {
+  <R> R executeOp(final @NotNull FileChannelOperation<R> operation) throws IOException {
     return storageLockContext.executeOp(file, operation, readOnly);
   }
 
-  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation,
-                            final boolean readOnly) throws IOException {
+  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation) throws IOException {
     return storageLockContext.executeIdempotentOp(file, operation, readOnly);
   }
 
@@ -585,7 +583,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
         }
         pageCacheStatistics.pageRead(bytesActuallyRead, startedAtNs);
         return pageBuffer;
-      }, isReadOnly());
+      });
     }
     catch (Throwable t) {
       pageCache.reclaimPageBuffer(pageSize, pageBuffer);
@@ -601,7 +599,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     executeIdempotentOp(ch -> {
       ch.write(bufferToSave, offsetInFile);
       return null;
-    }, isReadOnly());
+    });
 
     pageCacheStatistics.pageWritten(bytesToStore, startedAtNs);
   }
