@@ -61,6 +61,8 @@ import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUserMove
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.status.widget.WidgetPresentationWrapper
@@ -127,6 +129,9 @@ import java.awt.GridBagLayout
 import java.awt.Insets
 import java.awt.LayoutManager
 import java.awt.Point
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 import javax.accessibility.Accessible
@@ -139,6 +144,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.ToolTipManager
+import javax.swing.TransferHandler
 import javax.swing.UIManager
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
@@ -199,6 +205,134 @@ open class IdeStatusBarImpl @Internal constructor(
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
+
+    private val WIDGET_FLAVOR = DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=javax.swing.JComponent")
+  }
+
+  private class WidgetTransferable(val component: JComponent) : Transferable {
+    override fun getTransferDataFlavors(): Array<DataFlavor> =
+      arrayOf(WIDGET_FLAVOR)
+
+    override fun isDataFlavorSupported(flavor: DataFlavor): Boolean =
+      flavor == WIDGET_FLAVOR
+
+    override fun getTransferData(flavor: DataFlavor): Any =
+      if (isDataFlavorSupported(flavor)) return component
+      else throw UnsupportedFlavorException(flavor)
+  }
+
+  private inner class WidgetTransferHandler : TransferHandler() {
+    override fun getSourceActions(c: JComponent): Int =
+      MOVE
+
+    override fun createTransferable(c: JComponent): Transferable =
+      WidgetTransferable(c)
+
+    override fun canImport(support: TransferSupport): Boolean =
+      support.isDataFlavorSupported(WIDGET_FLAVOR) &&
+      support.isDrop
+
+    override fun importData(support: TransferSupport): Boolean {
+      try {
+        if (!canImport(support)) return false
+
+        val sourceWidgetId = (support.transferable.getTransferData(WIDGET_FLAVOR) as JComponent)
+                               .let { ClientProperty.get(it, WIDGET_ID) }
+                             ?: return false
+
+        val targetWidgetId = (support.component as? JComponent)
+                               ?.let { findWidgetComponent(it) }
+                               ?.let { ClientProperty.get(it, WIDGET_ID) }
+                             ?: return false
+
+        if (sourceWidgetId == targetWidgetId) return false
+
+        reorderWidgets(sourceWidgetId, targetWidgetId)
+
+        return true
+      }
+      catch (e: Exception) { // it appears escaping exceptions are swallowed
+        LOG.error("Unexpected error when reordering widget", e)
+        throw e
+      }
+    }
+  }
+
+  /**
+   * Traverse the components in case the drop was somehow not on the widget itself.
+   *
+   * Most likely not needed.
+   */
+  private fun findWidgetComponent(component: Component): JComponent? {
+    var current: Component? = component
+    while (current != null) {
+      (current as? JComponent)
+        ?.let { ClientProperty.get(current, WIDGET_ID) }
+        ?.let { return current }
+
+      if (current === rightPanel) break
+      current = current.parent
+    }
+    return null
+  }
+
+  class WidgetSorter(
+    private val moves: MutableList<StatusBarWidgetUserMove> =
+      StatusBarWidgetSettings.getInstance().getUserMoves().toMutableList(),
+    private val persist: (List<StatusBarWidgetUserMove>) -> Unit =
+      StatusBarWidgetSettings.getInstance()::setUserMoves
+  ) {
+
+    fun reorder(sourceWidgetId: String, targetWidgetId: String) {
+      moves.removeIf { it.source == sourceWidgetId }
+      moves += StatusBarWidgetUserMove(sourceWidgetId, targetWidgetId)
+      persist(moves)
+    }
+
+    fun sortWidgets(sorted: MutableList<Orderable>) {
+      LoadingOrder.sortByLoadingOrder(sorted)
+
+      LOG.debug("Working list after sort: $sorted")
+
+      LOG.debug("User moves: $moves")
+      for (move in moves) {
+        applyUserMove(sorted, move)
+      }
+
+      LOG.debug("Working list after applying user moves: $sorted")
+    }
+
+    private fun <T : Orderable> applyUserMove(
+      widgets: MutableList<T>,
+      move: StatusBarWidgetUserMove
+    ) {
+      val sourceIndex = widgets.indexOfFirst { it.orderId == move.source }
+      val targetIndex = widgets.indexOfFirst { it.orderId == move.target }
+
+      if (sourceIndex == -1 || targetIndex == -1) return
+
+      val item = widgets.removeAt(sourceIndex)
+      val insertIndex =
+        if (sourceIndex < targetIndex) targetIndex - 1 else targetIndex
+
+      widgets.add(insertIndex, item)
+    }
+  }
+
+  private val widgetSorter = WidgetSorter()
+
+  private fun reorderWidgets(sourceWidgetId: String, targetWidgetId: String) {
+    val sourceBean = widgetRegistry.get(sourceWidgetId) ?: return
+    val targetBean = widgetRegistry.get(targetWidgetId) ?: return
+
+    if (sourceBean.position != Position.RIGHT) return
+    if (targetBean.position != Position.RIGHT) return
+
+    widgetSorter.reorder(sourceWidgetId, targetWidgetId)
+
+    sortRightWidgets()
+    rightPanel.revalidate()
+    rightPanel.repaint()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -467,10 +601,14 @@ open class IdeStatusBarImpl @Internal constructor(
             get() = it.id
           override val order: LoadingOrder
             get() = it.order
+          override fun toString(): String {
+            return "Virtual(id=${it.id}, order=${it.order})"
+          }
         }
       }
 
-    LoadingOrder.sortByLoadingOrder(sorted)
+    widgetSorter.sortWidgets(sorted)
+
     for ((index, item) in sorted.withIndex()) {
       rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {
         gridx = index
@@ -498,6 +636,21 @@ open class IdeStatusBarImpl @Internal constructor(
     if (bean.position == Position.LEFT && panel.componentCount == 0) {
       bean.component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
     }
+
+    // Enable drag and drop for right panel widgets
+    if (bean.position == Position.RIGHT) {
+      bean.component.transferHandler = WidgetTransferHandler()
+
+      // For generic JComponents, we need to manually trigger drag via MouseMotionListener
+      // since setDragEnabled() is only available on specific components (JList, JTable, etc.)
+      bean.component.addMouseMotionListener(object : java.awt.event.MouseMotionAdapter() {
+        override fun mouseDragged(e: MouseEvent) {
+          val handler = bean.component.transferHandler
+          handler?.exportAsDrag(bean.component, e, TransferHandler.MOVE)
+        }
+      })
+    }
+
     panel.add(bean.component)
     panel.revalidate()
   }
@@ -902,6 +1055,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
 internal fun wrap(widget: StatusBarWidget): JComponent {
   val result = if (widget is CustomStatusBarWidget) {
     return wrapCustomStatusBarWidget(widget)
+      .also { ClientProperty.put(it, WIDGET_ID, widget.ID()) }
   }
   else {
     createComponentByWidgetPresentation(widget)

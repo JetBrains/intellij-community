@@ -28,16 +28,35 @@ class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarSt
   fun setEnabled(factory: StatusBarWidgetFactory, newValue: Boolean) {
     if (factory.isEnabledByDefault == newValue) {
       updateState {
-        StatusBarState(it.widgets - factory.id)
+        it.copy(widgets = it.widgets - factory.id)
       }
     }
     else {
       updateState {
-        StatusBarState(it.widgets + (factory.id to newValue))
+        it.copy(widgets = it.widgets + (factory.id to newValue))
       }
     }
+  }
+
+  fun setUserMoves(userMoves: List<StatusBarWidgetUserMove>) {
+    updateState { state ->
+      state.copy(userMoves = userMoves.associate { it.source to it.target })
+    }
+  }
+
+  fun getUserMoves(): List<StatusBarWidgetUserMove> {
+    return state.userMoves.map { StatusBarWidgetUserMove(it.key, it.value) }
   }
 }
 
 @Internal
-data class StatusBarState(@JvmField val widgets: Map<String, Boolean> = emptyMap())
+data class StatusBarState(
+  @JvmField val widgets: Map<String, Boolean> = emptyMap(),
+  @JvmField val userMoves: Map<String, String> = emptyMap(),
+)
+
+@Internal
+data class StatusBarWidgetUserMove(
+  val source: String,
+  val target: String,
+)
