@@ -783,7 +783,7 @@ public final class PsiTypesUtil {
       PsiType origComponentType = arrayType.getComponentType();
       PsiType componentType = removeExternalAnnotations(origComponentType);
       return componentType == origComponentType ? type : 
-             arrayType instanceof PsiEllipsisType ? new PsiEllipsisType(componentType) : 
+             arrayType instanceof PsiEllipsisType ? new PsiEllipsisType(componentType, noExternal) : 
              componentType.createArrayType().annotate(noExternal);
     }
     else if (type instanceof PsiWildcardType) {
