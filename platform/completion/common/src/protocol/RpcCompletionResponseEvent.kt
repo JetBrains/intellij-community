@@ -117,6 +117,17 @@ sealed interface RpcCompletionResponseEvent {
   object CompletionFinished : RpcCompletionResponseEvent {
     override fun debugToString(): String = "CompletionFinished"
   }
+
+  @Serializable
+  data class BackendSettings(
+    val mayHaveCustomPreview: Boolean,
+  ) : RpcCompletionResponseEvent {
+    override fun debugToString(): String = "BackendSettings(mayHaveCustomPreview=$mayHaveCustomPreview)"
+
+    override fun toString(): String = buildToString("BackendSettings") {
+      field("mayHaveCustomPreview", mayHaveCustomPreview)
+    }
+  }
 }
 
 fun Logger.logRpcCompletionResponseEvent(event: RpcCompletionResponseEvent) {

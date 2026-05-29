@@ -38,12 +38,9 @@ import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcompletion.ModCompletionItem;
@@ -93,7 +90,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
@@ -1347,7 +1343,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public @Nullable PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(getEditor().getDocument());
+    return LookupImplUtil.getPsiFile(this);
   }
 
   @Override
@@ -1357,42 +1353,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public @Nullable PsiElement getPsiElement() {
-    PsiFile file = getPsiFile();
-    if (file == null) return null;
-
-    int offset = getLookupStart();
-    Editor editor = getEditor();
-    if (editor instanceof EditorWindow) {
-      offset = editor.logicalPositionToOffset(((EditorWindow)editor).hostToInjected(this.editor.offsetToLogicalPosition(offset)));
-    }
-    if (offset > 0) return file.findElementAt(offset - 1);
-
-    return file.findElementAt(0);
-  }
-
-  private static @Nullable DocumentWindow getInjectedDocument(Project project, Editor editor, int offset) {
-    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (hostFile != null) {
-      // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
-      List<DocumentWindow> injected = InjectedLanguageManager.getInstance(project)
-        .getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset));
-      for (DocumentWindow documentWindow : injected) {
-        if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
-          return documentWindow;
-        }
-      }
-    }
-    return null;
+    return LookupImplUtil.getPsiElement(this);
   }
 
   @Override
   public @NotNull Editor getEditor() {
-    DocumentWindow documentWindow = getInjectedDocument(mySession.getProject(), editor, editor.getCaretModel().getOffset());
-    if (documentWindow != null) {
-      PsiFile injectedFile = PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(documentWindow);
-      return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-    }
-    return editor;
+    return LookupImplUtil.getEditor(getProject(), editor);
   }
 
   @Override

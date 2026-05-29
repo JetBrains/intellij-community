@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -41,6 +42,7 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlChunk
@@ -59,6 +61,7 @@ import com.intellij.ui.DeferredIcon
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -367,7 +370,7 @@ fun combineFragments(
 
 internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHaveCustomPreviewProvider {
   override fun mayHaveCustomPreview(lookup: Lookup): Boolean {
-    if (lookup !is LookupImpl) return false
+    if (!lookup.isCompletion) return false
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
     val psiFile = lookup.psiFile ?: return false
     val project = lookup.project
@@ -387,12 +390,14 @@ internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
     newLookup.addLookupListener(object : LookupListener {
       override fun lookupShown(event: LookupEvent) {
         if (LookupMayHaveCustomPreviewProvider.mayHaveCustomPreview(newLookup)) {
-          installLookupIntentionPreviewListener(newLookup)
+          installLookupIntentionPreviewMachinery(newLookup)
         }
       }
     })
   }
 }
+
+private val preview_installed_key = Key.create<Boolean>("preview.installed")
 
 /**
  * Installs a listener on the provided lookup that enables preview functionality for intentions
@@ -400,12 +405,23 @@ internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
  * for relevant completion items when the lookup selection changes.
  *
  * @param lookup the instance of `LookupImpl` for which the preview listener is to be installed
+ * @return true if preview machinery was installed during this call
  */
-private fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
-  if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return
+@ApiStatus.Internal
+@RequiresEdt
+fun installLookupIntentionPreviewMachinery(lookup: LookupImpl): Boolean {
+  if (!lookup.replace(preview_installed_key, null, true)) {
+    return false
+  }
+
+  if (!lookup.isShown) {
+    fileLogger().error("Lookup must be shown when preview is being installed")
+  }
+
+  if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return false
   val project = lookup.project
-  val file = lookup.psiFile ?: return
-  if (showJavaDocPreview(project)) return
+  val file = lookup.psiFile ?: return false
+  if (showJavaDocPreview(project)) return false
 
   val previewHandler = LookupPreviewHandler(
     /* project = */ project,
@@ -416,20 +432,24 @@ private fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
 
   val listener = object : LookupListener {
     private var shown: Boolean = false
-    override fun currentItemChanged(event: LookupEvent) {
-      if (!shown && event.lookup.currentItem?.getCustomPreviewHolder() != null) {
-        shown = true
-        previewHandler.showInitially()
-      }
-    }
 
+    override fun currentItemChanged(event: LookupEvent) = tryShowPreview()
     override fun itemSelected(event: LookupEvent): Unit = stopPreview()
     override fun lookupCanceled(event: LookupEvent): Unit = stopPreview()
+
+    fun tryShowPreview() {
+      if (shown || lookup.currentItem?.getCustomPreviewHolder() == null) return
+      shown = true
+      previewHandler.showInitially()
+    }
+
     fun stopPreview() {
       previewHandler.close()
       lookup.removeLookupListener(this)
     }
   }
+
+  listener.tryShowPreview()
 
   lookup.addLookupListener(listener)
 
@@ -442,6 +462,7 @@ private fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
       listener.stopPreview()
     }
   })
+  return true
 }
 
 private fun generatePreview(
