@@ -1,0 +1,30 @@
+<html>
+<body>
+Reports <code>@KotlinScript</code>-annotated classes that aren't fully set up to be used as a Kotlin script definition.
+<p>
+    A class annotated with <code>@KotlinScript</code> describes a script template — files matching its pattern
+    (for example <code>*.my.kts</code>) are expected to use its compilation configuration and dependencies.
+    Two things make a definition fully usable, and this inspection reports either being missing:
+</p>
+<ol>
+    <li>
+        <b>Registration in Kotlin scripting settings.</b> Without an entry in
+        <em>Settings → Languages &amp; Frameworks → Kotlin → Kotlin Scripting → "Script definition classes to load"</em>,
+        your IDE will not recognize matching <code>.kts</code> files as scripts of this definition. The quick-fix
+        <em>"Register definition in Kotlin scripting settings"</em> populates the FQN (and the owning module's classpath)
+        into the settings.
+    </li>
+    <li>
+        <b>Marker file at <code>META-INF/kotlin/script/templates/&lt;fqn&gt;.classname</code></b> packed into the resulting JAR.
+        Library-based discovery (<code>ScriptDefinitionsProvider</code>) scans dependency JARs for this empty marker file
+        to find available templates; consumers of your library won't auto-discover this definition without it.
+        The quick-fix <em>"Create marker file for downstream auto-discovery"</em> creates the file under the module's
+        first resource root.
+    </li>
+</ol>
+<p>
+    Apply whichever quick-fixes are relevant — both for the typical library-author flow, or only registration when
+    the template is consumed locally and never published.
+</p>
+</body>
+</html>

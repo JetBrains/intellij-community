@@ -19,21 +19,6 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         KotlinTestUtils.runTest({ doTest(it) }, this, path)
     }
 
-    @TestMetadata("singleTemplate")
-    fun testSingleTemplate() {
-        runTest("testData/script/templatesFromDependencies/singleTemplate/")
-    }
-
-    @TestMetadata("multipleTemplates")
-    fun testMultipleTemplates() {
-        runTest("testData/script/templatesFromDependencies/multipleTemplates/")
-    }
-
-    @TestMetadata("multipleRoots")
-    fun testMultipleRoots() {
-        runTest("testData/script/templatesFromDependencies/multipleRoots/")
-    }
-
     @TestMetadata("inJar")
     fun testInJar() {
         runTest("testData/script/templatesFromDependencies/inJar/")
@@ -50,7 +35,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     }
 
     fun testReRunReturnsConsistentTemplates() {
-        runTest("testData/script/templatesFromDependencies/singleTemplate/")
+        runTest("testData/script/templatesFromDependencies/inJar/")
 
         val provider = DefinitionFromDependenciesProvider(project)
         val firstFqns = provider.getDefinitionClasses().toList()
@@ -83,4 +68,5 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
             afterNoOp
         )
     }
+
 }

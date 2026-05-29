@@ -75,7 +75,7 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
     }
 }
 
-private object ScriptTemplatesFromDependenciesCache {
+internal object ScriptTemplatesFromDependenciesCache {
     fun getOrDiscover(project: Project): DefinitionTemplates = project.cacheByClass(
         ScriptTemplatesFromDependenciesCache::class.java,
         ScriptDefinitionsModificationTracker.getInstance(project),
