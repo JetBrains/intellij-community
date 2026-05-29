@@ -166,6 +166,7 @@ f:com.intellij.openapi.actionSystem.Presentation
 com.intellij.openapi.editor.Editor
 - com.intellij.openapi.util.UserDataHolder
 - *:getCustomWrapModel():com.intellij.openapi.editor.CustomWrapModel
+- *:getStickyLinesPanelHeight():I
 com.intellij.openapi.editor.EditorSettings
 - *a:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
 - *a:isSmoothCaretBlinking():Z

@@ -211,9 +211,6 @@ f:com.intellij.openapi.editor.ComponentInlayKt
 - f:paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics,java.awt.Rectangle,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.openapi.editor.FileDropManagerKt
 - *sf:containsFileDropTargets(java.awt.datatransfer.DataFlavor[]):Z
-com.intellij.openapi.editor.ex.EditorEx
-- com.intellij.openapi.editor.Editor
-- *:getStickyLinesPanelHeight():I
 a:com.intellij.openapi.editor.ex.EditorGutterComponentEx
 - javax.swing.JComponent
 - com.intellij.openapi.editor.EditorGutter
