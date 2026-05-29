@@ -1023,8 +1023,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkNullableStuffForMethod(PsiMethod method, final ProblemsHolder holder) {
     Annotated annotated = check(method, holder, method.getReturnType());
 
-    List<PsiMethod> superMethods = ContainerUtil.map(
-      method.findSuperMethodSignaturesIncludingStatic(true), MethodSignatureBackedByPsiMethod::getMethod);
+    List<PsiMethod> superMethods;
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      // Static methods hide, not override: nullability contracts of hidden methods do not apply.
+      superMethods = List.of();
+    }
+    else {
+      superMethods = ContainerUtil.filter(
+        ContainerUtil.map(method.findSuperMethodSignaturesIncludingStatic(true), MethodSignatureBackedByPsiMethod::getMethod),
+        m -> !m.hasModifierProperty(PsiModifier.STATIC));
+    }
 
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
 
