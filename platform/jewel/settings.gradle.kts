@@ -11,7 +11,7 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
     }
-    plugins { kotlin("jvm") version "2.2.20" }
+    plugins { kotlin("jvm") version "2.3.20" }
 }
 
 dependencyResolutionManagement {
