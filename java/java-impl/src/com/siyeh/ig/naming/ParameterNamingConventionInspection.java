@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPatternVariable;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public final class ParameterNamingConventionInspection extends
-                                                 ConventionInspection {
+public final class ParameterNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 1;
   private static final int DEFAULT_MAX_LENGTH = 20;
@@ -64,10 +64,11 @@ public final class ParameterNamingConventionInspection extends
 
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
+      if (variable instanceof PsiPatternVariable) {
+        return;
+      }
       final PsiElement scope = variable.getDeclarationScope();
-      if (scope instanceof PsiCatchSection ||
-          scope instanceof PsiForeachStatement ||
-          scope instanceof PsiLambdaExpression) {
+      if (scope instanceof PsiCatchSection || scope instanceof PsiForeachStatement || scope instanceof PsiLambdaExpression) {
         return;
       }
       final String name = variable.getName();

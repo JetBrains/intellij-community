@@ -10,5 +10,13 @@ public class ParameterNamingConvention {
   interface F {
     int a(int <warning descr="Parameter name 'i' is too short (1 < 3)">i</warning>);
   }
+  
+  void patternVariable() {
+    Number a = 1;
+    boolean r = switch (a) {
+      case Integer _ -> true;
+      default -> false;
+    };
+  }
 
 }
