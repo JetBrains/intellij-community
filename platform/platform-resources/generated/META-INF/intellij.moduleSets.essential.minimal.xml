@@ -250,16 +250,6 @@
     <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
     <!-- endregion -->
 
-    <!-- region nested: libraries.misc -->
-    <module name="intellij.libraries.javax.activation"/>
-    <module name="intellij.libraries.xml.rpc"/>
-    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
-    <module name="intellij.libraries.opencsv"/>
-    <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.plexus.utils"/>
-    <module name="intellij.libraries.maven.resolver.provider"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.libraries.download.pgp.verifier" loading="embedded"/>
     <module name="intellij.remoteDev.util" loading="embedded"/>

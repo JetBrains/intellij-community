@@ -7,6 +7,7 @@ import com.intellij.platform.pluginGraph.TargetName
 private const val MODULE_SET_PLUGIN_MODULE_PREFIX: String = "intellij.moduleSet.plugin."
 
 private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
+  "intellij.libraries.misc.plugin",
   "intellij.platform.bookmarks.plugin",
   "intellij.platform.navbar.plugin",
 )

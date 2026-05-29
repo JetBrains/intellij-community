@@ -1,0 +1,14 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.libraries.misc.plugin</id>
+  <name>Library Modules: Misc</name>
+  <description>Provides miscellaneous library content modules for IntelliJ-based IDEs.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.javax.activation" loading="required"/>
+    <module name="intellij.libraries.xml.rpc" loading="required"/>
+    <module name="intellij.libraries.kotlinx.document.store.mvstore" loading="required"/>
+    <module name="intellij.libraries.opencsv" loading="required"/>
+    <module name="intellij.libraries.lucene.common" loading="required"/>
+  </content>
+</idea-plugin>

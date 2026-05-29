@@ -132,7 +132,7 @@ Pluginization can break narrow test modules even when product packaging tests pa
 
 ## Pre-TeamCity Canary Suite
 
-Run this suite before relying on TeamCity after pluginization or plugin dependency changes. The order is intentional: fix failures in checks 1-5 before interpreting downstream canary failures.
+Run this suite before relying on TeamCity after pluginization or plugin dependency changes. The order is intentional: fix failures in checks 1-6 before interpreting downstream canary failures.
 
 1. Embedded dependency closure:
    `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='{"filter":"embeddedDependencyClosure","pluginSourceOnly":true}'`
@@ -140,34 +140,31 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
    `./tests.cmd --module intellij.platform.buildScripts.productDsl.tests --test org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidatorTest`
 3. Fast project structure/root packages:
    `./tests.cmd --module intellij.projectStructureTests --test com.intellij.ideaProjectStructure.fast.IntelliJProjectPackageNamesTest`
-4. Ultimate plugin module dependencies:
-   `./tests.cmd --module intellij.idea.ultimate.build.tests --test com.intellij.idea.ultimate.build.smokeTests.IdeaUltimatePluginModuleDependenciesTest`
-5. Product packaging baseline:
+4. Product packaging baseline:
    `./tests.cmd --module intellij.idea.ultimate.build.tests --test com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest`
-6. Database and SQL wrapper coverage:
+5. CLion packaging baseline:
+   `./tests.cmd --module intellij.clion.build.tests --test org.jetbrains.intellij.build.clion.CLionPackagingTest`
+6. Rider packaging baseline:
+   `./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest`
+7. Database and SQL wrapper coverage:
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.SqlFileStructureViewTest`
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.editor.SqlMultiLineTodoTest`
    `./tests.cmd --module intellij.database.tests --test com.intellij.database.view.DatabaseViewTest`
-7. Shell plus Markdown plugin loading:
+8. Shell plus Markdown plugin loading:
    `./community/tests.cmd --module intellij.sh.tests --test com.intellij.sh.highlighting.ShHighlightUsagesInMarkdownTest`
-8. Ruby plus SQL injection plugin loading:
+9. Ruby plus SQL injection plugin loading:
    `./tests.cmd --module intellij.ruby.tests --test org.jetbrains.plugins.ruby.ruby.psi.RubyHeredocInjectorTest#testSqlHeredoc`
-9. RustRover structure and SQL loading:
+10. RustRover structure and SQL loading:
    `./tests.cmd --module intellij.rustrover.core.test --test org.rust.ide.structure.RsStructureViewModelTest`
    `./tests.cmd --module intellij.rustrover.sql.tests --test com.jetbrains.rust.sql.SqlInjectorTest`
-10. ReSharper external services/DataGrip bridge:
-    `./tests.cmd --module intellij.resharper.external.services.test.cases.rd --test com.jetbrains.resharper.external.services.test.cases.ReSharperDataGripRdTest`
+11. ReSharper external services/DataGrip bridge:
+     `./tests.cmd --module intellij.resharper.external.services.test.cases.rd --test com.jetbrains.resharper.external.services.test.cases.ReSharperDataGripRdTest`
 
 ## Verification
 
 - Run `lint_files()` on every changed Kotlin source and test file.
 - Run the Pre-TeamCity Canary Suite after generated files and narrow test dependencies are updated.
-- After platform packaging checks are clean, run CLion and Rider packaging tests when product-specific packaging may be affected:
-
-```bash
-./tests.cmd --module intellij.clion.build.tests --test org.jetbrains.intellij.build.clion.CLionPackagingTest
-./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest
-```
+- Keep CLion and Rider packaging tests in the standard suite: wrapper plugins and `DEFAULT_BUNDLED_PLUGINS` changes can affect those product baselines even when `AllProductsPackagingTest` is green.
 
 - Run at least one representative test from each affected test module via `./tests.cmd --module <module> --test <FQN or FQN#method>`. Prefer a small smoke test that exercises plugin loading without external fixtures.
 - If the original CI test needs unavailable data or services, run a nearby smoke test and document the local blocker. Confirm `idea.log` no longer reports the original missing wrapper plugin.

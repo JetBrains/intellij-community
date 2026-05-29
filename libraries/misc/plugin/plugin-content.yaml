@@ -1,0 +1,38 @@
+- name: lib/libraries-misc-plugin.jar
+  modules:
+  - name: intellij.libraries.misc.plugin
+- name: lib/modules/intellij.libraries.javax.activation.jar
+  contentModules:
+  - name: intellij.libraries.javax.activation
+- name: lib/modules/intellij.libraries.kotlinx.document.store.mvstore.jar
+  contentModules:
+  - name: intellij.libraries.kotlinx.document.store.mvstore
+    libraries:
+      kotlinx-document-store-mvstore:
+      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
+      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
+- name: lib/modules/intellij.libraries.lucene.common.jar
+  projectLibraries:
+  - name: lucene-analysis-common
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10/lucene-analysis-common-10.jar
+    reason: <- intellij.libraries.lucene.common
+  - name: lucene-core
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10/lucene-core-10.jar
+    reason: <- intellij.libraries.lucene.common
+  contentModules:
+  - name: intellij.libraries.lucene.common
+- name: lib/modules/intellij.libraries.opencsv.jar
+  contentModules:
+  - name: intellij.libraries.opencsv
+    libraries:
+      opencsv:
+      - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
+      - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar
+- name: lib/modules/intellij.libraries.xml.rpc.jar
+  contentModules:
+  - name: intellij.libraries.xml.rpc
+    libraries:
+      xml-rpc:
+      - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar

@@ -488,6 +488,7 @@ libraries/markdown
 libraries/maven-resolver-provider
 libraries/microba
 libraries/miglayout-swing
+libraries/misc/plugin
 libraries/mockito
 libraries/mvstore
 libraries/netty/buffer

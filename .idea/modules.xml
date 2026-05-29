@@ -1110,6 +1110,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" filepath="$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" filepath="$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" filepath="$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" filepath="$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" filepath="$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mvstore/intellij.libraries.mvstore.iml" filepath="$PROJECT_DIR$/libraries/mvstore/intellij.libraries.mvstore.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/buffer/intellij.libraries.netty.buffer.iml" filepath="$PROJECT_DIR$/libraries/netty/buffer/intellij.libraries.netty.buffer.iml" />
