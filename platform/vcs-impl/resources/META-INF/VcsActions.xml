@@ -185,7 +185,10 @@
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <action id="ChangesView.EditSource" class="com.intellij.openapi.vcs.actions.ChangesViewPopupJumpToSourceAction"/>
+      <action id="ChangesView.EditSource"
+              class="com.intellij.openapi.vcs.actions.ChangesViewPopupJumpToSourceAction"
+              use-shortcut-of="EditSource"
+      />
       <reference ref="CopyReferencePopupGroup"/>
       <separator/>
       <reference ref="$Delete"/>
