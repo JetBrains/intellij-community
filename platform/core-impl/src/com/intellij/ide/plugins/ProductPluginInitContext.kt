@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.diagnostic.Activity
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
@@ -110,6 +109,15 @@ class ProductPluginInitContext(
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
 
+  override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {
+    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(totalPluginSet)
+    thirdPartyPluginsWithoutConsentCheckResult?.let { result ->
+      if (result.privacyNoteAccepted != null) {
+        ThirdPartyPluginsPrivacyConsentState.setState(result.privacyNoteAccepted)
+      }
+    }
+  }
+
   data class ThirdPartyPluginsWithoutConsentCheckResult(
     /** null if wasn't asked */
     val privacyNoteAccepted: Boolean?,
@@ -124,16 +132,12 @@ class ProductPluginInitContext(
    *
    * Invoked only during startup initialization.
    */
-  fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: UnambiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
-    val closeableActivity = parentActivity?.startChild("3rd-party plugins consent")
-      .let { activity -> AutoCloseable { activity?.end() } }
-    closeableActivity.use {
-      val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { idMap.resolvePluginId(it)?.getMainDescriptor() }
-      if (aliens.isEmpty()) {
-        return null
-      }
-      return checkThirdPartyPluginsPrivacyConsent(aliens).also { thirdPartyPluginsWithoutConsentCheckResult = it }
+  private fun checkThirdPartyPluginsPrivacyConsent(pluginSet: AmbiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { pluginSet.resolvePluginId(it).firstOrNull()?.getMainDescriptor() }
+    if (aliens.isEmpty()) {
+      return null
     }
+    return checkThirdPartyPluginsPrivacyConsent(aliens)
   }
 
   /** This method mutates [DisabledPluginsState]! */

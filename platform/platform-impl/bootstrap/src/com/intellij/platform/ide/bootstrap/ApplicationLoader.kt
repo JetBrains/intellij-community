@@ -26,6 +26,7 @@ import com.intellij.ide.ProtocolHandler
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
+import com.intellij.ide.plugins.ThirdPartyPluginsPrivacyConsentState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
@@ -602,7 +603,7 @@ fun callAppInitialized(scope: CoroutineScope, listeners: List<ApplicationInitial
 }
 
 private suspend fun checkThirdPartyPluginsAllowed() {
-  val noteAccepted = PluginManagerCore.consumeThirdPartyPluginsNoteAcceptedFlag() ?: return
+  val noteAccepted = ThirdPartyPluginsPrivacyConsentState.consumeState() ?: return
   if (noteAccepted) {
     serviceAsync<UpdateSettings>().isThirdPartyPluginsAllowed = true
     PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED)

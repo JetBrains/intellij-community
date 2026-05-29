@@ -79,6 +79,11 @@ interface PluginInitializationContext {
    */
   fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean
 
+  /**
+   * Only is called once during the startup initialization
+   */
+  fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet)
+
   companion object
 }
 
