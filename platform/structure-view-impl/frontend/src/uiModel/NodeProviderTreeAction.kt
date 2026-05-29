@@ -17,21 +17,17 @@ class NodeProviderTreeAction(
   override val checkboxText: @Nls String,
 ) : CheckboxTreeAction {
 
-  @Volatile
-  private var myNodesByParentId: Map<Int, List<StructureUiTreeElement>> = emptyMap()
+  private var myNodesByParentId: Map<Int, List<StructureViewNode>> = emptyMap()
 
-  @Volatile
   var nodesLoaded: Boolean = false
     private set
 
-  fun setNodes(newNodes: List<StructureUiTreeElement>) {
-    myNodesByParentId = newNodes.groupBy { node ->
-      (node as? StructureUiTreeElementImpl)?.dto?.parentId ?: -1
-    }
+  internal fun setNodesByParentId(nodesByParentId: Map<Int, List<StructureViewNode>>) {
+    myNodesByParentId = nodesByParentId
     nodesLoaded = true
   }
 
-  fun getNodes(parent: StructureUiTreeElement): List<StructureUiTreeElement> {
+  internal fun getNodes(parent: StructureUiTreeElement): List<StructureViewNode> {
     return myNodesByParentId[parent.id] ?: emptyList()
   }
 }

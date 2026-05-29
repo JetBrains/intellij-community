@@ -1,24 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.structureView.frontend.uiModel
 
-import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.rpc.rpcId
+import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.structureView.impl.StructureTreeApi
 import com.intellij.platform.structureView.impl.StructureViewScopeHolder
-import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
-import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
-import com.intellij.platform.structureView.frontend.uiModel.StructureUiTreeElementImpl.Companion.toUiElement
-import com.intellij.platform.structureView.impl.dto.StructureViewTreeElementDto
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
-import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.structureView.impl.dto.NodeProviderNodesDto
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
+import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
+import com.intellij.platform.structureView.impl.dto.StructureViewTreeElementDto
+import com.intellij.platform.structureView.impl.dto.TreeNodesDto
+import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.client.durable
@@ -28,7 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -44,18 +45,20 @@ internal class StructureUiModelImpl : StructureUiModel {
 
   private val dtoId: StructureViewDtoId
 
-  override val rootElement: StructureUiTreeElementWrapper = StructureUiTreeElementWrapper()
+  override val rootElement: StructureViewNode = StructureViewNode()
+
+  private val nodeById = HashMap<Int, StructureViewNode>().also {
+    it[0] = rootElement
+  }
 
   private val cs: kotlinx.coroutines.CoroutineScope
 
   private val myEnabledActionNames = CopyOnWriteArrayList<String>()
 
-  @Volatile
   private var myActions: List<StructureTreeAction> = emptyList()
 
   private val selection = MutableStateFlow<StructureUiTreeElement?>(null)
 
-  @Volatile
   private var rebuildTreeOnDeferredNodes: Boolean = false
 
   /**
@@ -63,7 +66,8 @@ internal class StructureUiModelImpl : StructureUiModel {
    */
   constructor(fileEditor: FileEditor, file: VirtualFile, project: Project) {
     dtoId = StructureViewDtoId(nextId.getAndIncrement())
-    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file.name} structure view")
+    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file.name} structure view",
+                                                                      Dispatchers.UI + ModalityState.any().asContextElement())
     initializeWithRpcModel(fileEditor, file, project)
   }
 
@@ -72,7 +76,8 @@ internal class StructureUiModelImpl : StructureUiModel {
    */
   constructor(file: VirtualFile?, project: Project, modelId: StructureViewDtoId, model: StructureViewModelDto) {
     dtoId = modelId
-    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file?.name} structure view")
+    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file?.name} structure view",
+                                                                     Dispatchers.UI + ModalityState.any().asContextElement())
     initializeWithProvidedModel(project, model)
   }
 
@@ -85,7 +90,7 @@ internal class StructureUiModelImpl : StructureUiModel {
 
       if (dto == null) {
         logger.warn("No structure view model for $file")
-        withContext(Dispatchers.UI) {
+        cs.launch {
           myModelListeners.forEach { it.onTreeChanged() }
           myUpdatePendingFlow.value = false
         }
@@ -142,58 +147,62 @@ internal class StructureUiModelImpl : StructureUiModel {
       }
 
       val uiNotifyStartTime = System.nanoTime()
-      withContext(Dispatchers.UI) {
-        myModelListeners.forEach { it.onActionsChanged() }
-        myModelListeners.forEach { it.onTreeChanged() }
-        myUpdatePendingFlow.value = false
-      }
+      myModelListeners.forEach { it.onActionsChanged() }
+      myModelListeners.forEach { it.onTreeChanged() }
+      myUpdatePendingFlow.value = false
       logger.trace {
         "StructureUiModelImpl[$dtoId]: notified listeners for nodes update in ${(System.nanoTime() - uiNotifyStartTime).asTraceDuration()}"
       }
 
-      val deferredAwaitStartTime = System.nanoTime()
-      val deferredNodes = try {
-        nodesUpdate.deferredProviderNodes.await()
-      }
-      catch (e: Throwable) {
-        rethrowControlFlowException(e)
-        rebuildTreeOnDeferredNodes = false
-        myUpdatePendingFlow.value = false
-        logger.error("Error computing provider nodes", e)
-        return@collect
-      }
-      logger.trace {
-        "StructureUiModelImpl[$dtoId]: deferred provider await for nodes update completed in " +
-        "${(System.nanoTime() - deferredAwaitStartTime).asTraceDuration()}; " +
-        "deferredProviders=${deferredNodes?.nodeProviders?.size ?: 0}, "
-      }
+      handleDeferredNodeProviders(model, nodesUpdate, updateStartTime)
+    }
+  }
 
-      if (deferredNodes != null) {
-        val deferredApplyStartTime = System.nanoTime()
-        applyNodesModel(model.rootNode,
-                        deferredNodes.nodeProviders,
-                        deferredNodes.nodes,
-                        nodesUpdate.editorSelectionId)
-        logger.trace {
-          "StructureUiModelImpl[$dtoId]: applied deferred provider nodes for update in " +
-          (System.nanoTime() - deferredApplyStartTime).asTraceDuration()
-        }
-      }
+  private suspend fun handleDeferredNodeProviders(
+    model: StructureViewModelDto,
+    nodesUpdate: TreeNodesDto,
+    updateStartTime: Long,
+  ) {
+    val deferredAwaitStartTime = System.nanoTime()
+    val deferredNodes = try {
+      nodesUpdate.deferredProviderNodes.await()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      rebuildTreeOnDeferredNodes = false
+      myUpdatePendingFlow.value = false
+      logger.error("Error computing provider nodes", e)
+      return
+    }
+    logger.trace {
+      "StructureUiModelImpl[$dtoId]: deferred provider await for nodes update completed in " +
+      "${(System.nanoTime() - deferredAwaitStartTime).asTraceDuration()}; " +
+      "deferredProviders=${deferredNodes?.nodeProviders?.size ?: 0}, "
+    }
 
-      // If an incomplete node provider was enabled while waiting for deferred nodes, rebuild tree now
-      if (rebuildTreeOnDeferredNodes) {
-        if (deferredNodes == null || deferredNodes.nodeProviders.isEmpty()) {
-          logger.error("Deferred provider nodes list is empty, but rebuildTreeOnDeferredNodes is true")
-        }
-        rebuildTreeOnDeferredNodes = false
-        withContext(Dispatchers.UI) {
-          myModelListeners.forEach { it.onTreeChanged() }
-          myUpdatePendingFlow.value = false
-        }
-      }
+    if (deferredNodes != null) {
+      val deferredApplyStartTime = System.nanoTime()
+      applyNodesModel(model.rootNode,
+                      deferredNodes.nodeProviders,
+                      deferredNodes.nodes,
+                      nodesUpdate.editorSelectionId)
       logger.trace {
-        "StructureUiModelImpl[$dtoId]: nodes update completed in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
+        "StructureUiModelImpl[$dtoId]: applied deferred provider nodes for update in " +
+        (System.nanoTime() - deferredApplyStartTime).asTraceDuration()
       }
+    }
+
+    // If an incomplete node provider was enabled while waiting for deferred nodes, rebuild tree now.
+    if (rebuildTreeOnDeferredNodes) {
+      if (deferredNodes == null || deferredNodes.nodeProviders.isEmpty()) {
+        logger.error("Deferred provider nodes list is empty, but rebuildTreeOnDeferredNodes is true")
+      }
+      rebuildTreeOnDeferredNodes = false
+      myModelListeners.forEach { it.onTreeChanged() }
+      myUpdatePendingFlow.value = false
+    }
+    logger.trace {
+      "StructureUiModelImpl[$dtoId]: nodes update completed in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
     }
   }
 
@@ -247,6 +256,31 @@ internal class StructureUiModelImpl : StructureUiModel {
   ) {
     val applyStartTime = System.nanoTime()
     var selectionElement: StructureUiTreeElement? = null
+    val reachableNodeIds = HashSet<Int>()
+
+    rootElement.update(rootDto)
+    reachableNodeIds.add(rootElement.id)
+    if (editorSelectionId == rootElement.id) {
+      selectionElement = rootElement
+    }
+
+    // Reuse nodes by id, but rebuild the backend-owned child lists from the latest DTO snapshot. FileStructurePopup separately
+    // rebuilds visibleChildren from these sourceChildren when actions, sorting, or speed search change.
+    for (node in nodeById.values) {
+      node.sourceChildren.clear()
+      node.parentNode = null
+    }
+
+    for (nodeDto in nodes) {
+      val node = getOrCreateNode(nodeDto, reachableNodeIds)
+      val parent = nodeById[nodeDto.parentId] ?: run {
+        logger.error("No parent for ${node.id} or it's not a backend one")
+        continue
+      }
+      node.parentNode = parent
+      if (nodeDto.id == editorSelectionId) selectionElement = node
+      parent.sourceChildren.add(node)
+    }
 
     for (providerDto in nodeProviders) {
       val provider = myActions.find { it.name == providerDto.providerName } as? NodeProviderTreeAction
@@ -255,30 +289,17 @@ internal class StructureUiModelImpl : StructureUiModel {
         continue
       }
 
-      val (selection, nodes) = convertNodesForProvider(editorSelectionId, providerDto.nodes)
+      val (selection, nodes) = convertNodesForProvider(editorSelectionId, providerDto.nodes, reachableNodeIds)
 
       if (selection != null) selectionElement = selection
 
-      provider.setNodes(nodes)
+      provider.setNodesByParentId(nodes)
     }
 
-    val rootNode = StructureUiTreeElementImpl(rootDto)
-    val nodeMap = HashMap<Int, StructureUiTreeElementImpl>()
-    nodeMap[0] = rootNode
-
-    for (nodeDto in nodes) {
-      val node = StructureUiTreeElementImpl(nodeDto)
-      val parent = nodeMap[nodeDto.parentId] ?: run {
-        logger.error("No parent for ${node.id} or it's not a backend one")
-        continue
-      }
-      node.parent = parent
-      if (nodeDto.id == editorSelectionId) selectionElement = node
-      parent.myChildren.add(node)
-      nodeMap[nodeDto.id] = node
+    nodeById.entries.removeIf { (id, _) ->
+      id !in reachableNodeIds
     }
 
-    rootElement.setDelegate(rootNode)
     selection.value = selectionElement
     logger.trace {
       "StructureUiModelImpl[$dtoId]: applyNodesModel completed in ${(System.nanoTime() - applyStartTime).asTraceDuration()}; " +
@@ -332,26 +353,38 @@ internal class StructureUiModelImpl : StructureUiModel {
     myModelListeners.clear()
   }
 
+  private fun getOrCreateNode(nodeDto: StructureViewTreeElementDto, reachableNodeIds: MutableSet<Int>): StructureViewNode {
+    reachableNodeIds.add(nodeDto.id)
+    return nodeById.getOrPut(nodeDto.id) { StructureViewNode() }.also {
+      it.update(nodeDto)
+    }
+  }
+
   private fun convertNodesForProvider(
     editorSelectionId: Int?,
     nodesDto: List<StructureViewTreeElementDto>,
-  ): Pair<StructureUiTreeElementImpl?, List<StructureUiTreeElementImpl>> {
-    val providerNodeMap = hashMapOf<Int, StructureUiTreeElementImpl>()
-    val nodes = mutableListOf<StructureUiTreeElementImpl>()
-    var selectionElement: StructureUiTreeElementImpl? = null
+    reachableNodeIds: MutableSet<Int>,
+  ): Pair<StructureViewNode?, Map<Int, List<StructureViewNode>>> {
+    val providerNodeMap = hashMapOf<Int, StructureViewNode>()
+    val nodesByParentId = hashMapOf<Int, MutableList<StructureViewNode>>()
+    var selectionElement: StructureViewNode? = null
+
     for (nodeDto in nodesDto) {
       val parent = providerNodeMap[nodeDto.parentId]
-      val node = nodeDto.toUiElement(parent)
+      val node = getOrCreateNode(nodeDto, reachableNodeIds)
       providerNodeMap[nodeDto.id] = node
       if (nodeDto.id == editorSelectionId) selectionElement = node
+
       if (parent == null) {
-        nodes.add(node)
+        node.parentNode = nodeById[nodeDto.parentId]
+        nodesByParentId.getOrPut(nodeDto.parentId) { mutableListOf() }.add(node)
       }
       else {
-        parent.myChildren.add(node)
+        node.parentNode = parent
+        parent.sourceChildren.add(node)
       }
     }
-    return selectionElement to nodes
+    return selectionElement to nodesByParentId
   }
 
   companion object {

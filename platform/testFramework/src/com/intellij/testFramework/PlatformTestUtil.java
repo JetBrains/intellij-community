@@ -250,6 +250,9 @@ public final class PlatformTestUtil {
         return ((AbstractTreeNode<?>)node).getTestPresentation();
       }
     }
+    if (node instanceof Queryable queryable) {
+      return Queryable.Util.print(queryable, printInfo);
+    }
     return String.valueOf(node);
   }
 
