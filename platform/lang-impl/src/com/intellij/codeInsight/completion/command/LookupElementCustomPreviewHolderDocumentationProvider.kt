@@ -63,7 +63,6 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.function.Function
 
 @ApiStatus.Internal
 class LookupElementCustomPreviewHolderDocumentationProvider : LookupElementDocumentationTargetProvider {
@@ -402,22 +401,18 @@ internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
  *
  * @param lookup the instance of `LookupImpl` for which the preview listener is to be installed
  */
-internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
+private fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
   if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return
   val project = lookup.project
   val file = lookup.psiFile ?: return
   if (showJavaDocPreview(project)) return
-  val previewHandler =
-    LookupPreviewHandler(
-      project, lookup,
-      Function { element: Any? ->
-        return@Function element as? LookupElement
-      },
-      Function { element: LookupElement? ->
-        val commandElement = element?.getCustomPreviewHolder()
-        commandElement?.preview(ActionContext.from(lookup.editor, file)) ?: IntentionPreviewInfo.EMPTY
-      }
-    )
+
+  val previewHandler = LookupPreviewHandler(
+    /* project = */ project,
+    /* lookup = */ lookup,
+    /* mapper = */ { element -> element as? LookupElement },
+    /* previewGenerator = */ { element -> generatePreview(element, lookup, file) }
+  )
 
   val listener = object : LookupListener {
     private var shown: Boolean = false
@@ -447,6 +442,16 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
       listener.stopPreview()
     }
   })
+}
+
+private fun generatePreview(
+  element: LookupElement,
+  lookup: LookupImpl,
+  file: PsiFile,
+): IntentionPreviewInfo {
+  val previewHolder = element.getCustomPreviewHolder() ?: return IntentionPreviewInfo.EMPTY
+  val ctx = ActionContext.from(lookup.editor, file)
+  return previewHolder.preview(ctx)
 }
 
 @ApiStatus.Internal
