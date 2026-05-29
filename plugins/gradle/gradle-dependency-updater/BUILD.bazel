@@ -24,6 +24,7 @@ jvm_library(
         "//android/gradle-dsl-toml",
         "//android/gradle-dsl-declarative",
         "//android/gradle-dsl-groovy",
+        "//android/gradle-dsl-android",
     ],
     deps = [
         # do not sort,
@@ -64,6 +65,7 @@ jvm_library(
         "//android/gradle-dsl-toml:gradle-dsl-toml_test_lib",
         "//android/gradle-dsl-declarative:gradle-dsl-declarative_test_lib",
         "//android/gradle-dsl-groovy:gradle-dsl-groovy_test_lib",
+        "//android/gradle-dsl-android:gradle-dsl-android_test_lib",
         "//platform/core-ui:core-ui_test_lib",
     ],
 )
