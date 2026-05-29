@@ -1082,6 +1082,10 @@ com.intellij.microservices.endpoints.presentation.EndpointMethodPresentation
 f:com.intellij.microservices.endpoints.presentation.HttpMethodPresentation$Companion
 - f:getHttpMethodOrder(java.lang.String):I
 - f:getHttpMethodsPresentation(java.util.Collection):java.lang.String
+f:com.intellij.microservices.oas.OasSchema
+- sf:Companion:com.intellij.microservices.oas.OasSchema$Companion
+- sf:SCHEMA_DEFINITION_STUB_REFERENCE:java.lang.String
+f:com.intellij.microservices.oas.OasSchema$Companion
 a:com.intellij.microservices.url.Authority
 f:com.intellij.microservices.url.Authority$Exact
 - <init>(java.lang.String):V

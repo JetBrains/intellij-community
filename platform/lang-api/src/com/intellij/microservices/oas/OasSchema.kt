@@ -30,4 +30,8 @@ data class OasSchema(
       )
     }
   }
+
+  companion object {
+    const val SCHEMA_DEFINITION_STUB_REFERENCE: String = "#/components/schemas/__SchemaDefinitionStub"
+  }
 }

@@ -5,6 +5,7 @@ import com.intellij.microservices.endpoints.EndpointsElementItem
 import com.intellij.microservices.endpoints.EndpointsListItem
 import com.intellij.microservices.endpoints.EndpointsProvider
 import com.intellij.microservices.endpoints.EndpointsUrlTargetProvider
+import com.intellij.microservices.mime.MimeTypes
 import com.intellij.microservices.url.UrlPath
 import com.intellij.microservices.url.UrlTargetInfo
 import java.util.Locale
@@ -12,6 +13,11 @@ import java.util.Locale
 val EMPTY_OPENAPI_SPECIFICATION: OpenApiSpecification = OpenApiSpecification(emptyList())
 
 fun getSpecificationByUrls(urls: Iterable<UrlTargetInfo>): OpenApiSpecification {
+  val fromProvider = urls.mapNotNull { OasSpecificationProvider.getOasSpecification(it) }
+  if (fromProvider.isNotEmpty()) {
+    return squashOpenApiSpecifications(fromProvider)
+  }
+
   return OpenApiSpecification(urls.map { urlTargetInfo ->
     OasEndpointPath.Builder(urlTargetInfo.path.getPresentation(OPEN_API_PRESENTATION)).build {
       val pathParams = urlTargetInfo.path.segments
@@ -35,6 +41,19 @@ fun getSpecificationByUrls(urls: Iterable<UrlTargetInfo>): OpenApiSpecification 
           isDeprecated = urlTargetInfo.isDeprecated
           responses = listOf(OasResponse("200", "OK"))
           parameters = pathParams + queryParams
+          if (urlTargetInfo.contentTypes.isNotEmpty()) {
+            requestBody = OasRequestBody(
+              urlTargetInfo.contentTypes.associateWith { contentType ->
+                if (contentType.equals(MimeTypes.APPLICATION_OCTET_STREAM, ignoreCase = true)) {
+                  OasSchema.Builder(OasSchemaType.STRING).build { format = OasSchemaFormat.BINARY }
+                }
+                else OasSchema.Builder(OasSchemaType.OBJECT).build {
+                  reference = OasSchema.SCHEMA_DEFINITION_STUB_REFERENCE
+                }
+              },
+              required = true
+            )
+          }
         }
       }
     }
