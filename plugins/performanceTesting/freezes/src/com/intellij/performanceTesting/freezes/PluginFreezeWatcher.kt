@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.plugin.freeze
+package com.intellij.performanceTesting.freezes
 
 import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.ThreadDump
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginUtilImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
-import com.intellij.threadDumpParser.ThreadState
 import com.intellij.util.application
 
 @Service(Service.Level.APP)
@@ -34,12 +31,7 @@ internal class PluginFreezeWatcher {
   }
 
   fun dumpedThreads(event: LogMessage, dump: ThreadDump, durationMs: Long): FreezeReason? {
-    val freezeCausingThreads = FreezeAnalyzer.analyzeFreeze(dump.rawDump, null)?.threads.orEmpty()
-    val pluginIds = freezeCausingThreads.mapNotNull { analyzeFreezeCausingPlugin(it) }
-    val frozenPlugin = pluginIds.groupingBy { it }
-                         .eachCount()
-                         .maxByOrNull { it.value }
-                         ?.key ?: return null
+    val frozenPlugin = analyzeFreezeCausingPlugin(dump.rawDump) ?: return null
 
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
 
@@ -67,13 +59,8 @@ internal class PluginFreezeWatcher {
            && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)
   }
 
-  private fun analyzeFreezeCausingPlugin(threadInfo: ThreadState): PluginId? {
-    val stackTraceElements = threadInfo.stackTrace.lineSequence()
-      .mapNotNull { parseStackTraceElement(it) }
-      .toList()
-      .toTypedArray()
-
-    return PluginUtilImpl.doFindPluginId(Throwable().apply { stackTrace = stackTraceElements })
+  private fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
+    return null // todo Diogen matcher
   }
 
   private fun parseStackTraceElement(stackTrace: String): StackTraceElement? {

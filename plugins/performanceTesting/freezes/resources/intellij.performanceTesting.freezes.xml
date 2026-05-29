@@ -1,0 +1,29 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotifier"/>
+    <editorNotificationProvider implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotificationPanel"/>
+
+    <registryKey key="ide.diagnostics.notification.freezes.in.plugins"
+                 defaultValue="true"
+                 description="Show notification about freezes in plugins"/>
+    <registryKey key="ide.diagnostics.notification.freezes.in.bundled.plugins"
+                 defaultValue="true"
+                 description="Show notification about freezes in bundled plugins (in releases)"/>
+    <applicationSettings service="com.intellij.performanceTesting.freezes.PluginsFreezesService"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportPromoterActivity"/>
+    <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.promo.FreezeCounterListener"/>
+  </extensions>
+
+  <actions>
+    <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
+            internal="true" text="Reset Freezes Notification State"/>
+  </actions>
+</idea-plugin>

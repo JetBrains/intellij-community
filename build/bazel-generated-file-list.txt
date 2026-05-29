@@ -603,7 +603,6 @@ platform/credential-store-impl
 platform/credential-store-ui
 platform/diagnostic
 platform/diagnostic/freezeAnalyzer
-platform/diagnostic/freezeInPluginNotifier
 platform/diagnostic/startUpPerformanceReporter
 platform/diagnostic/telemetry
 platform/diagnostic/telemetry-impl
@@ -1533,6 +1532,7 @@ plugins/performanceTesting/backend
 plugins/performanceTesting/commands-model
 plugins/performanceTesting/core
 plugins/performanceTesting/event-bus
+plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose

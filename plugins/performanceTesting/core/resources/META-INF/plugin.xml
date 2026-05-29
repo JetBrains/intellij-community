@@ -31,6 +31,7 @@
     <module name="intellij.driver.client" loading="embedded"/>
     <module name="intellij.driver.frontend.split"/>
     <module name="intellij.performanceTesting.async.core"/>
+    <module name="intellij.performanceTesting.freezes"/>
   </content>
   <content>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>
@@ -86,9 +87,6 @@
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
 
     <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter" internal="true"/>
-
-    <backgroundPostStartupActivity implementation="com.jetbrains.performancePlugin.promo.ErrorReportPromoterActivity"/>
-    <diagnostic.freezeNotifier implementation="com.jetbrains.performancePlugin.promo.FreezeCounterListener"/>
 
     <toolWindow id="EventQueue Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
                 factoryClass="com.jetbrains.performancePlugin.ui.EventWatcherToolWindowFactory"/>

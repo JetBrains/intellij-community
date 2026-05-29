@@ -390,7 +390,6 @@ object CommunityModuleSets {
 
     module("intellij.libraries.microba")
     module("intellij.platform.diagnostic.freezeAnalyzer")
-    module("intellij.platform.diagnostic.freezes")
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
     module("intellij.settingsSync.core")

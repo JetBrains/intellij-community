@@ -18533,6 +18533,13 @@ jvm_import(
     source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http//file",
 )
 
+jvm_import(
+  name = "performance_testing-freezes-com-hankcs-aho-corasick-double-array-trie",
+  jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3_http//file",
+  source_jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
     name = "com.guardsquare/proguard-base-7.8.2.jar_copy",
     src = "@com_guardsquare-proguard-base-7_8_2_http//file",

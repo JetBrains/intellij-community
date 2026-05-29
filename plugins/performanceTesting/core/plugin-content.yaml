@@ -18,6 +18,12 @@
 - name: lib/modules/intellij.performanceTesting.backend.jar
   contentModules:
   - name: intellij.performanceTesting.backend
+- name: lib/modules/intellij.performanceTesting.freezes.jar
+  contentModules:
+  - name: intellij.performanceTesting.freezes
+    libraries:
+      com.hankcs:aho-corasick-double-array-trie:
+      - name: $MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1/aho-corasick-double-array-trie-1.jar
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend

@@ -1,4 +1,4 @@
-package com.intellij.platform.diagnostic.plugin.freeze
+package com.intellij.performanceTesting.freezes
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls

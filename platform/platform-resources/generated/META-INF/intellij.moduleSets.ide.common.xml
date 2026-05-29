@@ -404,7 +404,6 @@
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
-    <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
     <module name="intellij.platform.inspect"/>
     <module name="intellij.settingsSync.core"/>
