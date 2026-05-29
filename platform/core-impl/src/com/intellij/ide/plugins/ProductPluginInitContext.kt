@@ -63,8 +63,6 @@ class ProductPluginInitContext(
     return set.contains(version)
   }
 
-  override fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
-
   override val requirePlatformAliasDependencyForLegacyPlugins: Boolean
     get() = !PlatformUtils.isIntelliJ()
 

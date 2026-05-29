@@ -19,8 +19,6 @@ import com.intellij.openapi.extensions.PluginId
 abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext() {
   abstract val expiredPlugins: Set<PluginId>
 
-  override fun isPluginExpired(id: PluginId): Boolean = id in expiredPlugins
-
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> by lazy {
     buildMap {
       configureProductModeModules(currentProductModeId)

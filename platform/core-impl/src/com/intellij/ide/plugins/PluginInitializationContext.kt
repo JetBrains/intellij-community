@@ -13,7 +13,6 @@ interface PluginInitializationContext {
   val productBuildNumber: BuildNumber
   val essentialPlugins: Set<PluginId>
   fun isPluginDisabled(id: PluginId): Boolean
-  fun isPluginExpired(id: PluginId): Boolean // TODO this method should disappear and related logic should be managed by [provideProductRulesImposedModuleExclusions]
   fun isPluginBroken(id: PluginId, version: String?): Boolean
 
   /**

@@ -16,7 +16,6 @@ import com.intellij.openapi.extensions.PluginId
 abstract class EmptyTestPluginInitContext : PluginInitializationContext {
   override val essentialPlugins: Set<PluginId> = emptySet()
   override fun isPluginDisabled(id: PluginId): Boolean = false
-  override fun isPluginExpired(id: PluginId): Boolean = false
   override fun isPluginBroken(id: PluginId, version: String?): Boolean = false
   override val requirePlatformAliasDependencyForLegacyPlugins: Boolean = false
   override val checkEssentialPlugins: Boolean = false
