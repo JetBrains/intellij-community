@@ -15,13 +15,12 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
-import com.intellij.openapi.command.CommandToken
 import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.command.undo.GlobalUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -31,7 +30,9 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -53,6 +54,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiElementProcessor
@@ -65,6 +67,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
 import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -221,23 +224,25 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
   val hasDecompiler = readAction { hasBinaryDecompiler(element) }
 
   val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
-  return if (hasDecompiler) {
+  val hasCachedDocument = readAction {
+    element.containingFile?.let {
+      PsiDocumentManager.getInstance(element.project)
+        .getCachedDocument(it) != null
+    }
+  }
+  return if (hasDecompiler && hasCachedDocument != true) {
     navigateWithoutOuterWriteIntent(element, openAsNative, searchForOpen, requestFocus, commandProcessor)
   }
   else {
     withContext(Dispatchers.EDT) {
-      //readaction is not enough
-      writeIntentReadAction {
         // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
-        val commandHandle = WriteIntentReadAction.compute<CommandToken> {
-          commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@compute null
-        } ?: return@writeIntentReadAction false
+        val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@withContext false
         try {
           if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
             val navigationItem = element as NavigationItem
             if (navigationItem.canNavigate()) {
               navigationItem.navigate(requestFocus)
-              return@writeIntentReadAction true
+              return@withContext true
             }
           }
         }
@@ -246,7 +251,6 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
           element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
         }
         false
-      }
     }
   }
 }
@@ -269,35 +273,52 @@ private suspend fun navigateWithoutOuterWriteIntent(
   requestFocus: Boolean,
   commandProcessor: CommandProcessorEx,
 ): Boolean {
-  val commandHandle = withContext(Dispatchers.EDT) {
-    WriteIntentReadAction.compute<CommandToken> {
-      commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT)
-    }
-  } ?: return false
-  try {
-    if (openAsNative || !activatePsiElementIfOpenAsync(element, searchForOpen, requestFocus)) {
-      val navigationItem = element as NavigationItem
-      val canNavigate = readAction { navigationItem.canNavigate() }
-      if (canNavigate) {
-        withContext(Dispatchers.EDT) {
-          navigationItem.navigate(requestFocus)
-        }
-        return true
-      }
-    }
-    else {
-      return true
-    }
+  val project = element.project
+
+  val before = withContext(Dispatchers.EDT) { NavigationSnapshot.capture(project) }
+  val navigated = try {
+    doNavigateAsync(element, openAsNative, searchForOpen, requestFocus)
   }
   finally {
-    withContext(NonCancellable + Dispatchers.EDT) {
-      WriteIntentReadAction.run {
-        commandProcessor.finishCommand(commandHandle, null)
-      }
-    }
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   }
-  return false
+  if (!navigated) return false
+  val after = withContext(Dispatchers.EDT) { NavigationSnapshot.capture(project) }
+  if (before != after) {
+    // short command only to register UndoableAction
+    withContext(NonCancellable + Dispatchers.EDT) {
+      val handle = commandProcessor.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT)
+      if (handle != null) {
+        try {
+          registerNavigationUndo(project, before, after)
+        } finally {
+          commandProcessor.finishCommand(handle, null)
+        }
+      }
+    }
+  }
+  return true
+}
+
+private fun registerNavigationUndo(
+  project: Project,
+  before: NavigationSnapshot,
+  after: NavigationSnapshot,
+) {
+  val action = object : GlobalUndoableAction(before.file, after.file) {
+    override fun undo() {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        before.restore(project)
+      }
+    }
+
+    override fun redo() {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        after.restore(project)
+      }
+    }
+  }
+  UndoManager.getInstance(project).undoableActionPerformed(action)
 }
 
 private suspend fun activatePsiElementIfOpenAsync(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
@@ -339,6 +360,25 @@ private suspend fun activatePsiElementIfOpenAsync(element: PsiElement, searchFor
     }
     false
   }
+}
+
+private suspend fun doNavigateAsync(
+  element: PsiElement,
+  openAsNative: Boolean,
+  searchForOpen: Boolean,
+  requestFocus: Boolean,
+): Boolean {
+  if (!openAsNative) {
+    val activated = activatePsiElementIfOpenAsync(element, searchForOpen, requestFocus)
+    if (activated) return true
+  }
+  val navigationItem = element as NavigationItem
+  val canNavigate = readAction { navigationItem.canNavigate() }
+  if (canNavigate) {
+    withContext(Dispatchers.EDT) { navigationItem.navigate(requestFocus) }
+    return true
+  }
+  return false
 }
 
 private fun shouldOpenAsNative(element: PsiElement): Boolean {
@@ -653,4 +693,28 @@ fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext): L
     if (o1.isEmpty()) 1 else if (o2.isEmpty()) -1 else o1.compareTo(o2)
   }
   return result.asList()
+}
+
+private data class NavigationSnapshot(
+  val file: VirtualFile?,
+  val offset: Int,
+) {
+  fun restore(project: Project) {
+    if (file == null) return
+    OpenFileDescriptor(project, file, offset).navigate(true)
+  }
+
+  companion object {
+    @RequiresEdt
+    fun capture(project: Project): NavigationSnapshot {
+      val fem = FileEditorManager.getInstance(project)
+      val editor = fem.selectedTextEditor
+      val document = editor?.getDocument()
+      val virtualFile = document?.let { FileDocumentManager.getInstance().getFile(it) }
+      return NavigationSnapshot(
+        file = virtualFile,
+        offset = editor?.caretModel?.offset ?: 0,
+      )
+    }
+  }
 }
