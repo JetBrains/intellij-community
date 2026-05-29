@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -284,7 +284,7 @@ public class MavenResumeAction extends AnAction {
 
     @Override
     public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-      if (outputType != ProcessOutputTypes.STDOUT) return;
+      if (!ProcessOutputType.isStdout(outputType)) return;
 
       String text = event.getText().trim();
       if (text.isEmpty()) return;

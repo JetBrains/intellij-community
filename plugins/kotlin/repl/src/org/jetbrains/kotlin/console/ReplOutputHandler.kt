@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.console
 
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.createDocumentBuilderFactory
@@ -52,7 +52,7 @@ class ReplOutputHandler(
         // hide warning about adding test folder to classpath
         if (text.startsWith("warning: classpath entry points to a non-existent location")) return
 
-        if (key == ProcessOutputTypes.STDOUT) {
+        if (ProcessOutputType.isStdout(key)) {
             inputBuffer.append(text)
             val resultingText = inputBuffer.toString()
             if (resultingText.endsWith("\n")) {

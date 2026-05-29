@@ -28,9 +28,9 @@ import java.nio.charset.Charset;
 public final class ScriptRunnerUtil {
   private static final Logger LOG = Logger.getInstance(ScriptRunnerUtil.class);
 
-  public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = key -> ProcessOutputTypes.STDOUT.equals(key);
+  public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = key -> ProcessOutputType.isStdout(key);
 
-  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = key -> ProcessOutputTypes.STDERR.equals(key);
+  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = key -> ProcessOutputType.isStderr(key);
 
   public static final Condition<Key> STDOUT_OR_STDERR_OUTPUT_KEY_FILTER = Conditions.or(STDOUT_OUTPUT_KEY_FILTER, STDERR_OUTPUT_KEY_FILTER);
 

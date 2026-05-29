@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.NotificationListener;
@@ -340,10 +340,10 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     @Override
     public void notifyTextAvailable(@NotNull String line, @NotNull Key outputType) {
-      if (outputType == ProcessOutputTypes.STDERR) {
+      if (ProcessOutputType.isStderr(outputType)) {
         LOG.warn(line);
       }
-      if (outputType != ProcessOutputTypes.STDOUT || myIsShuttingDown) {
+      if (!ProcessOutputType.isStdout(outputType) || myIsShuttingDown) {
         return;
       }
 

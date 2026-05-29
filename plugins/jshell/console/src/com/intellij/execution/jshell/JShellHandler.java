@@ -18,7 +18,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -112,7 +112,7 @@ public final class JShellHandler {
     processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
+        if (ProcessOutputType.isStdout(outputType)) {
           try {
             readerSink.write(event.getText());
             readerSink.flush();
@@ -122,7 +122,7 @@ public final class JShellHandler {
           }
         }
         else {
-          myConsoleView.print(event.getText(), outputType == ProcessOutputTypes.STDERR? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.SYSTEM_OUTPUT);
+          myConsoleView.print(event.getText(), ProcessOutputType.isStderr(outputType)? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.SYSTEM_OUTPUT);
         }
       }
 

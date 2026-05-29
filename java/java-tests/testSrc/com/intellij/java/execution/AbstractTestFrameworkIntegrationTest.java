@@ -17,7 +17,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
@@ -132,7 +131,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
         public void onTextAvailable(@NotNull String text, @NotNull Key<?> outputType) {
           if (StringUtil.isEmptyOrSpaces(text)) return;
           try {
-            if (outputType == ProcessOutputTypes.STDOUT) {
+            if (ProcessOutputType.isStdout(outputType)) {
               ServiceMessage serviceMessage = ServiceMessage.parse(text.trim());
               if (serviceMessage == null) {
                 processOutput.out.add(text);
@@ -146,7 +145,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
               processOutput.sys.add(text);
             }
 
-            if (outputType == ProcessOutputTypes.STDERR) {
+            if (ProcessOutputType.isStderr(outputType)) {
               processOutput.err.add(text);
             }
           }

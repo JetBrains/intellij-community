@@ -92,7 +92,7 @@ internal class GitRepositoryTagsHolderImpl(
 
     override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
       try {
-        if (outputType == ProcessOutputType.STDOUT) {
+        if (ProcessOutputType.isStdout(outputType)) {
           val scanner = StringScanner(line)
           val tagName = scanner.tabToken() ?: return
           val dereferencedHash = scanner.tabToken() ?: return

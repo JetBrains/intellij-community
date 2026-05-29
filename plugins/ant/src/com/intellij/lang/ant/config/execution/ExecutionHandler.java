@@ -9,7 +9,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -240,7 +240,7 @@ public final class ExecutionHandler {
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDERR) {
+        if (ProcessOutputType.isStderr(outputType)) {
           final String text = event.getText();
           synchronized (myUnprocessedStdErr) {
             myUnprocessedStdErr.append(text);

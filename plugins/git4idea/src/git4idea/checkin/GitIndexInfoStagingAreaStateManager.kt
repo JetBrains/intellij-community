@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
@@ -74,7 +74,7 @@ internal class GitIndexInfoStagingAreaStateManager(val repository: GitRepository
       endOptions()
 
       addLineListener(GitLineHandlerListener { line, outputType ->
-        if (outputType === ProcessOutputTypes.STDOUT) {
+        if (ProcessOutputType.isStdout(outputType)) {
           parseStatusLinePorcelainV2(line, result)
         }
       })

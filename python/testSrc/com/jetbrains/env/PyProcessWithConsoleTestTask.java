@@ -19,7 +19,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
@@ -156,10 +156,10 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
         super.onTextAvailable(event, outputType); //Store text for user
         final String text = event.getText();
         stdAll.append(text);
-        if (outputType.equals(ProcessOutputTypes.STDOUT)) {
+        if (ProcessOutputType.isStdout(outputType)) {
           stdOut.append(text);
         }
-        else if (outputType.equals(ProcessOutputTypes.STDERR)) {
+        else if (ProcessOutputType.isStderr(outputType)) {
           stdErr.append(text);
         }
       }

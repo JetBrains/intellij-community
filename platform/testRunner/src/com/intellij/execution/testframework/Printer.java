@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +16,8 @@ public interface Printer {
   void mark();
 
   default void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
-    if (processOutputType != ProcessOutputTypes.STDERR &&
-        processOutputType != ProcessOutputTypes.STDOUT &&
+    if (!ProcessOutputType.isStderr(processOutputType) &&
+        !ProcessOutputType.isStdout(processOutputType) &&
         !ProcessOutputType.isSystem(processOutputType)) {
       print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
       return;

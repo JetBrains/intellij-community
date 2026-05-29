@@ -5,7 +5,7 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,10 +148,10 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
         handler.addProcessListener(new ProcessListener() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            if (outputType == ProcessOutputTypes.STDOUT) {
+            if (ProcessOutputType.isStdout(outputType)) {
               stdOutParser.append(event.getText());
             }
-            else if (outputType == ProcessOutputTypes.STDERR) {
+            else if (ProcessOutputType.isStderr(outputType)) {
               stdErrParser.append(event.getText());
             }
           }

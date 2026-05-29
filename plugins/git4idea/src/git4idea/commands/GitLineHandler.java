@@ -142,8 +142,8 @@ public class GitLineHandler extends GitTextHandler {
 
   private void logOutput(@NotNull String line, @NotNull Key outputType) {
     if (mySilent) return;
-    boolean shouldLogOutput = outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() ||
-                              outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed();
+    boolean shouldLogOutput = ProcessOutputType.isStdout(outputType) && !isStdoutSuppressed() ||
+                              ProcessOutputType.isStderr(outputType) && !isStderrSuppressed();
     if (!shouldLogOutput) return;
     if (StringUtil.isEmptyOrSpaces(line)) return;
     LOG.info(line.trim());

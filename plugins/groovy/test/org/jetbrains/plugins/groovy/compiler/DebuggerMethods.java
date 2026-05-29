@@ -25,7 +25,7 @@ import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -67,7 +67,7 @@ public interface DebuggerMethods extends CompilerMethods {
         () -> runConfiguration(DefaultDebugExecutor.class, new ProcessListener() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            if (outputType.equals(ProcessOutputTypes.STDERR)) {
+            if (ProcessOutputType.isStderr(outputType)) {
               System.out.println(event.getText());
             }
           }

@@ -3,7 +3,7 @@ package git4idea.merge;
 
 import com.intellij.diff.merge.ConflictType;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -387,7 +387,7 @@ public final class GitMergeUtil {
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (!ProcessOutputType.isStdout(outputType)) return;
         if (!line.contains(blob)) return;
         if (pathAmbiguous[0]) return;
 

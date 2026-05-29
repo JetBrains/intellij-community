@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -402,7 +401,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private void processProcessOutputText(@NotNull String text, @NotNull Key<?> outputType, boolean isProcessWithPty) {
     try {
       ConsoleViewContentType contentType = null;
-      if (outputType != ProcessOutputTypes.STDOUT) {
+      if (!ProcessOutputType.isStdout(outputType)) {
         contentType = ConsoleViewContentType.getConsoleViewType(outputType);
       }
       if (ProcessOutputType.isSystem(outputType)) {

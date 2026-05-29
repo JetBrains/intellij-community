@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -118,7 +118,7 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
 
     fun getLineListener(): GitLineHandlerListener {
       val parser = GitLogParser.PathsParser(GitLogParser.NameStatus.STATUS, this)
-      return GitLineHandlerListener { line, outputType -> if (outputType == ProcessOutputTypes.STDOUT) parser.parseLine(line) }
+      return GitLineHandlerListener { line, outputType -> if (ProcessOutputType.isStdout(outputType)) parser.parseLine(line) }
     }
 
     fun getSingleRename(): VcsFileStatusInfo? {

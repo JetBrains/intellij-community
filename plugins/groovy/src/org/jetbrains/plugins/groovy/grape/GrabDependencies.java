@@ -7,7 +7,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -275,10 +275,10 @@ public final class GrabDependencies implements IntentionAction {
       if (LOG.isDebugEnabled()) {
         LOG.debug(outputType + text);
       }
-      if (outputType == ProcessOutputTypes.STDOUT) {
+      if (ProcessOutputType.isStdout(outputType)) {
         myStdOut.append(text);
       }
-      else if (outputType == ProcessOutputTypes.STDERR) {
+      else if (ProcessOutputType.isStderr(outputType)) {
         myStdErr.append(text);
       }
     }

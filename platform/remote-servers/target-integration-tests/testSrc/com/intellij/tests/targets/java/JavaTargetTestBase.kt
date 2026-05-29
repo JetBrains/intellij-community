@@ -82,7 +82,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
         )
         .build()
     }
-    val textDeferred = processOutputReader { _, outputType -> outputType == ProcessOutputType.STDOUT }
+    val textDeferred = processOutputReader { _, outputType -> ProcessOutputType.isStdout(outputType) }
     withDeletingExcessiveEditors {
       withTimeout(30_000) {
         CompletableDeferred<RunContentDescriptor>()
@@ -123,11 +123,11 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
 
     val textDeferred = processOutputReader filter@{ event, outputType ->
       val text = event.text ?: return@filter false
-      when (outputType) {
-        ProcessOutputType.STDOUT ->
+      when {
+        ProcessOutputType.isStdout(outputType) ->
           // For some reason this string appears in stdout. Don't know whether it should appear or not.
           !text.startsWith("Listening for transport ")
-        ProcessOutputType.SYSTEM -> text.startsWith("Debugger")
+        ProcessOutputType.isSystem(outputType) -> text.startsWith("Debugger")
         else -> false
       }
     }

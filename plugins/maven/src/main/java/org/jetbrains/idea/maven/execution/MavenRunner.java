@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -70,13 +69,13 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           String eventText = event.getText();
-          if (outputType == ProcessOutputTypes.STDERR || eventText.contains("[ERROR]")) {
+          if (ProcessOutputType.isStderr(outputType) || eventText.contains("[ERROR]")) {
             MavenLog.LOG.warn(eventText);
           }
           else if (ProcessOutputType.isSystem(outputType)) {
             MavenLog.LOG.info(eventText);
           }
-          else if (outputType == ProcessOutputTypes.STDOUT) {
+          else if (ProcessOutputType.isStdout(outputType)) {
             MavenLog.LOG.trace(eventText);
           }
         }

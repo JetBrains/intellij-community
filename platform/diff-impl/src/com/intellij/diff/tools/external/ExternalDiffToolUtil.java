@@ -22,6 +22,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -290,8 +291,8 @@ public final class ExternalDiffToolUtil {
     processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT ||
-            outputType == ProcessOutputTypes.STDERR) {
+        if (ProcessOutputType.isStdout(outputType) ||
+            ProcessOutputType.isStderr(outputType)) {
           outputConsole.appendOutput(outputType, event.getText());
         }
       }

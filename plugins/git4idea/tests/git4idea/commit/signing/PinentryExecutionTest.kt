@@ -7,7 +7,7 @@ import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -200,7 +200,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
             super.onTextAvailable(event, outputType)
             val receivedText = event.text
-            if (receivedText != null && outputType == ProcessOutputTypes.STDOUT) {
+            if (receivedText != null && ProcessOutputType.isStdout(outputType)) {
               replyOn(receivedText)
             }
           }

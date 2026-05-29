@@ -23,7 +23,7 @@ public interface OutputBuildEvent extends BuildEvent {
    */
   @Deprecated
   default boolean isStdOut() {
-    return getOutputType() == ProcessOutputType.STDOUT;
+    return getOutputType().isStdout();
   }
 
   @CheckReturnValue

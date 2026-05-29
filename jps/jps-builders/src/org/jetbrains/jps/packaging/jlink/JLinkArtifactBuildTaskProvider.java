@@ -6,7 +6,7 @@ import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -240,7 +240,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             String message = StringUtil.trimTrailing(event.getText());
-            if (outputType == ProcessOutputTypes.STDERR) {
+            if (ProcessOutputType.isStderr(outputType)) {
               errorOutput.append(event.getText());
             }
             else {

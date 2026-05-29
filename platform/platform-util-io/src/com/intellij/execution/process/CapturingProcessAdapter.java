@@ -21,10 +21,10 @@ public class CapturingProcessAdapter extends ProcessAdapter {
   }
 
   protected void addToOutput(String text, Key outputType) {
-    if (outputType == ProcessOutputTypes.STDOUT) {
+    if (ProcessOutputType.isStdout(outputType)) {
       myOutput.appendStdout(text);
     }
-    else if (outputType == ProcessOutputTypes.STDERR) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       myOutput.appendStderr(text);
     }
   }

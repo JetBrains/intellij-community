@@ -293,10 +293,10 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
           String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
 
           final Key outputType;
-          if (type == ProcessOutputTypes.STDOUT) {
+          if (ProcessOutputType.isStdout(type)) {
             outputType = ALL_STDOUT_KEYS.get(r.nextInt(2));
           }
-          else if (type == ProcessOutputTypes.STDERR) {
+          else if (ProcessOutputType.isStderr(type)) {
             outputType = ALL_STDERR_KEYS.get(r.nextInt(2));
           }
           else {

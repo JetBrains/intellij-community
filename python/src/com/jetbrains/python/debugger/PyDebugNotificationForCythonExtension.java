@@ -10,7 +10,7 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
@@ -164,7 +164,7 @@ public final class PyDebugNotificationForCythonExtension {
           handler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+              if (ProcessOutputType.isStdout(outputType) || ProcessOutputType.isStderr(outputType)) {
                 for (String line : StringUtil.splitByLines(event.getText())) {
                   if (isSignificantOutput(line)) {
                     indicator.setText2(line.trim()); //NON-NLS

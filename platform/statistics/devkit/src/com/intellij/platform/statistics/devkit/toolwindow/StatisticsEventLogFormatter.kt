@@ -30,7 +30,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
   override fun formatMessage(msg: String?): String? {
     if (msg == null) return null
     val processingResult = model.processLine(msg)
-    val isStderr = processingResult.key == ProcessOutputType.STDERR
+    val isStderr = processingResult.key?.let { ProcessOutputType.isStderr(it) } == true
     colorMagenta = getColorForCurrentTheme(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY, JBColor.MAGENTA)
     colorGreen = getColorForCurrentTheme(JsonSyntaxHighlighterFactory.JSON_STRING, JBColor.GREEN)
 

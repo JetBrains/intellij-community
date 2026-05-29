@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -597,7 +598,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             private val errorOutput = StringBuilder()
 
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                if (outputType == ProcessOutputTypes.STDERR) {
+                if (ProcessOutputType.isStderr(outputType)) {
                     errorOutput.append(event.text)
                 }
             }

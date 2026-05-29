@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch.repl
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -148,9 +148,9 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
         override fun notifyTextAvailable(text: String, outputType: Key<*>) {
             if (text.startsWith("warning: classpath entry points to a non-existent location")) return
 
-            when (outputType) {
-                ProcessOutputTypes.STDOUT -> handleReplMessage(text)
-                ProcessOutputTypes.STDERR -> errorOccurs(text)
+            when {
+                ProcessOutputType.isStdout(outputType) -> handleReplMessage(text)
+                ProcessOutputType.isStderr(outputType) -> errorOccurs(text)
             }
         }
 

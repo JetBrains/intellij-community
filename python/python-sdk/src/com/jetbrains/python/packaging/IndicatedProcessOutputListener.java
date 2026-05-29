@@ -2,7 +2,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -23,7 +23,7 @@ public final class IndicatedProcessOutputListener extends ProcessAdapter {
 
   @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+    if (ProcessOutputType.isStdout(outputType) || ProcessOutputType.isStderr(outputType)) {
       for (String line : StringUtil.splitByLines(event.getText())) {
         final @NlsSafe String trimmed = line.trim();
         if (isMeaningfulOutput(trimmed)) {

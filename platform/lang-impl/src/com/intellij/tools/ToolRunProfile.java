@@ -16,7 +16,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -106,8 +106,8 @@ public class ToolRunProfile implements ModuleRunProfile{
           processHandler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
-                || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
+              if ((ProcessOutputType.isStdout(outputType) && myTool.isShowConsoleOnStdOut())
+                || (ProcessOutputType.isStderr(outputType) && myTool.isShowConsoleOnStdErr())) {
                 ApplicationManager.getApplication().invokeLater(() -> {
                   RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
                 }, project.getDisposed());

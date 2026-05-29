@@ -2,7 +2,6 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -61,7 +60,7 @@ public class GroovycOutputParser {
       return;
     }
 
-    if (outputType == ProcessOutputTypes.STDERR && !isSafeStderr(text)) {
+    if (ProcessOutputType.isStderr(outputType) && !isSafeStderr(text)) {
       stdErr.append(StringUtil.convertLineSeparators(text));
       return;
     }

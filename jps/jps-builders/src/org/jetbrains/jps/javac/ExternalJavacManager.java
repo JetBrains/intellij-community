@@ -5,7 +5,7 @@ import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -447,10 +447,10 @@ public class ExternalJavacManager extends ProcessAdapter {
         LOG.trace("text from javac: " + text);
       }
       String prefix = null;
-      if (outputType == ProcessOutputTypes.STDOUT) {
+      if (ProcessOutputType.isStdout(outputType)) {
         prefix = STDOUT_LINE_PREFIX;
       }
-      else if (outputType == ProcessOutputTypes.STDERR) {
+      else if (ProcessOutputType.isStderr(outputType)) {
         prefix = STDERR_LINE_PREFIX;
       }
       if (prefix != null) {

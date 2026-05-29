@@ -20,7 +20,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -73,7 +73,7 @@ public final class ShellCommand {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           for (@NlsSafe String line : LineHandlerHelper.splitText(event.getText())) {
-            if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
+            if (ProcessOutputType.isStdout(outputType) && indicator != null && showTextOnIndicator) {
               indicator.setText2(line);
             }
             listener.onLineAvailable(line, outputType);

@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.util.Key
 import com.intellij.util.createDocumentBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -48,10 +48,10 @@ class PListBuddyWrapper(private val pListPath: String) {
       val processHandler = OSProcessHandler(commandLine)
       processHandler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          if (ProcessOutputTypes.STDOUT == outputType) {
+          if (ProcessOutputType.isStdout(outputType)) {
             output.append(event.text)
           }
-          if (ProcessOutputTypes.STDERR == outputType) {
+          if (ProcessOutputType.isStderr(outputType)) {
             errorMessage.append(event.text)
           }
         }

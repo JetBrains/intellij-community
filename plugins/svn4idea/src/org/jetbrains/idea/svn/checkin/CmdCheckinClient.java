@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -169,7 +169,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     @Override
     public void onLineAvailable(String line, Key outputType) {
       final String trim = line.trim();
-      if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+      if (ProcessOutputType.isStdout(outputType)) {
         try {
           parseLine(trim);
         }

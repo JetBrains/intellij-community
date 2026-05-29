@@ -3,7 +3,7 @@ package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -111,7 +111,7 @@ public final class GitBranchUtil {
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (!ProcessOutputType.isStdout(outputType)) return;
         if (!line.isEmpty()) tags.add(line);
       }
     });

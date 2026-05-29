@@ -2,7 +2,7 @@
 package org.jetbrains.idea.svn.info
 
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -73,7 +73,7 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
     val output = ProcessOutput()
     val listener = object : LineCommandAdapter() {
       override fun onLineAvailable(line: String, outputType: Key<*>) {
-        if (outputType === ProcessOutputTypes.STDOUT) {
+        if (ProcessOutputType.isStdout(outputType)) {
           output.appendStdout(line)
         }
       }

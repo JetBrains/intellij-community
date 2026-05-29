@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -57,10 +56,10 @@ internal class GradleServerProcessListener(
 
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
     log.traceIfNotEmpty(event.text)
-    if (connectionAddressReceived.get() && outputType !== ProcessOutputTypes.STDERR) {
+    if (connectionAddressReceived.get() && !ProcessOutputType.isStderr(outputType)) {
       return
     }
-    if (outputType === ProcessOutputTypes.STDERR) {
+    if (ProcessOutputType.isStderr(outputType)) {
       targetProgressIndicator.addText(event.text, outputType)
     }
     if (event.text.startsWith(CONNECTION_CONF_LINE_PREFIX)) {

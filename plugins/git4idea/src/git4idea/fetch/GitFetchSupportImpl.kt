@@ -3,7 +3,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
 import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationType
@@ -247,7 +247,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   private fun doFetch(fetchTarget: GitFetchSpec, authenticationGate: AuthenticationGate?): SingleRemoteResult {
     val indicator = progressManager.progressIndicator
     val progressListener = GitLineHandlerListener { line, outputType ->
-      if (indicator != null && outputType == ProcessOutputTypes.STDERR) {
+      if (indicator != null && ProcessOutputType.isStderr(outputType)) {
         // TODO: support 'GitStandardProgressAnalyzer' for multiple remotes
         indicator.text2 = line
       }

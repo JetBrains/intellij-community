@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -136,7 +136,7 @@ private class GitPinentryProblemDetector : GitLineEventDetector {
     private set
 
   override fun onLineAvailable(line: String, outputType: Key<*>) {
-    if (outputType === ProcessOutputTypes.STDERR && PATTERNS.any(line::contains)) {
+    if (ProcessOutputType.isStderr(outputType) && PATTERNS.any(line::contains)) {
       isDetected = true
     }
   }
@@ -151,7 +151,7 @@ private class GitGpgProblemDetector : GitLineEventDetector {
     private set
 
   override fun onLineAvailable(line: String, outputType: Key<*>) {
-    if (outputType === ProcessOutputTypes.STDERR && line.contains(PATTERN)) {
+    if (ProcessOutputType.isStderr(outputType) && line.contains(PATTERN)) {
       isDetected = true
     }
   }
@@ -166,7 +166,7 @@ private class GitEmptyCommitProblemDetector : GitLineEventDetector {
     private set
 
   override fun onLineAvailable(line: String, outputType: Key<*>) {
-    if (outputType === ProcessOutputTypes.STDOUT && PATTERNS.any { line.startsWith(it, ignoreCase = true) }) {
+    if (ProcessOutputType.isStdout(outputType) && PATTERNS.any { line.startsWith(it, ignoreCase = true) }) {
       isDetected = true
     }
   }

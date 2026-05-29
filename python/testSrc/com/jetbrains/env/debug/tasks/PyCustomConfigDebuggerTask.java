@@ -215,7 +215,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         myOutputBuilder.append(event.getText());
-        if (outputType == ProcessOutputType.STDERR) {
+        if (ProcessOutputType.isStderr(outputType)) {
           myStdErrBuilder.append(event.getText());
         }
       }

@@ -228,7 +228,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
         private var badLineReported = 0
         override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
           try {
-            if (outputType == ProcessOutputType.STDOUT) {
+            if (ProcessOutputType.isStdout(outputType)) {
               val scanner = StringScanner(line)
               val branchRef = scanner.tabToken() ?: return
               val branchHash = GitRefUtil.parseHash(scanner.tabToken()) ?: return

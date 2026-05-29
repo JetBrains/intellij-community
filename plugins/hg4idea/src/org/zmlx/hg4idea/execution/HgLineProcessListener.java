@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.execution;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsException;
@@ -13,10 +13,10 @@ public abstract class HgLineProcessListener {
   private byte @NotNull [] myBinaryOutput = new byte[0];
 
   public void onLineAvailable(String line, Key outputType) {
-    if (ProcessOutputTypes.STDOUT == outputType) {
+    if (ProcessOutputType.isStdout(outputType)) {
       processOutputLine(line);
     }
-    else if (ProcessOutputTypes.STDERR == outputType) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       processErrorLine(line);
     }
   }

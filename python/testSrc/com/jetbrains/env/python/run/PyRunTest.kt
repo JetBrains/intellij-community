@@ -8,7 +8,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.runInEdt
@@ -135,7 +135,7 @@ private class TestDslBuilder(private val executor: (PyTestTask) -> Unit) {
           val processHandler = it.processHandler ?: error("Failed to create process")
           processHandler.addProcessListener(object : ProcessListener {
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-              if (outputType == ProcessOutputTypes.STDOUT) {
+              if (ProcessOutputType.isStdout(outputType)) {
                 output.add(event.text)
               }
             }

@@ -13,7 +13,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -87,7 +86,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected void logText(@NotNull Parameters configuration, @NotNull ProcessEvent event, @NotNull Key outputType) {
     String text = StringUtil.notNullize(event.getText());
-    if (outputType == ProcessOutputTypes.STDERR) {
+    if (ProcessOutputType.isStderr(outputType)) {
       LOG.warn(text.trim());
     }
     else {
@@ -418,10 +417,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
+        if (ProcessOutputType.isStdout(outputType)) {
           LOG.debug("Remote process stdout:" + event.getText());
         } else
-        if (outputType == ProcessOutputTypes.STDERR) {
+        if (ProcessOutputType.isStderr(outputType)) {
           LOG.warn("Remote process stderr:" + event.getText());
         } else
         if (ProcessOutputType.isSystem(outputType)) {
@@ -436,7 +435,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           Info o = myProcMap.get(key);
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
-            if (outputType == ProcessOutputTypes.STDOUT) {
+            if (ProcessOutputType.isStdout(outputType)) {
               String prefix = "Port/ServicesPort/ID:";
               if (text.startsWith(prefix)) {
                 List<String> data = StringUtil.split(text.substring(prefix.length()).trim(), "/");
@@ -450,7 +449,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                 myProcMap.notifyAll();
               }
             }
-            else if (outputType == ProcessOutputTypes.STDERR) {
+            else if (ProcessOutputType.isStderr(outputType)) {
               info.stderr.append(text);
             }
           }

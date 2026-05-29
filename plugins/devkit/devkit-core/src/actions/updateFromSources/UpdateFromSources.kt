@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
@@ -182,7 +182,7 @@ private fun runUpdateScript(
       scriptHandler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
           output.add(event.text)
-          if (outputType == ProcessOutputTypes.STDOUT) {
+          if (ProcessOutputType.isStdout(outputType)) {
             indicator.text2 = event.text
           }
         }

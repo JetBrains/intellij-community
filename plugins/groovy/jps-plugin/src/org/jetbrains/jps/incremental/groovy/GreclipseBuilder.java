@@ -311,10 +311,10 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
 
           @Override
           public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
-            if (outputType == ProcessOutputType.STDERR) {
+            if (ProcessOutputType.isStderr(outputType)) {
               err.append(text);
             }
-            if (outputType == ProcessOutputType.STDOUT) {
+            if (ProcessOutputType.isStdout(outputType)) {
               out.append(text);
             }
           }

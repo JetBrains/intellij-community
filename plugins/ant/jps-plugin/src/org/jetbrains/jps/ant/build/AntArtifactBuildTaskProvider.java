@@ -4,7 +4,7 @@ package org.jetbrains.jps.ant.build;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -186,7 +186,7 @@ public final class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
         handler.addProcessListener(new ProcessListener() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            if (outputType == ProcessOutputTypes.STDERR) {
+            if (ProcessOutputType.isStderr(outputType)) {
               errorOutput.append(event.getText());
             }
           }

@@ -66,7 +66,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   protected boolean handlePrompt(String text, Key outputType) {
     // if process has separate output and error streams => try to handle prompts only from error stream output
-    boolean shouldHandleWithListeners = !processHasSeparateErrorStream() || ProcessOutputTypes.STDERR.equals(outputType);
+    boolean shouldHandleWithListeners = !processHasSeparateErrorStream() || ProcessOutputType.isStderr(outputType);
 
     return shouldHandleWithListeners && handlePromptWithListeners(text, outputType);
   }
@@ -115,10 +115,10 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   }
 
   private @NotNull StringBuilder getLastLineFor(Key outputType) {
-    if (ProcessOutputTypes.STDERR.equals(outputType)) {
+    if (ProcessOutputType.isStderr(outputType)) {
       return errorLine;
     }
-    else if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+    else if (ProcessOutputType.isStdout(outputType)) {
       return outputLine;
     }
     else {

@@ -2,7 +2,6 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -323,10 +322,10 @@ public abstract class GitImplBase implements Git {
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
-      if (outputType == ProcessOutputTypes.STDOUT) {
+      if (ProcessOutputType.isStdout(outputType)) {
         myOutputCollector.outputLineReceived(line);
       }
-      else if (outputType == ProcessOutputTypes.STDERR &&
+      else if (ProcessOutputType.isStderr(outputType) &&
                !looksLikeProgress(line)) {
         myOutputCollector.errorLineReceived(line);
       }
@@ -397,8 +396,8 @@ public abstract class GitImplBase implements Git {
       try {
         if (StringUtil.isEmptyOrSpaces(line)) return;
         if (ProcessOutputType.isSystem(outputType)) return;
-        if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
-        if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
+        if (ProcessOutputType.isStdout(outputType) && myHandler.isStdoutSuppressed()) return;
+        if (ProcessOutputType.isStderr(outputType) && myHandler.isStderrSuppressed()) return;
 
         myOutputPrinter.showCommandOutput(processId, myWorkingDir, outputType, line);
       }

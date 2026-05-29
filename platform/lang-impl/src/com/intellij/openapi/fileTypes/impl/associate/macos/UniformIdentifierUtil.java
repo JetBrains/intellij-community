@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
@@ -87,10 +87,10 @@ final class UniformIdentifierUtil {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event,
                                   @NotNull Key outputType) {
-        if (ProcessOutputTypes.STDERR.equals(outputType)) {
+        if (ProcessOutputType.isStderr(outputType)) {
           errMessage.append(event.getText());
         }
-        else if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+        else if (ProcessOutputType.isStdout(outputType)) {
           String text = event.getText();
           if (text.contains(CONTENT_TYPE_ATTR)) {
             contentTypeValue.set(extractContentTypeValue(text));

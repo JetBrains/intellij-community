@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -72,7 +72,7 @@ public final class GitIndexUtil {
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (!ProcessOutputType.isStdout(outputType)) return;
         ContainerUtil.addIfNotNull(result, parseListFilesStagedRecord(root, line));
       }
     });
@@ -119,7 +119,7 @@ public final class GitIndexUtil {
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (!ProcessOutputType.isStdout(outputType)) return;
         ContainerUtil.addIfNotNull(result, parseListTreeRecord(repositoryRoot, line));
       }
     });

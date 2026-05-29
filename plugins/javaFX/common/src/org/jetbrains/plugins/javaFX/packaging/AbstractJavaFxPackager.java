@@ -5,7 +5,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -277,7 +277,7 @@ public abstract class AbstractJavaFxPackager {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           String message = StringUtil.trimTrailing(event.getText());
-          if (outputType == ProcessOutputTypes.STDERR) {
+          if (ProcessOutputType.isStderr(outputType)) {
             LOG.error(message, (Throwable)null);
             errorOutput.append(event.getText());
           }

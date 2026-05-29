@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineHandlerHelper;
@@ -52,10 +53,10 @@ public class ResultBuilderNotifier extends ProcessAdapter {
 
   private void onTextAvailable(final String text, final Key outputType) {
     Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
-    if (ProcessOutputTypes.STDOUT == outputType) {
+    if (ProcessOutputType.isStdout(outputType)) {
       notifyLines(outputType, lines, myStdoutLine);
     }
-    else if (ProcessOutputTypes.STDERR == outputType) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       notifyLines(outputType, lines, myStderrLine);
     }
   }
