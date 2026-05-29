@@ -21,5 +21,10 @@
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
     <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleDependenciesAutoPopupHandler"
                   id="KotlinGradleDependenciesAutoPopupHandler"/>
+    <completion.confidence
+      language="kotlin"
+      implementationClass="com.intellij.gradle.completion.kotlin.EnableAutoPopupInKotlinGradleDependencyString"
+      id="kotlinGradleDoNotSkipAutoPopupInDependencyStrings"
+      order="before kotlinSkipAutopopupInStrings"/>
   </extensions>
 </idea-plugin>

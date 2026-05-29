@@ -2,11 +2,14 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.CompletionConfidence
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
@@ -22,11 +25,23 @@ internal class KotlinGradleDependenciesAutoPopupHandler : TypedHandlerDelegate()
 
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { psiFile ->
       val element = psiFile.findElementAt(offset) ?: return@scheduleAutoPopup false
-      element.isSingleDependencyArgumentInsideQuotes()
-      || element.isExcludeArgument()
-      || element.isPositionalOrNamedDependencyArgument()
+      element.isValidDependencyArgument()
     }
 
     return Result.CONTINUE
   }
 }
+
+internal class EnableAutoPopupInKotlinGradleDependencyString : CompletionConfidence() {
+  override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
+    if (!useDependencyCompletionService()) return ThreeState.UNSURE
+    if (!psiFile.name.endsWith(".gradle.kts")) return ThreeState.UNSURE
+    return if (contextElement.isValidDependencyArgument()) ThreeState.NO
+    else ThreeState.UNSURE
+  }
+}
+
+private fun PsiElement.isValidDependencyArgument() =
+  isSingleDependencyArgumentInsideQuotes()
+  || isExcludeArgument()
+  || isPositionalOrNamedDependencyArgument()

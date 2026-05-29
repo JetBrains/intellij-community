@@ -258,4 +258,44 @@ class KotlinGradleDependenciesAutoPopupHandlerTest : K2GradleCodeInsightTestCase
     autoPopupTester.typeWithPauses("\"")
     assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered outside of dependencies block" }
   }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup stays in dependency GAV`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(<caret>)
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("\"myG")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of dependency's GAV argument" }
+    assertEquals("myGroup:myArtifact:1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup stays in exclude positional group`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup:myArtifact:1.0") {
+              exclude(<caret>)
+          }
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("\"myG")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of exclude's group argument" }
+    assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  /**
+   * [typeWithPauses] does not test completion confidence
+   */
+  private fun CompletionAutoPopupTester.typeFast(text: String) {
+    codeInsightFixture.type(text)
+    this.joinAutopopup()
+    this.joinCompletion()
+  }
 }
+
