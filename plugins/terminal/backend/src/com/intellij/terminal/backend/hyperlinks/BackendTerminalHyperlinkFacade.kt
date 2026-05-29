@@ -2,32 +2,21 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
-import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,8 +43,6 @@ class BackendTerminalHyperlinkFacade(
     }
   }
 
-  private val pendingUpdateEvents = MutableStateFlow(0)
-
   fun applyContentUpdate(update: TerminalOutputUpdate) {
     if (update is TerminalOutputTrimmingUpdate) {
       trimOffset.set(update.startOffset)
@@ -64,15 +51,7 @@ class BackendTerminalHyperlinkFacade(
   }
 
   fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
-    val events = highlighter.collectResultsAndMaybeStartNewTask()
-    // HyperlinksUpdated events are immediately passed to updateModelState(),
-    // but the tests need to wait until they were actually applied, and they wait concurrently.
-    // This counter works as a latch: incremented here for each HyperlinksUpdated, decremented in updateModelState.
-    val updatesCount = events.count { it is TerminalHyperlinksOutputEvent.HyperlinksUpdated }
-    if (updatesCount > 0) {
-      pendingUpdateEvents.update { it + updatesCount }
-    }
-    return events
+    return highlighter.collectResultsAndMaybeStartNewTask()
   }
 
   fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated): Boolean {
@@ -81,7 +60,6 @@ class BackendTerminalHyperlinkFacade(
       model.removeHyperlinks(removedFrom)
     }
     model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
-    pendingUpdateEvents.update { it - 1 }
     return true
   }
 
@@ -89,59 +67,5 @@ class BackendTerminalHyperlinkFacade(
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
     TerminalHyperlinkNavigator.navigate(project, hyperlink, mouseEvent)
     ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
-  }
-
-  fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? =
-    model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let {
-      hyperlinkInfo -> BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
-    }
-
-  fun dumpState(): TerminalHyperlinksModelState = model.dumpState()
-
-  @TestOnly
-  suspend fun awaitTaskCompletion() {
-    highlighter.awaitTaskCompletion()
-    pendingUpdateEvents.first { it == 0 } // Wait until the last event is applied.
-  }
-
-  companion object {
-    fun install(
-      debugName: String,
-      project: Project,
-      coroutineScope: CoroutineScope,
-      outputModel: TerminalOutputModel,
-      filterContext: TerminalHyperlinkFilterContext?,
-    ): BackendTerminalHyperlinkFacade {
-      val facade = BackendTerminalHyperlinkFacade(debugName, project, coroutineScope, filterContext)
-
-      outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-        override fun afterContentChanged(event: TerminalContentChangeEvent) {
-          val model = event.model
-          val update: TerminalOutputUpdate = if (event.isTrimming) {
-            TerminalOutputTrimmingUpdate(
-              firstLine = model.firstLineIndex,
-              startOffset = model.startOffset,
-              endOffset = model.endOffset,
-              modificationStamp = model.modificationStamp,
-            )
-          }
-          else {
-            val startLine = model.getLineByOffset(event.offset)
-            val startOffset = model.getStartOfLine(startLine)
-            val endOffset = model.endOffset
-            TerminalOutputContentUpdate(
-              charsSequence = model.getText(startOffset, endOffset),
-              startLine = startLine,
-              endLine = model.lastLineIndex,
-              startOffset = startOffset,
-              modificationStamp = model.modificationStamp,
-            )
-          }
-          facade.applyContentUpdate(update)
-        }
-      })
-
-      return facade
-    }
   }
 }
