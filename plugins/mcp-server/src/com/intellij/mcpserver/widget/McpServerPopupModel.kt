@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.widget
 
 import androidx.compose.runtime.Stable
+import com.intellij.execution.services.ServiceViewManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
@@ -10,6 +11,7 @@ import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.services.McpServiceViewContributor
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.util.getConsentDialog
@@ -17,6 +19,7 @@ import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.TextTransferable
 
 
@@ -39,6 +42,7 @@ internal interface McpServerPopupModel {
   fun copyStreamConfig(): Boolean
   fun browseUrl(url: String)
   fun onSettingsClick()
+  fun showInServiceView()
 }
 
 internal class McpServerPopupModelImpl(
@@ -120,5 +124,10 @@ internal class McpServerPopupModelImpl(
 
   override fun onSettingsClick() {
     onSettingsClickAction()
+  }
+
+  override fun showInServiceView() {
+    val toolWindowId = ServiceViewManager.getInstance(project).getToolWindowId(McpServiceViewContributor::class.java)
+    ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.activate(null)
   }
 }

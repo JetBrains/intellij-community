@@ -100,10 +100,9 @@ internal fun McpServerPopupContent(
 private fun EnabledMcpSettings(model: McpServerPopupModel) {
   var isBraveMode by remember { mutableStateOf(model.braveMode) }
 
-  Text(
+  Link(
     text = McpServerBundle.message("mcp.server.status.bar.popup.active.connections", model.activeConnectionCount),
-    color = JewelTheme.globalColors.text.info,
-    fontSize = 12.sp,
+    onClick = { model.showInServiceView() },
   )
 
   Spacer(Modifier.height(spacing.verticalSmallGap.dp))
@@ -305,6 +304,7 @@ fun McpPanelPreview() {
     override fun copyStreamConfig() = true
     override fun browseUrl(url: String) {}
     override fun onSettingsClick() {}
+    override fun showInServiceView() {}
   }
 
   var sizeText by remember { mutableStateOf("") }
