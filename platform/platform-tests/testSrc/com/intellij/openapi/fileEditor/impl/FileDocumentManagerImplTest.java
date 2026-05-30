@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager;
@@ -47,6 +47,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -891,5 +892,32 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
     assertTrue(document.getModificationStamp() != stampBefore);
     assertTrue(document.getModificationSequence() > sequenceBefore);
+  }
+
+  public void testLightFileDocumentCaching() {
+    var lightFile = new LightVirtualFile("testFile.txt", "test");
+    assertNull("File is not expected to have a document", myDocumentManager.getCachedDocument(lightFile));
+    var lightFileDocument = myDocumentManager.getDocument(lightFile);
+    assertNotNull("Document should be created for the light file", lightFileDocument);
+    var lightFileDocumentRef = new WeakReference<>(lightFileDocument);
+    assertTrue("Document is expected to be in the cached docs", isDocumentCached(lightFileDocument));
+    //noinspection UnusedAssignment
+    lightFile = null;
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertTrue("Document is expected to be in the cached docs", isDocumentCached(lightFileDocument));
+    //noinspection UnusedAssignment
+    lightFileDocument = null;
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertNull("Document is expected to be GCed at this point", lightFileDocumentRef.get());
+  }
+
+  private boolean isDocumentCached(@NotNull Document document) {
+    var result = new boolean[1];
+    myDocumentManager.forEachCachedDocument(doc -> {
+      if (doc == document) {
+        result[0] = true;
+      }
+    });
+    return result[0];
   }
 }
