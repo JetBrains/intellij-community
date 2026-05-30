@@ -153,6 +153,7 @@ class ModifierKeyDoubleClickHandler {
     }
   }
 
+  @Synchronized
   private fun syncKeymapShortcuts() {
     val keymapManager = ApplicationManager.getApplication().getServiceIfCreated(KeymapManager::class.java)
     val activeKeymap = keymapManager?.activeKeymap
