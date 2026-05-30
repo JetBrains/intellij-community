@@ -1,7 +1,10 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.gradle"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.idea.gradle.dsl"/>
+    <module name="intellij.android.gradle.dsl.android"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
