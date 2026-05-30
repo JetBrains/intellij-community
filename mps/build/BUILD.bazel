@@ -1,3 +1,18 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
+
+java_binary(
+  name = "mps_builder",
+  runtime_deps = [":build"],
+  main_class = "org.jetbrains.intellij.build.mps.MPSBuilder",
+  add_opens = INTELLIJ_ADD_OPENS,
+  jvm_flags = [
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+  ],
+  data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+)
+
 ### auto-generated section `build intellij.mps.build` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
