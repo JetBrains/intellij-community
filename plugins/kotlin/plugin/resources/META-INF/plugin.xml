@@ -17,9 +17,7 @@
 
   <dependencies>
     <module name="intellij.java.backend"/>
-    <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.collaborationTools"/>
-    <module name="intellij.platform.scriptDebugger.ui"/>
   </dependencies>
 
   <extensionPoints>

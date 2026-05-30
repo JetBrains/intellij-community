@@ -2,6 +2,8 @@
   <module value="com.intellij.modules.collaborationTools.auth"/>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.collaborationTools.auth.base"/>
     <module name="intellij.platform.core"/>

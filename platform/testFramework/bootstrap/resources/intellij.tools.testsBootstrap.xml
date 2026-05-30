@@ -5,6 +5,7 @@
     <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.launcher"/>
     <module name="intellij.libraries.junit5.vintage"/>
+    <module name="intellij.libraries.asm.tools"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.teamcity.service.messages"/>
   </dependencies>
