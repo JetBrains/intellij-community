@@ -1,5 +1,5 @@
 fun test(map: Map<String, Int>) {
-    for (<selection>entry<caret></selection> in map) {
+    for ((<selection>key<caret></selection>, value) in map) {
 
     }
 }

@@ -41,6 +41,7 @@ class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinWhilePostfixTemplate(this),
             KotlinReturnPostfixTemplate(this),
             KotlinSpreadPostfixTemplate(this),
+            KotlinForDestructuringPostfixTemplate(this),
             KotlinForPostfixTemplate(this),
             KotlinIterPostfixTemplate(this),
             KotlinItorPostfixTemplate(this),

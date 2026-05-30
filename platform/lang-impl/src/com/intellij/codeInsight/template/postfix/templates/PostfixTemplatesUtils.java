@@ -51,7 +51,7 @@ public final class PostfixTemplatesUtils {
    * @return all templates registered in the given provider, including the edited templates and builtin templates in their current state.
    */
   public static @NotNull Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
-    Set<PostfixTemplate> result = new HashSet<>(provider.getTemplates());
+    Set<PostfixTemplate> result = new LinkedHashSet<>(provider.getTemplates());
     for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
       if (template instanceof PostfixChangedBuiltinTemplate) {
         result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());

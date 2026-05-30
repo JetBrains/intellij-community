@@ -34,6 +34,22 @@ fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean =
 
 @ApiStatus.Internal
 context(_: KaSession)
+fun iterationElementType(classType: KaClassType): KaType? =
+    typeArgumentFrom(classType, ITERABLE_CLASS_IDS, index = 0)
+
+context(_: KaSession)
+private fun typeArgumentFrom(classType: KaClassType, classIds: Set<ClassId>, index: Int): KaType? =
+    selfAndSupertypes(classType).firstNotNullOfOrNull { type ->
+        if (type.classId in classIds) type.typeArguments.getOrNull(index)?.type else null
+    }
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+private fun selfAndSupertypes(classType: KaClassType): Sequence<KaClassType> =
+    sequenceOf(classType) + classType.allSupertypes(shouldApproximate = true).filterIsInstance<KaClassType>()
+
+@ApiStatus.Internal
+context(_: KaSession)
 fun canBeIteratedOrIterator(type: KaType, checkNullability: Boolean = true): Boolean =
     type.isInheritorOf(ITERABLE_CLASS_IDS + StandardClassIds.Iterator, checkNullability)
 
