@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -177,7 +178,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     myValueExternalizer = valueExternalizer;
 
     myEnumerator = PersistentEnumerator.createDefaultEnumerator(
-      checkDataFiles(file),
+      checkDataFiles(file, lockContext),
       keyDescriptor,
       initialSize,
       lockContext,
@@ -368,6 +369,12 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
     catch (IOException ignored) {
     }
+    try {
+      assertNoOpenChannelsForFilesStartingWith(baseFile, myStorageLockContext);
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to list storage files before deleting " + baseFile, e);
+    }
     IOUtil.deleteAllFilesStartingWith(baseFile);
   }
 
@@ -402,11 +409,29 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     return false;
   }
 
-  private static @NotNull Path checkDataFiles(@NotNull Path file) {
+  private static @NotNull Path checkDataFiles(@NotNull Path file, @NotNull StorageLockContext storageLockContext) throws IOException {
     if (!Files.exists(file)) {
+      assertNoOpenChannelsForFilesStartingWith(getDataFile(file), storageLockContext);
       IOUtil.deleteAllFilesStartingWith(getDataFile(file));
     }
     return file;
+  }
+
+  private static void assertNoOpenChannelsForFilesStartingWith(@NotNull Path file,
+                                                               @NotNull StorageLockContext storageLockContext) throws IOException {
+    Path parentFile = file.getParent();
+    if (parentFile == null) {
+      return;
+    }
+
+    Path fileName = file.getFileName();
+    try (Stream<Path> children = Files.list(parentFile)) {
+      children
+        .filter(path -> path.getFileName().toString().startsWith(fileName.toString()))
+        .forEach(storageLockContext::assertNoOpenChannels);
+    }
+    catch (NoSuchFileException ignore) {
+    }
   }
 
   @VisibleForTesting
@@ -835,6 +860,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
       }
       finally {
         doClose();
+        assertNoOpenChannels();
       }
     }
     finally {
@@ -872,6 +898,15 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
     finally {
       myEnumerator.unlockStorageWrite();
+    }
+  }
+
+  /** Checks map-owned files against both mode-bound cache views after owned channels are closed. */
+  private void assertNoOpenChannels() {
+    myStorageLockContext.assertNoOpenChannels(myStorageFile);
+    PersistentHashMapValueStorage valueStorage = myValueStorage;
+    if (valueStorage != null) {
+      valueStorage.assertNoOpenChannels();
     }
   }
 
@@ -942,6 +977,9 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
 
       myValueStorage.dispose();
 
+      for (File file : oldFiles) {
+        myStorageLockContext.assertNoOpenChannels(file.toPath());
+      }
       for (File f : oldFiles) {
         assert FileUtil.deleteWithRenaming(f);
       }
@@ -954,6 +992,9 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
       File parentFile = newPath.getParent().toFile();
       final String newBaseName = newPath.getFileName().toString();
       final String oldDataFileBaseName = oldDataFile.getFileName().toString();
+      for (File file : newFiles) {
+        myStorageLockContext.assertNoOpenChannels(file.toPath());
+      }
       for (File f : newFiles) {
         String nameAfterRename = StringUtil.replace(f.getName(), newBaseName, oldDataFileBaseName);
         FileUtil.rename(f, new File(parentFile, nameAfterRename));

@@ -304,8 +304,14 @@ public final class ResizeableMappedFile implements Forceable, Closeable {
           storage.resize(logicalSize);
         }
       },
-      storage::close
+      storage::close,
+      this::assertNoOpenChannels
     );
+  }
+
+  /** Checks that close/remove operations did not leave any cached channel open for the backing storage file. */
+  private void assertNoOpenChannels() {
+    storage.assertNoOpenChannels();
   }
 
   public @NotNull PagedFileStorage getPagedFileStorage() {
@@ -349,6 +355,7 @@ public final class ResizeableMappedFile implements Forceable, Closeable {
     List<Exception> exceptions = new SmartList<>();
 
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(storage::close));
+    assertNoOpenChannels();
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(storage.getFile())));
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(deriveLengthFile())));
 

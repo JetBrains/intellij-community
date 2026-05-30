@@ -331,8 +331,14 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
         // 1) all the data reaches the disk
         // 2) the file could be moved/removed/etc
         myChannelsAccessor.closeChannel(myFile);
-      }
+      },
+      this::assertNoOpenChannels
     );
+  }
+
+  /** Checks that closing this storage did not leave any cached channel open for the same file. */
+  void assertNoOpenChannels() {
+    myStorageLockContext.assertNoOpenChannels(myFile);
   }
 
   private void unmapAll() {
@@ -518,7 +524,8 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     StorageLockContext threadLocalContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadLocalContext != null) {
       if (storageLockContext != null && storageLockContext != threadLocalContext) {
-        throw new IllegalStateException("Context(" + storageLockContext + ") != THREAD_LOCAL_STORAGE_LOCK_CONTEXT(" + threadLocalContext + ")");
+        throw new IllegalStateException(
+          "Context(" + storageLockContext + ") != THREAD_LOCAL_STORAGE_LOCK_CONTEXT(" + threadLocalContext + ")");
       }
       return threadLocalContext;
     }

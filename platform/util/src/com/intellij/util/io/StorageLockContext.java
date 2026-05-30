@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.nio.file.Path;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -225,6 +226,28 @@ public final class StorageLockContext {
   @ApiStatus.Internal
   public @NotNull ChannelsAccessor getChannelsAccessor(boolean readOnly) {
     return readOnly ? readOnlyChannelsAccessor : writableChannelsAccessor;
+  }
+
+  /** Checks that no cached channel remains for the file in either read-only or writable accessor. */
+  public void assertNoOpenChannels(@NotNull Path path) {
+    StringBuilder openChannels = new StringBuilder();
+    appendOpenChannelDescription(openChannels, "read-only", readOnlyChannelsAccessor, path);
+    appendOpenChannelDescription(openChannels, "writable", writableChannelsAccessor, path);
+    if (openChannels.length() > 0) {
+      throw new AssertionError("Open channels remain for " + path + ":\n" + openChannels);
+    }
+  }
+
+  private static void appendOpenChannelDescription(@NotNull StringBuilder openChannels,
+                                                   @NotNull String accessorMode,
+                                                   @NotNull ChannelsAccessor channelsAccessor,
+                                                   @NotNull Path path) {
+    if (channelsAccessor instanceof DiagnosticChannelsAccessor) {
+      String description = ((DiagnosticChannelsAccessor)channelsAccessor).describeCachedChannelOrNull(path);
+      if (description != null) {
+        openChannels.append(accessorMode).append(" accessor: ").append(description).append('\n');
+      }
+    }
   }
 
   public static void forceDirectMemoryCache() {

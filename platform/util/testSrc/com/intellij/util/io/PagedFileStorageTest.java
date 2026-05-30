@@ -24,9 +24,13 @@ import java.util.List;
 import java.util.Locale;
 
 import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -161,6 +165,76 @@ public class PagedFileStorageTest {
   }
 
   @Test
+  public void testCloseAndCleanReportsOpenChannelFromOtherModeCache() throws IOException {
+    Path path = tempDir.newFileNio("close-clean-open-other-mode");
+    OpenChannelsCache cache = newChannelsCache();
+    StorageLockContext lockContext = new StorageLockContext(false, cache.asReadOnly(), cache.asWritable());
+    ChannelsAccessor readOnlyAccessor = lockContext.getChannelsAccessor(/*readOnly: */true);
+
+    withLock(lockContext, () -> {
+      readOnlyAccessor.executeOp(path, channel -> channel.isOpen());
+      PagedFileStorage storage = new PagedFileStorage(path, lockContext, DEFAULT_PAGE_SIZE, false, false);
+      boolean storageClosed = false;
+      try {
+        IOException closeError = assertThrows(
+          "closeAndClean() should report a cached read-only channel for the same file",
+          IOException.class,
+          storage::closeAndClean
+        );
+        storageClosed = true;
+        AssertionError error = suppressedAssertion(closeError);
+        assertTrue(error.getMessage(), error.getMessage().contains("read-only accessor"));
+        assertTrue(error.getMessage(), error.getMessage().contains(path.toString()));
+        assertTrue(path.toString(), Files.exists(path));
+      }
+      finally {
+        readOnlyAccessor.closeChannel(path);
+        cache.asWritable().closeChannel(path);
+        if (!storageClosed) {
+          storage.close();
+        }
+        Files.deleteIfExists(path);
+      }
+    });
+  }
+
+  @Test
+  public void testResizeableMappedFileCloseAndRemoveAllFilesReportsOpenChannelFromOtherModeCache() throws IOException {
+    Path path = tempDir.newFileNio("resizable-close-remove-open-other-mode");
+    Path lengthFile = path.resolveSibling(path.getFileName() + ".len");
+    OpenChannelsCache cache = newChannelsCache();
+    StorageLockContext lockContext = new StorageLockContext(false, cache.asReadOnly(), cache.asWritable());
+    ChannelsAccessor readOnlyAccessor = lockContext.getChannelsAccessor(/*readOnly: */true);
+    ResizeableMappedFile mappedFile = null;
+
+    try {
+      readOnlyAccessor.executeOp(path, channel -> channel.isOpen());
+
+      mappedFile = new ResizeableMappedFile(path, 16, lockContext, DEFAULT_PAGE_SIZE, false);
+      ResizeableMappedFile mappedFileToClose = mappedFile;
+      AssertionError error = assertThrows(
+        "closeAndRemoveAllFiles() should report a cached read-only channel for the same file",
+        AssertionError.class,
+        mappedFileToClose::closeAndRemoveAllFiles
+      );
+      assertTrue(error.getMessage(), error.getMessage().contains("read-only accessor"));
+      assertTrue(error.getMessage(), error.getMessage().contains(path.toString()));
+      assertTrue(path.toString(), Files.exists(path));
+      assertTrue(lengthFile.toString(), Files.exists(lengthFile));
+      mappedFile = null;
+    }
+    finally {
+      readOnlyAccessor.closeChannel(path);
+      cache.asWritable().closeChannel(path);
+      if (mappedFile != null) {
+        mappedFile.close();
+      }
+      Files.deleteIfExists(lengthFile);
+      Files.deleteIfExists(path);
+    }
+  }
+
+  @Test
   public void testResizeableMappedFile() throws IOException {
     Path newPath = tempDir.newFile("storage-1").toPath();
     long freeSpace = Files.getFileStore(newPath).getUsableSpace();
@@ -222,6 +296,21 @@ public class PagedFileStorageTest {
     finally {
       lock.unlockWrite();
     }
+  }
+
+  private static OpenChannelsCache newChannelsCache() {
+    return new OpenChannelsCache(2, (path, readOnly) -> readOnly
+                                                        ? new ResilientFileChannel(path, READ)
+                                                        : new ResilientFileChannel(path, READ, WRITE, CREATE));
+  }
+
+  private static AssertionError suppressedAssertion(Throwable error) {
+    for (Throwable suppressed : error.getSuppressed()) {
+      if (suppressed instanceof AssertionError) {
+        return (AssertionError)suppressed;
+      }
+    }
+    throw new AssertionError("Expected suppressed AssertionError in " + error, error);
   }
 
   private static final class RecordingChannelsAccessor implements ChannelsAccessor {

@@ -205,6 +205,46 @@ class OpenChannelsCacheTest {
   }
 
   @Test
+  fun `StorageLockContext assertNoOpenChannels reports descriptors from both mode views`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("storage.bin")
+    val cache = OpenChannelsCache(2, RecordingChannelOpener())
+    val context = StorageLockContext(false, cache.asReadOnly(), cache.asWritable())
+    val readOnlyAccessor = context.getChannelsAccessor(true)
+    val writableAccessor = context.getChannelsAccessor(false)
+
+    try {
+      context.assertNoOpenChannels(file)
+
+      writableAccessor.executeOp(file) { }
+      val writableError = assertThrows<AssertionError> {
+        context.assertNoOpenChannels(file)
+      }
+      assertTrue(writableError.message!!.contains("writable accessor"), writableError.message)
+
+      readOnlyAccessor.executeOp(file) { }
+      val bothModesError = assertThrows<AssertionError> {
+        context.assertNoOpenChannels(file)
+      }
+      assertTrue(bothModesError.message!!.contains("read-only accessor"), bothModesError.message)
+      assertTrue(bothModesError.message!!.contains("writable accessor"), bothModesError.message)
+      assertTrue(bothModesError.message!!.contains(file.toString()), bothModesError.message)
+
+      writableAccessor.closeChannel(file)
+      val readOnlyError = assertThrows<AssertionError> {
+        context.assertNoOpenChannels(file)
+      }
+      assertTrue(readOnlyError.message!!.contains("read-only accessor"), readOnlyError.message)
+
+      readOnlyAccessor.closeChannel(file)
+      context.assertNoOpenChannels(file)
+    }
+    finally {
+      readOnlyAccessor.closeChannel(file)
+      writableAccessor.closeChannel(file)
+    }
+  }
+
+  @Test
   fun `locked read-only descriptor keeps cached channel and caches writable descriptor separately`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()

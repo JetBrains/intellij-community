@@ -6,6 +6,7 @@ import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOp
 import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -276,7 +277,7 @@ public final class OpenChannelsCache {
     }
   }
 
-  private final class AccessorView implements ChannelsAccessor {
+  private final class AccessorView implements ChannelsAccessor, DiagnosticChannelsAccessor {
     private final boolean readOnly;
 
     private AccessorView(boolean readOnly) {
@@ -303,6 +304,14 @@ public final class OpenChannelsCache {
     @Override
     public void closeChannel(@NotNull Path path) throws IOException {
       OpenChannelsCache.this.closeChannel(path, readOnly);
+    }
+
+    @Override
+    public @Nullable String describeCachedChannelOrNull(@NotNull Path path) {
+      synchronized (cacheLock) {
+        ChannelDescriptor descriptor = cachedChannels.get(new CacheKey(path, readOnly));
+        return descriptor == null ? null : descriptor.toString();
+      }
     }
 
     @Override

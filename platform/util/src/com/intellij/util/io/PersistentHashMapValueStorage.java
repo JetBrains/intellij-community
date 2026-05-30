@@ -40,7 +40,7 @@ public final class PersistentHashMapValueStorage {
   private final @NotNull StorageLockContext myStorageLockContext;
   private final @NotNull ChannelAccessorBackedFileAccessor myFileAccessor;
   private final @NotNull SyncAbleBufferedOutputStreamOverFileAccessor myAppender;
-  private final CompressedAppendableFile myCompressedAppendableFile;
+  private final MyCompressedAppendableFile myCompressedAppendableFile;
 
   private final CreationTimeOptions myOptions;
 
@@ -713,6 +713,14 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
+  /** Checks all channel-backed files owned by this value storage against both mode-bound cache views. */
+  void assertNoOpenChannels() {
+    myFileAccessor.assertNoOpenChannels();
+    if (myCompressedAppendableFile != null) {
+      myCompressedAppendableFile.assertNoOpenChannels();
+    }
+  }
+
   public void dispose() {
     try {
       if (myCompressedAppendableFile != null) myCompressedAppendableFile.dispose();
@@ -731,6 +739,7 @@ public final class PersistentHashMapValueStorage {
         }
         myCompactionModeReader = null;
       }
+      assertNoOpenChannels();
     }
   }
 
@@ -779,6 +788,7 @@ public final class PersistentHashMapValueStorage {
       SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
     private final @NotNull Path myPath;
+    private final @NotNull StorageLockContext myStorageLockContext;
     private final @NotNull ChannelsAccessor myChannelsAccessor;
     private final boolean myReadOnly;
 
@@ -788,6 +798,7 @@ public final class PersistentHashMapValueStorage {
                                       @NotNull StorageLockContext storageLockContext,
                                       boolean readOnly) throws IOException {
       myPath = path;
+      myStorageLockContext = storageLockContext;
       myChannelsAccessor = storageLockContext.getChannelsAccessor(readOnly);
       myReadOnly = readOnly;
       myAppendAtOffset = initialSize();
@@ -871,7 +882,17 @@ public final class PersistentHashMapValueStorage {
     }
 
     void close() throws IOException {
-      myChannelsAccessor.closeChannel(myPath);
+      try {
+        myChannelsAccessor.closeChannel(myPath);
+      }
+      finally {
+        assertNoOpenChannels();
+      }
+    }
+
+    /** Checks that no cached channel remains for this accessor's file in either mode-bound view. */
+    void assertNoOpenChannels() {
+      myStorageLockContext.assertNoOpenChannels(myPath);
     }
 
     private long sizeIfExists() throws IOException {
@@ -1089,6 +1110,13 @@ public final class PersistentHashMapValueStorage {
       disposeAppender(myChunkLengthAppender);
       closeFileAccessor(myChunkLengthFileAccessor);
       closeFileAccessor(myIncompleteChunkFileAccessor);
+      assertNoOpenChannels();
+    }
+
+    /** Checks compressed side-files against both mode-bound cache views. */
+    private void assertNoOpenChannels() {
+      myChunkLengthFileAccessor.assertNoOpenChannels();
+      myIncompleteChunkFileAccessor.assertNoOpenChannels();
     }
   }
 

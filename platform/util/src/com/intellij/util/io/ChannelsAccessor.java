@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -31,4 +32,10 @@ public interface ChannelsAccessor {
   interface FileChannelOpener {
     FileChannel open(@NotNull Path path, boolean readOnly) throws IOException;
   }
+}
+
+/** Optional diagnostics for cache-backed accessors, used by storage lifecycle checks. */
+interface DiagnosticChannelsAccessor {
+  /** Describes a cached channel for the path, or returns {@code null} if this accessor has no such channel open. */
+  @Nullable String describeCachedChannelOrNull(@NotNull Path path);
 }
