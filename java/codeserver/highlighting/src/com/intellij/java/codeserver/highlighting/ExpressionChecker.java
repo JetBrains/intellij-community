@@ -258,7 +258,7 @@ final class ExpressionChecker {
     if (rType == null) {
       rType = expression.getType();
     }
-    if (lType == null || lType == PsiTypes.nullType()) {
+    if (lType == null || lType.equals(PsiTypes.nullType())) {
       return true;
     }
     if (expression != null && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {

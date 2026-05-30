@@ -20,17 +20,15 @@ import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.isLoaded
 import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
-import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.isModuleSetPath
 import com.intellij.platform.pluginSystem.testFramework.loadRawPluginDescriptorInTest
@@ -489,10 +487,7 @@ class PluginDependenciesValidator private constructor(
         for (root in module.productionSourceRoots) {
           val file = root.findFile(path)
           if (file != null) {
-            return PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader).let {
-              it.consume(file.inputStream(), null)
-              it.getBuilder()
-            }
+            return parsePluginXml(file.inputStream(), null, readContext, xIncludeLoader)
           }
         }
       }
@@ -507,10 +502,7 @@ class PluginDependenciesValidator private constructor(
       val moduleDescriptor = findResourceFile(jpsModule, configFilePath)
       require(moduleDescriptor != null) { "Cannot find module descriptor '$configFilePath' in '$jpsModuleName' module" }
       val xIncludeLoader = PluginContentModuleFromSourceXIncludeLoader(jpsModule, xIncludeLoader)
-      return PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader).let {
-        it.consume(moduleDescriptor.inputStream(), null)
-        it.getBuilder()
-      }
+      return parsePluginXml(moduleDescriptor.inputStream(), null, readContext, xIncludeLoader)
     }
 
     override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {

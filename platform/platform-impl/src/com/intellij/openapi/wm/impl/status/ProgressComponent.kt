@@ -26,6 +26,7 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
@@ -139,11 +140,11 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
   }
 
   protected fun createCancelButton(): ProgressButton {
-    val cancelButton = InplaceButton(
+    val cancelButton = createInplaceButton(
       IconButton(indicatorModel.getCancelTooltipText(),
                  if (isCompact) AllIcons.Process.StopSmall else AllIcons.Process.Stop,
                  if (isCompact) AllIcons.Process.StopSmallHovered else AllIcons.Process.StopHovered),
-      ActionListener { _: ActionEvent? -> cancelRequest() }).setFillBg(false)
+      ActionListener { _: ActionEvent? -> cancelRequest() })
 
     cancelButton.isVisible = indicatorModel.isCancellable()
 
@@ -152,6 +153,12 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
 
   protected open fun cancelRequest() {
     indicatorModel.cancel()
+  }
+
+  protected fun createInplaceButton(source: IconButton, listener: ActionListener): InplaceButton {
+    return (if (isCompact) StatusBarProgressButton(source, listener) else InplaceButton(source, listener)).also {
+      it.setFillBg(false)
+    }
   }
 
   open fun getText(): @NlsContexts.ProgressText String? {
@@ -347,5 +354,13 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
         IdeBundle.message("progress.text.clickToViewProgressWindow")
       }
     }
+  }
+}
+
+private class StatusBarProgressButton : InplaceButton, WidgetEffectBoundsProvider {
+  constructor(source: IconButton, listener: ActionListener) : super(source, listener)
+
+  override fun getWidgetEffectBounds(): Rectangle {
+    return Rectangle(size).also { it.grow(JBUI.scale(3), JBUI.scale(3)) }
   }
 }

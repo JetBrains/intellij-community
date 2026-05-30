@@ -129,6 +129,18 @@
       description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
     />
     <registryKey
+      key="ea.auto.report.feature.visible"
+      defaultValue="true"
+      description="Makes the automatic error reporting feature visible in UI and available to enable/disable"
+      restartRequired="true"/>
+    <registryKey
+      key="ea.auto.report.forced" defaultValue="none"
+      description="Forces the automatic error reporting feature to be enabled with a certain level. Values: all | freezes | none"
+      restartRequired="true"/>
+    <registryKey
+      key="ea.auto.report.forced.tag" defaultValue=""
+      description="Additional tag for error reports"/>
+    <registryKey
       key="ide.linux.ijpl43505"
       defaultValue="true"
       description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"

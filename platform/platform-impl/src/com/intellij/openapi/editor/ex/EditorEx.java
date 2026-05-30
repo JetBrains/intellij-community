@@ -378,21 +378,6 @@ public interface EditorEx extends Editor {
    */
   void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor);
 
-  /**
-   * Returns the current height of the sticky lines panel component in pixels.
-   * <p>
-   * The integer value is in the range from {@code 0} to {@code lineHeight * stickyLinesLimit}.
-   * It is zero if the sticky lines feature is disabled or the panel is empty.
-   * <p>
-   * NOTE: the value is not necessarily a multiple of line height.
-   * For example, it can be {@code lineHeight / 2} if the editor is scrolled that way
-   * to render only bottom half of a sticky line.
-   */
-  @ApiStatus.Experimental
-  default int getStickyLinesPanelHeight() {
-    return 0;
-  }
-
   @ApiStatus.Internal
   @Override
   default @NotNull DocumentEx getElfDocument() {

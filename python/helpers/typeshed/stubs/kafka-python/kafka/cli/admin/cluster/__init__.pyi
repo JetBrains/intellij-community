@@ -1,0 +1,3 @@
+class ClusterSubCommand:
+    @classmethod
+    def add_subparser(cls, subparsers): ...

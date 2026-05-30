@@ -164,6 +164,8 @@ c:com.intellij.execution.process.ProcessOutputType
 - s:isStderr(com.intellij.openapi.util.Key):Z
 - isStdout():Z
 - s:isStdout(com.intellij.openapi.util.Key):Z
+- isSystem():Z
+- s:isSystem(com.intellij.openapi.util.Key):Z
 f:com.intellij.execution.process.ProcessWaitFor
 - <init>(java.lang.Process,com.intellij.execution.TaskExecutor,java.lang.String):V
 - detach():V

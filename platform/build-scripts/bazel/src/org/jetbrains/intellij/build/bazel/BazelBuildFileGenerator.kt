@@ -663,6 +663,10 @@ internal class BazelBuildFileGenerator(
 
       option("module_name", module.name)
 
+      if (module.name == "intellij.libraries.compose.runtime.desktop") {
+        option("exported_compiler_plugins", listOf("@lib//:compose-plugin"))
+      }
+
       visibility(arrayOf("//visibility:public"))
       if (customModule == null) {
         option("srcs", sourcesToGlob(sources, moduleDescriptor))

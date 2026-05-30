@@ -63,7 +63,6 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/base",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//libraries/guava",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
     "//platform/util/text-matching",
     "//platform/util:util-ui",
     "//plugins/kotlin/base/indices",
@@ -77,6 +76,14 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/util/concurrency",
     "//platform/statistics",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//platform/observable",
+    "//platform/util/jdom",
+    "//platform/lang-core",
   ]
 )
 
@@ -124,7 +131,6 @@ jvm_library(
     "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
     "//plugins/kotlin/kotlin.searching/base:base_test_lib",
     "//libraries/guava:guava_test_lib",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move_test_lib",
     "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util:util-ui_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
@@ -138,6 +144,12 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//plugins/kotlin/fir:fir_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem_test_lib",
+    "//platform/observable:observable_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings` end

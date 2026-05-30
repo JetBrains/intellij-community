@@ -113,10 +113,11 @@ public class OutputChecker {
   public void print(String s, Key<?> outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        if (outputType == ProcessOutputType.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
+        if (ProcessOutputType.isStderr(outputType) && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
           return;
         }
-        myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);
+        var key = outputType instanceof ProcessOutputType processOutputType ? processOutputType.getBaseOutputType() : outputType;
+        myBuffers.computeIfAbsent(key, _ -> new StringBuffer()).append(s);
       }
     }
   }

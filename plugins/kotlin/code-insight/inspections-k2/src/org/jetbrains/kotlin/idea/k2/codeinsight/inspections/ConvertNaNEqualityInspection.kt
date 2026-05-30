@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -7,8 +7,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -16,11 +17,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 private const val NAN_NAME = "NaN"
 private const val REGULAR_PATTERN = "$0.isNaN()"
@@ -91,10 +94,11 @@ internal class ConvertNaNEqualityInspection :
     }
 }
 
+@OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
 private fun KaSession.isNaNExpression(expression: KtExpression): Boolean {
     if (expression.text?.endsWith(NAN_NAME) != true) return false
 
-    val symbol = expression.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return false
+    val symbol = ((expression as? KtResolvableCall)?.resolveCall() as? KaVariableAccessCall)?.symbol ?: return false
     val fqName = symbol.callableId?.asSingleFqName()?.asString() ?: return false
 
     return NaNSet.contains(fqName)

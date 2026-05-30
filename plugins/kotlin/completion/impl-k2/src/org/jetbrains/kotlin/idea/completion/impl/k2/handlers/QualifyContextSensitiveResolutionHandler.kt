@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -116,7 +116,7 @@ private fun addQualifierIfNeeded(position: PsiElement): PsiElement? {
 
     analyze(fileCopy) {
         val reference = replaced.mainReference
-        if (!reference.usesContextSensitiveResolution) return null
+        if (!replaced.usesContextSensitiveResolution) return null
 
         val fqName = reference.resolveToSymbol()?.importableFqName?.parent() ?: return null
 

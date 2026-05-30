@@ -204,14 +204,17 @@ class AgentSessionsGearActionsTest {
 
   @Test
   fun dedicatedFrameRegistersMainToolbarExclusions() {
+    val activityExclusion = "<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" " +
+                            "id=\"AgentWorkbenchSessions.MainToolbar.Activity\"/>"
+
     assertThat(sessionsDescriptor())
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"MainToolbarVCSGroup\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ExecutionTargetsToolbarGroup\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"NewUiRunWidget\"/>")
-      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"AgentWorkbenchSessions.MainToolbar.Activity\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"AIAssistantHubPopupAction\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"BuildSolutionBar\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ActiveDeviceGroup\"/>")
+      .doesNotContain(activityExclusion)
       .doesNotContain("actionConfigurationCustomizer")
   }
 

@@ -30,7 +30,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JPanel
 
@@ -159,8 +158,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
       return accessibleContext
     }
 
-    private inner class LanguageServiceAccessibleTextPanel : AccessibleJComponent() {
-      override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+    private inner class LanguageServiceAccessibleTextPanel : AccessibleTextPanel() {
       override fun getAccessibleName(): String = LangBundle.message("language.services.widget.button")
     }
   }

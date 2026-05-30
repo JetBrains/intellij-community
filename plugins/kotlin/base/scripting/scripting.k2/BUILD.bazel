@@ -49,6 +49,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/backend/workspace",
     "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/code-insight/api",
     "//platform/workspace/jps",
     "//platform/external-system-impl:externalSystem-impl",
     "//java/idea-ui:ui",
@@ -69,6 +70,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/util",
     "//platform/eel-provider",
+    "//plugins/kotlin/scripting",
   ]
 )
 
@@ -111,6 +113,7 @@ jvm_library(
     "//java/java-psi-api:psi_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
     "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//java/idea-ui:ui_test_lib",
@@ -130,6 +133,7 @@ jvm_library(
     "//platform/util:util-ui_test_lib",
     "//platform/util:util_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//plugins/kotlin/scripting:scripting_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end
@@ -225,6 +229,8 @@ jvm_library(
     "//platform/backend/workspace:workspace_test_lib",
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/workspace/jps",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
@@ -249,6 +255,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/testFramework",
     "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+    "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//platform/execution",

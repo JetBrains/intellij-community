@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -21,6 +21,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.OrderedSet
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
@@ -112,6 +113,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.hasOuterClassMemberReference(targetClass: KtClass, outerClasses: Set<KtClass>): Boolean {
         val outerClassSymbols by lazy {
             outerClasses.mapNotNull { it.symbol as? KaClassSymbol }
@@ -125,7 +127,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
                     outerClassSymbols,
                     hasSuperType
                 )
-                is KtThisExpression -> expression.instanceReference.mainReference.resolveToSymbol() in outerClassSymbols
+                is KtThisExpression -> expression.resolveSymbol() in outerClassSymbols
                 else -> false
             }
         }

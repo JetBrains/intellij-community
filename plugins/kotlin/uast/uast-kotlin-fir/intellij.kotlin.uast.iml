@@ -43,5 +43,6 @@
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
   </component>
 </module>

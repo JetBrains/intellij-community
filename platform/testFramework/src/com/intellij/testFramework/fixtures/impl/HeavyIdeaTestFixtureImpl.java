@@ -140,6 +140,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
     for (Path fileToDelete : myFilesToDelete) {
       actions.add(() -> {
+        JarFileSystemImpl.cleanupForNextTest(); // free jar file handles under windows to be able to delete
         List<IOException> errors;
         try (Stream<Path> stream = Files.walk(fileToDelete)) {
           errors = stream

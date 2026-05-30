@@ -66,6 +66,7 @@ public class FileChooserDescriptor implements Cloneable {
   private @Nullable List<FileType> myFileTypeFilter = null;
   private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
+  private boolean myEnvironmentRestricted = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
 
@@ -115,6 +116,7 @@ public class FileChooserDescriptor implements Cloneable {
     myFileTypeFilter = d.myFileTypeFilter;
     myFileFilter = d.myFileFilter;
     myForcedToUseIdeaFileChooser = false;
+    myEnvironmentRestricted = d.myEnvironmentRestricted;
     myUserData.putAll(d.myUserData);
   }
 
@@ -398,6 +400,30 @@ public class FileChooserDescriptor implements Cloneable {
 
   public void setForcedToUseIdeaFileChooser(boolean forcedToUseIdeaFileChooser) {
     myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
+  }
+
+  /**
+   * When {@code true}, the file chooser restricts selection to files reachable in the current execution environment
+   * (e.g., a container environment such as WSL or Docker). Works only with {@code UniversalFileChooser}
+   */
+  public boolean isEnvironmentRestricted() {
+    return myEnvironmentRestricted;
+  }
+
+  /**
+   * @param environmentRestricted Enforces choosing files only in a specific environment
+   * @see #isEnvironmentRestricted
+   */
+  public void setEnvironmentRestricted(boolean environmentRestricted) {
+    withEnvironmentRestricted(environmentRestricted);
+  }
+
+  /**
+   * @see #setEnvironmentRestricted(boolean)
+   */
+  public FileChooserDescriptor withEnvironmentRestricted(boolean environmentRestricted) {
+    myEnvironmentRestricted = environmentRestricted;
+    return this;
   }
 
   @ApiStatus.Internal

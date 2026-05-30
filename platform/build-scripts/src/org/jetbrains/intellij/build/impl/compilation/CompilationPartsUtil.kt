@@ -4,7 +4,6 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.util.lang.EmptyZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
@@ -24,6 +23,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
+import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder

@@ -1,15 +1,14 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", compiler_plugin_jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
-jvm_library(
+compiler_plugin_jvm_library(
   name = "expects-compiler-plugin",
-  srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/fleet/multiplatform/expects/gradle/ExpectsGradlePlugin.kt"]),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
   visibility = ["//visibility:public"],
-  deps = [
-    "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
-  ],
+  srcs = glob(["srcJvmMain/**/*.kt"]),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  kotlinc_opts = ":custom_expects",
+  deps = ["@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel"],
 )
 
 kt_compiler_plugin(
@@ -18,3 +17,47 @@ kt_compiler_plugin(
   visibility = ["//visibility:public"],
   deps = [":expects-compiler-plugin"],
 )
+
+### auto-generated section `build fleet.compiler.plugins.expects` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_expects",
+  opt_in = ["org.jetbrains.kotlin.config.MessageCollectorAccess"],
+  x_jvm_default = "all-compatibility"
+)
+
+jvm_library(
+  name = "expects",
+  module_name = "fleet.compiler.plugins.expects",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  kotlinc_opts = ":custom_expects",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-compiler-embeddable-provided",
+  ]
+)
+
+jvm_library(
+  name = "expects_test_lib",
+  testonly = True,
+  module_name = "fleet.compiler.plugins.expects",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_expects",
+  runtime_deps = [
+    ":expects",
+    "@lib//:kotlin-compiler-embeddable-provided",
+  ]
+)
+### auto-generated section `build fleet.compiler.plugins.expects` end
+
+### auto-generated section `iml fleet.compiler.plugins.expects` start
+exports_files([
+  "fleet.compiler.plugins.expects.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.compiler.plugins.expects` end

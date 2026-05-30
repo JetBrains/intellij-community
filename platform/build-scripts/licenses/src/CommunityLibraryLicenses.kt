@@ -608,6 +608,19 @@ object CommunityLibraryLicenses {
       .apache("https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
       .suppliedByPersons("Daniel Savarese", "Jon S. Stevens", "Takashi Okamoto", "Mark Murphy", "Michael Davey", "Harald Kuhn"),
 
+    LibraryLicense(
+      name = "java-atk-wrapper",
+      libraryName = "jetbrains.intellij.deps.java.atk.wrapper.linux",
+      url = "https://github.com/JetBrains/intellij-deps-java-atk-wrapper",
+    )
+      .lgpl21("https://github.com/JetBrains/intellij-deps-java-atk-wrapper/blob/master/COPYING.LESSER")
+      .suppliedByOrganizations(Suppliers.JETBRAINS)
+      .forkedFrom(
+        groupId = "org.gnome",
+        artifactId = "java-atk-wrapper",
+        sourceCodeUrl = "https://gitlab.gnome.org/GNOME/java-atk-wrapper"
+      ),
+
     LibraryLicense(libraryName = "java-compatibility", url = "https://github.com/JetBrains/intellij-deps-java-compatibility")
       .gpl2ce("https://github.com/JetBrains/intellij-deps-java-compatibility/raw/master/LICENSE"),
 
@@ -1449,7 +1462,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("debugger-agent"),
     jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("download-pgp-verifier"),
-    jetbrainsLibrary("expects-compiler-plugin"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
@@ -1465,7 +1477,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.compiler.embeddable"),
-    jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
     jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),
@@ -1521,9 +1532,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinx-collections-immutable"),
     jetbrainsLibrary("kotlinx-coroutines-debug"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
-    jetbrainsLibrary("noria-compiler-plugin"),
-    jetbrainsLibrary("rhizomedb-compiler-plugin"),
-    jetbrainsLibrary("rpc-compiler-plugin"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("terminal-completion-db-with-extensions"),
     jetbrainsLibrary("terminal-completion-spec"),

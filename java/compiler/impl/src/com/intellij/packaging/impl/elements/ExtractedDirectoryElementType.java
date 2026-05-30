@@ -45,7 +45,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
         if (file == null || (file.isInLocalFileSystem() && file.isDirectory())) return false;
         return super.isFileSelectable(file);
       }
-    };
+    }.withEnvironmentRestricted(true);
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
     final List<PackagingElement<?>> list = new ArrayList<>();
     final PackagingElementFactory factory = PackagingElementFactory.getInstance();

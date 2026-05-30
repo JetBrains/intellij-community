@@ -4,11 +4,9 @@ package com.intellij.java.codeInsight.daemon.inlays
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
 import com.intellij.codeInsight.hints.AnnotationInlaySettings
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
@@ -56,27 +54,6 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
           return new String[20][30];
         }
       }""".trimIndent())
-  }
-
-  fun `test arrays java7`() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_7) {
-      testAnnotations(
-        """
-          final class Demo {
-            /*<# block [@Contract(value = "_ -> new", pure = true)] [@NotNull] #>*/
-            String[][] data(/*<# @NotNull #>*/String... arr) {
-              if (arr.length == 0) return new String[10][20];
-              return new String[20][30];
-            }
-          }""".trimIndent(), """
-          final class Demo {
-            /*<# block [@Contract(value = "_ -> new", pure = true)] #>*/
-            String[]/*<# ! #>*/[] data(String.../*<# ! #>*/ arr) {
-              if (arr.length == 0) return new String[10][20];
-              return new String[20][30];
-            }
-          }""".trimIndent())
-    }
   }
 
   fun `test contract nullable`() {

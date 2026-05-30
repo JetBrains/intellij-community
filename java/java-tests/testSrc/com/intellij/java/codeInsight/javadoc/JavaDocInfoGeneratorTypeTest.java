@@ -58,7 +58,11 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
     assertEquals(1, ors.length);
 
     MultiMap<PsiElement, AnnotationDocGenerator> annotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(ors[0]);
-    assertEquals(3, annotations.size());
+    // Method -> Contract
+    // Method return type (Optional) -> NotNull
+    // Parameter type (Supplier) -> NotNull
+    // Parameter type argument (Optional) -> NotNull
+    assertEquals(4, annotations.size());
   }
 
   public void testComparatorNaturalOrderTypeParameter() {
@@ -72,7 +76,10 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
     assertEquals(1, ors.length);
 
     MultiMap<PsiElement, AnnotationDocGenerator> annotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(ors[0]);
-    assertEquals(2, annotations.size());
+    // method -> Contract
+    // method return type -> NotNull
+    // parameter type -> NotNull
+    assertEquals(3, annotations.size());
   }
 
   public void testComparatorNaturalOrderText() {

@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//uast/uast-common-ide:ide",
+    "//plugins/kotlin/references",
   ]
 )
 
@@ -68,6 +69,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
     "//uast/uast-common-ide:ide_test_lib",
+    "//plugins/kotlin/references:references_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.uast.idea` end

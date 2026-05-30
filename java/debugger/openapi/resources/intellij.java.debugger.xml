@@ -7,7 +7,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.java.psi"/>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.jsp"/>
     <module name="intellij.platform.backend"/>

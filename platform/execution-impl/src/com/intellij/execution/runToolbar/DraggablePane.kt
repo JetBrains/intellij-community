@@ -3,10 +3,11 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.UI
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Cursor
@@ -17,13 +18,19 @@ import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 open class DraggablePane : JPanel() {
   private var listener: DragListener? = null
   private var startPoint: Point? = null
 
-  private val myUpdateQueue = MergingUpdateQueue("draggingQueue", 50, true, MergingUpdateQueue.ANY_COMPONENT)
+  private val myUpdateQueue = DebouncedUpdates.forComponent<DragUpdate>(
+    this,
+    "draggingQueue",
+    50.milliseconds
+  ).withContext(Dispatchers.UI)
+    .runLatest { update -> listener?.dragged(update.location, update.offset) }
 
   private val awtDragListener = AWTEventListener {
     when (it.id) {
@@ -39,11 +46,7 @@ open class DraggablePane : JPanel() {
       MouseEvent.MOUSE_DRAGGED -> {
         it as MouseEvent
         getOffset(it.locationOnScreen)?.let { offset ->
-          myUpdateQueue.queue(object : Update("draggingUpdate", false, 1) {
-            override fun run() {
-              listener?.dragged(it.locationOnScreen, offset)
-            }
-          })
+          myUpdateQueue.queue(DragUpdate(it.locationOnScreen, offset))
         }
       }
     }
@@ -117,7 +120,9 @@ open class DraggablePane : JPanel() {
     isOpaque = false
     preferredSize = JBDimension(7, 21)
     minimumSize = JBDimension(7, 21)
-}
+  }
+
+  private data class DragUpdate(val location: Point, val offset: Dimension)
 
   interface DragListener {
     fun dragStarted(locationOnScreen: Point)

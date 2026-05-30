@@ -235,12 +235,17 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new MagicResolvedConflictsAction(this));
 
     group.add(Separator.getInstance());
-    List<AnAction> diffActions = new ArrayList<>();
-    diffActions.add(new MyToggleExpandByDefaultAction());
-    diffActions.add(new MyToggleAutoScrollAction());
-    diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(diffActions);
+    List<AnAction> gutterActions = new ArrayList<>();
+    gutterActions.add(new MyToggleExpandByDefaultAction());
+    gutterActions.add(new MyToggleAutoScrollAction());
 
+    List<AnAction> diffActions = new ArrayList<>();
+    diffActions.add(new MyToggleAutoScrollAction());
+    diffActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ResolveConflictsInImports"));
+    diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
+    myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
+
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);
 
     AnAction additionalActions = ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions");
@@ -269,7 +274,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions"));
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
-
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
     return group;
   }
 

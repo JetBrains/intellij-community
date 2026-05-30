@@ -75,16 +75,10 @@ class PluginXmlParserTest {
   }
 
   private fun parseBytes(bytes: ByteArray): RawPluginDescriptor {
-    val consumer = createTestConsumer()
-    consumer.consume(bytes, "test-plugin.xml")
-    return consumer.build()
-  }
-
-  private fun createTestConsumer(): PluginDescriptorFromXmlStreamConsumer {
     val context = object : PluginDescriptorReaderContext {
       override val interner: XmlInterner = NoOpXmlInterner
       override val isMissingIncludeIgnored: Boolean = true
     }
-    return PluginDescriptorFromXmlStreamConsumer(context, null)
+    return parsePluginXml(bytes, "test-plugin.xml", context, null).build()
   }
 }

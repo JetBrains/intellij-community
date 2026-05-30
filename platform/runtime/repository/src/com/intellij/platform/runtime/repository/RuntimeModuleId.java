@@ -40,7 +40,7 @@ public final class RuntimeModuleId {
   /**
    * Returns a human-readable name of the module. It can be used for debugging and logging purposes only.
    */
-  public @NotNull String getPresentableName() {
+  public @NotNull String getDisplayName() {
     return myNamespace.equals(DEFAULT_NAMESPACE) ? myName : myName + " (namespace=" + myNamespace + ")";
   }
 
@@ -99,7 +99,7 @@ public final class RuntimeModuleId {
   //<editor-fold desc="deprecated methods" defaultstate="collapsed">
   /**
    * @deprecated there is no standard string representation of a runtime module ID.
-   * Use {@link #getPresentableName()} for presentation purposes, in other cases use {@link #getNamespace()} and {@link #getName()}.
+   * Use {@link #getDisplayName()} for presentation purposes, in other cases use {@link #getNamespace()} and {@link #getName()}.
    */
   @Deprecated(forRemoval = true)
   public @NotNull String getStringId() {

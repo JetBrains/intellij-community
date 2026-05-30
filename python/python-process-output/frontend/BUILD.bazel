@@ -38,8 +38,7 @@ jvm_library(
     "//python/python-process-output/common",
     "//libraries/kotlin/reflect",
     "//python/common",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -101,8 +100,7 @@ jvm_library(
     "//python/python-test-env/junit5",
     "//python/python-test-env/junit5:junit5_test_lib",
     "//python/common:common_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.python.processOutput.frontend` end
 
@@ -124,8 +122,7 @@ jvm_library(
   name = "python-processOutput-frontend-tests",
   module_name = "intellij.python.processOutput.frontend.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  plugins = ["@lib//:compose-plugin"]
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -208,8 +205,7 @@ jvm_library(
     "//python/python-test-env/junit5",
     "//python/python-test-env/junit5:junit5_test_lib",
   ],
-  runtime_deps = [":python-processOutput-frontend-tests"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":python-processOutput-frontend-tests"]
 )
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` end
 

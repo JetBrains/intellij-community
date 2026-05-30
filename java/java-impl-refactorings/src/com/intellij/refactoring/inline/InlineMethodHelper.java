@@ -167,6 +167,7 @@ class InlineMethodHelper {
         defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);
       }
 
+      paramType = PsiTypesUtil.removeExternalAnnotations(paramType);
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, paramType, initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);

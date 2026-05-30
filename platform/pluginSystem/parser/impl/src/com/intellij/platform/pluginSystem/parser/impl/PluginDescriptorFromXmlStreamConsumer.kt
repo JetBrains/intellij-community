@@ -2,14 +2,12 @@
 package com.intellij.platform.pluginSystem.parser.impl
 
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class PluginDescriptorFromXmlStreamConsumer private constructor(
+internal class PluginDescriptorFromXmlStreamConsumer private constructor(
   @JvmField val readContext: PluginDescriptorReaderContext,
   @JvmField val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
-) : PluginXmlStreamConsumer {
+) {
   constructor(
     readContext: PluginDescriptorReaderContext,
     xIncludeLoader: XIncludeLoader?,
@@ -28,7 +26,7 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
 
   fun getBuilder(): PluginDescriptorBuilder = builder
 
-  override fun consume(reader: XMLStreamReader2) {
+  fun consume(reader: XMLStreamReader2) {
     readModuleDescriptor(consumer = this, reader = reader)
   }
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * An object that returns annotations for {@link PsiType}. Since computing type annotations might be computationally expensive sometimes,
@@ -27,6 +29,16 @@ public interface TypeAnnotationProvider {
     }
 
     @Override
+    public @NotNull TypeAnnotationProvider removeExternalAnnotations() {
+      return this;
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
+    }
+
+    @Override
     public String toString() {
       return "EMPTY";
     }
@@ -39,6 +51,31 @@ public interface TypeAnnotationProvider {
    */
   default boolean hasAnnotations() {
     return getAnnotations().length > 0;
+  }
+
+  /**
+   * @return true if all the annotations of this provider are valid
+   */
+  default boolean isValid() {
+    for (PsiAnnotation annotation : getAnnotations()) {
+      if (!annotation.isValid()) return false;
+    }
+    return true;
+  }
+
+  /**
+   * @return new provider that doesn't contain external annotations from this provider
+   */
+  default @NotNull TypeAnnotationProvider removeExternalAnnotations() {
+    TypeAnnotationProvider self = this;
+    return new TypeAnnotationProvider() {
+      @Override
+      public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+        return Stream.of(self.getAnnotations())
+          .filter(annotation -> !ExternalAnnotationsManager.isExternal(annotation))
+          .toArray(PsiAnnotation[]::new);
+      }
+    };
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.configuration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -57,8 +57,30 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
   }
 
   public void testModuleInfoInProductionModularizedJUnit() throws Exception {
-    doTestModuleInfoInProductionModularizedJUnit(
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.5.2"));
+    Module module = createEmptyModule();
+    JUnitConfiguration configuration = setupConfiguration(
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.5.2"),
+      "modulePath/prod1", module);
+    JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    // m1 has no 'requires' → getAllRequires is empty → only ALL-UNNAMED opens; launcher added by appendJUnitLauncherClasses
+    assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
+                          " --add-reads m1=ALL-UNNAMED" +
+                          " --add-opens m1/p=ALL-UNNAMED" +
+                          " --add-modules m1" +
+                          " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
+
+    PathsList modulePath = params4Tests.getModulePath();
+    //production module output is on the module path
+    assertTrue("module path: " + modulePath.getPathsString(),
+                        modulePath.getPathList().contains(getCompilerOutputPath(module)));
+    // engine is moved to module path when isModularized=true to avoid unnamed-module split
+    assertTrue("engine should be on module path: " + modulePath.getPathsString(),
+               ContainerUtil.exists(modulePath.getPathList(), p -> p.contains("junit-jupiter-engine")));
+    //test output on the classpath
+    assertFalse("module path: " + modulePath.getPathsString(),
+                         modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
   }
 
   public void testModuleInfoInProductionModularizedJUnitNoEngineDependency() throws Exception {
@@ -76,7 +98,8 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                           " --add-reads m1=ALL-UNNAMED" +
                           " --add-opens m1/p=ALL-UNNAMED" +
-                          " --add-modules m1", moduleOptions.getParametersList().getParametersString());
+                          " --add-modules m1" +
+                          " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getClassPath());
 

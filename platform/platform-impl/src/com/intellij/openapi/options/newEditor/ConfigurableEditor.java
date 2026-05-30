@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -26,13 +27,12 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,8 @@ import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.cr
 
 @ApiStatus.Internal
 public class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private final MergingUpdateQueue queue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this, Alarm.ThreadToUse.SWING_THREAD, coroutineScope);
+  private final UpdateQueue<Configurable> queue = DebouncedUpdates.<Configurable>forScope(coroutineScope, "SettingsModification", 1000)
+    .runLatest(it -> updateIfCurrent(it));
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
     protected JComponent create(Configurable configurable) {
@@ -207,18 +208,7 @@ public class ConfigurableEditor extends AbstractEditor implements AnActionListen
   }
 
   void requestUpdate() {
-    Configurable configurable = this.configurable;
-    queue.queue(new Update(this) {
-      @Override
-      public void run() {
-        updateIfCurrent(configurable);
-      }
-
-      @Override
-      public boolean isExpired() {
-        return ConfigurableEditor.this.configurable != configurable;
-      }
-    });
+    queue.queue(this.configurable);
   }
 
   private boolean isPopupOverEditor(Component component) {
@@ -253,9 +243,11 @@ public class ConfigurableEditor extends AbstractEditor implements AnActionListen
   }
 
   final void updateIfCurrent(Configurable configurable) {
-    if (this.configurable == configurable) {
-      updateCurrent(configurable, false);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (this.configurable == configurable) {
+        updateCurrent(configurable, false);
+      }
+    }, ModalityState.stateForComponent(this));
   }
 
   final @NotNull Promise<? super Object> select(final Configurable configurable) {

@@ -73,6 +73,26 @@ object LinuxUiUtil {
     }
   }
 
+  /*
+   * https://documentation.ubuntu.com/adsys/latest/reference/policies/User%20Policies/Ubuntu/Desktop/Accessibility/screen-reader-enabled/
+   */
+  @JvmStatic
+  fun isGnomeScreenReaderSettingEnabled(): Boolean {
+    if (UnixDesktopEnv.CURRENT != UnixDesktopEnv.GNOME) {
+      return false
+    }
+
+    val commandLine = GeneralCommandLine(
+      "gsettings",
+      "get",
+      "org.gnome.desktop.a11y.applications",
+      "screen-reader-enabled",
+    )
+
+    val line = ExecUtil.execAndReadLine(commandLine) ?: return false
+    return line.trim() == "true"
+  }
+
   @JvmStatic
   fun isOrcaProcessRunning(): Boolean {
     val orcaProcessName = "orca"

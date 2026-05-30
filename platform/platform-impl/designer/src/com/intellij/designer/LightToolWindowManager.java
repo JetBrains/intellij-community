@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -17,9 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +39,7 @@ import java.util.function.Consumer;
 public abstract class LightToolWindowManager implements Disposable {
   public static final String EDITOR_MODE = "UI_DESIGNER_EDITOR_MODE.";
 
-  private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null, this);
+  private final UpdateQueue<DesignerEditorPanelFacade> myWindowQueue;
   protected final Project myProject;
   protected volatile ToolWindow myToolWindow;
 
@@ -47,10 +51,18 @@ public abstract class LightToolWindowManager implements Disposable {
     myProject = project;
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
+    CoroutineScope scope = myProject.getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+
+    myWindowQueue = DebouncedUpdates.<DesignerEditorPanelFacade>forScope(scope, getComponentName(), 200)
+      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+      .restartTimerOnAdd(true)
+      .runLatest(designer -> bindToDesigner(designer))
+      .cancelOnDispose(this);
+
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       if (getEditorMode() == null) {
         initListeners();
-        bindToDesigner(getActiveDesigner());
+        scheduleBindToDesigner(getActiveDesigner());
       }
     });
   }
@@ -60,17 +72,17 @@ public abstract class LightToolWindowManager implements Disposable {
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        bindToDesigner(getActiveDesigner());
+        scheduleBindToDesigner(getActiveDesigner());
       }
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        ApplicationManager.getApplication().invokeLater(() -> bindToDesigner(getActiveDesigner()));
+        ApplicationManager.getApplication().invokeLater(() -> scheduleBindToDesigner(getActiveDesigner()));
       }
 
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        bindToDesigner(getDesigner(event.getNewEditor()));
+        scheduleBindToDesigner(getDesigner(event.getNewEditor()));
       }
     });
   }
@@ -94,20 +106,18 @@ public abstract class LightToolWindowManager implements Disposable {
     return null;
   }
 
+  private void scheduleBindToDesigner(final DesignerEditorPanelFacade designer) {
+    myWindowQueue.queue(designer);
+  }
+
   private void bindToDesigner(final DesignerEditorPanelFacade designer) {
-    myWindowQueue.cancelAllUpdates();
-    myWindowQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        if (myToolWindow == null) {
-          if (designer == null) {
-            return;
-          }
-          initToolWindow();
-        }
-        updateToolWindow(designer);
+    if (myToolWindow == null) {
+      if (designer == null) {
+        return;
       }
-    });
+      initToolWindow();
+    }
+    updateToolWindow(designer);
   }
 
   protected abstract void initToolWindow();

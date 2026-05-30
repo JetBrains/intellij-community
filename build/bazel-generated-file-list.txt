@@ -231,7 +231,9 @@ fleet/build/sign
 fleet/bundles
 fleet/codecache
 fleet/codecache/test
-fleet/compiler-plugins
+fleet/compiler-plugins/expects
+fleet/compiler-plugins/noria
+fleet/compiler-plugins/rpc
 fleet/fastutil
 fleet/kernel
 fleet/ktor/client/core
@@ -239,6 +241,8 @@ fleet/lsp.protocol
 fleet/lsp.protocol/test
 fleet/modules/api
 fleet/multiplatform.shims
+fleet/radixTrie
+fleet/radixTrie/test
 fleet/reporting/api
 fleet/reporting/shared
 fleet/rhizomedb
@@ -1044,8 +1048,6 @@ plugins/devkit/intellij.kotlin.devkit
 plugins/devkit/intellij.kotlin.devkit/k1
 plugins/devkit/intellij.kotlin.devkit/k2
 plugins/devkit/jps-plugin
-plugins/devkit/runtimeModuleRepository/generator
-plugins/devkit/runtimeModuleRepository/generator/tests
 plugins/eclipse
 plugins/eclipse/common-eclipse-util
 plugins/eclipse/jps-plugin
@@ -1435,9 +1437,9 @@ plugins/kotlin/project-wizard/tests
 plugins/kotlin/refactorings/kotlin.refactorings.common
 plugins/kotlin/refactorings/kotlin.refactorings.common.tests
 plugins/kotlin/refactorings/kotlin.refactorings.k2
-plugins/kotlin/refactorings/kotlin.refactorings.move.k2
 plugins/kotlin/refactorings/kotlin.refactorings.tests.k2
 plugins/kotlin/refactorings/rename.k2
+plugins/kotlin/references
 plugins/kotlin/repl
 plugins/kotlin/run-configurations/junit
 plugins/kotlin/run-configurations/junit-fe10

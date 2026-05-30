@@ -62,8 +62,7 @@ jvm_library(
     "//plugins/gradle",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -116,8 +115,7 @@ jvm_library(
     "//plugins/gradle:gradle_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.compose` end
 

@@ -122,7 +122,7 @@ open class StandalonePluginUpdateChecker(
                                            checkResult.errors.values.first())
 
         is PluginUpdateInfo.UpdateAvailable ->
-          PluginUpdateStatus.Update(initPluginDescriptor(checkResult.update.pluginVersion), checkResult.update)
+          PluginUpdateStatus.Update(initPluginDescriptor(requireNotNull(checkResult.update.pluginVersion)), checkResult.update)
 
         else -> PluginUpdateStatus.LatestVersionInstalled
       }

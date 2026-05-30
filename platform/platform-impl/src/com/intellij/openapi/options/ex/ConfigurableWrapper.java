@@ -422,13 +422,51 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     public ConfigurableWrapper addChild(Configurable configurable) {
       if (myComparator != null) {
         int index = Arrays.binarySearch(myKids, configurable, myComparator);
-        LOG.assertTrue(index < 0, "similar configurable is already exist");
+        if (index >= 0) {
+          logColliding(configurable, index);
+        }
         myKids = ArrayUtil.insert(myKids, -1 - index, configurable);
       }
       else {
         myKids = ArrayUtil.append(myKids, configurable);
       }
       return this;
+    }
+
+    private void logColliding(@Nullable Configurable incoming, int existingIndex) {
+      String parentId = safeId(this);
+      String parentName = safeDisplayName(this);
+      String incomingName = safeDisplayName(incoming);
+      String incomingClass = incoming == null ? "null" : incoming.getClass().getName();
+      Configurable existing = (myKids != null && existingIndex >= 0 && existingIndex < myKids.length)
+                              ? myKids[existingIndex]
+                              : null;
+      String existingName = safeDisplayName(existing);
+      String existingClass = existing == null ? "null" : existing.getClass().getName();
+      LOG.error("Similar configurable already exists. Configurable display-name collision under parent id='" + parentId
+               + "' name='" + parentName + "': incoming displayName='" + incomingName
+               + "' class=" + incomingClass + "; existing displayName='" + existingName
+               + "' class=" + existingClass);
+    }
+
+    private static String safeDisplayName(@Nullable Configurable configurable) {
+      if (configurable == null) return "null";
+      try {
+        return String.valueOf(configurable.getDisplayName());
+      }
+      catch (Throwable t) {
+        return "<getDisplayName threw " + t.getClass().getSimpleName() + ">";
+      }
+    }
+
+    private static String safeId(@Nullable SearchableConfigurable configurable) {
+      if (configurable == null) return "null";
+      try {
+        return configurable.getId();
+      }
+      catch (Throwable t) {
+        return "<getId threw " + t.getClass().getSimpleName() + ">";
+      }
     }
 
     public void setFilter(Predicate<? super Configurable> filter) {

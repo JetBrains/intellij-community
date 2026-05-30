@@ -4,6 +4,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
@@ -18,7 +19,7 @@ public interface Printer {
   default void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
     if (processOutputType != ProcessOutputTypes.STDERR &&
         processOutputType != ProcessOutputTypes.STDOUT &&
-        processOutputType != ProcessOutputTypes.SYSTEM) {
+        !ProcessOutputType.isSystem(processOutputType)) {
       print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
       return;
     }

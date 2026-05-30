@@ -1,0 +1,3 @@
+class DescribeLogDirs:
+    @classmethod
+    def add_subparser(cls, subparsers): ...

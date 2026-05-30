@@ -302,6 +302,11 @@ public final class JobLauncherImpl extends JobLauncher {
         }
         return true;
       }
+
+      @Override
+      public String toString() {
+        return "ForkJoinTask: "+state();
+      }
     };
 
     private VoidForkJoinTask(@NotNull Runnable action, @NotNull ForkJoinPool forkJoinPool, @Nullable Consumer<? super Future<?>> onDoneCallback) {
@@ -363,6 +368,11 @@ public final class JobLauncherImpl extends JobLauncher {
         }
       }
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "VoidForkJoinTask: status="+myStatus+"; task:"+myForkJoinTask;
     }
   }
 

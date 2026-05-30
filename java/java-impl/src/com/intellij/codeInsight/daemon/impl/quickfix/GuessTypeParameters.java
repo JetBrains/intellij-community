@@ -28,6 +28,7 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public class GuessTypeParameters {
     if (infos.length == 1 && mySubstitutor != PsiSubstitutor.EMPTY) {
       ExpectedTypeInfo info = infos[0];
 
-      final PsiType expectedType = info.getType();
+      final PsiType expectedType = PsiTypesUtil.removeExternalAnnotations(info.getType());
 
       final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(mySubstitutor, expectedType, info.getKind());
       if (!matchedParameters.isEmpty()) {
@@ -87,7 +88,7 @@ public class GuessTypeParameters {
         return typeElement;
       }
 
-      typeElement = replaceTypeElement(typeElement, info.getType());
+      typeElement = replaceTypeElement(typeElement, expectedType);
 
       PsiSubstitutor rawingSubstitutor = getRawingSubstitutor(myProject, context, targetClass);
       int substitionResult = hasNullSubstitutions(mySubstitutor)

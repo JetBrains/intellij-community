@@ -4,6 +4,7 @@ package com.intellij.platform.buildScripts.licenses
 import tools.jackson.core.ObjectWriteContext
 import tools.jackson.core.PrettyPrinter
 import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultIndenter
 import tools.jackson.core.util.DefaultPrettyPrinter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -86,7 +87,7 @@ class LibraryLicensesListGenerator(val libraryLicenses: List<LibraryLicense>) {
       val jsonFactory = JsonFactory()
       val writeContext = object : ObjectWriteContext.Base() {
         override fun tokenStreamFactory() = jsonFactory
-        override fun getPrettyPrinter(): PrettyPrinter = DefaultPrettyPrinter()
+        override fun getPrettyPrinter(): PrettyPrinter = DefaultPrettyPrinter().withObjectIndenter(DefaultIndenter("  ", "\n"))
       }
       jsonFactory.createGenerator(writeContext, out).use { writer ->
         writer.writeStartArray()

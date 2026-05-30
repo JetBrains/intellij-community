@@ -211,12 +211,13 @@ object UniversalFileChooser {
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
-      //val projectContributor = projectContributor(project)
-      //val contributors = UniversalFileChooserContributor.EP_NAME.extensionList
-        // TODO IJPL-237292: Filter out tabs only with specific flag
-        //if (projectContributor != null) listOf(projectContributor)
-        //else UniversalFileChooserContributor.EP_NAME.extensionList
-      for (contributor in contributors) {
+      val effectiveContributors = if (descriptor.isEnvironmentRestricted) {
+        projectContributor(project)?.let { listOf(it) } ?: contributors
+      }
+      else {
+        contributors
+      }
+      for (contributor in effectiveContributors) {
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, toolbarActionGroup, ::updateOkEnabled)
         fileViews.add(fileView)
         tabbedPane.addTab(contributor.tabTitle, fileView.topComponent)
@@ -526,7 +527,7 @@ object UniversalFileChooser {
       val contributor: UniversalFileChooserContributor,
       descriptor: FileChooserDescriptor,
       disposable: Disposable,
-      project: Project,
+      private val project: Project,
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
@@ -536,6 +537,7 @@ object UniversalFileChooser {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
+      private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
 
       var fileToSelect: Path? = null
       private val breadcrumbs = Breadcrumbs()
@@ -697,15 +699,13 @@ object UniversalFileChooser {
         cardLayout.show(contentPanel, LOADING_CARD)
         scope.launch {
           withContext(Dispatchers.IO) {
-            // TODO: IJPL-237292
-            //val allRoots = if (!project.isDefault) {
-            //  val basePath = project.basePath?.let { Path.of(it) }
-            //  if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
-            //}
-            //else {
-            //  contributor.getRoots()
-            //}
-            val allRoots = contributor.getRoots()
+            val allRoots = if (environmentRestricted && !project.isDefault) {
+              val basePath = project.basePath?.let { Path.of(it) }
+              if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+            }
+            else {
+              contributor.getRoots()
+            }
             val realRoots = allRoots.filter { it.path != null }
             val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
             val mountStatuses = mutableMapOf<String, MountStatus>()

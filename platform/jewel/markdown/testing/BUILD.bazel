@@ -26,8 +26,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-runtime-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -51,8 +50,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
   ],
-  runtime_deps = [":testing"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":testing"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.testing` end
 

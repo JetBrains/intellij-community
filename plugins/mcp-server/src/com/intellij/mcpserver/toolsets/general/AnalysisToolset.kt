@@ -64,6 +64,7 @@ class AnalysisToolset : McpToolset {
         |Use this tool to lint several files after editing them.
         |Returns per-file problems with severity, description, and location information.
         |Batch responses may include file entries with `timedOut: true` and empty `problems` when individual files exceed the available budget.
+        |File entries with a `notAnalyzedReason` indicate files that could not be analyzed (e.g., outside project content roots, excluded, or unsupported file type).
         |Top-level `more: true` means the batch is incomplete.
         |`min_severity` must be `warning` or `error`; defaults to `warning`.
         |Note: Only analyzes files within the project directory.
@@ -112,6 +113,9 @@ class AnalysisToolset : McpToolset {
       progressTitle = McpServerBundle.message("progress.title.analyzing.file", filePath.substringAfterLast('/').substringAfterLast('\\')),
     )
     val item = lintResult.items.firstOrNull()
+    if (item?.notAnalyzedReason != null) {
+      mcpFail("File cannot be analyzed: ${item.notAnalyzedReason}")
+    }
     val result = FileProblemsResult(
       filePath = item?.filePath ?: filePath,
       errors = item?.problems?.map { it.toLegacyFileProblem() }.orEmpty(),
@@ -416,7 +420,7 @@ class AnalysisToolset : McpToolset {
     val completedFilePaths = ConcurrentHashMap.newKeySet<String>(requestedFiles.size)
     val onFileResult: (LintFileResult) -> Unit = { result ->
       completedFilePaths.add(result.filePath)
-      if (result.problems.isNotEmpty() || result.timedOut == true) {
+      if (result.problems.isNotEmpty() || result.timedOut == true || result.notAnalyzedReason != null) {
         completedResults.putIfAbsent(result.filePath, result)
       }
     }
@@ -460,6 +464,8 @@ class AnalysisToolset : McpToolset {
   @Serializable
   data class LintFileResult(
     val filePath: String,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val notAnalyzedReason: String? = null,
     @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
     val problems: List<LintProblem> = emptyList(),
     @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)

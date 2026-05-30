@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.DynamicPluginEnabler
 import com.intellij.ide.plugins.DynamicPlugins
-import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstallPluginRequest
@@ -194,7 +193,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         if (descriptor.isBundled) {
           installWithoutRestart = false
         }
-        else if (!allowLoadUnloadWithoutRestart(descriptor.pluginId)) {
+        else if (!checkCanUnloadWithoutRestart(descriptor.pluginId)) {
           installWithoutRestart = false
         }
         else if (!descriptor.isEnabled) {
@@ -498,7 +497,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val updateData = UpdateCheckerFacade.getInstance().getPluginUpdates(plugins = listOf(pluginId))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
-      .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
+      .map { it.uiModel }
       .firstOrNull()
   }
 
@@ -510,9 +509,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return service
     } else {
       val service = PluginUpdatesService.connectWithUpdates({ results ->
-                                                              callback(results.pluginUpdates.all.map {
-                                                                it.uiModel ?: PluginUiModelAdapter(it.descriptor)
-                                                              })
+                                                              callback(results.pluginUpdates.all.map { it.uiModel })
                                                             })
       service.setFilter { session.isPluginEnabled(it.pluginId) }
       session.updateService = service
@@ -790,9 +787,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.filter { pluginRequiresUltimatePluginButItsDisabled(it, idMap, contentModuleIdMap) }
   }
 
-  private fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
-    val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
-    return allowLoadUnloadWithoutRestart(descriptorImpl)
+  private suspend fun checkCanUnloadWithoutRestart(pluginId: PluginId): Boolean {
+    val plugin = PluginManagerCore.findPlugin(pluginId) as? PluginMainDescriptor ?: return false
+    return withContext(Dispatchers.Default) { DynamicPlugins.checkCanUnloadWithoutRestart(plugin) }
   }
 
   private fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {

@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -25,8 +26,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -58,7 +60,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   private int myComputedErrorsStamp;
   private int myShownErrorsStamp;
   private final Object myLock = new Object();
-  private final MergingUpdateQueue myContentUpdateQueue;
+  private final UpdateQueue<ShowErrorsUpdate> myContentUpdateQueue;
   private final JTextPane myContent = new JTextPane();
   private final Runnable myOnErrorsChanged;
   private static final @NlsSafe String myStyleText = "body {" +
@@ -84,7 +86,13 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(pane);
-    myContentUpdateQueue = new MergingUpdateQueue("ErrorPaneConfigurable Content Updates", 300, false, pane, this, pane);
+    myContentUpdateQueue = DebouncedUpdates.<ShowErrorsUpdate>forComponent(pane, "ErrorPaneConfigurable Content Updates", 300)
+      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+      .runLatest(update -> {
+        myContent.setText(update.myText);
+        myShownErrorsStamp = update.myCurrentStamp;
+      })
+      .cancelOnDispose(this);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
@@ -286,27 +294,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     }
   }
 
-  private class ShowErrorsUpdate extends Update {
-    private final int myCurrentStamp;
-    private final @Nls(capitalization = Nls.Capitalization.Sentence) String myText;
-
-    ShowErrorsUpdate(int currentStamp, @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
-      super(currentStamp);
-      myCurrentStamp = currentStamp;
-      myText = text;
-    }
-
-    @Override
-    public void run() {
-      if (!Disposer.isDisposed(ErrorPaneConfigurable.this)) {
-        myContent.setText(myText);
-        myShownErrorsStamp = myCurrentStamp;
-      }
-    }
-
-    @Override
-    public boolean canEat(@NotNull Update update) {
-      return update instanceof ShowErrorsUpdate && myCurrentStamp > ((ShowErrorsUpdate)update).myCurrentStamp;
-    }
+  private record ShowErrorsUpdate(int myCurrentStamp,
+                                  @Nls(capitalization = Nls.Capitalization.Sentence) String myText) {
   }
 }

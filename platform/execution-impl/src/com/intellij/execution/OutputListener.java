@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class OutputListener extends ProcessAdapter {
     if (outputType == ProcessOutputTypes.STDERR) {
       err.append(event.getText());
     }
-    else if (outputType == ProcessOutputTypes.SYSTEM) {
+    else if (ProcessOutputType.isSystem(outputType)) {
       // skip
     }
     else {

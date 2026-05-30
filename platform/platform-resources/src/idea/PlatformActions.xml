@@ -1872,6 +1872,14 @@
       <keyboard-shortcut keymap="Xcode" first-keystroke="alt PAGE_UP" remove="true"/>
     </action>
 
+    <action id="FocusStatusBar" class="com.intellij.openapi.wm.impl.status.FocusStatusBarAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt PAGE_DOWN"/>
+      <keyboard-shortcut keymap="Visual Studio" first-keystroke="alt PAGE_DOWN" remove="true"/>
+      <keyboard-shortcut keymap="Visual Studio OSX" first-keystroke="alt PAGE_DOWN" remove="true"/>
+      <keyboard-shortcut keymap="Visual Studio for Mac" first-keystroke="alt PAGE_DOWN" remove="true"/>
+      <keyboard-shortcut keymap="Xcode" first-keystroke="alt PAGE_DOWN" remove="true"/>
+    </action>
+
     <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction"
             internal="true"/>
 

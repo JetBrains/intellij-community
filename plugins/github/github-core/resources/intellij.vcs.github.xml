@@ -286,9 +286,7 @@
            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction"
            icon="AllIcons.Actions.Show"
            popup="true">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
-                    relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
-                    anchor="before"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
     </group>
 
     <group id="Github.Pull.Request.Branch.Popup.Actions">

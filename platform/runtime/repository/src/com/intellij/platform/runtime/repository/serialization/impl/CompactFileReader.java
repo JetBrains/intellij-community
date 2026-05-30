@@ -1,14 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
+import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +77,7 @@ public final class CompactFileReader {
 
         int visibilityIndex = in.read();
         if (visibilityIndex < 0 || visibilityIndex >= VISIBILITIES_BY_INDEX.length) {
-          throw new MalformedRepositoryException("Invalid visibility index '" + visibilityIndex + "' in '" + descriptorId.getPresentableName() + "'");
+          throw new MalformedRepositoryException("Invalid visibility index '" + visibilityIndex + "' in '" + descriptorId.getDisplayName() + "'");
         }
         RuntimeModuleVisibility visibility = VISIBILITIES_BY_INDEX[visibilityIndex];
 
@@ -84,7 +86,7 @@ public final class CompactFileReader {
         for (int j = 0; j < dependenciesCount; j++) {
           int dependencyIndex = in.readInt();
           if (dependencyIndex < 0 || dependencyIndex >= totalModuleIdCount) {
-            throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getPresentableName() + "'");
+            throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId.getDisplayName() + "'");
           }
           dependencies.add(moduleIds[dependencyIndex]);
         }
@@ -98,7 +100,7 @@ public final class CompactFileReader {
       }
 
       int pluginHeadersCount = in.readInt();
-      List<RawRuntimePluginHeader> pluginHeaders = new ArrayList<>(pluginHeadersCount);
+      List<RuntimePluginHeader> pluginHeaders = new ArrayList<>(pluginHeadersCount);
       for (int i = 0; i < pluginHeadersCount; i++) {
         String pluginId = in.readUTF();
         int pluginDescriptorModuleIdIndex = in.readInt();
@@ -107,7 +109,7 @@ public final class CompactFileReader {
         }
         RuntimeModuleId pluginDescriptorModuleId = moduleIds[pluginDescriptorModuleIdIndex];
         int includedModulesCount = in.readInt();
-        List<RawIncludedRuntimeModule> includedModules = new ArrayList<>(includedModulesCount);
+        List<IncludedRuntimeModule> includedModules = new ArrayList<>(includedModulesCount);
         for (int j = 0; j < includedModulesCount; j++) {
           int includedModuleIndex = in.readInt();
           if (includedModuleIndex < 0 || includedModuleIndex >= totalModuleIdCount) {
@@ -116,16 +118,16 @@ public final class CompactFileReader {
           RuntimeModuleId moduleId = moduleIds[includedModuleIndex];
           int loadingRuleIndex = in.read();
           if (loadingRuleIndex < 0 || loadingRuleIndex >= LOADING_RULES_BY_INDEX.length) {
-            throw new MalformedRepositoryException("Invalid loading rule index '" + loadingRuleIndex + "' for '" + moduleId.getPresentableName() + "' in '" + pluginId + "'");
+            throw new MalformedRepositoryException("Invalid loading rule index '" + loadingRuleIndex + "' for '" + moduleId.getDisplayName() + "' in '" + pluginId + "'");
           }
           int requiredIfAvailableIndex = in.readInt();
           if (requiredIfAvailableIndex < -1 || requiredIfAvailableIndex > totalModuleIdCount) {
-            throw new MalformedRepositoryException("Invalid required-if-available index '" + requiredIfAvailableIndex + "' for '" + moduleId.getPresentableName() + "' in '" + pluginId + "'");
+            throw new MalformedRepositoryException("Invalid required-if-available index '" + requiredIfAvailableIndex + "' for '" + moduleId.getDisplayName() + "' in '" + pluginId + "'");
           }
           RuntimeModuleId requiredIfAvailable = requiredIfAvailableIndex == -1 ? null : moduleIds[requiredIfAvailableIndex];
-          includedModules.add(new RawIncludedRuntimeModule(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));
+          includedModules.add(new IncludedRuntimeModuleImpl(moduleId, LOADING_RULES_BY_INDEX[loadingRuleIndex], requiredIfAvailable));
         }
-        pluginHeaders.add(RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules));
+        pluginHeaders.add(new RuntimePluginHeaderImpl(pluginId, pluginDescriptorModuleId, includedModules));
       }
 
       return RawRuntimeModuleRepositoryData.create(descriptors, pluginHeaders, filePath.getParent());

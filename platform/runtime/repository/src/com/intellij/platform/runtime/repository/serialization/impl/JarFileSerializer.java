@@ -2,9 +2,9 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +83,7 @@ public final class JarFileSerializer {
   }
 
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
-                               @NotNull Collection<RawRuntimePluginHeader> pluginHeaders,
+                               @NotNull Collection<RuntimePluginHeader> pluginHeaders,
                                @Nullable String bootstrapModuleName,
                                @NotNull Path jarFile,
                                int generatorVersion)
@@ -111,7 +111,7 @@ public final class JarFileSerializer {
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
         jarOutput.closeEntry();
       }
-      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         String moduleName = pluginHeader.getPluginDescriptorModuleId().getName();
         jarOutput.putNextEntry(new JarEntry("plugins/" + moduleName + ".xml"));
         PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);

@@ -476,6 +476,10 @@ f:com.intellij.openapi.application.ApplicationStarterEP
 - implementation:java.lang.String
 - isInternal:Z
 - key:java.lang.String
+c:com.intellij.openapi.fileChooser.FileChooserDescriptor
+- isEnvironmentRestricted():Z
+- setEnvironmentRestricted(Z):V
+- withEnvironmentRestricted(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 com.intellij.openapi.fileTypes.FileTypeConsumer
 - sf:EXTENSION_DELIMITER:java.lang.String
 - a:consume(com.intellij.openapi.fileTypes.FileType):V

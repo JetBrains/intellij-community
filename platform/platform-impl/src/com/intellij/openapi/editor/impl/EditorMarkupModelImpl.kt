@@ -43,10 +43,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.service
@@ -103,7 +103,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
@@ -117,7 +116,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -130,13 +128,9 @@ import com.intellij.util.ui.JBValue.UIInteger
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import com.intellij.util.ui.update.UpdateQueue
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -184,6 +178,7 @@ import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl) :
@@ -195,10 +190,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   // null renderer means we should not show a traffic light icon
   private var errorStripeRenderer: ErrorStripeRenderer? = null
   private val resourcesDisposable = Disposer.newCheckedDisposable()
-  private val statusUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable)
+  private val trafficLightVisibilityUpdateQueue: UpdateQueue<Unit>?
+  private val toolbarForcingUpdateQueue: UpdateQueue<Unit>?
 
   // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
-  private val trafficLightIconUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val trafficLightIconUpdateQueue: UpdateQueue<Unit>?
 
   private val errorStripeMarkersModel: ErrorStripeMarkersModel
 
@@ -335,21 +331,37 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     errorStripeMarkersModel = ErrorStripeMarkersModel(editor)
 
     val project = editor.project
-    @Suppress("IfThenToSafeAccess")
-    if (project != null) {
-      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        trafficLightIconUpdateRequests
-          .throttle(50)
-          .collectLatest {
-            val errorStripeRenderer = errorStripeRenderer ?: return@collectLatest
-            val newStatus = readAction { errorStripeRenderer.getStatus() }
-            if (!newStatus.equalsTo(analyzerStatus)) {
-              withContext(Dispatchers.EDT) {
-                changeStatus(newStatus)
-              }
+    val projectScope = project?.service<CoreUiCoroutineScopeHolder>()?.coroutineScope
+    
+    trafficLightIconUpdateQueue = projectScope?.let { scope ->
+      DebouncedUpdates.forScope<Unit>(scope, "traffic-light-icon-update", 50.milliseconds)
+        .runLatest {
+          val errorStripeRenderer = errorStripeRenderer ?: return@runLatest
+          val newStatus = readAction { errorStripeRenderer.getStatus() }
+          if (!newStatus.equalsTo(analyzerStatus)) {
+            withContext(Dispatchers.EDT) {
+              changeStatus(newStatus)
             }
           }
-      }.cancelOnDispose(resourcesDisposable)
+        }
+        .cancelOnDispose(resourcesDisposable)
+    }
+    
+    trafficLightVisibilityUpdateQueue = projectScope?.let { scope ->
+      DebouncedUpdates.forScope<Unit>(scope, "traffic-light-visibility-update", 50.milliseconds)
+        .withContext(Dispatchers.UI + ModalityState.any().asContextElement())
+        .runLatest { doUpdateTrafficLightVisibility() }
+        .cancelOnDispose(resourcesDisposable)
+    }
+    
+    toolbarForcingUpdateQueue = projectScope?.let { scope ->
+      DebouncedUpdates.forScope<Unit>(scope, "toolbar-forcing-update", 50.milliseconds)
+        .withContext(Dispatchers.UI + ModalityState.any().asContextElement())
+        .runLatest {
+          @Suppress("DEPRECATION")
+          statusToolbar.updateActionsImmediately()
+        }
+        .cancelOnDispose(resourcesDisposable)
     }
   }
 
@@ -412,17 +424,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   private fun updateTrafficLightVisibility() {
-    statusUpdates.queue(object : Update("visibility") {
-      override suspend fun execute() {
-        writeIntentReadAction {
-          doUpdateTrafficLightVisibility()
-        }
-      }
-
-      override fun run() {
-        WriteIntentReadAction.run { doUpdateTrafficLightVisibility() }
-      }
-    })
+    trafficLightVisibilityUpdateQueue?.queue(Unit)
   }
 
   private fun doUpdateTrafficLightVisibility() {
@@ -569,7 +571,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   fun repaintTrafficLightIcon() {
     if (errorStripeRenderer != null) {
-      trafficLightIconUpdateRequests.tryEmit(Unit)
+      trafficLightIconUpdateQueue?.queue(Unit)
     }
   }
 
@@ -614,12 +616,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   // Used in Rider please do not drop it
   fun forcingUpdateStatusToolbar() {
-    statusUpdates.queue(object : Update("forcingUpdate") {
-      override fun run() {
-        @Suppress("DEPRECATION")
-        statusToolbar.updateActionsImmediately()
-      }
-    })
+    toolbarForcingUpdateQueue?.queue(Unit)
   }
 
   private val currentHint: LightweightHint?

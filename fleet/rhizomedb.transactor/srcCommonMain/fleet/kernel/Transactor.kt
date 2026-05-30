@@ -351,10 +351,14 @@ suspend fun <T> withTransactor(
 
       override fun changeAsync(f: ChangeScope.() -> Unit): Deferred<Change> {
         val deferred = CompletableDeferred<Change>()
-        val result = priorityDispatchChannel.trySend(ChangeTask(f = f,
-                                                                rendezvous = CompletableDeferred(Unit),
-                                                                resultDeferred = deferred,
-                                                                causeSpan = currentSpan))
+        val result = priorityDispatchChannel.trySend(
+          ChangeTask(
+            f = f,
+            rendezvous = CompletableDeferred(Unit),
+            resultDeferred = deferred,
+            causeSpan = currentSpan,
+          ),
+        )
         if (!result.isSuccess) {
           if (result.isClosed) {
             deferred.cancel()
@@ -535,7 +539,7 @@ private fun logSubscription(sharedFlow: SharedFlow<TransactorEvent>): Flow<Subsc
               }
               is SubscriptionState.Overflow -> {
                 emit(SubscriptionEvent.Reset(event.change.dbAfter))
-               SubscriptionState.Active(event.timestamp)
+                SubscriptionState.Active(event.timestamp)
               }
             }
           }

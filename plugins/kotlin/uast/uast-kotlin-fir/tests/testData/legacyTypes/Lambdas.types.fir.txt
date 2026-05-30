@@ -13,9 +13,9 @@ UFile (package = ) [import java.util.stream.Stream...]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : java.util.stream.Stream<java.lang.String>
                 UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] : java.util.stream.Stream<java.lang.String>
-                    UQualifiedReferenceExpression [Stream.empty()] : java.util.stream.Stream<java.lang.String>
+                    UQualifiedReferenceExpression [Stream.empty()] : @org.jetbrains.annotations.NotNull() java.util.stream.Stream<java.lang.String>
                         USimpleNameReferenceExpression (identifier = Stream) [Stream]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : java.util.stream.Stream<java.lang.String>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : @org.jetbrains.annotations.NotNull() java.util.stream.Stream<java.lang.String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: java.lang.String ->...})] : java.util.stream.Stream<java.lang.String>
                         UIdentifier (Identifier (filter)) [UIdentifier (Identifier (filter))]

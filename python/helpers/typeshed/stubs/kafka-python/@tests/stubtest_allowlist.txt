@@ -1,0 +1,24 @@
+# Command-line entry points are not a useful typed API surface.
+kafka.__main__
+kafka.admin.__main__
+kafka.consumer.__main__
+kafka.producer.__main__
+
+# Benchmark modules are not included in type stubs.
+kafka.benchmarks.*
+
+# Concrete subclasses define these abstract properties as class attributes.
+kafka.protocol.api.Request.API_KEY
+kafka.protocol.api.Request.API_VERSION
+kafka.protocol.api.Request.RESPONSE_TYPE
+kafka.protocol.api.Request.SCHEMA
+kafka.protocol.api.Response.API_KEY
+kafka.protocol.api.Response.API_VERSION
+kafka.protocol.api.Response.SCHEMA
+
+# Vendored compatibility modules are implementation details.
+kafka.vendor
+kafka.vendor.enum34
+kafka.vendor.selectors34
+kafka.vendor.six
+kafka.vendor.socketpair

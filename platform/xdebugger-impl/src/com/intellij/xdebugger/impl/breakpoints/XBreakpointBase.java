@@ -463,6 +463,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
    * Primarily used for tooltip in the editor.
    */
   public @NotNull @Nls String getDescription() {
+    for (XBreakpointCustomTooltipProvider tooltipProvider : XBreakpointCustomTooltipProvider.EP_NAME.getExtensionList()) {
+      String tooltip = tooltipProvider.tryProvide(this);
+      if (tooltip != null) {
+        return tooltip;
+      }
+    }
+    return getDefaultDescription();
+  }
+
+  private @NotNull @Nls String getDefaultDescription() {
     StringBuilder builder = new StringBuilder();
     builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
     LineSeparator separator = new LineSeparator(builder);

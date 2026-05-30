@@ -87,6 +87,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.OverrideMethodsProcessor;
@@ -845,6 +846,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiStatement[] originalStatements = block.getStatements();
 
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
+    if (returnType != null) {
+      returnType = PsiTypesUtil.removeExternalAnnotations(returnType);
+    }
     InlineTransformer transformer = myTransformerChooser.apply(ref);
 
     PsiLocalVariable[] parmVars = helper.declareParameters();

@@ -1239,20 +1239,6 @@ http_file(
 )
 
 http_file(
-  name = "jetbrains_fleet-expects-compiler-plugin-2_4_0-RC-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.4.0-RC-0.1/expects-compiler-plugin-2.4.0-RC-0.1.jar",
-  sha256 = "79b41fdb4b90f4fe94c6023b3933fe6d95987a45a454ec4633d91d745b2ce04a",
-  downloaded_file_path = "expects-compiler-plugin-2.4.0-RC-0.1.jar"
-)
-
-http_file(
-  name = "jetbrains_fleet-expects-compiler-plugin-2_4_0-RC-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.4.0-RC-0.1/expects-compiler-plugin-2.4.0-RC-0.1-sources.jar",
-  sha256 = "a5924647070ac60ba0e5f6cd7ba7677fe2be932353f4f6194321a12f196dcf1d",
-  downloaded_file_path = "expects-compiler-plugin-2.4.0-RC-0.1-sources.jar"
-)
-
-http_file(
   name = "org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0.jar",
   sha256 = "e506fd77462afcdb16f0ccfe7c96c1549443580a3be240c5dcff1ae2bfac0555",
@@ -5733,6 +5719,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.28/intellij-deps-java-atk-wrapper-262.28.jar",
+  sha256 = "c5e6a7039331b81c974b317f5705942906e4486c47c6a489c1872fce09708cd0",
+  downloaded_file_path = "intellij-deps-java-atk-wrapper-262.28.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.28/intellij-deps-java-atk-wrapper-262.28-sources.jar",
+  sha256 = "87efdf282a40a574c0c21b878143e133975f3aa8c8dcdb238354fc79fb6cbc7f",
+  downloaded_file_path = "intellij-deps-java-atk-wrapper-262.28-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps-rwmutex-idea-0_0_10_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.10/rwmutex-idea-0.0.10.jar",
   sha256 = "61cd5eee5367d10e0cca664afdc4bbde2ff7aab9c175c5b520aac8b5315d874d",
@@ -5744,20 +5744,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.10/rwmutex-idea-0.0.10-sources.jar",
   sha256 = "d84d0cd861e5cee5c6cef174ca1a3bd1258fd16e7a11a96c99685dbadf685336",
   downloaded_file_path = "rwmutex-idea-0.0.10-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_4_0-RC_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.4.0-RC/kotlin-compose-compiler-plugin-2.4.0-RC.jar",
-  sha256 = "6194fb69372adfd2e7b8285612e4aa6efd1f745467965283820aa7d111ab21ec",
-  downloaded_file_path = "kotlin-compose-compiler-plugin-2.4.0-RC.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_4_0-RC-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.4.0-RC/kotlin-compose-compiler-plugin-2.4.0-RC-sources.jar",
-  sha256 = "24db8c2e199379592d9eed08f12684ac4ad59019a6969ab542a7b927acd75657",
-  downloaded_file_path = "kotlin-compose-compiler-plugin-2.4.0-RC-sources.jar"
 )
 
 http_file(
@@ -6570,6 +6556,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ehcache/sizeof/0.4.0/sizeof-0.4.0-sources.jar",
   sha256 = "2daa945138f5046578512cd230f9ff2203379416b24510f44aabcdd98c267b5b",
   downloaded_file_path = "sizeof-0.4.0-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.0-RC/kotlin-compiler-embeddable-2.4.0-RC.jar",
+  sha256 = "f2d0a10ac32702f217f53a3d760c33a51451fd1f233c38e58a275d740a270339",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.4.0-RC.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.0-RC/kotlin-compiler-embeddable-2.4.0-RC-sources.jar",
+  sha256 = "e3e1fbaa1c8fc155b596ad486a720d63c606f7f700c6c5eeff50f544b09155db",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.4.0-RC-sources.jar"
 )
 
 http_file(
@@ -14371,20 +14371,6 @@ http_file(
 )
 
 http_file(
-  name = "jetbrains_fleet-noria-compiler-plugin-2_4_0-RC-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.4.0-RC-0.1/noria-compiler-plugin-2.4.0-RC-0.1.jar",
-  sha256 = "e4f1b9cc00a4c33ef1e528b6c013189f2630eec9d62ddad34d56206625df2de6",
-  downloaded_file_path = "noria-compiler-plugin-2.4.0-RC-0.1.jar"
-)
-
-http_file(
-  name = "jetbrains_fleet-noria-compiler-plugin-2_4_0-RC-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.4.0-RC-0.1/noria-compiler-plugin-2.4.0-RC-0.1-sources.jar",
-  sha256 = "bb178af40d30922767b8c81f13a08f501329dcbca18fe632ae3a2cbd3e44d52c",
-  downloaded_file_path = "noria-compiler-plugin-2.4.0-RC-0.1-sources.jar"
-)
-
-http_file(
   name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14.jar",
   sha256 = "f0e3ffcbba6744ab4918a55aa32ff4f408fcd21e45ab8bd5f7883a1793b2a253",
@@ -15684,34 +15670,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/thaiopensource/jing/20030619/jing-20030619-sources.jar",
   sha256 = "b055dbb5df0ccd5f659e2511bdc18c3bbe034c9a5fc0a33f95408d05401e0641",
   downloaded_file_path = "jing-20030619-sources.jar"
-)
-
-http_file(
-  name = "jetbrains_fleet-rhizomedb-compiler-plugin-2_4_0-RC-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.4.0-RC-0.1/rhizomedb-compiler-plugin-2.4.0-RC-0.1.jar",
-  sha256 = "3bb05e623005d8e02a197d5c6e0fd78c234e1dbdaa8e1dd24707f98c10bf5221",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.4.0-RC-0.1.jar"
-)
-
-http_file(
-  name = "jetbrains_fleet-rhizomedb-compiler-plugin-2_4_0-RC-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.4.0-RC-0.1/rhizomedb-compiler-plugin-2.4.0-RC-0.1-sources.jar",
-  sha256 = "48040679681f5cc90ed6d1b00a0dd3d1478fe9ca25aaf20d89a4c81e0a7981e7",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.4.0-RC-0.1-sources.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fleet-rpc-compiler-plugin-2_4_0-RC-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.4.0-RC-0.1/rpc-compiler-plugin-2.4.0-RC-0.1.jar",
-  sha256 = "06b301d404b553dbd0ec512fd5b3b8667a1f3a3aae1b11f779712065be4669dc",
-  downloaded_file_path = "rpc-compiler-plugin-2.4.0-RC-0.1.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fleet-rpc-compiler-plugin-2_4_0-RC-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.4.0-RC-0.1/rpc-compiler-plugin-2.4.0-RC-0.1-sources.jar",
-  sha256 = "9025c274cce8a9068974c231458bbb7f23da93142ccc290b47aff73c567ecd30",
-  downloaded_file_path = "rpc-compiler-plugin-2.4.0-RC-0.1-sources.jar"
 )
 
 http_file(

@@ -67,7 +67,7 @@ fun loadPluginWithText(
     pluginSpec = pluginSpec,
     pluginsDir = pluginsDir,
   )
-  assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
+  assertThat(DynamicPlugins.validateCanUnloadWithoutRestart(descriptor)).isNull()
   try {
     assert(DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)) { "plugin is expected to load $descriptor" }
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
@@ -78,7 +78,7 @@ fun loadPluginWithText(
   }
 
   return Disposable {
-    val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
+    val reason = DynamicPlugins.validateCanUnloadWithoutRestart(descriptor)
     invokeAndWaitIfNeeded {
       unloadAndUninstallPlugin(descriptor)
     }

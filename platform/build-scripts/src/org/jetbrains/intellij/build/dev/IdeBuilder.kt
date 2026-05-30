@@ -52,7 +52,7 @@ import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
-import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
+import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.normalizeCompilationContextForBuild

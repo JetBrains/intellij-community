@@ -112,7 +112,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asDeferred
+import org.jetbrains.concurrency.asPromise
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import java.awt.Point
@@ -894,6 +896,21 @@ class FileStructurePopup(
     }
     selectInner(visitor)
   }
+
+  @TestOnly
+  @ApiStatus.Internal
+  override fun rebuildAndUpdateAsync(): Promise<*> =
+    cs.launch { rebuildAndUpdate() }.asPromise()
+
+  @TestOnly
+  @ApiStatus.Internal
+  override fun waitUpdateFinishedAsync(): Promise<*> =
+    cs.launch { waitUpdateFinished() }.asPromise()
+
+  @TestOnly
+  @ApiStatus.Internal
+  override fun selectCurrentAsync(): Promise<*> =
+    cs.launch { selectCurrent() }.asPromise()
 
   override fun setActionActive(name: String?, state: Boolean) {
   }

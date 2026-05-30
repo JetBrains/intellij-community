@@ -16,7 +16,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
@@ -489,7 +489,7 @@ private fun createProcessCallback(
     val exitCodeDeferred = CompletableDeferred<Int>()
     processHandler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        if (outputType == ProcessOutputTypes.SYSTEM) return
+        if (ProcessOutputType.isSystem(outputType)) return
         outputCollector.append(event.text)
       }
 

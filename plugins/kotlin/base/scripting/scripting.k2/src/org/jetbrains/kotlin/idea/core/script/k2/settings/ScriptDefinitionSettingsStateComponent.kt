@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 internal class ScriptDefinitionSettingsStateComponent(val project: Project) :
     SerializablePersistentStateComponent<ScriptDefinitionSettingsStateComponent.State>(State()), KotlinScriptingSettings {
 
-    fun updateSettings(updateFunction: (ScriptDefinitionSettingsStateComponent.State) -> ScriptDefinitionSettingsStateComponent.State) {
+    fun update(updateFunction: (ScriptDefinitionSettingsStateComponent.State) -> ScriptDefinitionSettingsStateComponent.State) {
         val before = state
         val after = updateState(updateFunction)
         if (before != after) {
@@ -67,8 +67,8 @@ internal val explicitTemplateDelimiters: Array<String> = arrayOf(":", ",", ";", 
 internal fun parseExplicitTemplateInput(text: String): List<String> =
     text.split(*explicitTemplateDelimiters).map { it.trim() }.filter { it.isNotEmpty() }
 
-internal fun ScriptDefinitionSettingsStateComponent.State.parsedExplicitTemplateClassNames(): List<String> =
-    parseExplicitTemplateInput(explicitTemplateClassNames)
+internal val ScriptDefinitionSettingsStateComponent.State.parsedClassNames: List<String>
+    get() = parseExplicitTemplateInput(explicitTemplateClassNames)
 
-internal fun ScriptDefinitionSettingsStateComponent.State.parsedExplicitTemplateClasspath(): List<String> =
-    parseExplicitTemplateInput(explicitTemplateClasspath)
+internal val ScriptDefinitionSettingsStateComponent.State.parsedClasspath: List<String>
+    get() = parseExplicitTemplateInput(explicitTemplateClasspath)

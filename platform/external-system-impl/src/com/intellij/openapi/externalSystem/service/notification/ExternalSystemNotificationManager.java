@@ -50,8 +50,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,20 +80,36 @@ public final class ExternalSystemNotificationManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalSystemNotificationManager.class);
 
   private static final @NotNull Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
-  private final @NotNull MergingUpdateQueue myUpdateQueue;
+
+  private sealed interface NotificationTask permits ShowNotificationTask, ClearNotificationsTask {
+  }
+
+  private record ShowNotificationTask(@NotNull ProjectSystemId externalSystemId,
+                                       @NotNull NotificationData notificationData,
+                                       @Nullable Key<String> notificationKey) implements NotificationTask {
+  }
+
+  private record ClearNotificationsTask(@Nullable String groupName,
+                                        @NotNull NotificationSource notificationSource,
+                                        @NotNull ProjectSystemId externalSystemId) implements NotificationTask {
+  }
+
+  private final @NotNull UpdateQueue<NotificationTask> myNotificationQueue;
   private volatile @Nullable Project myProject;
   private final @NotNull Set<Notification> myNotifications;
   private final @NotNull Map<Key, Notification> myUniqueNotifications;
   private final @NotNull Set<ProjectSystemId> initializedExternalSystem;
   private final @NotNull MessageCounter myMessageCounter;
 
-  public ExternalSystemNotificationManager(final @NotNull Project project) {
+  public ExternalSystemNotificationManager(final @NotNull Project project, @NotNull CoroutineScope scope) {
     myProject = project;
     myNotifications = ConcurrentCollectionFactory.createConcurrentSet();
     myUniqueNotifications = new ConcurrentHashMap<>();
     initializedExternalSystem = ConcurrentCollectionFactory.createConcurrentSet();
     myMessageCounter = new MessageCounter();
-    myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
+    
+    myNotificationQueue = DebouncedUpdates.<NotificationTask>forScope(scope, "ExternalSystem notifications", 500)
+      .runBatched(this::processNotifications);
   }
 
   public static @NotNull ExternalSystemNotificationManager getInstance(@NotNull Project project) {
@@ -204,60 +221,68 @@ public final class ExternalSystemNotificationManager implements Disposable {
     }
 
     if (notificationKey != null && isNotificationActive(notificationKey)) return;
-    myUpdateQueue.queue(new Update(new Object()) {
+    myNotificationQueue.queue(new ShowNotificationTask(externalSystemId, notificationData, notificationKey));
+  }
 
-      @Override
-      public void run() {
-        if (isDisposedOrNotOpen()) return;
-        assert myProject != null;
-        Project project = myProject;
+  private void processNotifications(List<NotificationTask> tasks) {
+    if (isDisposedOrNotOpen()) return;
+    Project project = myProject;
+    assert project != null;
 
-        final Application app = ApplicationManager.getApplication();
-        Runnable action = () -> {
-          if (!initializedExternalSystem.contains(externalSystemId)) {
-            app.runWriteAction(() -> {
-              if (isDisposedOrNotOpen()) return;
-              ExternalSystemUtil.ensureToolWindowContentInitialized(project, externalSystemId);
-              initializedExternalSystem.add(externalSystemId);
-            });
-          }
-          if (isDisposedOrNotOpen()) return;
-          NotificationGroup group;
-          if (notificationData.getBalloonGroup() == null) {
-            ExternalProjectsView externalProjectsView =
-              ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
-            group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                    ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-          }
-          else {
-            group = notificationData.getBalloonGroup();
-          }
-          if (group == null) return;
-
-          final Notification notification = group
-            .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
-            .setListener(notificationData.getListener());
-
-          if (notificationKey == null) {
-            myNotifications.add(notification);
-          }
-          else {
-            Notification oldNotification = myUniqueNotifications.put(notificationKey, notification);
-            if (oldNotification != null) {
-              oldNotification.expire();
-            }
-          }
-
-          if (notificationData.isBalloonNotification()) {
-            applyNotification(notification);
-          }
-          else {
-            addMessage(notification, externalSystemId, notificationData);
-          }
-        };
-        app.invokeLater(action, ModalityState.defaultModalityState(), project.getDisposed());
+    final Application app = ApplicationManager.getApplication();
+    Runnable action = () -> {
+      for (NotificationTask task : tasks) {
+        if (task instanceof ShowNotificationTask showTask) {
+          processShowNotification(app, project, showTask);
+        } else if (task instanceof ClearNotificationsTask clearTask) {
+          processClearNotification(project, clearTask);
+        }
       }
-    });
+    };
+    app.invokeLater(action, ModalityState.defaultModalityState(), project.getDisposed());
+  }
+
+  private void processShowNotification(Application app, Project project, ShowNotificationTask task) {
+    if (!initializedExternalSystem.contains(task.externalSystemId)) {
+      app.runWriteAction(() -> {
+        if (isDisposedOrNotOpen()) return;
+        ExternalSystemUtil.ensureToolWindowContentInitialized(project, task.externalSystemId);
+        initializedExternalSystem.add(task.externalSystemId);
+      });
+    }
+    if (isDisposedOrNotOpen()) return;
+    NotificationGroup group;
+    if (task.notificationData.getBalloonGroup() == null) {
+      ExternalProjectsView externalProjectsView =
+        ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(task.externalSystemId);
+      group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+              ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+    }
+    else {
+      group = task.notificationData.getBalloonGroup();
+    }
+    if (group == null) return;
+
+    final Notification notification = group
+      .createNotification(task.notificationData.getTitle(), task.notificationData.getMessage(), task.notificationData.getNotificationCategory().getNotificationType())
+      .setListener(task.notificationData.getListener());
+
+    if (task.notificationKey == null) {
+      myNotifications.add(notification);
+    }
+    else {
+      Notification oldNotification = myUniqueNotifications.put(task.notificationKey, notification);
+      if (oldNotification != null) {
+        oldNotification.expire();
+      }
+    }
+
+    if (task.notificationData.isBalloonNotification()) {
+      applyNotification(notification);
+    }
+    else {
+      addMessage(notification, task.externalSystemId, task.notificationData);
+    }
   }
 
   @Deprecated
@@ -267,53 +292,47 @@ public final class ExternalSystemNotificationManager implements Disposable {
     myMessageCounter.remove(groupName, notificationSource, externalSystemId);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
-    myUpdateQueue.queue(new Update(new Object()) {
-      @Override
-      public void run() {
-        if (isDisposedOrNotOpen()) return;
-        assert myProject != null;
-        Project project = myProject;
+    myNotificationQueue.queue(new ClearNotificationsTask(groupName, notificationSource, externalSystemId));
+  }
 
-        for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
-          Notification notification = iterator.next();
-          if (groupName == null || groupName.equals(notification.getGroupId())) {
-            notification.expire();
-            iterator.remove();
-          }
-        }
+  private void processClearNotification(Project project, ClearNotificationsTask task) {
+    final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(task.notificationSource, task.externalSystemId);
 
-        List<Key> toRemove = new SmartList<>();
-        myUniqueNotifications.forEach((key, notification) -> {
-          if (groupName == null || groupName.equals(notification.getGroupId())) {
-            notification.expire();
-            toRemove.add(key);
-          }
-        });
-        toRemove.forEach(myUniqueNotifications::remove);
+    for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
+      Notification notification = iterator.next();
+      if (task.groupName == null || task.groupName.equals(notification.getGroupId())) {
+        notification.expire();
+        iterator.remove();
+      }
+    }
 
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (toolWindow == null) return;
-
-        final MessageView messageView = MessageView.getInstance(project);
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (project.isDisposed()) return;
-          for (Content content: messageView.getContentManager().getContents()) {
-            if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
-              if (groupName == null) {
-                messageView.getContentManager().removeContent(content, true);
-              }
-              else {
-                assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
-                NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
-                ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
-                errorViewStructure.removeGroup(groupName);
-              }
-            }
-          }
-        });
+    List<Key> toRemove = new SmartList<>();
+    myUniqueNotifications.forEach((key, notification) -> {
+      if (task.groupName == null || task.groupName.equals(notification.getGroupId())) {
+        notification.expire();
+        toRemove.add(key);
       }
     });
+    toRemove.forEach(myUniqueNotifications::remove);
+
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+    if (toolWindow == null) return;
+
+    final MessageView messageView = MessageView.getInstance(project);
+    if (project.isDisposed()) return;
+    for (Content content: messageView.getContentManager().getContents()) {
+      if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
+        if (task.groupName == null) {
+          messageView.getContentManager().removeContent(content, true);
+        }
+        else {
+          assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
+          NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
+          ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
+          errorViewStructure.removeGroup(task.groupName);
+        }
+      }
+    }
   }
 
   private void addMessage(final @NotNull Notification notification,

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.Contract;
@@ -18,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
  * @see AnnotationUtil
  */
 public abstract class InferredAnnotationsManager {
+  protected static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+
+  @Contract(pure = true)
   public static InferredAnnotationsManager getInstance(@NotNull Project project) {
     return project.getService(InferredAnnotationsManager.class);
   }
@@ -37,9 +41,10 @@ public abstract class InferredAnnotationsManager {
   public abstract PsiAnnotation @NotNull [] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner);
 
   /**
-   * @return whether the given annotation was inferred by this service.
-   *
-   * @see AnnotationUtil#isInferredAnnotation(PsiAnnotation)
+   * @param annotation annotation to check
+   * @return true if this annotation is inferred
    */
-  public abstract boolean isInferredAnnotation(@NotNull PsiAnnotation annotation);
+  public static boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
+    return annotation.getUserData(INFERRED_ANNOTATION) != null;
+  }
 }

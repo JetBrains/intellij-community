@@ -17,11 +17,13 @@ import com.intellij.structuralsearch.JavaStructuralSearchProfile;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchTestCase;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
@@ -921,6 +923,16 @@ public class JavaStructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiExpressionStatement\")]new Object() {};"));
     assertEquals("expected variable of type anonymous class 4", 1,
                  findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
+  }
+
+  public void testContextScriptConstraintCompilation() {
+    // IJPL-245794: dialog validation compiles Complete Match scripts before inspection matching starts.
+    options.fillSearchCriteria("class '_Record {} ");
+    options.setFileType(JavaFileType.INSTANCE);
+    final MatchVariableConstraint constraint = options.addNewVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    constraint.setScriptCodeConstraint("__context__.getName() == 'NeedsToString'");
+
+    PatternCompiler.compilePattern(getProject(), options, true, true);
   }
 
   public void testCheckScriptValidation() {

@@ -5,7 +5,6 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.refactorings"/>
-    <module name="intellij.kotlin.refactorings.move"/>
     <module name="intellij.kotlin.searching"/>
     <!-- endregion -->
   </dependencies>

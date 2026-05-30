@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -71,8 +70,6 @@ public final class TextDiffViewerUtil {
   public static @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
-
-    result.add(Separator.getInstance());
     ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;
@@ -404,12 +401,15 @@ public final class TextDiffViewerUtil {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(!mySettings.isEnableAligningChangesMode());
+      if (mySettings.isEnableAligningChangesMode()) {
+        e.getPresentation().setEnabled(false);
+        Toggleable.setSelected(e.getPresentation(), true);
+      }
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return mySettings.isEnableSyncScroll();
+      return mySettings.isEnableSyncScroll() || mySettings.isEnableAligningChangesMode();
     }
 
     @Override

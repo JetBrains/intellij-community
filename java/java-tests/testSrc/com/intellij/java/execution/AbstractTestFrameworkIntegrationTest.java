@@ -16,6 +16,7 @@ import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -141,7 +142,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
               }
             }
 
-            if (outputType == ProcessOutputTypes.SYSTEM) {
+            if (ProcessOutputType.isSystem(outputType)) {
               processOutput.sys.add(text);
             }
 

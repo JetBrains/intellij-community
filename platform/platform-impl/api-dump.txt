@@ -312,6 +312,11 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 - f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):com.intellij.ide.plugins.PluginInstallCallbackData
 - bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
+f:com.intellij.ide.plugins.PluginInstaller
+- sf:INSTANCE:com.intellij.ide.plugins.PluginInstaller
+- sf:addStateListener(com.intellij.ide.plugins.PluginStateListener):V
+- sf:rootEntryName(java.nio.file.Path):java.lang.String
+- sf:unpackPlugin(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V
@@ -1048,6 +1053,40 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - f:toolName:java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
+f:com.intellij.openapi.updateSettings.impl.PluginDownloader
+- sf:Companion:com.intellij.openapi.updateSettings.impl.PluginDownloader$Companion
+- sf:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor):I
+- sf:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):I
+- sf:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- sf:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String,com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:getBuildNumber():com.intellij.openapi.util.BuildNumber
+- f:getDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
+- f:getFilePath():java.nio.file.Path
+- f:getId():com.intellij.openapi.extensions.PluginId
+- sf:getMarketplaceDownloadsUUID():java.lang.String
+- f:getPluginId():java.lang.String
+- f:getPluginName():java.lang.String
+- f:getPluginVersion():java.lang.String
+- f:getProductCode():java.lang.String
+- f:getReleaseDate():java.util.Date
+- f:getReleaseVersion():I
+- f:install():V
+- f:installDynamically(javax.swing.JComponent):Z
+- f:isFromMarketplace():Z
+- f:isLicenseOptional():Z
+- f:isShownErrors():Z
+- f:prepareToInstall(com.intellij.openapi.progress.ProgressIndicator):Z
+- sf:showErrorDialog(java.lang.String):V
+- f:toPluginNode():com.intellij.ide.plugins.PluginNode
+- f:withDownloadService(com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:withErrorsConsumer(java.util.function.Consumer):com.intellij.openapi.updateSettings.impl.PluginDownloader
+f:com.intellij.openapi.updateSettings.impl.PluginDownloader$Companion
+- f:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor):I
+- f:compareVersionsSkipBrokenAndIncompatible(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):I
+- f:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:createDownloader(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String,com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.PluginDownloader
+- f:getMarketplaceDownloadsUUID():java.lang.String
+- f:showErrorDialog(java.lang.String):V
 f:com.intellij.openapi.updateSettings.impl.UpdateChannel
 - f:getBuilds():java.util.List
 - f:getEvalDays():I
@@ -1163,6 +1202,16 @@ com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - a:createTabActions(com.intellij.ui.content.Content):java.util.List
 c:com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 - paintBorder(java.awt.Graphics,javax.swing.JComponent,I):V
+pf:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl$AccessibleIdeStatusBarImpl
+- getAccessibleDescription():java.lang.String
+- getAccessibleName():java.lang.String
+pc:com.intellij.openapi.wm.impl.status.TextPanel$AccessibleTextPanel
+- javax.swing.JComponent$AccessibleJComponent
+- <init>(com.intellij.openapi.wm.impl.status.TextPanel):V
+- getAccessibleAction():javax.accessibility.AccessibleAction
+- getAccessibleDescription():java.lang.String
+- getAccessibleName():java.lang.String
+- getAccessibleRole():javax.accessibility.AccessibleRole
 f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 - f:updateWidget(com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext):V
 - bs:updateWidget$default(com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager,com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext,I,java.lang.Object):V
@@ -1528,6 +1577,8 @@ f:com.intellij.ui.components.Badge$Companion
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+f:com.intellij.ui.components.IconLabelButton
+- getAccessibleContext():javax.accessibility.AccessibleContext
 f:com.intellij.ui.components.SearchFieldWithExtension
 - <init>(com.intellij.ui.SearchTextField,java.awt.Color):V
 - <init>(com.intellij.ui.components.JBTextField,java.awt.Color):V

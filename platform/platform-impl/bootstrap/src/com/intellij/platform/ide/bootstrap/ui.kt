@@ -2,7 +2,6 @@
 @file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
@@ -17,6 +16,7 @@ import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
@@ -27,7 +27,6 @@ import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -36,7 +35,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
-import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -139,7 +137,6 @@ internal fun scheduleInitAwtToolkit(scope: CoroutineScope, lockSystemDirsJob: Jo
 
 private suspend fun initAwtToolkit(busyThread: Thread) {
   checkHiDPISettings()
-  blockATKWrapper()
 
   System.setProperty("sun.awt.noerasebackground", "true")
   // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
@@ -199,24 +196,6 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
       UiThreadPriority.adjust()
     }
   }
-}
-
-/*
- * The method should be called before `Toolkit#initAssistiveTechnologies`, which is called from `Toolkit#getDefaultToolkit`.
- */
-private fun blockATKWrapper() {
-  // the registry must not be used here, because this method is called before application loading
-  if (OS.CURRENT != OS.Linux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
-    return
-  }
-
-  val activity = StartUpMeasurer.startActivity("atk wrapper blocking")
-  if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-    // Replacing the ATK wrapper with a fake object. It'll be instantiated and garbage-collected right away; a NOP.
-    System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
-    logger<AppStarter>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
-  }
-  activity.end()
 }
 
 @VisibleForTesting

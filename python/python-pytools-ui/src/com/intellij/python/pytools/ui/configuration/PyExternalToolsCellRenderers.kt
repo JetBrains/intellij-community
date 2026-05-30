@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.TableCellState
 import com.intellij.ui.components.JBLabel
@@ -41,6 +42,13 @@ internal interface PathCellHost {
   /** View row currently under the mouse for the Path column; -1 means no hover. */
   val pathHoveredRow: Int
   fun iconKindFor(toolRow: ToolRow?, pathFieldValue: PathFieldValue?): PathIconKind
+  /**
+   * Latest version uv would upgrade [toolRow]'s tool to, when known (returned by `uv tool list
+   * --outdated` on uv 0.10.10+). Non-null only on modern uv where the version is reported
+   * up-front; the legacy path has no way to know in advance, so the tooltip falls back to a
+   * "Click to try to upgrade" wording.
+   */
+  fun latestVersionFor(toolRow: ToolRow): String?
 }
 
 /** Renders the enabled state as an [OnOffButton] toggle switch. */
@@ -222,7 +230,23 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
   private val textLabel = JBLabel()
   private val baseFont: Font = textLabel.font
   private val italicFont: Font = baseFont.deriveFont(Font.ITALIC)
+  /**
+   * Shared animated spinner painted into the action-icon slot while
+   * [ToolRow.actionInProgress] is set. Needs [AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED]
+   * client property on the table view (set in [PyExternalToolsTable.configureView]) — without
+   * it the icon stops animating once it lands in a table-cell renderer.
+   */
+  private val progressIcon: AnimatedIcon = AnimatedIcon.Default()
   private var pathIcon: PathIconKind = PathIconKind.NONE
+  /**
+   * Cell-renderer captures the row's action lifecycle as two booleans. Both swap the hover
+   * action-icon slot, and both are mutually exclusive with the regular install/upgrade icon:
+   *  - [paintInProgress] — set while [ToolRow.actionInProgress] is true (modal is up);
+   *  - [paintSuccessCheck] — set when [ToolRow.lastSuccessMessage] is non-null.
+   * Both are hover-only — the row goes back to looking normal as soon as the pointer leaves.
+   */
+  private var paintInProgress: Boolean = false
+  private var paintSuccessCheck: Boolean = false
   private var paintEdit: Boolean = false
 
   init {
@@ -232,9 +256,9 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
 
   override fun doLayout() {
     val leftPad = JBUI.scale(5)
-    // Reserve room on the right for both hover icons (edit + the optional action icon —
-    // install / upgrade / info / reset), so the inner JBLabel ellipsis kicks in before the
-    // text collides with either icon.
+    // Reserve room on the right for both icons: the always-on-hover browse icon plus the
+    // optional action-slot icon — one of install / upgrade / reset / in-progress spinner /
+    // success ✓ — so the inner JBLabel ellipsis kicks in before the text collides with either.
     val rightReserve = AllIcons.General.OpenDisk.iconWidth + JBUI.scale(4) +
                        PythonPytoolsUIIcons.Install.iconWidth + JBUI.scale(10)
     val w = (width - leftPad - rightReserve).coerceAtLeast(0)
@@ -271,17 +295,20 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
     }
 
     // Disabled tools have no actionable affordances in the Path cell — neither the browse
-    // icon nor the install / upgrade / info icon shows.
+    // icon nor the install/upgrade/spinner/✓ shows. All overlays are tied to hover.
     val isHovered = row == host.pathHoveredRow && (toolRow?.staged?.enabled == true)
-    pathIcon = if (isHovered) host.iconKindFor(toolRow, detected) else PathIconKind.NONE
+    paintInProgress = isHovered && toolRow.actionInProgress
+    paintSuccessCheck = isHovered && !paintInProgress && toolRow.lastSuccessMessage != null
+    pathIcon = if (isHovered && !paintInProgress && !paintSuccessCheck) host.iconKindFor(toolRow, detected) else PathIconKind.NONE
     paintEdit = isHovered
     return this
   }
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    // Icon order from the right edge: browse (always shown on hover) is rightmost; the
-    // optional action icon (install / upgrade / info / reset) sits immediately to its left.
+    // Icon order from the right edge: browse (shown on hover) is rightmost; the optional
+    // action-slot icon (install / upgrade / reset / in-progress spinner / success ✓) sits
+    // immediately to its left.
     val rightEdge = width - JBUI.scale(5)
     val browseLeft = if (paintEdit) {
       val browse = AllIcons.General.OpenDisk
@@ -293,7 +320,11 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
     else {
       rightEdge
     }
-    val actionIcon = pathIcon.icon
+    val actionIcon = when {
+      paintInProgress -> progressIcon
+      paintSuccessCheck -> AllIcons.Actions.Checked
+      else -> pathIcon.icon
+    }
     if (actionIcon != null) {
       val ax = browseLeft - (if (paintEdit) JBUI.scale(4) else 0) - actionIcon.iconWidth
       val ay = (height - actionIcon.iconHeight) / 2

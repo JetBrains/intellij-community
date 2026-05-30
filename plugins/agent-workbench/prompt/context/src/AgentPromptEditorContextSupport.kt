@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReas
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -23,10 +24,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.ReferenceRange
 import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.max
 import kotlin.math.min
 
@@ -166,7 +169,7 @@ object AgentPromptEditorContextSupport {
         val document = editorState.document
         val snippet = extractSnippet(document, editorState.caretOffset, editorState.selectedRanges.firstOrNull()) ?: return null
         val psiFile = editorState.psiFile ?: PsiDocumentManager.getInstance(editorState.project).getPsiFile(document)
-        val symbolName = resolveSymbolName(psiFile, editorState.caretOffset)
+        val symbolName = resolveSymbolName(psiFile, document, editorState.caretOffset)
         val filePath = editorState.virtualFile?.path ?: psiFile?.virtualFile?.path
         val language = resolveLanguageName(psiFile)
         val selectedRanges = editorState.selectedRanges
@@ -189,11 +192,53 @@ object AgentPromptEditorContextSupport {
         return psiFile?.language?.id?.takeIf { it.isNotBlank() }
     }
 
-    private fun resolveSymbolName(psiFile: PsiFile?, rawOffset: Int): String? {
+    private fun resolveSymbolName(psiFile: PsiFile?, document: Document, rawOffset: Int): String? {
         val file = psiFile ?: return null
+        val offset = adjustSymbolOffset(file, document, rawOffset)
+        return resolveReferenceSymbolName(file, document, offset) ?: resolveEnclosingSymbolName(file, offset)
+    }
+
+    private fun adjustSymbolOffset(file: PsiFile, document: Document, rawOffset: Int): Int {
+        if (file.textLength == 0 || document.textLength == 0) {
+            return 0
+        }
+        val safeRawOffset = rawOffset.coerceIn(0, document.textLength)
+        return TargetElementUtil.adjustOffset(file, document, safeRawOffset).coerceIn(0, file.textLength - 1)
+    }
+
+    private fun resolveReferenceSymbolName(file: PsiFile, document: Document, offset: Int): String? {
+        val reference = file.findReferenceAt(offset) ?: return null
+        val elementStartOffset = reference.element.textRange.startOffset
+        val absoluteReferenceRange = ReferenceRange.getRanges(reference)
+            .asSequence()
+            .map { range -> range.shiftRight(elementStartOffset) }
+            .firstOrNull { range -> range.containsOffset(offset) }
+            ?: return null
+        if (absoluteReferenceRange.startOffset < 0 || absoluteReferenceRange.endOffset > document.textLength) {
+            return null
+        }
+        val referenceText = document.getText(absoluteReferenceRange)
+        return extractReferenceSymbolName(referenceText, offset - absoluteReferenceRange.startOffset)
+    }
+
+    @VisibleForTesting
+    fun extractReferenceSymbolName(referenceText: String, rawOffsetInReference: Int): String? {
+        if (referenceText.isEmpty()) {
+            return null
+        }
+        val offset = rawOffsetInReference.coerceIn(0, referenceText.length - 1)
+        val start = referenceText.lastIndexOf('.', startIndex = offset).let { dotOffset ->
+            if (dotOffset < 0) 0 else dotOffset + 1
+        }
+        val end = referenceText.indexOf('.', startIndex = offset + 1).let { dotOffset ->
+            if (dotOffset < 0) referenceText.length else dotOffset
+        }
+        return normalizeSymbolName(referenceText.substring(start, end))
+    }
+
+    private fun resolveEnclosingSymbolName(file: PsiFile, offset: Int): String? {
         val maxOffset = max(0, file.textLength - 1)
-        val offset = min(max(0, rawOffset), maxOffset)
-        var element: PsiElement? = PsiUtilCore.getElementAtOffset(file, offset)
+        var element: PsiElement? = PsiUtilCore.getElementAtOffset(file, min(max(0, offset), maxOffset))
         while (element != null) {
             val namedElement = element as? PsiNamedElement
             val name = normalizeSymbolName(namedElement?.name)

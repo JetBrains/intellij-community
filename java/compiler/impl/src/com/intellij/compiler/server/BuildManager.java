@@ -18,7 +18,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.IdleTracker;
 import com.intellij.ide.PowerSaveMode;
@@ -1753,7 +1753,7 @@ public final class BuildManager implements Disposable {
         // re-translate builder's output to idea.log
         var text = event.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {
-          if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+          if (ProcessOutputType.isSystem(outputType)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("BUILDER_PROCESS [" + outputType + "]: " + text.trim());
             }

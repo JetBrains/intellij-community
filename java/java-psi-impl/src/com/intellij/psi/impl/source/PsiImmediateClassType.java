@@ -172,6 +172,9 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     PsiImmediateClassType annotated = (PsiImmediateClassType)super.annotate(provider);
     if (annotated != this) {
       annotated.myNullability = null;
+      annotated.myInternalCanonicalText = null;
+      annotated.myPresentableTextAnnotated = null;
+      annotated.myCanonicalTextAnnotated = null;
     }
     return annotated;
   }

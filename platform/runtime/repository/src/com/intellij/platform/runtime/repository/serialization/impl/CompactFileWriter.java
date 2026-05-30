@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import java.util.Set;
 
 public final class CompactFileWriter {
   public static void saveToFile(@NotNull Collection<RawRuntimeModuleDescriptor> originalModuleDescriptors,
-                                @NotNull Collection<RawRuntimePluginHeader> originalPluginHeaders,
+                                @NotNull Collection<RuntimePluginHeader> originalPluginHeaders,
                                 @Nullable String bootstrapModuleName,
                                 int generatorVersion,
                                 @NotNull Path outputFile) throws IOException {
@@ -49,8 +49,8 @@ public final class CompactFileWriter {
       Collections.sort(moduleDescriptors,
                        Comparator.comparing((RawRuntimeModuleDescriptor descriptor) -> descriptor.getModuleId().getNamespace())
                                  .thenComparing(descriptor -> descriptor.getModuleId().getName()));
-      List<RawRuntimePluginHeader> pluginHeaders = new ArrayList<>(originalPluginHeaders);
-      Collections.sort(pluginHeaders, Comparator.comparing(RawRuntimePluginHeader::getPluginId));
+      List<RuntimePluginHeader> pluginHeaders = new ArrayList<>(originalPluginHeaders);
+      Collections.sort(pluginHeaders, Comparator.comparing(RuntimePluginHeader::getPluginId));
 
 
       Map<RuntimeModuleId, Integer> moduleIdIndexes = new HashMap<>(moduleDescriptors.size());
@@ -64,9 +64,9 @@ public final class CompactFileWriter {
       for (RawRuntimeModuleDescriptor descriptor : moduleDescriptors) {
         referencedModuleIds.addAll(descriptor.getDependencyIds());
       }
-      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         referencedModuleIds.add(pluginHeader.getPluginDescriptorModuleId());
-        for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
+        for (IncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           referencedModuleIds.add(includedModule.getModuleId());
           RuntimeModuleId requiredIfAvailableId = includedModule.getRequiredIfAvailableId();
           if (requiredIfAvailableId != null) {
@@ -110,7 +110,7 @@ public final class CompactFileWriter {
         for (RuntimeModuleId dependency : descriptor.getDependencyIds()) {
           Integer index = moduleIdIndexes.get(dependency);
           if (index == null) {
-            throw new AssertionError("Unknown dependency '" + dependency.getPresentableName() + "' in '" + descriptor.getModuleId().getPresentableName() + "'");
+            throw new AssertionError("Unknown dependency '" + dependency.getDisplayName() + "' in '" + descriptor.getModuleId().getDisplayName() + "'");
           }
           out.writeInt(index);
         }
@@ -121,18 +121,18 @@ public final class CompactFileWriter {
       }
 
       out.writeInt(pluginHeaders.size());
-      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         out.writeUTF(pluginHeader.getPluginId());
         Integer pluginDescriptorModuleIdIndex = moduleIdIndexes.get(pluginHeader.getPluginDescriptorModuleId());
         if (pluginDescriptorModuleIdIndex == null) {
-          throw new AssertionError("Unknown plugin descriptor module '" + pluginHeader.getPluginDescriptorModuleId().getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+          throw new AssertionError("Unknown plugin descriptor module '" + pluginHeader.getPluginDescriptorModuleId().getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
         }
         out.writeInt(pluginDescriptorModuleIdIndex);
         out.writeInt(pluginHeader.getIncludedModules().size());
-        for (RawIncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
+        for (IncludedRuntimeModule includedModule : pluginHeader.getIncludedModules()) {
           Integer includedModuleIndex = moduleIdIndexes.get(includedModule.getModuleId());
           if (includedModuleIndex == null) {
-            throw new AssertionError("Unknown included module '" + includedModule.getModuleId().getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+            throw new AssertionError("Unknown included module '" + includedModule.getModuleId().getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
           }
           out.writeInt(includedModuleIndex);
           out.write(indexOf(includedModule.getLoadingRule(), CompactFileReader.LOADING_RULES_BY_INDEX));
@@ -140,7 +140,7 @@ public final class CompactFileWriter {
           if (requiredIfAvailableId != null) {
             Integer requiredIfAvailableIndex = moduleIdIndexes.get(requiredIfAvailableId);
             if (requiredIfAvailableIndex == null) {
-              throw new AssertionError("Unknown required-if-available module '" + requiredIfAvailableId.getPresentableName() + "' in '" + pluginHeader.getPluginId() + "'");
+              throw new AssertionError("Unknown required-if-available module '" + requiredIfAvailableId.getDisplayName() + "' in '" + pluginHeader.getPluginId() + "'");
             }
             out.writeInt(requiredIfAvailableIndex);
           }

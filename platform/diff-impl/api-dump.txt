@@ -145,21 +145,20 @@ f:com.intellij.diff.actions.impl.SetEditorSettingsAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:applyDefaults():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- f:setDiffActions(java.util.List):V
+- f:setDiffActions(java.util.List,java.util.List):V
 - f:setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
-- pf:myActions:com.intellij.openapi.actionSystem.AnAction[]
-- applyDefaults():V
-- p:createAppearanceGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
+- <init>(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,java.util.List):V
+- f:applyDefaults():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pf:getAppearanceGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- installGutterPopup():V
-- ps:replaceOrAppend(java.util.List,java.lang.Object,java.lang.Object):V
-- setDiffActions(java.util.List):V
-- setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
+- f:installGutterPopup():V
+- f:setDiffActions(java.util.List,java.util.List):V
+- f:setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.diff.chains.AsyncDiffRequestChain
 - com.intellij.openapi.util.UserDataHolderBase

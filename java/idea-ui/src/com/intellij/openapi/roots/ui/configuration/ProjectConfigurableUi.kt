@@ -102,7 +102,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
       .bottomGap(BottomGap.SMALL)
 
     row(JavaUiBundle.message("project.structure.compiler.output")) {
-      textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject)
+      textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withEnvironmentRestricted(true), myProject)
         .bindText(compilerOutputProperty.toUiPathProperty())
         .onIsModified {
           if (!myProjectConfigurable.isFrozen)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
@@ -8,6 +8,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -15,9 +16,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -37,6 +38,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     private fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val operationReference = element.operationReference
         if (element.operationToken !in KtTokens.AUGMENTED_ASSIGNMENTS) return false
@@ -45,7 +47,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
         if (element.right == null) return false
 
         analyze(element) {
-            val resultingSymbol = operationReference.mainReference.resolveToSymbol() as? KaFunctionSymbol ?: return false
+            val resultingSymbol = operationReference.resolveSymbol() as? KaFunctionSymbol ?: return false
             return resultingSymbol.callableId?.callableName !in OperatorNameConventions.ASSIGNMENT_OPERATIONS
         }
     }

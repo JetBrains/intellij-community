@@ -479,7 +479,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   private String removeAnnotationsIfDumb(String s) {
-    return DumbService.isDumb(getProject()) ? s.replaceAll("@\\p{Alnum}* ", "") : s;
+    return DumbService.isDumb(getProject()) ? s.replaceAll("\\s*@\\p{Alnum}* ", "") : s;
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -503,7 +503,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
         -
         <html><b>double v</b></html>
         -
-        <html><b>@NotNull char[] chars</b></html>
+        <html><b>char @NotNull [] chars</b></html>
         -
         <html><b>@Nullable String s</b></html>
         -

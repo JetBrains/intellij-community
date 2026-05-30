@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardGestureAction
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -42,6 +43,7 @@ private const val MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION = "ModifierKeyDoubleClickH
 private const val MY_KEYMAP_HOLD_CTRL_ACTION = "ModifierKeyDoubleClickHandlerTest.action9"
 private const val MY_COMPARATOR_SNAPSHOT_FIRST_ACTION = "ModifierKeyDoubleClickHandlerTest.snapshot.z"
 private const val MY_COMPARATOR_SNAPSHOT_SECOND_ACTION = "ModifierKeyDoubleClickHandlerTest.snapshot.a"
+private const val RUN_ANYTHING_ACTION = "RunAnything"
 
 @Suppress("DEPRECATION")
 private val SHIFT_KEY_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null)
@@ -97,11 +99,16 @@ class ModifierKeyDoubleClickHandlerTest {
   private var keymapCtrlCtrlActionInvocationCount = 0
   private var keymapCtrlCtrlOverrideActionInvocationCount = 0
   private var keymapHoldCtrlActionInvocationCount = 0
+  private val originalGestureShortcuts = linkedMapOf<String, List<KeyboardModifierGestureShortcut>>()
 
   @BeforeEach
   fun setUp() {
     UIUtil.dispatchAllInvocationEvents()
     clearKeymapShortcuts()
+    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+    doubleClickHandler.suppressAction(IdeActions.ACTION_SEARCH_EVERYWHERE)
+    doubleClickHandler.suppressAction(RUN_ANYTHING_ACTION)
+    removeActiveKeymapGestureShortcuts()
     Clock.setTime(0)
 
     val actionManager = ActionManager.getInstance()
@@ -121,7 +128,6 @@ class ModifierKeyDoubleClickHandlerTest {
     UIUtil.dispatchAllInvocationEvents()
     clearKeymapShortcuts()
 
-    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
     doubleClickHandler.registerAction(MY_SHIFT_SHIFT_ACTION, KeyEvent.VK_SHIFT, -1)
     doubleClickHandler.registerAction(MY_SHIFT_SHIFT_KEY_ACTION, KeyEvent.VK_SHIFT, KeyEvent.VK_BACK_SPACE)
     doubleClickHandler.registerAction(MY_CTRL_CTRL_WITH_ALT_ACTION, KeyEvent.VK_CONTROL, -1, KeyEvent.VK_ALT, false)
@@ -142,8 +148,11 @@ class ModifierKeyDoubleClickHandlerTest {
     resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, emptyList())
     activeKeymap.removeShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT)
     activeKeymap.removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT)
+    restoreActiveKeymapGestureShortcuts()
     UIUtil.dispatchAllInvocationEvents()
     clearKeymapShortcuts()
+    doubleClickHandler.unsuppressAction(RUN_ANYTHING_ACTION)
+    doubleClickHandler.unsuppressAction(IdeActions.ACTION_SEARCH_EVERYWHERE)
 
     val actionManager = ActionManager.getInstance()
     actionManager.unregisterAction(MY_KEYMAP_HOLD_CTRL_ACTION)
@@ -575,6 +584,37 @@ class ModifierKeyDoubleClickHandlerTest {
         activeKeymap.addShortcut(actionId, shortcut)
       }
     }
+  }
+
+  private fun removeActiveKeymapGestureShortcuts() {
+    val activeKeymap = KeymapManager.getInstance().activeKeymap
+    originalGestureShortcuts.clear()
+    for (actionId in activeKeymap.actionIdList) {
+      val gestureShortcuts = activeKeymap.getShortcuts(actionId).filterIsInstance<KeyboardModifierGestureShortcut>()
+      if (gestureShortcuts.isNotEmpty()) {
+        originalGestureShortcuts[actionId] = gestureShortcuts
+      }
+    }
+
+    runWriteAction {
+      originalGestureShortcuts.forEach { (actionId, shortcuts) ->
+        shortcuts.forEach { shortcut -> activeKeymap.removeShortcut(actionId, shortcut) }
+      }
+    }
+  }
+
+  private fun restoreActiveKeymapGestureShortcuts() {
+    if (originalGestureShortcuts.isEmpty()) {
+      return
+    }
+
+    val activeKeymap = KeymapManager.getInstance().activeKeymap
+    runWriteAction {
+      originalGestureShortcuts.forEach { (actionId, shortcuts) ->
+        shortcuts.forEach { shortcut -> activeKeymap.addShortcut(actionId, shortcut) }
+      }
+    }
+    originalGestureShortcuts.clear()
   }
 
   private fun syncKeymapShortcuts() {

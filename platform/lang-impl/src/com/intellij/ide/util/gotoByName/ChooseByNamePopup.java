@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -28,8 +29,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +74,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private @NlsContexts.PopupAdvertisement String myAdText;
-  private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList, this);
+  private final UpdateQueue<Unit> myRepaintQueue = DebouncedUpdates.<Unit>forComponent(myList, "ChooseByNamePopup repaint", 50)
+    .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+    .restartTimerOnAdd(true)
+    .runLatest(ignored -> repaintListImmediate())
+    .cancelOnDispose(this);
 
   protected ChooseByNamePopup(final @Nullable Project project,
                               @NotNull ChooseByNameModel model,
@@ -478,13 +485,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public void repaintList() {
-    myRepaintQueue.cancelAllUpdates();
-    myRepaintQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        repaintListImmediate();
-      }
-    });
+    myRepaintQueue.queue(Unit.INSTANCE);
   }
 
   public void repaintListImmediate() {

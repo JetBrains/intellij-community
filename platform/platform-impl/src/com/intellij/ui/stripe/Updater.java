@@ -4,11 +4,14 @@ package com.intellij.ui.stripe;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +27,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public abstract class Updater<Painter extends ErrorStripePainter> implements Disposable {
   private final Painter myPainter;
   private final JScrollBar myScrollBar;
-  private final MergingUpdateQueue myQueue;
+  private final UpdateQueue<Unit> myQueue;
   private final MouseAdapter myMouseAdapter = new MouseAdapter() {
     @Override
     public void mouseMoved(MouseEvent event) {
@@ -46,7 +49,11 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     myScrollBar = bar;
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
-    myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
+    myQueue = DebouncedUpdates.<Unit>forComponent(myScrollBar, "ErrorStripeUpdater", 100)
+      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+      .restartTimerOnAdd(true)
+      .runLatest(ignored -> performUpdate())
+      .cancelOnDispose(this);
     ComponentUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
@@ -123,17 +130,14 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   public final void update() {
-    myQueue.cancelAllUpdates();
-    myQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        update(myPainter);
-        if (myPainter.isModified()) {
-          myScrollBar.invalidate();
-          myScrollBar.repaint();
-        }
-      }
-    });
+    myQueue.queue(Unit.INSTANCE);
+  }
+  private void performUpdate() {
+    update(myPainter);
+    if (myPainter.isModified()) {
+      myScrollBar.invalidate();
+      myScrollBar.repaint();
+    }
   }
 
   public int findNextIndex(int current) {

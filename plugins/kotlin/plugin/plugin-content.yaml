@@ -185,6 +185,7 @@
   - name: intellij.kotlin.onboarding.maven
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
+  - name: intellij.kotlin.references
   - name: intellij.kotlin.projectConfiguration
   - name: intellij.kotlin.projectWizard.cli
   - name: intellij.kotlin.projectWizard.core
@@ -236,7 +237,6 @@
   - name: intellij.kotlin.navigation
   - name: kotlin.refactorings.common
   - name: intellij.kotlin.refactorings
-  - name: intellij.kotlin.refactorings.move
   - name: intellij.kotlin.refactorings.rename
   - name: intellij.kotlin.performanceExtendedPlugin
   - name: intellij.kotlin.compilerPlugins.support.bundled

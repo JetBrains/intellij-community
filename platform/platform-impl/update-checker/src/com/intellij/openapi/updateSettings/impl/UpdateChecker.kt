@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.updateSettings.impl.PluginDownloader.compareVersionsSkipBrokenAndIncompatible
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
@@ -505,9 +504,9 @@ object UpdateChecker {
     val installedPlugin = UpdateCheckerPluginsFacade.getInstance().getPlugin(pluginId)
     if (installedPlugin == null
         || pluginVersion == null
-        || (compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
             && allowedUpgrade(installedPlugin, originalDownloader.descriptor))
-        || (compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
             && allowedDowngrade(installedPlugin, originalDownloader.descriptor))) {
       val oldDownloader = ourUpdatedPlugins[pluginId]
       val downloader = if (UpdateCheckerPluginsFacade.getInstance().isDisabled(pluginId)) {

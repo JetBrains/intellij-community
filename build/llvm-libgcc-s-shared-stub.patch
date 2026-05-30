@@ -1,0 +1,45 @@
+diff --git a/runtimes/libunwind/BUILD.bazel b/runtimes/libunwind/BUILD.bazel
+--- a/runtimes/libunwind/BUILD.bazel
++++ b/runtimes/libunwind/BUILD.bazel
+@@ -1,2 +1,4 @@
+ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
++load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("//runtimes:defs.bzl", "stub_library")
++load("//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+@@ -15,4 +17,30 @@ stub_library(
+ stub_library(
+     name = "gcc_s",
+     visibility = ["//visibility:public"],
+ )
++
++cc_library(
++    name = "gcc_s_shared.empty",
++    srcs = ["empty.c"],
++    copts = ["-fno-addrsig"],
++)
++
++cc_runtime_stage0_shared_library(
++    name = "gcc_s_shared",
++    shared_lib_name = "libgcc_s.so",
++    user_link_flags = [
++        "-nostdlib",
++        "-Wl,-soname,libgcc_s.so.1",
++    ],
++    visibility = ["//visibility:public"],
++    deps = [":gcc_s_shared.empty"],
++)
++
++filegroup(
++    name = "rules_rust_shared_library_dynamic_runtime_lib",
++    srcs = select({
++        "//platforms/config:gnu": [":gcc_s_shared"],
++        "//conditions:default": [],
++    }),
++    visibility = ["//visibility:public"],
++)
+diff --git a/runtimes/libunwind/empty.c b/runtimes/libunwind/empty.c
+new file mode 100644
+--- /dev/null
++++ b/runtimes/libunwind/empty.c
+@@ -0,0 +1 @@
++int __hermetic_llvm_libgcc_s_stub;

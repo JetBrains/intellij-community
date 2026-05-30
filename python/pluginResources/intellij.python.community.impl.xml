@@ -3,11 +3,10 @@
   <dependencies>
     <module name="intellij.regexp"/>
     <module name="intellij.libraries.kotlinx.io"/>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.json"/>
+    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.core.impl"/>
@@ -18,8 +17,6 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.community.impl.poetry.common"/>
-    <module name="intellij.python.uv.common"/>
-    <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.externalIndex"/>
@@ -27,12 +24,14 @@
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.requirements"/>
     <module name="intellij.python.pytools"/>
+    <module name="intellij.python.requirements"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.syntax"/>
+    <module name="intellij.python.uv.backend"/>
+    <module name="intellij.python.uv.common"/>
     <module name="intellij.python.venv"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.toml.core"/>

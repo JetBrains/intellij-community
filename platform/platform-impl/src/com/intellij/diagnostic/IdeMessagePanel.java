@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.status.StatusBarAccessibilityUtil;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.LazyInitializer;
@@ -38,6 +39,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -80,8 +84,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     component = LazyInitializer.create(() -> {
-      var result = new JPanel(new BorderLayout());
-      result.setOpaque(false);
+      var result = new IdeMessagePanelComponent();
       onClick.installOn(result);
       return result;
     });
@@ -260,6 +263,48 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     balloon = NotificationsManagerImpl.createBalloon(frame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(balloon, () -> balloon = null);
     layout.add(balloon);
+  }
+
+  private final class IdeMessagePanelComponent extends JPanel {
+    private IdeMessagePanelComponent() {
+      super(new BorderLayout());
+      setOpaque(false);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleIdeMessagePanelComponent();
+      }
+      return accessibleContext;
+    }
+
+    private final class AccessibleIdeMessagePanelComponent extends AccessibleJPanel {
+      private final AccessibleAction myAccessibleAction =
+        StatusBarAccessibilityUtil.createAccessibleAction(IdeMessagePanelComponent.this, () -> openErrorsDialog(null));
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.PUSH_BUTTON;
+      }
+
+      @Override
+      public String getAccessibleName() {
+        var name = super.getAccessibleName();
+        return name == null ? DiagnosticBundle.message("error.new.notification.title") : name;
+      }
+
+      @Override
+      public String getAccessibleDescription() {
+        var description = super.getAccessibleDescription();
+        return description == null ? DiagnosticBundle.message("error.new.notification.link") : description;
+      }
+
+      @Override
+      public AccessibleAction getAccessibleAction() {
+        return myAccessibleAction;
+      }
+    }
   }
 
   private final class IdeMessageAction extends AnAction implements DumbAware {

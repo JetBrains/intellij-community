@@ -44,8 +44,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     ":platform_jewel_markdown_extensions_gfm-alerts_provided",
     ":platform_jewel_markdown_extensions_gfm-tables_provided",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -70,8 +69,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` end
 

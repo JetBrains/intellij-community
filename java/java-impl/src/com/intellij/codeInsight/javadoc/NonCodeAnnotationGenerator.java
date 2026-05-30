@@ -8,9 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiTypeElement;
@@ -31,9 +29,19 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class NonCodeAnnotationGenerator {
+  private static <A, B> Function2<A, B, Unit> toFunction2(BiConsumer<A, B> biConsumer) {
+    return new Function2<>() {
+      @Override
+      public Unit invoke(A a, B b) {
+        biConsumer.accept(a, b);
+        return Unit.INSTANCE;
+      }
+    };
+  }
 
   public static @NotNull MultiMap<PsiElement, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
     MultiMap<PsiElement, AnnotationDocGenerator> generators = MultiMap.createLinked();
@@ -55,51 +63,26 @@ public final class NonCodeAnnotationGenerator {
             AnnotationInlayProviderKt.processTypeParameterAnnotationRecursively(
               parameters[i],
               originalParameters[i],
-              new Function2<>() {
-                @Override
-                public Unit invoke(PsiJavaCodeReferenceElement element,
-                                   PsiClassType type) {
-                  List<AnnotationDocGenerator> typeAnnotationGenerators =
-                    getGenerators(element, type.getAnnotations(),
-                                  externalManager, inferredManager,
-                                  new HashSet<>());
+              toFunction2((element, type) -> {
+                List<AnnotationDocGenerator> typeAnnotationGenerators = getGenerators(element, type.getAnnotations(), new HashSet<>());
                   if (!typeAnnotationGenerators.isEmpty()) {
                     generators.putValues(element, typeAnnotationGenerators);
                   }
-                  return Unit.INSTANCE;
-                }
-              },
-              new Function2<>() {
-                @Override
-                public Unit invoke(PsiTypeElement originalTypeElement,
-                                   PsiTypeElement typeElement) {
+              }),
+              toFunction2((originalTypeElement, typeElement) -> {
                   List<AnnotationDocGenerator> typeAnnotationGenerators =
-                    getGenerators(typeElement, originalTypeElement.getType()
-                                    .getAnnotations(),
-                                  externalManager, inferredManager,
-                                  new HashSet<>());
+                    getGenerators(typeElement, originalTypeElement.getType().getAnnotations(), new HashSet<>());
                   if (!typeAnnotationGenerators.isEmpty()) {
-                    generators.putValues(typeElement,
-                                         typeAnnotationGenerators);
+                    generators.putValues(typeElement, typeAnnotationGenerators);
                   }
-                  return Unit.INSTANCE;
-                }
-              },
-              new Function2<>() {
-                @Override
-                public Unit invoke(PsiTypeParameter originalParameter,
-                                   PsiTypeParameter parameter) {
+              }),
+              toFunction2((originalParameter, parameter) -> {
                   List<AnnotationDocGenerator> typeAnnotationGenerators =
-                    getGenerators(originalParameter, parameter,
-                                  externalManager, inferredManager,
-                                  new HashSet<>());
+                    getGenerators(originalParameter, parameter, externalManager, inferredManager, new HashSet<>());
                   if (!typeAnnotationGenerators.isEmpty()) {
-                    generators.putValues(parameter,
-                                         typeAnnotationGenerators);
+                    generators.putValues(parameter, typeAnnotationGenerators);
                   }
-                  return Unit.INSTANCE;
-                }
-              });
+              }));
           }
         }
       }
@@ -115,7 +98,7 @@ public final class NonCodeAnnotationGenerator {
           @Override
           public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
             List<AnnotationDocGenerator> typeAnnotationGenerators =
-              getGenerators(typeElement, typeElement.getType().getAnnotations(), externalManager, inferredManager, new HashSet<>());
+              getGenerators(typeElement, typeElement.getType().getAnnotations(), new HashSet<>());
             if (!typeAnnotationGenerators.isEmpty()) {
               generators.putValues(typeElement, typeAnnotationGenerators);
             }
@@ -130,12 +113,10 @@ public final class NonCodeAnnotationGenerator {
 
   private static @NotNull List<AnnotationDocGenerator> getGenerators(@NotNull PsiElement context,
                                                                      @NotNull PsiAnnotation @NotNull [] annotations,
-                                                                     @NotNull ExternalAnnotationsManager externalManager,
-                                                                     @NotNull InferredAnnotationsManager inferredManager,
                                                                      @NotNull Set<String> shownAnnotations) {
 
     List<AnnotationDocGenerator> nonCode = StreamEx.of(annotations)
-      .filter(anno -> externalManager.isExternalAnnotation(anno) || inferredManager.isInferredAnnotation(anno))
+      .filter(anno -> ExternalAnnotationsManager.isExternal(anno) || InferredAnnotationsManager.isInferredAnnotation(anno))
       .map(annotation -> AnnotationDocGenerator.forAnnotation(context, shownAnnotations, annotation))
       .nonNull()
       .toList();

@@ -17,8 +17,7 @@ jvm_library(
   name = "ui-tests",
   module_name = "intellij.platform.jewel.uiTests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  plugins = ["@lib//:compose-plugin"]
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -57,8 +56,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/test",
     "//libraries/kotlinx/coroutines/test:test_test_lib",
   ],
-  runtime_deps = [":ui-tests"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":ui-tests"]
 )
 ### auto-generated section `build intellij.platform.jewel.uiTests` end
 

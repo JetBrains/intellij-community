@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvents
 
@@ -8,12 +8,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.impl.ModuleRootEventImpl
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -556,7 +556,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         trackerD.assertNotModified()
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     fun `test code fragment out-of-block modification does not happen after body modification`() {
         val contextModule = createModuleInTmpDir("ctx") {
             val contextFile = FileWithText(
@@ -595,7 +595,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+                    val resolvedCall = callExpression.resolveCall()
                     assert(resolvedCall == null)
                 }
             }
@@ -612,7 +612,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+                    val resolvedCall = callExpression.resolveCall()
                     val resolvedFunction = resolvedCall?.symbol as? KaNamedFunctionSymbol
                     assert(resolvedFunction != null && resolvedFunction.name.asString() == "main" )
                 }

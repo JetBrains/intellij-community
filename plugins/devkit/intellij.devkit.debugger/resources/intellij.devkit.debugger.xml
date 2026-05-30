@@ -1,7 +1,6 @@
 <idea-plugin package="org.jetbrains.idea.devkit.debugger">
   <dependencies>
     <module name="intellij.java.backend"/>
-    <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
   </dependencies>
   <resource-bundle>messages.DevKitDebuggerBundle</resource-bundle>

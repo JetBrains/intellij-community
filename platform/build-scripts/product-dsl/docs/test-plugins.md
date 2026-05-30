@@ -173,6 +173,8 @@ Only **unresolvable** modules are auto-added to the test plugin content.
 
 **Note:** Content modules that belong to a plugin are **not** auto-added when their owning plugin is resolvable for the test plugin scope (the module is already available). If the owning plugin is not resolvable, the generator emits an error and skips auto-add unless the plugin ID is listed in `allowedMissingPluginIds` (either on the test plugin or on the module that triggered the dependency). **Exception:** library wrapper modules (`intellij.libraries.*`) are always auto-added as module dependencies, even if owned by a plugin.
 
+For dependencies declared directly on the DSL test plugin main target, `RUNTIME`-scoped `.iml` dependencies on valid content modules are generated as explicit `<dependencies><module name="..."/>` entries, even if the module is owned by a resolvable bundled plugin. This lets test plugins request a specific content module in their own plugin classloader without duplicating that module in `<content>`. Compile-scope plugin-owned content still normalizes to the owning `<plugin id="..."/>` dependency, and plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error.
+
 ### Source of Truth and Transitive Closure
 
 Auto-add uses **PluginGraph** as the single source of truth for module descriptors and resolvable modules, but reads JPS dependencies from the declared content modules. Project library dependencies are mapped to library modules via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules, not the graph), so library modules don't need to be present in module sets to be discovered.

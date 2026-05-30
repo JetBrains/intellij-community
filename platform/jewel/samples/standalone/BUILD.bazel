@@ -50,8 +50,7 @@ jvm_library(
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -82,8 +81,7 @@ jvm_library(
     "//platform/jewel/samples/showcase:showcase_test_lib",
     "//platform/icons:icons_test_lib",
     "//libraries/jbr:jbr_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` end
 

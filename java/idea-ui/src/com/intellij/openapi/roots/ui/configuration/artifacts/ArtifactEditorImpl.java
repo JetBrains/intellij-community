@@ -215,7 +215,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"))
-      .withDescription(JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact", getArtifact().getName())));
+      .withDescription(JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact", getArtifact().getName()))
+      .withEnvironmentRestricted(true));
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

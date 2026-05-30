@@ -200,7 +200,7 @@ object InternalPsiVersioning {
 
       @JvmStatic
       fun addListeners() {
-        if (listenerAdded.getAndSet(true)) {
+        if (!isVersionedSyntaxTreeEnabled() || listenerAdded.getAndSet(true)) {
           return
         }
         val writeActionListener = PsiVersioningLockingListener()

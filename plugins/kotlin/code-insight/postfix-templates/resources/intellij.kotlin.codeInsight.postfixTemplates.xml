@@ -1,11 +1,12 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.postfix">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="kotlin.code-insight.live-templates.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.template.postfixTemplateProvider

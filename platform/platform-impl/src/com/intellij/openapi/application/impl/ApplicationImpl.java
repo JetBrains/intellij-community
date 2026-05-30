@@ -566,8 +566,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       .onThread(ProgressRunner.ThreadToUse.POOLED)
       .modal()
       .withProgress(progress);
-    progressRunner = !shouldShowModalWindow && isHeadlessEnvironment() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
-                     ? progressRunner.fakeModal()
+    boolean isInHeadlessModeThatDoesNotWantToBehaveLikeProduction = isHeadlessEnvironment() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode();
+    boolean isInHigherModalityContext = EDT.isCurrentThreadEdt() && LaterInvocator.isInModalContext();
+    progressRunner = !shouldShowModalWindow && isInHeadlessModeThatDoesNotWantToBehaveLikeProduction && !isInHigherModalityContext
+                     ? progressRunner.fakeModal() // fakeModal cancels parallelization of lock. This is relevant for our old tests which behave not like the production does
                      : progressRunner;
 
     var result = progressRunner.submitAndGet();

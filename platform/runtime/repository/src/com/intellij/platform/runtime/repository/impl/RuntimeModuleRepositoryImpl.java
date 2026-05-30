@@ -6,9 +6,9 @@ import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleHeader;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   );
   private final Map<RuntimeModuleId, ResolveResult> myResolveResults;
   private final Map<RuntimeModuleId, RuntimeModuleHeaderImpl> myHeadersCache;
-  private volatile Map<RuntimeModuleId, RawRuntimePluginHeader> myBundledPluginHeadersByDescriptorModule;
+  private volatile Map<RuntimeModuleId, RuntimePluginHeader> myBundledPluginHeadersByDescriptorModule;
   private volatile RawRuntimeModuleRepositoryData myRawData;
   private final Path myDescriptorsFilePath;
 
@@ -55,7 +55,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   @Override
-  public @Nullable RuntimeModuleHeader findHeader(@NotNull RuntimeModuleId moduleId) {
+  public @Nullable RuntimeModuleHeader findModuleHeader(@NotNull RuntimeModuleId moduleId) {
     return resolveHeader(moduleId);
   }
 
@@ -130,13 +130,13 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     List<RuntimeModuleId> failedDependencyPath = result.getFailedDependencyPath();
     String message;
     if (failedDependencyPath.size() == 1) {
-      message = "Cannot find module '" + failedDependencyPath.get(0).getPresentableName() + "'";
+      message = "Cannot find module '" + failedDependencyPath.get(0).getDisplayName() + "'";
     }
     else {
       List<RuntimeModuleId> reversed = new ArrayList<>(failedDependencyPath.subList(0, failedDependencyPath.size() - 1));
       Collections.reverse(reversed);
-      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getPresentableName() + "' (" +
-                reversed.stream().map(id -> " <- '" + id.getPresentableName() + "'").collect(Collectors.joining()).trim() + ") is not found";
+      message = "Cannot resolve module '" + moduleId.getDisplayName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getDisplayName() + "' (" +
+                reversed.stream().map(id -> " <- '" + id.getDisplayName() + "'").collect(Collectors.joining()).trim() + ") is not found";
     }
     throw new MalformedRepositoryException(message);
   }
@@ -145,7 +145,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   public @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId) {
     var header = resolveHeader(moduleId);
     if (header == null) {
-      throw new MalformedRepositoryException("Cannot find module '" + moduleId.getPresentableName() + "'");
+      throw new MalformedRepositoryException("Cannot find module '" + moduleId.getDisplayName() + "'");
     }
     return header.getOwnClasspath();
   }
@@ -170,20 +170,20 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   @Override
-  public @NotNull List<@NotNull RawRuntimePluginHeader> getBundledPluginHeaders() {
+  public @NotNull List<@NotNull RuntimePluginHeader> getBundledPluginHeaders() {
     return getRawData().getPluginHeaders();
   }
 
   @Override
-  public @Nullable RawRuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId) {
+  public @Nullable RuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId) {
     if (myBundledPluginHeadersByDescriptorModule == null) {
-      HashMap<RuntimeModuleId, RawRuntimePluginHeader> map = new HashMap<>();
-      for (RawRuntimePluginHeader header : getRawData().getPluginHeaders()) {
+      HashMap<RuntimeModuleId, RuntimePluginHeader> map = new HashMap<>();
+      for (RuntimePluginHeader header : getRawData().getPluginHeaders()) {
         map.put(header.getPluginDescriptorModuleId(), header);
       }
       myBundledPluginHeadersByDescriptorModule = map;
     }
-    RawRuntimePluginHeader header = myBundledPluginHeadersByDescriptorModule.get(pluginDescriptorModuleId);
+    RuntimePluginHeader header = myBundledPluginHeadersByDescriptorModule.get(pluginDescriptorModuleId);
     if (header == null && !pluginDescriptorModuleId.getNamespace().equals(RuntimeModuleId.DEFAULT_NAMESPACE)) {
       //some plugin descriptor modules are also registered as content modules with default namespace
       header = myBundledPluginHeadersByDescriptorModule.get(RuntimeModuleId.contentModule(pluginDescriptorModuleId.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));

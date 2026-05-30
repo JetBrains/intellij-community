@@ -35,7 +35,7 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
    * When a service provider specifies a "provider" method, the service loader uses this method to create a service provider instance.
    * This method must be public, static, have no parameters, and return a type compatible with the service's interface or class.
    */
-  String PROVIDER_METHOD = "provider";
+  @NlsSafe String PROVIDER_METHOD = "provider";
 
   /* See http://openjdk.org/jeps/261#Class-loaders, "Class loaders" */
   Set<String> UPGRADEABLE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(

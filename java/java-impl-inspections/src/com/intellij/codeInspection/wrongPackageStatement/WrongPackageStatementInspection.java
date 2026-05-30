@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -63,10 +62,6 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
     PsiPackageStatement packageStatement = javaFile.getPackageStatement();
 
     String packageName = dirPackage.getQualifiedName();
-
-    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
-    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(file.getVirtualFile());
-    if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
     if (packageStatement == null) {
       if (!Comparing.strEqual(packageName, "", true)) {
         // highlight the first class in the file only

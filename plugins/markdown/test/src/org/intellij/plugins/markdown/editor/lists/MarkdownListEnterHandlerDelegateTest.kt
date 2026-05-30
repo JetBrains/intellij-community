@@ -28,6 +28,13 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
   fun testNewItemTwoSpacesInMarkerAndDocumentEnd() = doTest()
 
   @Test
+  fun testHardLineBreakDoesNotCreateNewItem() {
+    configureFromFileText("some.md", "- item 1  <caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- item 1  \n<caret>")
+  }
+
+  @Test
   fun testEnterBeforeItem() = doTest()
 
   @Test

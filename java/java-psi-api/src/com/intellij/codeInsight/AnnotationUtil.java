@@ -604,11 +604,11 @@ public class AnnotationUtil {
   }
 
   public static boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
-    return InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
+    return InferredAnnotationsManager.isInferredAnnotation(annotation);
   }
 
   public static boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
-    return ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation);
+    return ExternalAnnotationsManager.isExternal(annotation);
   }
 
   public static @Nullable @NlsSafe String getStringAttributeValue(@NotNull PsiAnnotation anno, final @Nullable String attributeName) {

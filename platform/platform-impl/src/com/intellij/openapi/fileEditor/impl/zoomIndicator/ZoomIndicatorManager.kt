@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.zoomIndicator
 
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -49,7 +49,9 @@ class ZoomIndicatorManager(project: Project) {
   }
 
   fun createOrGetBalloon(editorEx: EditorImpl): Balloon? {
-    val view = ZoomIndicatorView(editorEx)
+    val view = ZoomIndicatorView(editorEx).apply {
+      isOpaque = false
+    }
     val b = balloon
     if (editorEx == editor && (b as? BalloonImpl)?.isVisible == true) {
       b.getView().updateFontSize()

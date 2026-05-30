@@ -79,7 +79,7 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
         PsiExpression right = condition.getROperand();
         if (right == null || SideEffectChecker.mayHaveSideEffects(right, e -> e instanceof PsiMethodCallExpression)) return;
         PsiType rightType = getType(right);
-        if (rightType == null || leftType != rightType) return;
+        if (rightType == null || !leftType.equals(rightType)) return;
         EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
         boolean useMathMin = equivalenceChecker.expressionsAreEquivalent(left, model.getElseExpression());
         if (!useMathMin && !equivalenceChecker.expressionsAreEquivalent(left, model.getThenExpression())) return;

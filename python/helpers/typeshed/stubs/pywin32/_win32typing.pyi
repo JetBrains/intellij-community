@@ -1,8 +1,8 @@
 # Not available at runtime. Contains type definitions that are otherwise not exposed and not part of a specific module.
 from _typeshed import Incomplete, Unused
 from collections.abc import Iterable, Sequence
-from typing import Literal, NoReturn, SupportsIndex, TypeAlias, final, overload
-from typing_extensions import Self, deprecated, disjoint_base
+from typing import Literal, NoReturn, SupportsIndex, TypeAlias, TypedDict, final, overload, type_check_only
+from typing_extensions import Never, Required, Self, deprecated, disjoint_base
 
 from win32.lib.pywintypes import TimeType
 
@@ -120,15 +120,39 @@ class DOCINFO:
 
 class ExportCallback: ...
 
-class FORM_INFO_1:
-    @property
-    def Flags(self): ...
-    @property
-    def Name(self) -> str: ...
-    @property
-    def Size(self): ...
-    @property
-    def ImageableArea(self): ...
+@type_check_only
+class PrinterExtents(TypedDict):
+    Length: int
+    Width: int
+
+@type_check_only
+class PrinterDpi(TypedDict):
+    xdpi: int
+    ydpi: int
+
+@type_check_only
+class PrinterPaperSize(TypedDict):
+    x: int
+    y: int
+
+@type_check_only
+class SizeL(TypedDict):
+    cx: int
+    cy: int
+
+@type_check_only
+class RectL(TypedDict):
+    bottom: int
+    left: int
+    right: int
+    top: int
+
+@type_check_only
+class FormInfo1(TypedDict):
+    Flags: int
+    Name: str
+    Size: SizeL
+    ImageableArea: RectL
 
 class ImportCallback: ...
 
@@ -166,13 +190,186 @@ class NCB:
     @property
     def Post(self): ...
 
-class PRINTER_DEFAULTS:
-    @property
-    def pDatatype(self) -> str: ...
-    @property
-    def pDevMode(self) -> PyDEVMODE: ...
-    @property
-    def DesiredAccess(self): ...
+@type_check_only
+class PrinterDefaults(TypedDict, total=False):
+    pDataType: str | None
+    pDevMode: PyDEVMODEW | None
+    DesiredAccess: Required[int]
+
+@type_check_only
+class PrinterInfo1(TypedDict):
+    Flags: int
+    pDescription: str
+    pName: str
+    pComment: str
+
+PrinterInfo1Tuple: TypeAlias = tuple[int, str, str, str]
+
+@type_check_only
+class PrinterInfo2(TypedDict):
+    Attributes: int
+    AveragePPM: int
+    DefaultPriority: int
+    Priority: int
+    StartTime: int
+    Status: int
+    UntilTime: int
+    cJobs: int
+    pComment: str | None
+    pDatatype: str | None
+    pDevMode: PyDEVMODEW | None
+    pDriverName: str
+    pLocation: str | None
+    pParameters: str | None
+    pPortName: str
+    pPrintProcessor: str
+    pPrinterName: str
+    pSecurityDescriptor: PySECURITY_DESCRIPTOR | None
+    pSepFile: str | None
+    pServerName: str | None
+    pShareName: str | None
+
+PrinterInfo2Tuple: TypeAlias = tuple[
+    str | None,  # pServerName
+    str,  # pPrinterName
+    str,  # pShareName
+    str,  # pPortName
+    str,  # pDriverName
+    str,  # pComment
+    str,  # pLocation
+    None,  # (always None)
+    str,  # pSepFile
+    str,  # pPrintProcessor
+    str,  # pDatatype
+    str,  # pParameters
+    None,  # (always None)
+    int,  # Attributes
+    int,  # Priority
+    int,  # DefaultPriority
+    int,  # StartTime
+    int,  # UntilTime
+    int,  # Status
+    int,  # cJobs
+    int,  # AveragePPM
+]
+
+@type_check_only
+class PrinterInfo3(TypedDict):
+    pSecurityDescriptor: PySECURITY_DESCRIPTOR
+
+@type_check_only
+class PrinterInfo4(TypedDict):
+    Attributes: int
+    pPrinterName: str
+    pServerName: str | None
+
+@type_check_only
+class PrinterInfo5(TypedDict):
+    Attributes: int
+    DeviceNotSelectedTimeout: int
+    TransmissionRetryTimeout: int
+    pPortName: str
+    pPrinterName: str
+
+@type_check_only
+class PrinterInfo6(TypedDict):
+    Status: int
+
+@type_check_only
+class PrinterInfo7(TypedDict):
+    Action: int
+    ObjectGUID: str | None
+
+@type_check_only
+class PrinterInfo89(TypedDict):
+    pDevMode: PyDEVMODEW | None
+
+@type_check_only
+class JobInfo1(TypedDict):
+    JobId: int
+    pPrinterName: str
+    pMachineName: str
+    pUserName: str
+    pDocument: str
+    pDatatype: str
+    pStatus: str | None
+    Status: int
+    Priority: int
+    Position: int
+    TotalPages: int
+    PagesPrinted: int
+    Submitted: TimeType
+
+@type_check_only
+class JobInfo2(JobInfo1):
+    pNotifyName: str
+    pPrintProcessor: str
+    pParameters: str
+    pDriverName: str
+    pDevMode: PyDEVMODEW
+    pSecurityDescriptor: PySECURITY_DESCRIPTOR | None
+    StartTime: int
+    UntilTime: int
+    Size: int
+    Time: int
+
+@type_check_only
+class JobInfo3(TypedDict):
+    JobId: int
+    NextJobId: int
+    Reserved: int
+
+@type_check_only
+class DriverInfo1(TypedDict):
+    Name: str
+
+MonitorInfo1: TypeAlias = DriverInfo1
+PortInfo1: TypeAlias = DriverInfo1
+
+@type_check_only
+class MonitorInfo2(MonitorInfo1):
+    DLLName: str
+    Environment: str
+
+@type_check_only
+class PortInfo2(PortInfo1):
+    Description: str
+    MonitorName: str
+    PortType: int
+    Reserved: int
+
+@type_check_only
+class DriverInfo2(DriverInfo1):
+    ConfigFile: str
+    DataFile: str
+    DriverPath: str
+    Environment: str
+    Version: int
+
+@type_check_only
+class DriverInfo3(DriverInfo2):
+    DefaultDataType: str | None
+    DependentFiles: list[str]
+    HelpFile: str | None
+    MonitorName: str | None
+
+@type_check_only
+class DriverInfo4(DriverInfo3):
+    PreviousNames: str | None
+
+@type_check_only
+class DriverInfo5(DriverInfo2):
+    ConfigVersion: int
+    DriverAttributes: int
+    DriverVersion: int
+
+@type_check_only
+class DriverInfo6(DriverInfo4):
+    MfgName: str
+    OEMUrl: str | None
+    Provider: str
+    DriverDate: TimeType
+    DriverVersion: int
 
 class PyACL:
     def Initialize(self) -> None: ...
@@ -692,91 +889,10 @@ class PyDCB:
     @property
     def fDummy2(self) -> int: ...
 
-class PyDEVMODE:
-    @property
-    def SpecVersion(self) -> int: ...
-    @property
-    def DriverVersion(self) -> int: ...
-    @property
-    def Size(self) -> int: ...
-    @property
-    def DriverExtra(self) -> int: ...
-    @property
-    def Fields(self) -> int: ...
-    @property
-    def Orientation(self) -> int: ...
-    @property
-    def PaperSize(self) -> int: ...
-    @property
-    def PaperLength(self) -> int: ...
-    @property
-    def PaperWidth(self) -> int: ...
-    @property
-    def Position_x(self) -> int: ...
-    @property
-    def Position_y(self) -> int: ...
-    @property
-    def DisplayOrientation(self) -> int: ...
-    @property
-    def DisplayFixedOutput(self) -> int: ...
-    @property
-    def Scale(self) -> int: ...
-    @property
-    def Copies(self) -> int: ...
-    @property
-    def DefaultSource(self) -> int: ...
-    @property
-    def PrintQuality(self) -> int: ...
-    @property
-    def Color(self) -> int: ...
-    @property
-    def Duplex(self) -> int: ...
-    @property
-    def YResolution(self) -> int: ...
-    @property
-    def TTOption(self) -> int: ...
-    @property
-    def Collate(self) -> int: ...
-    @property
-    def LogPixels(self) -> int: ...
-    @property
-    def BitsPerPel(self) -> int: ...
-    @property
-    def PelsWidth(self) -> int: ...
-    @property
-    def PelsHeight(self) -> int: ...
-    @property
-    def DisplayFlags(self) -> int: ...
-    @property
-    def DisplayFrequency(self) -> int: ...
-    @property
-    def ICMMethod(self) -> int: ...
-    @property
-    def ICMIntent(self) -> int: ...
-    @property
-    def MediaType(self) -> int: ...
-    @property
-    def DitherType(self) -> int: ...
-    @property
-    def Reserved1(self) -> int: ...
-    @property
-    def Reserved2(self) -> int: ...
-    @property
-    def Nup(self) -> int: ...
-    @property
-    def PanningWidth(self) -> int: ...
-    @property
-    def PanningHeight(self) -> int: ...
-    @property
-    def DeviceName(self) -> str: ...
-    @property
-    def FormName(self) -> str: ...
-    @property
-    def DriverData(self) -> Incomplete | None: ...
-    def Clear(self) -> None: ...
-
+@disjoint_base
 class PyDEVMODEW:
-    def __init__(self, DriverExtra: int = ...) -> None: ...
+    def __new__(self, DriverExtra: int = 0) -> Self: ...
+    def Clear(self) -> None: ...
     SpecVersion: int
     DriverVersion: int
     @property
@@ -920,12 +1036,15 @@ class PyGROUP_USERS_INFO_1:
 class PyGdiHANDLE: ...
 class PyGetSignerCertificate: ...
 
-class PyHANDLE:
+@disjoint_base
+class PyHANDLE:  # type: ignore[type-var]
+    def __new__(cls, *args: Never) -> NoReturn: ...
     @property
     def handle(self) -> int: ...
     def Close(self) -> None: ...
     def close(self) -> None: ...
     def Detach(self) -> Self: ...
+    def __int__(self) -> int: ...
 
 @final
 class PyHDESK:
@@ -1258,7 +1377,7 @@ class PyPROFILEINFO:
 class PyPerfMonManager:
     def Close(self) -> None: ...
 
-class PyPrinterHANDLE: ...
+class PyPrinterHANDLE(PyHANDLE): ...
 class PyRECT: ...
 class PyResourceId: ...
 class PySCROLLINFO: ...

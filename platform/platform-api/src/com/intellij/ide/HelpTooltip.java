@@ -205,7 +205,7 @@ public class HelpTooltip {
 
         SwingUtilities.convertPointToScreen(location, owner);
         Rectangle r = new Rectangle(location, popupSize);
-        ScreenUtil.fitToScreen(r);
+        ScreenUtil.moveToFit(r, ScreenUtil.getScreenRectangle(owner), null, true);
         location = r.getLocation();
         SwingUtilities.convertPointFromScreen(location, owner);
         r.setLocation(location);

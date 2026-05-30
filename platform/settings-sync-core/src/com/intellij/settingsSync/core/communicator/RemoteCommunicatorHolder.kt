@@ -237,7 +237,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
             logger.error("Cannot download plugin '${marketplacePluginId.idString}' from marketplace!")
             return@withContext false
           }
-          val marketplacePluginFile = marketplacePluginDownloader.filePath
+          val marketplacePluginFile = marketplacePluginDownloader.getFilePath()
           val targetFile = PluginInstaller.unpackPlugin(marketplacePluginFile, Path.of(PathManager.getPluginsPath()))
 
           val targetDescriptor = loadDescriptor(targetFile, false, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER) ?: let {
@@ -260,7 +260,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
             return@withContext false
           }
 
-          val syncPluginFile = syncPluginDownloader.filePath
+          val syncPluginFile = syncPluginDownloader.getFilePath()
           val syncPluginDescriptor = loadDescriptorFromArtifact(syncPluginFile, null) ?: let {
             logger.error("Cannot load plugin descriptor for ${settingsSyncPluginId.idString}")
             return@withContext false

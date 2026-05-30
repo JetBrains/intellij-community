@@ -27,8 +27,7 @@ jvm_library(
     "//platform/jewel/markdown/extensions/gfm-tables",
     "//platform/jewel/markdown/extensions/images",
     "//platform/jewel/markdown/ide-laf-bridge-styling",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -65,8 +64,7 @@ jvm_library(
     "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
     "//platform/jewel/markdown/extensions/images:images_test_lib",
     "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.compose.markdown` end
 

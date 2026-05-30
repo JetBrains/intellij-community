@@ -43,6 +43,8 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.AccessToken;
@@ -111,6 +113,19 @@ import java.util.stream.Stream;
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
   private static final ExecutorService RELOAD_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Breakpoint reload", 1);
   public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
+
+  /**
+   * Output type for logging breakpoint messages. It keeps regular system-output styling while letting listeners distinguish
+   * logging breakpoint output from unrelated debugger system messages.
+   */
+  @ApiStatus.Internal
+  public static final ProcessOutputType LOGGING_BREAKPOINT_OUTPUT_TYPE =
+    new ProcessOutputType("logging breakpoint", ProcessOutputType.SYSTEM);
+
+  static {
+    ConsoleViewContentType.registerNewConsoleViewType(LOGGING_BREAKPOINT_OUTPUT_TYPE, ConsoleViewContentType.SYSTEM_OUTPUT);
+  }
+
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
   final XBreakpoint<P> myXBreakpoint;
@@ -455,7 +470,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (breakpoint != null) {
       breakpoint.getBreakpointManager().multicastLogMessage(breakpoint, message, debugProcess, stack);
     }
-    debugProcess.printToConsole(message);
+    var processHandler = debugProcess.getProcessHandler();
+    if (processHandler == null || breakpoint == null) {
+      debugProcess.printToConsole(message);
+    }
+    else {
+      processHandler.notifyTextAvailable(message, LOGGING_BREAKPOINT_OUTPUT_TYPE);
+    }
   }
 
   /**

@@ -35,8 +35,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/icons-api",
     "//platform/icons-impl",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -57,8 +56,7 @@ jvm_library(
     "//libraries/jbr:jbr_test_lib",
     "//platform/icons-api:icons-api_test_lib",
     "//platform/icons-impl:icons-impl_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` end
 

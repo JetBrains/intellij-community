@@ -6,6 +6,7 @@ import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.treeStructure.Tree
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
 
 @ApiStatus.Internal
 interface StructurePopupTestExt: Disposable {
@@ -28,4 +29,27 @@ interface StructurePopupTestExt: Disposable {
   @TestOnly
   @ApiStatus.Internal
   fun getTree(): Tree
+
+  /**
+   * Rebuilds the popup tree and waits until the rebuild has finished.
+   * Exposed as [Promise] so that callers in [com.intellij.platform.testFramework] need only see the interface
+   * (and not the concrete popup classes, which may live in plugin-content classloaders that are not visible).
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  fun rebuildAndUpdateAsync(): Promise<*>
+
+  /**
+   * Waits until any in-flight popup update has finished. May return an already-resolved promise.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  fun waitUpdateFinishedAsync(): Promise<*>
+
+  /**
+   * Selects the element under the editor caret in the popup tree.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  fun selectCurrentAsync(): Promise<*>
 }

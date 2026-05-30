@@ -14,6 +14,9 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.awt.event.InputEvent
+import java.awt.event.MouseEvent
+import javax.swing.JComponent
 
 object StatusBarUtil {
   internal fun getStatusBar(component: Component): StatusBar? {
@@ -45,6 +48,32 @@ object StatusBarUtil {
   @JvmStatic
   fun setStatusBarInfo(project: Project, message: @NlsContexts.StatusBarText String) {
     WindowManager.getInstance().getStatusBar(project)?.info = message
+  }
+
+  internal fun performPrimaryAction(component: JComponent, activationTarget: JComponent, action: Runnable?): Boolean {
+    if (!component.isEnabled) {
+      return false
+    }
+
+    if (action != null) {
+      action.run()
+    }
+    else {
+      dispatchMouseClick(activationTarget)
+    }
+    return true
+  }
+
+  private fun dispatchMouseClick(component: JComponent) {
+    val x = component.width / 2
+    val y = component.height / 2
+    val whenMillis = System.currentTimeMillis()
+    component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_PRESSED, whenMillis, InputEvent.BUTTON1_DOWN_MASK,
+                                       x, y, 1, false, MouseEvent.BUTTON1))
+    component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_RELEASED, whenMillis, 0, x, y, 1, false,
+                                       MouseEvent.BUTTON1))
+    component.dispatchEvent(MouseEvent(component, MouseEvent.MOUSE_CLICKED, whenMillis, 0, x, y, 1, false,
+                                       MouseEvent.BUTTON1))
   }
 
   private fun ensureValidEditorFile(editor: Editor, fileEditor: FileEditor?): Boolean {

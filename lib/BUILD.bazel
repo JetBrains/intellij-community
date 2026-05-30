@@ -1773,21 +1773,6 @@ java_library(
 )
 
 copy_file(
-  name = "jetbrains.fleet/expects-compiler-plugin-2.4.0-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-expects-compiler-plugin-2_4_0-RC-0_1_http//file",
-  out = "jetbrains.fleet/expects-compiler-plugin-2.4.0-RC-0.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "expects-compiler-plugin",
-  jar = "@jetbrains_fleet-expects-compiler-plugin-2_4_0-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-expects-compiler-plugin-2_4_0-RC-0_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar_copy",
   src = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
   out = "org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar",
@@ -7182,6 +7167,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-262.28.jar_copy",
+  src = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28_http//file",
+  out = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-262.28.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "jetbrains-intellij-deps-java-atk-wrapper-linux",
+  jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps/rwmutex-idea-0.0.10.jar_copy",
   src = "@org_jetbrains_intellij_deps-rwmutex-idea-0_0_10_http//file",
   out = "org.jetbrains.intellij.deps/rwmutex-idea-0.0.10.jar",
@@ -7193,21 +7193,6 @@ jvm_import(
   name = "jetbrains-intellij-deps-rwmutex-idea",
   jar = "@org_jetbrains_intellij_deps-rwmutex-idea-0_0_10_http//file",
   source_jar = "@org_jetbrains_intellij_deps-rwmutex-idea-0_0_10-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.4.0-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_4_0-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.4.0-RC.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_4_0-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_4_0-RC-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8277,6 +8262,28 @@ jvm_import(
   name = "kotlin-analysis-platform-tests-ehcache-sizeof",
   jar = "@org_ehcache-sizeof-0_4_0_http//file",
   source_jar = "@org_ehcache-sizeof-0_4_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0-RC.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0-RC.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-compiler-embeddable",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlin-compiler-embeddable-provided",
+  exports = [":kotlin-compiler-embeddable"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -18266,21 +18273,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "jetbrains.fleet/noria-compiler-plugin-2.4.0-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-noria-compiler-plugin-2_4_0-RC-0_1_http//file",
-  out = "jetbrains.fleet/noria-compiler-plugin-2.4.0-RC-0.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "noria-compiler-plugin",
-  jar = "@jetbrains_fleet-noria-compiler-plugin-2_4_0-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-noria-compiler-plugin-2_4_0-RC-0_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "objenesis",
   jar = "@org_objenesis-objenesis-3_4_http//file",
@@ -20098,36 +20090,6 @@ jvm_import(
   name = "relaxng-tests-jing",
   jar = "@thaiopensource-jing-20030619_http//file",
   source_jar = "@thaiopensource-jing-20030619-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "jetbrains.fleet/rhizomedb-compiler-plugin-2.4.0-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_4_0-RC-0_1_http//file",
-  out = "jetbrains.fleet/rhizomedb-compiler-plugin-2.4.0-RC-0.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "rhizomedb-compiler-plugin",
-  jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_4_0-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_4_0-RC-0_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.jetbrains.fleet/rpc-compiler-plugin-2.4.0-RC-0.1.jar_copy",
-  src = "@com_jetbrains_fleet-rpc-compiler-plugin-2_4_0-RC-0_1_http//file",
-  out = "com.jetbrains.fleet/rpc-compiler-plugin-2.4.0-RC-0.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "rpc-compiler-plugin",
-  jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_4_0-RC-0_1_http//file",
-  source_jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_4_0-RC-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl.WidgetEffect
@@ -17,6 +19,7 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
+import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.geom.RoundRectangle2D
@@ -25,8 +28,12 @@ import kotlin.math.max
 
 internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
+internal interface WidgetEffectBoundsProvider {
+  fun getWidgetEffectBounds(): Rectangle
+}
+
 /**
- * Handles hover and press visual effects for status bar widgets.
+ * Handles hover, press, and focus visual effects for status bar widgets.
  */
 internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
   private var effectComponent: JComponent? = null
@@ -72,10 +79,7 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
       return
     }
 
-    val highlightBounds = component.bounds
-    val point = RelativePoint(component.parent, highlightBounds.location).getPoint(statusBar)
-    highlightBounds.location = point
-
+    val highlightBounds = getBoundsOnStatusBar(component)
     val widgetEffect = ClientProperty.get(component, WIDGET_EFFECT_KEY)
     val bg = if (widgetEffect == WidgetEffect.PRESSED) {
       JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
@@ -85,6 +89,23 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
     }
 
     paintHover(g, component, highlightBounds, bg, statusBar)
+  }
+
+  fun paintFocusBorder(g: Graphics) {
+    val component = getFocusedWidgetComponent()
+    if (component == null || !component.isEnabled || !UIUtil.isAncestor(statusBar, component)) {
+      return
+    }
+
+    val focusBounds = getFocusBorderBounds(component)
+    val arc = JBUIScale.scale(10).toFloat()
+    DarculaNewUIUtil.drawRoundedRectangle(g, focusBounds, JBUI.CurrentTheme.Focus.focusColor(), arc, DarculaUIUtil.BW.float)
+  }
+
+  fun repaintFocusBorder(component: JComponent) {
+    val focusBounds = getFocusBorderBounds(component)
+    focusBounds.grow(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get())
+    statusBar.repaint(focusBounds)
   }
 
   /**
@@ -99,11 +120,34 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
       }
     }
   }
-
   /**
    * Returns the currently hovered/pressed widget ID, if any.
    */
   fun getEffectWidgetId(): String? = ClientProperty.get(effectComponent, WIDGET_ID)
+
+  private fun getFocusBorderBounds(component: JComponent): Rectangle {
+    val focusBounds = getHoverBounds(component, getBoundsOnStatusBar(component), statusBar)
+    focusBounds.grow(JBUIScale.scale(1), JBUIScale.scale(1))
+    return focusBounds.intersection(Rectangle(focusBounds.x, 0, focusBounds.width, statusBar.height))
+  }
+
+  private fun getBoundsOnStatusBar(component: JComponent): Rectangle {
+    if (component is WidgetEffectBoundsProvider) {
+      return RelativeRectangle(component, Rectangle(component.getWidgetEffectBounds())).getRectangleOn(statusBar)
+    }
+
+    val bounds = component.bounds
+    val point = RelativePoint(component.parent, bounds.location).getPoint(statusBar)
+    bounds.location = point
+    return bounds
+  }
+
+  private fun getFocusedWidgetComponent(): JComponent? {
+    val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner ?: return null
+    return statusBar.getFocusableWidgetComponents()
+      .asReversed()
+      .firstOrNull { focusOwner === it || UIUtil.isAncestor(it, focusOwner) }
+  }
 
   companion object {
     private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
@@ -116,23 +160,19 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
       bg: Color,
       statusBar: StatusBar,
     ) {
-      if (!ExperimentalUI.isNewUI() && (statusBar as? JComponent)?.getUI() is StatusBarUI) {
-        highlightBounds.y += StatusBarUI.BORDER_WIDTH.get()
-        highlightBounds.height -= StatusBarUI.BORDER_WIDTH.get()
-      }
+      val hoverBounds = getHoverBounds(component, highlightBounds, statusBar)
       g.color = bg
       if (ExperimentalUI.isNewUI()) {
-        JBInsets.removeFrom(highlightBounds, calcHoverInsetsCorrection(component))
         val g2 = g.create() as Graphics2D
         try {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
           val arc = JBUIScale.scale(4).toFloat()
           val shape: RoundRectangle2D = RoundRectangle2D.Float(
-            highlightBounds.x.toFloat(),
-            highlightBounds.y.toFloat(),
-            highlightBounds.width.toFloat(),
-            highlightBounds.height.toFloat(),
+            hoverBounds.x.toFloat(),
+            hoverBounds.y.toFloat(),
+            hoverBounds.width.toFloat(),
+            hoverBounds.height.toFloat(),
             arc,
             arc,
           )
@@ -143,8 +183,20 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
         }
       }
       else {
-        g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
+        g.fillRect(hoverBounds.x, hoverBounds.y, hoverBounds.width, hoverBounds.height)
       }
+    }
+
+    private fun getHoverBounds(component: JComponent, highlightBounds: Rectangle, statusBar: StatusBar): Rectangle {
+      val hoverBounds = Rectangle(highlightBounds)
+      if (!ExperimentalUI.isNewUI() && (statusBar as? JComponent)?.getUI() is StatusBarUI) {
+        hoverBounds.y += StatusBarUI.BORDER_WIDTH.get()
+        hoverBounds.height -= StatusBarUI.BORDER_WIDTH.get()
+      }
+      if (ExperimentalUI.isNewUI()) {
+        JBInsets.removeFrom(hoverBounds, calcHoverInsetsCorrection(component))
+      }
+      return hoverBounds
     }
 
     private fun calcHoverInsetsCorrection(effectComponent: JComponent): Insets {

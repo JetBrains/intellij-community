@@ -18,7 +18,9 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/bundles/fleet.bundles.iml" filepath="$PROJECT_DIR$/fleet/bundles/fleet.bundles.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/codecache/fleet.codecache.iml" filepath="$PROJECT_DIR$/fleet/codecache/fleet.codecache.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" filepath="$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/expects/fleet.compiler.plugins.expects.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/expects/fleet.compiler.plugins.expects.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/noria/fleet.compiler.plugins.noria.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/noria/fleet.compiler.plugins.noria.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/rpc/fleet.compiler.plugins.rpc.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/rpc/fleet.compiler.plugins.rpc.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" filepath="$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" filepath="$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/ktor/client/core/fleet.ktor.client.core.iml" filepath="$PROJECT_DIR$/fleet/ktor/client/core/fleet.ktor.client.core.iml" />
@@ -26,6 +28,8 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/lsp.protocol/test/fleet.lsp.protocol.test.iml" filepath="$PROJECT_DIR$/fleet/lsp.protocol/test/fleet.lsp.protocol.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/modules/api/fleet.modules.api.iml" filepath="$PROJECT_DIR$/fleet/modules/api/fleet.modules.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" filepath="$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/radixTrie/fleet.radixTrie.iml" filepath="$PROJECT_DIR$/fleet/radixTrie/fleet.radixTrie.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/radixTrie/test/fleet.radixTrie.test.iml" filepath="$PROJECT_DIR$/fleet/radixTrie/test/fleet.radixTrie.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" filepath="$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/reporting/shared/fleet.reporting.shared.iml" filepath="$PROJECT_DIR$/fleet/reporting/shared/fleet.reporting.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" filepath="$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" />
@@ -454,8 +458,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.modules/intellij.devkit.modules.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.modules/intellij.devkit.modules.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.noKotlin.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.noKotlin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/generator/intellij.devkit.runtimeModuleRepository.generator.iml" filepath="$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/generator/intellij.devkit.runtimeModuleRepository.generator.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/generator/tests/intellij.devkit.runtimeModuleRepository.generator.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/generator/tests/intellij.devkit.runtimeModuleRepository.generator.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.scaffolding/intellij.devkit.scaffolding.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.scaffolding/intellij.devkit.scaffolding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.smartupdate/intellij.devkit.smartupdate.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.smartupdate/intellij.devkit.smartupdate.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.stacktrace/intellij.devkit.stacktrace.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.stacktrace/intellij.devkit.stacktrace.iml" />
@@ -953,11 +955,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/idea/intellij.kotlin.projectWizard.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/idea/intellij.kotlin.projectWizard.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/maven/intellij.kotlin.projectWizard.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/maven/intellij.kotlin.projectWizard.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.k2/intellij.kotlin.refactorings.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.k2/intellij.kotlin.refactorings.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.move.k2/intellij.kotlin.refactorings.move.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.move.k2/intellij.kotlin.refactorings.move.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.move.k2/intellij.kotlin.refactorings.move.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.move.k2/intellij.kotlin.refactorings.move.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.tests.k2/intellij.kotlin.refactorings.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.tests.k2/intellij.kotlin.refactorings.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/references/intellij.kotlin.references.iml" filepath="$PROJECT_DIR$/plugins/kotlin/references/intellij.kotlin.references.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/junit/intellij.kotlin.runConfigurations.junit.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/junit/intellij.kotlin.runConfigurations.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/jvm/intellij.kotlin.runConfigurations.jvm.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/jvm/intellij.kotlin.runConfigurations.jvm.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/intellij.kotlin.runConfigurations.testng.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/intellij.kotlin.runConfigurations.testng.iml" />

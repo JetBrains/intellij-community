@@ -112,6 +112,8 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testStaticMethodHiding() { doTest(); }
+
   public void testNoOverridingChecksOnInapplicableAnnotations() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();

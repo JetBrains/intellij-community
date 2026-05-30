@@ -33,8 +33,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//libraries/jsoup",
   ],
-  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
-  plugins = ["@lib//:compose-plugin"]
+  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"]
 )
 
 jvm_library(
@@ -57,8 +56,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     "//libraries/jsoup:jsoup_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end
 
@@ -86,8 +84,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.markdown.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
-  plugins = ["@lib//:compose-plugin"]
+  exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"]
 )
 
 jvm_library(
@@ -126,8 +123,7 @@ jvm_library(
     "//platform/jewel/markdown/testing:testing_test_lib",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
-  runtime_deps = [":jewel-markdown-core-tests"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":jewel-markdown-core-tests"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.core.tests` end
 

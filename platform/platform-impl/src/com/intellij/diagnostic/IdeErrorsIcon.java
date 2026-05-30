@@ -3,11 +3,13 @@ package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon.Blinking;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +24,22 @@ final class IdeErrorsIcon extends JLabel {
   private static final int TIMEOUT = (int)TimeUnit.SECONDS.toMillis(Registry.intValue("ea.indicator.blinking.timeout", -1));
 
   private final boolean myEnableBlink;
-  private final @Nullable MergingUpdateQueue myBlinkTimeoutQueue;
+  private final @Nullable UpdateQueue<MessagePool.State> myBlinkTimeoutQueue;
 
   IdeErrorsIcon(boolean canBlink) {
     myEnableBlink = canBlink && TIMEOUT != 0;
-    myBlinkTimeoutQueue =
-      myEnableBlink && TIMEOUT > 0 ? new MergingUpdateQueue("ide-error-icon-blink-timeout", TIMEOUT, true, null).setRestartTimerOnAdd(true) : null;
+    myBlinkTimeoutQueue = myEnableBlink && TIMEOUT > 0
+      ? DebouncedUpdates.<MessagePool.State>forComponent(this, "ide-error-icon-blink-timeout", TIMEOUT)
+          .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+          .restartTimerOnAdd(true)
+          .runLatest(state -> stopBlinking(state))
+      : null;
+  }
+
+  private void stopBlinking(MessagePool.State state) {
+    if (state == MessagePool.State.UnreadErrors) {
+      setIcon(AllIcons.Ide.FatalError);
+    }
   }
 
   private static @NotNull Icon getUnreadIcon() {
@@ -54,17 +66,7 @@ final class IdeErrorsIcon extends JLabel {
     }
 
     if (myBlinkTimeoutQueue != null) {
-      if (state == MessagePool.State.UnreadErrors) {
-        myBlinkTimeoutQueue.queue(new Update(myBlinkTimeoutQueue) {
-          @Override
-          public void run() {
-            setIcon(AllIcons.Ide.FatalError);
-          }
-        });
-      }
-      else {
-        myBlinkTimeoutQueue.cancelAllUpdates();
-      }
+      myBlinkTimeoutQueue.queue(state);
     }
   }
 }

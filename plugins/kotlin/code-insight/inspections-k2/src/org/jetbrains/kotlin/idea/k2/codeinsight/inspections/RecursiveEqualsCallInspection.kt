@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -17,10 +18,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEqualsMethodSymbol
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -80,6 +81,7 @@ internal class RecursiveEqualsCallInspection : KotlinApplicableInspectionBase.Si
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtExpression): Unit? {
         val argumentExpr = when (element) {
             is KtBinaryExpression -> element.right
@@ -115,7 +117,7 @@ internal class RecursiveEqualsCallInspection : KotlinApplicableInspectionBase.Si
         }
         if (!isThisReceiver) return null
 
-        val argumentSymbol = argumentExpr.mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
+        val argumentSymbol = argumentExpr.resolveSymbol() as? KaValueParameterSymbol ?: return null
         val parameterSymbol = containingSymbol.valueParameters.singleOrNull() ?: return null
         return (argumentSymbol == parameterSymbol).asUnit
     }

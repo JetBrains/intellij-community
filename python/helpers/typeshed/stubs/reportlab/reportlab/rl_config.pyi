@@ -1,8 +1,13 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
+from weakref import ReferenceType
 
-def register_reset(func: Callable[[], Callable[[], object] | None]) -> None: ...
+__all__ = ("_reset", "register_reset")
+
+def register_reset(
+    func: Callable[[], Callable[[], object] | None], callback: Callable[[ReferenceType[Any]], object] | None = None
+) -> None: ...
 def _reset() -> None: ...
 
 allowTableBoundsErrors: int

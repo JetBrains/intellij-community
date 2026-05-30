@@ -22,7 +22,7 @@ import com.intellij.platform.runtime.product.serialization.ProductModulesSeriali
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
@@ -74,9 +74,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       error("The core plugin header is not found in $moduleRepository by module $corePluginDescriptorModule")
     }
     val mainGroupClassPath = corePluginHeader.includedModules.filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED }.flatMapTo(LinkedHashSet()) { module ->
-      val classpath = moduleRepository.findHeader(module.moduleId)?.ownClasspath ?: emptyList()
+      val classpath = moduleRepository.findModuleHeader(module.moduleId)?.ownClasspath ?: emptyList()
       if (tracing) {
-        classpath.forEach { logger.trace("Classpath for core plugin: adding $it from module '${module.moduleId.presentableName}'") }
+        classpath.forEach { logger.trace("Classpath for core plugin: adding $it from module '${module.moduleId.displayName}'") }
       }
       classpath
     }
@@ -138,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val bundled = productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModuleId ->
       val pluginHeader = moduleRepository.findBundledPluginHeader(pluginDescriptorModuleId)
       if (pluginHeader == null) {
-        logger<ModuleBasedProductLoadingStrategy>().error("Plugin header for module '${pluginDescriptorModuleId.presentableName}' is not found in the runtime module repository")
+        logger<ModuleBasedProductLoadingStrategy>().error("Plugin header for module '${pluginDescriptorModuleId.displayName}' is not found in the runtime module repository")
         return@mapNotNull null
       }
       scope.async {
@@ -149,7 +149,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun loadBundledPluginFromPluginHeader(
-    pluginHeader: RawRuntimePluginHeader,
+    pluginHeader: RuntimePluginHeader,
     bundledPluginsDir: Path,
     zipPool: ZipEntryResolverPool,
     loadingContext: PluginDescriptorLoadingContext,
@@ -159,21 +159,21 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val traceLogging = logger.isTraceEnabled
     for (includedModule in pluginHeader.includedModules) {
       if (includedModule.loadingRule == RuntimeModuleLoadingRule.EMBEDDED) {
-        val header = moduleRepository.findHeader(includedModule.moduleId)
+        val header = moduleRepository.findModuleHeader(includedModule.moduleId)
         if (header == null) {
           logger.error("Module '${includedModule.moduleId}' included as embedded in the header of plugin '${pluginHeader.pluginId}' is not found in the module repository")
           continue
         }
         if (traceLogging) {
           for (path in header.ownClasspath) {
-            logger.info("Classpath for '${pluginHeader.pluginId}': adding $path from module '${includedModule.moduleId.presentableName}'")
+            logger.info("Classpath for '${pluginHeader.pluginId}': adding $path from module '${includedModule.moduleId.displayName}'")
           }
         }
         pluginDescriptorClasspathSet.addAll(header.ownClasspath)
       }
     }
     val pluginDescriptorClasspath = pluginDescriptorClasspathSet.toList()
-    val pluginDescriptorModuleHeader = moduleRepository.findHeader(pluginHeader.pluginDescriptorModuleId)
+    val pluginDescriptorModuleHeader = moduleRepository.findModuleHeader(pluginHeader.pluginDescriptorModuleId)
     if (pluginDescriptorModuleHeader == null) {
       logger.error("Plugin descriptor module for '${pluginHeader.pluginDescriptorModuleId}' is not found in the module repository")
       return null
@@ -194,7 +194,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         val modulesWithPackagePrefix = descriptor.contentModules.asSequence().filter { it.packagePrefix != null }.mapTo(HashSet()) { it.moduleId.name }
         (pluginDescriptorClasspath +
         pluginHeader.includedModules.asSequence().filter { it.loadingRule != RuntimeModuleLoadingRule.EMBEDDED && it.moduleId.name in modulesWithPackagePrefix }.flatMap {
-          moduleRepository.findHeader(it.moduleId)?.ownClasspath?.asSequence() ?: emptySequence()
+          moduleRepository.findModuleHeader(it.moduleId)?.ownClasspath?.asSequence() ?: emptySequence()
         }).distinct()
       }
       else {
@@ -208,7 +208,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     classpathRoot: Path,
     bundledPluginsDir: Path,
     pluginDescriptorClasspath: List<Path>,
-    pluginHeader: RawRuntimePluginHeader,
+    pluginHeader: RuntimePluginHeader,
     zipFilePool: ZipEntryResolverPool,
     loadingContext: PluginDescriptorLoadingContext,
   ): PluginMainDescriptor? {
@@ -267,13 +267,13 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
    * Since JARs of plugin's modules may be located in different directories (until IJPL-220139 is fixed), the code tries to determine the
    * plugin directory by JARs located in standard locations (lib/ or lib/modules).
    */
-  private fun determinePluginDirectory(classpathRoot: Path, bundledPluginsDir: Path, pluginHeader: RawRuntimePluginHeader): Path? {
+  private fun determinePluginDirectory(classpathRoot: Path, bundledPluginsDir: Path, pluginHeader: RuntimePluginHeader): Path? {
     val grandparent = classpathRoot.parent.parent
     if (grandparent.parent == bundledPluginsDir) return grandparent
     return pluginHeader.includedModules
       .asSequence()
       .flatMap { included ->
-        moduleRepository.findHeader(included.moduleId)?.ownClasspath?.asSequence() ?: emptySequence()
+        moduleRepository.findModuleHeader(included.moduleId)?.ownClasspath?.asSequence() ?: emptySequence()
       }
       .map { jarFile ->
         val parent = jarFile.parent

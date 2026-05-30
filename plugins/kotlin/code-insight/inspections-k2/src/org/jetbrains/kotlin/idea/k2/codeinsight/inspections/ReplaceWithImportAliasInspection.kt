@@ -7,13 +7,14 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -52,6 +53,7 @@ internal class ReplaceWithImportAliasInspection :
         return qualifiedElement is KtDotQualifiedExpression || qualifiedElement is KtUserType
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
         val name = element.getIdentifier()?.text ?: return null
         val ktFile = element.containingKtFile
@@ -61,7 +63,7 @@ internal class ReplaceWithImportAliasInspection :
             !it.isAllUnder && it.alias != null && it.importedFqName?.shortName()?.asString() == name
         }.ifEmpty { return null }
 
-        val fqName = element.mainReference.resolveToSymbols().firstOrNull()?.importableFqName ?: return null
+        val fqName = element.resolveSymbol()?.importableFqName ?: return null
         val aliasNameIdentifier = imports.find { it.importedFqName == fqName }?.alias?.nameIdentifier ?: return null
         
         return Context(

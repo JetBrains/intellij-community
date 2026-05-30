@@ -39,6 +39,8 @@
 
 
     <registryKey key="diff.semantic.highlighting" defaultValue="false" description="Enables difference highlighting based on the semantics language"/>
+    <registryKey key="diff.highlighting.level.visible" defaultValue="false"
+                 description="Show the Highlighting Level option in the diff viewer settings menu"/>
 
     <editorActionHandler action="EditorEscape"
                          implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"

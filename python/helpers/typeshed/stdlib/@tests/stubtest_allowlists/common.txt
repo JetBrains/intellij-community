@@ -236,8 +236,11 @@ _?ctypes.Union.__getattr__  # doesn't exist, but makes things easy if we pretend
 _?ctypes.Union.__setattr__  # doesn't exist, but makes things easy if we pretend it does
 
 # Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
-# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+# These would ideally be special-cased by type checkers.
+# See https://github.com/python/mypy/issues/2220 and https://github.com/python/typeshed/issues/7813
 _?ctypes.Array.__iter__
+calendar._localized_day.__iter__
+calendar._localized_month.__iter__
 
 dataclasses.KW_ONLY  # white lies around defaults
 

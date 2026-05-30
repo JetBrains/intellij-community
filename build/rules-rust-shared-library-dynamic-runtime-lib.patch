@@ -1,0 +1,24 @@
+diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
+--- a/rust/private/rust.bzl
++++ b/rust/private/rust.bzl
+@@ -1191,6 +1191,11 @@
+ rust_shared_library = rule(
+     implementation = _rust_shared_library_impl,
+-    attrs = _COMMON_ATTRS | _PLATFORM_ATTRS | _EXPERIMENTAL_USE_CC_COMMON_LINK_ATTRS,
++    attrs = _COMMON_ATTRS | _PLATFORM_ATTRS | _EXPERIMENTAL_USE_CC_COMMON_LINK_ATTRS | {
++        "_dynamic_runtime_lib": attr.label(
++            default = Label("@llvm//runtimes/libunwind:rules_rust_shared_library_dynamic_runtime_lib"),
++            allow_files = True,
++        ),
++    },
+     fragments = ["cpp"],
+     cfg = _rust_shared_library_transition,
+     toolchains = [
+diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
+--- a/rust/private/rustc.bzl
++++ b/rust/private/rustc.bzl
+@@ -1647,1 +1647,4 @@
+     runtime_libs = get_cc_toolchain_runtime_libs(cc_toolchain, feature_configuration, crate_info.type)
++    dynamic_runtime_lib = getattr(ctx.files, "_dynamic_runtime_lib", [])
++    if dynamic_runtime_lib:
++        runtime_libs = depset(direct = dynamic_runtime_lib)

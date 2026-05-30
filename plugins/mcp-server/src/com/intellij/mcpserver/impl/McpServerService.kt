@@ -381,10 +381,6 @@ open class McpServerService(val cs: CoroutineScope) {
         )
 
         val session = sessionToolsManager.createAndInitializeSession(transport, applicationCall)
-        //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
-        //  // Workaround inspector failure
-        //  return@setRequestHandler EmptyRequestResult()
-        //}
 
         return@mcpPatched session
       }

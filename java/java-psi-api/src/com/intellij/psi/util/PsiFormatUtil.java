@@ -433,7 +433,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     if (type == null) return "null";
     return !BitUtil.isSet(options, SHOW_FQ_CLASS_NAMES) ? type.getPresentableText(false) :
            !BitUtil.isSet(options, USE_INTERNAL_CANONICAL_TEXT) ? type.getCanonicalText(false) :
-           type.getInternalCanonicalText();
+           PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   public static String formatReference(PsiJavaCodeReferenceElement ref, int options) {

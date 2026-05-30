@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
-    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.generator" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" scope="TEST" />
   </component>

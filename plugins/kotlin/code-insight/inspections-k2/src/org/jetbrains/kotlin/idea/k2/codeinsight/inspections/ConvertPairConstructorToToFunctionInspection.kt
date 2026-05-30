@@ -1,15 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -40,8 +40,9 @@ internal class ConvertPairConstructorToToFunctionInspection : KotlinApplicableIn
         return callee == "Pair"
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
-        val calleeSymbol = element.calleeExpression?.mainReference?.resolveToSymbol() as? KaConstructorSymbol ?: return null
+        val calleeSymbol = element.resolveSymbol() as? KaConstructorSymbol ?: return null
         if (calleeSymbol.importableFqName != PAIR_FQ_NAME) return null
 
         return Unit

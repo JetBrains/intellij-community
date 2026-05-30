@@ -53,7 +53,6 @@
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
-    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AgentWorkbenchSessions.MainToolbar.Activity"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>

@@ -10,11 +10,11 @@ import com.jetbrains.rhizomedb.ReduceDecision
 import com.jetbrains.rhizomedb.TX
 import com.jetbrains.rhizomedb.Versioned
 import com.jetbrains.rhizomedb.VersionedEID
-import fleet.util.radixTrie.RadixTrie
-import fleet.util.radixTrie.RadixTrieLong
-import fleet.util.radixTrie.get
-import fleet.util.radixTrie.put
-import fleet.util.radixTrie.update
+import fleet.radixTrie.RadixTrie
+import fleet.radixTrie.RadixTrieLong
+import fleet.radixTrie.get
+import fleet.radixTrie.put
+import fleet.radixTrie.update
 import kotlin.jvm.JvmInline
 
 /**

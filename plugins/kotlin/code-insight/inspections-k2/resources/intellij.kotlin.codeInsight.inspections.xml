@@ -1548,5 +1548,21 @@
                      language="kotlin"
                      key="inspection.lazy.without.delegation.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertTypeOfToCollectionLiteralInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.kotlin.convert.type.of.to.collection.literal.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertCollectionLiteralToTypeOfExpressionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.kotlin.convert.collection.literal.to.type.of.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

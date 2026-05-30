@@ -6,16 +6,16 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class AddContextParameterFix(
-    element: KtCallElement,
+    element: KtElement,
     private val contextTypes: List<String>
-) : PsiUpdateModCommandAction<KtCallElement>(element) {
-    override fun invoke(context: ActionContext, element: KtCallElement, updater: ModPsiUpdater) {
+) : PsiUpdateModCommandAction<KtElement>(element) {
+    override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
         val containingFunction = element.getStrictParentOfType<KtNamedFunction>() ?: return
 
         val psiFactory = KtPsiFactory(context.project)
@@ -23,14 +23,15 @@ class AddContextParameterFix(
         val allParams = existingParameters.map { it.text } + contextTypes.map { "_: $it" }
         val contextClause = allParams.joinToString(", ", "context(", ")")
 
-        val functionBody = if (existingParameters.isNotEmpty()) {
+        val newFunctionText = if (existingParameters.isNotEmpty()) {
             val oldContextEnd = existingParameters.last().parent.textRange.endOffset - containingFunction.textRange.startOffset
-            containingFunction.text.substring(oldContextEnd).trimStart()
+            val rest = containingFunction.text.substring(oldContextEnd).trimStart()
+            "$contextClause $rest"
         } else {
-            containingFunction.text
+            "$contextClause\n${containingFunction.text}"
         }
 
-        val newFunction = psiFactory.createFunction("$contextClause $functionBody")
+        val newFunction = psiFactory.createFunction(newFunctionText)
         val replacedFunction = containingFunction.replace(newFunction) as KtNamedFunction
         updater.select(replacedFunction.contextParameters.getOrNull(existingParameters.size)?.nameIdentifier ?: return)
     }

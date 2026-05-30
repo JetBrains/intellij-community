@@ -1528,7 +1528,7 @@ public class JavaDocInfoGenerator {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
-      if (anno.isNonCodeTypeUseAnnotation() && AnnotationDocGenerator.getContextType(owner) instanceof PsiArrayType) continue;
+      if (anno.isInferredTypeUseAnnotation() && AnnotationDocGenerator.getContextType(owner) instanceof PsiArrayType) continue;
       anno.generateAnnotation(buffer, format, generateLink, isRendered(), doHighlightSignatures());
 
       buffer.append(NBSP);

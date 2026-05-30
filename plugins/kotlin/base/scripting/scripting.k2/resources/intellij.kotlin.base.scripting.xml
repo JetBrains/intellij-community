@@ -12,6 +12,14 @@
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.k2.inspections.KotlinScriptTemplateNotRegisteredInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     bundle="messages.KotlinBaseScriptingBundle" key="inspection.script.definition.not.registered.name"/>
+
     <notificationGroup id="KotlinScriptNotificationGroup"
                        displayType="BALLOON"
                        bundle="messages.KotlinBaseScriptingBundle"
@@ -81,14 +89,11 @@
             id="StandardScriptDefinitionContributor"
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
-    <scriptDefinitionsSource
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
   </extensions>
 
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
-              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionTemplateListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

@@ -35,7 +35,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.buildDistributions
@@ -947,7 +947,7 @@ private fun readGeneratedRuntimeModuleRepository(buildContext: BuildContext): Ru
   val repositoryPath = findGeneratedRuntimeModuleRepository(buildContext) ?: return null
   val repository = RuntimeModuleRepository.create(repositoryPath)
   //force RuntimeModuleRepository to parse the file, otherwise it'll fail because the artifacts are deleted by doRunTestBuild before the packaging tests start
-  repository.findHeader(RuntimeModuleId.contentModule("intellij.platform.frontend", RuntimeModuleId.DEFAULT_NAMESPACE))
+  repository.findModuleHeader(RuntimeModuleId.contentModule("intellij.platform.frontend", RuntimeModuleId.DEFAULT_NAMESPACE))
   return repository
 }
 

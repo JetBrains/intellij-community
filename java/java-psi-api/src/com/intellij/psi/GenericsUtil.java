@@ -409,14 +409,13 @@ public final class GenericsUtil {
           LOG.assertTrue(toPut == null || toPut.isValid(), toPut);
           substitutor = substitutor.put(typeParameter, toPut);
         }
-        PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
-        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && applicableAnnotations.length == 0 && !(aClass instanceof PsiTypeParameter)) {
+        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && !(aClass instanceof PsiTypeParameter)) {
           return classType;
         }
         PsiManager manager = aClass.getManager();
         PsiType result = JavaPsiFacade.getElementFactory(manager.getProject())
           .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass))
-          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations))
+          .annotate(classType.getAnnotationProvider())
           .withNullability(classType.getNullability());
         if (toExtend) result = PsiWildcardType.createExtends(manager, result);
         return result;

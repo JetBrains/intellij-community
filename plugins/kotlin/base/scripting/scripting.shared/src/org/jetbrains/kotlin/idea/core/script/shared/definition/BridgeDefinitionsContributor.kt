@@ -4,11 +4,16 @@ package org.jetbrains.kotlin.idea.core.script.shared.definition
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.scripting.definitions.getEnvironment
+import java.io.File
+import java.nio.file.Path
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
@@ -27,12 +32,15 @@ class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptD
                 // TODO: rewrite load and discovery to return kotlin.script.experimental.host.ScriptDefinition to avoid unnecessary conversions
                 val explicitDefinitions = if (explicitClasses.isEmpty())
                     emptySequence()
-                else
+                else {
+                    val loadDefinitions = loadDefinitions(explicitClasses, classPath.map { it.absolutePath })
                     loadDefinitionsFromTemplates(
                         templateClassNames = explicitClasses,
                         templateClasspath = classPath.map { it.toPath() },
                         baseHostConfiguration = baseHostConfiguration
                     )
+                }
+
 
                 val discoveredDefinitions = if (provider.useDiscovery())
                     ScriptDefinitionsFromClasspathDiscoverySource(
@@ -57,6 +65,28 @@ class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptD
                 }.asSequence()
             }
         }
+
+    private fun loadDefinitions(templateFqns: List<String>, classpath: List<String>): List<ScriptDefinition> {
+        val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+            getEnvironment {
+                mapOf(
+                    "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File),
+                )
+            }
+        }
+
+        val newDefinitions = loadDefinitionsFromTemplates(
+            templateClassNames = templateFqns,
+            templateClasspath = classpath.map { Path.of(it) },
+            baseHostConfiguration = hostConfiguration,
+        ).map {
+            it.apply { order = Int.MIN_VALUE }
+        }.toList()
+
+        scriptingDebugLog { "Script definitions found: ${newDefinitions.joinToString()}" }
+
+        return newDefinitions
+    }
 }
 
 

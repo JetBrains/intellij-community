@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,10 +126,10 @@ public final class JavaSharedImplUtil {
 
   public static @NotNull PsiType annotate(@NotNull PsiType type,
                                           @NotNull PsiModifierList modifierList,
-                                          PsiAnnotation @NotNull [] annotations) {
+                                          @NotNull TypeAnnotationProvider annotations) {
     TypeAnnotationProvider original =
       modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
-    TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
+    TypeAnnotationProvider provider = filteringTypeAnnotationProvider(annotations, original);
     return type.annotate(provider);
   }
 
@@ -286,29 +287,35 @@ public final class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
-  public static @NotNull TypeAnnotationProvider filteringTypeAnnotationProvider(@NotNull PsiAnnotation @NotNull [] candidates,
+  public static @NotNull TypeAnnotationProvider filteringTypeAnnotationProvider(@NotNull TypeAnnotationProvider candidatesProvider,
                                                                                 @NotNull TypeAnnotationProvider originalProvider) {
-    if (candidates.length == 0) return originalProvider;
-    return new FilteringTypeAnnotationProvider(candidates, originalProvider);
+    if (candidatesProvider == TypeAnnotationProvider.EMPTY) return originalProvider;
+    return new FilteringTypeAnnotationProvider(candidatesProvider, originalProvider);
   }
 
   private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
-    private final PsiAnnotation[] myCandidates;
+    private final @NotNull TypeAnnotationProvider myCandidatesProvider;
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(PsiAnnotation @NotNull [] candidates, @NotNull TypeAnnotationProvider originalProvider) {
-      myCandidates = candidates;
+    private FilteringTypeAnnotationProvider(@NotNull TypeAnnotationProvider candidatesProvider, @NotNull TypeAnnotationProvider originalProvider) {
+      myCandidatesProvider = candidatesProvider;
       myOriginalProvider = originalProvider;
+    }
+
+    @Override
+    public boolean isValid() {
+      return myCandidatesProvider.isValid() && myOriginalProvider.isValid();
     }
 
     @Override
     public PsiAnnotation @NotNull [] getAnnotations() {
       PsiAnnotation[] result = myCache;
       if (result == null) {
-        List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
+        List<PsiAnnotation> filtered = JBIterable.of(myCandidatesProvider.getAnnotations())
           .filter(annotation ->
                     !annotation.isValid() || // avoid exceptions in the next line, enable isValid checks at more specific call sites
+                    ExternalAnnotationsManager.isNonCodeTypeAnnotation(annotation) ||
                     AnnotationTargetUtil.isTypeAnnotation(annotation))
           .append(myOriginalProvider.getAnnotations())
           .toList();

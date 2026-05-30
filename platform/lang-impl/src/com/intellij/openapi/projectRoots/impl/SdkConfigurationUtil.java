@@ -461,6 +461,7 @@ public final class SdkConfigurationUtil {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+    descriptor.setEnvironmentRestricted(true);
 
     Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType, path));
     VirtualFile suggestedSdkRoot = null;

@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -53,7 +54,8 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
     companion object {
         private fun computeOrGetDefinitions(project: Project): List<ScriptDefinition> = project.cacheByClass(
             ScriptDefinitionProviderImpl::class.java,
-            ScriptDefinitionsModificationTracker.getInstance(project)
+            ScriptDefinitionsModificationTracker.getInstance(project),
+            ProjectRootModificationTracker.getInstance(project),
         ) {
             SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions }
         }

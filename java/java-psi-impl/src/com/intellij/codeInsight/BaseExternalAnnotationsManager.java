@@ -5,9 +5,9 @@ import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiAnnotation;
@@ -27,7 +27,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -67,7 +66,6 @@ import java.util.stream.Collectors;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(BaseExternalAnnotationsManager.class);
-  private static final Key<Boolean> EXTERNAL_ANNO_MARKER = Key.create("EXTERNAL_ANNO_MARKER");
   private static final List<PsiFile> NULL_LIST = Collections.emptyList();
 
   protected final PsiManager myPsiManager;
@@ -110,11 +108,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
-    return annotation.getUserData(EXTERNAL_ANNO_MARKER) != null;
-  }
-
-  @Override
   public @Nullable PsiAnnotation findExternalAnnotation(final @NotNull PsiModifierListOwner listOwner, final @NotNull String annotationFQN) {
     List<PsiAnnotation> result = findExternalAnnotations(listOwner, annotationFQN);
     return result.isEmpty() ? null : result.get(0);
@@ -143,6 +136,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner listOwner,
                                                                         @NotNull String typePath) {
+    if (typePath.isEmpty()) {
+      List<AnnotationData> result = collectExternalAnnotations(listOwner);
+      if (result.isEmpty()) return PsiAnnotation.EMPTY_ARRAY;
+      return StreamEx.of(result)
+        .filter(data -> data.typePath == null)
+        .map(data -> data.getAnnotation(this))
+        .filter(annotation -> isNonCodeTypeAnnotation(annotation))
+        .toArray(PsiAnnotation.EMPTY_ARRAY);
+    }
     List<AnnotationData> result = collectExternalAnnotations(listOwner);
     if (result.isEmpty()) return PsiAnnotation.EMPTY_ARRAY;
     return StreamEx.of(result).filter(data -> typePath.equals(data.typePath))
@@ -198,6 +200,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : StreamEx.of(result)
       .filter(data -> data.typePath == null)
       .map(data -> data.getAnnotation(this))
+      .filter(listOwner instanceof PsiTypeParameter ? Predicates.alwaysTrue() : annotation -> !isNonCodeTypeAnnotation(annotation))
       .toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
@@ -352,7 +355,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         .collect(Collectors.toList());
       return findExternalAnnotationsFiles(packageName, (PsiPackage)listOwner, roots);
     }
-    final PsiFile containingFile = PsiUtil.preferCompiledElement(listOwner).getContainingFile();
+    PsiFile file = listOwner.getContainingFile();
+    if (file == null) return null;
+    final PsiFile containingFile = file.getOriginalFile();
     if (!(containingFile instanceof PsiClassOwner)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();

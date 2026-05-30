@@ -26,6 +26,7 @@ jvm_library(
   deps = [
     "//fleet/util/core",
     "//fleet/multiplatform.shims",
+    "//fleet/radixTrie",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
@@ -46,6 +47,7 @@ jvm_library(
     ":rhizomedb",
     "//fleet/util/core:core_test_lib",
     "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+    "//fleet/radixTrie:radixTrie_test_lib",
     "//fleet/fastutil:fastutil_test_lib",
   ]
 )

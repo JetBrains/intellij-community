@@ -25,8 +25,8 @@ class DefaultPluginUpdateHandler : PluginUpdateHandler {
 
     val pluginUpdates = internalPluginUpdates.pluginUpdates
     val notIgnoredDownloaders = pluginUpdates.allEnabled.filterNot { UpdateChecker.isIgnored(it.descriptor) }
-    val updateModels = notIgnoredDownloaders.mapNotNull { it.uiModel }
-    val disabledUpdateModels = pluginUpdates.allDisabled.mapNotNull { it.uiModel }
+    val updateModels = notIgnoredDownloaders.map { it.uiModel }
+    val disabledUpdateModels = pluginUpdates.allDisabled.map { it.uiModel }
     val incompatiblePluginNames = pluginUpdates.incompatible.map { it.name }
     registerDownloaders(sessionId, notIgnoredDownloaders)
     val errors = internalPluginUpdates.errors.map { it.key to it.value.message.orEmpty() }.toMap()

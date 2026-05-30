@@ -29,8 +29,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.openapi.roots.SingleFileSourcesTracker"
-                    serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
     <projectPreInit id="workspaceFileIndexInitializer" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>

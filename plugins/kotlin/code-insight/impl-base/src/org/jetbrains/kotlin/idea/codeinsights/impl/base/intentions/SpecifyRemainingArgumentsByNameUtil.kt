@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.application.options.CodeStyle
@@ -9,9 +9,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -151,7 +151,7 @@ object SpecifyRemainingArgumentsByNameUtil {
      * The largest overload is determined by value parameter count.
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidateInfo>): RemainingArgumentsData? {
+    private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidate>): RemainingArgumentsData? {
         val allFunctionCalls = allCalls.map { info ->
             // If any of the calls cannot be resolved, we do not want to continue
             info.candidate as? KaFunctionCall<*> ?: return null
@@ -174,14 +174,15 @@ object SpecifyRemainingArgumentsByNameUtil {
     /**
      * Calculates the [RemainingArgumentsData] for the [element].
      */
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     fun KaSession.findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null
-        val resolvedCall = functionCall.resolveToCall()?.singleFunctionCallOrNull()
+        val resolvedCall = functionCall.resolveCall()
         return if (resolvedCall != null) {
             // If we can unambiguously resolve the call, we get the data for it to avoid resolving all the candidates
             resolvedCall.getRemainingArgumentsData() ?: return null
         } else {
-            getRemainingArgumentsData(functionCall.resolveToCallCandidates())
+            getRemainingArgumentsData(functionCall.collectCallCandidates())
         }
     }
 

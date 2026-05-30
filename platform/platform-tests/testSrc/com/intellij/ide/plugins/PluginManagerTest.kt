@@ -9,9 +9,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.pluginSystem.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
 import com.intellij.platform.pluginSystem.testFramework.PseudoProductTestPluginInitContext
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.testFramework.PlatformTestUtil
@@ -357,9 +356,7 @@ class PluginManagerTest {
             val url = child.getAttributeValue("descriptor-url")!!
             if (url.endsWith("/$relativePath")) {
               try {
-                val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this, dataLoader))
-                reader.consume(elementAsBytes(child), null)
-                return reader.getBuilder()
+                return parsePluginXml(elementAsBytes(child), null, readContext, createXIncludeLoader(this, dataLoader))
               }
               catch (e: XMLStreamException) {
                 throw RuntimeException(e)
@@ -418,14 +415,13 @@ class PluginManagerTest {
 }
 
 private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuilder {
-  return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
-    override val interner = NoOpXmlInterner
-    override val isMissingIncludeIgnored = false
-  }, xIncludeLoader = createXIncludeLoader(PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, object : DataLoader {
+  val xIncludeLoader = createXIncludeLoader(PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
-  })).let {
-    it.consume(input, null)
-    it.getBuilder()
+  })
+  val readContext = object : PluginDescriptorReaderContext {
+    override val interner = NoOpXmlInterner
+    override val isMissingIncludeIgnored = false
   }
+  return parsePluginXml(input, null, readContext = readContext, xIncludeLoader = xIncludeLoader)
 }

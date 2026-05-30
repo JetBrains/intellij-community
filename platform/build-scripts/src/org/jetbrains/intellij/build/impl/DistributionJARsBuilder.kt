@@ -42,6 +42,7 @@ import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDistribution
 import org.jetbrains.intellij.build.impl.plugins.BundledPluginsBuildResult
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPluginsForAllPlatforms

@@ -432,7 +432,7 @@ com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificat
 - a:getTargetExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 f:com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - clearNotifications(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - s:createNotification(java.lang.String,java.lang.Throwable,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.externalSystem.service.notification.NotificationData
 - dispose():V

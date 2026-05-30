@@ -8,6 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+/**
+ * Don't use this directly, use [DynamicPlugins] as an API
+ */
 @IntellijInternalApi
 @ApiStatus.Internal
 interface DynamicPluginsSupport {
@@ -36,9 +39,11 @@ abstract class DynamicPluginsTransitionResult private constructor() {
 @ApiStatus.Internal
 interface DynamicTransitionIsNotPossibleReason {
   val logMessage: @NonNls String
+  val problematicPlugin: PluginMainDescriptor?
 
   companion object {
-    fun of(logMessage: @NonNls String): DynamicTransitionIsNotPossibleReason = DynamicTransitionIsNotPossibleReasonImpl(logMessage)
+    fun of(logMessage: @NonNls String, problematicPlugin: PluginMainDescriptor?): DynamicTransitionIsNotPossibleReason =
+      DynamicTransitionIsNotPossibleReasonImpl(logMessage, problematicPlugin)
   }
 }
 
@@ -58,7 +63,10 @@ private val instance: DynamicPluginsSupport? by lazy {
 @ApiStatus.Internal
 fun DynamicPluginsSupport.Companion.getInstance(): DynamicPluginsSupport? = instance
 
-private class DynamicTransitionIsNotPossibleReasonImpl(override val logMessage: @NonNls String): DynamicTransitionIsNotPossibleReason
+private class DynamicTransitionIsNotPossibleReasonImpl(
+  override val logMessage: @NonNls String,
+  override val problematicPlugin: PluginMainDescriptor?,
+): DynamicTransitionIsNotPossibleReason
 
 @IntellijInternalApi
 @ApiStatus.Internal

@@ -37,7 +37,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.navigation.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.performance.test" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" scope="RUNTIME" />
@@ -93,7 +92,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.parcelize" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="TEST" />

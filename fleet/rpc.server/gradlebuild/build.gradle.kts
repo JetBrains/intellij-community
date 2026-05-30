@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
+  id("rpc")
   // GRADLE_PLUGINS__MARKER_END
 }
 

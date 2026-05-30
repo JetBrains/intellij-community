@@ -153,6 +153,30 @@ class AgentPromptEditorContextContributorTest {
     }
 
     @Test
+    fun referenceSymbolNameUsesPlainReferenceText() {
+        assertThat(AgentPromptEditorContextSupport.extractReferenceSymbolName("setProjectLanguageLevel", 3))
+            .isEqualTo("setProjectLanguageLevel")
+    }
+
+    @Test
+    fun referenceSymbolNameUsesDottedSegmentAtCaret() {
+        val referenceText = "IdeaTestUtil.setProjectLanguageLevel"
+
+        assertThat(AgentPromptEditorContextSupport.extractReferenceSymbolName(referenceText, referenceText.indexOf("setProjectLanguageLevel")))
+            .isEqualTo("setProjectLanguageLevel")
+        assertThat(AgentPromptEditorContextSupport.extractReferenceSymbolName(referenceText, referenceText.indexOf("IdeaTestUtil")))
+            .isEqualTo("IdeaTestUtil")
+    }
+
+    @Test
+    fun referenceSymbolNameIgnoresBlankAndPlaceholderSegments() {
+        val incompleteReferenceText = "IdeaTestUtil."
+
+        assertThat(AgentPromptEditorContextSupport.extractReferenceSymbolName(incompleteReferenceText, incompleteReferenceText.lastIndex)).isNull()
+        assertThat(AgentPromptEditorContextSupport.extractReferenceSymbolName("<anonymous>", 1)).isNull()
+    }
+
+    @Test
     fun composeInitialMessageRendersFileSymbolThenSnippet() {
         val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
             AgentPromptInitialMessageRequest(

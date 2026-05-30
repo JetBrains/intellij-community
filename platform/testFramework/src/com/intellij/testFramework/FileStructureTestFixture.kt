@@ -7,16 +7,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider.Companion.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure.FilteringNode
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.launch
 
 /**
  * @author Konstantin Bulenkov
@@ -29,16 +25,7 @@ class FileStructureTestFixture(private val myFixture: CodeInsightTestFixture) : 
         val popup = popup
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() // Prevent write actions cancelling rebuild and update
         update()
-
-        if (popup is com.intellij.ide.util.FileStructurePopup) {
-            PlatformTestUtil.waitForPromise(popup.select(popup.getCurrentElement()))
-        } else if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
-          val cs = StructureViewScopeHolder.getInstance(myFixture.project).cs.childScope("test scope")
-          cs.launch {
-            popup.selectCurrent()
-          }
-          waitCoroutinesBlocking(cs)
-        }
+        PlatformTestUtil.waitForPromise(popup.selectCurrentAsync())
         val path = popup.getTree().selectionPath
         return TreeUtil.getLastUserObject(FilteringNode::class.java, path)
     }
@@ -70,14 +57,7 @@ class FileStructureTestFixture(private val myFixture: CodeInsightTestFixture) : 
                 Disposer.register(this, myPopup!!)
 
                 myPopup!!.initUi()
-
-                if (myPopup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
-                  val cs = StructureViewScopeHolder.getInstance(myFixture.project).cs.childScope("test scope")
-                  cs.launch {
-                    (myPopup as com.intellij.platform.structureView.frontend.FileStructurePopup).waitUpdateFinished()
-                  }
-                  waitCoroutinesBlocking(cs)
-                }
+                PlatformTestUtil.waitForPromise(myPopup!!.waitUpdateFinishedAsync())
             }
             return myPopup!!
         }
@@ -88,26 +68,17 @@ class FileStructureTestFixture(private val myFixture: CodeInsightTestFixture) : 
     }
 
   companion object {
-    fun waitUpdateFinished(popup: StructurePopupTestExt?, project: Project) {
-      if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
-        val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("test scope")
-        cs.launch {
-          popup.waitUpdateFinished()
-        }
-        waitCoroutinesBlocking(cs)
+    @JvmStatic
+    fun waitUpdateFinished(popup: StructurePopupTestExt?, @Suppress("UNUSED_PARAMETER") project: Project) {
+      if (popup != null) {
+        PlatformTestUtil.waitForPromise(popup.waitUpdateFinishedAsync())
       }
     }
 
-    fun update(popup: StructurePopupTestExt?, project: Project) {
-      if (popup is com.intellij.ide.util.FileStructurePopup) {
-        PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate())
-      }
-      else if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
-        val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("test scope")
-        cs.launch {
-          popup.rebuildAndUpdate()
-        }
-        waitCoroutinesBlocking(cs)
+    @JvmStatic
+    fun update(popup: StructurePopupTestExt?, @Suppress("UNUSED_PARAMETER") project: Project) {
+      if (popup != null) {
+        PlatformTestUtil.waitForPromise(popup.rebuildAndUpdateAsync())
       }
     }
   }

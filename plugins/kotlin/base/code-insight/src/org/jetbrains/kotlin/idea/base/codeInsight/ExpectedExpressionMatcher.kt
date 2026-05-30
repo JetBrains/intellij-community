@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.components.typeCreator
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -108,12 +109,13 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun getForArrayAccessArgument(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val arrayAccessExpression = (containerNode.parent as? KtArrayAccessExpression) ?: return null
 
-        for (call in arrayAccessExpression.resolveToCall()?.calls.orEmpty()) {
+        for (call in arrayAccessExpression.tryResolveCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == target) {
@@ -123,7 +125,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
             } else if (call is KaCompoundArrayAccessCall) {
                 val argumentIndex = call.indexArguments.indexOf(target)
                 if (argumentIndex >= 0) {
-                    val valueParameter = call.getPartiallyAppliedSymbol.signature.valueParameters.getOrNull(argumentIndex)
+                    val valueParameter = call.getterCall.signature.valueParameters.getOrNull(argumentIndex)
                     if (valueParameter != null) {
                         return ExpectedExpressionMatcher(types = listOf(valueParameter.returnType))
                     }
@@ -134,9 +136,10 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
-        for (call in callElement.resolveToCall()?.calls.orEmpty()) {
+        for (call in callElement.tryResolveCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == argument) {

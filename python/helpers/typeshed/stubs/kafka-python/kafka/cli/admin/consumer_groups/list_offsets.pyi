@@ -1,0 +1,3 @@
+class ListConsumerGroupOffsets:
+    @classmethod
+    def add_subparser(cls, subparsers): ...

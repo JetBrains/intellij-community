@@ -34,8 +34,7 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "//libraries/compose-foundation-desktop",
     "//libraries/skiko",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -54,8 +53,7 @@ jvm_library(
     "//platform/jewel/markdown/core:core_test_lib",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/skiko:skiko_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.samples.showcase` end
 

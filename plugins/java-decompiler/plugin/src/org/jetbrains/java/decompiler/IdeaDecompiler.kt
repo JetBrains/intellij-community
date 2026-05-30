@@ -27,6 +27,9 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
@@ -88,10 +91,14 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           val id = PluginId.getId("org.jetbrains.java.decompiler")
           PluginManagerCore.disablePlugin(id)
 
-          val plugin = PluginManagerCore.getPlugin(id)
-          if (plugin is PluginMainDescriptor && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
-            ApplicationManager.getApplication().invokeLater {
-              DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch {
+            val plugin = PluginManagerCore.getPlugin(id) as? PluginMainDescriptor
+                         ?: return@launch
+            if (DynamicPlugins.checkCanUnloadWithoutRestart(plugin)) {
+              ApplicationManager.getApplication().invokeLater {
+                DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
+              }
             }
           }
         }

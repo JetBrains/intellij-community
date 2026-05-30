@@ -292,12 +292,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @Override
   @RequiresEdt
   public @NotNull List<AnAction> createToolbarActions() {
+    List<AnAction> gutterActions = new ArrayList<>();
+    gutterActions.add(new MyToggleExpandByDefaultAction());
+
     List<AnAction> diffActions = new ArrayList<>();
-    diffActions.add(new MyToggleExpandByDefaultAction());
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(diffActions);
+    myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
 
     List<AnAction> group = new ArrayList<>();
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
@@ -310,12 +313,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @Override
   @RequiresEdt
   public @NotNull List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-    group.add(new MyToggleExpandByDefaultAction());
-    group.addAll(myTextDiffProvider.getDiffSettingsActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getDiffSettingsActions());
 
     group.add(Separator.getInstance());
     group.addAll(super.createPopupActions());
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -327,6 +330,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
+
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }

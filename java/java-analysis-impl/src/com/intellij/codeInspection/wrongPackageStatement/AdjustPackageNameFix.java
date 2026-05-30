@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
@@ -50,10 +49,6 @@ public class AdjustPackageNameFix extends ModCommandQuickFix {
     PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (myTargetPackage == null) return;
     String myTargetPackageName = myTargetPackage.getQualifiedName();
-    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
-    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(origFile.getVirtualFile());
-    if (singleFileSourcePackageName != null) myTargetPackageName = singleFileSourcePackageName;
-
     PsiPackageStatement statement = ((PsiJavaFile)file).getPackageStatement();
 
     if (myTargetPackageName.isEmpty()) {

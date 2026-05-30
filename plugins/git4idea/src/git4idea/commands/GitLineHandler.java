@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
@@ -127,7 +128,7 @@ public class GitLineHandler extends GitTextHandler {
    * @param isCr whether this line is CR-only separated (typically, a progress message)
    */
   private void onLineAvailable(@NotNull String line, boolean isCr, @NotNull Key outputType) {
-    if (outputType == ProcessOutputTypes.SYSTEM) return;
+    if (ProcessOutputType.isSystem(outputType)) return;
 
     // do not log git remote progress
     if (!isCr) logOutput(line, outputType);

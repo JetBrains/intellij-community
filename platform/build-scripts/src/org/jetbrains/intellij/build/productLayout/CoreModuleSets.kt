@@ -444,6 +444,7 @@ object CoreModuleSets {
     embeddedModule("fleet.fastutil")
     embeddedModule("fleet.kernel")
     embeddedModule("fleet.multiplatform.shims")
+    embeddedModule("fleet.radixTrie")
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")
     embeddedModule("fleet.rhizomedb")

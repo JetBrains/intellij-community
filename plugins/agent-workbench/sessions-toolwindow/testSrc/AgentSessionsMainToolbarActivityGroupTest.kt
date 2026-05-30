@@ -214,28 +214,67 @@ class AgentSessionsMainToolbarActivityGroupTest {
   }
 
   @Test
-  fun hiddenInDedicatedFrameWithoutProjectAndWithoutSourcePath() {
+  fun dedicatedFrameGroupVisibleWithoutSourceFrameActivityGates() {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { true },
-      sourceProjectPath = { "/work/project-a" },
-      isToolbarActivityEnabled = { true },
+      sourceProjectPath = { null },
+      isToolbarActivityEnabled = { false },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
+      chromeActivitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
-    val dedicatedEvent = testEventWithProject(group)
-    val noProjectEvent = TestActionEvent.createTestEvent(group, SimpleDataContext.builder().build())
-    val noSourcePathGroup = AgentSessionsMainToolbarActivityGroup(
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    val counters = group.getChildren(event).filterIsInstance<AgentSessionsActivityCounterAction>()
+    val events = counters.map { counter -> testEventWithProject(counter) }
+    runInEdtAndWait {
+      counters.zip(events).forEach { (counter, counterEvent) -> counter.update(counterEvent) }
+    }
+    assertThat(events.map { counterEvent -> counterEvent.presentation.text }).containsExactly("0", "0", "0")
+    assertThat(events.map { counterEvent -> counterEvent.presentation.isVisible }).containsExactly(true, true, true)
+    assertThat(events.map { counterEvent -> counterEvent.presentation.isEnabled }).containsExactly(false, false, false)
+  }
+
+  @Test
+  fun dedicatedFrameCountersUseChromeActivitySummary() {
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { true },
+      sourceProjectPath = { null },
+      isToolbarActivityEnabled = { false },
+      activitySummary = { AgentSessionsActivitySummary.EMPTY },
+      chromeActivitySummary = { activitySummary() },
+    )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    val counters = group.getChildren(event).filterIsInstance<AgentSessionsActivityCounterAction>()
+    val events = counters.map { counter -> testEventWithProject(counter) }
+    runInEdtAndWait {
+      counters.zip(events).forEach { (counter, counterEvent) -> counter.update(counterEvent) }
+    }
+    assertThat(events.map { counterEvent -> counterEvent.presentation.text }).containsExactly("1", "1", "1")
+    assertThat(events.map { counterEvent -> counterEvent.presentation.isVisible }).containsExactly(true, true, true)
+    assertThat(events.map { counterEvent -> counterEvent.presentation.isEnabled }).containsExactly(true, true, true)
+  }
+
+  @Test
+  fun hiddenWithoutProjectAndForSourceFrameWithoutSourcePath() {
+    val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { null },
       isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
-    val noSourcePathEvent = testEventWithProject(noSourcePathGroup)
+    val noProjectEvent = TestActionEvent.createTestEvent(group, SimpleDataContext.builder().build())
+    val noSourcePathEvent = testEventWithProject(group)
 
-    group.update(dedicatedEvent)
     group.update(noProjectEvent)
-    noSourcePathGroup.update(noSourcePathEvent)
+    group.update(noSourcePathEvent)
 
-    assertThat(dedicatedEvent.presentation.isEnabledAndVisible).isFalse()
     assertThat(noProjectEvent.presentation.isEnabledAndVisible).isFalse()
     assertThat(noSourcePathEvent.presentation.isEnabledAndVisible).isFalse()
   }
