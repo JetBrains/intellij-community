@@ -9,7 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.annotation.HighlightSeverity.WARNING
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 
-class KotlinScriptHighlightingVisitor : HighlightVisitor {
+internal class KotlinScriptHighlightingVisitor : HighlightVisitor {
     private var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>? = null
     private var holder: HighlightInfoHolder? = null
 
@@ -89,7 +89,7 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
 
             action.run()
         } catch (e: Throwable) {
-            if (Logger.shouldRethrow(e)) throw e
+            rethrowControlFlowException(e)
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
         } finally {

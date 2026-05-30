@@ -20,8 +20,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -285,7 +285,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         return try {
             incrementalStorage.refreshModules(updatedModules)
         } catch (e: Throwable) {
-            if (Logger.shouldRethrow(e)) throw e
+            rethrowControlFlowException(e)
             LOG.error("an exception during incremental KCRI storage refresh", e)
             false
         }
@@ -301,7 +301,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
         action()
     } catch (e: Throwable) {
-        if (Logger.shouldRethrow(e)) throw e
+        rethrowControlFlowException(e)
 
         try {
             LOG.error("an exception during $actionName calculation", e)
@@ -477,7 +477,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         return !isInsideLibraryScope() &&
                 storage != null &&
                 isEnabled(project) &&
-                runReadAction { element.containingFile }
+                runReadActionBlocking { element.containingFile }
                     ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
                     ?.not() == true
     }

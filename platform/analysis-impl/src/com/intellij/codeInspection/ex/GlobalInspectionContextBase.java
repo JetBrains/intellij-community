@@ -71,6 +71,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 public class GlobalInspectionContextBase extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextBase.class);
   private static final HashingStrategy<Tools> TOOLS_HASHING_STRATEGY = new HashingStrategy<>() {
@@ -315,7 +317,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
           throw e;
         }
         catch (Throwable e) {
-          if (Logger.shouldRethrow(e)) throw e;
+          rethrowControlFlowException(e);
           LOG.error(e);
         }
         return  null;

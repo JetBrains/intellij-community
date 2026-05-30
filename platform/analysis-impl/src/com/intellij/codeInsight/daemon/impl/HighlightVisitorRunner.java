@@ -8,7 +8,6 @@ import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -32,6 +31,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 class HighlightVisitorRunner {
   @NotNull private final PsiFile myPsiFile;
@@ -202,9 +203,7 @@ class HighlightVisitorRunner {
           break;
         }
         catch (Exception e) {
-          if (Logger.shouldRethrow(e)) {
-            throw e;
-          }
+          rethrowControlFlowException(e);
           if (!failed) {
             GeneralHighlightingPass.LOG.error("In file: " + psiFile.getViewProvider().getVirtualFile(), e);
             failed = true;

@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 /**
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
@@ -217,7 +219,7 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     catch (IndexNotReadyException ignore) {
     }
     catch (Throwable t) {
-      if (Logger.shouldRethrow(t)) throw t;
+      rethrowControlFlowException(t);
       LOG.error(t);
     }
   }

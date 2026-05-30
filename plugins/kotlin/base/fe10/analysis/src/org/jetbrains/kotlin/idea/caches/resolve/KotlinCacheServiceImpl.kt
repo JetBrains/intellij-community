@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -197,7 +198,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         @Suppress("USELESS_ELVIS")
         containingKtFile ?: throw IllegalStateException("containingKtFile was null for $this of ${this.javaClass}")
     } catch (e: Exception) {
-        if (Logger.shouldRethrow(e)) throw e
+        rethrowControlFlowException(e)
         throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
             .withPsiAttachment("element", this)
             .withPsiAttachment("file", this.containingFile)

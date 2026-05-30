@@ -2977,11 +2977,19 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" description="Replaces if (e instanceOf ControlFlowException) throw e with a convenient helper utility call" suppressId="RethowControlFlowExceptionWithUtil" text="if ($Expr$ instanceof ControlFlowException) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
+      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" description="Replaces if (e instanceOf ControlFlowException) throw e with a convenient helper utility call" suppressId="RethowControlFlowExceptionWithUtil" text="if ($Expr$ instanceof ControlFlowException) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if ($Expr$ is ControlFlowException) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>

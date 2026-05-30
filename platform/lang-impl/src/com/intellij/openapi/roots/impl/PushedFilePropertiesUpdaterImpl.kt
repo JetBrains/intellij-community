@@ -10,6 +10,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.checkCanceled
@@ -413,9 +414,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
           session.visitFile(fileOrDir)
         }
         catch (e: Exception) {
-          if (Logger.shouldRethrow(e)) {
-            throw e
-          }
+          rethrowControlFlowException(e)
           LOG.error("Failed to visit file", e, Attachment("filePath.txt", fileOrDir.path))
         }
       }

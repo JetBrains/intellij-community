@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -53,7 +53,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
         val context = try {
             getElementContext(element)
         } catch (e: Exception) {
-            if (Logger.shouldRethrow(e)) throw e
+            rethrowControlFlowException(e)
             throw KotlinExceptionWithAttachments("Unable to get element context", e)
                 .withPsiAttachment("element.kt", element)
                 .withPsiAttachment("file.kt", element.containingFile)

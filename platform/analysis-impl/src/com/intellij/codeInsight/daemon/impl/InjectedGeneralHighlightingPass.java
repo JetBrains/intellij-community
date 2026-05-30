@@ -45,6 +45,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 /**
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
@@ -177,7 +179,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
         });
       }
       catch (Exception e) {
-        if (Logger.shouldRethrow(e)) throw e;
+        rethrowControlFlowException(e);
         LOG.error(e);
       }
       advanceProgress(1);

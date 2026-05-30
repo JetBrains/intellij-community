@@ -135,7 +135,7 @@ inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? 
  * If [e] is null, then this function is a no-op.
  */
 fun rethrowControlFlowException(e: Throwable?) {
-  if (e != null && Logger.shouldRethrow(e)) {
+  if (e != null && Logger.isRethrowable(e)) {
     throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
   }
 }

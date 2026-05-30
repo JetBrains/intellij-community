@@ -76,6 +76,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 final class InspectionRunner {
   private static final Logger LOG = Logger.getInstance(InspectionRunner.class);
   private final PsiFile myPsiFile;
@@ -453,7 +455,7 @@ final class InspectionRunner {
                                psiElement -> context.holder.visitElement(psiElement, context.visitor));
     }
     catch (Throwable t) {
-      if (Logger.shouldRethrow(t)) throw t;
+      rethrowControlFlowException(t);
       LOG.error(t);
     }
   }

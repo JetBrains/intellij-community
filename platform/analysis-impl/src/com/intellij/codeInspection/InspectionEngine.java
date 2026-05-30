@@ -62,6 +62,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
 
@@ -77,9 +79,7 @@ public final class InspectionEngine {
       visitor = tool.buildVisitor(holder, isOnTheFly, session);
     }
     catch (Throwable e) {
-      if (Logger.shouldRethrow(e)) {
-        throw e;
-      }
+      rethrowControlFlowException(e);
       Throwable t = PluginException.createByClass("Inspection tool '"+tool.getShortName()+"' ("+tool.getClass()+") thrown exception from its buildVisitor()", e, tool.getClass());
       LOG.error(t);
       return PsiElementVisitor.EMPTY_VISITOR;

@@ -498,9 +498,20 @@ public abstract class Logger {
 
   private static final boolean ourRethrowCE = "true".equals(System.getProperty("idea.log.rethrow.ce", "true"));
 
-  public static boolean shouldRethrow(@NotNull Throwable t) {
+  @SuppressWarnings("SpellCheckingInspection")
+  static boolean isRethrowable(@NotNull Throwable t) {
     return t instanceof ControlFlowException ||
-           t instanceof CancellationException && ourRethrowCE;
+           t instanceof CancellationException;
+  }
+
+  /**
+   * Do not use in applied code.
+   *
+   * @see LoggerKt#rethrowControlFlowException(Throwable)
+   */
+  @ApiStatus.Internal
+  public static boolean shouldRethrow(@NotNull Throwable t) {
+    return isRethrowable(t) && ourRethrowCE;
   }
 
   @Contract("null -> null; !null -> !null")

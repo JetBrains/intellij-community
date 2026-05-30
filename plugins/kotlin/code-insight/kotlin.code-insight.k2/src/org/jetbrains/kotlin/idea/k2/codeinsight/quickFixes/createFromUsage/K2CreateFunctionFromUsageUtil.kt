@@ -8,7 +8,7 @@ import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
 import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.types.JvmType
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
@@ -445,7 +445,7 @@ object K2CreateFunctionFromUsageUtil {
             try {
                 asKaType(useSitePosition)
             } catch (e: Throwable) {
-                if (Logger.shouldRethrow(e)) throw e
+                rethrowControlFlowException(e)
 
                 // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
                 // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis

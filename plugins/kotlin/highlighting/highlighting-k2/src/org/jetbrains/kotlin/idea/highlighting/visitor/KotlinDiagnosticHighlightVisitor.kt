@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -82,7 +83,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             diagnosticsMap = analyzeFile(contextFile)
             action.run()
         } catch (e: Throwable) {
-            if (Logger.shouldRethrow(e)) throw e
+            rethrowControlFlowException(e)
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
         } finally {

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -157,7 +157,7 @@ fun KtElement.analyze(
 fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult = try {
     AnalysisResult.success(resolutionFacade.analyze(this), resolutionFacade.moduleDescriptor)
 } catch (e: Exception) {
-    if (Logger.shouldRethrow(e)) throw e
+    rethrowControlFlowException(e)
     AnalysisResult.internalError(BindingContext.EMPTY, e)
 }
 

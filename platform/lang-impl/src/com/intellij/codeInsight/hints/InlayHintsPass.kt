@@ -10,6 +10,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.JobLauncher
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
@@ -70,7 +71,7 @@ class InlayHintsPass(
             catch (_: IndexNotReadyException) {
             }
             catch (e: Throwable) {
-              if (Logger.shouldRethrow(e)) throw e
+              rethrowControlFlowException(e)
               LOG.error(e)
             }
             progress.checkCanceled()

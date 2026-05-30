@@ -18,8 +18,8 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.RegistryManager
@@ -118,9 +118,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
         logUsagesAsStateEvents(project = project, group = group, metrics = data, logger = logger)
       }
       catch (e: Throwable) {
-        if (Logger.shouldRethrow(e)) {
-          throw e
-        }
+        rethrowControlFlowException(e)
 
         if (project != null && project.isDisposed) {
           return
