@@ -1,9 +1,10 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.kernel.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="fleet.rhizomedb"/>
     <module name="intellij.platform.completion.common"/>
-    <!-- endregion -->
+    <module name="intellij.platform.kernel"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

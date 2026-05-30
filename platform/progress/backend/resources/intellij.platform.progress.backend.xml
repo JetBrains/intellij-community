@@ -5,6 +5,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.kernel"/>
   </dependencies>
   <!-- endregion -->
 

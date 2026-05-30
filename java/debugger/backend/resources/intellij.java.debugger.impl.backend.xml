@@ -4,7 +4,6 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.debugger.impl.shared"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.java.debugger"/>
