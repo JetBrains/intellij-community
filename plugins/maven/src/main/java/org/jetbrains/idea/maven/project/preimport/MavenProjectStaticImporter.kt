@@ -579,7 +579,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     modelMap["build.testOutputDirectory"] = mavenModel.build.testOutputDirectory
     //modelMap["build.finalName"] = mavenModel.build.finalName
     modelMap["build.directory"] = mavenModel.build.directory
-    val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, mutableListOf())
+    val result = MavenProjectReaderResult(mavenModel, modelMap, mutableListOf())
     mavenProject.updateFromReaderResult(result, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo(), false)
   }
 

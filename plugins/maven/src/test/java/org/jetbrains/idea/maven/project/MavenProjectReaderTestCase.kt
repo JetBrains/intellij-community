@@ -20,7 +20,7 @@ abstract class MavenProjectReaderTestCase : MavenMultiVersionImportingTestCase()
                                     vararg profiles: String): MavenProjectReaderResult {
     MavenSettingsCache.getInstance(project).reloadAsync()
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-    val reader = MavenProjectReader(project, mavenEmbedderWrappers, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val reader = MavenProjectReader(project, mavenEmbedderWrappers, mavenGeneralSettings, locator)
     val result = mavenEmbedderWrappers.use { reader.readProjectAsync(file) }
     return result
   }

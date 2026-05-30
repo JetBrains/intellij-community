@@ -453,7 +453,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), emptyList()))
+    projectsManager.projectsTree.resetManagedFiles(files)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(profiles.toList(), emptyList())
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
@@ -474,7 +475,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   ) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
+    projectsManager.projectsTree.resetManagedFiles(files)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(profiles.toList(), disabledProfiles)
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {

@@ -105,13 +105,11 @@ internal class MavenProjectsTreeUpdater(
       val userSettingsTimestamp = getFileTimestamp(userSettingsFile)
       val globalSettingsTimestamp = getFileTimestamp(globalSettingsFile)
 
-      val profilesHashCode = reader.explicitProfiles.hashCode()
       MavenProjectTimestamp(pomTimestamp,
                             parentTimestamp,
                             profilesTimestamp,
                             userSettingsTimestamp,
                             globalSettingsTimestamp,
-                            profilesHashCode.toLong(),
                             jvmConfigTimestamp,
                             mavenConfigTimestamp)
     }

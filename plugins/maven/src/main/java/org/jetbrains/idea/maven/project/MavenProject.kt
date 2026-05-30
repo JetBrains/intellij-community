@@ -80,7 +80,7 @@ class MavenProject(val file: VirtualFile) {
       readerResult.mavenModel,
       emptyList(),
       readerResult.readingProblems,
-      readerResult.activatedProfiles,
+      MavenExplicitProfiles.NONE,
       setOf(),
       readerResult.nativeModelMap,
       effectiveRepositoryPath,

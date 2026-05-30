@@ -28,7 +28,6 @@ import com.intellij.projectImport.DeprecatedProjectBuilderForImport
 import com.intellij.projectImport.ProjectImportBuilder
 import com.intellij.projectImport.ProjectOpenProcessor
 import icons.OpenapiIcons
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -186,7 +185,7 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
 
   private fun readMavenProjectTree(process: MavenProgressIndicator) {
     val tree = MavenProjectsTree(projectOrDefault)
-    tree.addManagedFilesWithProfiles(parameters.myFiles!!, MavenExplicitProfiles.NONE)
+    tree.addManagedFiles(parameters.myFiles!!)
 
     runBlockingMaybeCancellable {
       val mavenEmbedderWrappers = projectOrDefault.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()

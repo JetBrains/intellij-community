@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -1510,7 +1509,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                        """.trimIndent())
     val l = MyLoggingListener()
     project.messageBus.connect(getTestRootDisposable()).subscribe(MavenProjectsTree.Listener.TOPIC, l)
-    tree.addManagedFilesWithProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
+    tree.addManagedFiles(listOf(projectPom))
     tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log)
     l.log.clear()
@@ -1814,59 +1813,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       "parent1Profile",
       "parent2Profile",
       "settings")
-  }
-
-  @Test
-  fun testDeletingAndRestoringActiveProfilesWhenProjectDeletes() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <profiles>
-                         <profile>
-                           <id>one</id>
-                         </profile>
-                       </profiles>
-                       <modules>
-                         <module>m</module>
-                       </modules>
-                       """.trimIndent())
-    var m = createModulePom("m",
-                            """
-                                      <groupId>test</groupId>
-                                      <artifactId>m</artifactId>
-                                      <version>1</version>
-                                      <profiles>
-                                        <profile>
-                                          <id>two</id>
-                                        </profile>
-                                      </profiles>
-                                      """.trimIndent())
-    updateAll(mutableListOf<String?>("one", "two"), projectPom)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one", "two")
-    edtWriteAction {
-      m.delete(this)
-    }
-    deleteProject(m)
-
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one")
-    m = createModulePom("m",
-                        """
-                          <groupId>test</groupId>
-                          <artifactId>m</artifactId>
-                          <version>1</version>
-                          <profiles>
-                            <profile>
-                              <id>two</id>
-                            </profile>
-                          </profiles>
-                          """.trimIndent())
-    update(m)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one", "two")
   }
 
   @Test

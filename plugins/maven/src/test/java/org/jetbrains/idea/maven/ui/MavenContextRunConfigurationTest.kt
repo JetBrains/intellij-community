@@ -39,7 +39,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
+    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom))
+    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
 
@@ -59,7 +60,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
+    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom))
+    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
 
@@ -105,7 +107,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom, m2, m2))
+    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
 
@@ -165,7 +168,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom, m2, m2))
+    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
 

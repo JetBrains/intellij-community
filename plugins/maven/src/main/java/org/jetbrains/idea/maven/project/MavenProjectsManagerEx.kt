@@ -657,6 +657,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
               resolver.resolve(spec.resolveIncrementally(),
                                projectsToResolve,
                                tree,
+                               explicitProfiles,
                                tree.workspaceMap,
                                repositoryPath,
                                updateSnapshots,

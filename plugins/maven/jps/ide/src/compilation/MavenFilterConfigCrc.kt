@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing
 import org.jdom.output.Format
 import org.jdom.output.XMLOutputter
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.MavenProjectsTree.Companion.getFilterExclusions
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -17,11 +18,10 @@ import java.io.IOException
 import java.io.Writer
 import java.util.zip.CRC32
 
-fun MavenProjectsTree.getFilterConfigCrc(fileIndex: ProjectFileIndex): Int {
+fun MavenProjectsTree.getFilterConfigCrc(fileIndex: ProjectFileIndex, profiles: MavenExplicitProfiles): Int {
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val crc = CRC32()
-  val profiles = this.explicitProfiles
   updateCrc(crc, profiles.hashCode())
 
   val allProjects = this.projects

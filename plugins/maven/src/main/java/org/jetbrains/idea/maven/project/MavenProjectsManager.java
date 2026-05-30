@@ -261,14 +261,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState.originalFiles = tree.getManagedFilesPaths();
     myState.ignoredFiles = new HashSet<>(tree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = tree.getIgnoredFilesPatterns();
-    var profiles = tree.getExplicitProfiles();
-    myState.enabledProfiles = new ArrayList<>(profiles.getEnabledProfiles());
-    myState.disabledProfiles = new ArrayList<>(profiles.getDisabledProfiles());
   }
 
   private static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
-    MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(manager.myState.enabledProfiles, manager.myState.disabledProfiles);
-    tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
+    tree.resetManagedFilesPaths(manager.myState.originalFiles);
     tree.setIgnoredFilesPaths(new ArrayList<>(manager.myState.ignoredFiles));
     tree.setIgnoredFilesPatterns(manager.myState.ignoredPathMasks);
   }
@@ -406,7 +402,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }
     var tree = getProjectsTree();
-    tree.addManagedFilesWithProfiles(files, profiles);
+    tree.addManagedFiles(files);
+    setExplicitProfiles(profiles);
     setNewTreeFromSync(tree);
   }
 
@@ -438,7 +435,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
-    return getProjectsTree().getProfilesWithStates();
+    return getProjectsTree().getProfilesWithStates(getExplicitProfiles());
   }
 
   public boolean hasProjects() {
@@ -623,9 +620,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myState.enabledProfiles = new ArrayList<>(profiles.getEnabledProfiles());
     myState.disabledProfiles = new ArrayList<>(profiles.getDisabledProfiles());
-    if (isInitialized()) {
-      getProjectsTree().setExplicitProfiles(profiles);
-    }
     myProject.getMessageBus().syncPublisher(MavenProjectsTree.Listener.TOPIC).profilesChanged();
   }
 

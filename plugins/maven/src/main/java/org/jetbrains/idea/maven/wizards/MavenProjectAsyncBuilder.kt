@@ -154,7 +154,7 @@ class MavenProjectAsyncBuilder {
     }
 
     val tree = MavenProjectsTree(project)
-    tree.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE)
+    tree.addManagedFiles(files)
 
     generalSettings.updateFromMavenConfig(files)
     updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings, rootDirectory)

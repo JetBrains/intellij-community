@@ -14,18 +14,16 @@ public final class MavenProjectTimestamp {
   private final long myProfilesTimestamp;
   private final long myUserSettingsTimestamp;
   private final long myGlobalSettingsTimestamp;
-  private final long myExplicitProfilesHashCode;
   private final long myJvmConfigTimestamp;
   private final long myMavenConfigTimestamp;
 
-  static MavenProjectTimestamp NULL = new MavenProjectTimestamp(0, 0, 0, 0, 0, 0, 0, 0);
+  static MavenProjectTimestamp NULL = new MavenProjectTimestamp(0, 0, 0, 0, 0, 0, 0);
 
   public MavenProjectTimestamp(long pomTimestamp,
                         long parentTimestamp,
                         long profilesTimestamp,
                         long userSettingsTimestamp,
                         long globalSettingsTimestamp,
-                        long explicitProfilesHashCode,
                         long jvmConfigTimestamp,
                         long mavenConfigTimestamp) {
     myPomTimestamp = pomTimestamp;
@@ -33,14 +31,12 @@ public final class MavenProjectTimestamp {
     myProfilesTimestamp = profilesTimestamp;
     myUserSettingsTimestamp = userSettingsTimestamp;
     myGlobalSettingsTimestamp = globalSettingsTimestamp;
-    myExplicitProfilesHashCode = explicitProfilesHashCode;
     myJvmConfigTimestamp = jvmConfigTimestamp;
     myMavenConfigTimestamp = mavenConfigTimestamp;
   }
 
   public static MavenProjectTimestamp read(DataInputStream in) throws IOException {
     return new MavenProjectTimestamp(in.readLong(),
-                                     in.readLong(),
                                      in.readLong(),
                                      in.readLong(),
                                      in.readLong(),
@@ -55,7 +51,6 @@ public final class MavenProjectTimestamp {
     out.writeLong(myProfilesTimestamp);
     out.writeLong(myUserSettingsTimestamp);
     out.writeLong(myGlobalSettingsTimestamp);
-    out.writeLong(myExplicitProfilesHashCode);
     out.writeLong(myJvmConfigTimestamp);
     out.writeLong(myMavenConfigTimestamp);
   }
@@ -67,7 +62,6 @@ public final class MavenProjectTimestamp {
            + ":" + myProfilesTimestamp
            + ":" + myUserSettingsTimestamp
            + ":" + myGlobalSettingsTimestamp
-           + ":" + myExplicitProfilesHashCode
            + ":" + myJvmConfigTimestamp
            + ":" + myMavenConfigTimestamp + ")";
   }
@@ -84,7 +78,6 @@ public final class MavenProjectTimestamp {
     if (myProfilesTimestamp != timestamp.myProfilesTimestamp) return false;
     if (myUserSettingsTimestamp != timestamp.myUserSettingsTimestamp) return false;
     if (myGlobalSettingsTimestamp != timestamp.myGlobalSettingsTimestamp) return false;
-    if (myExplicitProfilesHashCode != timestamp.myExplicitProfilesHashCode) return false;
     if (myJvmConfigTimestamp != timestamp.myJvmConfigTimestamp) return false;
     if (myMavenConfigTimestamp != timestamp.myMavenConfigTimestamp) return false;
 
@@ -99,7 +92,6 @@ public final class MavenProjectTimestamp {
     result = 31 * result + Long.hashCode(myProfilesTimestamp);
     result = 31 * result + Long.hashCode(myUserSettingsTimestamp);
     result = 31 * result + Long.hashCode(myGlobalSettingsTimestamp);
-    result = 31 * result + Long.hashCode(myExplicitProfilesHashCode);
     result = 31 * result + Long.hashCode(myJvmConfigTimestamp);
     result = 31 * result + Long.hashCode(myMavenConfigTimestamp);
     return result;
