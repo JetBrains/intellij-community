@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.execution"/>

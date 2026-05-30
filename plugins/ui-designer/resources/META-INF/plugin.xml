@@ -6,6 +6,7 @@
   <description>Allows to design Swing UI graphically, supports code generation/instrumentation, preview, widgets library and UI-related code inspections</description>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.xml.impl"/>
     <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->

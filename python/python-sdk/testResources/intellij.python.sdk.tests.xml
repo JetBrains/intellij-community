@@ -5,6 +5,8 @@
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>

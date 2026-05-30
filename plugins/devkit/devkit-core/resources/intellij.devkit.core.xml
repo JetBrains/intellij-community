@@ -11,6 +11,7 @@
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.structureView.impl"/>

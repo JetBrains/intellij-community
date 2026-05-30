@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.settingsSync.core"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.settingsSync.performanceTesting.SettingsSyncCommandProvider"/>

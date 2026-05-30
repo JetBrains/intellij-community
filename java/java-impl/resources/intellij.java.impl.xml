@@ -3,7 +3,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.xml.impl"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.regexp"/>
     <module name="intellij.platform.externalSystem"/>

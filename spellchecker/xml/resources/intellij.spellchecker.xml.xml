@@ -8,6 +8,7 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
   </dependencies>
