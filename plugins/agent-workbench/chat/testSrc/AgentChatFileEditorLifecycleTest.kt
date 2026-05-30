@@ -390,6 +390,7 @@ class AgentChatFileEditorLifecycleTest {
       notifyRefresh = { _, _, refreshedThreadId, _ ->
         refreshThreadIds += refreshedThreadId
       },
+      currentTimeProvider = { 2_100L },
     )
 
     try {
@@ -407,6 +408,43 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(file.newThreadRebindRequestedAtMs).isNull()
       assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(refreshThreadIds).containsExactly(threadId)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun codexTerminalTitleDoesNotRebindConcreteTabAfterNewThreadCommandAnchorExpires() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = testFile()
+    file.updateNewThreadRebindRequestedAtMs(2_000L)
+    val title = TerminalTitle()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val refreshThreadIds = mutableListOf<String?>()
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindConcreteTabs = { _, _ ->
+        error("Expired /new anchor must not rebind a concrete Codex tab")
+      },
+      notifyRefresh = { _, _, refreshedThreadId, _ ->
+        refreshThreadIds += refreshedThreadId
+      },
+      currentTimeProvider = { 2_000L + AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS },
+    )
+
+    try {
+      controller.attach(terminalTitle = title, parentScope = controllerScope)
+      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+
+      assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
+      assertThat(file.threadId).isEqualTo("thread-1")
+      assertThat(file.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
+      assertThat(snapshotWriter.snapshots).isEmpty()
+      assertThat(refreshThreadIds).isEmpty()
     }
     finally {
       controller.dispose()

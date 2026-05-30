@@ -17,7 +17,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_PRE_WINDOW_MS
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS
@@ -326,9 +326,11 @@ internal class AgentSessionThreadRebindSupport(
       if (tabs.isEmpty()) {
         continue
       }
-      val staleTabs = tabs.filter { tab ->
-        nowMs < tab.newThreadRebindRequestedAtMs ||
-        nowMs - tab.newThreadRebindRequestedAtMs > CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS
+      val staleTabs = tabs.filterNot { tab ->
+        isConcreteCodexNewThreadRebindAnchorActive(
+          rebindRequestedAtMs = tab.newThreadRebindRequestedAtMs,
+          currentTimeMs = nowMs,
+        )
       }
       if (staleTabs.isNotEmpty()) {
         staleTabsByPath[path] = staleTabs

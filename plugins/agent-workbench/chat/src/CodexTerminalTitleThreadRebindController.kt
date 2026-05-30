@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -46,6 +47,7 @@ internal class CodexTerminalTitleThreadRebindController(
     Map<String, List<AgentChatConcreteTabRebindRequest>>,
   ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
   private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatScopedRefresh,
+  private val currentTimeProvider: () -> Long = System::currentTimeMillis,
 ) : AgentChatDisposableController {
   private var listenerDisposable: Disposable? = null
   private var rebindJob: Job? = null
@@ -135,6 +137,9 @@ internal class CodexTerminalTitleThreadRebindController(
     }
 
     val newThreadRebindRequestedAtMs = file.newThreadRebindRequestedAtMs ?: return null
+    if (!AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive(newThreadRebindRequestedAtMs, currentTimeProvider())) {
+      return null
+    }
     if (threadId == file.threadId || threadId == file.sessionId) {
       return null
     }

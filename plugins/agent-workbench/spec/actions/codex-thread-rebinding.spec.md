@@ -45,8 +45,9 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
 - Rebinding updates tab identity, resume command, stored title/activity fallback, editor-tab presentation, and persisted snapshot without opening a second tab.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Concrete top-level Codex tabs detect exact terminal command `/new`, store a single anchor timestamp, and request scoped refresh for the tab path.
+- Concrete top-level Codex tabs detect exact terminal command `/new`, store a single anchor timestamp, and run bounded scoped-refresh retries for the tab path until the tab rebinds or the anchor expires.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../chat/testSrc/AgentChatConcreteThreadRebindControllerTest.kt
 
 - Concrete `/new` rebinding is Codex-only. It must use bounded refresh-hint candidates for the same normalized path, require an unambiguous target, skip already-open targets, and clear stale anchors.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
@@ -62,6 +63,7 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatEditorServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatConcreteThreadRebindControllerTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest`
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
