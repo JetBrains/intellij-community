@@ -140,10 +140,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @Override
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
-    if (isInitialized()) {
-      applyStateToTree(getProjectsTree(), this);
-      scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.loadState"));
-    }
   }
 
   @Override
@@ -609,7 +605,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     var tree = myProjectsTreeRef.get();
     if (tree == null) {
       tree = new MavenProjectsTree(myProject);
-      applyStateToTree(tree, this);
     }
     return tree;
   }

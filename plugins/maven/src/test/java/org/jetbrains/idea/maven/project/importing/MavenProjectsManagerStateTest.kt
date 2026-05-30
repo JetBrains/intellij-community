@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.MavenProjectsManagerState
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.junit.Test
 
 class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
@@ -68,22 +66,5 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(state.enabledProfiles, "one", "two")
     assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
-
-    val newState = MavenProjectsManagerState()
-
-    newState.originalFiles = listOf(p1.getPath(), p3.getPath())
-    newState.enabledProfiles = (mutableListOf("three"))
-    newState.ignoredFiles = setOf(p1.getPath())
-    newState.ignoredPathMasks = mutableListOf("*.zzz")
-
-    waitForImportWithinTimeout {
-      projectsManager.loadState(newState)
-    }
-    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles, p1, p3)
-    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths, listOf(p1.getPath(), p3.getPath()))
-    assertUnorderedElementsAreEqual(projectsManager.getExplicitProfiles().enabledProfiles, "three")
-    assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), listOf(p1.getPath()))
-    assertUnorderedElementsAreEqual(projectsManager.getIgnoredFilesPatterns(), "*.zzz")
-
   }
 }
