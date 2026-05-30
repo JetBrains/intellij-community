@@ -8,6 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotifier"/>
+    <diagnostic.freezeAnalysis implementation="com.intellij.performanceTesting.freezes.PluginFreezeAnalysis"/>
     <editorNotificationProvider implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotificationPanel"/>
 
     <registryKey key="ide.diagnostics.notification.freezes.in.plugins"

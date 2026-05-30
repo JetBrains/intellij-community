@@ -50,8 +50,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageCluster
-import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.ComponentUtil
@@ -1010,11 +1008,6 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         get() = if (ApplicationManager.getApplication().isInternal) DEFAULT else REPORT_AND_CLEAR_ALL
     }
   }
-
-  private inline fun <reified T : Throwable> Throwable.isBackendInstance() =
-    this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
-
-  private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
 
   // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
   private val Throwable.kotlinVersionOrEmpty: String

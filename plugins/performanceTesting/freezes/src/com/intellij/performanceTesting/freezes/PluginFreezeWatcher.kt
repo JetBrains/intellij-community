@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.freezes
 
+import com.intellij.diagnostic.AbstractMessage
+import com.intellij.diagnostic.FreezeAnalysis
 import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.ThreadDump
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -61,9 +63,25 @@ internal class PluginFreezeWatcher {
   }
 }
 
+private const val DUMP_PREFIX = "dump"
+
+internal class PluginFreezeAnalysis : FreezeAnalysis {
+  override fun analyzeFreeze(event: AbstractMessage): PluginId? {
+    for (attachment in event.allAttachments) {
+      if (attachment.name.startsWith(DUMP_PREFIX)) {
+        val dump = attachment.displayText
+        analyzeFreezeCausingPlugin(dump)?.let {
+          return it
+        }
+      }
+    }
+    return null
+  }
+}
+
 private val stackTracePattern: Regex = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
-fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
+private fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
   val threads = ThreadDumpParser.getStackTraces(dump)
   val cause = ThreadDumpParser.analyzeFreeze(threads).cause ?: return null
   val topCallable = FreezeTitleGenerator.selectCallable(cause) ?: return null

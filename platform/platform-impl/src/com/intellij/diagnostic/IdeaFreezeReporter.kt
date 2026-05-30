@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -24,6 +25,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,9 +38,9 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.coroutineContext
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
+private val FREEZE_ANALYSIS_EP: ExtensionPointName<FreezeAnalysis> = ExtensionPointName("com.intellij.diagnostic.freezeAnalysis")
 
 internal class IdeaFreezeReporter : PerformanceListener {
   private var dumpTask: IdeaFreezeSamplingTask? = null
@@ -84,10 +86,19 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
     internal fun report(event: LogMessage) {
       // only report to JB
-      val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
+      val plugin = PluginManagerCore.getPlugin(analyzeFreeze(event))
       if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
         MessagePool.getInstance().addErrorMessage(event)
       }
+    }
+
+    internal fun analyzeFreeze(event: AbstractMessage): PluginId? {
+      val cause = FREEZE_ANALYSIS_EP.computeSafeIfAny {
+        it.analyzeFreeze(event)
+      }
+      if (cause != null) return cause
+
+      return PluginUtil.getInstance().findPluginId(event.throwable)
     }
 
     internal fun checkProfilerCrash(crashContent: String) {
@@ -415,7 +426,7 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
   val dumps = ArrayList<String>()
 
   for (file in files) {
-    coroutineContext.ensureActive()
+    currentCoroutineContext().ensureActive()
     val name = file.fileName.toString()
 
     suspend fun readText(): String {

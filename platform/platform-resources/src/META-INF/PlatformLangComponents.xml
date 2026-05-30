@@ -5,6 +5,7 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier"/>
+    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeAnalysis" interface="com.intellij.diagnostic.FreezeAnalysis"/>
     <extensionPoint name="autoHintsSuppressor" interface="com.intellij.codeInsight.daemon.impl.AutoHintsSuppressor"/>
   </extensionPoints>
 

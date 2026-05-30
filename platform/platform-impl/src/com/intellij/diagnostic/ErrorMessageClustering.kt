@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.impl.diagnostic.errorsDialog
+package com.intellij.diagnostic
 
-import com.intellij.diagnostic.AbstractMessage
-import com.intellij.diagnostic.DefaultIdeaErrorLogger
 import com.intellij.diagnostic.IdeErrorsDialog.Companion.hashMessage
-import com.intellij.diagnostic.MessagePool
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -36,10 +33,18 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
 
   private suspend fun createCluster(messages: List<AbstractMessage>): ErrorMessageCluster {
     val first = messages.first()
-    val pluginId = PluginUtil.getInstance().findPluginId(first.throwable)
+    val pluginId = analyzeCause(first)
     val plugin = createPluginInfo(pluginId)
     val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(first.throwable, plugin)
     return ErrorMessageCluster(messages, pluginId, plugin, submitter)
+  }
+
+  private fun analyzeCause(first: AbstractMessage): PluginId? {
+    if (first.throwable.isInstance<Freeze>()) {
+      return IdeaFreezeReporter.analyzeFreeze(first)
+    }
+
+    return PluginUtil.getInstance().findPluginId(first.throwable)
   }
 
   internal suspend fun createPluginInfo(pluginId: PluginId?): ProblematicPluginInfo? {
@@ -52,6 +57,12 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
     return ProblematicPluginInfoBasedOnModel(uiModel)
   }
 }
+
+internal inline fun <reified T : Throwable> Throwable.isBackendInstance(): Boolean {
+  return this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
+}
+
+internal inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
 
 private class ProblematicPluginInfoBasedOnModel(val plugin: PluginUiModel) : ProblematicPluginInfo {
   override val pluginId: PluginId

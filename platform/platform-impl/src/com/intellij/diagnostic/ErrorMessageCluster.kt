@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.impl.diagnostic.errorsDialog
+package com.intellij.diagnostic
 
-import com.intellij.diagnostic.AbstractMessage
-import com.intellij.diagnostic.MessagePool
-import com.intellij.diagnostic.RecoveredThrowable
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.extensions.PluginId
 
 /**
- * Describes a group of errors with the same stracktrace in [com.intellij.diagnostic.IdeErrorsDialog].
+ * Describes a group of errors with the same stacktrace in [IdeErrorsDialog].
  */
 internal class ErrorMessageCluster(
   val messages: List<AbstractMessage>,
