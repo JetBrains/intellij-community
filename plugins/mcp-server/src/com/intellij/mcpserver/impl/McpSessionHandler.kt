@@ -329,7 +329,6 @@ internal class McpSessionHandler(
         val initialDocumentContents = ConcurrentHashMap<Document, String>()
         val clientVersion = session.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
-        val sessionId = session.sessionId
         val additionalData = McpCallInfo(
             callId = McpServerService.callId.getAndAdd(1),
             clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
@@ -339,6 +338,7 @@ internal class McpSessionHandler(
             meta = request.meta?.json ?: EmptyJsonObject,
             mcpSessionOptions = sessionOptions,
             headers = headersWithoutAuthToken ?: emptyMap(),
+            sessionId = session.sessionId,
         ).apply {
             sessionHandler = this@McpSessionHandler
         }
@@ -379,7 +379,7 @@ internal class McpSessionHandler(
                             .put("mcp.client.name", clientVersion.name)
                             .put("mcp.client.version", clientVersion.version)
                             .put("mcp.call.id", additionalData.callId.toLong())
-                            .put("mcp.session.id", sessionId)
+                            .put("mcp.session.id", session.sessionId)
                             .build()
                     )
                     .startSpan()

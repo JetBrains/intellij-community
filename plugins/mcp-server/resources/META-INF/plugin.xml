@@ -45,12 +45,7 @@
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
 
-    <toolWindow id="MCP Server"
-                anchor="bottom"
-                icon="AllIcons.Nodes.McpServerWidget"
-                factoryClass="com.intellij.mcpserver.toolwindow.McpServerToolWindowFactory"
-                canCloseContents="false"
-                doNotActivateOnStart="true"/>
+    <serviceViewContributor implementation="com.intellij.mcpserver.services.McpServiceViewContributor"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>

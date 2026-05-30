@@ -1,10 +1,12 @@
 package com.intellij.mcpserver.toolwindow
 
+import com.intellij.execution.services.ServiceEventListener
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallInfo
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolSideEffectEvent
 import com.intellij.mcpserver.ToolCallListener
+import com.intellij.mcpserver.services.McpServiceViewContributor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -26,10 +28,11 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
   private val MAX_TOOL_CALLS = 5000
 
   private val _sessions = MutableStateFlow<List<McpSessionInfo>>(emptyList())
-  private val _hasActiveSessions = MutableStateFlow(false)
   private val _toolCalls = MutableStateFlow<List<McpToolCallEntry>>(emptyList())
 
   val activeSessionCount: Int get() = _sessions.value.size
+
+  fun getSessions(): List<McpSessionInfo> = _sessions.value
 
   private fun createChildScope(name: String): CoroutineScope = cs.childScope(name)
 
@@ -38,6 +41,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       override fun beforeMcpToolCall(mcpToolDescriptor: McpToolDescriptor, additionalData: McpCallInfo) {
         val entry = McpToolCallEntry(
           callId = additionalData.callId,
+          sessionId = additionalData.sessionId,
           toolName = mcpToolDescriptor.name,
           clientInfo = additionalData.clientInfo,
           projectName = additionalData.project?.name,
@@ -83,10 +87,6 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     })
   }
 
-  suspend fun collectAvailability(listener: suspend (Boolean) -> Unit) {
-    _hasActiveSessions.collect(listener)
-  }
-
   fun observeSessions(parentDisposable: Disposable, callback: (List<McpSessionInfo>) -> Unit) {
     val scope = createChildScope("MCP server diagnostic: observe sessions")
     Disposer.register(parentDisposable) {
@@ -120,24 +120,30 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       localAgentId = localAgentId,
     )
     _sessions.update { it + info }
-    _hasActiveSessions.value = true
+    fireServiceViewReset()
   }
 
   fun sessionInitialized(sessionId: String, clientInfo: ClientInfo) {
     _sessions.update { list ->
       list.map { if (it.sessionId == sessionId) it.copy(clientInfo = clientInfo) else it }
     }
+    fireServiceViewReset()
   }
 
   fun sessionEnded(sessionId: String) {
     _sessions.update { list ->
-      val updated = list.filter { it.sessionId != sessionId }
-      _hasActiveSessions.value = updated.isNotEmpty()
-      updated
+      list.filter { it.sessionId != sessionId }
     }
+    fireServiceViewReset()
   }
 
   fun clearToolCalls() {
     _toolCalls.update { emptyList() }
+  }
+
+  private fun fireServiceViewReset() {
+    application.messageBus
+      .syncPublisher(ServiceEventListener.TOPIC)
+      .handle(ServiceEventListener.ServiceEvent.createResetEvent(McpServiceViewContributor::class.java))
   }
 }

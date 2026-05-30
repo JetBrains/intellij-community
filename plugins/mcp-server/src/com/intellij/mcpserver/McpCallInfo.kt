@@ -23,6 +23,8 @@ class McpCallInfo(
   val meta: JsonObject,
   val mcpSessionOptions: McpServerService.McpSessionOptions,
   val headers: Map<String, List<String>> = emptyMap(),
+  // todo drop default, drop nullability
+  val sessionId: String? = null,
 ) {
   internal var sessionHandler: McpSessionHandler? = null
 

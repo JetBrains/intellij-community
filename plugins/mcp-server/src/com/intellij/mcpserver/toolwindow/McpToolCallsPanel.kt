@@ -40,14 +40,16 @@ import javax.swing.event.ListSelectionListener
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
-internal class McpToolCallsPanel(diagnosticService: McpDiagnosticService) : JPanel(BorderLayout()), Disposable {
+internal class McpToolCallsPanel(
+  diagnosticService: McpDiagnosticService,
+  private val sessionIdFilter: String? = null,
+) : JPanel(BorderLayout()), Disposable {
   private val tableModel = ToolCallsTableModel()
   private val table = JBTable(tableModel)
   private val detailPanel = ToolCallDetailPanel()
 
   private var allEntries: List<McpToolCallEntry> = emptyList()
   private var filterText: String = ""
-  private var filterClient: String? = null
   private var filterStatus: ToolCallStatus? = null
   private var autoScroll: Boolean = true
 
@@ -136,16 +138,6 @@ internal class McpToolCallsPanel(diagnosticService: McpDiagnosticService) : JPan
     panel.add(searchField)
     panel.add(Box.createHorizontalStrut(8))
 
-    val clientCombo = ComboBox<String>()
-    clientCombo.addItem(McpServerBundle.message("mcp.toolwindow.calls.filter.all.clients"))
-    clientCombo.addActionListener {
-      val selected = clientCombo.selectedItem as? String
-      filterClient = if (selected == McpServerBundle.message("mcp.toolwindow.calls.filter.all.clients")) null else selected
-      applyFilter()
-    }
-    panel.add(clientCombo)
-    panel.add(Box.createHorizontalStrut(8))
-
     val statusCombo = ComboBox<String>()
     statusCombo.addItem(McpServerBundle.message("mcp.toolwindow.calls.filter.all.statuses"))
     ToolCallStatus.entries.forEach { statusCombo.addItem(it.name) }
@@ -167,10 +159,10 @@ internal class McpToolCallsPanel(diagnosticService: McpDiagnosticService) : JPan
 
   private fun applyFilter() {
     val filtered = allEntries.filter { entry ->
+      val matchesSession = sessionIdFilter == null || entry.sessionId == sessionIdFilter
       val matchesText = filterText.isEmpty() || entry.toolName.contains(filterText, ignoreCase = true)
-      val matchesClient = filterClient == null || entry.clientInfo.name == filterClient
       val matchesStatus = filterStatus == null || entry.status == filterStatus
-      matchesText && matchesClient && matchesStatus
+      matchesSession && matchesText && matchesStatus
     }
     tableModel.updateEntries(filtered)
     if (autoScroll && filtered.isNotEmpty()) {
@@ -328,6 +320,7 @@ private fun formatJson(json: JsonObject): String {
 
 internal data class McpToolCallEntry(
   val callId: Int,
+  val sessionId: String?,
   val toolName: String,
   val clientInfo: ClientInfo,
   val projectName: String?,
