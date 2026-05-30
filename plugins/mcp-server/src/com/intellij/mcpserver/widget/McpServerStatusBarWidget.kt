@@ -1,6 +1,10 @@
 package com.intellij.mcpserver.widget
 
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.impl.McpServerService
@@ -12,13 +16,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.BadgeIconSupplier
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.intellij.icons.AllIcons
+import com.intellij.ui.BadgeIconSupplier
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.popup.PopupState
@@ -59,7 +59,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
   }
 
   private fun getCurrentIcon(): Icon =
-    if (McpServerService.getInstance().isRunning) MCP_LOGO
+    if (McpServerService.getInstance().isRunning) BADGE_ICON_SUPPLIER.successIcon
     else BADGE_ICON_SUPPLIER.errorIcon
 
   @Nls
