@@ -54,10 +54,6 @@ class MavenProjectsTree(val project: Project) {
 
   private var myIgnoredFilesPatternsCache: Pattern? = null
 
-  @Transient
-  private var myExplicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE
-  private val myTemporarilyRemovedExplicitProfiles = MavenExplicitProfiles(HashSet(), HashSet())
-
   private val myRootProjects = mutableListOf<MavenProject>() //2
 
   private val myTimestamps: MutableMap<VirtualFile, MavenProjectTimestamp> = HashMap()
@@ -273,17 +269,6 @@ class MavenProjectsTree(val project: Project) {
     return@withReadLock myIgnoredFilesPatternsCache!!.matcher(path).matches()
   }
 
-  private fun updateExplicitProfiles() {
-    val available = availableProfiles
-
-    withWriteLock {
-      updateExplicitProfiles(myExplicitProfiles.enabledProfiles, myTemporarilyRemovedExplicitProfiles.enabledProfiles,
-                             available)
-      updateExplicitProfiles(myExplicitProfiles.disabledProfiles, myTemporarilyRemovedExplicitProfiles.disabledProfiles,
-                             available)
-    }
-  }
-
   val availableProfiles: Set<String>
     get() {
       val res = HashSet<String>()
@@ -431,9 +416,6 @@ class MavenProjectsTree(val project: Project) {
       }
     }
 
-    tracer.spanBuilder("updateProfiles").use {
-      updateExplicitProfiles()
-    }
     updateContext.fireUpdatedIfNecessary()
 
     return updateContext.toUpdateResult()
@@ -511,7 +493,6 @@ class MavenProjectsTree(val project: Project) {
         updateContext.updated(mavenProject, MavenProjectChanges.NONE)
       }
     }
-    updateExplicitProfiles()
     updateContext.fireUpdatedIfNecessary()
 
     return updateContext.toUpdateResult()
