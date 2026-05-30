@@ -2,6 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
     <content url="file://$MODULE_DIR$/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
@@ -67,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.freezes" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.performanceTesting" />
 </module>

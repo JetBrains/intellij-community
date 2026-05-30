@@ -88,7 +88,7 @@ private fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
 
   val lines = cause.lines
   val startIndex = lines.indexOfFirst { line ->
-    line.toString().trim().removePrefix("at ").startsWith("$topCallable(")
+    line.toString().trim().removePrefix("at ").startsWith(topCallable)
   }
   if (startIndex < 0) return null
 
