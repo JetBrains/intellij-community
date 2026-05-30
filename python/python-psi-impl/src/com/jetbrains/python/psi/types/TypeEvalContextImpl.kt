@@ -316,29 +316,57 @@ open class TypeEvalContextImpl internal constructor(
     TypeEvalContextImpl(myParent.constraints) {
 
     val myInstructionCache: MutableMap<List<Any>, PyType> = ConcurrentHashMap()
+    
+    private val topAssumption: AssumptionContext =
+      if (myParent is AssumptionContext) myParent.topAssumption else this
 
     init {
       myEvaluated[element] = type ?: PyNullType
     }
 
     override fun getKnownType(element: PyTypedElement): PyType? {
-      return super.getKnownType(element) ?: myParent.getKnownType(element)
+      var current: TypeEvalContext = this
+      while (current is AssumptionContext) {
+        val knownType = current.getOwnKnownType(element)
+        if (knownType != null) {
+          return knownType
+        }
+        current = current.myParent
+      } 
+      return current.getKnownType(element)
+    }
+
+    // Helper to call super.getKnownType without recursion loops
+    private fun getOwnKnownType(element: PyTypedElement): PyType? {
+      return super.getKnownType(element)
     }
 
     override fun getKnownReturnType(callable: PyCallable): PyType? {
-      return super.getKnownReturnType(callable) ?: myParent.getKnownReturnType(callable)
+      var current: TypeEvalContextImpl = this
+      while (current is AssumptionContext) {
+        val knownType = current.getOwnKnownReturnType(callable)
+        if (knownType != null) {
+          return knownType
+        }
+        current = current.myParent
+      }
+      return current.getKnownReturnType(callable)
+    }
+
+    private fun getOwnKnownReturnType(callable: PyCallable): PyType? {
+      return super.getKnownReturnType(callable)
     }
 
     override fun trace(message: String, vararg args: Any?) {
-      myParent.trace(message, *args)
+      topAssumption.myParent.trace(message, *args)
     }
 
     override fun traceIndent() {
-      myParent.traceIndent()
+      topAssumption.myParent.traceIndent()
     }
 
     override fun traceUnindent() {
-      myParent.traceUnindent()
+      topAssumption.myParent.traceUnindent()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -347,24 +375,16 @@ open class TypeEvalContextImpl internal constructor(
     }
 
     fun getKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int): PyType? {
-      if (myParent is AssumptionContext) {
-        return myParent.getKnownTypeForInstruction(anchor, deducedType, num)
-      }
-      return myInstructionCache.get(listOf(anchor, deducedType, num))
+      return topAssumption.myInstructionCache[listOf(anchor, deducedType, num)]
     }
 
     fun setKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int, type: PyType) {
-      if (myParent is AssumptionContext) {
-        myParent.setKnownTypeForInstruction(anchor, deducedType, num, type)
-      }
-      else {
-        myInstructionCache.put(listOf(anchor, deducedType, num), type)
-      }
+      topAssumption.myInstructionCache[listOf(anchor, deducedType, num)] = type
     }
 
     @ApiStatus.Internal
     override fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?> {
-      return myParent.getContextTypeCache()
+      return topAssumption.myParent.getContextTypeCache()
     }
   }
 
