@@ -30,7 +30,7 @@ internal class AgentChatConcreteThreadRebindController(
           return@collectLatest
         }
         tabSnapshotWriter.upsert(file.toSnapshot())
-        notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = file.projectPath)
+        notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
       }
     }
   }

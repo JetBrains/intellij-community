@@ -1522,17 +1522,17 @@ class AgentChatEditorServiceTest {
 
   @Test
   fun testCodexScopedRefreshSignalsEmitNormalizedPaths(): Unit = timeoutRunBlocking {
-    val outputPath = "/work/project-terminal-output-delayed/"
+    val projectPath = "/work/project-scoped-refresh-delayed/"
     val signalWaiter = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       withTimeout(5.seconds) {
         codexScopedRefreshSignals().first()
       }
     }
 
-    notifyCodexTerminalOutputForRefresh(outputPath)
+    notifyCodexScopedRefresh(projectPath)
 
     val signal = signalWaiter.await()
-    assertThat(signal.scopedPaths).containsExactly("/work/project-terminal-output-delayed")
+    assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-delayed")
     assertThat(signal.activityHintsByThreadId).isEmpty()
   }
 
@@ -1544,14 +1544,14 @@ class AgentChatEditorServiceTest {
       }
     }
 
-    notifyAgentChatTerminalOutputForRefresh(
+    notifyAgentChatScopedRefresh(
       provider = AgentSessionProvider.CODEX,
-      projectPath = "/work/project-terminal-output-thread/",
+      projectPath = "/work/project-scoped-refresh-thread/",
       threadId = "codex-thread-1",
     )
 
     val signal = signalWaiter.await()
-    assertThat(signal.scopedPaths).containsExactly("/work/project-terminal-output-thread")
+    assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-thread")
     assertThat(signal.threadIds).containsExactly("codex-thread-1")
     assertThat(signal.activityHintsByThreadId).isEmpty()
   }

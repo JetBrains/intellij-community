@@ -63,7 +63,7 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Agent Chat scoped refresh from active session file changes remains enabled for providers that emit scoped refresh signals; terminal-output scoped refresh is a fallback gated by `agent.workbench.chat.terminal.output.scoped.refresh.enabled` and is disabled by default.
+- Agent Chat scoped refresh from active session file changes remains enabled for providers that emit scoped refresh signals.
   [@test] ../chat/testSrc/AgentChatScopedTerminalRefreshControllerTest.kt
 
 - Archive of a matching top-level thread closes the open chat tab and removes matching legacy tab state when present.

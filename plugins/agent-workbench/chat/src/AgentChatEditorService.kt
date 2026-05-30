@@ -331,7 +331,7 @@ suspend fun openChat(
 
   val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
   if (pendingProvider != null && AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
-    notifyAgentChatTerminalOutputForRefresh(provider = pendingProvider, projectPath = projectPath)
+    notifyAgentChatScopedRefresh(provider = pendingProvider, projectPath = projectPath)
   }
 
   return file
@@ -427,7 +427,7 @@ suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
   return collectOpenAgentChatProjectPaths(includePendingOnly = true)
 }
 
-fun notifyAgentChatTerminalOutputForRefresh(
+fun notifyAgentChatScopedRefresh(
   provider: AgentSessionProvider,
   projectPath: String,
   threadId: String? = null,
@@ -440,8 +440,8 @@ fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<AgentSes
   return AgentChatScopedRefreshSignalBus.signals(provider)
 }
 
-fun notifyCodexTerminalOutputForRefresh(projectPath: String) {
-  notifyAgentChatTerminalOutputForRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
+fun notifyCodexScopedRefresh(projectPath: String) {
+  notifyAgentChatScopedRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
 }
 
 fun codexScopedRefreshSignals(): Flow<AgentSessionSourceUpdateEvent> {

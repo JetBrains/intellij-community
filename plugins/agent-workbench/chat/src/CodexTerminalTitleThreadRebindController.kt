@@ -45,7 +45,7 @@ internal class CodexTerminalTitleThreadRebindController(
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabRebindRequest>>,
   ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
-  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatTerminalOutputForRefresh,
+  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatScopedRefresh,
 ) : AgentChatDisposableController {
   private var listenerDisposable: Disposable? = null
   private var rebindJob: Job? = null

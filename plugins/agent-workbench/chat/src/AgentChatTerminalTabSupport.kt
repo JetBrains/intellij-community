@@ -201,7 +201,7 @@ private class ToolWindowAgentChatTerminalTab(
       checkpoint = checkpoint,
       onMeaningfulOutput = {
         if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
-          notifyAgentChatTerminalOutputForRefresh(
+          notifyAgentChatScopedRefresh(
             provider = provider,
             projectPath = projectPath,
             threadId = threadId,
@@ -237,7 +237,7 @@ private class ToolWindowAgentChatTerminalTab(
       idleMs = idleMs,
       onMeaningfulOutput = {
         if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
-          notifyAgentChatTerminalOutputForRefresh(
+          notifyAgentChatScopedRefresh(
             provider = provider,
             projectPath = projectPath,
             threadId = threadId,

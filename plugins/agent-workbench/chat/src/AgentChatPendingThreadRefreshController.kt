@@ -47,7 +47,7 @@ internal class AgentChatPendingThreadRefreshController(
           return@collectLatest
         }
         tabSnapshotWriter.upsert(file.toSnapshot())
-        notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = file.projectPath)
+        notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
         ensurePendingScopedRefreshRetries(tab, emitImmediately = false)
       }
     }
@@ -66,7 +66,7 @@ internal class AgentChatPendingThreadRefreshController(
     }
     val job = tab.coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
       if (emitImmediately) {
-        notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = file.projectPath)
+        notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
       }
       while (isActive) {
         val retryDelayMs = pendingScopedRefreshRetryDelayMs() ?: break
@@ -76,7 +76,7 @@ internal class AgentChatPendingThreadRefreshController(
         if (!behavior.supportsPendingThreadRefreshRetry(file)) {
           break
         }
-        notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = file.projectPath)
+        notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
       }
     }
     retryJob = job
