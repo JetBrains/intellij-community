@@ -37,6 +37,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
   public static final @NotNull ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
 
   private final @NotNull StorageLockContext myStorageLockContext;
+  private final @NotNull ChannelsAccessor myChannelsAccessor;
   private final boolean myNativeBytesOrder;
   /**
    * Storage id(key), as returned by {@link FilePageCache#registerPagedFileStorage(PagedFileStorage)}, or -1 when closed
@@ -69,6 +70,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     myReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
 
     myStorageLockContext = lookupStorageContext(storageLockContext);
+    myChannelsAccessor = myStorageLockContext.getChannelsAccessor(myReadOnly);
     myPageSize = Math.max(pageSize > 0 ? pageSize : DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);
@@ -132,21 +134,11 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
   }
 
   <R> R executeOp(@NotNull FileChannelOperation<R> operation) throws IOException {
-    //it is important to always use the same 'readOnly' param in executeOp(), because different 'readOnly' params
-    // corresponds to different cached FileChannels -- for the same path, but different instances. And it is
-    // generally not guaranteed those different FileChannels instances always share the same data -- they generally
-    // do, but because of caching there could be some temporary difference in the content visible via readOnly
-    // and !readOnly FileChannel => better not to step on this trap
-    return myStorageLockContext.executeOp(myFile, operation, myReadOnly);
+    return myChannelsAccessor.executeOp(myFile, operation);
   }
 
   <R> R executeIdempotentOp(@NotNull FileChannelIdempotentOperation<R> operation) throws IOException {
-    //it is important to always use the same 'readOnly' param in executeIdempotentOp(), because different 'readOnly' params
-    // corresponds to different cached FileChannels -- for the same path, but different instances. And it is
-    // generally not guaranteed those different FileChannels instances always share the same data -- they generally
-    // do, but because of caching there could be some temporary difference in the content visible via readOnly
-    // and !readOnly FileChannel => better not to step on this trap
-    return myStorageLockContext.executeIdempotentOp(myFile, operation, myReadOnly);
+    return myChannelsAccessor.executeIdempotentOp(myFile, operation);
   }
 
   public void putInt(long addr, int value) throws IOException {
@@ -338,7 +330,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
         //Close channel so that
         // 1) all the data reaches the disk
         // 2) the file could be moved/removed/etc
-        myStorageLockContext.getChannelsAccessor().closeChannel(myFile);
+        myChannelsAccessor.closeChannel(myFile);
       }
     );
   }

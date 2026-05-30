@@ -16,7 +16,6 @@ import com.intellij.util.io.DurableDataEnumerator
 import com.intellij.util.io.FileChannelInterruptsRetryer
 import com.intellij.util.io.IOUtil.MiB
 import com.intellij.util.io.blobstorage.ByteBufferWriter
-import com.intellij.util.io.stats.CachedChannelsStatistics
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -238,13 +237,14 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
     val storagePath = storageFile.toRealPath()
 
     open(storagePath, READ, WRITE).use { channel ->
-      val channelsAccessor = channelsAccessor(storagePath, channel)
+      val writableChannelsAccessor = channelsAccessor(storagePath, channel, readOnly = false)
+      val readOnlyChannelsAccessor = channelsAccessor(storagePath, channel, readOnly = true)
 
-      openPersistentWriteAheadLog(caseDir, channelsAccessor).use { writeAheadLog ->
+      openPersistentWriteAheadLog(caseDir, writableChannelsAccessor).use { writeAheadLog ->
         FileChannelWithWAL(
           storagePath,
           writeAheadLog,
-          channelsAccessor,
+          writableChannelsAccessor,
           readOnly = false,
           applyUnfinishedOnRead = true,
         ).use { writableChannel ->
@@ -255,7 +255,7 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
           FileChannelWithWAL(
             storagePath,
             writeAheadLog,
-            channelsAccessor,
+            readOnlyChannelsAccessor,
             readOnly = true,
             applyUnfinishedOnRead = true,
           ).use { readOnlyChannel ->
@@ -534,13 +534,13 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
 private fun channelsAccessor(
   channelPath: Path,
   channel: FileChannel,
+  readOnly: Boolean = false,
 ): ChannelsAccessor = object : ChannelsAccessor {
-  override fun getStatistics(): CachedChannelsStatistics = CachedChannelsStatistics(0, 0, 0, 0, 0)
+  override fun isReadOnly(): Boolean = readOnly
 
   override fun <T> executeOp(
     path: Path,
     operation: ChannelsAccessor.FileChannelOperation<T?>,
-    readOnly: Boolean,
   ): T? {
     require(path == channelPath) { "Only [$channelPath] could be accessed, but [$path] requested" }
     return operation.execute(channel)
@@ -549,7 +549,6 @@ private fun channelsAccessor(
   override fun <T> executeIdempotentOp(
     path: Path,
     operation: FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T?>,
-    readOnly: Boolean,
   ): T? {
     require(path == channelPath) { "Only [$channelPath] could be accessed, but [$path] requested" }
     return operation.execute(channel)
@@ -561,11 +560,7 @@ private fun channelsAccessor(
 }
 
 private fun writeFully(path: Path, channelsAccessor: ChannelsAccessor, offsetInFile: Long, data: ByteBuffer) {
-  channelsAccessor.executeIdempotentOp(
-    path,
-    { channel -> writeFully(channel, offsetInFile, data) },
-    /*readOnly: */false
-  )
+  channelsAccessor.executeIdempotentOp(path) { channel -> writeFully(channel, offsetInFile, data) }
 }
 
 private fun writeFully(channel: FileChannel, offsetInFile: Long, data: ByteArray) {

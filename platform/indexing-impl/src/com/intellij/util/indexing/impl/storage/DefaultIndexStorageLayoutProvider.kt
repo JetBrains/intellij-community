@@ -243,16 +243,12 @@ private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
 
 
 private val VIA_CHANNELS_CACHE_FILE_WRITER = ToFileWriter { path: Path, offsetInFile: Long, buffer: ByteBuffer ->
-  PageCacheUtils.CHANNELS_CACHE.executeOp(
-    path,
-    { channel: FileChannel ->
-      var offset = offsetInFile
-      while (buffer.hasRemaining()) {
-        offset += channel.write(buffer, offset)
-      }
-    },
-    /*readOnly: */ false
-  )
+  PageCacheUtils.getCachedChannelsAccessor(/*readOnly = */false).executeOp(path) { channel: FileChannel ->
+    var offset = offsetInFile
+    while (buffer.hasRemaining()) {
+      offset += channel.write(buffer, offset)
+    }
+  }
 }
 
 /** Valid values: `null, 'disabled', 'in-memory' (for debug), 'persistent'` */
@@ -279,7 +275,8 @@ private val WRITE_AHEAD_LOG = when (USE_WRITE_AHEAD_LOG) {
 private val CHANNEL_WITH_WAL_OPENER = FileChannelOpener { path: Path, readOnly: Boolean ->
   require(WRITE_AHEAD_LOG != null) { "WRITE_AHEAD_LOG is disabled" }
 
-  FileChannelWithWAL(path, WRITE_AHEAD_LOG, PageCacheUtils.CHANNELS_CACHE, readOnly)
+  val channelsAccessor = PageCacheUtils.getCachedChannelsAccessor(readOnly)
+  FileChannelWithWAL(path, WRITE_AHEAD_LOG, channelsAccessor, readOnly)
 }
 
 /** Shared channels cache, with write-ahead-log feature  */
@@ -309,10 +306,14 @@ private fun setupPersistentWAL(directory: Path): WriteAheadLog? {
 @Internal
 fun newStorageLockContext(): StorageLockContext {
   if (WRITE_AHEAD_LOG != null) {
-    return StorageLockContext(/*useRWLock:*/false, CHANNELS_WITH_WRITE_AHEAD_CACHE)
+    return StorageLockContext(
+      /* useReadWriteLock: */ false,
+      CHANNELS_WITH_WRITE_AHEAD_CACHE.asReadOnly(),
+      CHANNELS_WITH_WRITE_AHEAD_CACHE.asWritable()
+    )
   }
   else {
-    return StorageLockContext(/*useRWLock:*/false, /*cacheChannels:*/true)//== use regular PageCacheUtils.CHANNELS_CACHE
+    return StorageLockContext(/*useRWLock:*/false, /*cacheChannels:*/true)//== use regular PageCacheUtils cached accessors
   }
 }
 

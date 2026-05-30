@@ -44,8 +44,14 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   private val applyUnfinishedOnRead: Boolean = APPLY_UNFINISHED_ON_READ,
 ) : FileChannel(), Resilient {
 
-  /** Fix (path, readOnly) arguments in `channelsAccessor` so that it can't be accidentally called with any other path/ro values */
-  private val channelOpExecutor: ChannelOpExecutor = ChannelOpExecutor.partiallyApply(channelsAccessor, path, readOnly)
+  init {
+    require(channelsAccessor.isReadOnly == readOnly) {
+      "channelsAccessor mode (${channelsAccessor.isReadOnly}) must match FileChannelWithWAL mode ($readOnly)"
+    }
+  }
+
+  /** Fix `path` argument in `channelsAccessor` so that it can't be accidentally called with any other path. */
+  private val channelOpExecutor: ChannelOpExecutor = ChannelOpExecutor.partiallyApply(channelsAccessor, path)
 
   private val perFileWriter: WriteAheadLog.PerFileWriter = writeAheadLog.openFor(path)
 
@@ -284,6 +290,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
 
   companion object {
     private val APPLY_UNFINISHED_ON_READ = getBooleanProperty("indexes.write-ahead-log.apply-unfinished-on-read", false)
+
     /** Accumulated statistics of flush()-ed entries, split by different 'causes' */
     private val entriesFlushedOnRead = AtomicLong()
     private val entriesFlushedOnForce = AtomicLong()
@@ -351,12 +358,12 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
     override fun close()
 
     companion object {
-      /** Partial-application: fixes 'path' & 'readOnly' arguments */
+      /** Partial-application: fixes 'path' argument */
       @JvmStatic
-      fun partiallyApply(channelsAccessor: ChannelsAccessor, path: Path, readOnly: Boolean): ChannelOpExecutor {
+      fun partiallyApply(channelsAccessor: ChannelsAccessor, path: Path): ChannelOpExecutor {
         return object : ChannelOpExecutor {
           override fun <T> invoke(op: FileChannelOperation<T>): T {
-            return channelsAccessor.executeOp<T>(path, op, readOnly)
+            return channelsAccessor.executeOp<T>(path, op)
           }
 
           override fun close() {

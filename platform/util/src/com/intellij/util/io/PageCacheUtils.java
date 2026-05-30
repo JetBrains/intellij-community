@@ -97,46 +97,31 @@ public final class PageCacheUtils {
     return new ResilientFileChannel(path, readOnly ? new OpenOption[]{READ} : new OpenOption[]{READ, WRITE, CREATE});
   };
 
-  /** Channels cache-bypassing accessor */
-  public static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
-
-    private final AtomicInteger operationsExecuted = new AtomicInteger(0);
-
-    @Override
-    public <T> T executeOp(@NotNull Path path,
-                           @NotNull FileChannelOperation<T> operation,
-                           boolean readOnly) throws IOException {
-      operationsExecuted.incrementAndGet();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, RESILIENT_CHANNEL_OPENER)) {
-        return operation.execute(desc.channel());
-      }
-    }
-
-    @Override
-    public <T> T executeIdempotentOp(@NotNull Path path,
-                                     @NotNull FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T> operation,
-                                     boolean readOnly) throws IOException {
-      operationsExecuted.incrementAndGet();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, RESILIENT_CHANNEL_OPENER)) {
-        return desc.executeIdempotentOp(operation);
-      }
-    }
-
-    @Override
-    public void closeChannel(@NotNull Path path) {
-    }
-
-    @Override
-    public @NotNull CachedChannelsStatistics getStatistics() {
-      return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */ operationsExecuted.get(), 0);
-    }
-  };
+  /** Channels cache-bypassing accessors holder */
+  private static final UncachedChannelsAccessors CHANNELS_NO_CACHE = new UncachedChannelsAccessors(RESILIENT_CHANNEL_OPENER);
 
   /** Shared channels cache */
-  public static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
+  private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
     CHANNELS_CACHE_CAPACITY,
     RESILIENT_CHANNEL_OPENER
   );
+
+  public static @NotNull ChannelsAccessor getChannelsAccessor(boolean cacheChannels,
+                                                              boolean readOnly) {
+    return cacheChannels ? getCachedChannelsAccessor(readOnly) : getUncachedChannelsAccessor(readOnly);
+  }
+
+  public static @NotNull ChannelsAccessor getCachedChannelsAccessor(boolean readOnly) {
+    return readOnly ? CHANNELS_CACHE.asReadOnly() : CHANNELS_CACHE.asWritable();
+  }
+
+  public static @NotNull CachedChannelsStatistics getChannelsStatistics() {
+    return CHANNELS_CACHE.getStatistics().plus(CHANNELS_NO_CACHE.getStatistics());
+  }
+
+  private static @NotNull ChannelsAccessor getUncachedChannelsAccessor(boolean readOnly) {
+    return readOnly ? CHANNELS_NO_CACHE.asReadOnly() : CHANNELS_NO_CACHE.asWritable();
+  }
 
   static {
     LOG.info(
@@ -196,6 +181,75 @@ public final class PageCacheUtils {
     }
 
     return Runtime.getRuntime().maxMemory();
+  }
+
+  /** 'Emulates' {@linkplain OpenChannelsCache} API for uniformity. */
+  private static final class UncachedChannelsAccessors {
+    private final AtomicInteger operationsExecuted = new AtomicInteger(0);
+
+    private final @NotNull ChannelsAccessor readOnlyAccessor;
+    private final @NotNull ChannelsAccessor writableAccessor;
+
+    private UncachedChannelsAccessors(@NotNull ChannelsAccessor.FileChannelOpener channelOpener) {
+      readOnlyAccessor = new UncachedChannelsAccessor(/*readOnly: */true, channelOpener);
+      writableAccessor = new UncachedChannelsAccessor(/*readOnly: */false, channelOpener);
+    }
+
+    private @NotNull ChannelsAccessor asReadOnly() {
+      return readOnlyAccessor;
+    }
+
+    private @NotNull ChannelsAccessor asWritable() {
+      return writableAccessor;
+    }
+
+    private @NotNull CachedChannelsStatistics getStatistics() {
+      return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */operationsExecuted.get(), 0);
+    }
+
+    private final class UncachedChannelsAccessor implements ChannelsAccessor {
+      private final boolean readOnly;
+      private final @NotNull ChannelsAccessor.FileChannelOpener channelOpener;
+
+      private UncachedChannelsAccessor(boolean readOnly,
+                                       @NotNull ChannelsAccessor.FileChannelOpener channelOpener) {
+        this.readOnly = readOnly;
+        this.channelOpener = channelOpener;
+      }
+
+      @Override
+      public boolean isReadOnly() {
+        return readOnly;
+      }
+
+      @Override
+      public <T> T executeOp(@NotNull Path path,
+                             @NotNull FileChannelOperation<T> operation) throws IOException {
+        operationsExecuted.incrementAndGet();
+        try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, channelOpener)) {
+          return operation.execute(desc.channel());
+        }
+      }
+
+      @Override
+      public <T> T executeIdempotentOp(@NotNull Path path,
+                                       @NotNull FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T> operation)
+        throws IOException {
+        operationsExecuted.incrementAndGet();
+        try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, channelOpener)) {
+          return desc.executeIdempotentOp(operation);
+        }
+      }
+
+      @Override
+      public void closeChannel(@NotNull Path path) {
+      }
+
+      @Override
+      public String toString() {
+        return "UncachedChannelsAccessor[readOnly=" + readOnly + ']';
+      }
+    }
   }
 
   private PageCacheUtils() { throw new AssertionError("Not for instantiation"); }

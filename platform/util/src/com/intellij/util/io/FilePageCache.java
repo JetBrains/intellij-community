@@ -443,8 +443,7 @@ public final class FilePageCache {
     try {
       pagesAccessLock.lock();
       try {
-        CachedChannelsStatistics channelCachingStats =
-          PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
+        CachedChannelsStatistics channelCachingStats = PageCacheUtils.getChannelsStatistics();
         return new FilePageCacheStatistics(channelCachingStats,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,

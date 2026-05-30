@@ -112,17 +112,29 @@ class FileChannelWithWALTest {
   }
 
   @Test
+  fun `channel rejects underlying accessor with different mode`(@TempDir tempDir: Path) {
+    val file = tempDir.storageFile()
+    val writeAheadLog = RecordingWriteAheadLog()
+
+    val error = assertThrows<IllegalArgumentException> {
+      FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.getCachedChannelsAccessor(true), readOnly = false)
+    }
+
+    assertTrue(error.message!!.contains("must match FileChannelWithWAL mode"))
+  }
+
+  @Test
   fun `read returns data with pending write applied even if the write is really pending`(@TempDir tempDir: Path) {
     val file = tempDir.storageFile()
     Files.write(file, byteArrayOf(1, 2, 3, 4))
     val writeAheadLog = fileBackedWriteAheadLog()
 
-    FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.CHANNELS_CACHE, readOnly = false).use { writeableChannel ->
+    FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.getCachedChannelsAccessor(false), readOnly = false).use { writeableChannel ->
       writeableChannel.write(ByteBuffer.wrap(byteArrayOf(9, 8)), 1)
 
       assertArrayEquals(byteArrayOf(1, 2, 3, 4), Files.readAllBytes(file), "Write is pending: file content is unchanged")
 
-      FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.CHANNELS_CACHE, readOnly = true).use { readOnlyChannel ->
+      FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.getCachedChannelsAccessor(true), readOnly = true).use { readOnlyChannel ->
         val target = ByteBuffer.allocate(4)
 
         assertEquals(4, readOnlyChannel.read(target, 0))
@@ -147,7 +159,7 @@ class FileChannelWithWALTest {
     FileChannelWithWAL(
       file,
       writeAheadLog,
-      PageCacheUtils.CHANNELS_CACHE,
+      PageCacheUtils.getCachedChannelsAccessor(false),
       readOnly = false,
       applyUnfinishedOnRead = true
     ).use { writeableChannel ->
@@ -158,7 +170,7 @@ class FileChannelWithWALTest {
       FileChannelWithWAL(
         file,
         writeAheadLog,
-        PageCacheUtils.CHANNELS_CACHE,
+        PageCacheUtils.getCachedChannelsAccessor(true),
         readOnly = true,
         applyUnfinishedOnRead = true
       ).use { readOnlyChannel ->
@@ -188,14 +200,14 @@ class FileChannelWithWALTest {
     FileChannelWithWAL(
       flushReadFile,
       fileBackedWriteAheadLog(),
-      PageCacheUtils.CHANNELS_CACHE,
+      PageCacheUtils.getCachedChannelsAccessor(false),
       readOnly = false,
       applyUnfinishedOnRead = false,
     ).use { flushReadChannel ->
       FileChannelWithWAL(
         overlayReadFile,
         fileBackedWriteAheadLog(),
-        PageCacheUtils.CHANNELS_CACHE,
+        PageCacheUtils.getCachedChannelsAccessor(false),
         readOnly = false,
         applyUnfinishedOnRead = true,
       ).use { overlayReadChannel ->
@@ -230,7 +242,7 @@ class FileChannelWithWALTest {
   private fun Path.storageFile(): Path = resolve("storage.bin").also { Files.createFile(it) }
 
   private fun openWritableChannel(file: Path, writeAheadLog: WriteAheadLog): FileChannelWithWAL {
-    return FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.CHANNELS_CACHE, readOnly = false)
+    return FileChannelWithWAL(file, writeAheadLog, PageCacheUtils.getCachedChannelsAccessor(false), readOnly = false)
   }
 
   private fun readChannelContent(channel: FileChannelWithWAL): ByteArray {
@@ -263,17 +275,14 @@ class FileChannelWithWALTest {
   }
 
   private fun fileBackedWriteAheadLog(): WriteAheadLog {
+    val writeableAccessor = PageCacheUtils.getCachedChannelsAccessor(/*readOnly = */false)
     return ByteArrayQueueWriteAheadLog { path, offsetInFile, data ->
-      PageCacheUtils.CHANNELS_CACHE.executeOp(
-        path,
-        { channel ->
-          var offset = offsetInFile
-          while (data.hasRemaining()) {
-            offset += channel.write(data, offset)
-          }
-        },
-        false,
-      )
+      writeableAccessor.executeOp(path) { channel ->
+        var offset = offsetInFile
+        while (data.hasRemaining()) {
+          offset += channel.write(data, offset)
+        }
+      }
     }
   }
 

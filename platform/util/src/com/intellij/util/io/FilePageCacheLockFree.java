@@ -559,7 +559,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           try {
             //TODO RC: this better to be responsibility of the storage (why cache should even know
             //         about channels cache?)
-            PageCacheUtils.CHANNELS_CACHE.closeChannel(file);
+            storage.closeChannel();
           }
           catch (Throwable t) {
             LOG.error("Can't close channel for " + file, t);

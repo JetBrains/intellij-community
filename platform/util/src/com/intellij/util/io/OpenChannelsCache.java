@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -6,7 +6,6 @@ import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOp
 import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -21,51 +20,65 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * {@linkplain ChannelsAccessor} implementation that caches a limited number of opened {@link FileChannel}s.
- * Cache eviction policy is kind of FIFO -- the first channel cached is the first candidate to drop
- * from the cache, given it is not used right now.
+ * Owner of a limited shared cache of opened {@link FileChannel}s.
+ * Cache eviction policy is kind of LRU -- the oldest channel accessed is the first to be evicted, given it is not used right now.
  * <p>
- * Cache provides 2 ways to access a {@linkplain FileChannel}:
- * - {@link #executeOp(Path, FileChannelOperation, boolean)}: a lambda supplied with {@link ResilientFileChannel} channel wrapper
- * (see {@link ResilientFileChannel} description for details about that 'reliable' means there)
- * - {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}: a lambda must be idempotent, but supplied with
- * plain {@link FileChannel} without wrapping.
- * <p/>
+ * The owner exposes two mode-bound {@link ChannelsAccessor} views: {@link #asReadOnly()} and {@link #asWritable()}.
  * BEWARE: cache caches (potentially) 2 different {@linkplain FileChannel} instances: readOnly and !readOnly.
- * It is generally not guaranteed those different FileChannels instances always share the same data -- they
- * generally do, but because of caching there could be some temporary difference in the content visible via
- * readOnly and !readOnly FileChannel. So, avoid accessing the same path via 2 different readOnly/!readOnly
- * FileChannels: prefer using the single 'readOnly' param for all the accesses.
+ * Generally, it is not guaranteed these 2 different FileChannels instances always share the same data -- they
+ * could, but also there could be some temporary difference in the content visible via readOnly and !readOnly
+ * FileChannel. So, better avoid accessing the same path via 2 different readOnly/!readOnly FileChannels: use
+ * the single accessor for _all_ the accesses to the given Path.
  */
 @ApiStatus.Internal
-public final class OpenChannelsCache
-  implements ChannelsAccessor { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+public final class OpenChannelsCache {
+  // TODO: does it make sense to have a background thread, that flushes the cache by timeout?
+
   /** Max channels to keep open in cache */
   private final int capacity;
 
-  //statistics of the caching efficacy:
-  private int hitCount;
-  private int missCount;
-  private int loadCount;
-
   //@GuardedBy("cacheLock")
-  private final @NotNull Map<ChannelCacheKey, ChannelDescriptor> cachedChannels;
+  private final @NotNull Map<CacheKey, ChannelDescriptor> cachedChannels;
 
   private final transient Object cacheLock = new Object();
 
-  private final @NotNull FileChannelOpener channelOpener;
+  private final @NotNull ChannelsAccessor.FileChannelOpener channelOpener;
+
+  private final transient @NotNull ChannelsAccessor readOnlyAccessor;
+  private final transient @NotNull ChannelsAccessor writableAccessor;
+
+
+  //statistics of the caching efficacy:
+  private final PerModeStatistics readOnlyStats = new PerModeStatistics();
+  private final PerModeStatistics writableStats = new PerModeStatistics();
+
 
   public OpenChannelsCache(int capacity,
-                           @NotNull FileChannelOpener channelOpener) {
+                           @NotNull ChannelsAccessor.FileChannelOpener channelOpener) {
     this.capacity = capacity;
     cachedChannels = new LinkedHashMap<>(capacity, 0.5f, /*orderByAccess: */true);
     this.channelOpener = channelOpener;
+    readOnlyAccessor = new AccessorView(/*readOnly: */true);
+    writableAccessor = new AccessorView(/*readOnly: */false);
   }
 
-  @Override
+  public @NotNull ChannelsAccessor asReadOnly() {
+    return readOnlyAccessor;
+  }
+
+  public @NotNull ChannelsAccessor asWritable() {
+    return writableAccessor;
+  }
+
   public @NotNull CachedChannelsStatistics getStatistics() {
     synchronized (cacheLock) {
-      return new CachedChannelsStatistics(hitCount, missCount, loadCount, /*bypassedCache: */0, capacity);
+      return new CachedChannelsStatistics(
+        readOnlyStats.hitCount + writableStats.hitCount,
+        readOnlyStats.missCount + writableStats.missCount,
+        readOnlyStats.loadCount + writableStats.loadCount,
+        /*bypassedCache: */0,
+        capacity
+      );
     }
   }
 
@@ -74,14 +87,12 @@ public final class OpenChannelsCache
    * is a FileChannel implementation that tries to ensure each FileChannel operation is completed,
    * or not started at all, but not interrupted in the middle. If something interrupts 'elementary'
    * FileChannel ops, like read/write -- those ops are retried, invisibly for processor -- see class
-   * description for details. But it comes with small performance cost, and als the {@link ResilientFileChannel}
+   * description for details. But it comes with small performance cost, and also the {@link ResilientFileChannel}
    * does not implement some FileChannel operations, so be aware.
    */
-  @VisibleForTesting
-  @Override
-  public <T> T executeOp(@NotNull Path path,
-                         @NotNull FileChannelOperation<T> operation,
-                         boolean readOnly) throws IOException {
+  private <T> T executeOp(@NotNull Path path,
+                          @NotNull ChannelsAccessor.FileChannelOperation<T> operation,
+                          boolean readOnly) throws IOException {
     ChannelDescriptor descriptor = acquireDescriptor(path, readOnly);
     //channel access is NOT guarded by the cacheLock
     try {
@@ -96,11 +107,9 @@ public final class OpenChannelsCache
    * Parameter {@param operation} should be idempotent because sometimes calculation might be restarted
    * when the file channel was closed by thread interruption
    */
-  @VisibleForTesting
-  @Override
-  public <T> T executeIdempotentOp(@NotNull Path path,
-                                   @NotNull FileChannelIdempotentOperation<T> operation,
-                                   boolean readOnly) throws IOException {
+  private <T> T executeIdempotentOp(@NotNull Path path,
+                                    @NotNull FileChannelIdempotentOperation<T> operation,
+                                    boolean readOnly) throws IOException {
     ChannelDescriptor descriptor = acquireDescriptor(path, readOnly);
     //channel access is NOT guarded by the cacheLock
     try {
@@ -114,25 +123,30 @@ public final class OpenChannelsCache
   private @NotNull ChannelDescriptor acquireDescriptor(@NotNull Path path,
                                                        boolean readOnly) throws IOException {
     synchronized (cacheLock) {
-      ChannelCacheKey key = new ChannelCacheKey(path, readOnly);
+      CacheKey key = new CacheKey(path, readOnly);
       ChannelDescriptor descriptor = cachedChannels.get(key);
+      PerModeStatistics statistics = statisticsFor(readOnly);
       if (descriptor == null) {
         boolean somethingDropped = releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, readOnly, channelOpener);
         cachedChannels.put(key, descriptor);
         if (somethingDropped) {
-          missCount++;
+          statistics.missCount++;
         }
         else {
-          loadCount++;
+          statistics.loadCount++;
         }
       }
       else {
-        hitCount++;
+        statistics.hitCount++;
       }
       descriptor.lock();
       return descriptor;
     }
+  }
+
+  private @NotNull OpenChannelsCache.PerModeStatistics statisticsFor(boolean readOnly) {
+    return readOnly ? readOnlyStats : writableStats;
   }
 
   private void releaseDescriptor(@NotNull ChannelDescriptor descriptor) {
@@ -141,19 +155,10 @@ public final class OpenChannelsCache
     }
   }
 
-  @Override
-  @VisibleForTesting
-  public void closeChannel(@NotNull Path path) throws IOException {
+  private void closeChannel(@NotNull Path path,
+                            boolean readOnly) throws IOException {
     synchronized (cacheLock) {
-      List<ChannelCacheKey> keysToClose = new ArrayList<>();
-      for (ChannelCacheKey key : cachedChannels.keySet()) {
-        if (key.path.equals(path)) {
-          keysToClose.add(key);
-        }
-      }
-      for (ChannelCacheKey key : keysToClose) {
-        closeChannel(key);
-      }
+      closeChannel(new CacheKey(path, readOnly));
     }
   }
 
@@ -165,8 +170,8 @@ public final class OpenChannelsCache
       return false;
     }
 
-    List<ChannelCacheKey> keysToDrop = new ArrayList<>();
-    for (Map.Entry<ChannelCacheKey, ChannelDescriptor> entry : cachedChannels.entrySet()) {
+    List<CacheKey> keysToDrop = new ArrayList<>();
+    for (Map.Entry<CacheKey, ChannelDescriptor> entry : cachedChannels.entrySet()) {
       if (dropCount < 0) break;
       if (!entry.getValue().isLocked()) {
         dropCount--;
@@ -174,7 +179,7 @@ public final class OpenChannelsCache
       }
     }
 
-    for (ChannelCacheKey key : keysToDrop) {
+    for (CacheKey key : keysToDrop) {
       closeChannel(key);
     }
 
@@ -182,7 +187,7 @@ public final class OpenChannelsCache
   }
 
   //@GuardedBy(cacheLock)
-  private void closeChannel(@NotNull ChannelCacheKey key) throws IOException {
+  private void closeChannel(@NotNull OpenChannelsCache.CacheKey key) throws IOException {
     ChannelDescriptor descriptor = cachedChannels.remove(key);
 
     if (descriptor != null) {
@@ -198,7 +203,7 @@ public final class OpenChannelsCache
 
     ChannelDescriptor(@NotNull Path path,
                       boolean readOnly,
-                      @NotNull FileChannelOpener channelOpener) throws IOException {
+                      @NotNull ChannelsAccessor.FileChannelOpener channelOpener) throws IOException {
       this.readOnly = readOnly;
       if (!readOnly) {
         Path parent = path.getParent();
@@ -271,12 +276,53 @@ public final class OpenChannelsCache
     }
   }
 
-  private static final class ChannelCacheKey {
+  private final class AccessorView implements ChannelsAccessor {
+    private final boolean readOnly;
+
+    private AccessorView(boolean readOnly) {
+      this.readOnly = readOnly;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return readOnly;
+    }
+
+    @Override
+    public <T> T executeOp(@NotNull Path path,
+                           @NotNull FileChannelOperation<T> operation) throws IOException {
+      return OpenChannelsCache.this.executeOp(path, operation, readOnly);
+    }
+
+    @Override
+    public <T> T executeIdempotentOp(@NotNull Path path,
+                                     @NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
+      return OpenChannelsCache.this.executeIdempotentOp(path, operation, readOnly);
+    }
+
+    @Override
+    public void closeChannel(@NotNull Path path) throws IOException {
+      OpenChannelsCache.this.closeChannel(path, readOnly);
+    }
+
+    @Override
+    public String toString() {
+      return "OpenChannelsCache.AccessorView[readOnly=" + readOnly + ']';
+    }
+  }
+
+  private static final class PerModeStatistics {
+    private int hitCount;
+    private int missCount;
+    private int loadCount;
+  }
+
+  private static final class CacheKey {
     private final @NotNull Path path;
     private final boolean readOnly;
 
-    private ChannelCacheKey(@NotNull Path path,
-                            boolean readOnly) {
+    private CacheKey(@NotNull Path path,
+                     boolean readOnly) {
       this.path = path;
       this.readOnly = readOnly;
     }
@@ -286,10 +332,10 @@ public final class OpenChannelsCache
       if (this == obj) {
         return true;
       }
-      if (!(obj instanceof ChannelCacheKey)) {
+      if (!(obj instanceof CacheKey)) {
         return false;
       }
-      ChannelCacheKey key = (ChannelCacheKey)obj;
+      CacheKey key = (CacheKey)obj;
       return readOnly == key.readOnly && path.equals(key.path);
     }
 

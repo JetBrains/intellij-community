@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -107,8 +106,9 @@ public class PagedFileStorageTest {
   @Test
   public void testWritableStorageUsesWritableChannelsForAllOperations() throws IOException {
     Path path = tempDir.newFileNio("writable-storage-channel-mode");
-    RecordingChannelsAccessor channelsAccessor = new RecordingChannelsAccessor();
-    StorageLockContext lockContext = new StorageLockContext(false, channelsAccessor);
+    RecordingChannelsAccessor readOnlyChannelsAccessor = new RecordingChannelsAccessor(true);
+    RecordingChannelsAccessor writableChannelsAccessor = new RecordingChannelsAccessor(false);
+    StorageLockContext lockContext = new StorageLockContext(false, readOnlyChannelsAccessor, writableChannelsAccessor);
 
     withLock(lockContext, () -> {
       try (PagedFileStorage storage = new PagedFileStorage(path, lockContext, DEFAULT_PAGE_SIZE, false, false)) {
@@ -127,7 +127,8 @@ public class PagedFileStorageTest {
       }
     });
 
-    channelsAccessor.assertOnlyReadOnlyMode(false);
+    writableChannelsAccessor.assertWasUsed();
+    readOnlyChannelsAccessor.assertWasNotUsed();
   }
 
   @Test
@@ -135,8 +136,9 @@ public class PagedFileStorageTest {
     Path path = tempDir.newFileNio("readonly-storage-channel-mode");
     Files.write(path, new byte[]{42});
 
-    RecordingChannelsAccessor channelsAccessor = new RecordingChannelsAccessor();
-    StorageLockContext lockContext = new StorageLockContext(false, channelsAccessor);
+    RecordingChannelsAccessor readOnlyChannelsAccessor = new RecordingChannelsAccessor(true);
+    RecordingChannelsAccessor writableChannelsAccessor = new RecordingChannelsAccessor(false);
+    StorageLockContext lockContext = new StorageLockContext(false, readOnlyChannelsAccessor, writableChannelsAccessor);
 
     PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions().readOnly(true).with(() -> {
       withLock(lockContext, () -> {
@@ -154,7 +156,8 @@ public class PagedFileStorageTest {
       return null;
     });
 
-    channelsAccessor.assertOnlyReadOnlyMode(true);
+    readOnlyChannelsAccessor.assertWasUsed();
+    writableChannelsAccessor.assertWasNotUsed();
   }
 
   @Test
@@ -222,26 +225,31 @@ public class PagedFileStorageTest {
   }
 
   private static final class RecordingChannelsAccessor implements ChannelsAccessor {
-    private final ChannelsAccessor delegate = PageCacheUtils.CHANNELS_NO_CACHE;
-    private final List<Boolean> readOnlyModes = new ArrayList<>();
+    private final boolean readOnly;
+    private final ChannelsAccessor delegate;
+    private final List<Path> paths = new ArrayList<>();
 
-    @Override
-    public @NotNull CachedChannelsStatistics getStatistics() {
-      return delegate.getStatistics();
+    private RecordingChannelsAccessor(boolean readOnly) {
+      this.readOnly = readOnly;
+      delegate = PageCacheUtils.getChannelsAccessor(false, readOnly);
     }
 
     @Override
-    public <T> T executeOp(@NotNull Path path, @NotNull FileChannelOperation<T> operation, boolean readOnly) throws IOException {
-      readOnlyModes.add(readOnly);
-      return delegate.executeOp(path, operation, readOnly);
+    public boolean isReadOnly() {
+      return readOnly;
+    }
+
+    @Override
+    public <T> T executeOp(@NotNull Path path, @NotNull FileChannelOperation<T> operation) throws IOException {
+      paths.add(path);
+      return delegate.executeOp(path, operation);
     }
 
     @Override
     public <T> T executeIdempotentOp(@NotNull Path path,
-                                     @NotNull FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T> operation,
-                                     boolean readOnly) throws IOException {
-      readOnlyModes.add(readOnly);
-      return delegate.executeIdempotentOp(path, operation, readOnly);
+                                     @NotNull FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T> operation) throws IOException {
+      paths.add(path);
+      return delegate.executeIdempotentOp(path, operation);
     }
 
     @Override
@@ -249,11 +257,12 @@ public class PagedFileStorageTest {
       delegate.closeChannel(path);
     }
 
-    private void assertOnlyReadOnlyMode(boolean expectedReadOnly) {
-      assertFalse(readOnlyModes.toString(), readOnlyModes.isEmpty());
-      for (boolean readOnly : readOnlyModes) {
-        assertEquals(readOnlyModes.toString(), expectedReadOnly, readOnly);
-      }
+    private void assertWasUsed() {
+      assertFalse(paths.toString(), paths.isEmpty());
+    }
+
+    private void assertWasNotUsed() {
+      assertTrue(paths.toString(), paths.isEmpty());
     }
   }
 

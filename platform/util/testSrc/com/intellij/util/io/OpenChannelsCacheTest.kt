@@ -21,25 +21,36 @@ import java.nio.file.Path
 
 class OpenChannelsCacheTest {
   @Test
+  fun `accessor views are stable and mode-bound`() {
+    val cache = OpenChannelsCache(2, RecordingChannelOpener())
+
+    assertSame(cache.asReadOnly(), cache.asReadOnly(), "Read-only accessor view must be stable")
+    assertSame(cache.asWritable(), cache.asWritable(), "Writable accessor view must be stable")
+    assertNotSame(cache.asReadOnly(), cache.asWritable(), "Different modes must use different accessor views")
+    assertTrue(cache.asReadOnly().isReadOnly, "Read-only accessor view must report read-only mode")
+    assertFalse(cache.asWritable().isReadOnly, "Writable accessor view must report writable mode")
+  }
+
+  @Test
   fun `executeOp reuses cached channel for repeated read access`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val readOnly = true
-
     val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+
     try {
-      val firstChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel }, readOnly)
-      val secondChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel }, readOnly)
+      val firstChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+      val secondChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
 
       assertSame(firstChannel, secondChannel, "Repeated read-only access must reuse the cached descriptor")
-      assertEquals(listOf(readOnly), opener.opened.map { it.readOnly }, "Only one read-only channel should be opened")
+      assertEquals(listOf(true), opener.opened.map { it.readOnly }, "Only one read-only channel should be opened")
       assertFalse(firstChannel.wasClosed, "Cached descriptor must stay open after operation release")
       assertEquals(1, cache.statistics.load, "First access should be counted as a cache load")
       assertEquals(1, cache.statistics.hit, "Second access should be counted as a cache hit")
       assertEquals(0, cache.statistics.miss, "No eviction or read/write mode switch should happen")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
     }
   }
 
@@ -47,106 +58,112 @@ class OpenChannelsCacheTest {
   fun `executeIdempotentOp reuses cached resilient channel`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val readOnly = true
-
     val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+
     try {
-      val firstChannel = cache.executeIdempotentOp(file, { channel -> channel as TrackingFileChannel }, readOnly)
-      val secondChannel = cache.executeIdempotentOp(file, { channel -> channel as TrackingFileChannel }, readOnly)
+      val firstChannel = readOnlyAccessor.executeIdempotentOp(file) { channel -> channel as TrackingFileChannel }
+      val secondChannel = readOnlyAccessor.executeIdempotentOp(file) { channel -> channel as TrackingFileChannel }
 
       assertSame(firstChannel, secondChannel, "Idempotent operations must reuse the cached descriptor")
       assertEquals(2, firstChannel.idempotentOperationCount, "Both operations should run through the same resilient channel")
-      assertEquals(listOf(readOnly), opener.opened.map { it.readOnly }, "Only one read-only channel should be opened")
+      assertEquals(listOf(true), opener.opened.map { it.readOnly }, "Only one read-only channel should be opened")
       assertFalse(firstChannel.wasClosed, "Cached descriptor must stay open after operation release")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
     }
   }
 
   @Test
-  fun `read-only request returns channel that rejects writes`(@TempDir tempDir: Path) {
+  fun `read-only accessor returns channel that rejects writes`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val readOnly = true
-
     val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+
     try {
-      cache.executeOp(file, { channel ->
+      readOnlyAccessor.executeOp(file) { channel ->
         assertThrows<NonWritableChannelException>("Read-only channel must reject writes") {
           writeSingleByte(channel)
         }
-      }, readOnly)
+      }
 
-      assertEquals(listOf(readOnly), opener.opened.map { it.readOnly }, "The descriptor should be opened in read-only mode")
+      assertEquals(listOf(true), opener.opened.map { it.readOnly }, "The descriptor should be opened in read-only mode")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
     }
   }
 
   @Test
-  fun `read-only request returns non-writable channel even if writable channel is cached`(@TempDir tempDir: Path) {
+  fun `read-only accessor returns non-writable channel even if writable channel is cached`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-
     val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+    val writableAccessor = cache.asWritable()
+
     try {
-      val writableChannel = cache.executeOp(file, { channel ->
+      val writableChannel = writableAccessor.executeOp(file) { channel ->
         writeSingleByte(channel)
         channel as TrackingFileChannel
-      }, /*readOnly: */false)
+      }
 
       assertFalse(writableChannel.readOnly, "Precondition: first cached descriptor must be writable")
 
-      cache.executeOp(file, { channel ->
+      readOnlyAccessor.executeOp(file) { channel ->
         assertThrows<NonWritableChannelException>("Read-only request must not reuse a cached writable descriptor") {
           writeSingleByte(channel)
         }
-      }, /*readOnly: */true)
+      }
 
       assertEquals(listOf(false, true), opener.opened.map { it.readOnly }, "Read-only request should open a separate descriptor")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
+      writableAccessor.closeChannel(file)
     }
   }
 
   @Test
-  fun `unlocked descriptor is closed on eviction`(@TempDir tempDir: Path) {
-    val firstFile = tempDir.resolve("first.bin")
-    val secondFile = tempDir.resolve("second.bin")
+  fun `unlocked descriptor is closed on shared-capacity eviction`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val readOnly = true
-
     val cache = OpenChannelsCache(1, opener)
-    try {
-      val firstChannel = cache.executeOp(firstFile, { channel -> channel as TrackingFileChannel }, readOnly)
-      val secondChannel = cache.executeOp(secondFile, { channel -> channel as TrackingFileChannel }, readOnly)
+    val readOnlyAccessor = cache.asReadOnly()
+    val writableAccessor = cache.asWritable()
 
-      assertTrue(firstChannel.wasClosed, "Unlocked first descriptor should be closed when evicted")
-      assertFalse(secondChannel.wasClosed, "Newest descriptor should remain cached")
-      assertEquals(listOf(firstFile, secondFile), opener.opened.map { it.path }, "Both paths should be opened once")
+    try {
+      val readOnlyChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+      val writableChannel = writableAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+
+      assertTrue(readOnlyChannel.wasClosed, "Shared capacity should evict the first unlocked descriptor regardless of mode")
+      assertFalse(writableChannel.wasClosed, "Newest descriptor should remain cached")
+      assertEquals(listOf(true, false), opener.opened.map { it.readOnly }, "Both modes should be opened once")
       assertEquals(1, cache.statistics.load, "First access should be counted as a cache load")
       assertEquals(1, cache.statistics.miss, "Second access should be counted as a miss caused by eviction")
+      assertEquals(1, cache.statistics.capacity, "Owner statistics must report shared physical capacity once")
     }
     finally {
-      cache.closeChannel(firstFile)
-      cache.closeChannel(secondFile)
+      readOnlyAccessor.closeChannel(file)
+      writableAccessor.closeChannel(file)
     }
   }
 
   @Test
-  fun `read-only and writable descriptors are cached independently`(@TempDir tempDir: Path) {
+  fun `read-only and writable descriptors are cached independently under shared owner`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
     val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+    val writableAccessor = cache.asWritable()
 
     try {
-      val readOnlyChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel },       /*readOnly: */ true)
-      val writableChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel },       /*readOnly: */ false)
-      val cachedReadOnlyChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel }, /*readOnly: */ true)
-      val cachedWritableChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel }, /*readOnly: */ false)
+      val readOnlyChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+      val writableChannel = writableAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+      val cachedReadOnlyChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+      val cachedWritableChannel = writableAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
 
       assertNotSame(readOnlyChannel, writableChannel, "Read-only and writable descriptors must be cached separately")
       assertSame(readOnlyChannel, cachedReadOnlyChannel, "Read-only access should reuse the read-only descriptor")
@@ -158,54 +175,80 @@ class OpenChannelsCacheTest {
       assertEquals(2, cache.statistics.load, "First access for each read/write mode should be counted as a load")
       assertEquals(0, cache.statistics.miss, "No eviction should happen when capacity fits both descriptors")
       assertEquals(2, cache.statistics.hit, "Second access for each read/write mode should be counted as a hit")
+      assertEquals(2, cache.statistics.capacity, "Owner statistics must report shared physical capacity once")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
+      writableAccessor.closeChannel(file)
     }
+  }
+
+  @Test
+  fun `closeChannel on one view does not close descriptor from another mode`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("storage.bin")
+    val opener = RecordingChannelOpener()
+    val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+    val writableAccessor = cache.asWritable()
+
+    val readOnlyChannel = readOnlyAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+    val writableChannel = writableAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
+
+    readOnlyAccessor.closeChannel(file)
+
+    assertTrue(readOnlyChannel.wasClosed, "Read-only view should close the read-only descriptor")
+    assertFalse(writableChannel.wasClosed, "Read-only view must not close the writable descriptor")
+
+    writableAccessor.closeChannel(file)
+
+    assertEquals(1, writableChannel.closeCount, "Writable view should close the writable descriptor exactly once")
   }
 
   @Test
   fun `locked read-only descriptor keeps cached channel and caches writable descriptor separately`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
+    val cache = OpenChannelsCache(2, opener)
+    val readOnlyAccessor = cache.asReadOnly()
+    val writableAccessor = cache.asWritable()
 
     lateinit var readOnlyChannel: TrackingFileChannel
     lateinit var writableChannel: TrackingFileChannel
 
-    val cache = OpenChannelsCache(2, opener)
     try {
-      cache.executeOp(file, { outerChannel ->
+      readOnlyAccessor.executeOp(file) { outerChannel ->
         readOnlyChannel = outerChannel as TrackingFileChannel
-        writableChannel = cache.executeOp(file, { nestedChannel -> nestedChannel as TrackingFileChannel }, false)
+        writableChannel = writableAccessor.executeOp(file) { nestedChannel -> nestedChannel as TrackingFileChannel }
 
         assertNotSame(readOnlyChannel, writableChannel, "Nested writable request must use a separate descriptor")
         assertFalse(readOnlyChannel.wasClosed, "Locked read-only descriptor must stay cached")
         assertFalse(writableChannel.wasClosed, "Nested writable descriptor should be cached, not closed as temporary")
-      }, true)
+      }
 
-      val cachedWritableChannel = cache.executeOp(file, { channel -> channel as TrackingFileChannel }, false)
+      val cachedWritableChannel = writableAccessor.executeOp(file) { channel -> channel as TrackingFileChannel }
 
       assertSame(writableChannel, cachedWritableChannel, "Nested writable descriptor should be reusable after outer operation completes")
-      assertFalse(readOnlyChannel.wasClosed, "Read-only descriptor must remain cached until closeChannel(path)")
-      assertFalse(writableChannel.wasClosed, "Writable descriptor must remain cached until closeChannel(path)")
+      assertFalse(readOnlyChannel.wasClosed, "Read-only descriptor must remain cached until its view closes it")
+      assertFalse(writableChannel.wasClosed, "Writable descriptor must remain cached until its view closes it")
       assertEquals(listOf(true, false), opener.opened.map { it.readOnly }, "Read-only and writable descriptors should be opened once each")
       assertEquals(2, cache.statistics.load, "First access for each read/write mode should be counted as a load")
       assertEquals(0, cache.statistics.miss, "Nested writable access should not bypass or miss the cache")
       assertEquals(1, cache.statistics.hit, "Repeated writable access should be counted as a hit")
     }
     finally {
-      cache.closeChannel(file)
+      readOnlyAccessor.closeChannel(file)
+      writableAccessor.closeChannel(file)
     }
 
-    assertTrue(readOnlyChannel.wasClosed, "closeChannel(path) should close the read-only descriptor")
-    assertEquals(1, writableChannel.closeCount, "closeChannel(path) should close the writable descriptor exactly once")
+    assertTrue(readOnlyChannel.wasClosed, "Read-only descriptor must be closed by read-only view")
+    assertEquals(1, writableChannel.closeCount, "Writable descriptor must be closed by writable view exactly once")
   }
 
   private class RecordingChannelOpener : ChannelsAccessor.FileChannelOpener {
     val opened = mutableListOf<TrackingFileChannel>()
 
     override fun open(path: Path, readOnly: Boolean): FileChannel {
-      return TrackingFileChannel(path, readOnly).also { opened += it }
+      return TrackingFileChannel(readOnly).also { opened += it }
     }
   }
 
@@ -213,7 +256,7 @@ class OpenChannelsCacheTest {
     channel.write(ByteBuffer.wrap(byteArrayOf(42)))
   }
 
-  private class TrackingFileChannel(val path: Path, val readOnly: Boolean) : FileChannel(), Resilient {
+  private class TrackingFileChannel(val readOnly: Boolean) : FileChannel(), Resilient {
     var closeCount: Int = 0
       private set
 

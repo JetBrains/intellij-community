@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
-import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,15 +12,13 @@ import java.nio.file.Path;
 /** Abstracts different ways of caching/not caching opened {@linkplain FileChannel}s */
 @ApiStatus.Internal
 public interface ChannelsAccessor {
-  @NotNull CachedChannelsStatistics getStatistics();
+  boolean isReadOnly();
 
   <T> T executeOp(@NotNull Path path,
-                  @NotNull FileChannelOperation<T> operation,
-                  boolean readOnly) throws IOException;
+                  @NotNull FileChannelOperation<T> operation) throws IOException;
 
   <T> T executeIdempotentOp(@NotNull Path path,
-                            @NotNull FileChannelIdempotentOperation<T> operation,
-                            boolean readOnly) throws IOException;
+                            @NotNull FileChannelIdempotentOperation<T> operation) throws IOException;
 
   void closeChannel(@NotNull Path path) throws IOException;
 

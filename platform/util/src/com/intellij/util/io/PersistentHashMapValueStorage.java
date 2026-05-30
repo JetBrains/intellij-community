@@ -788,7 +788,7 @@ public final class PersistentHashMapValueStorage {
                                       @NotNull StorageLockContext storageLockContext,
                                       boolean readOnly) throws IOException {
       myPath = path;
-      myChannelsAccessor = storageLockContext.getChannelsAccessor();
+      myChannelsAccessor = storageLockContext.getChannelsAccessor(readOnly);
       myReadOnly = readOnly;
       myAppendAtOffset = initialSize();
     }
@@ -815,11 +815,11 @@ public final class PersistentHashMapValueStorage {
           writeOffset += written;
         }
         return null;
-      }, myReadOnly);
+      });
     }
 
     int read(long addr, byte @NotNull [] dst, int off, int len) throws IOException {
-      return myChannelsAccessor.executeOp(myPath, channel -> channel.read(ByteBuffer.wrap(dst, off, len), addr), myReadOnly);
+      return myChannelsAccessor.executeOp(myPath, channel -> channel.read(ByteBuffer.wrap(dst, off, len), addr));
     }
 
     /** Replaces side-file content while keeping FileChannel lifetime scoped to the accessor operation. */
@@ -843,7 +843,7 @@ public final class PersistentHashMapValueStorage {
           channel.truncate(len);
         }
         return null;
-      }, myReadOnly);
+      });
       myAppendAtOffset = len;
     }
 
@@ -855,7 +855,7 @@ public final class PersistentHashMapValueStorage {
         if (channel.size() == 0) return false;
         channel.truncate(0);
         return true;
-      }, myReadOnly);
+      });
       if (cleared) {
         myAppendAtOffset = 0;
       }
@@ -867,7 +867,7 @@ public final class PersistentHashMapValueStorage {
       myChannelsAccessor.executeOp(myPath, channel -> {
         channel.force(true);
         return null;
-      }, myReadOnly);
+      });
     }
 
     void close() throws IOException {
@@ -883,7 +883,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     private long size() throws IOException {
-      return myChannelsAccessor.executeOp(myPath, channel -> channel.size(), myReadOnly);
+      return myChannelsAccessor.executeOp(myPath, channel -> channel.size());
     }
 
     @Override

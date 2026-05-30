@@ -2,7 +2,6 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.io.stats.CachedChannelsStatistics
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -196,7 +195,7 @@ internal class PersistentHashMapValueStorageContractTest {
     val firstPayload = accessorFirstPayload()
     val secondPayload = accessorSecondPayload()
     val channelsAccessor = RecordingChannelsAccessor()
-    val lockContext = StorageLockContext(false, channelsAccessor)
+    val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
     val config = TestConfig(name = "plain", hasNoChunks = false, useCompression = false)
 
     val firstAddress = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
@@ -241,7 +240,7 @@ internal class PersistentHashMapValueStorageContractTest {
     val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
     val payload = ByteArray(COMPRESSED_ACCESSOR_PAYLOAD_SIZE) { index -> (index % 251).toByte() }
     val channelsAccessor = RecordingChannelsAccessor()
-    val lockContext = StorageLockContext(false, channelsAccessor)
+    val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
     val config = TestConfig(name = "compressed", hasNoChunks = false, useCompression = true)
 
     val address = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
@@ -282,7 +281,7 @@ internal class PersistentHashMapValueStorageContractTest {
     val storageFile = tempDir.resolve("compressed-forced-incomplete-tail-clear.values")
     val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
     val channelsAccessor = RecordingChannelsAccessor()
-    val lockContext = StorageLockContext(false, channelsAccessor)
+    val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
     val config = TestConfig(name = "compressed-hasNoChunks-true", hasNoChunks = true, useCompression = true)
 
     withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
@@ -488,7 +487,10 @@ internal class PersistentHashMapValueStorageContractTest {
     val chunksCount: Int,
   )
 
-  private class RecordingChannelsAccessor : ChannelsAccessor {
+  private class RecordingChannelsAccessor {
+    val readOnlyAccessor: ChannelsAccessor = Accessor(/*readOnly = */true)
+    val writableAccessor: ChannelsAccessor = Accessor(/*readOnly = */false)
+
     val operations = ArrayList<Operation>()
     val channelOperations = ArrayList<ChannelOperation>()
     val closedPaths = ArrayList<Path>()
@@ -497,39 +499,38 @@ internal class PersistentHashMapValueStorageContractTest {
     var idempotentOperations = 0
       private set
 
-    override fun getStatistics(): CachedChannelsStatistics {
-      return CachedChannelsStatistics(0, 0, 0, operations.size + idempotentOperations, 0)
-    }
+    private inner class Accessor(private val readOnly: Boolean) : ChannelsAccessor {
+      override fun isReadOnly(): Boolean = readOnly
 
-    override fun <T> executeOp(path: Path, operation: ChannelsAccessor.FileChannelOperation<T>, readOnly: Boolean): T {
-      operations.add(Operation(path, readOnly))
-      if (!readOnly) {
-        Files.createDirectories(path.parent)
-      }
+      override fun <T> executeOp(path: Path, operation: ChannelsAccessor.FileChannelOperation<T>): T {
+        operations.add(Operation(path, readOnly))
+        if (!readOnly) {
+          Files.createDirectories(path.parent)
+        }
 
-      val options = if (readOnly) arrayOf(READ) else arrayOf(READ, WRITE, CREATE)
-      activeChannels++
-      try {
-        FileChannel.open(path, *options).use { channel ->
-          return operation.execute(RecordingFileChannel(path, readOnly, channel, channelOperations))
+        val options = if (readOnly) arrayOf(READ) else arrayOf(READ, WRITE, CREATE)
+        activeChannels++
+        try {
+          FileChannel.open(path, *options).use { channel ->
+            return operation.execute(RecordingFileChannel(path, readOnly, channel, channelOperations))
+          }
+        }
+        finally {
+          activeChannels--
         }
       }
-      finally {
-        activeChannels--
+
+      override fun <T> executeIdempotentOp(
+        path: Path,
+        operation: FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T>,
+      ): T {
+        idempotentOperations++
+        return executeOp(path) { channel -> operation.execute(channel) }
       }
-    }
 
-    override fun <T> executeIdempotentOp(
-      path: Path,
-      operation: FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T>,
-      readOnly: Boolean,
-    ): T {
-      idempotentOperations++
-      return executeOp(path, { channel -> operation.execute(channel) }, readOnly)
-    }
-
-    override fun closeChannel(path: Path) {
-      closedPaths.add(path)
+      override fun closeChannel(path: Path) {
+        closedPaths.add(path)
+      }
     }
 
     data class Operation(val path: Path, val readOnly: Boolean)
