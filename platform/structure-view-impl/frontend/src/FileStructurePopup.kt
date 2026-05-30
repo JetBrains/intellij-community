@@ -299,7 +299,7 @@ class FileStructurePopup(
 
               rebuildVisibleTree(RebuildReason.SPEED_SEARCH)
 
-              TreeUtil.promiseExpandAll(tree)
+              expandAllVisibleNodes()
               if (isBackspace && handleBackspace(prefix)) {
                 return@withContext
               }
@@ -675,6 +675,18 @@ class FileStructurePopup(
 
   private fun expandAutoNodes() {
     expandAutoNodes(TreePath(rootNode), 0)
+  }
+
+  private fun expandAllVisibleNodes() {
+    expandAllVisibleNodes(TreePath(rootNode))
+  }
+
+  private fun expandAllVisibleNodes(path: TreePath) {
+    tree.expandPath(path)
+    val node = path.lastPathComponent as? StructureViewNode ?: return
+    for (child in node.visibleChildren) {
+      expandAllVisibleNodes(path.pathByAddingChild(child))
+    }
   }
 
   private fun expandAutoNodes(path: TreePath, depth: Int) {
