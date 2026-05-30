@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import static com.intellij.openapi.editor.ex.util.SegmentArray.calcCapacity;
  * {@link IElementType} index and and restartability of the state (positive values are for initial state).
  */
 public class ShortBasedStorage implements DataStorage {
+  private static final Logger LOG = Logger.getInstance(ShortBasedStorage.class);
   protected short[] myData;
 
   public ShortBasedStorage() {
@@ -58,8 +60,10 @@ public class ShortBasedStorage implements DataStorage {
   @Override
   public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     final short idx = tokenType.getIndex();
-    if (tokenType.getIndex() < 0)
-      throw new IllegalArgumentException("Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter.");
+    if (tokenType.getIndex() < 0) {
+      LOG.error(new IllegalArgumentException(
+        "Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter."));
+    }
     return isRestartableState ? idx : -idx;
   }
 

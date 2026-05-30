@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,9 @@ import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
  */
 @ApiStatus.Internal
 public class IntBasedStorage implements DataStorage {
+
+  private static final Logger LOG = Logger.getInstance(IntBasedStorage.class);
+
   int[] myData;
 
   public IntBasedStorage() {
@@ -55,8 +59,10 @@ public class IntBasedStorage implements DataStorage {
 
   @Override
   public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
-    if (tokenType.getIndex() < 0)
-      throw new IllegalArgumentException("Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter.");
+    if (tokenType.getIndex() < 0) {
+      LOG.error(new IllegalArgumentException(
+        "Token type " + tokenType + " is not registered and cannot be used in a lexer editor highlighter."));
+    }
     return ((state & 0xFFFF) << 16) | (tokenType.getIndex() & 0xffff);
   }
 

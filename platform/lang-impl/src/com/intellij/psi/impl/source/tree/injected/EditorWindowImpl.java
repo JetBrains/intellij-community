@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -46,8 +45,6 @@ import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -297,10 +294,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull EditorHighlighter getHighlighter() {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    SyntaxHighlighter syntaxHighlighter =
-      SyntaxHighlighterFactory.getSyntaxHighlighter(myInjectedFile.getLanguage(), getProject(), myInjectedFile.getVirtualFile());
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(syntaxHighlighter, scheme);
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getProject(), myInjectedFile.getVirtualFile());
     highlighter.setText(getDocument().getText());
     highlighter.setEditor(new LightHighlighterClient(getDocument(), getProject()));
     return highlighter;
@@ -825,7 +819,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public String toString() {
-    return super.toString() + "[disposed=" + myDisposed + "; valid=" + ReadAction.compute(()->isValid()) + "]";
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + ReadAction.compute(() -> isValid()) + "]";
   }
 
   @Override
