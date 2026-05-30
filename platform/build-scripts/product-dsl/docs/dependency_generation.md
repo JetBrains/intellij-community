@@ -340,6 +340,9 @@ If a target is embedded in every product from the embedded-check scope, it is al
 - They can't be disabled or unloaded
 - Declaring them adds no value but creates maintenance burden
 
+Exception: content module dependencies remain explicit when the source descriptor overrides a service registered by the dependency descriptor.
+Service overrides depend on descriptor registration order, so embedded availability alone is not enough.
+
 ### Examples
 
 | Target module | Plugin source present? | Embedded in embedded-check scope? | Skip? |

@@ -971,6 +971,62 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
+    fun `content module in plugin keeps globally embedded dependency that registers overridden service`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val serviceInterface = "com.intellij.util.xml.ConverterManager"
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.xml.dom.impl") {
+            descriptor = """
+              <idea-plugin>
+                <extensions defaultExtensionNs="com.intellij">
+                  <applicationService serviceInterface="$serviceInterface"
+                                      serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"
+                                      open="true"/>
+                </extensions>
+              </idea-plugin>
+            """.trimIndent()
+          }
+
+          contentModule("intellij.java.xml.dom.impl") {
+            descriptor = """
+              <idea-plugin>
+                <extensions defaultExtensionNs="com.intellij">
+                  <applicationService serviceInterface="$serviceInterface"
+                                      serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"
+                                      overrides="true"/>
+                </extensions>
+              </idea-plugin>
+            """.trimIndent()
+            jpsDependency("intellij.xml.dom.impl")
+          }
+
+          plugin("com.intellij.java") {
+            content("intellij.java.xml.dom.impl")
+          }
+
+          product("Idea") {
+            bundlesPlugin("com.intellij.java")
+            moduleSet("xml") {
+              module(
+                "intellij.xml.dom.impl",
+                ModuleLoadingRuleValue.EMBEDDED
+              )
+            }
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("com.intellij.java"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.java.xml.dom.impl") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Overriding service registration needs the base service descriptor to load first")
+          .contains(ContentModuleName("intellij.xml.dom.impl"))
+      }
+    }
+
+    @Test
     fun `content module in plugin keeps dependency when only bundled owner plugin provides target`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {

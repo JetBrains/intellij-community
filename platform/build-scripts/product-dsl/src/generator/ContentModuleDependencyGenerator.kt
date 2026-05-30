@@ -200,7 +200,7 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
 
   // Compute production dependencies (written to XML)
   val prodInfo = descriptorCache.getOrAnalyze(contentModuleName.value)
-               ?: return ContentModuleGenerationOutput(plan = null, suppressibleError = null)
+                 ?: return ContentModuleGenerationOutput(plan = null, suppressibleError = null)
 
   if (prodInfo.skipDependencyGeneration) {
     return ContentModuleGenerationOutput(plan = null, suppressibleError = prodInfo.suppressibleError)
@@ -209,6 +209,7 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
   val plan = buildContentModuleDependencyPlanFromInfoWithBothSets(
     contentModuleName = contentModuleName,
     prodInfo = prodInfo,
+    descriptorCache = descriptorCache,
     graph = pluginGraph,
     allRealProductNames = allRealProductNames,
     suppressionConfig = suppressionConfig,
@@ -233,9 +234,10 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
  * These modules need their TEST scope JPS dependencies included in the XML because they run in
  * a test context. For these modules, we use `withTests=true` when computing "production" deps.
  */
-private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
+private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   contentModuleName: ContentModuleName,
   prodInfo: ModuleDescriptorCache.DescriptorInfo,
+  descriptorCache: ModuleDescriptorCache,
   graph: PluginGraph,
   allRealProductNames: Set<String>,
   suppressionConfig: SuppressionConfig,
@@ -287,14 +289,14 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     val module = contentModule(contentModuleName)
     isTestDescriptor || (module != null && !hasProductionContentSource(module.id))
   }
-  val prodGraphDeps = graph.query {
-    computeJpsDeps(
-      graph = graph,
-      moduleName = contentModuleName,
-      includeTestScope = includeTestScopeForWrittenDeps,
-      allRealProductNames = allRealProductNames,
-    )
-  }
+  val prodGraphDeps = computeJpsDeps(
+    graph = graph,
+    moduleName = contentModuleName,
+    includeTestScope = includeTestScopeForWrittenDeps,
+    allRealProductNames = allRealProductNames,
+    descriptorCache = descriptorCache,
+    sourceOverridingServiceKeys = prodInfo.overridingServiceKeys,
+  )
   val prodGraphModuleDeps = prodGraphDeps.moduleDeps
   val prodGraphPluginDeps = prodGraphDeps.pluginDeps
   val prodFilteredEmbeddedDeps = prodGraphDeps.filteredEmbeddedModuleDeps.filterTo(LinkedHashSet()) { dep -> dep in prodGraphModuleDeps }
@@ -339,6 +341,8 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     moduleName = contentModuleName,
     includeTestScope = true,
     allRealProductNames = allRealProductNames,
+    descriptorCache = descriptorCache,
+    sourceOverridingServiceKeys = prodInfo.overridingServiceKeys,
   ).moduleDeps
 
   for (depModule in testGraphModuleDeps) {
@@ -450,7 +454,7 @@ internal fun updateGraphWithModuleDependencyPlans(graph: PluginGraph, plans: Lis
     lazyNameIndex = true,
     descriptorFlagsComplete = false,
   )
-  
+
   val moduleIndex = newStore.mutableNameIndex(NODE_CONTENT_MODULE)
 
   // Add orphan nodes
@@ -501,6 +505,11 @@ private data class JpsDeps(
   val filteredEmbeddedModuleDeps: Set<ContentModuleName>,
 )
 
+private data class JpsModuleDepCandidate(
+  val moduleName: ContentModuleName,
+  @JvmField val filteredByEmbedded: Boolean,
+)
+
 /**
  * Computes JPS dependencies for a content module with scope filtering.
  *
@@ -510,17 +519,18 @@ private data class JpsDeps(
  * @param moduleName The content module name
  * @param includeTestScope If false, excludes TEST scope dependencies
  */
-private fun computeJpsDeps(
+private suspend fun computeJpsDeps(
   graph: PluginGraph,
   moduleName: ContentModuleName,
   includeTestScope: Boolean,
   allRealProductNames: Set<String>,
+  descriptorCache: ModuleDescriptorCache,
+  sourceOverridingServiceKeys: Set<String>,
 ): JpsDeps {
-  val moduleDeps = HashSet<ContentModuleName>()
+  val moduleDepCandidates = ArrayList<JpsModuleDepCandidate>()
   val pluginDeps = HashSet<PluginId>()
-  val filteredEmbeddedModuleDeps = HashSet<ContentModuleName>()
   graph.query {
-    val mod = contentModule(moduleName) ?: return JpsDeps(moduleDeps, pluginDeps, filteredEmbeddedModuleDeps)
+    val mod = contentModule(moduleName) ?: return@query
     val isPluginOnlySource = hasPluginSource(mod.id) && !hasNonPluginSource(mod.id)
     val applyEmbeddedPluginDependencyFiltering = isPluginOnlySource && !hasModuleSetWrapperSource(mod.id)
     val sourceOwnerPluginIds = if (applyEmbeddedPluginDependencyFiltering) {
@@ -573,13 +583,13 @@ private fun computeJpsDeps(
             }
             if (depModuleId != null && applyEmbeddedPluginDependencyFiltering && !sharesOwnerPlugin &&
                 shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
-              filteredEmbeddedModuleDeps.add(c.moduleName)
+              moduleDepCandidates.add(JpsModuleDepCandidate(c.moduleName, filteredByEmbedded = true))
               debug("missingDeps") {
                 "embeddedSkip source=${moduleName.value} dep=${c.moduleName.value} includeTestScope=$includeTestScope"
               }
             }
             else {
-              moduleDeps.add(c.moduleName)
+              moduleDepCandidates.add(JpsModuleDepCandidate(c.moduleName, filteredByEmbedded = false))
             }
           }
           is DependencyClassification.PluginDep -> pluginDeps.add(c.pluginId)
@@ -588,5 +598,48 @@ private fun computeJpsDeps(
       }
     }
   }
+
+  val moduleDeps = HashSet<ContentModuleName>()
+  val filteredEmbeddedModuleDeps = HashSet<ContentModuleName>()
+  val keepFilteredEmbeddedDeps = HashMap<ContentModuleName, Boolean>()
+
+  for (candidate in moduleDepCandidates) {
+    if (!candidate.filteredByEmbedded) {
+      moduleDeps.add(candidate.moduleName)
+      continue
+    }
+
+    val keepForServiceOverride = keepFilteredEmbeddedDeps.get(candidate.moduleName) ?: shouldKeepEmbeddedDependencyForServiceOverride(
+      descriptorCache = descriptorCache,
+      sourceOverridingServiceKeys = sourceOverridingServiceKeys,
+      depModuleName = candidate.moduleName,
+    ).also {
+      keepFilteredEmbeddedDeps.putIfAbsent(candidate.moduleName, it)
+    }
+
+    if (keepForServiceOverride) {
+      moduleDeps.add(candidate.moduleName)
+      debug("missingDeps") {
+        "embeddedKeep serviceOverrideOrder source=${moduleName.value} dep=${candidate.moduleName.value} includeTestScope=$includeTestScope"
+      }
+    }
+    else {
+      filteredEmbeddedModuleDeps.add(candidate.moduleName)
+    }
+  }
+
   return JpsDeps(moduleDeps, pluginDeps, filteredEmbeddedModuleDeps)
+}
+
+private suspend fun shouldKeepEmbeddedDependencyForServiceOverride(
+  descriptorCache: ModuleDescriptorCache,
+  sourceOverridingServiceKeys: Set<String>,
+  depModuleName: ContentModuleName,
+): Boolean {
+  if (sourceOverridingServiceKeys.isEmpty()) {
+    return false
+  }
+
+  val depInfo = descriptorCache.getOrAnalyze(depModuleName.value) ?: return false
+  return depInfo.registeredServiceKeys.any { sourceOverridingServiceKeys.contains(it) }
 }
