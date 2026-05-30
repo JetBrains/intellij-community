@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("SameParameterValue", "ReplaceGetOrSet")
+@file:Suppress("SameParameterValue", "ReplaceGetOrSet", "KotlinPrintToLogpoint")
 
 package org.jetbrains.intellij.build.bazel
 
@@ -112,7 +112,7 @@ internal class JpsModuleToBazel {
         kotlincDefaults = kotlincDefaults,
       )
       val moduleList = generator.computeModuleList(m2RepoPath)
-      // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
+      // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
       generator.save(communityResult.moduleBuildFiles)
@@ -253,7 +253,6 @@ internal class JpsModuleToBazel {
       val projectLibraries: Map<String, LibraryDescription>,
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun saveTargets(
       file: Path,
       targets: List<BazelBuildFileGenerator.ModuleTargets>,
@@ -469,11 +468,9 @@ internal class JpsModuleToBazel {
       )
 
       if (file.isRegularFile() && file.readText() == fileContent) {
-        println("No changes in $file")
         return targetsFileValue
       }
 
-      println("Writing targets info to $file")
       file.parent.createDirectories()
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
