@@ -29,6 +29,8 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
   private val _hasActiveSessions = MutableStateFlow(false)
   private val _toolCalls = MutableStateFlow<List<McpToolCallEntry>>(emptyList())
 
+  val activeSessionCount: Int get() = _sessions.value.size
+
   private fun createChildScope(name: String): CoroutineScope = cs.childScope(name)
 
   init {

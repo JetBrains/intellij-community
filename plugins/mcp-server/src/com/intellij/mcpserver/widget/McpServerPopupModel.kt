@@ -11,8 +11,10 @@ import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.util.getConsentDialog
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.TextTransferable
@@ -27,6 +29,7 @@ internal interface McpServerPopupModel {
   val unconfiguredMessage: String?
   val helpLink: String
   val detectedClientNames: List<String>
+  val activeConnectionCount: Int
 
   fun tryEnable(): Boolean
   fun disable()
@@ -64,6 +67,8 @@ internal class McpServerPopupModelImpl(
   override val braveMode: Boolean get() = settings.state.enableBraveMode
   override val sseUrl: String? get() = if (service.isRunning) addressProvider?.serverSseUrl else null
   override val streamUrl: String? get() = if (service.isRunning) addressProvider?.serverStreamUrl else null
+
+  override val activeConnectionCount: Int get() = service<McpDiagnosticService>().activeSessionCount
 
   override val helpLink: String get() = getHelpLink("mcp-server.html#supported-tools")
 
