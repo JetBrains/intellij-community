@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
+import com.intellij.platform.ide.nonModalWelcomeScreen.FileDragAndDropHandler
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -58,6 +60,8 @@ interface WelcomeRightTabContentProvider {
 
   @Composable
   fun getAdditionalLinks(project: Project): List<LinkModel> = emptyList()
+
+  fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
 
   /**
    * Optional link rendered below the feature grid (above the banner) on the welcome right tab.

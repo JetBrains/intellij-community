@@ -14,9 +14,13 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Unmodifiable
 import java.nio.file.Path
 
-internal object GoFileDragAndDropHandler {
+interface FileDragAndDropHandler {
+  fun openFiles(project: Project, files: @Unmodifiable List<Path>?): Boolean
+}
 
-  fun openFiles(project: Project, files: @Unmodifiable List<Path>?): Boolean {
+object DefaultFileDragAndDropHandler : FileDragAndDropHandler {
+
+  override fun openFiles(project: Project, files: @Unmodifiable List<Path>?): Boolean {
     if (files.isNullOrEmpty()) return false
 
     val fileEditorManager = FileEditorManager.getInstance(project)

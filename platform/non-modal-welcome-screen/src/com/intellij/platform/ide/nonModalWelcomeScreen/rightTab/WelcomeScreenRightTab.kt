@@ -56,7 +56,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
@@ -115,7 +114,7 @@ class WelcomeScreenRightTab(
       object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
           val files = FileCopyPasteUtil.getFiles(event.awtTransferable)
-          return GoFileDragAndDropHandler.openFiles(project, files)
+          return contentProvider.getFileDragAndDropHandler().openFiles(project, files)
         }
       }
     }
