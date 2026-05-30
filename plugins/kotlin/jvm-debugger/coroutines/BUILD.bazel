@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 create_kotlinc_options(
   name = "custom_coroutines",
@@ -9,6 +9,11 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ],
   x_context_parameters = True
+)
+
+jvm_provided_library(
+  name = "java_rt_provided",
+  lib = "//java/java-runtime:rt"
 )
 
 jvm_library(
@@ -59,7 +64,6 @@ jvm_library(
     "//java/execution/impl",
     "//java/debugger/impl",
     "//plugins/kotlin/code-insight/utils",
-    "//java/java-runtime:rt",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//java/java-impl:impl",
@@ -68,6 +72,7 @@ jvm_library(
     "//platform/execution",
     "//platform/statistics",
     "//platform/util:util-ui",
+    ":java_rt_provided",
   ]
 )
 
@@ -116,6 +121,7 @@ jvm_library(
     "//java/execution/impl:impl_test_lib",
     "//java/debugger/impl:impl_test_lib",
     "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//java/java-runtime:rt",
     "//java/java-runtime:rt_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",

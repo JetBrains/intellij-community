@@ -155,7 +155,13 @@ jvm_library(
   name = "kotlin-gradle-scripting-tests",
   module_name = "intellij.kotlin.gradle.scripting.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/plugin/k2",
+    "//platform/testRunner/plugin",
+    "//plugins/gradle/plugin",
+    "//plugins/gradle/java/plugin",
+  ]
 )
 
 jvm_library(
@@ -172,8 +178,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
-    "//plugins/kotlin/plugin/k2",
-    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-api:ide",
@@ -201,6 +205,10 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
     "//platform/workspace/jps",
     "//platform/workspace/jps:jps_test_lib",
     "//plugins/gradle",
@@ -303,8 +311,12 @@ jvm_library(
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-tests",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
+    "//plugins/gradle/plugin:plugin_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/gradle/java/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting.tests` end

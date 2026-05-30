@@ -69,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
-    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.java.impl" />

@@ -1,0 +1,10 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.psi"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

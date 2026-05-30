@@ -6,7 +6,10 @@ jvm_library(
   module_name = "intellij.junit.v6.rt.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = ["//platform/smRunner"]
+  runtime_deps = [
+    "//platform/smRunner",
+    "//platform/testRunner/plugin",
+  ]
 )
 
 jvm_library(
@@ -81,6 +84,7 @@ jvm_library(
     ":junit-v6-rt-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.junit.v6.rt.tests` end

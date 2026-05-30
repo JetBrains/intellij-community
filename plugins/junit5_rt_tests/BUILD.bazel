@@ -9,6 +9,7 @@ jvm_library(
   runtime_deps = [
     "//plugins/junit5_rt:junit-v5-rt",
     "//platform/smRunner",
+    "//platform/testRunner/plugin",
   ]
 )
 
@@ -96,6 +97,7 @@ jvm_library(
     ":junit-v5-rt-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.junit.v5.rt.tests` end
