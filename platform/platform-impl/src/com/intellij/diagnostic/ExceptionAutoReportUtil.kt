@@ -57,13 +57,6 @@ object ExceptionAutoReportUtil {
     return isAutoReportAllowedByUser()
   }
 
-  suspend fun isAutoReportEnabledAsync(): Boolean {
-    if (!isAutoReportVisible()) return false
-    if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
-
-    return isAutoReportAllowedByUser()
-  }
-
   @JvmStatic // may be called extremely early before IDE started!
   val isConsentAllowedToBeVisible: Boolean
     get() = isAutoReportVisibleBlocking() && !isAutoReportForced // do not show consents UI if level is forced

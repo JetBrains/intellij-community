@@ -63,7 +63,7 @@ internal class PluginFreezeWatcher {
   }
 }
 
-private const val DUMP_PREFIX = "dump"
+private const val DUMP_PREFIX = "dump-"
 
 internal class PluginFreezeAnalysis : FreezeAnalysis {
   override fun analyzeFreeze(event: AbstractMessage): PluginId? {
