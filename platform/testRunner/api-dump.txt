@@ -91,7 +91,6 @@ a:com.intellij.execution.testframework.Filter
 - select(java.util.List):java.util.List
 - a:shouldAccept(com.intellij.execution.testframework.AbstractTestProxy):Z
 com.intellij.execution.testframework.HistoryTestRunnableState
-- com.intellij.execution.configurations.VisibleRunContentState
 c:com.intellij.execution.testframework.HyperLink
 - com.intellij.execution.testframework.Printable
 - <init>(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V

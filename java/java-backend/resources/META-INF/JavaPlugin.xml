@@ -73,15 +73,11 @@
                         serviceImplementation="com.intellij.refactoring.util.RefactoringConflictsUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
 
-    <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
-                        serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity"/>
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibraryExtendedPropertiesUpdateStartupActivity"/>
     <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
-
-    <console.folding implementation="com.intellij.execution.filters.StackTraceFolding"/>
 
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge" preload="await"/>
@@ -112,8 +108,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 
-    <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
-
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
@@ -121,7 +115,6 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory" open="true"/>
     <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
-    <applicationService serviceImplementation="com.intellij.execution.filters.StackTraceFoldingSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
@@ -145,8 +138,6 @@
     <optionController implementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings$Provider"/>
     <optionController implementation="com.intellij.codeInsight.OrderEntryConfigurationProvider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>
-    <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
-                    serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.impl.EntryPointsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
@@ -233,9 +224,6 @@
     <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationRefreshAction"/>
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationActivity"/>
 
-    <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
-                        serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.JavaFindUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.JavaExtractMethodCollector"/>
     <statistics.counterUsagesCollector
@@ -277,8 +265,6 @@
 
     <changesGroupingPolicy key="module" id="module" weight="20"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
-    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
-
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
                     overrides="true"/>
@@ -349,7 +335,6 @@
 
     <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
 
-    <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectStructureSelectInTarget"/>
 
@@ -388,14 +373,10 @@
     <externalSystem.beforeRunTaskImporter
       implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
-    <externalSystem.runConfigurationEx implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJavaSdkProvider"
                         overrides="true"/>
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
-
-    <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
-    <java.programPatcher implementation="com.intellij.execution.ClasspathModificationPatcher" order="last"/>
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.JavaVersionChecker"/>
 
@@ -417,8 +398,6 @@
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
     <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
 
-    <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
-
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
@@ -433,7 +412,6 @@
 
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
-    <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
     <stacktrace.fold.line.modifier implementation="com.intellij.execution.JavaModuleNameStacktraceModifier"/>
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
@@ -507,37 +485,10 @@
 
     <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
 
-    <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
-    <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
-    <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
-    <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
-    <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
-
-    <executionTargetLanguageRuntimeType implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType"/>
-    <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
-                        serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
-
-    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
-    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
     <externalSystem.modifiableModelsProvider
       implementation="com.intellij.openapi.externalSystem.service.project.PackagingModifiableModelProvider"/>
-    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.jar.JarApplicationRunConfigurationImporter"/>
     <configuration.ModuleStructureExtension
       implementation="com.intellij.openapi.externalSystem.service.project.ExternalModuleStructureExtension"/>
-
-    <runLineMarkerContributor language="JVM"
-                              order="before applicationRunLineMarkerProvider"
-                              implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
-    <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
-                              implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
-    <completion.contributor language="TEXT" implementationClass="com.intellij.execution.ui.VmOptionsCompletionContributor"
-                            order="first" id="VmOptionsCompletionContributor"/>
-    <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
-                        serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
-
-    <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 
     <warmupConfigurator implementation="com.intellij.ide.warmup.JdkWarmupConfigurator"/>
     <postStartupActivity implementation="com.intellij.ide.warmup.JdkWarmupProjectActivity"/>
@@ -566,11 +517,6 @@
                          bundle="messages.JavaBundle" key="jvm.logging.configurable.display.name"/>
     <jvm.exceptionFilter implementation="com.intellij.execution.filters.NavigateToExceptionClassFilter"/>
 
-    <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
-    <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
-
-    <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>
-
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
     <fileIconPatcher implementation="com.intellij.ide.JavaExcludedFileIconPatcher" order="after javaFileIconPatcher"/>
     <editorTabTitleProvider implementation="com.intellij.ui.JavaEditorTabTitleProvider"/>
@@ -589,9 +535,6 @@
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector"
                               order="first"/>
 
-    <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
-    <runConfigurationExtension implementation="com.intellij.execution.impl.JavaDebuggerAutoAttach"/>
-
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>
     <weigher order="after stats" key="completion" id="methodChains"
@@ -603,7 +546,6 @@
                              handlerClass="com.intellij.codeInsight.intention.impl.config.AssignmentTooltipLinkHandler"/>
     <library.javaSourceRootDetector implementation="com.intellij.openapi.roots.ui.configuration.LibraryJavaSourceRootDetector"/>
 
-    <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
 
     <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
     <library.type implementation="com.intellij.externalSystem.ImportedLibraryType"/>
@@ -767,7 +709,6 @@
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
-    <testDiffProvider language="JAVA" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
@@ -1255,7 +1196,6 @@
                                             implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider" id="JAVA" order="after Android,after C++,after Dart,after General,after Go,after Handlebars, after ObjectiveC"/>
-    <consoleOptionsProvider instance="com.intellij.execution.filters.StackTraceFoldingConfigurable"/>
     <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <errorOptionsProvider instance="com.intellij.java.codeInspection.ui.JavaErrorOptionsProvider"/>
     <overrideImplementsAnnotationsHandler implementation="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandlerImpl"/>
@@ -1291,7 +1231,6 @@
 
     <java.externalAnnotation.locationProvider
       implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
-    <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
@@ -1322,7 +1261,6 @@
     <notificationGroup id="Legacy Library" displayType="TOOL_WINDOW" bundle="messages.JavaBundle" key="notification.group.legacy.library"/>
 
     <compiler.task execute="BEFORE" implementation="com.intellij.jarRepository.CompilationDependenciesResolutionTask"/>
-    <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
 
     <jarRepositoryAuthenticationDataProvider implementation="com.intellij.jarRepository.MavenSettingsXmlRepositoryAuthenticationDataProvider"
                                              order="last"/>
@@ -1359,9 +1297,6 @@
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
-
-    <threadDumpProvider implementation="com.intellij.execution.impl.JstackThreadDumpProvider"/>
-    <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
@@ -1453,7 +1388,6 @@
     <projectSettings service="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <projectSettings service="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
     <applicationSettings service="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
-    <projectSettings service="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <projectSettings service="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
     <projectSettings service="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
     <projectSettings service="com.intellij.compiler.options.ValidationConfiguration"/>
@@ -1462,7 +1396,6 @@
     <projectSettings service="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectSettings service="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <applicationSettings service="org.jetbrains.java.generate.GenerateToStringContext"/>
-    <applicationSettings service="com.intellij.execution.filters.StackTraceFoldingSettings"/>
     <projectSettings service="com.intellij.codeInspection.ex.impl.EntryPointsManagerImpl"/>
     <projectSettings service="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <applicationSettings service="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>

@@ -10,6 +10,6 @@
     <module name="intellij.platform.smRunner" loading="required"/>
     <module name="intellij.platform.smRunner.frontend.split" required-if-available="intellij.platform.frontend.split"/>
     <module name="intellij.platform.smRunner.vcs"/>
-    <module name="intellij.platform.smRunner.backend.split" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.smRunner.backend.split"/>
   </content>
 </idea-plugin>

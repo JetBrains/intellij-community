@@ -155,7 +155,6 @@ com.intellij.execution.configurations.TargetAwareRunProfile
 - com.intellij.execution.configurations.RunProfile
 - a:canRunOn(com.intellij.execution.ExecutionTarget):Z
 com.intellij.execution.configurations.VirtualConfigurationType
-com.intellij.execution.configurations.VisibleRunContentState
 com.intellij.execution.configurations.WithoutOwnBeforeRunSteps
 com.intellij.execution.configurations.WrappingRunConfiguration
 - com.intellij.execution.configurations.WithoutOwnBeforeRunSteps

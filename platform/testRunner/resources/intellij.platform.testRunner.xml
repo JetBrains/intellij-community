@@ -24,6 +24,7 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+    <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
     <projectSettings service="com.intellij.execution.testframework.autotest.AutoTestManager"/>
   </extensions>
