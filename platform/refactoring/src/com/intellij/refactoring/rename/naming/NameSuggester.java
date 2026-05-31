@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -200,7 +200,16 @@ public final class NameSuggester {
   private static @NotNull String decapitalizeProbably(@NotNull String word, String originalWord) {
     if (originalWord.isEmpty()) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
-      return StringUtil.decapitalize(word);
+      char[] chars = word.toCharArray();
+      for (int i = 0; i < chars.length; i++) {
+        if (Character.isUpperCase(chars[i]) && (i == 0 || i + 1 == chars.length || !Character.isLowerCase(chars[i + 1]))) {
+            chars[i] = Character.toLowerCase(chars[i]);
+        }
+        else {
+          break;
+        }
+      }
+      return new String(chars);
     }
     return word;
   }

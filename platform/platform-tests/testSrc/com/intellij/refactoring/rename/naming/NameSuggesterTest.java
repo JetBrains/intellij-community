@@ -205,16 +205,21 @@ public class NameSuggesterTest extends TestCase {
     doSuggestionTest("Bar", "FooBarBaz", "someBarAwesome", "someFooBarBazAwesome");
   }
 
-  private void doChangesTest(final String oldClassName, final String newClassName, final String changes) {
+  public void testSingleLetterPrefix() {
+    doSuggestionTest("ClassA", "QClassA", "classA","qClassA");
+  }
+  
+  public void testMultiLetterPrefix() {
+    doSuggestionTest("Encoder", "URLEncoder", "encoder", "urlEncoder");
+  }
+
+  private static void doChangesTest(String oldClassName, String newClassName, String changes) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);
-    assertEquals(
-      changes,
-      suggester.getChanges().toString()
+    assertEquals(changes, suggester.getChanges().toString()
     );
   }
 
-  private void doSuggestionTest(final String oldClassName, final String newClassName, final String variableName,
-                                final String expectedSuggestion) {
+  private static void doSuggestionTest(String oldClassName, String newClassName, String variableName, String expectedSuggestion) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);
     assertEquals(expectedSuggestion, suggester.suggestName(variableName));
   }
