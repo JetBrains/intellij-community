@@ -424,7 +424,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
         // Ensure RunManager is initialized off-EDT — the tree update path
         // (RunConfigurationsNode.updateRunConfigurations) queries it and would
         // otherwise trigger blocking service init on EDT.
-        project.serviceAsync<RunManager>()
+        RunManager.getInstanceAsync(project)
 
         r.run()
       }

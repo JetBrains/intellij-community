@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlin.ReplaceWith;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -38,7 +39,7 @@ public final class ReadAction {
    * @deprecated use {@link ReadAction#nonBlocking(Callable)} or {@link #computeBlocking(ThrowableComputable)} (for explicitly non-cancellable read actions)
    */
   @Deprecated
-  @RequiresBlockingContext
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "readActionBlocking(action)", imports = {}))
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     runBlocking(action);
   }
@@ -52,7 +53,7 @@ public final class ReadAction {
    * @deprecated use {@link ReadAction#nonBlocking(Callable)} or {@link #computeBlocking(ThrowableComputable)} (for explicitly non-cancellable read actions)
    */
   @Deprecated
-  @RequiresBlockingContext
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "readActionBlocking(action)", imports = {}))
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return computeBlocking(action);
   }
@@ -76,7 +77,7 @@ public final class ReadAction {
    * @see NonBlockingReadAction#executeSynchronously for synchronous execution in background threads
    * @see CoroutinesKt#readAction for suspend contexts
    */
-  @RequiresBlockingContext
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "readActionBlocking(action)", imports = {}))
   public static <T, E extends Throwable> T computeBlocking(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
     if (isReadAllowedButNotWrite(application)) {
@@ -106,8 +107,9 @@ public final class ReadAction {
    * @see NonBlockingReadAction#executeSynchronously for synchronous execution in background threads
    * @see CoroutinesKt#readAction for suspend contexts
    */
-  @SuppressWarnings("SSBasedInspection") // to not replace application call to ReadAction.compute
-  @RequiresBlockingContext
+   // to not replace application call to ReadAction.compute
+  @SuppressWarnings("CanBeSimplifiedToReadActionCompute")
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "readActionBlocking(action)", imports = {}))
   public static <E extends Throwable> void runBlocking(@NotNull ThrowableRunnable<E> action) throws E {
     Application application = ApplicationManager.getApplication();
     if (isReadAllowedButNotWrite(application)) {

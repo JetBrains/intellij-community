@@ -492,6 +492,7 @@ com.intellij.util.QueryExecutor
 - a:wrapExecution(com.intellij.util.Processor,com.intellij.util.Processor):Z
 *@:com.intellij.util.concurrency.annotations.RequiresBlockingContext
 - java.lang.annotation.Annotation
+- a:replaceWith():kotlin.ReplaceWith
 *@:com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 - java.lang.annotation.Annotation
 - a:generateAssertion():Z

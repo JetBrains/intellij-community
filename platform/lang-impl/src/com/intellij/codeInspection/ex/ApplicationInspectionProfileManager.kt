@@ -29,7 +29,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -58,7 +57,6 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable @Internal con
 
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstanceImpl(): ApplicationInspectionProfileManager {
       return InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
     }

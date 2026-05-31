@@ -209,7 +209,7 @@ fun projectFixture(
     newProject
   }
   // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
-  project.serviceAsync<RunManager>()
+  RunManager.getInstanceAsync(project)
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
   }

@@ -35,7 +35,7 @@ internal class ProjectRunConfigurationInitializer : InitProjectActivity {
         // Message bus will fire queued parent message bus messages
         // (and, so, SOE may occur because all other projectOpened will be processed before us)
         // you should not listen to changes until the project opened
-        project.serviceAsync<RunManager>()
+        RunManager.getInstanceAsync(project)
         IS_RUN_MANAGER_INITIALIZED.set(project, true)
       }
     }

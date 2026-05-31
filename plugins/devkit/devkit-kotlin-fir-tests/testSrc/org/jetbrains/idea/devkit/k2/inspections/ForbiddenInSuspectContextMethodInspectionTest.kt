@@ -317,7 +317,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       }
 
       suspend fun suspendContext() {
-        <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
+          <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
       }
     """.trimIndent())
 
@@ -325,7 +325,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
     assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    myFixture.launchAction(intention)
 
     myFixture.checkResult("""
       import com.example.suspendAlternative
@@ -336,7 +336,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       }
 
       suspend fun suspendContext() {
-        suspendAlternative()
+          suspendAlternative()
       }
     """.trimIndent())
   }

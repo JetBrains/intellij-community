@@ -39,7 +39,8 @@ fun <T> runReadAction(runnable: () -> T): T = runReadActionBlocking(runnable)
  * @see NonBlockingReadAction.executeSynchronously() for synchronous execution in background threads
  * @see readAction for suspend contexts
  */
-@RequiresBlockingContext
+@RequiresBlockingContext(replaceWith = ReplaceWith(expression = "readActionBlocking(runnable)",
+                                                   imports = ["com.intellij.openapi.application.readActionBlocking"]))
 fun <T> runReadActionBlocking(runnable: () -> T): T {
   val application = ApplicationManager.getApplication()
   if (application.isReadAllowedButNotWrite()) {
