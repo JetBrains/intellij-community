@@ -15,6 +15,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAndBackgroundWriteAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -28,6 +29,7 @@ import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.currentCoroutineContext
 import kotlin.io.path.name
 import kotlin.io.path.pathString
+import kotlin.time.measureTime
 
 class PatchToolset : McpToolset {
   @McpTool
@@ -69,8 +71,19 @@ class PatchToolset : McpToolset {
       }
     }
 
-    FileDocumentManager.getInstance().saveAllDocuments()
-    ManagingFS.getInstance().flushPendingUpdates()
+    val saveDocsSecs = measureTime {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }.inWholeSeconds
+    if (saveDocsSecs > 10) {
+      thisLogger().error("saveAllDocuments took $saveDocsSecs seconds")
+    }
+
+    val flushSecs = measureTime {
+      ManagingFS.getInstance().flushPendingUpdates()
+    }.inWholeSeconds
+    if (flushSecs > 10) {
+      thisLogger().error("flushPendingUpdates took $flushSecs seconds")
+    }
 
     val total = operations.size
     val failed = errors.size
