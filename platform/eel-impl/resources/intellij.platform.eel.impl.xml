@@ -6,7 +6,6 @@
     <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>

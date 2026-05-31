@@ -6,10 +6,14 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
@@ -40,5 +44,11 @@
       bundle="messages.IjentImplBundle"
       groupKey="advanced.settings.container.environments"
     />
+    <projectConfigurable
+      groupId="build"
+      id="ijent.dashboard"
+      key="configurable.ijent.dashboard.display.name"
+      bundle="messages.IjentImplBundle"
+      instance="com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable"/>
   </extensions>
 </idea-plugin>

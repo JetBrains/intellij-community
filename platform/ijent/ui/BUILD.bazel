@@ -9,6 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
+    "//platform/observable",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/eel",
@@ -29,6 +30,10 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/platform-impl:ide-impl",
     "//platform/util:util-ui",
+    "//platform/util/coroutines",
+    "//platform/lang-api:lang",
+    "//platform/execution",
+    "//platform/platform-frontend:frontend",
   ]
 )
 
@@ -40,6 +45,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":ui",
+    "//platform/observable:observable_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/util:util_test_lib",
@@ -58,6 +64,10 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ijent.community.ui` end
