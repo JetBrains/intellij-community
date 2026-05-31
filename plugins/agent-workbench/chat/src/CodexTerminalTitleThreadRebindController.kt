@@ -51,7 +51,7 @@ internal class CodexTerminalTitleThreadRebindController(
 ) : AgentChatDisposableController {
   private var listenerDisposable: Disposable? = null
   private var rebindJob: Job? = null
-  private var observedThreadId: String? = null
+  private var reboundThreadId: String? = null
 
   fun attach(terminalTitle: TerminalTitle, parentScope: CoroutineScope) {
     if (listenerDisposable != null) {
@@ -77,33 +77,36 @@ internal class CodexTerminalTitleThreadRebindController(
     if (!file.isCodexTopLevelThread() || file.projectPath.isBlank()) {
       return false
     }
-    if (observedThreadId == threadId || rebindJob?.isActive == true) {
+    if (reboundThreadId == threadId || rebindJob?.isActive == true) {
       return false
     }
 
     val projectPath = file.projectPath
     val request = buildRebindRequest(projectPath = projectPath, threadId = threadId) ?: return false
 
-    observedThreadId = threadId
     val job = parentScope.launch {
-      val reboundBindings = when (request) {
+      val rebindResult = when (request) {
         is CodexTerminalTitleRebindRequest.Pending -> rebindPendingTabs(
           AgentSessionProvider.CODEX,
           mapOf(projectPath to listOf(request.request)),
-        ).reboundBindings
+        ).toTerminalTitleRebindResult()
 
         is CodexTerminalTitleRebindRequest.Concrete -> rebindConcreteTabs(
           AgentSessionProvider.CODEX,
           mapOf(projectPath to listOf(request.request)),
-        ).reboundBindings
+        ).toTerminalTitleRebindResult()
       }
-      if (reboundBindings > 0) {
+      if (rebindResult.reboundBindings > 0) {
         tabSnapshotWriter.upsert(file.toSnapshot())
+        synchronized(this@CodexTerminalTitleThreadRebindController) {
+          reboundThreadId = threadId
+        }
       }
       notifyRefresh(AgentSessionProvider.CODEX, projectPath, threadId, null)
       LOG.debug {
         "Codex terminal title rebind requested for path=$projectPath threadId=$threadId " +
-        "reboundBindings=$reboundBindings"
+        "requestedBindings=${rebindResult.requestedBindings}, reboundBindings=${rebindResult.reboundBindings}, " +
+        "outcomes=${rebindResult.outcomesByPath}"
       }
     }
     rebindJob = job
@@ -165,6 +168,28 @@ private sealed interface CodexTerminalTitleRebindRequest {
   data class Pending(val request: AgentChatPendingTabRebindRequest) : CodexTerminalTitleRebindRequest
 
   data class Concrete(val request: AgentChatConcreteTabRebindRequest) : CodexTerminalTitleRebindRequest
+}
+
+private data class CodexTerminalTitleRebindResult(
+  val requestedBindings: Int,
+  val reboundBindings: Int,
+  val outcomesByPath: Map<String, List<String>>,
+)
+
+private fun AgentChatPendingTabRebindReport.toTerminalTitleRebindResult(): CodexTerminalTitleRebindResult {
+  return CodexTerminalTitleRebindResult(
+    requestedBindings = requestedBindings,
+    reboundBindings = reboundBindings,
+    outcomesByPath = outcomesByPath.mapValues { (_, outcomes) -> outcomes.map { it.status.name } },
+  )
+}
+
+private fun AgentChatConcreteTabRebindReport.toTerminalTitleRebindResult(): CodexTerminalTitleRebindResult {
+  return CodexTerminalTitleRebindResult(
+    requestedBindings = requestedBindings,
+    reboundBindings = reboundBindings,
+    outcomesByPath = outcomesByPath.mapValues { (_, outcomes) -> outcomes.map { it.status.name } },
+  )
 }
 
 internal fun extractCodexThreadIdFromTerminalTitle(applicationTitle: String?): String? {

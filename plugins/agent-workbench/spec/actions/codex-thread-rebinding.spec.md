@@ -25,7 +25,7 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Codex launch specs must configure `tui.terminal_title=["thread"]` so the terminal title exposes the concrete thread id. Agent Chat may use this title as an early rebind signal before app-server refresh can reliably read the thread.
+- Codex launch specs must configure `tui.terminal_title=["thread-id","thread"]` so the terminal title exposes the concrete thread id even after Codex assigns a human thread title. Agent Chat may use this title as an early rebind signal before app-server refresh can reliably read the thread. The `thread-id` title item is supported by stable Codex CLI `0.131.0+` and first appeared in `0.130.0-alpha.8`; stable `0.130.0` and older ignore it as invalid and fall back to the valid `thread` item.
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 

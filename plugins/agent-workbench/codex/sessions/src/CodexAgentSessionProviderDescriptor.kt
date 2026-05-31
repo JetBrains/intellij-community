@@ -252,6 +252,5 @@ private fun buildCodexBaseCommand(executable: String): List<String> {
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
-// Codex writes the concrete thread id into the terminal title. Agent Chat uses it as an early rebind signal before
-// app-server refresh can reliably read the thread.
-private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread\"]"
+// The dedicated thread-id title item is the stable UUID signal. The thread item keeps the human title/fallback visible.
+private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread-id\",\"thread\"]"

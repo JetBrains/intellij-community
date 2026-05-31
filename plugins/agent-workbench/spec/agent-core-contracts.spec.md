@@ -35,13 +35,13 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
-- Standard resume command mapping after executable token is canonical: Codex `-c check_for_update_on_startup=false -c tui.terminal_title=["thread"] resume <id>`, Claude `--resume <id>`, Junie `--skip-update-check --session-id <id>`. YOLO resume uses provider-specific YOLO flags only when explicitly requested by prompt launch or restored from stored chat tab metadata; ordinary thread open must not infer YOLO from global last-used UI preferences.
+- Standard resume command mapping after executable token is canonical: Codex `-c check_for_update_on_startup=false -c tui.terminal_title=["thread-id","thread"] resume <id>`, Claude `--resume <id>`, Junie `--skip-update-check --session-id <id>`. Codex `thread-id` is supported by stable CLI `0.131.0+`; stable `0.130.0` and older ignore it and fall back to `thread`. YOLO resume uses provider-specific YOLO flags only when explicitly requested by prompt launch or restored from stored chat tab metadata; ordinary thread open must not infer YOLO from global last-used UI preferences.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
-- New-thread command mapping after executable token is canonical: Codex standard/YOLO include `-c check_for_update_on_startup=false -c tui.terminal_title=["thread"]`, Claude standard/YOLO with a preallocated `--session-id <uuid>`, and Junie standard/YOLO are defined by provider descriptors and tested there.
+- New-thread command mapping after executable token is canonical: Codex standard/YOLO include `-c check_for_update_on_startup=false -c tui.terminal_title=["thread-id","thread"]`, Claude standard/YOLO with a preallocated `--session-id <uuid>`, and Junie standard/YOLO are defined by provider descriptors and tested there. Codex `thread-id` has the same `0.131.0+` stable compatibility boundary as resume launches.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt

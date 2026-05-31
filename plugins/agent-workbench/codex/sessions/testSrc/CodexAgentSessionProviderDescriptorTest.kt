@@ -434,5 +434,5 @@ private val CODEX_BASE_COMMAND: List<String> = listOf(
   "-c",
   "check_for_update_on_startup=false",
   "-c",
-  "tui.terminal_title=[\"thread\"]",
+  "tui.terminal_title=[\"thread-id\",\"thread\"]",
 )

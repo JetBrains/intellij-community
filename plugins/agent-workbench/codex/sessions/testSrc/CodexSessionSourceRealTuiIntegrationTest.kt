@@ -188,4 +188,4 @@ class CodexSessionSourceRealTuiIntegrationTest {
   }
 }
 
-private const val CODEX_TERMINAL_TITLE_THREAD_CONFIG: String = "tui.terminal_title=[\"thread\"]"
+private const val CODEX_TERMINAL_TITLE_THREAD_CONFIG: String = "tui.terminal_title=[\"thread-id\",\"thread\"]"

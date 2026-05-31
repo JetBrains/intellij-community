@@ -108,6 +108,8 @@ class AgentChatFileEditorLifecycleTest {
       .isEqualTo(threadId)
     assertThat(extractCodexThreadIdFromTerminalTitle("CODEX · 018F4B30-F1B2-7000-9B4D-ABCDEF123456"))
       .isEqualTo(threadId)
+    assertThat(extractCodexThreadIdFromTerminalTitle("$threadId | Fix indexing bug | /work/project-a"))
+      .isEqualTo(threadId)
     assertThat(extractCodexThreadIdFromTerminalTitle("Codex · Fix indexing bug · /work/project-a"))
       .isNull()
   }
@@ -166,6 +168,63 @@ class AgentChatFileEditorLifecycleTest {
       title.change { applicationTitle = "Codex · $threadId" }
 
       assertThat(requests).hasSize(1)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun codexTerminalTitleRebindRetriesPendingTabWhenFirstAttemptDoesNotRebind() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = pendingTestFile()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val requests = mutableListOf<AgentChatPendingTabRebindRequest>()
+    val refreshThreadIds = mutableListOf<String?>()
+    var attempts = 0
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindPendingTabs = { _, requestsByPath ->
+        val request = requestsByPath.getValue(file.projectPath).single()
+        requests += request
+        attempts++
+        if (attempts == 1) {
+          pendingRebindReport(file.projectPath, request, AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN)
+        }
+        else {
+          file.rebindPendingThread(
+            threadIdentity = request.target.threadIdentity,
+            threadId = request.target.threadId,
+            threadTitle = request.target.threadTitle,
+            threadActivity = request.target.threadActivity,
+          )
+          pendingRebindReport(file.projectPath, request, AgentChatPendingTabRebindStatus.REBOUND)
+        }
+      },
+      notifyRefresh = { _, _, refreshedThreadId, _ ->
+        refreshThreadIds += refreshedThreadId
+      },
+    )
+
+    try {
+      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+
+      assertThat(requests).hasSize(1)
+      assertThat(file.isPendingThread).isTrue()
+      assertThat(snapshotWriter.snapshots).isEmpty()
+      assertThat(refreshThreadIds).containsExactly(threadId)
+
+      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+
+      assertThat(requests).hasSize(2)
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadId).isEqualTo(threadId)
+      assertThat(file.isPendingThread).isFalse()
+      assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(refreshThreadIds).containsExactly(threadId, threadId)
     }
     finally {
       controller.dispose()
@@ -408,6 +467,67 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(file.newThreadRebindRequestedAtMs).isNull()
       assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(refreshThreadIds).containsExactly(threadId)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun codexTerminalTitleRebindRetriesConcreteTabAfterNewThreadCommandWhenFirstAttemptDoesNotRebind() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = testFile()
+    file.updateNewThreadRebindRequestedAtMs(2_000L)
+    val snapshotWriter = RecordingSnapshotWriter()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
+    val refreshThreadIds = mutableListOf<String?>()
+    var attempts = 0
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindConcreteTabs = { _, requestsByPath ->
+        val request = requestsByPath.getValue(file.projectPath).single()
+        requests += request
+        attempts++
+        if (attempts == 1) {
+          concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.CONCRETE_TAB_NOT_OPEN)
+        }
+        else {
+          file.rebindConcreteThread(
+            threadIdentity = request.target.threadIdentity,
+            threadId = request.target.threadId,
+            threadTitle = request.target.threadTitle,
+            threadActivity = request.target.threadActivity,
+          )
+          concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.REBOUND)
+        }
+      },
+      notifyRefresh = { _, _, refreshedThreadId, _ ->
+        refreshThreadIds += refreshedThreadId
+      },
+      currentTimeProvider = { 2_100L },
+    )
+
+    try {
+      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+
+      assertThat(requests).hasSize(1)
+      assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
+      assertThat(file.threadId).isEqualTo("thread-1")
+      assertThat(file.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
+      assertThat(snapshotWriter.snapshots).isEmpty()
+      assertThat(refreshThreadIds).containsExactly(threadId)
+
+      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+
+      assertThat(requests).hasSize(2)
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadId).isEqualTo(threadId)
+      assertThat(file.newThreadRebindRequestedAtMs).isNull()
+      assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(refreshThreadIds).containsExactly(threadId, threadId)
     }
     finally {
       controller.dispose()
@@ -2141,6 +2261,54 @@ private fun codexPlanDispatchSteps(
     AgentInitialMessageDispatchStep(
       text = prompt,
       timeoutPolicy = promptTimeoutPolicy,
+    ),
+  )
+}
+
+private fun pendingRebindReport(
+  projectPath: String,
+  request: AgentChatPendingTabRebindRequest,
+  status: AgentChatPendingTabRebindStatus,
+): AgentChatPendingTabRebindReport {
+  val reboundFiles = if (status == AgentChatPendingTabRebindStatus.REBOUND) 1 else 0
+  return AgentChatPendingTabRebindReport(
+    requestedBindings = 1,
+    reboundBindings = reboundFiles,
+    reboundFiles = reboundFiles,
+    updatedPresentations = reboundFiles,
+    outcomesByPath = mapOf(
+      projectPath to listOf(
+        AgentChatPendingTabRebindOutcome(
+          projectPath = projectPath,
+          request = request,
+          status = status,
+          reboundFiles = reboundFiles,
+        )
+      )
+    ),
+  )
+}
+
+private fun concreteRebindReport(
+  projectPath: String,
+  request: AgentChatConcreteTabRebindRequest,
+  status: AgentChatConcreteTabRebindStatus,
+): AgentChatConcreteTabRebindReport {
+  val reboundFiles = if (status == AgentChatConcreteTabRebindStatus.REBOUND) 1 else 0
+  return AgentChatConcreteTabRebindReport(
+    requestedBindings = 1,
+    reboundBindings = reboundFiles,
+    reboundFiles = reboundFiles,
+    updatedPresentations = reboundFiles,
+    outcomesByPath = mapOf(
+      projectPath to listOf(
+        AgentChatConcreteTabRebindOutcome(
+          projectPath = projectPath,
+          request = request,
+          status = status,
+          reboundFiles = reboundFiles,
+        )
+      )
     ),
   )
 }
