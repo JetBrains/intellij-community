@@ -71,7 +71,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see ReplaceWith
  */
 @MustBeDocumented
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.BINARY)
 @Target(
   AnnotationTarget.FUNCTION,
   AnnotationTarget.PROPERTY_GETTER,
@@ -80,27 +80,4 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 annotation class RequiresBlockingContext(
   val replaceWith: ReplaceWith = ReplaceWith(""),
-)
-
-/**
- * Specifies a code fragment that can be used to replace a blocking function call
- * with its suspend equivalent.
- *
- * This is modeled after [kotlin.ReplaceWith] and follows the same semantics.
- *
- * @property expression the replacement expression. Must be a valid Kotlin expression.
- *                      The replacement expression is interpreted in the context of the symbol being used
- *                      and can reference members of the enclosing classes, etc.
- *                      An empty string means no replacement is specified.
- * @property imports the fully qualified names that should be imported to make the replacement
- *                   expression resolve correctly. These are not inserted automatically and are
- *                   used by inspection tooling to determine what imports may be needed.
- * @see kotlin.ReplaceWith
- */
-@MustBeDocumented
-@Retention(AnnotationRetention.SOURCE)
-@Target()
-annotation class ReplaceWith(
-  val expression: String,
-  vararg val imports: String,
 )

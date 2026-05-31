@@ -346,10 +346,12 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
       .setValue(true, testRootDisposable)
 
-    myFixture.configureByText("file.kt", """
+    myFixture.configureByText("file.kt", /* language=kotlin */ """
+      package demo
+
       import com.intellij.util.concurrency.annotations.*
 
-      @RequiresBlockingContext(ReplaceWith("suspendAlternative()"))
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", imports = []))
       fun blockingFunction() {
       }
 
@@ -357,7 +359,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       }
 
       suspend fun suspendContext() {
-        <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
+          <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
       }
     """.trimIndent())
 
@@ -365,12 +367,14 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
     assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    myFixture.launchAction(intention)
 
     myFixture.checkResult("""
+      package demo
+
       import com.intellij.util.concurrency.annotations.*
 
-      @RequiresBlockingContext(ReplaceWith("suspendAlternative()"))
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", imports = []))
       fun blockingFunction() {
       }
 
@@ -378,7 +382,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       }
 
       suspend fun suspendContext() {
-        suspendAlternative()
+          suspendAlternative()
       }
     """.trimIndent())
   }
@@ -880,21 +884,20 @@ abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixture
 
   @Before
   fun addAnnotation() {
-    myFixture.addClass("""
+    myFixture.addFileToProject("RequiresBlockingContext.kt", """
       package com.intellij.util.concurrency.annotations;
 
-      public @interface ReplaceWith {
-        String expression();
-        String[] imports() default {};
-      }
-    """.trimIndent())
-
-    myFixture.addClass("""
-      package com.intellij.util.concurrency.annotations;
-
-      public @interface RequiresBlockingContext {
-        ReplaceWith replaceWith() default @ReplaceWith(expression = "");
-      }
+      @MustBeDocumented
+      @Retention(AnnotationRetention.BINARY)
+      @Target(
+        AnnotationTarget.FUNCTION,
+        AnnotationTarget.PROPERTY_GETTER,
+        AnnotationTarget.PROPERTY_SETTER,
+      )
+      @ApiStatus.Experimental
+      annotation class RequiresBlockingContext(
+        val replaceWith: ReplaceWith = ReplaceWith(""),
+      )
     """.trimIndent())
   }
 

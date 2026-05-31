@@ -20,9 +20,9 @@ import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.util.isImported
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
@@ -203,11 +205,11 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       val replaceWithArg = requiresBlockingContextAnnotation.arguments.find { it.name.asString() == "replaceWith" }
         ?: return null
 
-      val replaceWithAnnotation = replaceWithArg.expression as? KaAnnotation
+      val replaceWithAnnotation = (replaceWithArg.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotation
         ?: return null
 
       val expressionArg = replaceWithAnnotation.arguments.find { it.name.asString() == "expression" }
-      val replacementExpression = (expressionArg?.expression as? org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ConstantValue)
+      val replacementExpression = (expressionArg?.expression as? KaAnnotationValue.ConstantValue)
         ?.value?.value as? String
         ?: return null
 
@@ -215,15 +217,17 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
       val importsArg = replaceWithAnnotation.arguments.find { it.name.asString() == "imports" }
       val imports = when (val importsValue = importsArg?.expression) {
-        is org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue -> {
+        is KaAnnotationValue.ArrayValue -> {
           importsValue.values.mapNotNull {
-            (it as? org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ConstantValue)?.value?.value as? String
+            (it as? KaAnnotationValue.ConstantValue)?.value?.value as? String
           }
         }
         else -> emptyList()
       }
 
-      return ReplaceWithSuspendAlternativeQuickFix(expression, replacementExpression, imports)
+      val callName = expression.getCallNameExpression() ?: return null
+
+      return ReplaceWithSuspendAlternativeFix(callName, ReplaceWithData(replacementExpression, imports, false))
     }
 
     private fun KaSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {

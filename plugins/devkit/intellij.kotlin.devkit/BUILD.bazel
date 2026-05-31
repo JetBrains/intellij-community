@@ -56,6 +56,8 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/polySymbols",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
   ]
 )
 
@@ -104,6 +106,8 @@ jvm_library(
     "//java/openapi:java_test_lib",
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/polySymbols:polySymbols_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.devkit` end
