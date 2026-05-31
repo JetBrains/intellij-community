@@ -5,6 +5,9 @@ import com.example.SubclassOfProcessCanceledException;
 class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   private static final Logger LOG = Logger.getInstance(IncorrectPceHandlingWhenPceCaughtImplicitlyTests.class);
 
+  void rethrowControlFlowException(Throwable t) { // API stub
+  }
+
   // tests for ProcessCanceledException
 
   void throwPce() throws ProcessCanceledException {
@@ -16,6 +19,25 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
       throwPce();
     } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown. It is thrown by 'throwPce()'.">e</error>) {
       // exception swallowed
+    }
+  }
+
+  void testPceRethrown() {
+    try {
+      throwPce();
+    } catch (Exception e) {
+      // exception rethrown with platform fun
+      rethrowControlFlowException(e);
+    }
+  }
+
+  void testPceRethrownAndLog() {
+    try {
+      throwPce();
+    } catch (Exception e) {
+      // exception rethrown with platform fun
+      rethrowControlFlowException(e);
+      LOG.info(e);
     }
   }
 

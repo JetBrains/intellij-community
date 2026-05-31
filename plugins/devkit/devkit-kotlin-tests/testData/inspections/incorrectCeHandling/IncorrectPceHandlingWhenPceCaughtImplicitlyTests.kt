@@ -5,6 +5,9 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = Logger.getInstance("any")
 
+fun rethrowControlFlowException(t: Throwable) { // API stub
+}
+
 class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
 
   // tests for ProcessCanceledException
@@ -19,6 +22,27 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown. It is thrown by 'throwPce()'.">e</error>: Exception) {
       // exception swallowed
+    }
+  }
+
+  fun testPceRethrown() {
+    try {
+      throwPce()
+    }
+    catch (e: Exception) {
+      // exception rethrown with platform fun
+      rethrowControlFlowException(e)
+    }
+  }
+
+  fun testPceRethrownAndLog() {
+    try {
+      throwPce()
+    }
+    catch (e: Exception) {
+      // exception rethrown with platform fun
+      rethrowControlFlowException(e)
+      LOG.info("Error occured", e)
     }
   }
 
