@@ -23,8 +23,8 @@
     <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.promo.FreezeCounterListener"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.PerformanceTestingBundle">
     <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
-            internal="true" text="Reset Freezes Notification State"/>
+            internal="true"/>
   </actions>
 </idea-plugin>
