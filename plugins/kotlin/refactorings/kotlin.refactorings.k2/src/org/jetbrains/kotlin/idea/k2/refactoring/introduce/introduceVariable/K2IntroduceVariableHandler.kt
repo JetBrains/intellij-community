@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.isAncestor
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -60,6 +62,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
+import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -80,14 +83,17 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -360,6 +366,55 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
+    private fun replaceDestructuredPropertyReferences(
+        references: MutableList<SmartPsiElementPointer<KtExpression>>,
+        propertyNames: List<String>,
+        entryNames: List<String>,
+    ) {
+        val entryNameByPropertyName = propertyNames.zip(entryNames).toMap()
+        if (entryNameByPropertyName.isEmpty()) return
+
+        val newReferences = references.mapNotNull { pointer ->
+            val reference = pointer.element ?: return@mapNotNull null
+            val qualifiedExpression = reference.getDotQualifiedExpressionForReceiverIgnoringParentheses()
+                ?: return@mapNotNull pointer
+            val selectorName = (qualifiedExpression.selectorExpression as? KtNameReferenceExpression)?.getReferencedName()
+                ?: return@mapNotNull pointer
+            val entryName = entryNameByPropertyName[selectorName]
+                ?: return@mapNotNull pointer
+
+            val replacement = KtPsiFactory(reference.project).createExpression(entryName)
+            qualifiedExpression.replace(replacement)
+            null
+        }
+
+        references.clear()
+        references.addAll(newReferences)
+    }
+
+    private fun KtExpression.getDotQualifiedExpressionForReceiverIgnoringParentheses(): KtDotQualifiedExpression? {
+        var receiver: KtExpression = this
+        while (receiver.parent is KtParenthesizedExpression) {
+            receiver = receiver.parent as KtParenthesizedExpression
+        }
+        val qualifiedExpression = receiver.parent as? KtDotQualifiedExpression ?: return null
+        return qualifiedExpression.takeIf { it.receiverExpression == receiver }
+    }
+
+    private fun suggestDestructuredPropertyNames(
+        expression: KtExpression,
+        entriesCount: Int,
+    ): List<String>? {
+        return analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            val expressionType = expression.expressionType?.lowerBoundIfFlexible() as? KaClassType
+                ?: return@analyzeInModalWindow null
+            extractDataClassParameters(expressionType)
+                ?.takeIf { entriesCount <= it.size }
+                ?.take(entriesCount)
+                ?.map { it.name.asString() }
+        }
+    }
+
     context(_: KaSession)
     private fun KaType?.toDenotable(): KaType? {
         val type = when {
@@ -444,6 +499,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     else -> suggestSingleVariableNames(expression, nameValidator)
                 }
                 val selectedDestructuringEntryNames = destructuringNames.takeIf { it.isNotEmpty() }?.map { it.first() }
+                val destructuringPropertyNames =
+                    destructuringNames.takeIf { it.isNotEmpty() }?.let { suggestDestructuredPropertyNames(expression, it.size) }
                 val nameBasedDestructuringPropertyNames =
                     destructuringNames.takeIf { it.isNotEmpty() }?.let { suggestNameBasedDestructuringPropertyNames(expression, it.size) }
 
@@ -492,6 +549,15 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
                     destructuringDeclarationForReplacement?.initializer?.let { initializer ->
                         introduceVariableContext.references.add(SmartPointerManager.createPointer(initializer))
+                    }
+                    if (destructuringDeclarationForReplacement != null && destructuringPropertyNames != null && selectedDestructuringEntryNames != null) {
+                        runWriteAction {
+                            replaceDestructuredPropertyReferences(
+                                introduceVariableContext.references,
+                                destructuringPropertyNames,
+                                selectedDestructuringEntryNames,
+                            )
+                        }
                     }
 
                     val destructuringDeclaration = property as? KtDestructuringDeclaration
