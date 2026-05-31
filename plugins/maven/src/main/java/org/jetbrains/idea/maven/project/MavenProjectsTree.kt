@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -60,8 +59,6 @@ class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
   private val myStructureReadLock: Lock = myStructureLock.readLock()
   private val myStructureWriteLock: Lock = myStructureLock.writeLock()
-
-  private val myManagedFilesPaths: MutableSet<String> = LinkedHashSet()
 
   private val myIgnoredFilesPaths: MutableList<String> = ArrayList()
 
@@ -407,17 +404,6 @@ class MavenProjectsTree(val project: Project) {
            '}'
   }
 
-  fun isManagedFile(moduleFile: VirtualFile): Boolean {
-    return isManagedFile(moduleFile.path)
-  }
-
-  private fun isManagedFile(path: String): Boolean = withReadLock {
-    for (each in myManagedFilesPaths) {
-      if (FileUtil.pathsEqual(each, path)) return@withReadLock true
-    }
-    return@withReadLock false
-  }
-
   @ApiStatus.Internal
   suspend fun delete(
     files: List<VirtualFile>,
@@ -475,14 +461,7 @@ class MavenProjectsTree(val project: Project) {
   @ApiStatus.Internal
   internal fun doDelete(aggregator: MavenProject?, project: MavenProject, updateContext: MavenProjectsTreeUpdateContext) {
     for (each in getModules(project)) {
-      if (isManagedFile(each.path)) {
-        if (reconnectRoot(each)) {
-          updateContext.updated(each, MavenProjectChanges.NONE)
-        }
-      }
-      else {
-        doDelete(project, each, updateContext)
-      }
+      doDelete(project, each, updateContext)
     }
 
     withWriteLock {

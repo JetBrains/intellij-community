@@ -439,7 +439,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isManagedFile(@NotNull VirtualFile f) {
-    return getProjectsTree().isManagedFile(f);
+    return getState().originalFiles.contains(f.getPath());
   }
 
   public @NotNull MavenExplicitProfiles getExplicitProfiles() {

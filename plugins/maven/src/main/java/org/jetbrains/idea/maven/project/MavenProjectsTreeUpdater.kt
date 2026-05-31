@@ -122,16 +122,8 @@ internal class MavenProjectsTreeUpdater(
   private fun handleRemovedModules(mavenProject: MavenProject, prevModules: List<MavenProject>, existingModuleFiles: List<VirtualFile>) {
     val removedModules = prevModules.filter { !existingModuleFiles.contains(it.file) }
     for (module in removedModules) {
-      val moduleFile = module.file
-      if (tree.isManagedFile(moduleFile)) {
-        if (tree.reconnectRoot(module)) {
-          updateContext.updated(module, MavenProjectChanges.NONE)
-        }
-      }
-      else {
-        tree.removeModule(mavenProject, module)
-        tree.doDelete(mavenProject, module, updateContext)
-      }
+      tree.removeModule(mavenProject, module)
+      tree.doDelete(mavenProject, module, updateContext)
     }
   }
 
