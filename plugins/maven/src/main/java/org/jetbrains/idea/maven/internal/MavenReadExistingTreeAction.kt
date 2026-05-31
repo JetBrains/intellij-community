@@ -20,7 +20,7 @@ class MavenReadExistingTreeAction : DumbAwareAction() {
       runBlockingCancellable {
         val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
         mavenEmbedderWrappers.use {
-          mavenProjectManager.projectsTree.updateAll(true, mavenProjectManager.generalSettings, mavenEmbedderWrappers, indicator)
+          mavenProjectManager.projectsTree.updateAll(true, mavenProjectManager.generalSettings, mavenProjectManager.explicitProfiles, mavenEmbedderWrappers, indicator)
         }
       }
     }

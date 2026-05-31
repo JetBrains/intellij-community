@@ -76,10 +76,11 @@ private class MavenFullSyncFileReader(
   val projectsTree: MavenProjectsTree,
   val spec: MavenSyncSpec,
   val generalSettings: MavenGeneralSettings,
+  val explicitProfiles: MavenExplicitProfiles,
 ) : MavenSyncFileReader {
   override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
     return reportRawProgress { reporter ->
-      projectsTree.updateAll(spec.forceReading(), generalSettings, wrappers, reporter)
+      projectsTree.updateAll(spec.forceReading(), generalSettings, explicitProfiles, wrappers, reporter)
     }
   }
 }
@@ -88,13 +89,14 @@ private class MavenPartialSyncFileReader(
   val projectsTree: MavenProjectsTree,
   val spec: MavenSyncSpec,
   val generalSettings: MavenGeneralSettings,
+  val explicitProfiles: MavenExplicitProfiles,
   val filesToUpdate: List<VirtualFile>,
   val filesToDelete: List<VirtualFile>,
 ) : MavenSyncFileReader {
   override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
     return reportRawProgress { reporter ->
-      val deleted = projectsTree.delete(filesToDelete, generalSettings, wrappers, reporter)
-      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, wrappers, reporter)
+      val deleted = projectsTree.delete(filesToDelete, generalSettings, explicitProfiles, wrappers, reporter)
+      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, explicitProfiles, wrappers, reporter)
       deleted + updated
     }
   }
@@ -375,7 +377,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       return doUpdateMavenProjects(tree, spec, null, mavenEmbedderWrappers, MavenPartialSyncFileReader(
-        tree, spec, generalSettings, filesToUpdate, filesToDelete))
+        tree, spec, generalSettings, explicitProfiles, filesToUpdate, filesToDelete))
     }
   }
 
@@ -457,7 +459,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       return doUpdateMavenProjects(treeToSync, spec,
                                    modelsProvider,
                                    mavenEmbedderWrappers,
-                                   MavenFullSyncFileReader(treeToSync, spec, generalSettings))
+                                   MavenFullSyncFileReader(treeToSync, spec, generalSettings, explicitProfiles))
     }
   }
 

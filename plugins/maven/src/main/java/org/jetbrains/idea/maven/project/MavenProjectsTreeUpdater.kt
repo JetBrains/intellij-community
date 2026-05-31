@@ -11,6 +11,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -23,6 +24,7 @@ internal class MavenProjectsTreeUpdater(
   private val tree: MavenProjectsTree,
   private val updateContext: MavenProjectsTreeUpdateContext,
   private val reader: MavenProjectReader,
+  private val explicitProfiles: MavenExplicitProfiles,
   private val process: RawProgressReporter?,
   private val updateModules: Boolean,
 ) {
@@ -105,11 +107,13 @@ internal class MavenProjectsTreeUpdater(
       val userSettingsTimestamp = getFileTimestamp(userSettingsFile)
       val globalSettingsTimestamp = getFileTimestamp(globalSettingsFile)
 
+      val profilesHashCode = explicitProfiles.hashCode()
       MavenProjectTimestamp(pomTimestamp,
                             parentTimestamp,
                             profilesTimestamp,
                             userSettingsTimestamp,
                             globalSettingsTimestamp,
+                            profilesHashCode.toLong(),
                             jvmConfigTimestamp,
                             mavenConfigTimestamp)
     }

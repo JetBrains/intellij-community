@@ -716,8 +716,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("two"))
     importProjectAsync()
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("two"), listOf("one"))
+    updateAllProjects()
     val p = projectsTree.findProject(projectPom)!!
     assertEquals("\${prop1}", p.name)
     assertEquals("value2", p.packaging)
@@ -1086,8 +1087,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
     importProjectsAsync(projectPom, module)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
+    updateAllProjects()
     val p = projectsTree.findProject(module)!!
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.buildDirectory)
   }

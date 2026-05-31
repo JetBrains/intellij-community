@@ -177,7 +177,7 @@ class MavenProjectAsyncBuilder {
       reportRawProgress { reporter ->
         val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
         mavenEmbedderWrappers.use {
-          tree.updateAll(false, generalSettings, mavenEmbedderWrappers, reporter)
+          tree.updateAll(false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, reporter)
         }
       }
     }

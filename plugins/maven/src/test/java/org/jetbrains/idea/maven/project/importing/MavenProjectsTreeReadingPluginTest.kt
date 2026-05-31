@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
 
@@ -38,7 +39,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
         .add("deleted")
         .add("resolved", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")

@@ -28,6 +28,7 @@ import com.intellij.projectImport.DeprecatedProjectBuilderForImport
 import com.intellij.projectImport.ProjectImportBuilder
 import com.intellij.projectImport.ProjectOpenProcessor
 import icons.OpenapiIcons
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -190,7 +191,7 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     runBlockingMaybeCancellable {
       val mavenEmbedderWrappers = projectOrDefault.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
       mavenEmbedderWrappers.use {
-        tree.updateAll(false, generalSettings, mavenEmbedderWrappers, process.indicator)
+        tree.updateAll(false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, process.indicator)
       }
     }
 

@@ -383,10 +383,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     updateAll(projectPom)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
     l.log.clear()
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log(), l.log)
     l.log.clear()
-    tree.updateAll(true, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(true, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
   }
 
@@ -412,10 +412,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     update(projectPom)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
     l.log.clear()
-    tree.update(listOf(projectPom), false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.update(listOf(projectPom), false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log(), l.log)
     l.log.clear()
-    tree.update(listOf(projectPom), true, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.update(listOf(projectPom), true, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "project").add("deleted"), l.log)
     l.log.clear()
   }
@@ -1510,11 +1510,11 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     val l = MyLoggingListener()
     project.messageBus.connect(getTestRootDisposable()).subscribe(MavenProjectsTree.Listener.TOPIC, l)
     tree.addManagedFiles(listOf(projectPom))
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log)
     l.log.clear()
     tree.removeManagedFiles(listOf(projectPom))
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log)
   }
 
@@ -1793,12 +1793,13 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profiles>
                         """.trimIndent())
 
+    importProjectAsync()
     projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("projectProfile",
                                                                     "parent1Profile",
                                                                     "parent2Profile",
                                                                     "settings",
                                                                     "xxx"))
-    importProjectAsync()
+    updateAllProjects()
     val mavenProject = tree.findProject(projectPom)!!
     assertUnorderedElementsAreEqual(
       mavenProject.activatedProfilesIds.enabledProfiles,
@@ -1806,7 +1807,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       "parent1Profile",
       "parent2Profile",
       "settings")
-    resolve(project, mavenProject, mavenGeneralSettings)
+    updateAllProjects()
     assertUnorderedElementsAreEqual(
       mavenProject.activatedProfilesIds.enabledProfiles,
       "projectProfile",

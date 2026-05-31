@@ -53,17 +53,17 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     updateAll(emptyList<String>(), *files)
   }
 
-  protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile) {
+  protected suspend fun updateAll(profiles: List<String>, vararg files: VirtualFile) {
     tree.resetManagedFiles(listOf(*files))
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles(profiles, emptySet()), mavenEmbedderWrappers, rawProgressReporter)
   }
 
   protected suspend fun update(file: VirtualFile) {
-    tree.update(listOf(file), false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.update(listOf(file), false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
   }
 
   protected suspend fun deleteProject(file: VirtualFile) {
-    tree.delete(listOf(file), mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.delete(listOf(file), mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
   }
 
   @Throws(IOException::class)
