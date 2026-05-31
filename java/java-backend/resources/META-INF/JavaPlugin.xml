@@ -1155,7 +1155,6 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateConstructorCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSurroundWithCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSafeDeleteCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.platform.structureView.backend.completion.commands.ViewStructureCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaParameterInfoCompletionCommand" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider" order="last"/>
 

@@ -232,6 +232,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [
+    "//platform/libraries/cglib",
     "//platform/backend/workspace",
     "//platform/external-system-api/dependency-updater",
     "//platform/observable",
@@ -391,6 +392,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":gradle-tests",
+    "//platform/libraries/cglib:cglib_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",

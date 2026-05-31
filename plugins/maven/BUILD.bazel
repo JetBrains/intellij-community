@@ -127,7 +127,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-  ]
+  ],
+  runtime_deps = ["//java/xml.dom.impl"]
 )
 
 jvm_library(
@@ -179,6 +180,7 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//java/java-impl:impl_test_lib",
+    "//java/xml.dom.impl:xml.dom.impl_test_lib",
     "//platform/lang-core:lang-core_test_lib",
     "//platform/macro:macro_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
