@@ -58,8 +58,7 @@ public final class NameSuggester {
 
   private int findInNewBackwardsFromIndex(String patternWord, int newIndex) {
     for (int i = newIndex; i >= 0; i--) {
-      final String s = myNewClassName.get(i);
-      if (s.equals(patternWord)) return i;
+      if (myNewClassName.get(i).equals(patternWord)) return i;
     }
     return -1;
   }
@@ -75,7 +74,7 @@ public final class NameSuggester {
     return result;
   }
 
-  public String suggestName(final String propertyName) {
+  public String suggestName(String propertyName) {
     if (myOldClassNameAsGiven.equals(propertyName)) return myNewClassNameAsGiven;
     final List<@NotNull String> propertyWords = NameUtilCore.splitNameIntoWordList(propertyName);
     Int2IntMap matches = calculateMatches(propertyWords);
@@ -104,12 +103,12 @@ public final class NameSuggester {
   }
 
   private static String calculateNewName(TreeMap<Pair<Integer, Integer>, String> replacements,
-                                         final List<@NotNull String> propertyWords,
+                                         List<@NotNull String> propertyWords,
                                          String propertyName) {
     StringBuffer resultingWords = new StringBuffer();
     int currentWord = 0;
     final Pair<int[], int[]> wordIndices = calculateWordPositions(propertyName, propertyWords);
-    for (final Map.Entry<Pair<Integer, Integer>, String> entry : replacements.entrySet()) {
+    for (Map.Entry<Pair<Integer, Integer>, String> entry : replacements.entrySet()) {
       final int first = entry.getKey().getFirst().intValue();
       final int last = entry.getKey().getSecond().intValue();
       for (int i = currentWord; i < first; i++) {
@@ -140,7 +139,7 @@ public final class NameSuggester {
     resultingWords.append(propertyWord);
   }
 
-  private static String calculateBetween(final Pair<int[], int[]> wordIndices, int i, String propertyName) {
+  private static String calculateBetween(Pair<int[], int[]> wordIndices, int i, String propertyName) {
     final int thisWordStart = wordIndices.getFirst()[i];
     final int prevWordEnd = wordIndices.getSecond()[i];
     return propertyName.substring(prevWordEnd + 1, thisWordStart);
@@ -158,7 +157,7 @@ public final class NameSuggester {
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(List<@NotNull String> propertyWords, Int2IntMap matches) {
     TreeMap<Pair<Integer, Integer>, String> replacements = new TreeMap<>(Pair.comparingByFirst());
-    for (final OriginalToNewChange change : myChanges) {
+    for (OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;
       if (change.getOldLength() > 0) {
@@ -171,7 +170,7 @@ public final class NameSuggester {
                       Collections.singletonList(propertyWords));
           }
 
-          final String replacement = suggestReplacement(propertyWords.get(propertyWordFirst), newString);
+          final String replacement = decapitalizeProbably(newString, propertyWords.get(propertyWordFirst));
           replacements.put(Pair.create(propertyWordFirst, matches.get(last)), replacement);
         }
       }
@@ -191,10 +190,6 @@ public final class NameSuggester {
       }
     }
     return replacements;
-  }
-
-  private static String suggestReplacement(String propertyWord, @NotNull String newClassNameWords) {
-    return decapitalizeProbably(newClassNameWords, propertyWord);
   }
 
   private static @NotNull String decapitalizeProbably(@NotNull String word, String originalWord) {
@@ -221,7 +216,7 @@ public final class NameSuggester {
     return true;
   }
 
-  private Int2IntMap calculateMatches(final @UnknownNullability List<@NotNull String> propertyWords) {
+  private Int2IntMap calculateMatches(@UnknownNullability List<@NotNull String> propertyWords) {
     int classNameIndex = myOldClassName.size() - 1;
     Int2IntMap matches = new Int2IntOpenHashMap();
     for (int i = propertyWords.size() - 1; i >= 0; i--) {
@@ -276,12 +271,8 @@ public final class NameSuggester {
   private record Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
   }
 
-  private @Nullable Match checkMatch(final int oldClassNameIndex, final int propertyNameIndex, final String propertyWord) {
-    if (propertyWord.equalsIgnoreCase(myOldClassName.get(oldClassNameIndex))) {
-      return new Match(oldClassNameIndex, propertyNameIndex, propertyWord);
-    }
-    else {
-      return null;
-    }
+  private @Nullable Match checkMatch(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
+    if (!propertyWord.equalsIgnoreCase(myOldClassName.get(oldClassNameIndex))) return null;
+    return new Match(oldClassNameIndex, propertyNameIndex, propertyWord);
   }
 }
