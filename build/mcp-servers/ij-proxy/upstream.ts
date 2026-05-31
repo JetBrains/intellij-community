@@ -35,6 +35,7 @@ export interface UpstreamConnectionOptions {
   transport: McpStreamTransport
   projectPath: string
   defaultProjectPathKey: 'project_path' | 'projectPath'
+  connectTimeoutMs: number
   /**
    * When true, `project_path` / `projectPath` is injected into every upstream tool call —
    * including container-scoped tools that carry their own `sessionId` — so the IDE MCP
@@ -70,6 +71,7 @@ export class UpstreamConnection {
   private _projectPathManager: ReturnType<typeof createProjectPathManager>
   private readonly _defaultProjectPathKey: 'project_path' | 'projectPath'
   private _forceInjectProjectPath: boolean
+  private readonly _connectTimeoutMs: number
   private readonly _toolCallTimeoutMs: number
   private readonly _buildTimeoutMs: number
   private readonly _warn: (message: string) => void
@@ -88,6 +90,7 @@ export class UpstreamConnection {
 
   constructor(options: UpstreamConnectionOptions) {
     this._transport = options.transport
+    this._connectTimeoutMs = options.connectTimeoutMs
     this._toolCallTimeoutMs = options.toolCallTimeoutMs
     this._buildTimeoutMs = options.buildTimeoutMs
     this._warn = options.warn
@@ -146,7 +149,8 @@ export class UpstreamConnection {
       this._tools = null
     }
     if (this._connectedPromise) return this._connectedPromise
-    this._connectedPromise = this.client.connect(this._transport).catch((error) => {
+    const options = this._connectTimeoutMs > 0 ? {timeout: this._connectTimeoutMs} : undefined
+    this._connectedPromise = this.client.connect(this._transport, options).catch((error) => {
       this._connectedPromise = null
       throw error
     })

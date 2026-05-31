@@ -337,6 +337,7 @@ function createUpstreamForUrl(url: string): UpstreamConnection {
     transport,
     projectPath,
     defaultProjectPathKey,
+    connectTimeoutMs,
     forceInjectProjectPath: containerSession != null,
     toolCallTimeoutMs,
     buildTimeoutMs,
