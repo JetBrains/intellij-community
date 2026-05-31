@@ -27,6 +27,9 @@ interface IjentUnavailableHandler {
 internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, timeout: Duration, body: suspend () -> T): T {
   // TODO behavior should depend on caller context:
   //  for EDT - basic events could be dispatched even before showing dialog
+  if (timeout.isInfinite()) {
+    return body()
+  }
   return coroutineScope {
     val dialogJob = launch {
       delay(timeout)

@@ -16,6 +16,7 @@ import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
+import com.intellij.platform.ijent.unavailableDialogTimeout
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -76,10 +77,9 @@ fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSy
  */
 @ApiStatus.Internal
 fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
-  val timeout = 500.milliseconds
-  return IntelliJCoroutinesFacade.runAndCompensateParallelism(timeout) {
+  return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
     fsBlockingWithoutParallelismCompensation {
-      showModalDialogOnTimeout(this, timeout) {
+      showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
         body()
       }
     }
@@ -98,17 +98,17 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
 @Suppress("SSBasedInspection")
 @VisibleForTesting
 @ApiStatus.Internal
-fun <T> fsBlockingWithoutParallelismCompensation(body: suspend () -> T): T {
+fun <T> fsBlockingWithoutParallelismCompensation(body: suspend (IjentCallerContext) -> T): T {
   val callerContext = IjentCallerContext.computeCallerContext()
   if (callerContext.allowCancellableNio()) {
     return prepareThreadContext { ctx ->
       runBlocking(ctx + IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
-        body()
+        body(callerContext)
       }
     }
   }
   return runBlocking(IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
-    body()
+    body(callerContext)
   }
 }
 

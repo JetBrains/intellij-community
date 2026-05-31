@@ -6,6 +6,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 data class IjentCallerContext(
   val isRead: Boolean,
@@ -24,6 +26,18 @@ fun IjentCallerContext.allowCancellableNio(): Boolean {
     isRead && !isWrite -> IjentRegistry.getInstance().isEnabled("ijent.nio.cancellable.read", true)
     else -> false
   }
+}
+
+fun IjentCallerContext.unavailableDialogTimeout(): Duration {
+  return if (IjentRegistry.getInstance().isEnabled("ijent.unavailable.dialog.enabled", true)) {
+    if (isDispatchThread) {
+      500.milliseconds
+    }
+    else {
+      1000.milliseconds
+    }
+  }
+  else Duration.INFINITE
 }
 
 class IjentCalledContextElement(val callerContext: IjentCallerContext) : AbstractCoroutineContextElement(Key) {
