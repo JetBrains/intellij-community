@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.idea.AppMode
+import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
@@ -186,6 +188,21 @@ class PluginManagerTest {
     saveDisabledPluginsAndInvalidate(configPath, mutableListOf("a"))
     com.intellij.testFramework.assertions.Assertions.assertThat(configPath.resolve(
       DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator())
+  }
+
+  @Test
+  fun `remote development plugin is essential only in remote dev host mode`() {
+    val remoteDevelopmentPlugin = PluginManagerCore.REMOTE_DEVELOPMENT_PLUGIN_ID
+    try {
+      AppMode.setFlags(listOf(WellKnownCommand.SERVER_MODE))
+      assertThat(ProductPluginInitContext().essentialPlugins).contains(remoteDevelopmentPlugin)
+
+      AppMode.setFlags(emptyList())
+      assertThat(ProductPluginInitContext().essentialPlugins).doesNotContain(remoteDevelopmentPlugin)
+    }
+    finally {
+      AppMode.setFlags(emptyList())
+    }
   }
 
   // TODO probably should be moved elsewhere

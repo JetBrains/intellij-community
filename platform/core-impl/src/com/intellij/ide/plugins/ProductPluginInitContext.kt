@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
 import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
+import com.intellij.ide.plugins.PluginManagerCore.REMOTE_DEVELOPMENT_PLUGIN_ID
 import com.intellij.ide.plugins.PluginManagerCore.getPluginNameAndVendor
 import com.intellij.ide.plugins.PluginManagerCore.logger
 import com.intellij.ide.plugins.ProductRulesImposedExclusion.ProductRulesImposedExclusionReason
@@ -45,6 +46,9 @@ class ProductPluginInitContext(
     buildSet {
       add(CORE_ID)
       addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
+      if (AppMode.isRemoteDevHost()) {
+        add(REMOTE_DEVELOPMENT_PLUGIN_ID)
+      }
     }
   }
   private val disabledPlugins: Set<PluginId> get() = disabledPluginsOverride ?: DisabledPluginsState.getDisabledIds()

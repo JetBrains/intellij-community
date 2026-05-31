@@ -79,6 +79,8 @@ object PluginManagerCore {
   @JvmField val ULTIMATE_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.modules.ultimate")
   @ApiStatus.Internal
   @JvmField val MARKETPLACE_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.marketplace")
+  @ApiStatus.Internal
+  @JvmField val REMOTE_DEVELOPMENT_PLUGIN_ID: PluginId = PluginId.getId("com.jetbrains.remoteDevelopment")
 
   @Volatile
   @VisibleForTesting
