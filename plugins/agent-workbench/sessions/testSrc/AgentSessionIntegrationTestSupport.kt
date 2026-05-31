@@ -353,6 +353,9 @@ internal suspend fun withTestServiceAndLaunch(
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
+  branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
+    error("Unexpected branch mismatch confirmation")
+  },
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
   withServiceAndLaunch(
@@ -369,6 +372,7 @@ internal suspend fun withTestServiceAndLaunch(
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
+    branchMismatchConfirmation = branchMismatchConfirmation,
     action = action,
   )
 }
@@ -440,6 +444,9 @@ internal suspend fun withServiceAndLaunch(
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
+  branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
+    error("Unexpected branch mismatch confirmation")
+  },
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -457,6 +464,7 @@ internal suspend fun withServiceAndLaunch(
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
+    branchMismatchConfirmation = branchMismatchConfirmation,
   ) { service, _, launchService ->
     action(service, launchService)
   }
@@ -535,6 +543,9 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
+  branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
+    error("Unexpected branch mismatch confirmation")
+  },
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
   val job = SupervisorJob()
@@ -587,6 +598,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
         openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+        branchMismatchConfirmation = branchMismatchConfirmation,
       )
     }
     else {
@@ -599,6 +611,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
         openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+        branchMismatchConfirmation = branchMismatchConfirmation,
       )
     }
     val archiveService = AgentSessionArchiveService(

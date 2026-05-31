@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -21,6 +22,8 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -116,6 +119,92 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.thread.archived).isFalse()
           assertThat(unarchiveCalls.get()).isZero()
           assertThat(archivedRefreshCalls.get()).isZero()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun openThreadWithBranchMismatchAllowsDialogToAcquireWriteIntentReadLock() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = false,
+      unarchiveThreadHandler = { _, _ -> false },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val confirmations = AtomicInteger(0)
+    val currentProject = ProjectManager.getInstance().defaultProject
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(emptyList())) },
+          projectEntriesProvider = { listOf(featureWorktreeProjectEntry()) },
+          chatOpenExecutor = chatOpenExecutor,
+          branchMismatchConfirmation = { project, originBranch, currentBranch ->
+            confirmations.incrementAndGet()
+            assertThat(project).isSameAs(currentProject)
+            assertThat(originBranch).isEqualTo("main")
+            assertThat(currentBranch).isEqualTo("feature")
+
+            val application = ApplicationManager.getApplication()
+            assertThat(application.isWriteIntentLockAcquired).isFalse()
+            application.runWriteIntentReadAction<Unit, Exception> {}
+            true
+          },
+        ) { service, launchService ->
+          service.refreshCatalogAndLoadNewlyOpened()
+          waitForCondition { hasFeatureWorktree(service.state.value) }
+
+          launchService.openChatThread(
+            path = WORKTREE_PATH,
+            thread = branchMismatchThread(),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+            currentProject = currentProject,
+          )
+
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+          assertThat(confirmations.get()).isEqualTo(1)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun openThreadWithBranchMismatchCancelsWhenDialogRejected() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = false,
+      unarchiveThreadHandler = { _, _ -> false },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val confirmations = AtomicInteger(0)
+    val promptResults = CopyOnWriteArrayList<AgentPromptLaunchResult>()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(emptyList())) },
+          projectEntriesProvider = { listOf(featureWorktreeProjectEntry()) },
+          chatOpenExecutor = chatOpenExecutor,
+          branchMismatchConfirmation = { _, originBranch, currentBranch ->
+            confirmations.incrementAndGet()
+            assertThat(originBranch).isEqualTo("main")
+            assertThat(currentBranch).isEqualTo("feature")
+            false
+          },
+        ) { service, launchService ->
+          service.refreshCatalogAndLoadNewlyOpened()
+          waitForCondition { hasFeatureWorktree(service.state.value) }
+
+          launchService.openChatThread(
+            path = WORKTREE_PATH,
+            thread = branchMismatchThread(),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+            promptLaunchResolved = promptResults::add,
+          )
+
+          waitForCondition { promptResults.singleOrNull()?.error == AgentPromptLaunchError.CANCELLED }
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(confirmations.get()).isEqualTo(1)
         }
       }
     }
@@ -635,6 +724,33 @@ class AgentSessionLaunchServiceTest {
       provider = AgentSessionProvider.CODEX,
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) threads.toList() else emptyList() },
     )
+  }
+
+  private fun featureWorktreeProjectEntry(): TestProjectCatalogEntry {
+    return openTestProjectEntry(
+      path = PROJECT_PATH,
+      name = "Project A",
+      worktrees = listOf(
+        TestWorktreeCatalogEntry(
+          path = WORKTREE_PATH,
+          name = "Feature",
+          branch = "feature",
+          isOpen = true,
+        ),
+      ),
+    )
+  }
+
+  private fun branchMismatchThread(): AgentSessionThread {
+    return thread(id = "codex-feature", updatedAt = 200, provider = AgentSessionProvider.CODEX).copy(originBranch = "main")
+  }
+
+  private fun hasFeatureWorktree(state: AgentSessionsState): Boolean {
+    return state.projects.any { project ->
+      project.worktrees.any { worktree ->
+        worktree.path == WORKTREE_PATH && worktree.branch == "feature"
+      }
+    }
   }
 }
 

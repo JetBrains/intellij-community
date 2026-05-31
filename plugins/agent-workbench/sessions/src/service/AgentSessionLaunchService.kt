@@ -65,6 +65,7 @@ import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -212,6 +213,9 @@ class AgentSessionLaunchService internal constructor(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
   private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  private val branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { project, originBranch, currentBranch ->
+    showBranchMismatchDialog(project, originBranch, currentBranch)
+  },
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -323,8 +327,8 @@ class AgentSessionLaunchService internal constructor(
         val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
         val originBranch = effectiveThread.originBranch
         if (worktreeBranch != null && originBranch != null && originBranch != worktreeBranch && !isBranchMismatchDialogSuppressed()) {
-          val proceed = withContext(Dispatchers.UI) {
-            showBranchMismatchDialog(originBranch, worktreeBranch)
+          val proceed = withContext(Dispatchers.UiWithModelAccess) {
+            branchMismatchConfirmation(currentProject, originBranch, worktreeBranch)
           }
           if (!proceed) {
             promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.CANCELLED))
@@ -1626,7 +1630,7 @@ private fun isBranchMismatchDialogSuppressed(): Boolean {
   return PropertiesComponent.getInstance().getBoolean(SUPPRESS_BRANCH_MISMATCH_DIALOG_KEY, false)
 }
 
-private fun showBranchMismatchDialog(originBranch: String, currentBranch: String): Boolean {
+private fun showBranchMismatchDialog(project: Project?, originBranch: String, currentBranch: String): Boolean {
   return MessageDialogBuilder
     .okCancel(
       AgentSessionsBundle.message("toolwindow.thread.branch.mismatch.dialog.title"),
@@ -1641,7 +1645,7 @@ private fun showBranchMismatchDialog(originBranch: String, currentBranch: String
       }
     })
     .asWarning()
-    .ask(null as Project?)
+    .ask(project)
 }
 
 private fun AgentSessionThread.matchesPromptTarget(provider: AgentSessionProvider, threadId: String): Boolean {
