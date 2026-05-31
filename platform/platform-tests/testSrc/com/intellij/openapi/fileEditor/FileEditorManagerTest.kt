@@ -201,7 +201,7 @@ class FileEditorManagerTest {
 
   @Test
   fun testOpenRecentEditorTab(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    registerProvider(MockFileEditorProvider())
+    registerProvider(MyDumbAwareProvider("mock", MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR))
 
     openFiles("""
                   <component name="FileEditorManager">
