@@ -178,7 +178,7 @@ internal class SessionTreeCellRenderer(
       }
 
       is SessionTreeNode.Empty -> {
-        icon = AllIcons.General.Information
+        icon = null
         append(treeNode.message, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
 

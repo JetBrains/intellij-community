@@ -337,6 +337,26 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun emptyRowsRenderQuietTextWithoutIcon() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val emptyId = SessionTreeId.Empty(project.path)
+    val message = AgentSessionsBundle.message("toolwindow.empty.project")
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        if (id == emptyId) SessionTreeNode.Empty(project, message) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(emptyId), false, false, true, 0, false)
+
+    assertThat(renderer.icon).isNull()
+    assertThat(renderer.getCharSequence(true).toString()).isEqualTo(message)
+  }
+
+  @Test
   fun loadingProjectRowsUseProjectIconAndNoLoadingText() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
     val projectId = SessionTreeId.Project(project.path)
