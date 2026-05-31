@@ -12,5 +12,10 @@ interface FreezeNotifier {
 
 @ApiStatus.Internal
 interface FreezeAnalysis {
-  fun analyzeFreeze(event: AbstractMessage): PluginId?
+  fun analyzeFreeze(dump: String): Result?
+
+  class Result(
+    val plugin: PluginId?,
+    val stackFrame: String?
+  )
 }

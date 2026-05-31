@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.freezes
 
-import com.intellij.diagnostic.AbstractMessage
 import com.intellij.diagnostic.FreezeAnalysis
 import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.ThreadDump
@@ -34,8 +33,7 @@ internal class PluginFreezeWatcher {
   }
 
   fun dumpedThreads(event: LogMessage, dump: ThreadDump, durationMs: Long): FreezeReason? {
-    val frozenPlugin = analyzeFreezeCausingPlugin(dump.rawDump) ?: return null
-
+    val frozenPlugin = analyzeFreezeCausingPlugin(dump.rawDump)?.plugin ?: return null
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
 
     if (!isWorthReportingToUser(pluginDescriptor, frozenPlugin)) {
@@ -63,25 +61,15 @@ internal class PluginFreezeWatcher {
   }
 }
 
-private const val DUMP_PREFIX = "dump-"
-
 internal class PluginFreezeAnalysis : FreezeAnalysis {
-  override fun analyzeFreeze(event: AbstractMessage): PluginId? {
-    for (attachment in event.allAttachments) {
-      if (attachment.name.startsWith(DUMP_PREFIX)) {
-        val dump = attachment.displayText
-        analyzeFreezeCausingPlugin(dump)?.let {
-          return it
-        }
-      }
-    }
-    return null
+  override fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
+    return analyzeFreezeCausingPlugin(dump)
   }
 }
 
 private val stackTracePattern: Regex = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
-private fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
+private fun analyzeFreezeCausingPlugin(dump: String): FreezeAnalysis.Result? {
   val threads = ThreadDumpParser.getStackTraces(dump)
   val cause = ThreadDumpParser.analyzeFreeze(threads).cause ?: return null
   val topCallable = FreezeTitleGenerator.selectCallable(cause) ?: return null
@@ -96,9 +84,9 @@ private fun analyzeFreezeCausingPlugin(dump: String): PluginId? {
     val element = parseStackTraceElement(lines[i].toString()) ?: continue
     val descriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(element.className) ?: continue
     if (descriptor.pluginId == PluginManagerCore.CORE_ID) continue
-    return descriptor.pluginId
+    return FreezeAnalysis.Result(descriptor.pluginId, topCallable)
   }
-  return null
+  return FreezeAnalysis.Result(null, topCallable)
 }
 
 private fun parseStackTraceElement(stackTrace: String): StackTraceElement? {

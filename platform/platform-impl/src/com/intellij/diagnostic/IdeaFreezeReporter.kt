@@ -29,6 +29,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
@@ -93,12 +94,20 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     internal fun analyzeFreeze(event: AbstractMessage): PluginId? {
-      val cause = FREEZE_ANALYSIS_EP.computeSafeIfAny {
-        it.analyzeFreeze(event)
+      for (attachment in event.allAttachments) {
+        if (attachment.name.startsWith(DUMP_PREFIX)) {
+          val cause = analyzeFreeze(attachment.displayText)?.plugin
+          if (cause != null) return cause
+        }
       }
-      if (cause != null) return cause
 
       return PluginUtil.getInstance().findPluginId(event.throwable)
+    }
+
+    internal fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
+      return FREEZE_ANALYSIS_EP.computeSafeIfAny {
+        it.analyzeFreeze(dump)
+      }
     }
 
     internal fun checkProfilerCrash(crashContent: String) {
@@ -279,6 +288,13 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     }
     val report = createReportAttachment(durationInSeconds, reportText)
     return LogMessage(Freeze(commonStack), message, attachments + report)
+  }
+}
+
+@ApiStatus.Internal
+object FreezeAnalysisFacade {
+  fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
+    return IdeaFreezeReporter.analyzeFreeze(dump)
   }
 }
 

@@ -8,13 +8,11 @@ import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.NoStackTraceFoldingPanel
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -109,7 +107,8 @@ class AnalyzeStacktraceUtil private constructor() {
         for (provider in EP_CONTENT_PROVIDER.extensionList) {
           runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
             provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
-              Disposer.register(descriptor, contentDescriptor)
+              // do not register on parent descriptor, the tab will break on parent close
+              Disposer.register(project, contentDescriptor)
               withContext(Dispatchers.EDT) {
                 runContentManager.showRunContent(executor, contentDescriptor)
               }
