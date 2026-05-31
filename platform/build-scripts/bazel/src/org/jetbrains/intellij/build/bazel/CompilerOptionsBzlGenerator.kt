@@ -36,6 +36,8 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
   val optIn = starlarkStringList(defaults.optIn)
   val progressive = if (defaults.progressive) "True" else "False"
   val jvmDefault = starlarkString(defaults.jvmDefault)
+  val diagnosticNames = if (defaults.diagnosticNames) "True" else "False"
+  val allWarnings = if (defaults.allWarnings) "True" else "False"
   val xxLanguage = starlarkStringList(defaults.xxLanguage)
 
   return """
@@ -78,8 +80,8 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             x_lambdas = "indy",
             x_no_call_assertions = False,
             x_no_param_assertions = False,
-            x_render_internal_diagnostic_names = False,
-            x_report_all_warnings = False,
+            x_render_internal_diagnostic_names = $diagnosticNames,
+            x_report_all_warnings = $allWarnings,
             x_sam_conversions = "indy",
             x_skip_prerelease_check = False,
             x_strict_java_nullability_assertions = False,

@@ -13,6 +13,8 @@ internal data class KotlincProjectDefaults(
   val progressive: Boolean,
   val jvmDefault: String,
   val rawJvmDefault: String?,
+  val diagnosticNames: Boolean,
+  val allWarnings: Boolean,
   val xxLanguage: List<String>,
 )
 
@@ -22,6 +24,8 @@ internal fun parseKotlincProjectDefaults(projectDir: Path): KotlincProjectDefaul
 private const val OPT_IN_PREFIX = "-opt-in="
 private const val PROGRESSIVE_FLAG = "-progressive"
 private const val XJVM_DEFAULT_PREFIX = "-Xjvm-default="
+private const val DIAGNOSTIC_NAMES_FLAG = "-Xrender-internal-diagnostic-names"
+private const val ALL_WARNINGS_FLAG = "-Xreport-all-warnings"
 private const val XX_LANGUAGE_PREFIX = "-XXLanguage:"
 
 /**
@@ -57,6 +61,8 @@ internal fun parseKotlincProjectDefaultsFromXml(kotlincXml: Path): KotlincProjec
   val optIn = mutableListOf<String>()
   var progressive = false
   var rawJvmDefault: String? = null
+  var diagnosticNames = false
+  var allWarnings = false
   val xxLanguage = mutableListOf<String>()
 
   for (token in additionalArguments.split(" ").filter { it.isNotEmpty() }) {
@@ -70,6 +76,8 @@ internal fun parseKotlincProjectDefaultsFromXml(kotlincXml: Path): KotlincProjec
         }
         rawJvmDefault = value
       }
+      token == DIAGNOSTIC_NAMES_FLAG -> diagnosticNames = true
+      token == ALL_WARNINGS_FLAG -> allWarnings = true
       token.startsWith(XX_LANGUAGE_PREFIX) -> xxLanguage += token.removePrefix(XX_LANGUAGE_PREFIX)
       else -> error(
         "Unsupported Kotlin compiler option in $kotlincXml KotlinCompilerSettings.additionalArguments: '$token'. " +
@@ -88,6 +96,8 @@ internal fun parseKotlincProjectDefaultsFromXml(kotlincXml: Path): KotlincProjec
     progressive = progressive,
     jvmDefault = jvmDefault,
     rawJvmDefault = rawJvmDefault,
+    diagnosticNames = diagnosticNames,
+    allWarnings = allWarnings,
     xxLanguage = xxLanguage.toList(),
   )
 }
