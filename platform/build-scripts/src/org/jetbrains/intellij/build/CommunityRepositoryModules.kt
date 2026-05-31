@@ -228,6 +228,9 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.statsCollector")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
+    pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
+    },
     pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),
