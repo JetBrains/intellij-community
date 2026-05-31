@@ -15,16 +15,18 @@ public class InputStreamOverPagedStorageTest extends InputStreamOverPagedStorage
 
   private static final StorageLockContext CONTEXT = new StorageLockContext(true, true, false);
 
+  private FilePageCacheLockFree filePageCache;
   private PagedFileStorageWithRWLockedPageContent storage;
   private ReentrantReadWriteLock storageLock;
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue("Can't test lock-free storage if LOCK_FREE_PAGE_CACHE_ENABLED=false", PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED);
+    filePageCache = new FilePageCacheLockFree(PAGE_SIZE * 16L);
     storageLock = new ReentrantReadWriteLock();
-    storage =  new PagedFileStorageWithRWLockedPageContent(
+    storage = new PagedFileStorageWithRWLockedPageContent(
       temporaryFolder.newFile().toPath(),
       CONTEXT,
+      filePageCache,
       PAGE_SIZE,
       false,
       new SharedLockLockingStrategy(storageLock)
@@ -38,9 +40,11 @@ public class InputStreamOverPagedStorageTest extends InputStreamOverPagedStorage
       storage.close();
       storageLock.writeLock().unlock();
     }
+    if (filePageCache != null) {
+      filePageCache.close();
+    }
   }
 
-  
 
   @Override
   protected @NotNull InputStreamOverPagedStorage streamOverStorage(long position,

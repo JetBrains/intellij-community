@@ -149,10 +149,6 @@ public class CancellableLockBenchmark {
                "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
                "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED"
-
-               //to enable 'new' API:
-               //"-Dvfs.lock-free-impl.enable=true",
-               //"-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5",
                //"-Dvfs.use-streamlined-attributes-storage=true"
       )
       //.mode(Mode.SingleShotTime)

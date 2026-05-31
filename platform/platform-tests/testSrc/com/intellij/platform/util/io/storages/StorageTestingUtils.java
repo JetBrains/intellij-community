@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.CleanableStorage;
-import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.pagecache.PagedStorage;
@@ -301,11 +300,6 @@ public final class StorageTestingUtils {
       // methods before -- so don't touch it even with a stick.
       // Even set.contains(byteBuffer) could crash JVM: it calls value.hashCode() which for
       // ByteBuffer scans through its content
-      return true;
-    }
-
-    if (value instanceof FilePageCacheLockFree) {
-      //don't close app-global cache
       return true;
     }
 

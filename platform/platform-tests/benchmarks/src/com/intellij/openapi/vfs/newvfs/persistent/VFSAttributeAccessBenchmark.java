@@ -203,10 +203,6 @@ public class VFSAttributeAccessBenchmark {
                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
                "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
                "-Djava.awt.headless=true"
-
-               //to enable 'new' API:
-               //"-Dvfs.lock-free-impl.enable=true",
-               //"-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5",
       )
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)

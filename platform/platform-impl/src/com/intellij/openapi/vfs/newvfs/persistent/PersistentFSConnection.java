@@ -554,8 +554,7 @@ public final class PersistentFSConnection {
     private static int competingThreads() {
       //FIXME RC: this is totally incorrect now: code relies on implicit knowledge that all storages use
       //          PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This
-      //          is not true anymore, since VFS uses either FilePageCacheLockFree or mmapped-file based
-      //          storages now:
+      //          is not true anymore, since VFS uses only mmapped-file based storages now:
 
       ReentrantReadWriteLock storageLock = StorageLockContext.defaultContextLock();
 

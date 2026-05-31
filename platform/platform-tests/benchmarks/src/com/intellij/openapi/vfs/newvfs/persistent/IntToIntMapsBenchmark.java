@@ -5,8 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.AbstractIntToIntBtree;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IntToIntBtree;
 import com.intellij.util.io.IntToIntBtreeLockFree;
+import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -65,6 +67,7 @@ public class IntToIntMapsBenchmark {
     public AbstractIntToIntBtree bTree;
 
     public StorageLockContext lockContext = new StorageLockContext(true, true, true);
+    public FilePageCacheLockFree pageCache;
 
     public Int2IntOpenHashMap generatedKeyValues;
     public int[] generatedKeys;
@@ -83,10 +86,12 @@ public class IntToIntMapsBenchmark {
         );
       }
       else if (btreeImplementation.equals("lock-free")) {
+        pageCache = new FilePageCacheLockFree(PageCacheUtils.FILE_PAGE_CACHES_TOTAL_CAPACITY_BYTES);
         bTree = new IntToIntBtreeLockFree(
           TREE_PAGE_SIZE,
           file.toPath(),
           lockContext,
+          pageCache,
           /*createAnew: */ true, new PageContentLockingStrategy.SharedLockLockingStrategy()
         );
       }
@@ -107,6 +112,9 @@ public class IntToIntMapsBenchmark {
     public void tearDown() throws Exception {
       if (bTree != null) {
         bTree.doClose();
+      }
+      if (pageCache != null) {
+        pageCache.close();
       }
       if (file != null) {
         file.delete();

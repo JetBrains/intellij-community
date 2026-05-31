@@ -61,6 +61,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
   public IntToIntBtreeLockFree(int pageSize,
                                @NotNull Path file,
                                @NotNull StorageLockContext storageLockContext,
+                               @NotNull FilePageCacheLockFree pageCache,
                                boolean initial, SharedLockLockingStrategy lockingStrategy)
     throws IOException {
     this.pageSize = pageSize;
@@ -71,6 +72,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
 
     storage = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       file,
+      pageCache,
       storageLockContext,
       SystemProperties.getIntProperty("idea.IntToIntBtree.page.size", DEFAULT_PAGE_SIZE),
       IOUtil.useNativeByteOrderForByteBuffers(),
@@ -1117,7 +1119,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
   }
 
   @Override
-  public @NotNull BTreeStatistics getStatistics() throws IOException  {
+  public @NotNull BTreeStatistics getStatistics() throws IOException {
     int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
     return new BTreeStatistics(
       pagesCount,

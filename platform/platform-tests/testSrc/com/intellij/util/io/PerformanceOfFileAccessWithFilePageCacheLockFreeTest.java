@@ -7,7 +7,7 @@ import com.intellij.util.io.pagecache.PageUnsafe;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
+import org.junit.After;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -18,8 +18,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
-
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Measures throughput:
@@ -43,11 +41,11 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   private static final int TWICE = 2;
 
   private final StorageLockContext storageContext = new StorageLockContext(true, true, true);
+  private final FilePageCacheLockFree pageCache = new FilePageCacheLockFree(PageCacheUtils.FILE_PAGE_CACHES_TOTAL_CAPACITY_BYTES);
 
-  @BeforeClass
-  public static void checkLockFreePageCacheIsEnabled() throws Exception {
-    assumeTrue("PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED must be set for this test to run",
-               PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED);
+  @After
+  public void closePageCache() throws InterruptedException {
+    pageCache.close();
   }
 
   //======================= Single-threaded, with FilePageCache NEW ========
@@ -67,7 +65,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     printReportForThroughput("Read sequentially, via PageCacheNew", totalReadBytes, elapsedNs);
 
-    System.out.println(storageContext.pageCache().getStatistics().toPrettyString());
+    System.out.println(pageCache.getStatistics().toPrettyString());
   }
 
   @Test
@@ -86,7 +84,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     printReportForThroughput("Read randomly, via PageCacheNew", totalReadBytes, elapsedNs);
 
-    System.out.println(storageContext.pageCache().getStatistics().toPrettyString());
+    System.out.println(pageCache.getStatistics().toPrettyString());
   }
 
   @Test
@@ -120,7 +118,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     printReportForThroughput("Write randomly, via PageCacheNew", totalReadBytes, elapsedNs);
 
-    System.out.println(storageContext.pageCache().getStatistics().toPrettyString());
+    System.out.println(pageCache.getStatistics().toPrettyString());
   }
 
   //======================= Multi-threaded, with FilePageCache ========
@@ -242,14 +240,13 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   public void responseTime_Random_Read_ViaFilePageCacheNew() throws IOException, InterruptedException {
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
-    final FilePageCacheLockFree pageCache = storageContext.pageCache();
-
     final long pagesCount = FILE_SIZE / BUFFER_SIZE;
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
     try (final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
                                                                                                                   storageContext,
+                                                                                                                  pageCache,
                                                                                                                   BUFFER_SIZE,
                                                                                                                   true,
                                                                                                                   PageContentLockingStrategy.LOCK_PER_PAGE)) {
@@ -314,14 +311,13 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   public void responseTime_Random_Write_ViaFilePageCacheNew() throws IOException, InterruptedException {
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
-    final FilePageCacheLockFree pageCache = storageContext.pageCache();
-
     final long pagesCount = FILE_SIZE / BUFFER_SIZE;
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
     try (final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
                                                                                                                   storageContext,
+                                                                                                                  pageCache,
                                                                                                                   BUFFER_SIZE,
                                                                                                                   true,
                                                                                                                   PageContentLockingStrategy.LOCK_PER_PAGE)) {
@@ -386,6 +382,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                                                   final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
     try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
                                                                                                             storageContext,
+                                                                                                            pageCache,
                                                                                                             BUFFER_SIZE,
                                                                                                             true,
                                                                                                             PageContentLockingStrategy.LOCK_PER_PAGE)) {
@@ -408,6 +405,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                                          final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
     try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
                                                                                                             storageContext,
+                                                                                                            pageCache,
                                                                                                             BUFFER_SIZE,
                                                                                                             true,
                                                                                                             PageContentLockingStrategy.LOCK_PER_PAGE)) {
@@ -431,6 +429,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
                                                                                                             storageContext,
+                                                                                                            pageCache,
                                                                                                             BUFFER_SIZE,
                                                                                                             true,
                                                                                                             PageContentLockingStrategy.LOCK_PER_PAGE)) {
@@ -453,7 +452,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   private void writeFileSequentiallyTwice(final @NotNull File file,
                                           final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
     try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(),
-                                                                                                            storageContext, BUFFER_SIZE,
+                                                                                                            storageContext, pageCache,
+                                                                                                            BUFFER_SIZE,
                                                                                                             true,
                                                                                                             PageContentLockingStrategy.LOCK_PER_PAGE)) {
       long blocksCount = FILE_SIZE / BUFFER_SIZE;

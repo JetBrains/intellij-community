@@ -361,14 +361,9 @@ public class VFSInitializationTest {
         }
       }
       catch (VFSInitException requestToRebuild) {
-        //FIXME RC: with FilePageCacheLockFree this exception's .errorCategory becomes UNRECOGNIZED, not
-        //  NOT_CLOSED_PROPERLY, as expected, because FilePageCacheLockFree fails on attempt to open
-        //  another storage from same file (legacy FilePageCache allowed that) -- and it happens earlier
-        //  than connectionStatus check.
-        //  This is a testing problem, not a code problem: with current API there is no way to emulate
-        //  'incorrect shutdown'. Previously I just open second PersistentFSConnection without closing
-        //  first one, but now as FilePageCacheLockFree is more vigilant, this path is blocked.
-        //  I'll think about better approach later, for now just remove the check
+        //FIXME RC: this is a testing problem, not a code problem: with current API there is no way to emulate
+        //  'incorrect shutdown' without opening a second PersistentFSConnection before closing the first one.
+        //  This path can fail earlier than connectionStatus check, so the category check is disabled for now.
         //OK, this is what we expect:
         //assertEquals(
         //  "rebuildCause must be NOT_CLOSED_PROPERLY",

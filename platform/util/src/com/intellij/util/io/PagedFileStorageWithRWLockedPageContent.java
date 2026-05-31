@@ -113,6 +113,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
   };
 
   public static PagedFileStorageWithRWLockedPageContent createWithDefaults(@NotNull Path file,
+                                                                           @NotNull FilePageCacheLockFree pageCache,
                                                                            @Nullable StorageLockContext storageLockContext,
                                                                            int pageSize,
                                                                            boolean nativeBytesOrder,
@@ -126,7 +127,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     int actualPageSize = Math.max(pageSize > 0 ? pageSize : PageCacheUtils.DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
 
     return new PagedFileStorageWithRWLockedPageContent(
-      file, storageContext,
+      file, storageContext, pageCache,
       actualPageSize, nativeBytesOrder, readOnly,
       strategy
     );
@@ -134,21 +135,24 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
 
   public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
                                                  @NotNull StorageLockContext storageLockContext,
+                                                 @NotNull FilePageCacheLockFree pageCache,
                                                  int pageSize,
                                                  @NotNull PageContentLockingStrategy strategy) throws IOException {
-    this(file, storageLockContext, pageSize, /*nativeBytesOrder: */true, /*readOnly: */false, strategy);
+    this(file, storageLockContext, pageCache, pageSize, /*nativeBytesOrder: */true, /*readOnly: */false, strategy);
   }
 
   public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
                                                  @NotNull StorageLockContext storageLockContext,
+                                                 @NotNull FilePageCacheLockFree pageCache,
                                                  int pageSize,
                                                  boolean nativeBytesOrder,
                                                  @NotNull PageContentLockingStrategy strategy) throws IOException {
-    this(file, storageLockContext, pageSize, nativeBytesOrder, /*readOnly: */false, strategy);
+    this(file, storageLockContext, pageCache, pageSize, nativeBytesOrder, /*readOnly: */false, strategy);
   }
 
   public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
                                                  @NotNull StorageLockContext storageLockContext,
+                                                 @NotNull FilePageCacheLockFree pageCache,
                                                  int pageSize,
                                                  boolean nativeBytesOrder,
                                                  boolean readOnly,
@@ -166,7 +170,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
 
     this.pageContentLockingStrategy = strategy;
 
-    pageCache = storageLockContext.pageCache();
+    this.pageCache = pageCache;
     pages = pageCache.registerStorage(this);
 
     try {

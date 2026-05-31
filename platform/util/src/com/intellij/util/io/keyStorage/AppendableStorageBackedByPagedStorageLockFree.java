@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IOCancellationCallbackHolder;
 import com.intellij.util.io.InputStreamOverPagedStorage;
 import com.intellij.util.io.LimitedInputStream;
@@ -56,6 +57,7 @@ public final class AppendableStorageBackedByPagedStorageLockFree<Data> implement
 
   public AppendableStorageBackedByPagedStorageLockFree(@NotNull Path file,
                                                        @Nullable StorageLockContext lockContext,
+                                                       @NotNull FilePageCacheLockFree pageCache,
                                                        int pageSize,
                                                        boolean valuesAreBufferAligned,
                                                        @NotNull DataExternalizer<Data> dataDescriptor,
@@ -63,6 +65,7 @@ public final class AppendableStorageBackedByPagedStorageLockFree<Data> implement
     this.storageLock = storageLock;
     PagedFileStorageWithRWLockedPageContent storage = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       file,
+      pageCache,
       lockContext,
       pageSize,
       /*nativeByteOrder: */false, //TODO RC: why not native order?
