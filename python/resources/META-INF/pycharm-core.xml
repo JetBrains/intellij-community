@@ -35,8 +35,6 @@
       <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
-    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
-            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="PyCharm.MarkRootGroup">
       <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>

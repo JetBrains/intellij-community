@@ -655,7 +655,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <projectService serviceInterface="com.intellij.openapi.project.BaseProjectDirectories" open="true"
                     serviceImplementation="com.intellij.ide.project.impl.BaseProjectDirectoriesImpl"/>
 
-    <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <registryKey key="scroll.to.first.trace" defaultValue="true"
                  description="In tests view: if 'scrollToStackTrace' is enabled and node with multiple children is selected, scroll to the trace of the first child"/>
 
@@ -2138,7 +2137,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationSettings service="com.intellij.util.net.HttpConfigurable"/>
     <applicationSettings service="com.intellij.openapi.keymap.NationalKeyboardSupport"/>
     <projectSettings service="com.intellij.openapi.ui.MasterDetailsStateService"/>
-    <projectSettings service="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <applicationSettings
       service="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"/>
     <applicationSettings service="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>

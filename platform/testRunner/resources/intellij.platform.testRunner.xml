@@ -22,10 +22,42 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.testStatusListener"
+                    interface="com.intellij.execution.testframework.TestStatusListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testActionProvider"
+                    interface="com.intellij.execution.testframework.ToggleModelActionProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testDiffProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.execution.testframework.actions.TestDiffProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
+    <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <projectSettings service="com.intellij.execution.testframework.autotest.AutoTestManager"/>
+    <projectSettings service="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
   </extensions>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <group id="TestTreePopupMenu">
+      <!--suppress PluginXmlCapitalization -->
+      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
+      <reference ref="EditSource"/>
+    </group>
+
+    <action id="ExportTestResults" class="com.intellij.execution.testframework.export.ExportTestResultsAction"
+            icon="AllIcons.ToolbarDecorator.Export"/>
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+  </actions>
 </idea-plugin>

@@ -61,15 +61,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
     myProperties = properties;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
-    final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
-      @Override
-      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        mySplitter.setOrientation(splitVertically());
-        revalidate();
-        repaint();
-      }
-    };
-    properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
   public @NotNull TestStatusLine getStatusLine() {
@@ -91,6 +82,15 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
     mySplitter = createSplitter(mySplitterProportionProperty,
                                 mySplitterDefaultProportion,
                                 splitVertically);
+    final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
+      @Override
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        mySplitter.setOrientation(splitVertically());
+        revalidate();
+        repaint();
+      }
+    };
+    myProperties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
     if (mySplitter instanceof OnePixelSplitter) {
       ((OnePixelSplitter)mySplitter).setBlindZone(() -> JBUI.insetsTop(myToolbarPanel.getHeight()));
     }
