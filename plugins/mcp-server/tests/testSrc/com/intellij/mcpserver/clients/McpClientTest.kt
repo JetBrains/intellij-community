@@ -267,20 +267,20 @@ class McpClientTest {
 }
 
 private class TestableMcpClient : McpClient(
-  mcpClientInfo = McpClientInfo(name = McpClientInfo.Name.CURSOR, scope = McpClientInfo.Scope.GLOBAL),
+  mcpClientInfo = McpClientInfo(name = McpClientInfo.Name.CURSOR, scope = McpClientInfo.Scope.Global),
   configPath = Paths.get("test.json")
 ) {
   fun buildUpdated(existing: JsonObject, entry: ServerConfig): JsonObject = buildUpdatedConfig(existing, entry)
 }
 
-private class TestableVSCodeClient : VSCodeClient(McpClientInfo.Scope.GLOBAL, Paths.get("vscode.json")) {
+private class TestableVSCodeClient : VSCodeClient(McpClientInfo.Scope.Global, Paths.get("vscode.json")) {
   fun buildUpdated(existing: JsonObject, entry: ServerConfig): JsonObject = buildUpdatedConfig(existing, entry)
 }
 
 private class PromotionAwareMcpClient(
   private val servers: Map<String, ExistingConfig>?,
 ) : McpClient(
-  mcpClientInfo = McpClientInfo(name = McpClientInfo.Name.CURSOR, scope = McpClientInfo.Scope.GLOBAL),
+  mcpClientInfo = McpClientInfo(name = McpClientInfo.Name.CURSOR, scope = McpClientInfo.Scope.Global),
   configPath = Paths.get("promotion.json")
 ) {
   override fun readMcpServers(): Map<String, ExistingConfig>? = servers

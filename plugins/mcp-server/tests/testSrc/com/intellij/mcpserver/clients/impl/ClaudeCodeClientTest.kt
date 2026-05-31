@@ -26,7 +26,7 @@ class ClaudeCodeClientTest : VscodeForkMcpClientTest() {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.PROJECT, configPath)
+    val client = createClient(McpClientInfo.Scope.Project(tempDir.toString()), configPath)
     runBlocking(Dispatchers.Default) {
       client.configure(getStreamableHttpConfigOrThrow(client))
     }

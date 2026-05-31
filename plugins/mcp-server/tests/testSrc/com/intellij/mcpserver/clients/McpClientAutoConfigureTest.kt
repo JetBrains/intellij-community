@@ -12,6 +12,7 @@ import com.intellij.mcpserver.clients.impl.WindsurfClient
 import com.intellij.mcpserver.clients.impl.readServers
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
@@ -21,7 +22,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -78,7 +82,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -97,7 +101,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -116,7 +120,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -135,7 +139,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
-    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
     // CodexClient overrides streamableHttpUrl, so it doesn't need service substitution
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
@@ -154,7 +158,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = JunieClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = JunieClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -173,7 +177,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -193,7 +197,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = AirClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = AirClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -224,7 +228,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.EDT) {
       client.autoConfigure()
     }
@@ -257,7 +261,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -286,7 +290,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
     McpClient.overrideWriteLegacyForTests(false)
 
-    val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -308,7 +312,7 @@ class McpClientAutoConfigureTest {
 
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
-    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
     runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
@@ -317,5 +321,45 @@ class McpClientAutoConfigureTest {
     assertTrue(result.contains("""[projects."/Users/test/project"]"""))
     assertTrue(result.contains("trust_level"))
     assertTrue(result.contains("[mcp_servers.codextest]"))
+  }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  @Test
+  fun `autoConfigure with project path includes headers in JSON config`() {
+    val configPath = tempDir.resolve("config.json")
+    configPath.writeText("""{"mcpServers": {}}""")
+
+    McpClient.overrideProductSpecificServerKeyForTests("test")
+
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Project("/my/project"), configPath)
+    runBlocking(Dispatchers.Default) {
+      client.autoConfigure()
+    }
+
+    val config = McpClient.json.decodeFromStream<JsonObject>(configPath.inputStream())
+    val serverEntry = config["mcpServers"]?.jsonObject?.get("test")?.jsonObject
+    requireNotNull(serverEntry)
+    val headers = serverEntry["headers"]?.jsonObject
+    requireNotNull(headers)
+    assertEquals("/my/project", headers[IJ_MCP_SERVER_PROJECT_PATH]?.jsonPrimitive?.contentOrNull)
+  }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  @Test
+  fun `autoConfigure without project path omits headers from JSON config`() {
+    val configPath = tempDir.resolve("config.json")
+    configPath.writeText("""{"mcpServers": {}}""")
+
+    McpClient.overrideProductSpecificServerKeyForTests("test")
+
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
+    runBlocking(Dispatchers.Default) {
+      client.autoConfigure()
+    }
+
+    val config = McpClient.json.decodeFromStream<JsonObject>(configPath.inputStream())
+    val serverEntry = config["mcpServers"]?.jsonObject?.get("test")?.jsonObject
+    requireNotNull(serverEntry)
+    assertFalse(serverEntry.containsKey("headers"))
   }
 }

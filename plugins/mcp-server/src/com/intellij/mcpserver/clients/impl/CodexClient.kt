@@ -28,7 +28,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     return stdio || network
   }
 
-  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl)
+  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl, headers = buildScopeHeaders())
 
   override fun readMcpServers(): Map<String, ExistingConfig>? {
     if (!configPath.exists()) return null
@@ -124,6 +124,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       val table = newTomlConfig()
       when (this) {
         is CodexStreamableHttpConfig -> table.set<Any?>(listOf("url"), url)
+          .also { headers?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("headers"), it.toTomlConfig()) } }
         is STDIOServerConfig -> {
           command?.let { table.set<Any?>(listOf("command"), it) }
           args?.let { table.set<Any?>(listOf("args"), it) }

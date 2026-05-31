@@ -29,7 +29,7 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
 
   private val vsCodeVersion: Deferred<SemVer?> = application.service<McpServiceScope>().scope.getSemVerOfVscodeFork("code")
 
-  override suspend fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
+  override suspend fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse", headers = buildScopeHeaders())
 
   override suspend fun getStreamableHttpConfig(): ServerConfig? {
     // VScode supports streamable HTTP since 1.100.0 (https://github.com/microsoft/vscode/releases/tag/1.100.0)
@@ -37,7 +37,7 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
       null
     }
     else {
-      VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+      VSCodeNetworkConfig(url = streamableHttpUrl, type = "http", headers = buildScopeHeaders())
     }
   }
 

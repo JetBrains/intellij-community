@@ -30,9 +30,12 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
@@ -59,6 +62,7 @@ import java.nio.file.Path
 import javax.swing.AbstractAction
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
@@ -134,12 +138,30 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                                           .joinToString("<br/>") { " • " + it.mcpClientInfo.displayName }))
       }.bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
 
-      group(McpServerBundle.message("settings.terminal.group"), indent = false) {
-        row {
-          checkBox(McpServerBundle.message("settings.terminal.promotion.show"))
-            .comment(McpServerBundle.message("settings.terminal.promotion.comment", McpServerBundle.ideDisplayName()))
-            .bindSelected(showMcpServerTerminalPromotionProperty())
-        }
+      val projectForComponent = ProjectUtil.getActiveProject()
+      if (projectForComponent != null) {
+        group(McpServerBundle.message("settings.client.project.group", projectForComponent.name), indent = false) {
+          row {
+            val container = JPanel(VerticalLayout(0)).apply { isOpaque = false }
+            cell(container).align(AlignX.FILL)
+
+            container.launchOnShow("project clients detection") {
+              val project = withContext(Dispatchers.UI) {
+                ProjectUtil.getProjectForComponent(settingsPanel)
+              }
+              if (project != null) {
+                val projectClients = McpClientDetector.detectProjectMcpClients(project)
+                if (projectClients.isNotEmpty()) {
+                  withContext(Dispatchers.UI) {
+                    val clientsPanel = createProjectClientsPanel(projectClients, settingsPanel, project)
+                    container.add(clientsPanel)
+                    container.revalidate()
+                  }
+                }
+              }
+            }
+          }
+        }.visibleIf(enabledCheckboxState!!)
       }
 
       group(McpServerBundle.message("settings.client.group"), indent = false) {
@@ -148,98 +170,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
         indent {
           McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
-            val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
-            val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
-            row {
-              text(mcpClient.mcpClientInfo.displayName)
-            }.topGap(TopGap.SMALL)
-            val autoconfiguredPressed = ValueComponentPredicate(false)
-            val errorDuringConfiguration = ValueComponentPredicate(false)
-            val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
-
-            val transportTypeKnown = ValueComponentPredicate(false)
-            lateinit var configuredTextCell: Cell<javax.swing.JEditorPane>
-            lateinit var restartInfoTextCell: Cell<javax.swing.JEditorPane>
-            lateinit var errorCommentCell: Cell<javax.swing.JEditorPane>
-
-            // Function to refresh transport message
-            fun refreshTransportMessage() {
-              val transportType = mcpClient.getTransportTypesDisplayString()
-              transportTypeKnown.set(transportType != null)
-              val configuredMessage = if (transportType != null) {
-                McpServerBundle.message("mcp.server.configured.with.transport", transportType)
-              }
-              else {
-                McpServerBundle.message("mcp.server.configured")
-              }
-              configuredTextCell.component.text = configuredMessage
-              restartInfoTextCell.component.text = McpServerBundle.message("mcp.server.client.restart.info.settings", configuredMessage)
-            }
-
-            fun performConfigurationAction(action: suspend () -> Unit) {
-              runCatching {
-                runWithModalProgressBlocking(
-                  ModalTaskOwner.guess(),
-                  McpServerBundle.message("autoconfigure.progress.title"),
-                  TaskCancellation.nonCancellable()
-                ) {
-                  action()
-                }
-              }.onFailure {
-                thisLogger().info(it)
-                errorDuringConfiguration.set(true)
-                val message = if (it is McpClient.McpClientConfigurationException) {
-                  it.message
-                }
-                else {
-                  McpServerBundle.message("mcp.server.client.autoconfig.unknown.error")
-                }
-                errorCommentCell.component.text = McpServerBundle.message("mcp.server.client.autoconfig.error", message)
-              }.onSuccess {
-                errorDuringConfiguration.set(false)
-                isConfigured.set(true)
-                isPortCorrect.set(true)
-                configExists.set(true)
-                autoconfiguredPressed.set(true)
-                refreshTransportMessage()
-              }
-            }
-
-            row {
-              cell(JBOptionButton(object : AbstractAction(McpServerBundle.message("autoconfigure.mcp.server")) {
-                override fun actionPerformed(e: ActionEvent?) {
-                  performConfigurationAction {
-                    mcpClient.autoConfigure()
-                  }
-                }
-              }, null)).apply {
-                configureAdditionalActions(mcpClient, this, ::performConfigurationAction)
-              }
-              icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL)
-                .visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
-              configuredTextCell = text("").visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
-
-              icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
-              restartInfoTextCell = text("").visibleIf(autoconfiguredPressed.and(transportTypeKnown))
-
-              icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL)
-                .visibleIf(isConfigured.not())
-              comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
-
-              icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect.not()))
-              comment(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
-
-              icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(errorDuringConfiguration)
-              errorCommentCell = comment(
-                McpServerBundle.message(
-                  "mcp.server.client.autoconfig.error",
-                  McpServerBundle.message("mcp.server.client.autoconfig.unknown.error"),
-                ),
-              ).visibleIf(errorDuringConfiguration)
-            }
-
-            // Call initially to populate the text
-            refreshTransportMessage()
+            buildClientRows(mcpClient, settingsPanel)
           }
         }
       }.visibleIf(enabledCheckboxState!!)
@@ -251,17 +182,17 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         indent {
           row {
             button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
-              val json = createSseServerJsonEntry(McpServerService.getInstance().port, null)
+              val json = createSseServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
             button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
-              val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, null)
+              val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
             button(McpServerBundle.message("copy.mcp.server.stream.configuration"), {
-              val json = createStreamableServerJsonEntry(McpServerService.getInstance().port, null)
+              val json = createStreamableServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
@@ -276,6 +207,14 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             .bindSelected(settings.state::enableBraveMode)
         }
       }.visibleIf(enabledCheckboxState!!)
+
+      group(McpServerBundle.message("settings.terminal.group"), indent = false) {
+        row {
+          checkBox(McpServerBundle.message("settings.terminal.promotion.show"))
+            .comment(McpServerBundle.message("settings.terminal.promotion.comment", McpServerBundle.ideDisplayName()))
+            .bindSelected(showMcpServerTerminalPromotionProperty())
+        }
+      }
     }
 
     settingsPanel = panel
@@ -307,6 +246,116 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   }
 
   override fun getId(): @NonNls String = "com.intellij.mcpserver.settings"
+}
+
+private fun createProjectClientsPanel(projectClients: List<McpClient>, settingsPanel: DialogPanel?, project: Project): DialogPanel {
+  return panel {
+    row { comment(McpServerBundle.message("settings.client.project.setup.description")) }
+    indent {
+      projectClients.forEach { mcpClient ->
+        buildClientRows(mcpClient, settingsPanel, project)
+      }
+    }
+  }
+}
+
+private fun Panel.buildClientRows(
+  mcpClient: McpClient,
+  settingsPanel: DialogPanel?,
+  project: Project? = null,
+) {
+  val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
+  val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
+  row {
+    text(mcpClient.mcpClientInfo.displayName)
+  }.topGap(TopGap.SMALL)
+  val autoconfiguredPressed = ValueComponentPredicate(false)
+  val errorDuringConfiguration = ValueComponentPredicate(false)
+  val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
+
+  val transportTypeKnown = ValueComponentPredicate(false)
+  lateinit var configuredTextCell: Cell<javax.swing.JEditorPane>
+  lateinit var restartInfoTextCell: Cell<javax.swing.JEditorPane>
+  lateinit var errorCommentCell: Cell<javax.swing.JEditorPane>
+
+  // Function to refresh transport message
+  fun refreshTransportMessage() {
+    val transportType = mcpClient.getTransportTypesDisplayString()
+    transportTypeKnown.set(transportType != null)
+    val configuredMessage = if (transportType != null) {
+      McpServerBundle.message("mcp.server.configured.with.transport", transportType)
+    }
+    else {
+      McpServerBundle.message("mcp.server.configured")
+    }
+    configuredTextCell.component.text = configuredMessage
+    restartInfoTextCell.component.text = McpServerBundle.message("mcp.server.client.restart.info.settings", configuredMessage)
+  }
+
+  fun performConfigurationAction(action: suspend () -> Unit) {
+    runCatching {
+      runWithModalProgressBlocking(
+        ModalTaskOwner.guess(),
+        McpServerBundle.message("autoconfigure.progress.title"),
+        TaskCancellation.nonCancellable()
+      ) {
+        action()
+      }
+    }.onFailure {
+      thisLogger().info(it)
+      errorDuringConfiguration.set(true)
+      val message = if (it is McpClient.McpClientConfigurationException) {
+        it.message
+      }
+      else {
+        McpServerBundle.message("mcp.server.client.autoconfig.unknown.error")
+      }
+      errorCommentCell.component.text = McpServerBundle.message("mcp.server.client.autoconfig.error", message)
+    }.onSuccess {
+      errorDuringConfiguration.set(false)
+      isConfigured.set(true)
+      isPortCorrect.set(true)
+      configExists.set(true)
+      autoconfiguredPressed.set(true)
+      refreshTransportMessage()
+    }
+  }
+
+  row {
+    cell(JBOptionButton(object : AbstractAction(McpServerBundle.message("autoconfigure.mcp.server")) {
+      override fun actionPerformed(e: ActionEvent) {
+        performConfigurationAction {
+          mcpClient.autoConfigure()
+        }
+      }
+    }, null)).apply {
+      configureAdditionalActions(mcpClient, this, ::performConfigurationAction)
+    }
+    icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL)
+      .visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+    configuredTextCell = text("").visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+
+    icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
+    restartInfoTextCell = text("").visibleIf(autoconfiguredPressed.and(transportTypeKnown))
+
+    icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL)
+      .visibleIf(isConfigured.not())
+    comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
+
+    icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect.not()))
+    comment(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
+
+    icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(errorDuringConfiguration)
+    errorCommentCell = comment(
+      McpServerBundle.message(
+        "mcp.server.client.autoconfig.error",
+        McpServerBundle.message("mcp.server.client.autoconfig.unknown.error"),
+      ),
+    ).visibleIf(errorDuringConfiguration)
+  }
+
+  // Call initially to populate the text
+  refreshTransportMessage()
 }
 
 internal fun showMcpServerTerminalPromotionProperty(): MutableProperty<Boolean> {

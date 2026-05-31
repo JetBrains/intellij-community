@@ -84,6 +84,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -151,6 +152,9 @@ internal class McpSessionHandler(
     useFiltersFromEP,
     invocationMode = McpToolInvocationMode.VIA_ROUTER,
   )
+
+  private val projectPathParamToStrip: String? =
+    if (!projectPathFromInitialRequest.isNullOrBlank()) projectPathParameterName else null
 
   val mcpTools = toolsProvider.mcpTools
 
@@ -282,10 +286,12 @@ internal class McpSessionHandler(
   }
 
   private fun mcpToolToRegisteredTool(mcpTool: McpTool): RegisteredTool {
-    val tool = mcpTool.toSdkTool()
+    val tool = mcpTool.toSdkTool(stripPropertyName = projectPathParamToStrip)
     return RegisteredTool(tool) { request ->
         val session = sessionAwaiter.await()
         val httpRequest = currentCoroutineContext().httpRequestOrNull
+
+        // todo this code to get project could be simplified
         val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
         val projectPathFromCallHeader =
           httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH)
@@ -561,7 +567,7 @@ private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
   return callToolResult
 }
 
-private fun McpTool.toSdkTool(): Tool {
+private fun McpTool.toSdkTool(stripPropertyName: String? = null): Tool {
   val outputSchema = if (structuredToolOutputEnabled) {
     descriptor.outputSchema?.let {
       ToolSchema(
@@ -570,13 +576,28 @@ private fun McpTool.toSdkTool(): Tool {
     }
   }
   else null
+
+  val inputProperties = descriptor.inputSchema.propertiesSchema
+  val inputRequired = descriptor.inputSchema.requiredProperties
+
+  val effectiveProperties: JsonObject
+  val effectiveRequired: List<String>
+  if (stripPropertyName != null && inputProperties.containsKey(stripPropertyName)) {
+    effectiveProperties = JsonObject(inputProperties.filterKeys { it != stripPropertyName })
+    effectiveRequired = inputRequired.filter { it != stripPropertyName }
+  }
+  else {
+    effectiveProperties = inputProperties
+    effectiveRequired = inputRequired.toList()
+  }
+
   val tool = Tool(
     name = descriptor.name,
     title = descriptor.title,
     description = descriptor.description,
     inputSchema = ToolSchema(
-      properties = descriptor.inputSchema.propertiesSchema,
-      required = descriptor.inputSchema.requiredProperties.toList(),
+      properties = effectiveProperties,
+      required = effectiveRequired,
     ),
     outputSchema = outputSchema,
     annotations = descriptor.annotations,

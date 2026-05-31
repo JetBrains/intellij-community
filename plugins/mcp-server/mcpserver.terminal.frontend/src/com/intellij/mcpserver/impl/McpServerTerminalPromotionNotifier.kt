@@ -299,18 +299,18 @@ private fun collectTerminalPromotionCandidates(
   return when (provider) {
     McpServerTerminalProvider.CODEX -> McpServerTerminalPromotionCandidates(
       projectClient = project.basePath?.let { basePath ->
-        CodexClient(McpClientInfo.Scope.PROJECT, Paths.get(basePath, ".codex", "config.toml"))
+        CodexClient(McpClientInfo.Scope.Project(project), Paths.get(basePath, ".codex", "config.toml"))
       },
       globalClient = McpClientDetector.preferredCodexConfigPath()?.let { configPath ->
-        CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+        CodexClient(McpClientInfo.Scope.Global, configPath)
       },
     )
     McpServerTerminalProvider.CLAUDE -> McpServerTerminalPromotionCandidates(
       projectClient = project.basePath?.let { basePath ->
-        ClaudeCodeClient(McpClientInfo.Scope.PROJECT, Paths.get(basePath, ".mcp.json"))
+        ClaudeCodeClient(McpClientInfo.Scope.Project(project), Paths.get(basePath, ".mcp.json"))
       },
       globalClient = ClaudeCodeClient(
-        McpClientInfo.Scope.GLOBAL,
+        McpClientInfo.Scope.Global,
         Paths.get(OSAgnosticPathUtil.expandUserHome("~/.claude.json"))
       ),
     )
@@ -494,8 +494,8 @@ internal fun mcpServerTerminalPromotionFixActionText(): @NlsActions.ActionText S
 
 internal fun mcpServerTerminalPromotionSetupActionText(scope: McpClientInfo.Scope): @NlsActions.ActionText String {
   val scopeText = when (scope) {
-    McpClientInfo.Scope.PROJECT -> McpServerBundle.message("mcp.server.terminal.promotion.scope.project")
-    McpClientInfo.Scope.GLOBAL -> McpServerBundle.message("mcp.server.terminal.promotion.scope.global")
+    is McpClientInfo.Scope.Project -> McpServerBundle.message("mcp.server.terminal.promotion.scope.project")
+    is McpClientInfo.Scope.Global -> McpServerBundle.message("mcp.server.terminal.promotion.scope.global")
   }
   return McpServerBundle.message("mcp.server.terminal.promotion.setup.action", McpServerBundle.ideDisplayName(), scopeText)
 }

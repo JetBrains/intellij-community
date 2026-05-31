@@ -43,7 +43,7 @@ class VSCodeClientTest : VscodeForkMcpClientTest() {
   @Test
   fun `mcpServersKey returns servers for VSCode`() {
     val configPath = tempDir.resolve("config.json")
-    val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
     assertThat(client.mcpServersKey()).isEqualTo("servers")
   }
 }

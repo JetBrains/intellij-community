@@ -17,7 +17,7 @@ class ClaudeCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     return stdio || network
   }
 
-  override suspend fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl)
+  override suspend fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl, headers = buildScopeHeaders())
 
-  override suspend fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl)
+  override suspend fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl, headers = buildScopeHeaders())
 }

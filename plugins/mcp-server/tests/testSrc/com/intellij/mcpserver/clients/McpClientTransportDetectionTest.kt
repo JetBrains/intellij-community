@@ -54,7 +54,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(1, types.size)
@@ -77,7 +77,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(1, types.size)
@@ -100,7 +100,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(1, types.size)
@@ -131,7 +131,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(3, types.size)
@@ -144,7 +144,7 @@ class McpClientTransportDetectionTest {
   fun `getConfiguredTransportTypes returns empty set for missing config`() {
     val configPath = tempDir.resolve("missing.json")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(0, types.size)
@@ -155,7 +155,7 @@ class McpClientTransportDetectionTest {
     val configPath = tempDir.resolve("config.json")
     configPath.writeText("""{"mcpServers": {}}""")
 
-    val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(0, types.size)
@@ -177,7 +177,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CursorClient(McpClientInfo.Scope.Global, configPath)
     val displayString = client.getTransportTypesDisplayString()
 
     assertEquals("Stdio", displayString)
@@ -199,7 +199,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
     val displayString = client.getTransportTypesDisplayString()
 
     assertEquals("SSE", displayString)
@@ -210,7 +210,7 @@ class McpClientTransportDetectionTest {
     val configPath = tempDir.resolve("config.json")
     configPath.writeText("""{"mcpServers": {}}""")
 
-    val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = WindsurfClient(McpClientInfo.Scope.Global, configPath)
     val displayString = client.getTransportTypesDisplayString()
 
     assertNull(displayString)
@@ -220,7 +220,7 @@ class McpClientTransportDetectionTest {
   fun `getTransportTypesDisplayString returns null for missing config`() {
     val configPath = tempDir.resolve("missing.json")
 
-    val client = ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = ClaudeCodeClient(McpClientInfo.Scope.Global, configPath)
     val displayString = client.getTransportTypesDisplayString()
 
     assertNull(displayString)
@@ -240,7 +240,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(1, types.size)
@@ -257,7 +257,7 @@ class McpClientTransportDetectionTest {
       """.trimIndent()
     )
 
-    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val client = CodexClient(McpClientInfo.Scope.Global, configPath)
     val types = client.getConfiguredTransportTypes()
 
     assertEquals(1, types.size)

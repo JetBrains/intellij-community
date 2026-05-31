@@ -110,13 +110,13 @@ internal class McpServerPopupModelImpl(
   }
 
   override fun copySseConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(service.port, null)))
+    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(service.port, project.basePath)))
 
   override fun copyStdioConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(service.port, null)))
+    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(service.port, project.basePath)))
 
   override fun copyStreamConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(service.port, null)))
+    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(service.port, project.basePath)))
 
   override fun browseUrl(url: String) {
     BrowserUtil.browse(url)

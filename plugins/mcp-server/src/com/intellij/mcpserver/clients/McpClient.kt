@@ -12,6 +12,7 @@ import com.intellij.mcpserver.impl.getForcedMcpServerPortOrNull
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
+import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.stdio.main
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.NlsContexts
@@ -103,7 +104,9 @@ abstract class McpClient(
     return configure(getStdioConfig())
   }
 
-  suspend fun getPreferredConfig(): ServerConfig = getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
+  suspend fun getPreferredConfig(projectBasePath: String? = null): ServerConfig {
+    return getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
+  }
 
   open suspend fun getStreamableHttpConfig(): ServerConfig? = null
 
@@ -179,6 +182,11 @@ abstract class McpClient(
         TransportType.STREAMABLE_HTTP -> "HTTP Stream"
       }
     }
+  }
+
+  fun buildScopeHeaders(): Map<String, String>? {
+    val projectPath = (mcpClientInfo.scope as? McpClientInfo.Scope.Project)?.projectPath ?: return null
+    return mapOf(IJ_MCP_SERVER_PROJECT_PATH to projectPath)
   }
 
   private fun isPortMatching(serverConfig: ExistingConfig, targetPort: Int): Boolean {

@@ -6,8 +6,8 @@ import com.intellij.mcpserver.annotations.McpToolHintValue.TRUE
 import com.intellij.mcpserver.annotations.McpToolHints
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.asTool
-import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -134,6 +134,19 @@ class TransportTest {
       assertThat(actual).isEqualTo(secondProject)
     }
     delay(500.milliseconds)
+  }
+
+  @ParameterizedTest
+  @MethodSource("getTransports")
+  fun list_tools_strips_project_path_when_session_header_present(transport: TransportHolder) = transportTest(transport) { client ->
+    val listTools = client.listTools()
+    assertThat(listTools.tools).isNotEmpty()
+    for ((name, inputSchema) in listTools.tools) {
+      val properties = inputSchema.properties
+      assertThat(properties?.containsKey(projectPathParameterName))
+        .describedAs("Tool '$name' should not have '$projectPathParameterName' in schema when session project path is set")
+        .isFalse()
+    }
   }
 
   val projectFromTool = CompletableDeferred<Project?>()

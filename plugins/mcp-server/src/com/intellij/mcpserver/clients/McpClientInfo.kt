@@ -1,5 +1,7 @@
 package com.intellij.mcpserver.clients
 
+import org.jetbrains.annotations.TestOnly
+
 /**
  * Describes an MCP client integration, capturing its display name and configuration scope.
  * `name` identifies the target product, while `scope` differentiates global and project-level configs.
@@ -9,7 +11,7 @@ data class McpClientInfo(
   val scope: Scope,
 ) {
 
-  val displayName: String = "${name.baseName}${if (scope == Scope.PROJECT) " (Project)" else ""}"
+  val displayName: String = "${name.baseName}${if (scope is Scope.Project) " (Project)" else ""}"
 
   enum class Name(val baseName: String) {
     VS_CODE("VSCode"),
@@ -22,7 +24,19 @@ data class McpClientInfo(
     AIR("Air"),
   }
 
-  enum class Scope {
-    GLOBAL, PROJECT
+  sealed class Scope {
+    data object Global: Scope()
+    class Project : Scope {
+      val projectPath: String?
+
+      constructor(project: com.intellij.openapi.project.Project) {
+        this.projectPath = project.basePath
+      }
+
+      @TestOnly
+      constructor(projectPath: String?) {
+        this.projectPath = projectPath
+      }
+    }
   }
 }

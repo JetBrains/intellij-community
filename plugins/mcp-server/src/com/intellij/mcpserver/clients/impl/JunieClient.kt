@@ -12,5 +12,5 @@ class JunieClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
 ) {
   override fun isConfigured(): Boolean = isSSEOrStreamConfigured() == true || isStdIOConfigured() == true
 
-  override suspend fun getStreamableHttpConfig(): ServerConfig = JunieNetworkConfig(url = streamableHttpUrl, type = "http")
+  override suspend fun getStreamableHttpConfig(): ServerConfig = JunieNetworkConfig(url = streamableHttpUrl, type = "http", headers = buildScopeHeaders())
 }

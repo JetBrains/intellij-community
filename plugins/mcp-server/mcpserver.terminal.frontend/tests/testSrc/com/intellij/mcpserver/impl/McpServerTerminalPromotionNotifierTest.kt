@@ -51,9 +51,9 @@ internal class McpServerTerminalPromotionNotifierTest {
   fun `prefers project client when project config artifacts exist`() {
     McpClient.overrideProductSpecificServerKeyForTests("idea")
     val projectClient =
-      FakeClient(McpClientInfo.Scope.PROJECT, linkedMapOf("idea" to ExistingConfig(url = "http://example.com:1/stream", type = "http")))
+      FakeClient(McpClientInfo.Scope.Project("/fake/project"), linkedMapOf("idea" to ExistingConfig(url = "http://example.com:1/stream", type = "http")))
     val globalClient =
-      FakeClient(McpClientInfo.Scope.GLOBAL, linkedMapOf("idea" to ExistingConfig(url = "http://example.com:2/stream", type = "http")))
+      FakeClient(McpClientInfo.Scope.Global, linkedMapOf("idea" to ExistingConfig(url = "http://example.com:2/stream", type = "http")))
 
     val preferred = McpServerTerminalPromotionCandidates(projectClient, globalClient).preferredClient()
 
@@ -64,11 +64,11 @@ internal class McpServerTerminalPromotionNotifierTest {
   fun `prefers global client when project config is not attached`() {
     McpClient.overrideProductSpecificServerKeyForTests("idea")
     val projectClient =
-      FakeClient(McpClientInfo.Scope.PROJECT,
+      FakeClient(McpClientInfo.Scope.Project("/fake/project"),
                  linkedMapOf("other" to ExistingConfig(url = "http://example.com:1/stream", type = "http")),
                  false)
     val globalClient =
-      FakeClient(McpClientInfo.Scope.GLOBAL,
+      FakeClient(McpClientInfo.Scope.Global,
                  linkedMapOf("idea" to ExistingConfig(url = "http://example.com:2/stream", type = "http")),
                  true)
 
@@ -79,8 +79,8 @@ internal class McpServerTerminalPromotionNotifierTest {
 
   @Test
   fun `falls back to project client when no server is configured`() {
-    val projectClient = FakeClient(McpClientInfo.Scope.PROJECT, null, false)
-    val globalClient = FakeClient(McpClientInfo.Scope.GLOBAL, null, false)
+    val projectClient = FakeClient(McpClientInfo.Scope.Project("/fake/project"), null, false)
+    val globalClient = FakeClient(McpClientInfo.Scope.Global, null, false)
 
     val preferred = McpServerTerminalPromotionCandidates(projectClient, globalClient).preferredClient()
 
@@ -89,8 +89,8 @@ internal class McpServerTerminalPromotionNotifierTest {
 
   @Test
   fun `setup clients prefer project scope on the left`() {
-    val projectClient = FakeClient(McpClientInfo.Scope.PROJECT, null, false)
-    val globalClient = FakeClient(McpClientInfo.Scope.GLOBAL, null, false)
+    val projectClient = FakeClient(McpClientInfo.Scope.Project("/fake/project"), null, false)
+    val globalClient = FakeClient(McpClientInfo.Scope.Global, null, false)
 
     val setupClients = McpServerTerminalPromotionCandidates(projectClient, globalClient).setupClients()
 
@@ -111,8 +111,8 @@ internal class McpServerTerminalPromotionNotifierTest {
 
   @Test
   fun `setup dropdown action group keeps project scope first`() {
-    val projectClient = FakeClient(McpClientInfo.Scope.PROJECT, null, false)
-    val globalClient = FakeClient(McpClientInfo.Scope.GLOBAL, null, false)
+    val projectClient = FakeClient(McpClientInfo.Scope.Project("/fake/project"), null, false)
+    val globalClient = FakeClient(McpClientInfo.Scope.Global, null, false)
 
     val setupActionGroup = createMcpServerTerminalPromotionSetupActionGroup(listOf(projectClient, globalClient)) { }
 
@@ -125,13 +125,13 @@ internal class McpServerTerminalPromotionNotifierTest {
 
   @Test
   fun `setup action text includes project scope`() {
-    assertThat(mcpServerTerminalPromotionSetupActionText(McpClientInfo.Scope.PROJECT))
+    assertThat(mcpServerTerminalPromotionSetupActionText(McpClientInfo.Scope.Project("/fake/project")))
       .isEqualTo("Set up ${ApplicationNamesInfo.getInstance().fullProductName} MCP (project)")
   }
 
   @Test
   fun `setup action text includes global scope`() {
-    assertThat(mcpServerTerminalPromotionSetupActionText(McpClientInfo.Scope.GLOBAL))
+    assertThat(mcpServerTerminalPromotionSetupActionText(McpClientInfo.Scope.Global))
       .isEqualTo("Set up ${ApplicationNamesInfo.getInstance().fullProductName} MCP (global)")
   }
 
@@ -139,10 +139,10 @@ internal class McpServerTerminalPromotionNotifierTest {
   fun `reconfigure clients include every wrong port scope`() {
     McpClient.overrideProductSpecificServerKeyForTests("idea")
     val projectClient =
-      FakeClient(McpClientInfo.Scope.PROJECT,
+      FakeClient(McpClientInfo.Scope.Project("/fake/project"),
                  linkedMapOf("idea" to ExistingConfig(url = "http://localhost:63000/stream", type = "http")))
     val globalClient =
-      FakeClient(McpClientInfo.Scope.GLOBAL,
+      FakeClient(McpClientInfo.Scope.Global,
                  linkedMapOf("idea" to ExistingConfig(url = "http://127.0.0.1:65000/stream", type = "http")))
 
     val reconfigureClients =
@@ -155,10 +155,10 @@ internal class McpServerTerminalPromotionNotifierTest {
   fun `reconfigure clients skip scopes already on current port`() {
     McpClient.overrideProductSpecificServerKeyForTests("idea")
     val projectClient =
-      FakeClient(McpClientInfo.Scope.PROJECT,
+      FakeClient(McpClientInfo.Scope.Project("/fake/project"),
                  linkedMapOf("idea" to ExistingConfig(url = "http://localhost:63000/stream", type = "http")))
     val globalClient =
-      FakeClient(McpClientInfo.Scope.GLOBAL,
+      FakeClient(McpClientInfo.Scope.Global,
                  linkedMapOf("idea" to ExistingConfig(url = "http://127.0.0.1:64000/stream", type = "http")))
 
     val reconfigureClients =

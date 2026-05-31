@@ -17,7 +17,7 @@ class WindsurfClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
     return stdio || network
   }
 
-  override suspend fun getSSEConfig(): ServerConfig = WindsurfNetworkConfig(serverUrl = sseUrl, type = "sse")
+  override suspend fun getSSEConfig(): ServerConfig = WindsurfNetworkConfig(serverUrl = sseUrl, type = "sse", headers = buildScopeHeaders())
 
-  override suspend fun getStreamableHttpConfig(): ServerConfig = WindsurfNetworkConfig(serverUrl = streamableHttpUrl, type = "http")
+  override suspend fun getStreamableHttpConfig(): ServerConfig = WindsurfNetworkConfig(serverUrl = streamableHttpUrl, type = "http", headers = buildScopeHeaders())
 }
