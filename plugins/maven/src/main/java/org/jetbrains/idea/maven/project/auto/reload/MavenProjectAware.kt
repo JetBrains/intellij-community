@@ -77,7 +77,7 @@ class MavenProjectAware(
 
   private fun collectSettingsFiles(): Set<String> {
     val result = LinkedHashSet<String>()
-    result.addAll(manager.projectsTree.managedFilesPaths)
+    result.addAll(manager.state.originalFiles)
     result.addAll(manager.projectsTree.projectsFiles.map { it.path })
     for (mavenProject in manager.projectsTree.projects) {
       ProgressManager.checkCanceled()

@@ -128,7 +128,6 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
       projectTree.updater()
         .setRootProjects(roots)
-        .setManagedFiles(roots.map { it.file.path })
         .setAggregatorMappings(mavenProjectMappings)
         .setMavenIdMappings(allProjects)
 

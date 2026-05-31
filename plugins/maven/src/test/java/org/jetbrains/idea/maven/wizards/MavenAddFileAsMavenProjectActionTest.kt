@@ -39,7 +39,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     action.actionPerformedAsync(event)
 
     val projectsManager = MavenProjectsManager.getInstance(module.project)
-    val paths = projectsManager.projectsTreeForTests.existingManagedFiles.map { it.toNioPath() }
+    val paths = projectsManager.state.originalFiles.map { Path.of(it) }
     TestCase.assertEquals(1, paths.size)
     TestCase.assertEquals(pom2, paths[0])
   }

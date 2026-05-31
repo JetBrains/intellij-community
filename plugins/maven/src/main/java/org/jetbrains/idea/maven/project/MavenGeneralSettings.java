@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -19,6 +20,7 @@ import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -473,7 +475,9 @@ public class MavenGeneralSettings implements Cloneable {
 
     var files = MavenUtil.collectFiles(instance.getRootProjects());
     if (files.isEmpty()) {
-      files = instance.getProjectsTree().getExistingManagedFiles();
+      files = instance.getState().originalFiles.stream()
+        .map(f -> VirtualFileManager.getInstance().findFileByNioPath(Path.of(f)))
+        .filter(f -> f != null).toList();
     }
 
     updateFromMavenConfig(files);

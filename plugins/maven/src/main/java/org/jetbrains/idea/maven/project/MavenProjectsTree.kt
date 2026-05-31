@@ -3,15 +3,14 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -21,20 +20,35 @@ import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.util.messages.Topic
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenProfileKind
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.*
-import java.io.*
-import java.lang.Runnable
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.Strings
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.EventListener
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -99,7 +113,9 @@ class MavenProjectsTree(val project: Project) {
 
     DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
       out.writeUTF(STORAGE_VERSION)
-      writeCollection(out, copy.myManagedFilesPaths)
+
+      // managed file paths
+      writeCollection(out, emptyList())
       writeCollection(out, copy.myIgnoredFilesPaths)
       writeCollection(out, copy.myIgnoredFilesPatterns)
 
@@ -122,47 +138,6 @@ class MavenProjectsTree(val project: Project) {
       writeProjectsRecursively(out, getModules(mavenProject))
     }
   }
-
-  val managedFilesPaths: List<String>
-    get() = withReadLock {
-      ArrayList(myManagedFilesPaths)
-    }
-
-  fun resetManagedFilesPaths(paths: List<String>) {
-    withWriteLock {
-      myManagedFilesPaths.replaceWith(LinkedHashSet(paths))
-    }
-  }
-
-  @TestOnly
-  fun resetManagedFiles(files: List<VirtualFile>) {
-    resetManagedFilesPaths(MavenUtil.collectPaths(files))
-  }
-
-  fun addManagedFiles(files: List<VirtualFile>) {
-    val newFiles = withReadLock {
-      val newFiles = ArrayList(myManagedFilesPaths)
-      newFiles.addAll(MavenUtil.collectPaths(files))
-      newFiles
-    }
-
-    resetManagedFilesPaths(newFiles)
-  }
-
-  fun removeManagedFiles(files: List<VirtualFile>) {
-    val filePaths = files.map { it.path }.toSet()
-    withWriteLock { myManagedFilesPaths.removeAll(filePaths) }
-  }
-
-  val existingManagedFiles: List<VirtualFile>
-    get() {
-      val result: MutableList<VirtualFile> = ArrayList()
-      for (path in managedFilesPaths) {
-        val f = LocalFileSystem.getInstance().findFileByPath(path)
-        if (f != null && f.exists()) result.add(f)
-      }
-      return result
-    }
 
   var ignoredFilesPaths: List<String>
     get() = withReadLock {
@@ -312,46 +287,35 @@ class MavenProjectsTree(val project: Project) {
       return result
     }
 
-
-  @Deprecated("use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead")
-  fun updateAll(
-    force: Boolean,
-    generalSettings: MavenGeneralSettings,
-    explicitProfiles: MavenExplicitProfiles,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-    process: MavenProgressIndicator,
-  ) {
-    runBlockingMaybeCancellable { updateAll(force, generalSettings, explicitProfiles, mavenEmbedderWrappers, process.indicator) }
-  }
-
   @ApiStatus.Internal
-  suspend fun updateAll(
-    force: Boolean,
-    generalSettings: MavenGeneralSettings,
-    explicitProfiles: MavenExplicitProfiles,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-    process: ProgressIndicator,
-  ): MavenProjectsTreeUpdateResult {
-    return updateAll(force, generalSettings, explicitProfiles, mavenEmbedderWrappers, toRawProgressReporter(process))
-  }
-
-  @ApiStatus.Internal
-  suspend fun updateAll(
+  suspend fun updateAllFiles(
+    managedFiles: List<String>,
     force: Boolean,
     generalSettings: MavenGeneralSettings,
     explicitProfiles: MavenExplicitProfiles,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
     progressReporter: RawProgressReporter,
   ): MavenProjectsTreeUpdateResult {
-    val managedFiles = existingManagedFiles
+    val files = managedFiles.mapNotNull { VirtualFileManager.getInstance().findFileByNioPath(Path.of(it)) }
+    return updateAll(files, force, generalSettings, explicitProfiles, mavenEmbedderWrappers, progressReporter)
+  }
 
+  @ApiStatus.Internal
+  suspend fun updateAll(
+    files: List<VirtualFile>,
+    force: Boolean,
+    generalSettings: MavenGeneralSettings,
+    explicitProfiles: MavenExplicitProfiles,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    progressReporter: RawProgressReporter,
+  ): MavenProjectsTreeUpdateResult {
     val projectReader = MavenProjectReader(project, mavenEmbedderWrappers, generalSettings, projectLocator)
 
     val updated = tracer.spanBuilder("updateProjectTree").useWithScope {
-      update(managedFiles, true, force, projectReader, explicitProfiles, progressReporter)
+      update(files, true, force, projectReader, explicitProfiles, progressReporter)
     }
 
-    val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, managedFiles)
+    val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, files)
     val deleted = tracer.spanBuilder("cleanupProjectTree").useWithScope {
       delete(projectReader, explicitProfiles, obsoleteFiles, progressReporter)
     }
@@ -903,11 +867,6 @@ class MavenProjectsTree(val project: Project) {
   }
 
   inner class Updater {
-    fun setManagedFiles(paths: List<String>): Updater {
-      myManagedFilesPaths.replaceWith(paths)
-      return this
-    }
-
     fun setRootProjects(roots: List<MavenProject>): Updater {
       myRootProjects.clear()
       roots.forEach { root ->
@@ -943,12 +902,9 @@ class MavenProjectsTree(val project: Project) {
     }
 
     fun copyFrom(projectTree: MavenProjectsTree): Updater {
-
-      addFrom(projectTree) { it.myManagedFilesPaths }
       projectTree.myRootProjects.forEach {
         myRootProjects.addProject(it)
       }
-
 
       addFromMap(projectTree) { it.myMavenIdToProjectMapping }
       addFromMap(projectTree) { it.myVirtualFileToProjectMapping }
@@ -1005,7 +961,9 @@ class MavenProjectsTree(val project: Project) {
       try {
         storageVersion = inputStream.readUTF()
 
-        myManagedFilesPaths.replaceWith(readCollection(inputStream, LinkedHashSet()))
+        // managed file paths
+        readCollection(inputStream, LinkedHashSet())
+
         myIgnoredFilesPaths.replaceWith(readCollection(inputStream, ArrayList()))
         myIgnoredFilesPatterns.replaceWith(readCollection(inputStream, ArrayList()))
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModels
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport
 import com.intellij.projectImport.ProjectImportBuilder
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -184,14 +186,21 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     })
   }
 
+  private fun toRawProgressReporter(progressIndicator: ProgressIndicator): RawProgressReporter {
+    return object : RawProgressReporter {
+      override fun text(text: @NlsContexts.ProgressText String?) {
+        progressIndicator.text = text
+      }
+    }
+  }
+
   private fun readMavenProjectTree(process: MavenProgressIndicator) {
     val tree = MavenProjectsTree(projectOrDefault)
-    tree.addManagedFiles(parameters.myFiles!!)
 
     runBlockingMaybeCancellable {
       val mavenEmbedderWrappers = projectOrDefault.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
       mavenEmbedderWrappers.use {
-        tree.updateAll(false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, process.indicator)
+        tree.updateAll(parameters.myFiles!!, false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, toRawProgressReporter(process.indicator))
       }
     }
 

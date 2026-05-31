@@ -39,7 +39,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom))
+    projectsManager.state.originalFiles = listOf(projectPom.path)
     projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
@@ -60,7 +60,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom))
+    projectsManager.state.originalFiles = listOf(projectPom.path)
     projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
@@ -107,7 +107,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom, m2, m2))
+    projectsManager.state.originalFiles = (listOf(projectPom, m2, m2)).map { it.path }
     projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()
@@ -168,7 +168,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.projectsTree.resetManagedFiles(listOf(projectPom, m2, m2))
+    projectsManager.state.originalFiles = listOf(projectPom, m2, m2).map { it.path }
     projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
     updateAllProjects()
     projectsManager.fireActivatedInTests()

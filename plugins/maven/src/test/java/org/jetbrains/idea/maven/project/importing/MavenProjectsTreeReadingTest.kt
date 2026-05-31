@@ -383,10 +383,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     updateAll(projectPom)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
     l.log.clear()
-    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(listOf(projectPom), false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log(), l.log)
     l.log.clear()
-    tree.updateAll(true, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(listOf(projectPom), true, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
   }
 
@@ -1509,12 +1509,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                        """.trimIndent())
     val l = MyLoggingListener()
     project.messageBus.connect(getTestRootDisposable()).subscribe(MavenProjectsTree.Listener.TOPIC, l)
-    tree.addManagedFiles(listOf(projectPom))
-    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(listOf(projectPom), false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log)
     l.log.clear()
-    tree.removeManagedFiles(listOf(projectPom))
-    tree.updateAll(false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAllFiles(emptyList(), false, mavenGeneralSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log)
   }
 
@@ -1621,9 +1619,8 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                 </profile>
                                 """.trimIndent())
     updateAll(projectPom)
-    val existingManagedFiles = tree.existingManagedFiles
     val obsoleteFiles = tree.rootProjectsFiles
-    assertEquals(existingManagedFiles, obsoleteFiles)
+    assertEquals(listOf(projectPom), obsoleteFiles)
   }
 
   @Test

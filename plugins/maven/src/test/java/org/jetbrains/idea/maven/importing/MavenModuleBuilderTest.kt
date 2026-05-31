@@ -160,14 +160,14 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(1, projectsManager.projectsTreeForTests.managedFilesPaths.size)
+    assertEquals(1, projectsManager.state.originalFiles.size)
 
     setModuleNameAndRoot("module", "$projectPath/module")
     setAggregatorProject(null)
     createNewModule(MavenId("org.foo", "module", "1.0"))
     projectRoot.findFileByRelativePath("module/pom.xml")
 
-    assertEquals(2, projectsManager.projectsTreeForTests.managedFilesPaths.size)
+    assertEquals(2, projectsManager.state.originalFiles.size)
   }
 
   @Test
@@ -179,14 +179,14 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(1, projectsManager.projectsTreeForTests.managedFilesPaths.size)
+    assertEquals(1, projectsManager.state.originalFiles.size)
 
     setModuleNameAndRoot("module", "$projectPath/module")
     setAggregatorProject(projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
     projectRoot.findFileByRelativePath("module/pom.xml")
 
-    assertEquals(1, projectsManager.projectsTreeForTests.managedFilesPaths.size)
+    assertEquals(1, projectsManager.state.originalFiles.size)
   }
 
   @Test

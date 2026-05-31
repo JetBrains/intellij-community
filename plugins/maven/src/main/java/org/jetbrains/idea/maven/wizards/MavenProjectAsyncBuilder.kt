@@ -154,7 +154,6 @@ class MavenProjectAsyncBuilder {
     }
 
     val tree = MavenProjectsTree(project)
-    tree.addManagedFiles(files)
 
     generalSettings.updateFromMavenConfig(files)
     updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings, rootDirectory)
@@ -177,7 +176,7 @@ class MavenProjectAsyncBuilder {
       reportRawProgress { reporter ->
         val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
         mavenEmbedderWrappers.use {
-          tree.updateAll(false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, reporter)
+          tree.updateAll(files, false, generalSettings, MavenExplicitProfiles.NONE, mavenEmbedderWrappers, reporter)
         }
       }
     }
