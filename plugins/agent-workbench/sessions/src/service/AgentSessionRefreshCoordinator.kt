@@ -34,7 +34,6 @@ import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettin
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -57,7 +56,7 @@ internal class AgentSessionRefreshCoordinator(
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
   private val isRefreshGateActive: suspend () -> Boolean,
-  private val scheduleVfsRefresh: () -> Unit = { SaveAndSyncHandler.getInstance().scheduleRefresh() },
+  private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
@@ -211,13 +210,20 @@ internal class AgentSessionRefreshCoordinator(
       provider = provider,
       updateEvent = updateEvent,
     )
-    if (candidatePaths.isNotEmpty() && candidatePaths.none(isVfsRefreshOnStatusUpdatesEnabled)) {
+    if (candidatePaths.isEmpty()) {
+      LOG.debug {
+        "Skipped VFS refresh for ${provider.value} source update: no resolved project paths"
+      }
+      return
+    }
+    val enabledCandidatePaths = candidatePaths.filter(isVfsRefreshOnStatusUpdatesEnabled).toSet()
+    if (enabledCandidatePaths.isEmpty()) {
       LOG.debug {
         "Skipped VFS refresh for ${provider.value} source update: disabled by project config paths=${candidatePaths.size}"
       }
       return
     }
-    scheduleVfsRefresh()
+    scheduleVfsRefresh(enabledCandidatePaths)
   }
 
   fun refresh() {

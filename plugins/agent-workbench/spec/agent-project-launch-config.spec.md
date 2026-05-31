@@ -48,7 +48,7 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
   [@test] ../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
 
 - Config schema supports a top-level runtime behavior key:
-  - `refreshVfsOnStatusUpdates`: boolean; defaults to `true`; when `false`, Agent Workbench suppresses IDE VFS refresh scheduling for source updates that carry project-file-change evidence only when the resolved update candidate set contains no refresh-enabled project roots. The platform refresh API is global, so a disabled root may still be refreshed when batched with another enabled root.
+  - `refreshVfsOnStatusUpdates`: boolean; defaults to `true`; when `false`, Agent Workbench suppresses IDE VFS refresh scheduling for source updates that carry project-file-change evidence for that project root.
   [@test] ../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 

@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
@@ -116,7 +117,7 @@ class AgentSessionRefreshCoordinatorTest {
 
   @Test
   fun sourceUpdatesScheduleSingleDebouncedVfsRefresh() = runBlocking(Dispatchers.Default) {
-    val vfsRefreshInvocations = AtomicInteger(0)
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       supportsUpdates = true,
@@ -129,20 +130,31 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
-    ) { coordinator, _ ->
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
       coordinator.observeSessionSourceUpdates()
 
-      waitForCondition { vfsRefreshInvocations.get() == 1 }
+      waitForCondition { vfsRefreshRequests.size == 1 }
       delay(500.milliseconds)
 
-      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+      assertThat(vfsRefreshRequests).containsExactly(setOf(PROJECT_PATH))
     }
   }
 
   @Test
   fun hintSourceUpdateWithProjectFileChangeEvidenceSchedulesVfsRefresh() = runBlocking(Dispatchers.Default) {
-    val vfsRefreshInvocations = AtomicInteger(0)
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       supportsUpdates = true,
@@ -160,13 +172,13 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
     ) { coordinator, _ ->
       coordinator.observeSessionSourceUpdates()
 
-      waitForCondition { vfsRefreshInvocations.get() == 1 }
+      waitForCondition { vfsRefreshRequests.size == 1 }
 
-      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+      assertThat(vfsRefreshRequests).containsExactly(setOf(PROJECT_PATH))
     }
   }
 
@@ -174,7 +186,7 @@ class AgentSessionRefreshCoordinatorTest {
   fun sourceUpdateWithProjectFileChangeEvidenceSchedulesVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
     val projectPath = tempDir.resolve("project")
     Files.createDirectories(projectPath)
-    val vfsRefreshInvocations = AtomicInteger(0)
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val closedRefreshInvocations = AtomicInteger(0)
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -191,7 +203,7 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -209,7 +221,7 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition { closedRefreshInvocations.get() == 1 }
 
-      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+      assertThat(vfsRefreshRequests).containsExactly(setOf(projectPath.toString()))
     }
   }
 
@@ -234,7 +246,7 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+      scheduleVfsRefresh = { _ -> vfsRefreshInvocations.incrementAndGet() },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -277,7 +289,7 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+      scheduleVfsRefresh = { _ -> vfsRefreshInvocations.incrementAndGet() },
       isVfsRefreshOnStatusUpdatesEnabled = { false },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
@@ -4505,7 +4517,7 @@ private suspend fun withLoadingCoordinator(
   clearOpenConcreteCodexTabAnchors: (Map<String, List<AgentChatConcreteTabSnapshot>>) -> Int = { tabsByPath ->
     tabsByPath.values.sumOf { it.size }
   },
-  scheduleVfsRefresh: () -> Unit = {},
+  scheduleVfsRefresh: (Set<String>) -> Unit = { _ -> },
   isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean = { true },
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {

@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -58,7 +59,7 @@ class AgentSessionRefreshService internal constructor(
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
   private val stateStore: AgentSessionsStateStore,
   private val warmState: SessionWarmState,
-  private val scheduleVfsRefresh: () -> Unit = { SaveAndSyncHandler.getInstance().scheduleRefresh() },
+  private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot =
@@ -260,6 +261,13 @@ class AgentSessionRefreshService internal constructor(
 
   fun loadWorktreeThreadsOnDemand(projectPath: String, worktreePath: String) {
     loadingCoordinator.loadWorktreeThreadsOnDemand(projectPath, worktreePath)
+  }
+}
+
+internal fun scheduleAgentWorkbenchVfsRefresh(paths: Set<String>) {
+  val nioPaths = paths.mapNotNull(::parseAgentWorkbenchPathOrNull)
+  if (nioPaths.isNotEmpty()) {
+    SaveAndSyncHandler.getInstance().scheduleRefresh(nioPaths)
   }
 }
 

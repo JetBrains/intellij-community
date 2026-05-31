@@ -69,6 +69,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
@@ -87,6 +88,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
   listenDelay: Duration = LISTEN_DELAY,
 ) : SaveAndSyncHandler() {
   private val refreshKnownLocalRootsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val scopedVfsRefreshScheduler = ScopedVfsRefreshScheduler()
   private val refreshOpenedFilesRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -122,16 +124,19 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
           .debounce(300.milliseconds)
           .collect {
             if (!isSyncBlocked(settings)) {
-              for (listener in EP_NAME.extensionList) {
-                runCatching {
-                  listener.beforeRefresh()
-                }.getOrLogException(LOG)
-              }
-
+              notifyBeforeRefresh()
               doRefreshAllKnownLocalRoots(refreshQueue, refreshSession)
             }
           }
       }
+
+      scopedVfsRefreshScheduler.launchProcessing(
+        coroutineScope = this,
+        settings = settings,
+        refreshQueue = refreshQueue,
+        isSyncBlocked = ::isSyncBlocked,
+        beforeRefresh = ::notifyBeforeRefresh,
+      )
 
       launch(CoroutineName("refresh opened files requests flow processing")) {
         // not collectLatest - wait for previous execution
@@ -193,6 +198,14 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     refreshSession.getAndSet(session)?.cancel()
     LOG.debug("VFS refresh started (refreshRequests)")
     session.launch()
+  }
+
+  private suspend fun notifyBeforeRefresh() {
+    for (listener in EP_NAME.extensionList) {
+      runCatching {
+        listener.beforeRefresh()
+      }.getOrLogException(LOG)
+    }
   }
 
   private fun isSyncBlocked(settings: GeneralSettings): Boolean {
@@ -436,6 +449,14 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     externalChangesModificationTracker.incModificationCount()
     check(refreshOpenedFilesRequests.tryEmit(Unit))
     check(refreshKnownLocalRootsRequests.tryEmit(Unit))
+  }
+
+  override fun scheduleRefresh(paths: Collection<Path>) {
+    if (paths.isEmpty()) {
+      return
+    }
+    externalChangesModificationTracker.incModificationCount()
+    scopedVfsRefreshScheduler.schedule(paths)
   }
 
   override fun maybeRefresh(modalityState: ModalityState) {

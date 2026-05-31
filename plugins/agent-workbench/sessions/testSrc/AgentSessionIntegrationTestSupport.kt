@@ -569,7 +569,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
       warmState = warmState,
-      scheduleVfsRefresh = {},
+      scheduleVfsRefresh = { _ -> },
       openAgentChatSnapshotProvider = {
         buildOpenChatRefreshSnapshot(
           pendingTabsByProvider = mapOf(
