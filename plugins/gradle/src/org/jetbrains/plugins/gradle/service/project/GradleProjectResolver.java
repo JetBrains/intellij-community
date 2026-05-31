@@ -30,6 +30,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.CanonicalPathPrefixTree;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
@@ -556,7 +557,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
           index.buildClasspathNodesMap().get(Path.of(participant.getRootPath()).getParent());
 
         @NotNull Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
-        AtomicReference<DataNode<? extends ModuleData>> buildSrcModuleNode = new AtomicReference<>();
+        @NotNull Ref<DataNode<? extends ModuleData>> buildSrcModuleNodeRef = new Ref<>();
 
         findAll(projectDataNode, ProjectKeys.MODULE).stream()
           .filter(node -> buildSrcProjectPaths.contains(node.getData().getLinkedExternalProjectPath()))
@@ -568,18 +569,19 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
 
             if (participant.getRootPath().equals(node.getData().getLinkedExternalProjectPath())) {
               if (ctx.isResolveModulePerSourceSet()) {
-                buildSrcModuleNode.set(findChild(node, GradleSourceSetData.KEY,
-                                                 sourceSetNode -> sourceSetNode.getData().getExternalName().endsWith(":main")));
+                buildSrcModuleNodeRef.set(findChild(node, GradleSourceSetData.KEY, sourceSetNode ->
+                  sourceSetNode.getData().getExternalName().endsWith(":main")));
               }
               else {
-                buildSrcModuleNode.set(node);
+                buildSrcModuleNodeRef.set(node);
               }
             }
           });
 
-        GradleBuildSrcProjectsResolver.addBuildSrcToBuildScriptClasspathData(buildClasspathNodes,
-                                                                             buildSrcModules,
-                                                                             buildSrcModuleNode.get());
+        DataNode<? extends ModuleData> buildSrcModuleNode = buildSrcModuleNodeRef.get();
+        if (buildSrcModuleNode != null) {
+          GradleBuildSrcProjectsResolver.addBuildSrcToBuildScriptClasspathData(buildClasspathNodes, buildSrcModules, buildSrcModuleNode);
+        }
       }
     }
   }

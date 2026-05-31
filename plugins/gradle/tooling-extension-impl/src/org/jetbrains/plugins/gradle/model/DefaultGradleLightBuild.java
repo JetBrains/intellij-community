@@ -34,9 +34,12 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
 
   private @Nullable DefaultGradleLightBuild myParentBuild = null;
 
-  public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild, @NotNull GradleVersion gradleVersion) {
-    BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
-    myName = rootGradleProject.getName();
+  public DefaultGradleLightBuild(
+    @NotNull GradleBuild gradleBuild,
+    @NotNull BasicGradleProject gradleRootProject,
+    @NotNull GradleVersion gradleVersion
+  ) {
+    myName = gradleRootProject.getName();
     myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
 
     Map<BasicGradleProject, DefaultGradleLightProject> projects = new LinkedHashMap<>();
@@ -45,13 +48,13 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     }
 
     replicateModelHierarchy(
-      rootGradleProject,
+      gradleRootProject,
       it -> projects.get(it),
       BasicGradleProject::getChildren,
       DefaultGradleLightProject::addChildProject
     );
 
-    myRootProject = projects.get(rootGradleProject);
+    myRootProject = projects.get(gradleRootProject);
     myProjects = new ArrayList<>(projects.values());
   }
 
@@ -134,8 +137,11 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     Map<File, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
-      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
-      gradleBuildsToConverted.put(gradleBuild.getBuildIdentifier().getRootDir(), build);
+      BasicGradleProject gradleRootProject = gradleBuild.getRootProject();
+      if (gradleRootProject != null) {
+        DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleRootProject, gradleVersion);
+        gradleBuildsToConverted.put(gradleBuild.getBuildIdentifier().getRootDir(), build);
+      }
     }
     setIncludedBuildsHierarchy(gradleBuilds, gradleBuildsToConverted);
     setBuildSrcHierarchy(gradleBuildsToConverted.values());
@@ -149,11 +155,12 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   ) {
     for (GradleBuild gradleBuild : gradleBuilds) {
       DefaultGradleLightBuild build = gradleBuildsToConverted.get(gradleBuild.getBuildIdentifier().getRootDir());
-      assert build != null;
+      if (build == null) continue;
 
       for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
         DefaultGradleLightBuild buildToUpdate = gradleBuildsToConverted.get(includedGradleBuild.getBuildIdentifier().getRootDir());
-        assert buildToUpdate != null;
+        if (buildToUpdate == null) continue;
+
         buildToUpdate.setParentBuild(build);
       }
     }

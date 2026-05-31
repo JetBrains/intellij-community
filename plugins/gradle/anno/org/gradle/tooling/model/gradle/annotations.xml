@@ -1,0 +1,5 @@
+<root>
+  <item name='org.gradle.tooling.model.gradle.GradleBuild org.gradle.tooling.model.gradle.BasicGradleProject getRootProject()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>
