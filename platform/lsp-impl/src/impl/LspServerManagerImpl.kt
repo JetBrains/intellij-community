@@ -36,6 +36,7 @@ import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
 import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.LspServerSupportProvider.LspServerStarter
+import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
 import com.intellij.platform.lsp.impl.features.codeLens.LSP_CODE_VISION_PROVIDER_ID
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.psi.PsiFile
