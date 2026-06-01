@@ -27,7 +27,6 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun deletePluginFiles(pluginId: PluginId)
   suspend fun performUninstall(sessionId: String, id: PluginId): Boolean
 
-  suspend fun allowLoadUnloadWithoutRestart(pluginId: String): Boolean
   suspend fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
   suspend fun apply(projectId: ProjectId?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
