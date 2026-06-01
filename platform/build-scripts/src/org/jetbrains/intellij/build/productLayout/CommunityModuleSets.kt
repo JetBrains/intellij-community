@@ -350,13 +350,19 @@ object CommunityModuleSets {
   // endregion
 
   /**
-   * Remote development common modules.
+   * RD (Rider and Remote development) common modules.
+   * Included in all IDEs
    */
   fun rdCommon(): ModuleSet = moduleSet("rd.common") {
     module("intellij.rd.ide.model.generated")
     module("intellij.rd.platform")
     module("intellij.rd.ui")
     module("intellij.platform.split.protocol")
+
+    // These modules are included in all IDEs.
+    // However, they are due to intellij.rd.client -> intellij.rd.client.base -> com.intellij.rd.client.capable alias,
+    // Those modules are loaded only: in JetBrains Client, Rider and an IDE if a Radler is installed.
+    // Packaging of those modules to the all IDEs is required to load a JetBrains Client from the big IDE distribution.
     module("intellij.rd.client")
     module("intellij.rd.client.base")
   }
