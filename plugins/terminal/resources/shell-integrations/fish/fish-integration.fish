@@ -20,6 +20,7 @@ function override_jb_variables
             set -gx $new_name $value
         end
       end
+      set -e -g $name
     end
 
     if string match -q -- "_INTELLIJ_FORCE_PREPEND_*" $name
@@ -31,6 +32,7 @@ function override_jb_variables
             set -gx $new_name "$value$$new_name"
         end
       end
+      set -e -g $name
     end
   end
 end
