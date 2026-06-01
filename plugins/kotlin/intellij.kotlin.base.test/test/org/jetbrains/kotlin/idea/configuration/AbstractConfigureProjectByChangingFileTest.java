@@ -9,11 +9,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +51,8 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
     }
 
     protected void doTest(@NotNull String beforeFile, @NotNull String afterFile, @NotNull C configurator) throws Exception {
+        copyAllFiles();
+
         configureByFile(beforeFile);
 
         prepareModuleInfoFile(beforeFile);
@@ -59,6 +64,8 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         NotificationMessageCollector collector = NotificationMessageCollector.create(getProject());
 
+        addSourceRoots();
+
         runConfigurator(getModule(), getFile(), configurator, version, JvmTarget.JVM_1_8.getDescription(), collector);
 
         collector.showNotification();
@@ -66,6 +73,46 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
         KotlinTestUtils.assertEqualsToFile(new File(getTestDataDirectory(), afterFile), getFile().getText());
 
         checkModuleInfoFile(beforeFile);
+    }
+
+    private void addSourceRoots() {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+            String[] sourceDirs = InTextDirectivesUtils.findArrayWithPrefixes(getFile().getText(), "// SOURCE_ROOTS:");
+            for (String sourceDir : sourceDirs) {
+                VirtualFile sourceRoot = getSourceRoot();
+                VirtualFile parent = getFile().getVirtualFile().getParent();
+
+                VirtualFile vDir = VfsUtil.findRelativeFile(sourceRoot, sourceDir.split("/"));
+                if (vDir == null) {
+                    vDir = VfsUtil.findRelativeFile(parent, sourceDir.split("/"));
+                }
+                if (vDir == null) {
+                    try {
+                        vDir = VfsUtil.createDirectoryIfMissing(sourceRoot, sourceDir);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                if (vDir != null) {
+                    PsiTestUtil.addSourceRoot(getModule(), vDir);
+                }
+            }
+        });
+    }
+
+    private void copyAllFiles() {
+        File testDataDir = getTestDataDirectory();
+
+        ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+                VirtualFile root = getSourceRoot();
+                if (root != null) {
+                    VfsUtil.copyDirectory(this, VfsUtil.findFile(testDataDir.toPath(), true), root, null);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void prepareModuleInfoFile(@NotNull String beforeFile) throws IOException {

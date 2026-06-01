@@ -383,7 +383,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             val sourceDirsTag = executionConfiguration(execution, "sourceDirs")
             execution.configuration.createChildTag("sourceDirs")?.let { newSourceDirsTag ->
                 for (dir in sourceDirs) {
-                    newSourceDirsTag.add(newSourceDirsTag.createChildTag("sourceDir", dir))
+                    if (dir.isNotEmpty()) {
+                        newSourceDirsTag.add(newSourceDirsTag.createChildTag("sourceDir", dir))
+                    }
                 }
                 sourceDirsTag.replace(newSourceDirsTag)
             }

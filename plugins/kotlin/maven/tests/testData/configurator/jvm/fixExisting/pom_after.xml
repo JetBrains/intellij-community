@@ -39,6 +39,12 @@
                             <goal>wrong-goal</goal>
                             <goal>compile</goal>
                         </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>src/main/kotlin</sourceDir>
+                                <sourceDir>src/test/kotlin</sourceDir>
+                            </sourceDirs>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>
@@ -57,3 +63,4 @@
 </project>
 
 <!-- VERSION: 1.6.20 -->
+<!-- SOURCE_ROOTS: src/main/kotlin, src/test/kotlin -->
