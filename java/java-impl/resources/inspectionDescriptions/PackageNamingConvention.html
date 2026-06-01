@@ -1,15 +1,18 @@
 <html>
 <body>
 Reports packages whose names are either too short, too long, or do not follow the specified regular expression pattern.
+<p>A quick-fix to rename such packages is available only in the editor.</p>
 <p><b>Example:</b></p>
 <pre><code>
   package io;
 </code></pre>
+This example will be reported if the inspection is enabled with the default settings where a package name should have a minimum length of 3.
 <!-- tooltip end -->
 <p>
-  Use the options to specify the minimum and maximum length of the package name
-  as well as a regular expression that matches valid package names
-  (regular expressions are in standard <code>java.util.regex</code> format).
+  Use the fields in the <b>Options</b> section to specify the minimum length, maximum length, and a regular expression for
+  acceptable package names.
+  Specify <b>0</b> in a length field to skip the corresponding check.
+  Regular expressions use the standard <code>java.util.regex</code> format.
 </p>
 </body>
 </html>
