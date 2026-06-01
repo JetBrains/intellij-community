@@ -8,6 +8,11 @@ import org.jetbrains.intellij.build.OsFamily
 internal fun generateStdioMcpRunnerLaunchData(ideContext: BuildContext, os: OsFamily): CustomCommandLaunchData = CustomCommandLaunchData(
   commands = listOf("stdioMcpServer"),
   vmOptionsFilePath = "${if (os == OsFamily.MACOS) "../bin" else "bin"}/mcp-server.vmoptions",
-  bootClassPathJarNames = ideContext.bootClassPathJarNames + "../plugins/mcpserver/lib/mcpserver-frontend.jar",
+  bootClassPathJarNames = ideContext.bootClassPathJarNames + listOf(
+    "../plugins/mcpserver/lib/mcpserver.jar",
+    "../plugins/mcpserver/lib/io.modelcontextprotocol.kotlin.sdk.jar",
+    "../plugins/mcpserver/lib/io.github.oshai.kotlin.logging.jvm.jar",
+    "../plugins/mcpserver/lib/ktor-server-sse-jvm.jar",
+  ),
   mainClass = "com.intellij.mcpserver.stdio.McpStdioRunnerKt",
 )
