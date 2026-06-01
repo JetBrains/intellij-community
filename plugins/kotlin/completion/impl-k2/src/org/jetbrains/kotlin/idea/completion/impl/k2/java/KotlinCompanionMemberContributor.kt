@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
@@ -181,17 +180,28 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
 
 
 /**
+ * Returns the [Visibility] directly declared on the declaration symbol.
+ */
+private fun KtDeclaration.getDirectVisibility(): Visibility = when {
+    hasModifier(KtTokens.PRIVATE_KEYWORD) -> Visibilities.Private
+    hasModifier(KtTokens.PROTECTED_KEYWORD) -> Visibilities.Protected
+    hasModifier(KtTokens.INTERNAL_KEYWORD) -> Visibilities.Internal
+    hasModifier(KtTokens.PUBLIC_KEYWORD) -> Visibilities.Public
+    else -> Visibilities.DEFAULT_VISIBILITY
+}
+
+/**
  * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
  */
 private fun KtDeclaration.getEffectiveVisibility(): Visibility {
-    val visibility = visibilityModifierTypeOrDefault().toVisibility()
+    val directVisibility = getDirectVisibility()
     val containingClassOrObject = containingClassOrObject
     if (containingClassOrObject != null) {
-        return minOf(visibility, containingClassOrObject.getEffectiveVisibility()) {
+        return minOf(directVisibility, containingClassOrObject.getEffectiveVisibility()) {
             a, b -> a.compareTo(b) ?: 0
         }
     }
-    return visibility
+    return directVisibility
 }
 
 /**
