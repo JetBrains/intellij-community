@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspOpenedFilesService
+import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
 
 internal class LspFileEditorManagerListener : FileEditorManagerListener {

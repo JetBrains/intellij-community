@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.documentSync
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ModalityState
@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerState.Running
 import com.intellij.platform.lsp.api.LspServerSupportProvider
+import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import java.util.Collections
