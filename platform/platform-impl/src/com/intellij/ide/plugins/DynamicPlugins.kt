@@ -16,6 +16,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -394,6 +395,71 @@ object DynamicPlugins {
 
   fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
     return DynamicPluginsLegacyImpl.onPluginUnload(parentDisposable, callback)
+  }
+
+  /**
+   * Note: this method should not be expected to produce the exact max loadable subset, because the actual maximum may actually require a lot of computation.
+   * Instead, expect this method to employ heuristics to get some approximation in a reasonable time.
+   *
+   * @param plugins ids of plugins from the current context that are disabled, but there is a demand to load as many of them as possible dynamically
+   * @return a list of ids of plugins that can be enabled and loaded dynamically together
+   */
+  @IntellijInternalApi
+  @ApiStatus.Internal
+  suspend fun findMaxLoadableSubsetApproximation(plugins: List<PluginId>): List<PluginId> {
+    val dynamicPluginsSupport = DynamicPluginsSupport.getInstance() ?: error("new dynamic plugins support is not enabled")
+    val candidates = plugins.toMutableSet()
+
+    val externalConflict = ObjectUtils.sentinel("external conflict")
+
+    suspend fun testConfiguration(newState: PluginSet): Any? {
+      val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
+        val candidate = newState.resolvedPluginSet!!.originalPluginSet.resolvePluginId(candidateId)
+        candidate == null || !newState.resolvedPluginSet!!.isResolved(candidate)
+      }
+      if (excludedCandidates.isNotEmpty()) {
+        // TODO log
+        return excludedCandidates
+      }
+      val dynamicTransitionImpossible = dynamicPluginsSupport.validateDynamicTransitionPossible(newState)
+      if (dynamicTransitionImpossible == null) {
+        return null
+      }
+      val problematicPlugin = dynamicTransitionImpossible.reason.problematicPlugin
+      if (problematicPlugin == null || problematicPlugin.pluginId !in candidates) {
+        return externalConflict
+      }
+      return listOf(problematicPlugin.pluginId)
+    }
+
+    while (true) {
+      val newState = computeNewPluginsState(
+        include = emptyList(),
+        exclude = emptyList(),
+        pretendEnabled = candidates.toList(),
+        pretendDisabled = emptyList(),
+      )
+      when (val testResult = testConfiguration(newState)) {
+        null -> return candidates.toList()
+        externalConflict -> break
+        is List<*> -> candidates.removeAll(testResult.toSet())
+      }
+    }
+    // either dynamic reconfiguration sequence is not allowed by settings, or this subset of candidates cannot be loaded due to conflicts with other plugins
+    // let's make a single pass trying to greedily include as many plugins as possible
+    val acceptedCandidates = mutableListOf<PluginId>()
+    for (candidate in candidates) {
+      val newState = computeNewPluginsState(
+        include = emptyList(),
+        exclude = emptyList(),
+        pretendEnabled = acceptedCandidates + candidate,
+        pretendDisabled = emptyList(),
+      )
+      if (testConfiguration(newState) == null) {
+        acceptedCandidates.add(candidate)
+      }
+    }
+    return acceptedCandidates.toList()
   }
 
   private fun computeNewPluginsState(
