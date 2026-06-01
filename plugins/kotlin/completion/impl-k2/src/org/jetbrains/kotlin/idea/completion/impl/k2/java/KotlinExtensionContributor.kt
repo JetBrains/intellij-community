@@ -50,9 +50,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -62,8 +62,10 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNames
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import javax.swing.Icon
 
 /**
@@ -225,23 +227,23 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
 
     context(_: KaSession)
     private fun KaType.processApplicableExtensions(
-        positionFile: PsiFile,
         prefixMatcher: PrefixMatcher,
         processor: (extension: KaCallableSymbol, methodWrapper: PsiMethod) -> Unit
     ) {
         val extensionsFromIndex = KtSymbolFromIndexProvider(file = null).getExtensionCallableSymbolsByNameFilter(
             { prefixMatcher.prefixMatches(it.asString()) },
-            listOf(this),
-        ) { it.canBeAnalysed() }
+            listOf(this)
+        ) psiFilter@{ extension ->
+            // We only support top-level extensions
+            if (extension.containingClassOrObject != null) return@psiFilter false
+            // We do not want to show suspend methods
+            if (extension.hasModifier(KtTokens.SUSPEND_KEYWORD)) return@psiFilter false
+
+            // Hide non-visible extensions or ones that cannot be analyzed in the current session
+            extension.isVisibleIgnoringProtected(useSiteModule) && extension.canBeAnalysed()
+        }
 
         extensionsFromIndex.forEach { extension ->
-            // We only support top-level extensions
-            if (!extension.isTopLevel) return@forEach
-            // We do not want to show suspend methods
-            if (extension is KaNamedFunctionSymbol && extension.isSuspend) return@forEach
-            // Hide non-visible extensions
-            if (!extension.isVisibleIgnoringProtected(positionFile)) return@forEach
-
             // Getting matching extensions from the index does not check for generics inside the type properly,
             // which means false positive matches could be included. We filter them out manually.
             val receiverType = extension.receiverType ?: return@forEach
@@ -332,7 +334,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
 
         analyze(kaModule) {
             val qualifierKaType = qualifierType.asKaType(parameters.originalFile)?.lowerBoundIfFlexible() ?: return@analyze
-            qualifierKaType.processApplicableExtensions(parameters.originalFile, result.prefixMatcher) { extension, methodWrapper ->
+            qualifierKaType.processApplicableExtensions(result.prefixMatcher) { extension, methodWrapper ->
                 val containingClass = methodWrapper.containingClass ?: return@processApplicableExtensions
 
                 if (parameters.completionType == CompletionType.SMART) {

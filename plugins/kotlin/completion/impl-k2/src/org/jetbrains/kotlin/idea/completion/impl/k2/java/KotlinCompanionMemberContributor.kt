@@ -15,27 +15,30 @@ import com.intellij.codeInsight.lookup.VariableLookupItem
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
@@ -111,19 +114,6 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
         }
     }
 
-    /**
-     * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
-     */
-    context(_: KaSession)
-    private fun KaDeclarationSymbol.getEffectiveVisibility(): KaSymbolVisibility {
-        val visibility = visibility
-        val containingSymbol = containingSymbol as? KaDeclarationSymbol
-        if (containingSymbol != null) {
-            return maxOf(visibility, containingSymbol.getEffectiveVisibility())
-        }
-        return visibility
-    }
-
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -151,10 +141,14 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
             val resolvedCompanion = companionObject.symbol
             val allMembers = resolvedCompanion.memberScope
 
+            val originalFileKaModule = parameters.originalFile.getKaModule(parent.project, useSiteModule)
+
             for (declaration in allMembers.declarations) {
+                val psi = declaration.psi as? KtDeclaration ?: continue
+                if (!psi.isVisibleIgnoringProtected(originalFileKaModule)) continue
+
                 // If the declaration is marked as static or JvmField, it will already appear without `.Companion`.
                 if (declaration.isMarkedAsStatic() || declaration.isJvmField()) continue
-                if (!declaration.isVisibleIgnoringProtected(parameters.originalFile)) continue
                 // Hide suspend functions because they cannot easily be called from Java
                 if (declaration is KaNamedFunctionSymbol && declaration.isSuspend) continue
 
@@ -189,26 +183,26 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
 /**
  * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
  */
-context(_: KaSession)
-private fun KaDeclarationSymbol.getEffectiveVisibility(): KaSymbolVisibility {
-    val visibility = visibility
-    val containingSymbol = containingSymbol as? KaDeclarationSymbol
-    if (containingSymbol != null) {
-        return maxOf(visibility, containingSymbol.getEffectiveVisibility())
+private fun KtDeclaration.getEffectiveVisibility(): Visibility {
+    val visibility = visibilityModifierTypeOrDefault().toVisibility()
+    val containingClassOrObject = containingClassOrObject
+    if (containingClassOrObject != null) {
+        return minOf(visibility, containingClassOrObject.getEffectiveVisibility()) {
+            a, b -> a.compareTo(b) ?: 0
+        }
     }
     return visibility
 }
 
 /**
- * Checks if the given declaration symbol is visible at the [positionFile].
+ * Checks if the given declaration is visible from the position of [fromModule].
  * The check assumes protected members are not visible for simplicity.
  */
-context(_: KaSession)
-internal fun KaDeclarationSymbol.isVisibleIgnoringProtected(positionFile: PsiFile): Boolean = when (getEffectiveVisibility()) {
-    KaSymbolVisibility.PUBLIC -> true
-    KaSymbolVisibility.INTERNAL -> {
-        val positionModule = positionFile.getKaModule(positionFile.project, useSiteModule)
-        positionModule == useSiteModule || positionModule in useSiteModule.directFriendDependencies
+internal fun KtDeclaration.isVisibleIgnoringProtected(fromModule: KaModule): Boolean = when (getEffectiveVisibility()) {
+    Visibilities.Public -> true
+    Visibilities.Internal -> {
+        val fileModule = containingKtFile.getKaModule(containingKtFile.project, fromModule)
+        fileModule == fromModule || fileModule in fromModule.directFriendDependencies
     }
     else -> false
 }
