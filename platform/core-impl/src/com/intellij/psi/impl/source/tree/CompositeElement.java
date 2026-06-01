@@ -725,7 +725,7 @@ public class CompositeElement extends TreeElement {
 
   @ApiStatus.Internal
   @Override
-  protected TreeElement getFirstChildNodeVersioned(long version) {
+  public TreeElement getFirstChildNodeVersioned(long version) {
     return doGetFirstChild(version);
   }
 

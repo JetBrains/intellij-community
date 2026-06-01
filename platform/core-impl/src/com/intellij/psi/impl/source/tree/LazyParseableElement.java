@@ -373,7 +373,7 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   @ApiStatus.Internal
-  protected TreeElement getFirstChildNodeVersioned(long version) {
+  public TreeElement getFirstChildNodeVersioned(long version) {
     ensureParsed();
     return super.getFirstChildNodeVersioned(version);
   }

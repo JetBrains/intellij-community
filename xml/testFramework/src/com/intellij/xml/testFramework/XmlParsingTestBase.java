@@ -20,7 +20,9 @@ import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.psi.xml.XmlDoctype;
@@ -190,9 +192,9 @@ public abstract class XmlParsingTestBase extends ParsingTestCase {
     doTestXml(loadFile("manyErrors.xml"));
   }
 
-  private static void transformAllChildren(final ASTNode file) {
-    for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      transformAllChildren(child);
+  private static void transformAllChildren(final ASTNode file, long version) {
+    for (TreeElement child = ((TreeElement)file).getFirstChildNodeVersioned(version); child != null; child = child.getTreeNextVersioned(version)) {
+      transformAllChildren(child, version);
     }
   }
 
@@ -211,13 +213,15 @@ public abstract class XmlParsingTestBase extends ParsingTestCase {
     final String text = loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", fileName);
     long start = System.nanoTime();
     final PsiFile file = createFile(fileName, text);
-    transformAllChildren(file.getNode());
+    long version1 = InternalPsiVersioning.getCurrentPsiVersion();
+    transformAllChildren(file.getNode(), version1);
     LOG.debug("First parsing took " + (System.nanoTime() - start) + "ns");
 
     var perfTest = Benchmark.newBenchmark("XML Parser Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         PsiFile next = createPsiFile("test" + i, text);
-        transformAllChildren(next.getNode());
+        long version2 = InternalPsiVersioning.getCurrentPsiVersion();
+        transformAllChildren(next.getNode(), version2);
       }
     });
 

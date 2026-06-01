@@ -324,7 +324,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * An optimized version of {@link #getFirstChildNode()} that allows skipping querying the thread-local version.
    */
   @ApiStatus.Internal
-  protected TreeElement getFirstChildNodeVersioned(long version) {
+  public TreeElement getFirstChildNodeVersioned(long version) {
     return getFirstChildNode();
   }
 
