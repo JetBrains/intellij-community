@@ -111,21 +111,6 @@ public final class PluginInstallOperation {
   private final Map<PluginId, ActionCallback> myLocalWaitInstallCallbacks = new IdentityHashMap<>();
   private static final Object ourInstallLock = new Object();
 
-  private static void removeInstallCallback(@NotNull PluginId id, @NotNull ActionCallback callback, boolean isDone) {
-    synchronized (ourInstallLock) {
-      ActionCallback oldValue = ourInstallCallbacks.get(id);
-      if (oldValue == callback) {
-        ourInstallCallbacks.remove(id);
-      }
-    }
-    if (isDone) {
-      callback.setDone();
-    }
-    else {
-      callback.setRejected();
-    }
-  }
-
   private void createInstallCallback(@NotNull PluginId id) {
     ActionCallback callback = new ActionCallback();
     ourInstallCallbacks.put(id, callback);
@@ -561,18 +546,6 @@ public final class PluginInstallOperation {
     }
   }
 
-  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginUiModel> nodes) {
-    List<String> pluginNames = ContainerUtil.map(nodes,
-                                                 node -> StringUtil.wrapWithDoubleQuote(node.getName()));
-
-    int size = pluginNames.size();
-    if (size == 1) {
-      return pluginNames.get(0);
-    }
-
-    return NlsMessages.formatAndList(pluginNames);
-  }
-
   /**
    * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
    */
@@ -591,6 +564,33 @@ public final class PluginInstallOperation {
                               PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(),
                                                                                         pluginFromMarketplace.getDescriptor()) > 0;
     return fromCustomRepos ? pluginFromCustomRepos : pluginFromMarketplace;
+  }
+
+  private static void removeInstallCallback(@NotNull PluginId id, @NotNull ActionCallback callback, boolean isDone) {
+    synchronized (ourInstallLock) {
+      ActionCallback oldValue = ourInstallCallbacks.get(id);
+      if (oldValue == callback) {
+        ourInstallCallbacks.remove(id);
+      }
+    }
+    if (isDone) {
+      callback.setDone();
+    }
+    else {
+      callback.setRejected();
+    }
+  }
+
+  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginUiModel> nodes) {
+    List<String> pluginNames = ContainerUtil.map(nodes,
+                                                 node -> StringUtil.wrapWithDoubleQuote(node.getName()));
+
+    int size = pluginNames.size();
+    if (size == 1) {
+      return pluginNames.get(0);
+    }
+
+    return NlsMessages.formatAndList(pluginNames);
   }
 
   /**
