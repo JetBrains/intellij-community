@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.util
 
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
