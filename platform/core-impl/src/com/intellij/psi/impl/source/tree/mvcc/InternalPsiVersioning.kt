@@ -377,7 +377,16 @@ object InternalPsiVersioning {
       }
     } else {
       if (correctVersion != value) {
-        thisLogger().error("Expected version $correctVersion, but found $value")
+        try {
+          // known case: this breaks is someone executed "suspending write action"
+          thisLogger().error("Expected version $correctVersion, but found $value")
+        } catch (e : AssertionError) {
+          // in tests, the error above throws a hard error which corrupts the stack of cleanups.
+          // we hope that the error will be reported and the rest of the program proceeds as expected
+          if (!ApplicationManager.getApplication().isUnitTestMode) {
+            throw e
+          }
+        }
       }
       AccessToken.EMPTY_ACCESS_TOKEN
     }
