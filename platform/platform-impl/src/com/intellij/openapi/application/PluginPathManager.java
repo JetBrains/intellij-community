@@ -19,6 +19,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Locates plugin sources and runtime resources within an JetBrains IDE installation.
+ */
 public final class PluginPathManager {
   private PluginPathManager() {
   }
@@ -67,6 +70,13 @@ public final class PluginPathManager {
 
   private static ConcurrentMap<String, File> ourPluginHomes = new ConcurrentHashMap<>();
 
+  /**
+   * Returns the source directory of the plugin with the given name, searching the known
+   * sub-repositories of an IntelliJ development checkout.
+   *
+   * <p>If no matching directory is found, returns a synthetic {@code <home>/plugins/<pluginName>}
+   * path which may not exist on disk. Results are cached.
+   */
   public static File getPluginHome(@NonNls String pluginName) {
     File subRepo = ourPluginHomes.computeIfAbsent(pluginName, k -> {
       File repo = findSubRepo(k);
@@ -85,10 +95,18 @@ public final class PluginPathManager {
     return null;
   }
 
+  /** Convenience wrapper around {@link #getPluginHome(String)} returning the absolute path string. */
   public static String getPluginHomePath(String pluginName) {
     return getPluginHome(pluginName).getPath();
   }
 
+  /**
+   * Returns the plugin source directory as a path relative to {@link PathManager#getHomePath()},
+   * using {@code '/'} as separator and a leading slash (for example {@code /community/plugins/foo}).
+   *
+   * <p>If the plugin is not located in any known sub-repository, returns the default
+   * {@code /plugins/<pluginName>}.
+   */
   public static String getPluginHomePathRelative(String pluginName) {
     File subRepo = findSubRepo(pluginName);
     if (subRepo != null) {
@@ -98,6 +116,13 @@ public final class PluginPathManager {
     return "/plugins/" + pluginName;
   }
 
+  /**
+   * Resolves a resource that lives next to a plugin's distribution directory, given any class
+   * loaded from that plugin.
+   *
+   * @return the resolved {@link File}, or {@code null} if no plausible location could be found
+   * (note that the returned file is not guaranteed to exist).
+   */
   public static @Nullable File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
     Path result = PluginManagerCoreKt.getPluginDistDirByClass(pluginClass);
     if (result != null) {
@@ -125,5 +150,14 @@ public final class PluginPathManager {
     catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Resolves a path within the distribution directory of the plugin that owns {@code pluginClass}.
+   */
+  public static @Nullable Path getPluginDistPath(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+    Path baseDir = PluginManagerCoreKt.getPluginDistDirByClass(pluginClass);
+    if (baseDir == null) return null;
+    return baseDir.resolve(resourceName);
   }
 }

@@ -11,6 +11,9 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 
+/**
+ * Checks for updates of plugins in the Marketplace and/or custom repositories configured.
+ */
 @Service(Service.Level.APP)
 class PluginUpdateCheckService {
   companion object {
@@ -18,6 +21,15 @@ class PluginUpdateCheckService {
     fun getInstance(): PluginUpdateCheckService = service()
   }
 
+  /**
+   * Checks whether an update is available for the plugin identified by [pluginId].
+   *
+   * Must be called from a background thread without holding the read lock; the call performs
+   * network I/O via the plugin repository.
+   *
+   * @param pluginId the plugin to check for updates.
+   * @param indicator optional progress indicator forwarded to the underlying repository request.
+   */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   fun getPluginUpdate(pluginId: PluginId, indicator: ProgressIndicator? = null): PluginUpdateInfo {

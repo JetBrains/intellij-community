@@ -12,6 +12,9 @@ import org.jetbrains.annotations.Nls
  * Exposes information about plugins currently known to the IDE.
  *
  * Prefer this API over direct usage of [PluginManagerCore] when client code only needs to inspect plugin metadata.
+ *
+ * @see com.intellij.openapi.application.PluginPathManager to load plugin resources
+ * @see com.intellij.openapi.updateSettings.PluginUpdateCheckService to check for updates in the Marketplace
  */
 @ApiStatus.Experimental
 @Service(Service.Level.APP)

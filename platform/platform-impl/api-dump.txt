@@ -677,6 +677,8 @@ f:com.intellij.openapi.actionSystem.impl.MenuCancelledControlFlowException
 - com.intellij.openapi.diagnostic.ControlFlowException
 - <init>():V
 - <init>(java.lang.Throwable):V
+f:com.intellij.openapi.application.PluginPathManager
+- s:getPluginDistPath(java.lang.Class,java.lang.String):java.nio.file.Path
 f:com.intellij.openapi.command.impl.FinishMarkAction
 - getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
 f:com.intellij.openapi.command.impl.StartMarkAction

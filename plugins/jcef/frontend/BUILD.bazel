@@ -13,6 +13,7 @@ jvm_library(
     "//platform/platform-frontend:frontend",
     "//platform/ui.jcef",
     "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
   ]
 )
 
@@ -27,6 +28,7 @@ jvm_library(
     "//platform/platform-frontend:frontend_test_lib",
     "//platform/ui.jcef:ui.jcef_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.jcef.frontend` end
