@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.platformListeners
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -12,7 +12,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.platform.lsp.impl.LspDynamicCapabilities
+import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerImpl.FileChangeInfo
+import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.util.containers.MultiMap
 import org.eclipse.lsp4j.FileChangeType
 

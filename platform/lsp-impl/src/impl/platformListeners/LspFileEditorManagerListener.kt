@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.platformListeners
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -6,6 +6,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.impl.LspOpenedFilesService
+import com.intellij.platform.lsp.impl.LspServerManagerImpl
 
 internal class LspFileEditorManagerListener : FileEditorManagerListener {
   override fun fileOpened(fileEditorManager: FileEditorManager, file: VirtualFile) {
