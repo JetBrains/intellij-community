@@ -5,12 +5,18 @@ import com.intellij.diagnostic.ThreadDump
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
 
 @ApiStatus.Internal
 interface UnhandledReportSinkService {
   companion object {
     @JvmStatic
-    fun getInstance(): UnhandledReportSinkService? = serviceOrNull()
+    fun getInstance(): UnhandledReportSinkService? = try {
+      serviceOrNull()
+    }
+    catch (_: CancellationException) {
+      null  // the application is already disposed
+    }
   }
 
   fun report(data: PluginFreezeReportData)

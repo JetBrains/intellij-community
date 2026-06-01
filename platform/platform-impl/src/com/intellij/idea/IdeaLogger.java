@@ -30,7 +30,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Component;
 import java.awt.Graphics;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -112,16 +111,8 @@ public final class IdeaLogger extends JulLogger {
           var pluginId = pluginUtil.findPluginId(t);
           var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
           LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
-
           if (pluginId != null) {
-            @Nullable UnhandledReportSinkService sinkService;
-            try {
-              sinkService = UnhandledReportSinkService.getInstance();
-            }
-            catch (CancellationException e) {
-              return; // application disposed already
-            }
-
+            var sinkService = UnhandledReportSinkService.getInstance();
             if (sinkService != null) { // might be null in CLI utils
               sinkService.report(new PluginExceptionReportData(pluginId, t));
             }

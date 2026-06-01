@@ -86,7 +86,10 @@ object MessagePool {
       message.setRead(true) // expire notifications
     }
     myErrors.clear()
-    notifyPoolCleared()
+    val event = PoolClearedEvent()
+    for (it in myAdvisors) {
+      it.poolCleared(event)
+    }
   }
 
   /** No-op, unsupported */
@@ -107,27 +110,15 @@ object MessagePool {
     myAdvisors.remove(advisor)
   }
 
-  private suspend fun notifyEntryAdded(m: AbstractMessage) {
-    for (it in myAdvisors) {
-      it.afterEntryAdded(AfterEntryAddedEvent(m))
-    }
-  }
-
-  private fun notifyPoolCleared() {
-    for (it in myAdvisors) {
-      it.poolCleared(PoolClearedEvent())
-    }
-  }
-
   private fun notifyEntryRead(m: AbstractMessage) {
-    for (it in myAdvisors) {
-      it.entryWasRead(EntryReadEvent(m))
-    }
+    val event = EntryReadEvent(m)
+    myAdvisors.forEach { it.entryWasRead(event) }
   }
 
   private suspend fun doAddMessage(message: AbstractMessage) {
+    val beforeEvent = BeforeEntryAddedEvent(message)
     for (listener in myAdvisors) {
-      if (!listener.beforeEntryAdded(BeforeEntryAddedEvent(message))) {
+      if (!listener.beforeEntryAdded(beforeEvent)) {
         return
       }
     }
@@ -142,7 +133,10 @@ object MessagePool {
 
     message.setOnReadCallback { notifyEntryRead(message) }
     myErrors.add(message)
-    notifyEntryAdded(message)
+    val afterEvent = AfterEntryAddedEvent(message)
+    for (it in myAdvisors) {
+      it.afterEntryAdded(afterEvent)
+    }
   }
 
   class TooManyErrorsException internal constructor() : Exception(DiagnosticBundle.message("error.monitor.too.many.errors"))

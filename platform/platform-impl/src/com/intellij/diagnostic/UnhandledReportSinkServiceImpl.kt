@@ -36,7 +36,7 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
           sink.submit(report)
         }
         catch (e: Exception) {
-          thisLogger().warn("Failed to submit unhandled error report to " + sink.javaClass, e)
+          thisLogger().warn("Failed to submit an unhandled error report to ${sink.javaClass}", e)
         }
       }
     }
@@ -54,7 +54,7 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
     val count = exceptionCountPerPlugin.merge(data.pluginId, 1, Int::plus) ?: return
     if (count > MAX_EXCEPTIONS_PER_PLUGIN) return
     if (count == MAX_EXCEPTIONS_PER_PLUGIN) {
-      thisLogger().warn("Exception report limit reached for plugin ${data.pluginId}, further reports will be dropped")
+      thisLogger().warn("Exception report limit reached for plugin ${data.pluginId}; further reports will be dropped")
     }
 
     emitReport(data.pluginId, UnhandledExceptionReport(data.t))
