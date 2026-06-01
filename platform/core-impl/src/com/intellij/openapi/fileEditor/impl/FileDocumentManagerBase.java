@@ -149,6 +149,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       oldFile = document.getUserData(FILE_KEY);
       document.putUserData(FILE_KEY, virtualFile);
       virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
+      // Do not keep the same file bound both through HARD_REF_TO_DOCUMENT_KEY and myDocumentCache.
+      FileDocumentManager manager = getInstance();
+      if (manager instanceof FileDocumentManagerBase) {
+        ((FileDocumentManagerBase)manager).myDocumentCache.remove(virtualFile);
+      }
     }
 
     if (fireBindingChangedEvent) {

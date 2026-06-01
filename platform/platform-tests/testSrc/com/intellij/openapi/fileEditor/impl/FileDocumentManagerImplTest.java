@@ -18,9 +18,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -37,6 +40,7 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -139,6 +143,31 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
+  }
+
+  public void testHardRegisteredNonPhysicalDocumentRemovedFromWeakCache() {
+    VirtualFile file = new NonLightNonPhysicalVirtualFile("nonPhysical.txt", "test");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(
+      "The test file should have a document before hard registration",
+      document
+    );
+    assertTrue(
+      "Non-LightVirtualFile documents start in myDocumentCache",
+      isDocumentInCache(document)
+    );
+
+    FileDocumentManagerBase.registerDocument(document, file);
+
+    assertSame(
+      "Cached document lookup should keep working via HARD_REF_TO_DOCUMENT_KEY",
+      document,
+      myDocumentManager.getCachedDocument(file)
+    );
+    assertFalse(
+      "Hard-bound documents must not leave a strong file key in myDocumentCache",
+      isDocumentInCache(document)
+    );
   }
 
   public void testGetUnsavedDocuments_NoDocuments() {
@@ -795,6 +824,16 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
+  private boolean isDocumentInCache(@NotNull Document document) {
+    AtomicBoolean result = new AtomicBoolean();
+    myDocumentManager.forEachCachedDocument(cachedDocument -> {
+      if (cachedDocument == document) {
+        result.set(true);
+      }
+    });
+    return result.get();
+  }
+
   @NotNull
   private static List<VirtualFile> createNonPhysicalFiles() {
     List<VirtualFile> allFiles = new ArrayList<>();
@@ -802,6 +841,39 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       allFiles.add(new LightVirtualFile("b" + i + ".txt", "b" + i));
     }
     return allFiles;
+  }
+
+  private static final VirtualFileSystem NON_LIGHT_NON_PHYSICAL_FILE_SYSTEM = new TestNonPhysicalFileSystem();
+
+  private static final class NonLightNonPhysicalVirtualFile extends MockVirtualFile {
+    private NonLightNonPhysicalVirtualFile(@NotNull String name, @NotNull String text) {
+      super(name, text);
+    }
+
+    @Override
+    public @NotNull VirtualFileSystem getFileSystem() {
+      return NON_LIGHT_NON_PHYSICAL_FILE_SYSTEM;
+    }
+  }
+
+  private static final class TestNonPhysicalFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
+    @Override
+    public @NotNull String getProtocol() {
+      return "non-light-non-physical";
+    }
+
+    @Override
+    public @Nullable VirtualFile findFileByPath(@NotNull String path) {
+      return null;
+    }
+
+    @Override
+    public void refresh(boolean asynchronous) { }
+
+    @Override
+    public @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+      return null;
+    }
   }
 
   public void testDocumentModificationStampMustChangeBeforeFileDeletion() {
