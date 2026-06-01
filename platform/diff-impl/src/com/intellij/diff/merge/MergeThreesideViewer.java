@@ -233,6 +233,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new ApplyNonConflictsAction(this, ThreeSide.BASE, DiffBundle.message("action.merge.apply.non.conflicts.all.text")));
     group.add(new ApplyNonConflictsAction(this, ThreeSide.RIGHT, DiffBundle.message("action.merge.apply.non.conflicts.right.text")));
     group.add(new MagicResolvedConflictsAction(this));
+    group.add(new RevertConflictResolutionAction(this));
 
     group.add(Separator.getInstance());
     List<AnAction> gutterActions = new ArrayList<>();
@@ -1027,6 +1028,17 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   public LineRange resolveChangeAutomatically(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
     return model.resolveChangeAutomatically(change.getIndex(), side);
   }
+
+  @RequiresEdt
+  public void resetChanges() {
+    List<TextMergeChange> resolvedChanges = ContainerUtil.filter(getAllChanges(), c -> c.isResolved());
+    executeMergeCommand(DiffBundle.message("message.revert.conflict.resolution.command"), true, resolvedChanges, () -> {
+      for (TextMergeChange change : resolvedChanges) {
+        model.resetResolvedChange(change.getIndex(), false);
+      }
+    });
+  }
+
 
   private static final Key<Boolean> EXTERNAL_OPERATION_IN_PROGRESS = Key.create("external.resolve.operation");
 
