@@ -35,7 +35,7 @@ internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
         return metrics
     }
 
-    private val GROUP = EventLogGroup("kotlin.ide.script.settings", 1)
+    private val GROUP = EventLogGroup("kotlin.ide.script.settings", 2)
 
     // scriptingAutoReloadEnabled Event
     private val scriptingAREnabledField = EventFields.Boolean("enabled")
@@ -47,7 +47,8 @@ internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
             "Script_definition_for_extension_scripts_and_IDE_console",
             "MainKtsScript",
             "Kotlin_Script",
-            "Space_Automation"
+            "Space_Automation",
+            "Qodana .inspection.kts"
         )
     )
     private val scriptingPluginInfoField = EventFields.PluginInfo
