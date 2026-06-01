@@ -8,5 +8,7 @@
     <module name="intellij.rd.platform"/>
     <module name="intellij.rd.ui"/>
     <module name="intellij.platform.split.protocol"/>
+    <module name="intellij.rd.client"/>
+    <module name="intellij.rd.client.base"/>
   </content>
 </idea-plugin>
