@@ -4,6 +4,7 @@ package com.intellij.util.io
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -269,6 +270,11 @@ internal class PersistentHashMapValueStorageContractTest {
       channelsAccessor.forceOperations(chunkLengthFile).size,
       "Compressed chunk-length appender flush must not force the chunk-length side-file"
     )
+    assertEquals(
+      0,
+      channelsAccessor.forceOperations(incompleteChunkFile).size,
+      "Compressed incomplete tail write must not force the incomplete chunk side-file"
+    )
     channelsAccessor.clearChannelOperations()
 
     withStorage(storageFile, config, readOnly = true, lockContext = lockContext) { storage ->
@@ -309,8 +315,8 @@ internal class PersistentHashMapValueStorageContractTest {
   }
 
   @Test
-  fun `compressed incomplete chunk clear is forced even when side file becomes empty`() {
-    val storageFile = tempDir.resolve("compressed-forced-incomplete-tail-clear.values")
+  fun `compressed incomplete chunk clear does not force when side file becomes empty`() {
+    val storageFile = tempDir.resolve("compressed-unforced-incomplete-tail-clear.values")
     val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
     val channelsAccessor = RecordingChannelsAccessor()
     val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
@@ -334,9 +340,9 @@ internal class PersistentHashMapValueStorageContractTest {
     val incompleteTailOperations = channelsAccessor.channelOperations.filter { it.path == incompleteChunkFile }
     val truncateIndex = incompleteTailOperations.indexOfFirst { it.name == "truncate" && it.size == 0L }
     assertTrue(truncateIndex >= 0, "Compressed storage must truncate the incomplete chunk side-file when a page is completed")
-    assertTrue(
+    assertFalse(
       incompleteTailOperations.drop(truncateIndex + 1).any { it.name == "force" },
-      "Incomplete chunk side-file clear must be forced even though the side-file size becomes 0"
+      "Incomplete chunk side-file clear must not force after truncating the side-file to 0"
     )
   }
 

@@ -209,7 +209,7 @@ public final class PersistentHashMapValueStorage {
 
       long currentLength = myFileAccessor.sizeIfExists();
       if (currentLength > mySize) {  // if real file length (unexpectedly) increases
-        Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure:" + myPath);
+        Logger.getInstance(getClass()).info("Avoided PSHM corruption due to write failure:" + myPath);
         mySize = currentLength;  // volatile write
       }
     }
@@ -861,19 +861,16 @@ public final class PersistentHashMapValueStorage {
       myAppendAtOffset = len;
     }
 
-    /** Clears a non-empty side-file and returns true if truncation was performed. */
-    synchronized boolean clearIfNonEmpty() throws IOException {
-      if (myReadOnly || !Files.exists(myPath)) return false;
+    /** Clears side-file content if it exists and is non-empty. */
+    synchronized void clearIfNonEmpty() throws IOException {
+      if (myReadOnly || !Files.exists(myPath)) return;
 
-      boolean cleared = myChannelsAccessor.executeOp(myPath, channel -> {
-        if (channel.size() == 0) return false;
+      myChannelsAccessor.executeOp(myPath, channel -> {
+        if (channel.size() == 0) return null;
         channel.truncate(0);
-        return true;
+        return null;
       });
-      if (cleared) {
-        myAppendAtOffset = 0;
-      }
-      return cleared;
+      myAppendAtOffset = 0;
     }
 
     /** Forces pending writes to the backing file. This is a durability/WAL-drain operation, not a logical visibility barrier. */
@@ -1083,16 +1080,11 @@ public final class PersistentHashMapValueStorage {
     @Override
     protected void writeIncompleteChunkFile(byte @NotNull [] buffer, int length) throws IOException {
       myIncompleteChunkFileAccessor.replace(buffer, length);
-      //TODO RC: do we really need this fsync here? What for?
-      myIncompleteChunkFileAccessor.force();
     }
 
     @Override
     protected void deleteIncompleteChunkFileIfExists() throws IOException {
-      if (myIncompleteChunkFileAccessor.clearIfNonEmpty()) {
-        //TODO RC: do we really need this fsync here? What for?
-        myIncompleteChunkFileAccessor.force();
-      }
+      myIncompleteChunkFileAccessor.clearIfNonEmpty();
     }
 
     @Override
