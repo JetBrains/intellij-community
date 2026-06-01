@@ -19,9 +19,6 @@ import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.platform.lsp.impl.LspServerNotificationsHandlerImpl
 import com.intellij.platform.lsp.impl.mapTextEdit
-import com.intellij.platform.lsp.impl.formatter.LspFormattingService.LspFormattingGoal.FullFileFormatting
-import com.intellij.platform.lsp.impl.formatter.LspFormattingService.LspFormattingGoal.OptimizeImports
-import com.intellij.platform.lsp.impl.formatter.LspFormattingService.LspFormattingGoal.RangeFormatting
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.PsiFile
@@ -43,9 +40,9 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   override fun canFormat(psiFile: PsiFile, vararg features: Feature): Boolean {
     val goal = LspFormattingGoal.getFormattingGoal(features) ?: return false
     val lspServer: LspServer? = when (goal) {
-      FullFileFormatting -> findServerToFormatThisFile(psiFile, true)
-      RangeFormatting -> findServerToFormatThisFile(psiFile, false)
-      OptimizeImports -> findServerToOptimizeImports(psiFile)
+      LspFormattingGoal.FullFileFormatting -> findServerToFormatThisFile(psiFile, true)
+      LspFormattingGoal.RangeFormatting -> findServerToFormatThisFile(psiFile, false)
+      LspFormattingGoal.OptimizeImports -> findServerToOptimizeImports(psiFile)
     }
     return lspServer != null
   }
