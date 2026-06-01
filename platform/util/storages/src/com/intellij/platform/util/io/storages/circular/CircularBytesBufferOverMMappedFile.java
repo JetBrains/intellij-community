@@ -369,6 +369,9 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
     private Factory(int requestedCapacity,
                     boolean cleanFileIfIncompatible) {
+      if (requestedCapacity <= 0) {
+        throw new IllegalArgumentException("requestedCapacity(=" + requestedCapacity + ") must be positive");
+      }
       this.requestedCapacity = requestedCapacity;
       this.cleanFileIfIncompatible = cleanFileIfIncompatible;
     }
@@ -409,11 +412,34 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       return new Factory(requestedCapacity, true);
     }
 
+    /**
+     * BEWARE: file size on disk could be up to 2x larger!
+     * Use {@linkplain #withFileSizeNoMoreThan(int)} if you want to limit the file size
+     */
     public static Factory withCapacityAtLeast(int capacity) {
       if (capacity <= 0) {
         throw new IllegalArgumentException("capacity(=" + capacity + ") must be positive");
       }
       return new Factory(capacity, false);
+    }
+
+    /** Configures the capacity such that on-disk file size is <= maxFileSize */
+    public static Factory withFileSizeNoMoreThan(int maxFileSize) {
+      int capacity = capacityByMaxFileSize(maxFileSize);
+      return new Factory(capacity, false);
+    }
+
+    /** @return max capacity for the buffer such that the file on disk will be <= maxFileSize */
+    public static int capacityByMaxFileSize(int maxFileSize) {
+      if (maxFileSize <= HeaderLayout.HEADER_SIZE) {
+        throw new IllegalArgumentException("maxFileSize(=" + maxFileSize + ") must be > headerSize(=" + HeaderLayout.HEADER_SIZE + ")");
+      }
+      if (roundUpToPowerOf2(maxFileSize) == maxFileSize) {
+        //maxFileSize is already a 2^N:
+        return maxFileSize - HeaderLayout.HEADER_SIZE;
+      }
+
+      return roundUpToPowerOf2(maxFileSize) / 2 - HeaderLayout.HEADER_SIZE;
     }
 
     private static int roundUpToPowerOf2(int value) {

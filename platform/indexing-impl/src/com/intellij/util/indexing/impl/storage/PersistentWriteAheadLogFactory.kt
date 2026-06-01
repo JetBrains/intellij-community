@@ -2,8 +2,10 @@
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.util.io.storages.circular.CircularBytesBufferOverMMappedFile
 import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer
 import com.intellij.util.io.IOUtil
+import com.intellij.util.io.IOUtil.KiB
 import com.intellij.util.io.IOUtil.MiB
 import com.intellij.util.io.writeaheadlog.WriteAheadLog
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -11,8 +13,8 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.ThreadFactory
 
-/** Indexes' pageSize ~= 1Mb: 64Mb should be enough */
-private const val DEFAULT_WAL_CAPACITY = 64 * MiB
+/** Indexes' pageSize ~= 1Mb: ~63Mb should be enough */
+private val DEFAULT_WAL_CAPACITY = CircularBytesBufferOverMMappedFile.Factory.capacityByMaxFileSize(64 * MiB)
 
 @Internal
 object PersistentWriteAheadLogFactory {

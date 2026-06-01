@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -199,6 +200,20 @@ class CircularBytesBufferOverMMappedFileTest {
     }
   }
 
+  @Test
+  fun `withFileSizeNoMoreThan creates file no larger than power-of-two limit`(@TempDir tempDir: Path) {
+    val maxFileSize = 128
+
+    assertFileSizeNoMoreThan(tempDir, maxFileSize)
+  }
+
+  @Test
+  fun `withFileSizeNoMoreThan creates file no larger than non-power-of-two limit`(@TempDir tempDir: Path) {
+    val maxFileSize = 1_000
+
+    assertFileSizeNoMoreThan(tempDir, maxFileSize)
+  }
+
   private fun withQueue(tempDir: Path, capacity: Int = 128, action: (CircularBytesBufferOverMMappedFile) -> Unit) {
     val queue = openQueue(tempDir.resolve("queue.mmap"), capacity)
     try {
@@ -211,6 +226,19 @@ class CircularBytesBufferOverMMappedFileTest {
 
   private fun openQueue(storagePath: Path, capacity: Int = 128): CircularBytesBufferOverMMappedFile {
     return CircularBytesBufferOverMMappedFile.Factory.withCapacityAtLeast(capacity).open(storagePath)
+  }
+
+  private fun assertFileSizeNoMoreThan(tempDir: Path, maxFileSize: Int) {
+    val storagePath = tempDir.resolve("queue.mmap")
+    val queue = CircularBytesBufferOverMMappedFile.Factory.withFileSizeNoMoreThan(maxFileSize).open(storagePath)
+    try {
+      assertThat(Files.size(storagePath))
+        .withFailMessage("Factory must create a file no larger than the requested maxFileSize")
+        .isLessThanOrEqualTo(maxFileSize.toLong())
+    }
+    finally {
+      queue.closeAndClean()
+    }
   }
 
   private fun CircularBytesBuffer.append(bytes: ByteArray) {
