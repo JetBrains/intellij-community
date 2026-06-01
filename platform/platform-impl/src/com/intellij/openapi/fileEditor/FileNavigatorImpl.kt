@@ -1,14 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.pom.Navigatable
+import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -113,6 +118,16 @@ class FileNavigatorImpl : FileNavigator {
 @RequiresEdt
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
+  if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(descriptor.file)) {
+    val success = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        ReadAction.computeCancellable<Document, Throwable> {
+          FileDocumentManager.getInstance().getDocument(descriptor.file) //force decompilation
+        }
+      },
+      UIBundle.message("progress.decompiling.file", descriptor.file.name), true, descriptor.project)
+    if (!success) return false
+  }
   val editors = fileEditorManager.openFileEditor(descriptor, focusEditor)
   for (editor in editors) {
     if (editor is TextEditor) {

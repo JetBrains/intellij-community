@@ -19,6 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
@@ -37,6 +40,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final int myOffset;
   private final RangeMarker myRangeMarker;
   private final @NotNull CodeInsightContext myContext;
+  private final @Nullable Supplier<@NotNull Integer> myOffsetSupplier;
 
   private boolean myUseCurrentWindow;
   private boolean myUsePreviewTab;
@@ -51,6 +55,11 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     this(project, file, CodeInsightContexts.anyContext(), - 1, -1, offset, false);
   }
 
+  @ApiStatus.Internal
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull Supplier<@NotNull Integer> offsetSupplier) {
+    this(project, file, CodeInsightContexts.anyContext(), - 1, -1, -1, offsetSupplier, false);
+  }
+
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
     this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, false);
   }
@@ -62,7 +71,6 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
     this(project, file, CodeInsightContexts.anyContext(), -1, -1, -1, false);
   }
-
   private OpenFileDescriptor(
     @NotNull Project project,
     @NotNull VirtualFile file,
@@ -72,12 +80,26 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     int offset,
     boolean persistent
   ) {
+    this(project, file, context, logicalLine, logicalColumn, offset, null, persistent);
+  }
+
+  private OpenFileDescriptor(
+    @NotNull Project project,
+    @NotNull VirtualFile file,
+    @NotNull CodeInsightContext context,
+    int logicalLine,
+    int logicalColumn,
+    int offset,
+    @Nullable Supplier<@NotNull Integer> offsetSupplier,
+    boolean persistent
+  ) {
     myProject = project;
     myFile = file;
     myContext = context;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
     myOffset = offset;
+    myOffsetSupplier = offsetSupplier;
     if (offset >= 0) {
       myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
     }
@@ -100,10 +122,21 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   public RangeMarker getRangeMarker() {
+    if (myOffsetSupplier != null) {
+      int offset = myOffsetSupplier.get();
+      if (offset < 0) {
+        return null;
+      }
+      return LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(myFile, offset);
+    }
     return myRangeMarker;
   }
 
   public int getOffset() {
+    if (myOffsetSupplier != null) {
+      Integer offset = myOffsetSupplier.get();
+      return offset;
+    }
     return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;
   }
 
