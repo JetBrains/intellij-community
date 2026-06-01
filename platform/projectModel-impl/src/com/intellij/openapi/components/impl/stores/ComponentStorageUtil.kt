@@ -10,13 +10,13 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.util.SmartList
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.TreeMap
 
@@ -84,7 +84,7 @@ object ComponentStorageUtil {
   @JvmStatic
   @Throws(IOException::class)
   fun loadTextContent(file: Path): String {
-    val data = Files.readAllBytes(file)
+    val data = EelFiles.readAllBytes(file)
     val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
     return String(data, offset, data.size - offset, StandardCharsets.UTF_8)
   }
