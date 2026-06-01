@@ -1,10 +1,16 @@
 // "Add argument to existing 'context'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-
+// IGNORE_K1
 // DISABLE_K2_ERRORS
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
-context(i: Int, s: String) fun bar() {}
+interface Logger { fun log(msg: String) }
 
-val result = context(1,<caret>) { bar() }
+context(l: Logger) fun emit() { l.log("x") }
+
+fun repro(extraLogger: Logger) {
+    context("hello", extraLogger) {
+        emit()
+    }
+}
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

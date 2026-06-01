@@ -5,6 +5,8 @@
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 context(i: Int, s: String) fun bar() {}
 
-val result = context(1) { <caret>bar() }
+val greeting: String = "hello"
+
+val result = context(1, greeting) { bar() }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

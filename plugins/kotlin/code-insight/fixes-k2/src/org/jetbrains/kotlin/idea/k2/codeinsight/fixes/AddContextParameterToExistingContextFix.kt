@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 internal class AddContextParameterToExistingContextFix(
     surroundingCall: KtCallExpression,
+    private val candidateName: String,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallExpression>(surroundingCall) {
 
     override fun invoke(context: ActionContext, element: KtCallExpression, updater: ModPsiUpdater) {
