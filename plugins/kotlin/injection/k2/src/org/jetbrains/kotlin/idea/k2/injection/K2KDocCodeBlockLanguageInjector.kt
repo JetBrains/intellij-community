@@ -22,6 +22,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         if (context is KDocSpanTextInjectionHost) {
             registrar.startInjecting(KotlinLanguage.INSTANCE)
                 .addPlace(null, null, context, TextRange(0, context.textLength))
+                .makeInspectionsLenient(true)
                 .doneInjecting()
             return
         }
@@ -42,6 +43,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         if (elements.isNotEmpty()) {
             registrar
                 .startInjecting(languages[host.languageId] ?: KotlinLanguage.INSTANCE)
+                .makeInspectionsLenient(true)
                 .addPlace(null, null, context, TextRange(0, 0))
 
             elements.forEach {

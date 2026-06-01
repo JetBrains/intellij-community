@@ -5,15 +5,21 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 
 internal class KotlinHighlightInjectionErrorFilter: HighlightErrorFilter() {
     override fun shouldHighlightErrorElement(element: PsiErrorElement): Boolean {
-        if (element.language == KotlinLanguage.INSTANCE &&
-            element.errorDescription == "Package directive and imports are forbidden in code fragments" &&
-            InjectedLanguageManager.getInstance(element.project).isInjectedFragment(element.containingFile)
-        ) {
-            return false
-        }
-        return true
+        if (element.language != KotlinLanguage.INSTANCE) return true
+
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(element.project)
+        if (!injectedLanguageManager.isInjectedFragment(element.containingFile)) return true
+
+        val injectionHost = injectedLanguageManager.getInjectionHost(element)
+
+        val shouldBeIgnored =
+            injectionHost is KDocElement ||
+                    element.errorDescription == "Package directive and imports are forbidden in code fragments"
+
+        return !shouldBeIgnored
     }
 }
