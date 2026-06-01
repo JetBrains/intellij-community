@@ -92,7 +92,7 @@ internal class PythonModulePathCacheManager(
           is EntityChange.Added<*> -> null
         }
         if (entity != null) {
-          val module = entity.findModule(event.storageBefore)
+          val module = entity.findModule(event.storageBefore) ?: continue
           val newValue = pathCache.computeIfPresent(module) { _, v ->
             v.clearCache()
             v
@@ -106,16 +106,14 @@ internal class PythonModulePathCacheManager(
       // Invalidate caches if source roots are added or removed for this module
       val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
       for (change in sourceRootChanges) {
-        var sourceRootEntity: SourceRootEntity? = null
-        if (change is EntityChange.Added<*>) {
-          sourceRootEntity = (change as EntityChange.Added<SourceRootEntity>).newEntity
-        }
-        else if (change is EntityChange.Removed<*>) {
-          sourceRootEntity = (change as EntityChange.Removed<SourceRootEntity>).oldEntity
+        val (sourceRootEntity, storage) = when (change) {
+          is EntityChange.Added<SourceRootEntity> -> change.newEntity to event.storageAfter
+          is EntityChange.Removed<SourceRootEntity> -> change.oldEntity to event.storageBefore
+          is EntityChange.Replaced<*> -> null to event.storageBefore
         }
         if (sourceRootEntity != null) {
           val moduleEntity = sourceRootEntity.contentRoot.module
-          val module = moduleEntity.findModule(event.storageBefore)
+          val module = moduleEntity.findModule(storage) ?: continue
           pathCache.computeIfPresent(module) { _, v ->
             v.clearCache()
             v
