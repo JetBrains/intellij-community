@@ -23,18 +23,27 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Verifies that bytecode annotations whose type descriptor carries a {@code '+'}
+ * Verifies that bytecode annotations whose type descriptor carries a bad character
  * (synthetic JDK markers like {@code Ljdk/Profile+Annotation;} are silently skipped.
  * Such names are legal in the classfile but not a
  * valid Java reference, so letting them through produces
  * {@code IncorrectOperationException} when the stub text is later re-parsed.
  */
-public class StubBuildingVisitorPlusAnnotationTest extends LightIdeaTestCase {
+public class StubBuildingVisitorInvalidAnnotationTest extends LightIdeaTestCase {
   private static final String PLUS_DESC = "Ljdk/Profile+Annotation;";
+  private static final String MINUS_DESC = "Lorg/some-test/Annotation;";
   private static final String DEPRECATED_DESC = "Ljava/lang/Deprecated;";
 
   public void testPlusAnnotationsAreDroppedAtEveryLevel() throws Exception {
-    byte[] bytes = generateClassBytes();
+    doTest(PLUS_DESC, "+");
+  }
+
+  public void testMinusAnnotationsAreDroppedAtEveryLevel() throws Exception {
+    doTest(MINUS_DESC, "-");
+  }
+
+  private static void doTest(String desc, String s) throws ClsFormatException {
+    byte[] bytes = generateClassBytes(desc);
 
     List<String> loggedErrors = new ArrayList<>();
     List<String> annotationTexts = new ArrayList<>();
@@ -54,36 +63,36 @@ public class StubBuildingVisitorPlusAnnotationTest extends LightIdeaTestCase {
     assertEmpty(loggedErrors);
 
     for (String text : annotationTexts) {
-      assertFalse(text.contains("+"));
+      assertFalse(text.contains(s));
     }
 
     assertTrue(ContainerUtil.exists(annotationTexts, t -> t.startsWith("@java.lang.Deprecated")));
   }
 
-  private static byte[] generateClassBytes() {
+  private static byte[] generateClassBytes(String desc) {
     ClassWriter cw = new ClassWriter(0);
     cw.visit(Opcodes.V16, Opcodes.ACC_PUBLIC, "p/Sample", null, "java/lang/Object", null);
 
     // class-level: '+' must be dropped, @Deprecated must be kept.
-    AnnotationVisitor ca = cw.visitAnnotation(PLUS_DESC, true);
+    AnnotationVisitor ca = cw.visitAnnotation(desc, true);
     ca.visit("value", 1);
     ca.visitEnd();
     cw.visitAnnotation(DEPRECATED_DESC, true).visitEnd();
 
     // field
     FieldVisitor fv = cw.visitField(Opcodes.ACC_PRIVATE, "f", "I", null, null);
-    fv.visitAnnotation(PLUS_DESC, true).visitEnd();
+    fv.visitAnnotation(desc, true).visitEnd();
     fv.visitEnd();
 
     // record
     RecordComponentVisitor rcv = cw.visitRecordComponent("r", "I", null);
-    rcv.visitAnnotation(PLUS_DESC, true).visitEnd();
+    rcv.visitAnnotation(desc, true).visitEnd();
     rcv.visitEnd();
 
     // method + parameter
     MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "m", "(I)V", null, null);
-    mv.visitAnnotation(PLUS_DESC, true).visitEnd();
-    mv.visitParameterAnnotation(0, PLUS_DESC, true).visitEnd();
+    mv.visitAnnotation(desc, true).visitEnd();
+    mv.visitParameterAnnotation(0, desc, true).visitEnd();
     mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     mv.visitMaxs(0, 2);
