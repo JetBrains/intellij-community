@@ -357,6 +357,8 @@ object CommunityModuleSets {
     module("intellij.rd.platform")
     module("intellij.rd.ui")
     module("intellij.platform.split.protocol")
+    module("intellij.rd.client")
+    module("intellij.rd.client.base")
   }
 
   /**
