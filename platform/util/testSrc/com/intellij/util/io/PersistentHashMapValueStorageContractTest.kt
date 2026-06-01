@@ -60,7 +60,7 @@ internal class PersistentHashMapValueStorageContractTest {
 
       val firstAddress = withStorage(storageFile, config, readOnly = false) { storage ->
         storage.appendPayload(firstPayload, previousTailAddress = 0).also {
-          storage.force()
+          storage.flush()
         }
       }
 
@@ -72,7 +72,7 @@ internal class PersistentHashMapValueStorageContractTest {
             secondAddress > firstAddress,
             "${config.name}: append after reopen must allocate after the already persisted first record"
           )
-          storage.force()
+          storage.flush()
         }
       }
 
@@ -91,7 +91,7 @@ internal class PersistentHashMapValueStorageContractTest {
 
       val address = withStorage(storageFile, config, readOnly = false) { storage ->
         storage.appendPayload(payload, previousTailAddress = 0).also {
-          storage.force()
+          storage.flush()
         }
       }
 
@@ -117,7 +117,7 @@ internal class PersistentHashMapValueStorageContractTest {
       withStorage(storageFile, config, readOnly = false) { storage ->
         val firstAddress = storage.appendPayload(firstChunk, previousTailAddress = 0)
         val secondAddress = storage.appendPayload(secondChunk, previousTailAddress = firstAddress)
-        storage.force()
+        storage.flush()
 
         storage.switchToCompactionModeForTest()
 
@@ -200,14 +200,20 @@ internal class PersistentHashMapValueStorageContractTest {
 
     val firstAddress = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
       storage.appendPayload(firstPayload, previousTailAddress = 0).also {
-        storage.force()
+        storage.flush()
       }
     }
+    assertEquals(
+      1,
+      channelsAccessor.forceOperations(storageFile).size,
+      "Initial append must preserve the single historical first-header force on the main value file"
+    )
+    channelsAccessor.clearChannelOperations()
 
     val secondAddress = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
       storage.assertRecord(firstAddress, firstPayload, 1, "Value written through the custom accessor must be readable after reopen")
       storage.appendPayload(secondPayload, previousTailAddress = firstAddress).also {
-        storage.force()
+        storage.flush()
       }
     }
 
@@ -217,6 +223,11 @@ internal class PersistentHashMapValueStorageContractTest {
                            2,
                            "Value storage must read value chains through the custom accessor")
     }
+    assertEquals(
+      0,
+      channelsAccessor.forceOperations(storageFile).size,
+      "Main value file reads and logical flushes after the header workaround must not call FileChannel.force()"
+    )
 
     assertEquals(0, channelsAccessor.activeChannels, "Recording accessor must not keep channels open after operations")
     assertEquals(0, channelsAccessor.idempotentOperations, "Adapter append protocol must not use retryable idempotent operations")
@@ -245,13 +256,34 @@ internal class PersistentHashMapValueStorageContractTest {
 
     val address = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
       storage.appendPayload(payload, previousTailAddress = 0).also {
-        storage.force()
+        storage.flush()
       }
     }
+    assertEquals(
+      1,
+      channelsAccessor.forceOperations(storageFile).size,
+      "Compressed storage must preserve only the historical first-header force on the main value file"
+    )
+    assertEquals(
+      0,
+      channelsAccessor.forceOperations(chunkLengthFile).size,
+      "Compressed chunk-length appender flush must not force the chunk-length side-file"
+    )
+    channelsAccessor.clearChannelOperations()
 
     withStorage(storageFile, config, readOnly = true, lockContext = lockContext) { storage ->
       storage.assertRecord(address, payload, 1, "Compressed value storage must read side files through the custom accessor")
     }
+    assertEquals(
+      0,
+      channelsAccessor.forceOperations(storageFile).size,
+      "Compressed chunk reads must flush the main appender without forcing the main value file"
+    )
+    assertEquals(
+      0,
+      channelsAccessor.forceOperations(chunkLengthFile).size,
+      "Compressed chunk length reads must not force the chunk-length side-file"
+    )
 
     assertTrue(
       channelsAccessor.operations.any { it.path == chunkLengthFile && !it.readOnly },
@@ -286,11 +318,11 @@ internal class PersistentHashMapValueStorageContractTest {
 
     withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
       storage.appendPayload(byteArrayOf(1), previousTailAddress = 0)
-      storage.force()
+      storage.flush()
 
       val payloadLength = payloadLengthToFillCompressedPage(storage.size, config.hasNoChunks)
       storage.appendPayload(ByteArray(payloadLength) { index -> (index % 251).toByte() }, previousTailAddress = 0)
-      storage.force()
+      storage.flush()
 
       assertEquals(
         CompressedAppendableFile.PAGE_LENGTH.toLong(),
@@ -330,7 +362,7 @@ internal class PersistentHashMapValueStorageContractTest {
           }
         }
 
-        forceAndReopen("final writable reopen")
+        flushAndReopen("final writable reopen")
         reopenReadOnlyAndVerify("final read-only reopen")
       }
       finally {
@@ -344,7 +376,7 @@ internal class PersistentHashMapValueStorageContractTest {
         operation < 40 -> appendNewRecord(operationNo)
         operation < 65 && !config.hasNoChunks -> appendChunk(operationNo)
         operation < 85 -> readBackRandomRecord(operationNo)
-        operation < 95 -> forceAndReopen("operation $operationNo")
+        operation < 95 -> flushAndReopen("operation $operationNo")
         else -> reopenReadOnlyAndVerify("operation $operationNo")
       }
     }
@@ -377,15 +409,19 @@ internal class PersistentHashMapValueStorageContractTest {
       assertRecord(recordIndex, records[recordIndex], "${caseName(operationNo)} readBack")
     }
 
-    private fun forceAndReopen(checkpoint: String) {
-      storage.force()
+    private fun flushAndReopen(checkpoint: String) {
+      //TODO RC: do we need separate .flush() before .dispose()?
+      //         shouldn't .dispose() do flush() inside?
+      storage.flush()
       storage.dispose()
       storage = openStorage(readOnly = false)
       assertAllRecords("${caseName()} after $checkpoint")
     }
 
     private fun reopenReadOnlyAndVerify(checkpoint: String) {
-      storage.force()
+      //TODO RC: do we need separate .flush() before .dispose()?
+      //         shouldn't .dispose() do flush() inside?
+      storage.flush()
       storage.dispose()
 
       storage = openStorage(readOnly = true)
@@ -536,6 +572,16 @@ internal class PersistentHashMapValueStorageContractTest {
     data class Operation(val path: Path, val readOnly: Boolean)
 
     data class ChannelOperation(val path: Path, val name: String, val size: Long? = null, val readOnly: Boolean? = null)
+
+    /** Starts a new assertion window while preserving accessor lifecycle counters. */
+    fun clearChannelOperations() {
+      channelOperations.clear()
+    }
+
+    /** Selects physical force calls for one file so tests can keep main-file and side-file expectations separate. */
+    fun forceOperations(path: Path): List<ChannelOperation> {
+      return channelOperations.filter { it.path == path && it.name == "force" }
+    }
 
     private class RecordingFileChannel(
       private val path: Path,

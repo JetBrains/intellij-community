@@ -202,7 +202,10 @@ public final class PersistentHashMapValueStorage {
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
       // code depends on correct value of mySize
-      forceAppender();
+      flushAppender();
+      //Preserves the historical behavior: force the header record
+      //TODO RC: think through, why do we need it/do we (still) need it ?
+      myFileAccessor.force();
 
       long currentLength = myFileAccessor.sizeIfExists();
       if (currentLength > mySize) {  // if real file length (unexpectedly) increases
@@ -522,10 +525,10 @@ public final class PersistentHashMapValueStorage {
   private int myLastReportedChunksCount;
 
   /**
-   * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
+   * Reads bytes pointed by tailChunkAddress, returns new address if linked list compactification have been performed
    */
   ReadResult readBytes(long tailChunkAddress) throws IOException {
-    forceAppender();
+    flushAppender();
 
     checkCancellation();
     long startedTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
@@ -673,22 +676,22 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
-  public void force() {
+  public void flush() {
     if (myOptions.myReadOnly) return;
     if (myCompressedAppendableFile != null) {
       myCompressedAppendableFile.force();
     }
     if (mySize < 0) assert false;  // volatile read
-    forceAppender();
+    flushAppender();
   }
 
-  private void forceAppender() {
-    forceAppender(myAppender);
+  private void flushAppender() {
+    flushAppender(myAppender);
   }
 
-  private static void forceAppender(@NotNull SyncAbleBufferedOutputStreamOverFileAccessor appender) {
+  private static void flushAppender(@NotNull SyncAbleBufferedOutputStreamOverFileAccessor appender) {
     try {
-      appender.sync();
+      appender.flushBufferedBytes();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -873,6 +876,7 @@ public final class PersistentHashMapValueStorage {
       return cleared;
     }
 
+    /** Forces pending writes to the backing file. This is a durability/WAL-drain operation, not a logical visibility barrier. */
     void force() throws IOException {
       if (myReadOnly) return;
       myChannelsAccessor.executeOp(myPath, channel -> {
@@ -987,16 +991,13 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static final class SyncAbleBufferedOutputStreamOverFileAccessor extends BufferedOutputStream {
-    private final @NotNull ChannelAccessorBackedFileAccessor myFileAccessor;
-
     SyncAbleBufferedOutputStreamOverFileAccessor(@NotNull ChannelAccessorBackedFileAccessor fileAccessor) {
       super(new OutputStreamOverFileAccessor(fileAccessor));
-      myFileAccessor = fileAccessor;
     }
 
-    public void sync() throws IOException {
+    /** Flushes Java-level buffering so later channel reads in this process can see appended bytes. */
+    void flushBufferedBytes() throws IOException {
       flush();
-      myFileAccessor.force();
     }
 
     public void dispose() throws IOException {
@@ -1043,7 +1044,7 @@ public final class PersistentHashMapValueStorage {
 
     @Override
     protected @NotNull InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
-      forceAppender();
+      flushAppender();
       byte[] bytes = new byte[pageSize];
       myFileAccessor.read(offset, bytes, 0, pageSize);
       return new ByteArrayInputStream(bytes);
@@ -1082,12 +1083,14 @@ public final class PersistentHashMapValueStorage {
     @Override
     protected void writeIncompleteChunkFile(byte @NotNull [] buffer, int length) throws IOException {
       myIncompleteChunkFileAccessor.replace(buffer, length);
+      //TODO RC: do we really need this fsync here? What for?
       myIncompleteChunkFileAccessor.force();
     }
 
     @Override
     protected void deleteIncompleteChunkFileIfExists() throws IOException {
       if (myIncompleteChunkFileAccessor.clearIfNonEmpty()) {
+        //TODO RC: do we really need this fsync here? What for?
         myIncompleteChunkFileAccessor.force();
       }
     }
@@ -1100,7 +1103,7 @@ public final class PersistentHashMapValueStorage {
     @Override
     public synchronized void force() {
       super.force();
-      forceAppender(myChunkLengthAppender);
+      flushAppender(myChunkLengthAppender);
     }
 
     @Override

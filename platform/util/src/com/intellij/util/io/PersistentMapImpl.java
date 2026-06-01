@@ -835,7 +835,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
   private void clearAppenderCaches() {
     if (myIntMapping) return;
     flushAppendCache();
-    myValueStorage.force();
+    myValueStorage.flush();
   }
 
   @Override
