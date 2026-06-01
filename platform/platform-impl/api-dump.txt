@@ -1204,7 +1204,6 @@ c:com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolb
 - paintBorder(java.awt.Graphics,javax.swing.JComponent,I):V
 pf:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl$AccessibleIdeStatusBarImpl
 - getAccessibleDescription():java.lang.String
-- getAccessibleName():java.lang.String
 pc:com.intellij.openapi.wm.impl.status.TextPanel$AccessibleTextPanel
 - javax.swing.JComponent$AccessibleJComponent
 - <init>(com.intellij.openapi.wm.impl.status.TextPanel):V

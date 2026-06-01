@@ -32,7 +32,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.impl.BridgeTaskSupport
@@ -916,6 +915,7 @@ open class IdeStatusBarImpl @Internal constructor(
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleIdeStatusBarImpl()
+      accessibleContext.accessibleName = UIBundle.message("status.bar.accessible.group.name")
     }
     return accessibleContext
   }
@@ -963,12 +963,6 @@ open class IdeStatusBarImpl @Internal constructor(
 
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
-
-    override fun getAccessibleName(): String {
-      val shortcut = KeymapUtil.getFirstKeyboardShortcutText("FocusStatusBar")
-      return if (shortcut.isNotEmpty()) UIBundle.message("status.bar.accessible.group.name.with.shortcut", shortcut)
-      else UIBundle.message("status.bar.accessible.group.name")
-    }
 
     override fun getAccessibleDescription(): String? = getInfo()
   }
