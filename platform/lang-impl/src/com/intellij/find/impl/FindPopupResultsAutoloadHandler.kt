@@ -277,6 +277,10 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     val project = host.project
     val onFinishCalled = AtomicBoolean(false)
 
+    // Matches already counted by previous passes. Each pass re-scans the query from the start,
+    // so any match whose raw-emission ordinal is below this was already counted.
+    val countedBeforePass = state.cumulativeUsageCount()
+
     if (loadMore) {
       host.onLoadingRowVisibilityRequest(visible = true)
     }
@@ -311,7 +315,8 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
                 onStop(hash)
                 return@findUsages false
               }
-              if (resultsCount.getAndIncrement() >= maxUsages) {
+              val ordinal = resultsCount.getAndIncrement()
+              if (ordinal >= maxUsages) {
                 onStop(hash)
                 return@findUsages false
               }
@@ -349,7 +354,10 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
                 }
                 host.appendIncomingRow(newItem)
                 state.recordFilePath(newItem.path)
-                val displayOccurrences = host.resultsRowCount
+                if (ordinal >= countedBeforePass) {
+                  state.incrementUsageCount()
+                }
+                val displayOccurrences = state.cumulativeUsageCount()
                 val displayFiles = state.cumulativeFileCount()
                 if (displayOccurrences > 0) {
                   host.updateInfoLabel(displayOccurrences, displayFiles, loadingMore = false)
@@ -429,7 +437,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
                              (host.isContentFullyVisible || host.isUserAtBottom) &&
                              host.resultsRowCount > 0
 
-          val displayOccurrences = host.resultsRowCount
+          val displayOccurrences = state.cumulativeUsageCount()
           val displayFiles = state.cumulativeFileCount()
           if (autoLoadMore) {
             // Guarantee the counter reflects this pass before chaining into the next.

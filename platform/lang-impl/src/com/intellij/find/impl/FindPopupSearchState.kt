@@ -26,6 +26,9 @@ internal class FindPopupSearchState {
   /** Cumulative file paths since the last fresh search — drives the "in N files" label across paging.  */
   private val cumulativeFilePaths: MutableSet<String> = HashSet()
 
+  /** Cumulative usage count since the last fresh search — drives the "N matches" label across paging.  */
+  private var cumulativeUsageCount: Int = 0
+
   /** Dedup keys (`path|line|navigationOffset`) for every row currently in the table.  */
   private val currentRowKeys: MutableSet<String> = HashSet()
 
@@ -49,6 +52,7 @@ internal class FindPopupSearchState {
     this.isExhausted = false
     frozenRowCount = 0
     cumulativeFilePaths.clear()
+    cumulativeUsageCount = 0
     currentRowKeys.clear()
     firstResultPath = null
     needReset.set(true)
@@ -87,5 +91,14 @@ internal class FindPopupSearchState {
 
   fun cumulativeFileCount(): Int {
     return cumulativeFilePaths.size
+  }
+
+  // --- Cumulative usage count ---------------------------------------------
+  fun incrementUsageCount() {
+    cumulativeUsageCount++
+  }
+
+  fun cumulativeUsageCount(): Int {
+    return cumulativeUsageCount
   }
 }
