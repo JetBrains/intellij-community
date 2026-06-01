@@ -6,6 +6,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
+load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
 
 jvm_import(
     name = "protobuf_java",
@@ -30,7 +31,20 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
-# Kotlin toolchain for rules_kotlin backend
+# Kotlin toolchain for rules_kotlin backend.
+# ABI-generation options are kept in sync with the JPS backend's invocation of
+# JvmAbiCommandLineProcessor in
+# jvm-inc-builder/src/.../kotlinPlugins.kt::configurePlugins so that both
+# backends produce the same Kotlin ABI bytes.
+#
+# Mapping (jvm-abi-gen plugin option -> source of truth here):
+#   removePrivateClasses=true                    -> experimental_remove_private_classes_in_abi_jars
+#   removeDebugInfo=false                        -> experimental_remove_debug_info_in_abi_jars (default False)
+#   treatInternalAsPrivate (not set)             -> experimental_treat_internal_as_private_in_abi_jars (default False)
+#   removeDataClassCopyIfConstructorIsPrivate=true,
+#   preserveDeclarationOrder=true                -> hard-coded in BtapiCompiler.buildAbiGenPlugin
+#                                                   (upstream rules_kotlin doesn't expose these via
+#                                                   toolchain attrs).
 define_kt_toolchain(
     name = "kotlin_toolchain",
     api_version = "2.3",
@@ -42,6 +56,18 @@ define_kt_toolchain(
     btapi_kotlin_reflect = ":kotlin-reflect_import",
     btapi_kotlin_stdlib = ":kotlin-stdlib_import",
     language_version = "2.3",
+
+    # Implicit Kotlin stdlib + jetbrains-annotations injected by rules_kotlin into
+    # every kt_jvm_library's JavaInfo. Without these overrides the toolchain falls
+    # back to rules_kotlin's defaults (@kotlin_rules_maven//...)
+    jvm_stdlibs = [
+        ":annotations_import",
+        ":kotlin-stdlib_import",
+    ],
+    jvm_runtime = [
+        ":kotlin-stdlib_import",
+    ],
+    experimental_remove_private_classes_in_abi_jars = True,
 )
 
 # --@rules_jvm//:trace
@@ -60,6 +86,15 @@ jvm_import(
     name = "annotations_import",
     jar = "@annotations_http//file",
     source_jar = "@annotations-sources_http//file",
+    visibility = ["//visibility:public"],
+    # Version must match the `annotations_http` http_file URL in MODULE.bazel —
+    # verified at analysis time by `:annotations_import_coords_check`.
+    tags = ["maven_coordinates=org.jetbrains:annotations:26.0.2"],
+)
+
+assert_maven_coordinates_match_jar(
+    name = "annotations_import_coords_check",
+    target = ":annotations_import",
     visibility = ["//visibility:public"],
 )
 
@@ -186,6 +221,15 @@ jvm_import(
 jvm_import(
     name = "kotlin-stdlib_import",
     jar = "@kotlin-stdlib_http//file",
+    visibility = ["//visibility:public"],
+    # Version must match `kotlin_compiler_version` in MODULE.bazel — verified at
+    # analysis time by `:kotlin-stdlib_import_coords_check`.
+    tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.4.0"],
+)
+
+assert_maven_coordinates_match_jar(
+    name = "kotlin-stdlib_import_coords_check",
+    target = ":kotlin-stdlib_import",
     visibility = ["//visibility:public"],
 )
 
@@ -433,6 +477,7 @@ pkg_zip(
         "*.bzl",
         "*.bazel",
         "*.bazel.lock",
+        "*.patch",
     ]) + [
         ":rules_to_zip",
         "//dependency-graph:files_to_zip",

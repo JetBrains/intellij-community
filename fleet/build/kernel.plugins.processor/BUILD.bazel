@@ -1,28 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-
-kt_jvm_library(
-    name = "kernel.plugins.processor-kt",
-    srcs = glob(
-        [
-            "srcJvmMain/**/*.kt",
-            "srcJvmMain/**/*.java",
-            "srcJvmMain/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kernel.plugins.processor",
-    resource_strip_prefix = "resources",
-    resources = glob(["resources/**/*"]),
-    visibility = ["//visibility:public"],
-    deps = [
-        "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
-        "@lib//:kotlin-stdlib",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:kotlinx-io-core",
-    ],
-)
 
 ### auto-generated section `build fleet.build.kernel.plugins.processor` start
 

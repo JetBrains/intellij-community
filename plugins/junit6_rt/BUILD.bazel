@@ -46,11 +46,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":junit-v6-rt",
-        "//plugins/junit5_rt:junit-v5-rt_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
+        "//plugins/junit5_rt:junit-v5-rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.v6.rt` end

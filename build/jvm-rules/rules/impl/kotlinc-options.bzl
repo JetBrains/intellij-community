@@ -1,5 +1,9 @@
 load(
     "@rules_kotlin//kotlin/internal:opts.bzl",
+    # Upstream rules_kotlin calls this provider `KotlincExtraOptions`; we re-export
+    # it locally under the historical name `KotlincExtraOptionsInfo` so consumers
+    # in this repo don't need to change.
+    _KotlincExtraOptionsInfo = "KotlincExtraOptions",
     _RKKotlincOptions = "KotlincOptions",
     _rk_kotlinc_options_to_flags = "kotlinc_options_to_flags",
     _rk_kt_kotlinc_options = "kt_kotlinc_options",
@@ -7,17 +11,12 @@ load(
 
 KotlincOptions = _RKKotlincOptions
 
-KotlincExtraOptionsInfo = provider(
-    fields = {
-        "api_version": "Kotlin API version used by the JPS backend.",
-        "language_version": "Kotlin language version used by the JPS backend.",
-        "plugin_options": "Additional -P compiler options for the JPS backend.",
-        "x_allow_result_return_type": "Enable kotlin.Result as a return type for the JPS backend.",
-        "x_strict_java_nullability_assertions": "Enable strict Java nullability assertions for the JPS backend.",
-        "x_wasm_attach_js_exception": "Enable attaching JS exceptions for Wasm in the JPS backend.",
-        "x_wasm_kclass_fqn": "Enable KClass::qualifiedName support for Wasm in the JPS backend.",
-    },
-)
+# Re-exported from upstream rules_kotlin (defined in @rules_kotlin//kotlin/internal:opts.bzl
+# on the btapi-wip branch); using the upstream-defined provider lets the BTA
+# compile path read it via target[KotlincExtraOptionsInfo] with matching identity.
+# The JPS path also consumes it (via kotlinc_options_to_args /
+# _kotlinc_worker_option_value below).
+KotlincExtraOptionsInfo = _KotlincExtraOptionsInfo
 
 _EXTRA_OPTION_FIELDS = [
     "api_version",

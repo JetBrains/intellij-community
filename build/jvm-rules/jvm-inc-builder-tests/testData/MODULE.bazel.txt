@@ -21,9 +21,9 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "6c7550c333f10fd49c59a5c05714c2747802077906822be066bc738c10038324",
-    strip_prefix = "rules_kotlin-2f7b666442f78bfcb5fd6360a3150b2938233cef",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/2f7b666442f78bfcb5fd6360a3150b2938233cef.zip",
+    sha256 = "5c9b4664b3f926624a405f1d39ce74bcfc0a46b319df4f20d2ee63bdfed9c43e",
+    strip_prefix = "rules_kotlin-ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f.zip",
 )
 
 # the module is supposed to always be overridden with the local version
@@ -33,3 +33,40 @@ archive_override(
     module_name = "rules_jvm",
     url = "file://ABSOLUTE_RULES_JVM_ARTIFACT_PATH",
 )
+
+# single_version_override is a root-module-only directive, so patches declared in rules_jvm MODULE.bazel
+# are not applied when rules_jvm is consumed as a dependency.
+# These overrides must be duplicated here for the test workspace.
+# Patch files are extracted from the rules_jvm zip archive at test setup time.
+single_version_override(
+    module_name = "rules_jvm_external",
+    patches = [
+        "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "rules-jvm-external-6.10-default-to-maven-resolver.patch",
+    ],
+    version = "6.10",
+)
+
+single_version_override(
+    module_name = "rules_android",
+    patches = [
+        "rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
+)
+
+single_version_override(
+    module_name = "bazel_worker_java",
+    patches = [
+        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
+)
+
+# hermetic_cc_toolchain (zig) is used in rules_jvm but marked as dev_dependency there.
+# Do NOT register zig toolchains here: the zig C++ toolchain uses x86_64-windows-gnu
+# which lacks pthread.h, causing protobuf/abseil-cpp compilation to fail on Windows.
+# Without registration, Bazel falls back to the auto-detected system C++ toolchain (MSVC).
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk")
