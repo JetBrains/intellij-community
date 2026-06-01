@@ -135,7 +135,11 @@ val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 
-private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale, forceLetters: Boolean = true): String? {
+@Internal
+@VisibleForTesting
+fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale, forceLetters: Boolean = true): String? {
+  // Detect at once whether the input is a "key-only" string produced by BundleBase
+  val hasMarkers = INDEX_ENTRY_REGEXP.containsMatchIn(s)
   val matches = INDEX_ENTRY_REGEXP.findAll(s)
 
   var result: MutableList<String>? = null
@@ -167,7 +171,10 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
   val parameterPlaceholder = "{0}"
 
   val message = if (result == null) {
-    first ?: s
+    // When the input contained markers, only their resolved values represent the user-visible
+    // text — falling back to the raw marker string would leak placeholder text. When it had
+    // no markers (a plain hit), return the string as-is.
+    first ?: if (hasMarkers) return null else s
   }
   else if (result.size == 2 && result[0].contains(parameterPlaceholder)) {
     result[0].replace(parameterPlaceholder, result[1])
