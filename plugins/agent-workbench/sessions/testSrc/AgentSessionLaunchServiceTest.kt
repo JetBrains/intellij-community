@@ -554,7 +554,10 @@ class AgentSessionLaunchServiceTest {
             threadId = activeThread.id,
           )
           archiveService.archiveThreads(listOf(archiveTarget), AgentWorkbenchEntryPoint.TREE_POPUP)
-          waitForCondition { !activeThreadIds(service.state.value).contains(activeThread.id) }
+          waitForCondition {
+            archiveCalls.get() == 1 &&
+            !activeThreadIds(service.state.value).contains(activeThread.id)
+          }
 
           launchService.openChatThread(
             path = PROJECT_PATH,
