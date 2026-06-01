@@ -49,26 +49,15 @@ object DynamicPlugins {
     forceRemovePlugins: List<PluginMainDescriptor>,
     extraStateValidator: PluginStateValidator,
   ): Boolean {
-    DynamicPluginsSupport.getInstance()?.let { instance ->
-      val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
-      val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
-      extraStateValidator.validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return false
-      }
-      return instance.validateDynamicTransitionPossible(newState) == null
+    val dynamicPlugins = DynamicPluginsSupport.getInstance() ?: error("new dynamic plugins support is disabled")
+    val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
+    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+    val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
+    extraStateValidator.validate(resolvedPluginSet)?.let {
+      LOG.info("new plugins state did not meet expectations: $it")
+      return false
     }
-
-    if (forceRemovePlugins.isNotEmpty()) {
-      return forceRemovePlugins.all {
-        DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(it, context = addNewCustomPlugins)
-      }
-    } else {
-      return addNewCustomPlugins.all {
-        DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(it) // yep, old implementation assumes unloading even if we want to load the plugin...
-      }
-    }
+    return dynamicPlugins.validateDynamicTransitionPossible(newState) == null
   }
 
   /**
