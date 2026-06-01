@@ -153,7 +153,6 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
   private BtreeIndexNodeView myAccessNodeView;
   private int myLastGetKey;
-  private int myOptimizedInserts;
   private boolean myCanUseLastKey;
 
   /**
@@ -232,7 +231,6 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     if (canUseLastKey) {
       myCanUseLastKey = false;
       if (key == myLastGetKey && !myAccessNodeView.myHasFullPagesAlongPath) {
-        ++myOptimizedInserts;
         ++count;
         try {
           myAccessNodeView.insert(key, value);
