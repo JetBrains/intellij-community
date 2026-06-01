@@ -615,6 +615,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/PreferMoreSpecificExtension3/");
     }
 
+    @TestMetadata("PrefillImportedVariableAbsent")
+    public void testPrefillImportedVariableAbsent() throws Exception {
+        runTest("../../completion/testData/basic/multifile/PrefillImportedVariableAbsent/");
+    }
+
     @TestMetadata("PropertyKeysEmptyString")
     public void testPropertyKeysEmptyString() throws Exception {
         runTest("../../completion/testData/basic/multifile/PropertyKeysEmptyString/");

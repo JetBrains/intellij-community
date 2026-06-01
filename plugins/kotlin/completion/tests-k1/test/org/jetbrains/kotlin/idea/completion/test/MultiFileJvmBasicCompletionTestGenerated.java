@@ -615,6 +615,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/PreferMoreSpecificExtension3/");
     }
 
+    @TestMetadata("PrefillImportedVariableAbsent")
+    public void testPrefillImportedVariableAbsent() throws Exception {
+        runTest("../testData/basic/multifile/PrefillImportedVariableAbsent/");
+    }
+
     @TestMetadata("PropertyKeysEmptyString")
     public void testPropertyKeysEmptyString() throws Exception {
         runTest("../testData/basic/multifile/PropertyKeysEmptyString/");

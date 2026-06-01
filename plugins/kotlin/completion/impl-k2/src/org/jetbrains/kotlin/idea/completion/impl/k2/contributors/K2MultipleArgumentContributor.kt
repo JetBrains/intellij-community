@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
@@ -110,27 +111,6 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
         return signatures
     }
 
-    /**
-     * Returns local variables (i.e., from the same file) with the names from [allNamesToFind].
-     * Note that shadowing is taken into account properly, and only the closest variable that is available is returned
-     * for each name.
-     */
-    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun getVariablesForNames(allNamesToFind: Set<Name>): Map<Name, KaVariableSymbol> {
-        // We do not want to consider variables that are imported
-        val scopes = context.weighingContext.scopeContext.scopes.filterNot { it.kind is KaScopeKind.ImportingScope }
-
-        // We reverse the scopes to correctly perform shadowing.
-        // Innermost scopes appear first in `scopes` so for their variables to win, we need to reverse the list.
-        val variables = scopes.reversed().flatMap { scopeWithKind ->
-            scopeWithKind.scope.callables(allNamesToFind)
-                .filterIsInstance<KaVariableSymbol>()
-                .map { it.name to it }
-        }.toMap()
-
-        return variables
-    }
-
     data class MultiArgumentSignatureData(
         val completesAllArguments: Boolean,
         val tail: Tail,
@@ -180,7 +160,7 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
         if (signatures.isEmpty()) return
 
         val allNamesToFind = signatures.flatMapTo(mutableSetOf()) { it.missingArguments.keys }
-        val variables = getVariablesForNames(allNamesToFind)
+        val variables = getLocalVariablesForNames(allNamesToFind, context.weighingContext.scopeContext)
 
         val matchedNames = mutableMapOf<List<Name>, MultiArgumentSignatureData>()
         for (signature in signatures) {
@@ -225,4 +205,26 @@ internal class MultipleArgumentsInsertHandler : SerializableInsertHandler {
         }
     }
 
+}
+
+
+/**
+ * Returns local variables (i.e., from the same file) with the names from [allNamesToFind].
+ * Note that shadowing is taken into account properly, and only the closest variable that is available is returned
+ * for each name.
+ */
+context(_: KaSession)
+internal fun getLocalVariablesForNames(allNamesToFind: Set<Name>, scopeContext: KaScopeContext): Map<Name, KaVariableSymbol> {
+    // We do not want to consider variables that are imported
+    val scopes = scopeContext.scopes.filterNot { it.kind is KaScopeKind.ImportingScope }
+
+    // We reverse the scopes to correctly perform shadowing.
+    // Innermost scopes appear first in `scopes` so for their variables to win, we need to reverse the list.
+    val variables = scopes.reversed().flatMap { scopeWithKind ->
+        scopeWithKind.scope.callables(allNamesToFind)
+            .filterIsInstance<KaVariableSymbol>()
+            .map { it.name to it }
+    }.toMap()
+
+    return variables
 }

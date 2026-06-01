@@ -2213,6 +2213,36 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("PrefillSameNameParameter.kt")
+            public void testPrefillSameNameParameter() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillSameNameParameter.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariable.kt")
+            public void testPrefillSameNameVariable() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillSameNameVariable.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariableAlreadyPassed.kt")
+            public void testPrefillSameNameVariableAlreadyPassed() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillSameNameVariableAlreadyPassed.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariableSmart.kt")
+            public void testPrefillSameNameVariableSmart() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillSameNameVariableSmart.kt");
+            }
+
+            @TestMetadata("PrefillSameNameVariableTypeMismatch.kt")
+            public void testPrefillSameNameVariableTypeMismatch() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillSameNameVariableTypeMismatch.kt");
+            }
+
+            @TestMetadata("PrefillTopLevelValue.kt")
+            public void testPrefillTopLevelValue() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrefillTopLevelValue.kt");
+            }
+
             @TestMetadata("PrivateFunction.kt")
             public void testPrivateFunction() throws Exception {
                 runTest("../testData/basic/common/namedArguments/PrivateFunction.kt");

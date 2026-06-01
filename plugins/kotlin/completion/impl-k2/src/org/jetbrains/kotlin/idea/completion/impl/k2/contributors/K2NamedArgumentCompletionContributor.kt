@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
@@ -78,6 +79,15 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                 }
             }
 
+            // Local variables with the same name as any of the currently edited arguments
+            val potentiallyRelevantLocalVariables by lazy(LazyThreadSafetyMode.NONE) {
+                val scopeContext = context.completionContext.originalFile.scopeContext(callElement)
+                val namesAtCurrentIndex = namedArgumentInfos
+                    .filter { namedArgument -> namedArgument.indexedTypes.any { it.index == currentArgumentIndex } }
+                    .mapTo(mutableSetOf()) { it.name }
+                getLocalVariablesForNames(namesAtCurrentIndex, scopeContext)
+            }
+
             buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
@@ -98,6 +108,16 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                         val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
                         if (nullablePosition != null) {
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
+                        }
+
+                        // We only check matching names and types if there is only a single type at the current position.
+                        val singleTypeAtPosition = typesAtCurrentPosition.singleOrNull()
+                        if (singleTypeAtPosition != null) {
+                            // Try and find a _local_ variable with the same name and matching type to prefill it
+                            val variableTypeWithSameName = potentiallyRelevantLocalVariables[name]?.returnType
+                            if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.value) == true) {
+                                add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleTypeAtPosition.index))
+                            }
                         }
                     }
                 }
@@ -154,9 +174,9 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         }.toMap()
 
         if (argumentsBeforeCurrent.any {
-            it.getArgumentExpression() !in argumentToValueParameterIndex &&
-            it.getArgumentExpression() !in argumentToContextParameterIndex
-        }) return emptySequence()
+                it.getArgumentExpression() !in argumentToValueParameterIndex &&
+                        it.getArgumentExpression() !in argumentToContextParameterIndex
+            }) return emptySequence()
 
         val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull {
             valueArgumentMapping[it.getArgumentExpression()] ?: contextArgumentMapping[it.getArgumentExpression()]
