@@ -132,9 +132,8 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 
       scopedVfsRefreshScheduler.launchProcessing(
         coroutineScope = this,
-        settings = settings,
         refreshQueue = refreshQueue,
-        isSyncBlocked = ::isSyncBlocked,
+        refreshGate = { getVfsRefreshGate(settings) },
         beforeRefresh = ::notifyBeforeRefresh,
       )
 
@@ -209,11 +208,15 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
   }
 
   private fun isSyncBlocked(settings: GeneralSettings): Boolean {
+    return getVfsRefreshGate(settings) != ScopedVfsRefreshGate.Ready
+  }
+
+  private fun getVfsRefreshGate(settings: GeneralSettings): ScopedVfsRefreshGate {
     if (!settings.isSyncOnFrameActivation) {
       LOG.debug("VFS refresh rejected: isSyncOnFrameActivation=false")
-      return true
+      return ScopedVfsRefreshGate.DropPending
     }
-    return isSyncBlockedTemporarily()
+    return if (isSyncBlockedTemporarily()) ScopedVfsRefreshGate.RetryLater else ScopedVfsRefreshGate.Ready
   }
 
   private fun isSyncBlockedTemporarily(): Boolean {
@@ -502,7 +505,9 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
   }
 
   override fun unblockSyncOnFrameActivation() {
-    blockSyncCount.decrementAndGet()
+    if (blockSyncCount.decrementAndGet() == 0) {
+      scopedVfsRefreshScheduler.requestProcessing()
+    }
     LOG.debug("sync unblocked")
   }
 
