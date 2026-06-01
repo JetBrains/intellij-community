@@ -4,7 +4,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeVisionFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -38,7 +38,7 @@ class LspCodeLensTest {
   private val editorFixture = sharedFileFixture.editorFixture()
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       codeLensProvider = CodeLensOptions()
     },

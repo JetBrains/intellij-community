@@ -7,7 +7,7 @@ import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.common.FakeLspServerDescriptor
 import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,7 +41,7 @@ class LspDidSaveTest {
   @Nested
   inner class DidSaveWithoutText {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -74,7 +74,7 @@ class LspDidSaveTest {
   @Nested
   inner class DidSaveWithText {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -118,7 +118,7 @@ class LspDidSaveTest {
     private val codeInsightFixture2 by codeInsightFixture(projectFixture2, tempDirFixture2)
 
     @Suppress("unused")
-    private val lspServerSupport1 by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider1 by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -128,7 +128,7 @@ class LspDidSaveTest {
     )
 
     @Suppress("unused")
-    private val lspServerSupport2 by projectFixture2.lspServerSupportFixture(
+    private val fakeLspServerProvider2 by projectFixture2.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
@@ -39,7 +39,7 @@ internal class LspDocumentHighlightsTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       documentHighlightProvider = Either.forLeft(true)
     },

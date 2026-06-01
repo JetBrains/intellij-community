@@ -7,7 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -43,7 +43,7 @@ internal class LspWorkspaceSymbolTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       workspaceSymbolProvider = Either.forLeft(true)
     },
