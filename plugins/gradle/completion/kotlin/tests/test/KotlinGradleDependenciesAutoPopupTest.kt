@@ -71,6 +71,8 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
   ) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", fileContent)
     fixture.configureFromExistingVirtualFile(file)
+    // make sure that IDEA is ready for completion
+    fixture.doHighlighting()
     runInEdtAndWait {
       val lookupElements = fixture.completeBasic()
       assertNotNull(lookupElements) { "Autocompletion was not expected: fixture.completeBasic() returned null" }
