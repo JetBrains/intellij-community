@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiAnnotation;
@@ -109,12 +110,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @Override
   public @Nullable PsiAnnotation findExternalAnnotation(final @NotNull PsiModifierListOwner listOwner, final @NotNull String annotationFQN) {
+    if (isNonCodeTypeAnnotation(annotationFQN)) return null;
     List<PsiAnnotation> result = findExternalAnnotations(listOwner, annotationFQN);
     return result.isEmpty() ? null : result.get(0);
   }
 
   @Override
   public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+    if (isNonCodeTypeAnnotation(annotationFQN)) return Collections.emptyList();
     List<AnnotationData> result = collectExternalAnnotations(listOwner);
     return filterAnnotations(result, annotationFQN);
   }
@@ -136,19 +139,30 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner listOwner,
                                                                         @NotNull String typePath) {
-    if (typePath.isEmpty()) {
-      List<AnnotationData> result = collectExternalAnnotations(listOwner);
-      if (result.isEmpty()) return PsiAnnotation.EMPTY_ARRAY;
-      return StreamEx.of(result)
-        .filter(data -> data.typePath == null)
-        .map(data -> data.getAnnotation(this))
-        .filter(annotation -> isNonCodeTypeAnnotation(annotation))
-        .toArray(PsiAnnotation.EMPTY_ARRAY);
-    }
     List<AnnotationData> result = collectExternalAnnotations(listOwner);
     if (result.isEmpty()) return PsiAnnotation.EMPTY_ARRAY;
-    return StreamEx.of(result).filter(data -> typePath.equals(data.typePath))
-      .map(data -> data.getAnnotation(this)).toArray(PsiAnnotation.EMPTY_ARRAY);
+    List<PsiAnnotation> annos = new ArrayList<>();
+    for (AnnotationData data : result) {
+      if (!typePath.equals(StringUtil.notNullize(data.typePath))) continue;
+      if (typePath.isEmpty() && !isNonCodeTypeAnnotation(data.annotationClassFqName)) continue;
+      annos.add(data.getAnnotation(this));
+    }
+    return annos.toArray(PsiAnnotation.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @Nullable PsiAnnotation findExternalTypeAnnotation(@NotNull PsiModifierListOwner listOwner,
+                                                            @NotNull String typePath,
+                                                            @NotNull String annotationFQN) {
+    List<AnnotationData> result = collectExternalAnnotations(listOwner);
+    if (result.isEmpty()) return null;
+    if (typePath.isEmpty() && !isNonCodeTypeAnnotation(annotationFQN)) return null;
+    for (AnnotationData data : result) {
+      if (!annotationFQN.equals(data.annotationClassFqName)) continue;
+      if (!typePath.equals(StringUtil.notNullize(data.typePath))) continue;
+      return data.getAnnotation(this);
+    }
+    return null;
   }
 
   @Override

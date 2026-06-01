@@ -130,11 +130,13 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
     }
-    if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) && owner instanceof PsiParameter && owner.getParent() != null) {
+    if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) || annotationFQN.equals(myNullabilityManager.getDefaultNullable())) {
       PsiType type = PsiUtil.getTypeByPsiElement(owner);
       if (type != null && !TypeNullability.UNKNOWN.equals(type.getNullability())) {
         return true;
       }
+    }
+    if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) && owner instanceof PsiParameter && owner.getParent() != null) {
       return HardcodedContracts.hasHardcodedContracts(owner);
     }
     return false;

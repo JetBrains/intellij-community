@@ -340,7 +340,12 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
   @Nullable
   private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
-    return ExternalAnnotationsManager.getInstance(getProject()).findExternalAnnotation(owner, fqn);
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(getProject());
+    PsiAnnotation annotation = manager.findExternalAnnotation(owner, fqn);
+    if (annotation == null) {
+      annotation = manager.findExternalTypeAnnotation(owner, "", fqn);
+    }
+    return annotation;
   }
 
   private abstract static class PackageVisitor extends JavaRecursiveElementVisitor {
