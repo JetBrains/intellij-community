@@ -127,6 +127,7 @@ public final class ThreadLeakTracker {
       "qtp", // used in tests for mocking via WireMock in integration testing
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
+      "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
