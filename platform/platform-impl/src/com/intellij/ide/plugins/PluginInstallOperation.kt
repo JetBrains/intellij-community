@@ -101,6 +101,7 @@ class PluginInstallOperation(
   val isRestartRequired: Boolean
     get() = myRestartRequired
 
+  @RequiresBackgroundThread
   fun run() {
     updateUrls()
     mySuccess = prepareToInstall(myPluginsToInstall)
@@ -149,6 +150,7 @@ class PluginInstallOperation(
     }
   }
 
+  @RequiresBackgroundThread
   private fun prepareToInstall(pluginsToInstall: List<PluginUiModel>): Boolean {
     val pluginIdsBeingInstalled: MutableList<PluginId> = SmartList()
     for (pluginNode in pluginsToInstall) {
@@ -172,6 +174,7 @@ class PluginInstallOperation(
     return result
   }
 
+  @RequiresBackgroundThread
   @Throws(IOException::class)
   private fun prepareToInstallWithCallback(
     pluginNode: PluginUiModel,
@@ -447,6 +450,7 @@ class PluginInstallOperation(
     return true
   }
 
+  @RequiresBackgroundThread
   private fun prepareDependencies(
     pluginNode: IdeaPluginDescriptor,
     dependencies: MutableList<PluginUiModel>,
