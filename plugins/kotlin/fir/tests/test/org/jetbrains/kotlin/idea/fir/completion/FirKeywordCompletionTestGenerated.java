@@ -140,6 +140,16 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
         runTest("../../completion/testData/keywords/CommaExpected.kt");
     }
 
+    @TestMetadata("CompanionBlockDisabled.kt")
+    public void testCompanionBlockDisabled() throws Exception {
+        runTest("../../completion/testData/keywords/CompanionBlockDisabled.kt");
+    }
+
+    @TestMetadata("CompanionBlockNotInFunctionBody.kt")
+    public void testCompanionBlockNotInFunctionBody() throws Exception {
+        runTest("../../completion/testData/keywords/CompanionBlockNotInFunctionBody.kt");
+    }
+
     @TestMetadata("CompanionObjectBeforeObject.kt")
     public void testCompanionObjectBeforeObject() throws Exception {
         runTest("../../completion/testData/keywords/CompanionObjectBeforeObject.kt");

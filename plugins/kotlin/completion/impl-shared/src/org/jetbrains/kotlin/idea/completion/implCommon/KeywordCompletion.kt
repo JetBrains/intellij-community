@@ -206,9 +206,14 @@ class KeywordCompletion() {
             WHEN_KEYWORD,
         )
 
-        private fun getCompoundKeywords(token: KtKeywordToken, languageVersionSettings: LanguageVersionSettings): Set<KtKeywordToken>? =
-            mapOf<KtKeywordToken, Set<KtKeywordToken>>(
-                COMPANION_KEYWORD to setOf(OBJECT_KEYWORD),
+        private fun getCompoundKeywords(token: KtKeywordToken, languageVersionSettings: LanguageVersionSettings): Set<KtKeywordToken?>? =
+            mapOf<KtKeywordToken, Set<KtKeywordToken?>>(
+                COMPANION_KEYWORD to buildSet {
+                    add(OBJECT_KEYWORD)
+                    if (languageVersionSettings.supportsFeature(LanguageFeature.CompanionBlocksAndExtensions)) {
+                        add(null)
+                    }
+                },
                 DATA_KEYWORD to setOfNotNull(
                     CLASS_KEYWORD,
                     OBJECT_KEYWORD.takeIf { languageVersionSettings.supportsFeature(LanguageFeature.DataObjects) },
@@ -270,7 +275,7 @@ class KeywordCompletion() {
         }
     }
 
-    private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
+    private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken?>? {
         return when {
             this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
             else -> getCompoundKeywords(this, position.languageVersionSettings)
@@ -328,7 +333,14 @@ class KeywordCompletion() {
                 if (prev in INCOMPATIBLE_KEYWORDS_AROUND_SEALED) return
             }
 
-            val nextIsNotYetPresent = keywordToken.getNextPossibleKeywords(position)?.none { it.value == next } == true
+            if (keywordToken == COMPANION_KEYWORD) {
+                // Companion object should only be suggested inside class bodies
+                val containingKtElement = position.parentOfType<KtElement>() ?: return
+                val containingClassBody = containingKtElement as? KtClassBody ?: containingKtElement.parent as? KtClassBody ?: return
+                if (containingClassBody.allCompanionObjects.isNotEmpty()) return
+            }
+
+            val nextIsNotYetPresent = keywordToken.getNextPossibleKeywords(position)?.none { it?.value == next } == true
             if (nextIsNotYetPresent && keywordToken.avoidSuggestingWith(nextKeyword)) return
 
             if (nextIsNotYetPresent)

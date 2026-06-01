@@ -1,12 +1,13 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocksAndExtensions
 
 <caret>
 
 // EXIST:  abstract
 // EXIST:  class
 // EXIST:  class TopScope
+// EXIST:  companion
 // EXIST:  enum class
 // EXIST:  enum class TopScope
 // EXIST:  final

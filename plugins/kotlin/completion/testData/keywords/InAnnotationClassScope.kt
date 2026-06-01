@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocksAndExtensions
 
 annotation class Test {
     <caret>
@@ -35,5 +35,6 @@ annotation class Test {
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  companion object
+// EXIST: companion
 // EXIST: data object
 // NOTHING_ELSE

@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocksAndExtensions
 
 class MouseMovedEventArgs
 {
@@ -35,6 +35,7 @@ class MouseMovedEventArgs
 // EXIST:  constructor
 // EXIST:  init
 // EXIST:  companion object
+// EXIST: companion
 // EXIST:  operator
 // EXIST:  infix
 // EXIST:  sealed class

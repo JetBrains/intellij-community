@@ -140,6 +140,16 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/CommaExpected.kt");
     }
 
+    @TestMetadata("CompanionBlockDisabled.kt")
+    public void testCompanionBlockDisabled() throws Exception {
+        runTest("../testData/keywords/CompanionBlockDisabled.kt");
+    }
+
+    @TestMetadata("CompanionBlockNotInFunctionBody.kt")
+    public void testCompanionBlockNotInFunctionBody() throws Exception {
+        runTest("../testData/keywords/CompanionBlockNotInFunctionBody.kt");
+    }
+
     @TestMetadata("CompanionObjectBeforeObject.kt")
     public void testCompanionObjectBeforeObject() throws Exception {
         runTest("../testData/keywords/CompanionObjectBeforeObject.kt");
