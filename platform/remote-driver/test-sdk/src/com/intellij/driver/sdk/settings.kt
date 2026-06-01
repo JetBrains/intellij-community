@@ -24,6 +24,9 @@ interface AdvancedSettingsRef {
   fun getBoolean(id: String): Boolean
   fun setBoolean(id: String, value: Boolean)
   fun getDefaultBoolean(id: String): Boolean
+
+  fun getInt(id: String): Int
+  fun setInt(id: String, value: Int)
 }
 
 @Remote("com.intellij.openapi.updateSettings.impl.UpdateSettings")
@@ -45,6 +48,10 @@ fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT): AdvancedSett
 
 fun Driver.setAdvancedSetting(id: String, value: Boolean, rdTarget: RdTarget = RdTarget.DEFAULT) {
   advancedSettings(rdTarget).setBoolean(id, value)
+}
+
+fun Driver.setAdvancedSetting(id: String, value: Int, rdTarget: RdTarget = RdTarget.DEFAULT) {
+  advancedSettings(rdTarget).setInt(id, value)
 }
 
 fun Driver.setThirdPartyPluginsAllowed(allowed: Boolean) {
