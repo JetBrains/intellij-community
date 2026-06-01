@@ -637,7 +637,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 
 private suspend fun doRefreshOpenedFiles(refreshQueue: RefreshQueue) {
   val files = getOpenedProjects()
-    .flatMap { it.serviceIfCreated<FileEditorManager>()?.selectedEditors?.asSequence() ?: emptySequence() }
+    .flatMap { it.serviceIfCreated<FileEditorManager>()?.selectedEditorWithRemotes?.asSequence() ?: emptySequence() }
     .flatMap { it.filesToRefresh }
     .filter { it is NewVirtualFile }
     .toList()
