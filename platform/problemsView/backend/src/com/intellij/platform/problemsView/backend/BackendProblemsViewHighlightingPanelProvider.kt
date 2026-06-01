@@ -10,6 +10,7 @@ import com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
 import com.intellij.openapi.project.Project
 import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewKeyEnabled
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,4 +37,9 @@ internal class BackendProblemsViewHighlightingPanelProvider(private val project:
 
 internal class MockHighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, "BECurrentFile", state, ProblemsViewBundle.messagePointer("problems.view.highlighting")) {
+
+  init {
+    UIUtil.markAsShowing(this, true)
+  }
+
 }
