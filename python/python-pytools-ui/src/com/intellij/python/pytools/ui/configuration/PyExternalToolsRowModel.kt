@@ -4,9 +4,14 @@ package com.intellij.python.pytools.ui.configuration
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.SlowOperations
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version as PlatformVersion
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pytools.PyTool
@@ -14,10 +19,14 @@ import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.findExecutableInPath
+import com.intellij.python.pytools.findExecutableInSdk
+import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
+import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -73,6 +82,35 @@ internal class ToolRow(
    * that the action did something. Cleared on next panel show via [PyExternalToolsTable.onShown].
    */
   var lastSuccessMessage: String? = null,
+  /**
+   * Per-SDK detection result for the project's Python SDKs. `null` while the initial probe is
+   * still in flight; non-null afterwards even when the project has no Python SDKs (the field
+   * holds [SdkAvailability.NoProjectSdks] in that case).
+   *
+   * Surfaced in the Lookup column as a ✓ (all SDKs have it), ✗ (none have it), or ◐ (partial)
+   * glyph next to `Sdk`, plus a tooltip listing the resolved binary path per SDK.
+   */
+  var sdkAvailability: SdkAvailability? = null,
+)
+
+/**
+ * Project-SDK detection snapshot for one [ToolRow]: an ordered list of SDKs with the tool's
+ * resolved binary path inside each (or `null` when the tool isn't installed in that SDK).
+ */
+internal data class SdkAvailability(val entries: List<SdkEntry>) {
+  val totalCount: Int get() = entries.size
+  val matchedCount: Int get() = entries.count { it.binaryPath != null }
+
+  companion object {
+    val NoProjectSdks: SdkAvailability = SdkAvailability(emptyList())
+  }
+}
+
+/** A single project SDK plus the resolved binary path, or `null` when the SDK doesn't have it. */
+internal data class SdkEntry(
+  /** Short presentable label — the same one used elsewhere in the IDE for this SDK. */
+  val sdkLabel: String,
+  val binaryPath: Path?,
 )
 
 internal sealed interface PathFieldValue {
@@ -241,4 +279,43 @@ internal fun ToolRow.browseExecutablePath(
       onPathChosen(file.toNioPath())
     }
   }
+}
+
+/**
+ * Lightweight read-action snapshot of a project Python SDK: the [com.intellij.openapi.projectRoots.Sdk]
+ * itself plus its precomputed display label. Captured once per probe pass so the per-tool SDK
+ * detection doesn't have to keep re-touching the project model.
+ */
+internal data class ProjectSdkSnapshot(
+  val sdk: Sdk,
+  val label: String,
+)
+
+/**
+ * Take a snapshot of the project's Python SDKs. Modules are enumerated via the workspace-model
+ * snapshot ([WorkspaceModel.currentSnapshot]) which is thread-safe without a read action; the
+ * resulting list is unique and alphabetically ordered for stable downstream display.
+ */
+internal fun snapshotProjectSdks(project: Project): List<ProjectSdkSnapshot> {
+  val moduleEntities = project.workspaceModel.currentSnapshot.entities<ModuleEntity>().toList()
+  val moduleManager = ModuleManager.getInstance(project)
+  return moduleEntities
+    .mapNotNull { moduleManager.findModuleByName(it.name) }
+    .mapNotNull { it.pythonSdk }
+    .distinct()
+    .sortedBy { it.name }
+    .map { sdk -> ProjectSdkSnapshot(sdk, sdk.pyInterpreterPresentation().shortName) }
+}
+
+/**
+ * Compute [SdkAvailability] for [this] tool against a previously-taken [snapshotProjectSdks]
+ * result. Performs blocking I/O (SDK enrichment + executable existence checks), so callers
+ * must run it off the EDT. Pure with respect to [this] — multiple tools can share the same
+ * snapshot without re-touching the project model.
+ */
+internal fun PyTool.detectInSdks(snapshot: List<ProjectSdkSnapshot>): SdkAvailability {
+  if (snapshot.isEmpty()) return SdkAvailability.NoProjectSdks
+  return SdkAvailability(snapshot.map { sdk ->
+    SdkEntry(sdkLabel = sdk.label, binaryPath = findExecutableInSdk(sdk.sdk.pyRichSdk()))
+  })
 }

@@ -50,14 +50,80 @@ internal fun modeLabel(mode: ExecutableDiscoveryMode): String = when (mode) {
 }
 
 /**
+ * Per-step availability marker for one chain mode. UNKNOWN suppresses the glyph entirely
+ * (initial render before probes complete). PARTIAL is only meaningful for the SDK step (some
+ * project SDKs have the tool, others don't); Path and uvx are binary FOUND / NOT_FOUND.
+ */
+internal enum class ChainStepStatus { UNKNOWN, FOUND, PARTIAL, NOT_FOUND }
+
+internal fun SdkAvailability?.toChainStatus(): ChainStepStatus = when {
+  this == null -> ChainStepStatus.UNKNOWN
+  totalCount == 0 -> ChainStepStatus.NOT_FOUND
+  matchedCount == 0 -> ChainStepStatus.NOT_FOUND
+  matchedCount == totalCount -> ChainStepStatus.FOUND
+  else -> ChainStepStatus.PARTIAL
+}
+
+internal fun PathFieldValue?.toChainStatus(): ChainStepStatus = when (this) {
+  null -> ChainStepStatus.UNKNOWN
+  is PathFieldValue.Custom -> ChainStepStatus.FOUND
+  is PathFieldValue.AutoDetected -> ChainStepStatus.FOUND
+  PathFieldValue.NotFound -> ChainStepStatus.NOT_FOUND
+}
+
+internal fun uvxChainStatus(uvAvailable: Boolean?): ChainStepStatus = when (uvAvailable) {
+  null -> ChainStepStatus.UNKNOWN
+  true -> ChainStepStatus.FOUND
+  false -> ChainStepStatus.NOT_FOUND
+}
+
+/**
  * Render the picked [mode] followed by its implicit fallback chain — e.g. picking `Sdk` becomes
- * `Sdk → Path → uvx`, `Path` becomes `Path → uvx`, and `uvx` is just `uvx`. Used by both the
- * combobox renderer (enabled rows) and the plain-label renderer (disabled rows) so the two paths
- * stay in lock-step.
+ * `Sdk · Path · uvx`, `Path` becomes `Path · uvx`, and `uvx` is just `uvx`. Each chain step is
+ * decorated with a coloured ✓ / ✗ / ◐ glyph from [statusFor]: ✓ when the step would resolve,
+ * ✗ when it can't, ◐ when only some project SDKs have the tool. Steps returning
+ * [ChainStepStatus.UNKNOWN] render plain (initial state before background probes complete).
  */
 @Nls
-internal fun modeChainLabel(mode: ExecutableDiscoveryMode): String {
+@Suppress("HardCodedStringLiteral")
+internal fun modeChainLabel(
+  mode: ExecutableDiscoveryMode,
+  statusFor: ((ExecutableDiscoveryMode) -> ChainStepStatus)? = null,
+): String {
   val all = ExecutableDiscoveryMode.entries
   val tail = all.subList(all.indexOf(mode) + 1, all.size)
-  return (listOf(mode) + tail).joinToString(" → ") { modeLabel(it) }
+  val chain = listOf(mode) + tail
+  if (statusFor == null) {
+    // No row context (e.g. popup items) — render the plain, undecorated chain.
+    return chain.joinToString(" · ") { modeLabel(it) }
+  }
+  return buildString {
+    append("<html>")
+    chain.joinTo(this, " · ") { m -> modeLabel(m) + glyphSuffix(statusFor(m)) }
+    append("</html>")
+  }
 }
+
+/**
+ * Render the trailing glyph for one chain step. Covers every [ChainStepStatus] — including
+ * UNKNOWN, which renders as a muted `?` so the user sees "probing in progress" rather than
+ * a silently-missing marker.
+ */
+private fun glyphSuffix(status: ChainStepStatus): String {
+  val (glyph, color) = when (status) {
+    ChainStepStatus.UNKNOWN -> "?" to STEP_UNKNOWN_COLOR
+    ChainStepStatus.FOUND -> "✓" to STEP_FOUND_COLOR
+    ChainStepStatus.PARTIAL -> "◐" to STEP_PARTIAL_COLOR
+    ChainStepStatus.NOT_FOUND -> "✗" to STEP_NOT_FOUND_COLOR
+  }
+  val hex = "%06x".format(color.rgb and 0xFFFFFF)
+  return "<font color='#$hex'>&nbsp;$glyph</font>"
+}
+
+private val STEP_FOUND_COLOR: Color = JBColor(Color(0x59A869), Color(0x6A8759))
+private val STEP_NOT_FOUND_COLOR: Color = JBColor(Color(0xC75450), Color(0xCF5B56))
+private val STEP_PARTIAL_COLOR: Color = JBColor(
+  JBColor.namedColor("ColorPalette.Orange6", Color(0xE08855)),
+  JBColor.namedColor("ColorPalette.Orange4", Color(0xCB7B57)),
+)
+private val STEP_UNKNOWN_COLOR: Color = JBColor.GRAY

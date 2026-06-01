@@ -51,6 +51,29 @@ internal interface PathCellHost {
   fun latestVersionFor(toolRow: ToolRow): String?
 }
 
+/**
+ * Status provider used by the Lookup-column renderers to decorate each chain step (SDK, PATH,
+ * uvx) with a ✓ / ✗ / ◐ glyph. Implemented by the configurable since the renderers don't have
+ * direct access to the [UvController] or the project SDK list.
+ */
+internal interface ModeCellHost {
+  fun modeStatusFor(toolRow: ToolRow, mode: ExecutableDiscoveryMode): ChainStepStatus
+}
+
+/**
+ * Build the chain text for a Lookup-column cell. Returns the decorated (HTML) chain when both
+ * the [host] and the row's [ToolRow] are resolvable, the plain chain otherwise, and an empty
+ * string when the cell value isn't a [ExecutableDiscoveryMode]. Shared between the combobox
+ * and read-only renderers so both go through the same null-handling path.
+ */
+@Suppress("HardCodedStringLiteral")
+private fun renderChainText(host: ModeCellHost?, table: JTable, value: Any?, row: Int): String {
+  val mode = value as? ExecutableDiscoveryMode ?: return ""
+  val toolRow = (table.model as? ListTableModel<*>)?.getRowValue(row) as? ToolRow
+  if (host == null || toolRow == null) return modeChainLabel(mode)
+  return modeChainLabel(mode) { host.modeStatusFor(toolRow, it) }
+}
+
 /** Renders the enabled state as an [OnOffButton] toggle switch. */
 internal class OnOffCellRenderer : TableCellRenderer {
   private val button = OnOffButton().apply { isOpaque = true }
@@ -175,22 +198,34 @@ internal class ToolCellRenderer(private val host: ToolCellHost) : JPanel(null), 
  * `Path → uvx`, and `uvx` renders as just `uvx`. Used both for the closed-state cell and the
  * popup items so each option visualizes its own fallback chain.
  */
-internal class ModeComboBoxRenderer
+internal class ModeComboBoxRenderer(private val host: ModeCellHost? = null)
   : ComboBoxTableRenderer<ExecutableDiscoveryMode>(ExecutableDiscoveryMode.entries.toTypedArray()) {
+  /**
+   * Popup items don't have row context (they render each dropdown option independently), so
+   * the default plain-chain text from [getTextFor] is what they show. The closed-state cell
+   * and the editor route through [getTableCellRendererComponent] / [getTableCellEditorComponent]
+   * — those calls have a row index and post-overwrite the rendered text with a decorated
+   * chain label that includes the row's ✓ / ✗ / ◐ glyphs.
+   */
   override fun getTextFor(value: ExecutableDiscoveryMode): String = modeChainLabel(value)
 
-  // Force the renderer/editor to ignore the row's selection state so the cell never
-  // tints blue when the row is search-highlighted — the spotlight border drawn by the
-  // table is the only highlight cue we want.
   override fun getTableCellRendererComponent(
     table: JTable, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int,
-  ): Component =
-    super.getTableCellRendererComponent(table, value, false, hasFocus, row, column)
+  ): Component {
+    // Force isSelected=false so the cell never tints blue when the row is search-highlighted —
+    // the spotlight border drawn by the table is the only highlight cue we want.
+    val component = super.getTableCellRendererComponent(table, value, false, hasFocus, row, column)
+    text = renderChainText(host, table, value, row)
+    return component
+  }
 
   override fun getTableCellEditorComponent(
     table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int,
-  ): Component =
-    super.getTableCellEditorComponent(table, value, false, row, column)
+  ): Component {
+    val component = super.getTableCellEditorComponent(table, value, false, row, column)
+    text = renderChainText(host, table, value, row)
+    return component
+  }
 }
 
 /**
@@ -199,7 +234,7 @@ internal class ModeComboBoxRenderer
  * `ComboBoxTableRenderer.paintComponent` would otherwise overlay, so a disabled row reads as
  * "this is the lookup chain" without offering an inactive combobox affordance.
  */
-internal class ModeReadOnlyRenderer : JBLabel(), TableCellRenderer {
+internal class ModeReadOnlyRenderer(private val host: ModeCellHost? = null) : JBLabel(), TableCellRenderer {
   // Same TableCellState path that [ComboBoxTableRenderer.getTableCellRendererComponent] uses,
   // so the disabled label inherits the exact font, border, foreground, and background the
   // combobox version would render with — keeping enabled and disabled rows pixel-aligned.
@@ -214,7 +249,7 @@ internal class ModeReadOnlyRenderer : JBLabel(), TableCellRenderer {
   ): Component {
     cellState.collectState(table, false, hasFocus, row, column)
     cellState.updateRenderer(this)
-    text = (value as? ExecutableDiscoveryMode)?.let { modeChainLabel(it) }.orEmpty()
+    text = renderChainText(host, table, value, row)
     return this
   }
 }

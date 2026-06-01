@@ -23,6 +23,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BasicStroke
 import java.awt.Component
 import java.awt.Cursor
@@ -82,6 +85,16 @@ internal class PyExternalToolsTable(
     iconKindFor(toolRow, pathFieldValue, uv.uvAvailable.get(), uv::isUvManaged, uv::isUpgradeAvailable)
 
   override fun latestVersionFor(toolRow: ToolRow): String? = uv.latestVersionFor(toolRow)
+
+  /**
+   * Per-step availability for the Lookup column glyphs. SDK comes from the row's enumerated
+   * project SDKs, PATH from the row's resolved [PathFieldValue], uvx from the [UvController].
+   */
+  override fun modeStatusFor(toolRow: ToolRow, mode: ExecutableDiscoveryMode): ChainStepStatus = when (mode) {
+    ExecutableDiscoveryMode.INTERPRETER -> toolRow.sdkAvailability.toChainStatus()
+    ExecutableDiscoveryMode.PATH -> toolRow.pathFieldValue.toChainStatus()
+    ExecutableDiscoveryMode.UVX -> uvxChainStatus(uv.uvAvailable.get())
+  }
 
   // ---------- Renderers, columns, model, view ----------
 
@@ -193,11 +206,17 @@ internal class PyExternalToolsTable(
       maxWidth = toggleWidth
       preferredWidth = toggleWidth
     }
+    // Pin Tool and Lookup to fixed widths so they don't redistribute on dialog resize; the
+    // Path column (last, flexible via [JTable.AUTO_RESIZE_LAST_COLUMN]) absorbs all extra
+    // horizontal space.
     columnModel.getColumn(COL_TOOL).apply {
-      preferredWidth = JBUI.scale(200)
+      val width = JBUI.scale(220)
+      minWidth = width
+      maxWidth = width
+      preferredWidth = width
     }
     columnModel.getColumn(COL_MODE).apply {
-      val width = JBUI.scale(140)
+      val width = JBUI.scale(170)
       minWidth = width
       maxWidth = width
       preferredWidth = width
@@ -294,7 +313,11 @@ internal class PyExternalToolsTable(
                                  isOverPathIcon(e, pathEffective) &&
                                  isIconWithAction
         val overEditIcon = pathEffective >= 0 && isOverPathEditIcon(e, pathEffective)
-        val desired = if (overGear || overActionableIcon || overEditIcon) {
+        // The whole on/off toggle cell is clickable — clicking anywhere in [COL_ENABLED]
+        // starts the cell editor which flips the switch. Show the hand cursor over the whole
+        // cell so the affordance matches the click behaviour.
+        val overToggle = viewCol == COL_ENABLED && viewRow >= 0
+        val desired = if (overGear || overActionableIcon || overEditIcon || overToggle) {
           Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         }
         else {
@@ -329,6 +352,23 @@ internal class PyExternalToolsTable(
     // user about whether the underlying tool state is still up to date.
     rows.forEach { it.lastSuccessMessage = null }
     rows.forEach { probeRow(it) }
+    scope.launch { probeAllSdks() }
+  }
+
+  /**
+   * Take a single read-action snapshot of the project's Python SDKs and use it to compute
+   * [SdkAvailability] for every row. Sharing the snapshot avoids each tool re-touching the
+   * project model, and the read action is taken once instead of N times.
+   */
+  private suspend fun probeAllSdks() {
+    val sdks = withContext(Dispatchers.IO) { snapshotProjectSdks(project) }
+    for (row in rows) {
+      val avail = withContext(Dispatchers.IO) { row.tool.detectInSdks(sdks) }
+      withContext(Dispatchers.Main) {
+        row.sdkAvailability = avail
+        refreshRow(row)
+      }
+    }
   }
 
   /** True iff any row has unsaved edits — either a staged-vs-persisted diff, or a dirty detail configurable. */
@@ -598,17 +638,17 @@ internal class PyExternalToolsTable(
     override fun getRenderer(item: ToolRow?): TableCellRenderer = toolCellRenderer
   }
 
-  private class ModeColumn : ColumnInfo<ToolRow, ExecutableDiscoveryMode>(
+  private inner class ModeColumn : ColumnInfo<ToolRow, ExecutableDiscoveryMode>(
     PyToolsUiBundle.message("settings.external.tools.column.mode")
   ) {
     // Two separate instances on purpose: ComboBoxTableRenderer is a JLabel that mutates its own
     // state when used as a renderer for surrounding cells. Sharing one instance for both renderer
     // and editor leaves the active editor JLabel blank after the surrounding rows repaint.
-    private val cellRenderer = ModeComboBoxRenderer()
+    private val cellRenderer = ModeComboBoxRenderer(this@PyExternalToolsTable)
 
     /** Plain-text renderer used for disabled rows — same chain text, no dropdown arrow. */
-    private val readOnlyRenderer = ModeReadOnlyRenderer()
-    private val cellEditor = ModeComboBoxRenderer().withClickCount(1)
+    private val readOnlyRenderer = ModeReadOnlyRenderer(this@PyExternalToolsTable)
+    private val cellEditor = ModeComboBoxRenderer(this@PyExternalToolsTable).withClickCount(1)
 
     override fun valueOf(item: ToolRow): ExecutableDiscoveryMode = item.staged.mode
     override fun getColumnClass(): Class<*> = ExecutableDiscoveryMode::class.java

@@ -17,7 +17,7 @@ import javax.swing.JTable
  * configurable implements both [ToolCellHost] and [PathCellHost], so it satisfies this without
  * extra plumbing.
  */
-internal interface TooltipHost : ToolCellHost, PathCellHost
+internal interface TooltipHost : ToolCellHost, PathCellHost, ModeCellHost
 
 /**
  * Top-level dispatcher invoked from the table's `getToolTipText(MouseEvent)` override. Picks
@@ -40,9 +40,61 @@ internal fun resolveCellTooltip(
   val cellRect = table.getCellRect(viewRow, viewCol, false)
   return when (viewCol) {
     COL_TOOL -> toolColumnTooltip(toolRow, host, event.x, cellRect)
+    COL_MODE -> modeColumnTooltip(toolRow)
     COL_PATH -> pathColumnTooltip(toolRow, host, event.x, cellRect)
     else -> default()
   }
+}
+
+/**
+ * Tooltip for the Lookup-column cell: a short description of the fallback strategy implied by
+ * the picked mode, followed by the per-SDK detection list (when probed) so the user can see
+ * exactly which project SDKs have the tool's binary and at which path.
+ */
+private fun modeColumnTooltip(toolRow: ToolRow): String = buildString {
+  append("<html>")
+  // Prefix with the tool name so each row's tooltip text differs even when the strategy and
+  // per-SDK detection happen to be identical — JTable / ToolTipManager only refreshes the
+  // visible tooltip when the returned string actually changes, otherwise the previous one
+  // sticks as the pointer crosses into a new row.
+  append("<b>")
+  append(StringUtil.escapeXmlEntities(toolRow.tool.presentableName))
+  append("</b><br>")
+  append(StringUtil.escapeXmlEntities(lookupStrategyText(toolRow.staged.mode)))
+  // Surface the per-SDK detection list only when `Sdk` is actually part of the active fallback
+  // chain (i.e. the user picked `Sdk` as the starting mode). Picking `Path` or `uvx` skips the
+  // SDK step entirely, so the list would be informational noise.
+  val avail = toolRow.sdkAvailability
+  val sdkInChain = toolRow.staged.mode == com.intellij.python.pytools.configuration.ExecutableDiscoveryMode.INTERPRETER
+  if (sdkInChain && avail != null && avail.entries.isNotEmpty()) {
+    append("<br><br>")
+    append(StringUtil.escapeXmlEntities(PyToolsUiBundle.message("settings.external.tools.lookup.sdk.tooltip.header")))
+    avail.entries.forEach { entry ->
+      append("<br>&nbsp;&nbsp;")
+      append(StringUtil.escapeXmlEntities(entry.sdkLabel))
+      append(": ")
+      val path = entry.binaryPath
+      if (path != null) {
+        append(StringUtil.escapeXmlEntities(path.toString()))
+      }
+      else {
+        append("<span style='color:gray'>")
+        append(StringUtil.escapeXmlEntities(PyToolsUiBundle.message("settings.external.tools.lookup.sdk.tooltip.not.installed")))
+        append("</span>")
+      }
+    }
+  }
+  append("</html>")
+}
+
+/** Human-readable description of the fallback chain implied by the picked [mode]. */
+private fun lookupStrategyText(mode: com.intellij.python.pytools.configuration.ExecutableDiscoveryMode): String = when (mode) {
+  com.intellij.python.pytools.configuration.ExecutableDiscoveryMode.INTERPRETER ->
+    PyToolsUiBundle.message("settings.external.tools.lookup.strategy.sdk")
+  com.intellij.python.pytools.configuration.ExecutableDiscoveryMode.PATH ->
+    PyToolsUiBundle.message("settings.external.tools.lookup.strategy.path")
+  com.intellij.python.pytools.configuration.ExecutableDiscoveryMode.UVX ->
+    PyToolsUiBundle.message("settings.external.tools.lookup.strategy.uvx")
 }
 
 /**

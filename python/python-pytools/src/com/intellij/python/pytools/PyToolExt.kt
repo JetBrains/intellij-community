@@ -129,7 +129,7 @@ private fun EelOsFamily.getOsSpecificBinaryName(binaryName: String): String = wh
 /**
  * only local sdks are supported currently
  */
-private fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableNames: List<String> = aliases.map { it.name }): Path? {
+fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableNames: List<String> = aliases.map { it.name }): Path? {
   return pyRichSdk.pythonBinaryPath?.let { basePythonBinaryPath ->
     val osFamily = basePythonBinaryPath.getEelDescriptor().osFamily
     osFamily.getOsSpecificBinaryFileNames(executableNames).firstNotNullOfOrNull { binaryFileName ->
