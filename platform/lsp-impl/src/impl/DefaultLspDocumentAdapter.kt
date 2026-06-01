@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.impl.documentSync.LspDidChangeUtil
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
