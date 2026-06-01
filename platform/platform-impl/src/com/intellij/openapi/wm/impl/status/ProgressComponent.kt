@@ -84,6 +84,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
       component.add(createButtonPanel(
         eastButtons.map{ b: ProgressButton -> b.button }), BorderLayout.EAST)
       component.setToolTipText(computeTooltipText(indicatorModel))
+      component.getAccessibleContext().accessibleDescription = "" // override tooltip
     }
     else {
       component.setLayout(BorderLayout())

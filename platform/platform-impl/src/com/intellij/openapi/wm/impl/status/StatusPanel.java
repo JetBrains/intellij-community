@@ -120,6 +120,7 @@ final class StatusPanel extends JPanel {
         }
       }
     });
+    myTextPanel.setFocusable(false);
 
     add(myTextPanel, BorderLayout.WEST);
   }

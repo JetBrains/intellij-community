@@ -1344,6 +1344,7 @@ class InfoAndProgressPanel internal constructor(
       val tooltip = ProgressComponent.computeTooltipText(if (isIndicatorVisible) currentIndicator.indicatorModel else null)
       progressIcon.toolTipText = tooltip
       counterComponent.toolTipText = tooltip
+      counterComponent.getAccessibleContext().accessibleDescription = "" // override tooltip
       doLayout()
       revalidate()
       repaint()
@@ -1392,13 +1393,15 @@ class InfoAndProgressPanel internal constructor(
         val baseName = IdeBundle.message("progress.accessible.name")
         val ind = indicator ?: return baseName
         val visibleCounterText = counterComponent.takeIf { it.isVisible }?.text?.takeIf(String::isNotEmpty)
-        val text = (listOfNotNull(ind.title ?: ind.indicatorModel.title, ind.textPanel.text, ind.getText2())
-                      .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
-                      .distinct() + listOfNotNull(visibleCounterText))
+        val progressText = listOfNotNull(ind.textPanel.text, visibleCounterText)
+          .filter(String::isNotEmpty)
           .joinToString(". ")
-        return if (text.isEmpty()) baseName
-        else IdeBundle.message("progress.accessible.name.with.progress", text)
+
+        return if (progressText.isEmpty()) baseName
+        else IdeBundle.message("progress.accessible.name.with.progress", progressText)
       }
+
+      override fun getAccessibleDescription(): @NlsContexts.Tooltip String = ProgressComponent.computeTooltipText(indicator?.indicatorModel)
 
       override fun getAccessibleValue(): AccessibleValue = this
       override fun getCurrentAccessibleValue(): Number = indicator?.progress?.value ?: 0
@@ -1438,6 +1441,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
     val panel = TextPanel()
     panel.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
     panel.border = JBUI.Borders.emptyLeft(4)
+    panel.isFocusable = false
     return panel
   }
 
