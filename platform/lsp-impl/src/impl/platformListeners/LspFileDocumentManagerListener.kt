@@ -1,10 +1,12 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.platformListeners
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.lsp.impl.LspOpenedFilesService
+import com.intellij.platform.lsp.impl.LspServerManagerImpl
 
 internal class LspFileDocumentManagerListener : FileDocumentManagerListener {
 

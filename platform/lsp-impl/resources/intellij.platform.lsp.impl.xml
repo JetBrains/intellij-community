@@ -24,9 +24,9 @@
                     serviceImplementation="com.intellij.platform.lsp.impl.LspServerManagerImpl"/>
 
     <editorFactoryDocumentListener id="LspDocumentListener"
-                                   implementation="com.intellij.platform.lsp.impl.LspDocumentListener"/>
+                                   implementation="com.intellij.platform.lsp.impl.platformListeners.LspDocumentListener"/>
     <vfs.asyncListener id="LspFileListener"
-                       implementation="com.intellij.platform.lsp.impl.LspFileListener"/>
+                       implementation="com.intellij.platform.lsp.impl.platformListeners.LspFileListener"/>
 
     <highlightingPassFactory implementation="com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingPassFactory"/>
     <problemFileHighlightFilter implementation="com.intellij.platform.lsp.impl.features.highlighting.LspProblemFileHighlightFilter"/>
@@ -115,12 +115,12 @@
 
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
-              class="com.intellij.platform.lsp.impl.LspFileEditorManagerListener"/>
+              class="com.intellij.platform.lsp.impl.platformListeners.LspFileEditorManagerListener"/>
   </projectListeners>
 
   <applicationListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
-              class="com.intellij.platform.lsp.impl.LspFileDocumentManagerListener"/>
+              class="com.intellij.platform.lsp.impl.platformListeners.LspFileDocumentManagerListener"/>
     <listener topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
               class="com.intellij.platform.lsp.impl.features.navigation.CurrentActionListener"/>
   </applicationListeners>

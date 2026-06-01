@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl
+package com.intellij.platform.lsp.impl.platformListeners
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSetFactory
+import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.platform.lsp.impl.documentSync.LspDidChangeUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.Collections
