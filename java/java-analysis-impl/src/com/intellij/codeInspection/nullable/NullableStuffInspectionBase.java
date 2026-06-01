@@ -99,7 +99,6 @@ import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -1023,16 +1022,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkNullableStuffForMethod(PsiMethod method, final ProblemsHolder holder) {
     Annotated annotated = check(method, holder, method.getReturnType());
 
-    List<PsiMethod> superMethods;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) {
-      // Static methods hide, not override: nullability contracts of hidden methods do not apply.
-      superMethods = List.of();
-    }
-    else {
-      superMethods = ContainerUtil.filter(
-        ContainerUtil.map(method.findSuperMethodSignaturesIncludingStatic(true), MethodSignatureBackedByPsiMethod::getMethod),
-        m -> !m.hasModifierProperty(PsiModifier.STATIC));
-    }
+    List<PsiMethod> superMethods = List.of(method.findSuperMethods(true));
 
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
 
