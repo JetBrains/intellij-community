@@ -6,7 +6,6 @@
   "type": "object",
   "required": [
     "url",
-    "authToken",
     "dateTime",
     "pid",
     "jvmOptionsPath",
@@ -19,10 +18,6 @@
       "type": "string",
       "format": "uri",
       "description": "Built-in server endpoint URL."
-    },
-    "authToken": {
-      "type": "string",
-      "description": "Bearer authentication token."
     },
     "dateTime": {
       "type": "string",

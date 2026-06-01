@@ -49,7 +49,6 @@
     <module name="intellij.agent.workbench.container"/>
     <module name="intellij.agent.workbench.container.mcp"/>
     <module name="intellij.agent.workbench.container.eel"/>
-    <module name="intellij.agent.workbench.discoverability"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

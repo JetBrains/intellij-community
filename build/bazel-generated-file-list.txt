@@ -613,6 +613,7 @@ platform/diagnostic/telemetry/rt
 platform/diff-api
 platform/diff-impl
 platform/diff-impl/tests
+platform/discoverability
 platform/distribution-content
 platform/duplicates-analysis
 platform/dvcs-api
@@ -960,7 +961,6 @@ plugins/agent-workbench/codex/common
 plugins/agent-workbench/codex/ide
 plugins/agent-workbench/codex/sessions
 plugins/agent-workbench/common
-plugins/agent-workbench/discoverability
 plugins/agent-workbench/filewatch
 plugins/agent-workbench/json
 plugins/agent-workbench/junie/common

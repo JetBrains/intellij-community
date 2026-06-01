@@ -1,0 +1,34 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.discoveryInfoContributor"
+                    interface="com.intellij.platform.discoverability.DiscoveryInfoContributor"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <discoveryInfoContributor implementation="com.intellij.platform.discoverability.OpenedProjectRootsContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.discoverability.OpenedProjectRootsContributor"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.discoverability.ProjectRootsProjectCloseListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+</idea-plugin>

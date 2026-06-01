@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.discoverability
+package com.intellij.platform.discoverability
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.io.BuiltInServer
 import tools.jackson.core.json.JsonFactory
@@ -60,7 +62,7 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
           return@launch
         }
 
-        val instanceDir = Path.of(System.getProperty("user.home"), ".local", "share", "JetBrains", "ide")
+        val instanceDir = PathManager.getCommonDataPath().resolve("discovery")
         createDirectories(instanceDir)
         cleanUpStaleFiles(instanceDir)
 
@@ -121,72 +123,8 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
   }
 
   private fun writeInstanceInfo(jsonFile: Path, address: InetAddress, port: Int) {
-    val appInfo = ApplicationInfo.getInstance()
-    val namesInfo = ApplicationNamesInfo.getInstance()
-
     openOutputStream(jsonFile).use { out ->
-      JsonFactory().createGenerator(out, DefaultPrettyPrinter()).use { writer ->
-        writer.obj {
-          writer.writeStringField("url", "http://${address.hostAddress}:$port")
-          writer.writeStringField("dateTime", ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-          writer.writeNumberField("pid", ProcessHandle.current().pid())
-
-          val vmOptionsFile = System.getProperty("jb.vmOptionsFile")
-          if (vmOptionsFile != null) {
-            writer.writeStringField("jvmOptionsPath", Path.of(vmOptionsFile).toAbsolutePath().toString())
-          }
-          else {
-            writer.writeStringField("jvmOptionsPath", null)
-          }
-
-          writer.obj("paths") {
-            writer.writeStringField("installDir", PathManager.getHomePath())
-            writer.writeStringField("bin", PathManager.getBinPath())
-            writer.writeStringField("config", PathManager.getConfigDir().toString())
-            writer.writeStringField("system", PathManager.getSystemDir().toString())
-            writer.writeStringField("logs", PathManager.getLogDir().toString())
-            writer.writeStringField("plugins", PathManager.getPluginsDir().toString())
-          }
-
-          writer.obj("ideInfo") {
-            writer.writeStringField("productCode", appInfo.build.productCode)
-            writer.writeStringField("productName", namesInfo.fullProductName)
-            writer.writeStringField("fullVersion", appInfo.fullVersion)
-            writer.writeStringField("buildNumber", appInfo.build.asString())
-
-            val buildDate = appInfo.buildDate
-            if (buildDate != null) {
-              val zdt = buildDate.toInstant().atZone(buildDate.timeZone.toZoneId())
-              writer.writeStringField("buildDate", DateTimeFormatter.ofPattern("MMMM d, yyyy").format(zdt))
-            }
-            else {
-              writer.writeStringField("buildDate", null)
-            }
-
-            writer.obj("runtime") {
-              writer.writeStringField("version", System.getProperty("java.runtime.version", ""))
-              writer.writeStringField("vmName", System.getProperty("java.vm.name", ""))
-              writer.writeStringField("vmVendor", System.getProperty("java.vm.vendor", ""))
-            }
-
-            writer.obj("os") {
-              writer.writeStringField("name", System.getProperty("os.name", ""))
-              writer.writeStringField("version", System.getProperty("os.version", ""))
-              writer.writeStringField("arch", System.getProperty("os.arch", ""))
-            }
-
-            val gcNames = ManagementFactory.getGarbageCollectorMXBeans().joinToString(", ") { it.name }
-            writer.writeStringField("gc", gcNames)
-            writer.writeNumberField("memoryMb", Runtime.getRuntime().maxMemory() / (1024 * 1024))
-          }
-
-          writer.obj("properties") {
-            DiscoveryInfoContributor.EP_NAME.forEachExtensionSafe { contributor ->
-              contributor.contribute(writer)
-            }
-          }
-        }
-      }
+      writeDiscoveryInfoJson(out, address, port)
     }
   }
 
@@ -225,6 +163,76 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
     catch (e: Exception) {
       LOG.warn("Failed to check support of posix permissions on $path", e)
       false
+    }
+  }
+}
+
+@ApiStatus.Internal
+@VisibleForTesting
+fun writeDiscoveryInfoJson(out: OutputStream, address: InetAddress, port: Int) {
+  val appInfo = ApplicationInfo.getInstance()
+  val namesInfo = ApplicationNamesInfo.getInstance()
+
+  JsonFactory().createGenerator(out, DefaultPrettyPrinter()).use { writer ->
+    writer.obj {
+      writer.writeStringField("url", "http://${address.hostAddress}:$port")
+      writer.writeStringField("dateTime", ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+      writer.writeNumberField("pid", ProcessHandle.current().pid())
+
+      val vmOptionsFile = System.getProperty("jb.vmOptionsFile")
+      if (vmOptionsFile != null) {
+        writer.writeStringField("jvmOptionsPath", Path.of(vmOptionsFile).toAbsolutePath().toString())
+      }
+      else {
+        writer.writeStringField("jvmOptionsPath", null)
+      }
+
+      writer.obj("paths") {
+        writer.writeStringField("installDir", PathManager.getHomePath())
+        writer.writeStringField("bin", PathManager.getBinPath())
+        writer.writeStringField("config", PathManager.getConfigDir().toString())
+        writer.writeStringField("system", PathManager.getSystemDir().toString())
+        writer.writeStringField("logs", PathManager.getLogDir().toString())
+        writer.writeStringField("plugins", PathManager.getPluginsDir().toString())
+      }
+
+      writer.obj("ideInfo") {
+        writer.writeStringField("productCode", appInfo.build.productCode)
+        writer.writeStringField("productName", namesInfo.fullProductName)
+        writer.writeStringField("fullVersion", appInfo.fullVersion)
+        writer.writeStringField("buildNumber", appInfo.build.asString())
+
+        val buildDate = appInfo.buildDate
+        if (buildDate != null) {
+          val zdt = buildDate.toInstant().atZone(buildDate.timeZone.toZoneId())
+          writer.writeStringField("buildDate", DateTimeFormatter.ofPattern("MMMM d, yyyy").format(zdt))
+        }
+        else {
+          writer.writeStringField("buildDate", null)
+        }
+
+        writer.obj("runtime") {
+          writer.writeStringField("version", System.getProperty("java.runtime.version", ""))
+          writer.writeStringField("vmName", System.getProperty("java.vm.name", ""))
+          writer.writeStringField("vmVendor", System.getProperty("java.vm.vendor", ""))
+        }
+
+        writer.obj("os") {
+          writer.writeStringField("name", System.getProperty("os.name", ""))
+          writer.writeStringField("version", System.getProperty("os.version", ""))
+          writer.writeStringField("arch", System.getProperty("os.arch", ""))
+        }
+
+        val gcNames = ManagementFactory.getGarbageCollectorMXBeans().joinToString(", ") { it.name }
+        writer.writeStringField("gc", gcNames)
+        writer.writeNumberField("memoryMb", Runtime.getRuntime().maxMemory() / (1024 * 1024))
+      }
+
+      writer.obj("properties") {
+        for (contributor in DiscoveryInfoContributor.EP_NAME.extensionsIfPointIsRegistered) {
+          contributor.contribute(writer)
+        }
+      }
     }
   }
 }
