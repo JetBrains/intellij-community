@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -281,7 +281,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
         ClsElementImpl.setMirror(pkg, mirrorPkg);
         ClsElementImpl.setMirrorIfPresent(classes[0].getModifierList(), mirrorPkg.getAnnotationList());
       }
-      else if (pkg == null || !CORRUPTED_CLASS_PACKAGE.equals(pkg.getPackageName())) {
+      else if (pkg == null || (!CORRUPTED_CLASS_PACKAGE.equals(pkg.getPackageName())) && !pkg.getPackageName().contains("-")) {
         ClsElementImpl.setMirrorIfPresent(pkg, mirrorPkg);
         ClsElementImpl.setMirrors(classes, mirrors);
       }

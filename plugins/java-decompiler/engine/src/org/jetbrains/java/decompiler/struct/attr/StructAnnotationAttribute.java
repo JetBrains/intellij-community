@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
    * format but not a valid Java reference. Skip them at parse time.
    */
   private static boolean isSupportedAnnotationName(@Nullable String className) {
-    return className == null || className.indexOf('+') < 0;
+    return className == null || (className.indexOf('+') < 0 && className.indexOf('-') < 0);
   }
 
   public static Exprent parseAnnotationElement(DataInputStream data, ConstantPool pool) throws IOException {
