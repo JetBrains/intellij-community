@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -49,6 +47,10 @@ public class AsyncableFileIOTaskExecutorTest {
   @AfterEach
   void tearDown() throws Exception {
     taskExecutor.close();
+  }
+
+  private void waitForPendingAsyncFlushToFinish() throws Exception {
+    executorService.submit(() -> { }).get(10, SECONDS);
   }
 
 
@@ -282,6 +284,17 @@ public class AsyncableFileIOTaskExecutorTest {
   }
 
   @Test
+  void exception_inAsyncExecution_isRethrownOnFlush_ifTaskAlreadyFinished() throws Exception {
+    int fileId = 43;
+    Exception failure = new Exception();
+    taskExecutor.execute(new MockTask(fileId, /*async:*/true, failure));
+    waitForPendingAsyncFlushToFinish();
+
+    Exception e = assertThrows(Exception.class, () -> taskExecutor.flush());
+    assertEquals(failure, e, "Single exception from already finished async task should still be propagated");
+  }
+
+  @Test
   void exceptions_inAsyncExecution_areRethrownOnFlush_combined() throws Exception {
     Exception failure1 = new Exception("Failure#1");
     Exception failure2 = new Exception("Failure#2");
@@ -329,6 +342,28 @@ public class AsyncableFileIOTaskExecutorTest {
         "3 failed tasks, but only failure(fileId=42) should be rethrown"
       );
     }
+
+    try {
+      taskExecutor.flush();
+    }
+    catch (Exception ignored) {
+      //clean the exceptions so they don't ruin tearDown()
+    }
+  }
+
+  @Test
+  void exception_inAsyncExecution_isRethrownOnFlushByFileId_ifTaskAlreadyFinished() throws Exception {
+    Exception failure1 = new Exception("Failure#1");
+    Exception failure2 = new Exception("Failure#2");
+    Exception failure3 = new Exception("Failure#3");
+
+    taskExecutor.execute(new MockTask(/*fileId: */ 41, /*async:*/ true, failure1));
+    taskExecutor.execute(new MockTask(/*fileId: */ 42, /*async:*/ true, failure2));
+    taskExecutor.execute(new MockTask(/*fileId: */ 43, /*async:*/ true, failure3));
+    waitForPendingAsyncFlushToFinish();
+
+    Exception e = assertThrows(Exception.class, () -> taskExecutor.flush(42));
+    assertEquals(failure2, e, "Only failure(fileId=42) should be rethrown");
 
     try {
       taskExecutor.flush();

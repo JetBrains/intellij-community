@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -284,6 +283,7 @@ public final class AsyncableFileIOTaskExecutor<T extends FileIOTaskExecutor.File
     Set<TaskEntry<T>> tasksRemaining;
     synchronized (pendingTasksLock) {
       if (pendingTasks.isEmpty() && inProgressTasks.isEmpty()) {
+        rethrowAndCleanPendingFailures();
         return;
       }
       tasksRemaining = new HashSet<>(pendingTasks.values());
@@ -334,6 +334,7 @@ public final class AsyncableFileIOTaskExecutor<T extends FileIOTaskExecutor.File
 
     while (true) {
       if (pendingEntryToExecute == null && inProgressEntryToWait == null) {
+        rethrowAndCleanPendingFailures(fileId);
         return; //nothing more to flush
       }
 
