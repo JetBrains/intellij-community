@@ -10,7 +10,6 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
 
 /**
  * Tests for [ClassOverriddenAtRuntimeInspection] quick fix — verifies that the fix correctly reorders
@@ -89,7 +88,7 @@ class ClassOverriddenAtRuntimeFixTest : LightJavaCodeInsightFixtureTestCase() {
     val entries = ModuleRootManager.getInstance(module).orderEntries
     val firstIdx = entries.indexOfFirst { it is ModuleOrderEntry && it.moduleName == first }
     val secondIdx = entries.indexOfFirst { it is ModuleOrderEntry && it.moduleName == before }
-    TestCase.assertTrue(
+    assertTrue(
       "Expected '$first' (idx=$firstIdx) to appear before '$before' (idx=$secondIdx)",
       firstIdx in 0 until secondIdx
     )

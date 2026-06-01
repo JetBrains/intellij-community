@@ -12,6 +12,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -20,8 +22,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaElementVisitor;
@@ -34,19 +37,25 @@ import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -64,8 +73,6 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
     boolean includeTests = ProjectFileIndex.getInstance(holder.getProject()).isInTestSourceContent(file);
 
     return new JavaElementVisitor() {
-      private final Map<String, OverrideInfo> myCache = new HashMap<>();
-
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         checkRef(expression);
@@ -90,7 +97,7 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
         if (psiClass.getContainingClass() != null) return;
         String fqn = psiClass.getQualifiedName();
         if (fqn == null) return;
-        OverrideInfo info = myCache.computeIfAbsent(fqn, k -> computeOverrideInfo(psiClass, k, module, includeTests));
+        OverrideInfo info = getOverrideInfo(fqn);
         if (info == OverrideInfo.EMPTY) return;
         String message = JavaAnalysisBundle.message("class.overridden.at.runtime.problem", fqn, info.runtimeEntryName());
         holder.registerProblem(reference, message, fix(info));
@@ -100,7 +107,7 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
         if (!(member.getContainingClass() instanceof PsiClass containingClass)) return;
         String fqn = containingClass.getQualifiedName();
         if (fqn == null) return;
-        OverrideInfo info = myCache.computeIfAbsent(fqn, k -> computeOverrideInfo(containingClass, k, module, includeTests));
+        OverrideInfo info = getOverrideInfo(fqn);
         if (info == OverrideInfo.EMPTY) return;
 
         // A.test() — the "A" class reference is already flagged above; skip to avoid double warning
@@ -116,42 +123,74 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
         holder.registerProblem(element != null ? element : reference, message, fix(info));
       }
 
+      private @NotNull OverrideInfo getOverrideInfo(@NotNull String fqn) {
+        return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> CachedValueProvider.Result.create(
+          ConcurrentFactoryMap.<CacheKey, OverrideInfo>createMap(key -> computeOverrideInfo(key.fqn(), module, key.includeTests())),
+          ProjectRootManager.getInstance(module.getProject()),
+          PsiModificationTracker.MODIFICATION_COUNT)
+        ).get(new CacheKey(fqn, includeTests));
+      }
+
       private static LocalQuickFix @NotNull [] fix(@NotNull OverrideInfo info) {
         return new LocalQuickFix[]{new MoveDepBeforeFix(info.compileEntryName(), info.runtimeEntryName())};
       }
     };
   }
 
-  private static @NotNull OverrideInfo computeOverrideInfo(@NotNull PsiClass compileClass,
-                                                           @NotNull String fqn,
+  private record CacheKey(@NotNull String fqn, boolean includeTests) {
+  }
+
+  private static @NotNull OverrideInfo computeOverrideInfo(@NotNull String fqn,
                                                            @NotNull Module module,
                                                            boolean includeTests) {
-    GlobalSearchScope runtimeScope = module.getModuleRuntimeScope(includeTests);
-    PsiClass runtimeClass = JavaPsiFacade.getInstance(module.getProject()).findClass(fqn, runtimeScope);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
+    PsiClass compileClass = facade.findClass(fqn, module.getModuleWithDependenciesAndLibrariesScope(includeTests));
+    if (compileClass == null) return OverrideInfo.EMPTY;
+
+    PsiClass runtimeClass = facade.findClass(fqn, module.getModuleRuntimeScope(includeTests));
     if (runtimeClass == null || compileClass.equals(runtimeClass)) return OverrideInfo.EMPTY;
 
-    VirtualFile runtimeFile = PsiUtilCore.getVirtualFile(runtimeClass);
     VirtualFile compileFile = PsiUtilCore.getVirtualFile(compileClass);
-    if (runtimeFile == null || compileFile == null) return OverrideInfo.EMPTY;
+    VirtualFile runtimeFile = PsiUtilCore.getVirtualFile(runtimeClass);
+    if (compileFile == null || runtimeFile == null) return OverrideInfo.EMPTY;
 
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
     String runtimeEntryName = findTopLevelEntryName(module, fileIndex.getOrderEntriesForFile(runtimeFile),
                                                     m -> m.getModuleRuntimeScope(includeTests).contains(runtimeFile));
+
     String compileEntryName = findTopLevelEntryName(module, fileIndex.getOrderEntriesForFile(compileFile),
-                                                    m -> containsInExportedCompileScope(m, compileFile, includeTests));
+                                                    m -> ContainerUtil.exists(getExportedDependencies(m, includeTests),
+                                                                              root -> VfsUtilCore.isAncestor(root, compileFile, false)));
     if (runtimeEntryName == null || compileEntryName == null) return OverrideInfo.EMPTY;
 
     return new OverrideInfo(runtimeEntryName, compileEntryName);
   }
 
-  private static boolean containsInExportedCompileScope(@NotNull Module module,
-                                                        @NotNull VirtualFile file,
-                                                        boolean includeTests) {
-    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively().exportedOnly().compileOnly();
-    if (!includeTests) enumerator = enumerator.productionOnly();
+  private static Set<VirtualFile> getExportedDependencies(@NotNull Module module, boolean includeTests) {
+    return collectExportedCompileRoots(module, includeTests, new HashSet<>(), new HashSet<>());
+  }
 
-    if (ContainerUtil.exists(enumerator.classes().usingCache().getRoots(), root -> VfsUtilCore.isAncestor(root, file, false))) return true;
-    return ContainerUtil.exists(enumerator.sources().usingCache().getRoots(), root -> VfsUtilCore.isAncestor(root, file, false));
+  private static Set<VirtualFile> collectExportedCompileRoots(@NotNull Module module, boolean includeTests,
+                                                              @NotNull Set<Module> visited, @NotNull Set<VirtualFile> out) {
+    if (!visited.add(module)) return out;
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        Collections.addAll(out, entry.getFiles(OrderRootType.SOURCES)); // own sources are always visible to dependents
+        continue;
+      }
+      if (!(entry instanceof ExportableOrderEntry exportable) || !exportable.isExported()) continue;
+      DependencyScope scope = exportable.getScope();
+      if (!scope.isForProductionCompile() && !(includeTests && scope.isForTestCompile())) continue;
+
+      if (entry instanceof ModuleOrderEntry moduleOrderEntry) {
+        Module dependency = moduleOrderEntry.getModule();
+        if (dependency != null) collectExportedCompileRoots(dependency, includeTests, visited, out);
+      }
+      else {
+        Collections.addAll(out, entry.getFiles(OrderRootType.CLASSES));
+      }
+    }
+    return out;
   }
 
   private record OverrideInfo(@NotNull String runtimeEntryName, @NotNull String compileEntryName) {
