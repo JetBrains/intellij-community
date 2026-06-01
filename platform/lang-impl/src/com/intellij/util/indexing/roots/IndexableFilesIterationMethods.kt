@@ -94,11 +94,16 @@ object IndexableFilesIterationMethods {
       if (file in rootsSet) {
         return true
       }
-      return shouldIndexFile(targetFile, projectFileIndex, rootsSet, excludeNonProjectRoots)
+      return !file.isExcluded(projectFileIndex, excludeNonProjectRoots) &&
+             shouldIndexFile(targetFile, projectFileIndex, rootsSet, excludeNonProjectRoots)
     }
     if (file !is VirtualFileWithId || file.id <= 0) {
       return false
     }
-    return !excludeNonProjectRoots || runReadActionBlocking { !projectFileIndex.isExcluded(file) }
+    return !file.isExcluded(projectFileIndex, excludeNonProjectRoots)
   }
+}
+
+private fun VirtualFile.isExcluded(projectFileIndex: ProjectFileIndex, excludeNonProjectRoots: Boolean): Boolean {
+  return excludeNonProjectRoots && runReadActionBlocking { projectFileIndex.isExcluded(this) }
 }
