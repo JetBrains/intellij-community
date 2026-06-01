@@ -1,0 +1,12 @@
+// "Add argument to existing 'context'" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+
+// DISABLE_K2_ERRORS
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+context(i: Int, s: String) fun bar() {}
+
+val greeting: String = "hello"
+
+val result = context(1) { <caret>bar() }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix
