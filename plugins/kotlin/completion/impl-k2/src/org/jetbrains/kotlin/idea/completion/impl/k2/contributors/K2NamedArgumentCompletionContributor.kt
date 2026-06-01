@@ -5,16 +5,19 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
@@ -129,20 +132,44 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
         candidate: KaFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>,
-    ): Sequence<IndexedValue<KaVariableSignature<KaValueParameterSymbol>>> {
-        val signature = candidate.partiallyAppliedSymbol.signature
-        val argumentMapping = candidate.argumentMapping
+    ): Sequence<IndexedValue<KaVariableSignature<KaParameterSymbol>>> {
+        val signature = candidate.signature
+        val valueArgumentMapping = candidate.valueArgumentMapping
 
-        val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(callElement, signature, argumentMapping)
-        if (argumentsBeforeCurrent.any { it.getArgumentExpression() !in argumentToParameterIndex }) return emptySequence()
+        val contextArgumentMapping = candidate.contextArgumentMapping
+        val contextParameterIndexes = signature.contextParameters.mapIndexed { index, signature -> signature to index }.toMap()
 
-        val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull { argumentMapping[it.getArgumentExpression()] }.toSet()
-        return signature.valueParameters
+        val argumentToValueParameterIndex =
+            CallParameterInfoProvider.mapArgumentsToParameterIndices(callElement, signature, valueArgumentMapping)
+
+        val argumentToContextParameterIndex = contextArgumentMapping.toList().mapNotNull { (argument, variableSignature) ->
+            val indexOfArgument = contextParameterIndexes[variableSignature] ?: return@mapNotNull null
+            argument to indexOfArgument
+        }.toMap()
+
+        if (argumentsBeforeCurrent.any {
+            it.getArgumentExpression() !in argumentToValueParameterIndex &&
+            it.getArgumentExpression() !in argumentToContextParameterIndex
+        }) return emptySequence()
+
+        val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull {
+            valueArgumentMapping[it.getArgumentExpression()] ?: contextArgumentMapping[it.getArgumentExpression()]
+        }.toSet()
+
+        val parametersToConsider = if (callElement.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) {
+            // We put the context parameters after the value parameters because they are less likely to be chosen by the user
+            signature.valueParameters + signature.contextParameters
+        } else {
+            signature.valueParameters
+        }
+
+        return parametersToConsider
             .asSequence()
             .withIndex()
             .filterNot { (_, parameter) ->

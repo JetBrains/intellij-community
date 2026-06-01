@@ -2071,6 +2071,36 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/namedArguments/CompanionObjectInvoke.kt");
             }
 
+            @TestMetadata("ContextParameterNameAfterValueParam.kt")
+            public void testContextParameterNameAfterValueParam() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameAfterValueParam.kt");
+            }
+
+            @TestMetadata("ContextParameterNameAlreadyPassed.kt")
+            public void testContextParameterNameAlreadyPassed() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameAlreadyPassed.kt");
+            }
+
+            @TestMetadata("ContextParameterNameCompletion.kt")
+            public void testContextParameterNameCompletion() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameCompletion.kt");
+            }
+
+            @TestMetadata("ContextParameterNameMultiple.kt")
+            public void testContextParameterNameMultiple() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameMultiple.kt");
+            }
+
+            @TestMetadata("ContextParameterNameOrder.kt")
+            public void testContextParameterNameOrder() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameOrder.kt");
+            }
+
+            @TestMetadata("ContextParameterNameWithoutFlag.kt")
+            public void testContextParameterNameWithoutFlag() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/ContextParameterNameWithoutFlag.kt");
+            }
+
             @TestMetadata("ForEmptyParametersFunction.kt")
             public void testForEmptyParametersFunction() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/ForEmptyParametersFunction.kt");
