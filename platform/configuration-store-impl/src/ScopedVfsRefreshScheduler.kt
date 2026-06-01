@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshSession
@@ -105,20 +104,48 @@ private fun resolveRefreshRoots(paths: Collection<Path>): List<NewVirtualFile> {
 
 private fun compactNestedPaths(paths: Collection<Path>): List<Path> {
   val result = ArrayList<Path>()
+  val acceptedPaths = HashSet<Path>()
+  // Candidates are sorted shallow-first, so checking only the parent chain is enough to find accepted ancestors.
   for (path in paths.asSequence().map { it.toAbsolutePath().normalize() }.distinct().sortedBy { it.nameCount }) {
-    if (result.none { path.startsWith(it) }) {
+    if (!hasAcceptedAncestor(path, acceptedPaths)) {
       result.add(path)
+      acceptedPaths.add(path)
     }
   }
   return result
 }
 
+private fun hasAcceptedAncestor(path: Path, acceptedPaths: Set<Path>): Boolean {
+  var parent = path.parent
+  while (parent != null) {
+    if (parent in acceptedPaths) {
+      return true
+    }
+    parent = parent.parent
+  }
+  return false
+}
+
 private fun compactNestedVirtualFiles(files: Collection<NewVirtualFile>): List<NewVirtualFile> {
   val result = ArrayList<NewVirtualFile>()
+  val acceptedFiles = HashSet<NewVirtualFile>()
+  // Avoid pairwise ancestor checks: every accepted ancestor is found by walking parents of the current candidate.
   for (file in files.sortedBy { it.path.length }) {
-    if (result.none { VfsUtilCore.isAncestor(it, file, false) }) {
+    if (file !in acceptedFiles && !hasAcceptedAncestor(file, acceptedFiles)) {
       result.add(file)
+      acceptedFiles.add(file)
     }
   }
   return result
+}
+
+private fun hasAcceptedAncestor(file: NewVirtualFile, acceptedFiles: Set<NewVirtualFile>): Boolean {
+  var parent = file.parent
+  while (parent != null) {
+    if (parent in acceptedFiles) {
+      return true
+    }
+    parent = parent.parent
+  }
+  return false
 }
