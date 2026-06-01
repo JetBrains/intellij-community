@@ -61,6 +61,11 @@ final class JaCoCoCoverageFileType implements INativeFileType, FileTypeIdentifia
     var jaCoCoCoverageRunner = CoverageRunner.EP_NAME.findExtension(JaCoCoCoverageRunner.class);
     if (jaCoCoCoverageRunner == null) return false;
     if (!jaCoCoCoverageRunner.getDataFileExtension().equals(file.getExtension())) return false;
-    return jaCoCoCoverageRunner.canBeLoaded(file.toNioPath());
+    try {
+      return jaCoCoCoverageRunner.canBeLoaded(file.toNioPath());
+    }
+    catch (UnsupportedOperationException e) {//.toNioPath() could throw it
+      return false;
+    }
   }
 }
