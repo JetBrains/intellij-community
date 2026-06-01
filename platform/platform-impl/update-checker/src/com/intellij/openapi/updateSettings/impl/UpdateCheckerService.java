@@ -92,7 +92,7 @@ public class UpdateCheckerService {
     var settings = UpdateSettings.getInstance();
     updateDefaultChannel(settings);
     if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
-      scheduleFirstCheck(settings);
+      UpdateCheckFirstRunDeferralRunner.getInstance().runWhenLifted(() -> scheduleFirstCheck(settings));
     }
   }
 

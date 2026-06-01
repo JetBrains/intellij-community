@@ -23,6 +23,7 @@ public interface UpdateRequestParametersProvider {
     ApplicationManager.getApplication()
       .getService(UpdateRequestParametersProvider.class)
       .amendUpdateRequest(parameters);
+    UpdateRequestParametersContributor.EP_NAME.forEachExtensionSafe(c -> c.amendUpdateRequest(parameters));
     return url.addParameters(parameters);
   }
 }

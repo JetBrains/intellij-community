@@ -6,6 +6,8 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.nio.file.Path
 
 internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
@@ -16,6 +18,9 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process 
       else -> "monolith"
     }
+
+  // this strategy doesn't support advancing between modes, so the flow always reports the current mode id
+  override val currentModeIdFlow: StateFlow<String> = MutableStateFlow(currentModeId)
 
   override fun advanceToLightWithRdConnectionMode(): Boolean {
     throw NotImplementedError("It seems that you are starting ij-light with wrong ProductLoadingStrategy (ModuleBasedProductLoadingStrategy is expected)")
