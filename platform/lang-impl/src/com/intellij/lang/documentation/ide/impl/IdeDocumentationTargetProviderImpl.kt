@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.documentation.DocumentationTargetFinder
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.impl.documentationTargets
@@ -31,7 +32,7 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     if (documentationTargets != null) {
       return documentationTargets
     }
-    val sourceElement = DocumentationManager.getContextElement(editor, file)
+    val sourceElement = DocumentationTargetFinder.getContextElement(editor, file)
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
     if (targetElement == null) {
       return emptyList()
