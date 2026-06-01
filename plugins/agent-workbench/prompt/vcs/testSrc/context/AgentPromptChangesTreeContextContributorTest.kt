@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.vcs.context
 
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -59,7 +60,7 @@ class AgentPromptChangesTreeContextContributorTest {
     val item = result.single()
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.SNIPPET)
     assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.changes.title"))
-    assertThat(item.itemId).isEqualTo("changes.selection")
+    assertThat(item.itemId).isEqualTo(AgentPromptContextItemIds.CHANGES_SELECTION)
     assertThat(item.source).isEqualTo("changes")
     assertThat(item.body).contains("Changelist: Fix login bug (active)")
     assertThat(item.body).contains("Changes: none")

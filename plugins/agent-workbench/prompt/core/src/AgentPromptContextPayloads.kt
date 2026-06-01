@@ -10,6 +10,10 @@ object AgentPromptContextRendererIds {
   const val TEST_FAILURES: String = "testFailures"
 }
 
+object AgentPromptContextItemIds {
+  const val CHANGES_SELECTION: String = "changes.selection"
+}
+
 object AgentPromptPayload {
   fun obj(vararg entries: Pair<String, AgentPromptPayloadValue>): AgentPromptPayloadValue.Obj {
     return AgentPromptPayloadValue.Obj(linkedMapOf(*entries))

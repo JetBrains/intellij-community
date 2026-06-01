@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.ai.review.prompt
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
@@ -45,6 +46,10 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
     }
 
     assertEquals(renderedIssueBlock("https://tracker.example.test/issue/CASE-101"), prompt)
+  }
+
+  fun `test ai review matches changes selection context`() {
+    assertTrue(extension.matches(listOf(changesSelectionContextItem())))
   }
 
   fun `test ai review uses default draft kind when commit issues are absent`() {
@@ -231,6 +236,18 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
       itemId = "vcsCommits",
       source = "manualVcs",
       truncation = AgentPromptContextTruncation.none(8),
+    )
+  }
+
+  private fun changesSelectionContextItem(): AgentPromptContextItem {
+    val body = "Selected changes:\n- modified: src/Foo.kt"
+    return AgentPromptContextItem(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Selected Changes",
+      body = body,
+      itemId = AgentPromptContextItemIds.CHANGES_SELECTION,
+      source = "changes",
+      truncation = AgentPromptContextTruncation.none(body.length),
     )
   }
 

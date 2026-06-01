@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.prompt.vcs.context
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
@@ -108,7 +109,7 @@ internal class AgentPromptChangesTreeContextContributor : AgentPromptContextCont
         title = AgentPromptVcsBundle.message("context.changes.title"),
         body = body,
         payload = payload,
-        itemId = "changes.selection",
+        itemId = AgentPromptContextItemIds.CHANGES_SELECTION,
         source = "changes",
         truncation = AgentPromptContextTruncation(
           originalChars = fullBody.length,
@@ -156,7 +157,7 @@ internal class AgentPromptChangesTreeContextContributor : AgentPromptContextCont
         title = AgentPromptVcsBundle.message("context.changes.title"),
         body = body,
         payload = payload,
-        itemId = "changes.selection",
+        itemId = AgentPromptContextItemIds.CHANGES_SELECTION,
         source = "changes",
         truncation = AgentPromptContextTruncation(
           originalChars = fullBody.length,
