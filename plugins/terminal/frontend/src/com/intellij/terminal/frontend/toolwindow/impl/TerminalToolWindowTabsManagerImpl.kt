@@ -34,7 +34,6 @@ import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
@@ -413,7 +412,7 @@ internal class TerminalToolWindowTabsManagerImpl(
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
 
-        TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope.asDisposable())
+        TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope)
         TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
       }
     }

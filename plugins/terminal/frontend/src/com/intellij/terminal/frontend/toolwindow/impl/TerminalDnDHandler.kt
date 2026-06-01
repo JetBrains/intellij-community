@@ -4,11 +4,12 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDSupport
-import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.dnd.FileCopyPasteUtil.getFileListFromAttachedObject
 import com.intellij.ide.dnd.TransferableWrapper
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -23,7 +24,12 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.escapeShellArgument
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.session.ShellName
@@ -41,48 +47,62 @@ import java.nio.file.Path
  * Supports drops from Project View (PSI elements) and native OS file managers
  */
 internal object TerminalDnDHandler {
-  fun installHandler(window: ToolWindowEx, parentDisposable: Disposable) {
-    val handler = getDropHandler(window)
+  fun installHandler(window: ToolWindowEx, coroutineScope: CoroutineScope) {
+    val handler = getDropHandler(window, coroutineScope)
 
     DnDSupport.createBuilder(window.decorator)
       .setDropHandler(handler)
-      .setDisposableParent(parentDisposable)
+      .setDisposableParent(coroutineScope.asDisposable())
       .enableAsNativeTarget()
       .disableAsSource()
       .install()
   }
 
-  private fun getDropHandler(window: ToolWindowEx): DnDDropHandler = DnDDropHandler { event ->
+  private fun getDropHandler(window: ToolWindowEx, coroutineScope: CoroutineScope): DnDDropHandler = DnDDropHandler { event ->
     val dataContext = getDataContext(event) ?: return@DnDDropHandler
     val terminalView = dataContext.getData(TerminalView.DATA_KEY)
     if (terminalView != null) {
       handleDropOnTerminalView(event, terminalView)
     }
     else {
-      handleDropOnTab(event, dataContext, window)
+      handleDropOnTab(window, coroutineScope, event, dataContext)
     }
   }
 
   private fun handleDropOnTerminalView(event: DnDEvent, terminalView: TerminalView) {
     val context = getTerminalDropContext(terminalView) ?: return
-    val textToInsert = getTextToInsertForFiles(getDroppedFiles(event), context).ifEmpty { return }
-    terminalView.createSendTextBuilder()
-      .useBracketedPasteMode()
-      .send(textToInsert)
+    val data = TerminalDropData(event)
+
+    terminalView.coroutineScope.launch {
+      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
+      val textToInsert = getTextToInsertForFiles(droppedFiles, context).ifEmpty { return@launch }
+
+      withContext(Dispatchers.EDT) {
+        terminalView.createSendTextBuilder()
+          .useBracketedPasteMode()
+          .send(textToInsert)
+      }
+    }
   }
 
-  private fun handleDropOnTab(event: DnDEvent, dataContext: DataContext, window: ToolWindowEx) {
+  private fun handleDropOnTab(window: ToolWindowEx, coroutineScope: CoroutineScope, event: DnDEvent, dataContext: DataContext) {
     val contentManager = dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER) ?: return
-    val files = getDroppedFiles(event)
-    val dir = getDirectory(files.firstOrNull()) ?: return
+    val data = TerminalDropData(event)
 
-    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
-    createTerminalTab(
-      window.project,
-      workingDirectory = dir.path,
-      contentManager = contentManager,
-      startupFusInfo = fusInfo
-    )
+    coroutineScope.launch {
+      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
+      val dir = getDirectory(droppedFiles.firstOrNull()) ?: return@launch
+
+      val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
+      withContext(Dispatchers.EDT) {
+        createTerminalTab(
+          window.project,
+          workingDirectory = dir.path,
+          contentManager = contentManager,
+          startupFusInfo = fusInfo
+        )
+      }
+    }
   }
 
   private fun getDataContext(event: DnDEvent): DataContext? {
@@ -140,20 +160,24 @@ internal object TerminalDnDHandler {
     return TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString()
   }
 
+  private suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = withContext(Dispatchers.IO) {
+    paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  }
+
   private data class TerminalDropContext(
     val eelDescriptor: EelDescriptor,
     val shellName: ShellName,
   )
 }
 
-internal fun getDroppedFiles(event: DnDEvent): List<VirtualFile> {
-  val attachedObject = event.getAttachedObject()
-
-  val psiFiles = (attachedObject as? TransferableWrapper)
+internal class TerminalDropData(event: DnDEvent) {
+  val virtualFiles: List<VirtualFile>? = (event.attachedObject as? TransferableWrapper)
     ?.getPsiElements()
     ?.filterIsInstance<PsiFileSystemItem>()
     ?.map { it.virtualFile }
     ?.takeIf { it.isNotEmpty() }
 
-  return psiFiles ?: FileCopyPasteUtil.getVirtualFileListFromAttachedObject(attachedObject)
+  val paths: List<Path> = if (virtualFiles == null)
+    getFileListFromAttachedObject(event.attachedObject).map { it.toPath() }
+  else emptyList()
 }
