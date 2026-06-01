@@ -81,3 +81,7 @@ internal val TARGET_FUNCTION_FQ_NAMES: Set<FqName> = setOf(
     FqName("kotlin.ulongArrayOf"),
     FqName("kotlin.ushortArrayOf"),
 )
+
+internal val LITERAL_TO_FUNCTION_CANDIDATES: List<FqName> = TARGET_FUNCTION_FQ_NAMES.filter {
+    it != FqName("kotlin.collections.emptyList") && it != FqName("kotlin.collections.emptySet")
+}

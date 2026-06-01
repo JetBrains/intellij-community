@@ -1503,6 +1503,14 @@
                      language="kotlin"
                      key="inspection.kotlin.revert.to.collection.literals.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.CollapseCollectionLiteralChainCallInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFO"
+                     language="kotlin"
+                     key="inspection.kotlin.remove.type.conversion.on.collection.literal.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedClassToSealedInterfaceInspection"
             shortName="ConvertSealedClassToSealedInterface"

@@ -14037,6 +14037,55 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/collapseCollectionLiteralChainCall")
+        public static class CollapseCollectionLiteralChainCall extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("chainCall.kt")
+            public void testChainCall() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/chainCall.kt");
+            }
+
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/getter.kt");
+            }
+
+            @TestMetadata("parentheses.kt")
+            public void testParentheses() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/parentheses.kt");
+            }
+
+            @TestMetadata("toIntArray.kt")
+            public void testToIntArray() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/toIntArray.kt");
+            }
+
+            @TestMetadata("toMutableListOf.kt")
+            public void testToMutableListOf() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/toMutableListOf.kt");
+            }
+
+            @TestMetadata("toSetOf.kt")
+            public void testToSetOf() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/toSetOf.kt");
+            }
+
+            @TestMetadata("toTypedArray.kt")
+            public void testToTypedArray() throws Exception {
+                runTest("testData/inspectionsLocal/collapseCollectionLiteralChainCall/toTypedArray.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall")
         public static class ConvertCollectionLiteralToFunctionCall extends AbstractK2LocalInspectionTest {
             @java.lang.Override
@@ -14094,6 +14143,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/expressionBody.kt");
             }
 
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/getter.kt");
+            }
+
             @TestMetadata("inReturnExpression.kt")
             public void testInReturnExpression() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/inReturnExpression.kt");
@@ -14132,26 +14186,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/simple.kt");
-            }
-
-            @TestMetadata("toIntArray.kt")
-            public void testToIntArray() throws Exception {
-                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/toIntArray.kt");
-            }
-
-            @TestMetadata("toMutableListOf.kt")
-            public void testToMutableListOf() throws Exception {
-                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/toMutableListOf.kt");
-            }
-
-            @TestMetadata("toSetOf.kt")
-            public void testToSetOf() throws Exception {
-                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/toSetOf.kt");
-            }
-
-            @TestMetadata("toTypedArray.kt")
-            public void testToTypedArray() throws Exception {
-                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/toTypedArray.kt");
             }
         }
 
