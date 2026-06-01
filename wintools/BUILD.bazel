@@ -26,7 +26,8 @@ jvm_library(
     ":wintools",
     "//platform/util:util_test_lib",
     "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "@lib//:junit5",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/hamcrest",
     "//libraries/hamcrest:hamcrest_test_lib",
   ]

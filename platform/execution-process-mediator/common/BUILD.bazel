@@ -31,7 +31,8 @@ jvm_library(
     "//libraries/guava:guava_test_lib",
     "//libraries/protobuf:protobuf_test_lib",
     "//libraries/javax/annotation:annotation_test_lib",
-    "@lib//:junit5",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
     "//libraries/grpc:grpc_test_lib",
   ]

@@ -6,6 +6,11 @@ jvm_provided_library(
   lib = "//libraries/junit4"
 )
 
+jvm_provided_library(
+  name = "libraries_junit5_provided",
+  lib = "//libraries/junit5"
+)
+
 jvm_library(
   name = "core",
   module_name = "intellij.platform.testFramework.core",
@@ -22,7 +27,6 @@ jvm_library(
     "//platform/boot",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:opentest4j",
-    "@lib//:junit5-provided",
     "//java/java-runtime:rt",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -34,6 +38,7 @@ jvm_library(
     "//platform/testFramework/teamCity",
     "//.ownership/runtime-resolver:codeowners-runtime-resolver",
     ":libraries_junit4_provided",
+    ":libraries_junit5_provided",
   ]
 )
 
@@ -54,7 +59,8 @@ jvm_library(
     "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
     "//libraries/junit4",
     "//libraries/junit4:junit4_test_lib",
-    "@lib//:junit5-provided",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//java/java-runtime:rt_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/jackson3/jackson:libraries-jackson3_test_lib",

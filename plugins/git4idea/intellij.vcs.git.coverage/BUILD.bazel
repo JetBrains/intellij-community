@@ -34,7 +34,8 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":vcs-git-coverage",
-    "@lib//:junit5",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/ide-core:ide-core_test_lib",

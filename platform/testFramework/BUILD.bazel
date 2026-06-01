@@ -2,6 +2,11 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
+  name = "libraries_junit5_provided",
+  lib = "//libraries/junit5"
+)
+
+jvm_provided_library(
   name = "libraries_junit4_provided",
   lib = "//libraries/junit4"
 )
@@ -20,7 +25,6 @@ jvm_library(
   resource_strip_prefix = "resources",
   deps = [
     "@lib//:jet_check",
-    "@lib//:junit5-provided",
     "@lib//:junit5Params-provided",
     "//libraries/assertj-core",
     "@lib//:kotlin-stdlib",
@@ -89,11 +93,12 @@ jvm_library(
     "//jps/model-impl",
     "//platform/util:util-ui",
     "//platform/util-ex",
+    ":libraries_junit5_provided",
     ":libraries_junit4_provided",
     ":libraries_junit5-launcher_provided",
   ],
   exports = [
-    "@lib//:junit5-provided",
+    "//libraries/junit5",
     "@lib//:junit5Params-provided",
     "//libraries/junit4",
     "//platform/ide-core-impl",
@@ -116,7 +121,8 @@ jvm_library(
   resources = glob(["testResources/**/*"]),
   resource_strip_prefix = "testResources",
   exports = [
-    "@lib//:junit5-provided",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "@lib//:junit5Params-provided",
     "//libraries/junit4",
     "//libraries/junit4:junit4_test_lib",
@@ -131,7 +137,8 @@ jvm_library(
   ],
   runtime_deps = [
     ":testFramework",
-    "@lib//:junit5-provided",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "@lib//:junit5Params-provided",
     "//libraries/assertj-core:assertj-core_test_lib",
     "@lib//:byte-buddy",

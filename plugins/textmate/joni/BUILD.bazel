@@ -27,7 +27,8 @@ jvm_library(
     "//plugins/textmate/core:core_test_lib",
     "//plugins/textmate/core/tests",
     "//plugins/textmate/core/tests:tests_test_lib",
-    "@lib//:junit5",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.textmate.joni` end
