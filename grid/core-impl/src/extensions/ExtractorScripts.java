@@ -81,11 +81,10 @@ public final class ExtractorScripts {
   private static Path findScript(String name, boolean isAggregatorScript) {
     try {
       PluginId id = getPluginId();
-      return id == null ? null :
-             ExtensionsService.getInstance().extensionsRootTypeFindResource(
-               id,
-               isAggregatorScript ? AGGREGATORS_SCRIPT_DIR + "/" + name : EXTRACTORS_SCRIPT_DIR + "/" + name
-             );
+      return ExtensionsService.getInstance().extensionsRootTypeFindResource(
+        id,
+        isAggregatorScript ? AGGREGATORS_SCRIPT_DIR + "/" + name : EXTRACTORS_SCRIPT_DIR + "/" + name
+      );
     }
     catch (IOException e) {
       return null;
@@ -109,19 +108,18 @@ public final class ExtractorScripts {
   private static @Nullable Path getScriptDirectoryImpl(boolean isAggregatorsDir) {
     try {
       PluginId id = getPluginId();
-      return id == null ? null :
-             ExtensionsService.getInstance().extensionsRootTypeFindResourceDirectory(
-               id,
-               isAggregatorsDir ? AGGREGATORS_SCRIPT_DIR : EXTRACTORS_SCRIPT_DIR,
-               false
-             );
+      return ExtensionsService.getInstance().extensionsRootTypeFindResourceDirectory(
+        id,
+        isAggregatorsDir ? AGGREGATORS_SCRIPT_DIR : EXTRACTORS_SCRIPT_DIR,
+        false
+      );
     }
     catch (IOException ignore) {
     }
     return null;
   }
 
-  public static @Nullable PluginId getPluginId() {
-    return PluginId.findId("com.intellij.database");
+  public static @NotNull PluginId getPluginId() {
+    return PluginId.getId("com.intellij.database");
   }
 }

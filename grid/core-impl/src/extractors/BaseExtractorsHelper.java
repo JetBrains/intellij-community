@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static com.intellij.database.extensions.ExtensionScriptsUtil.getDefaultClassLoader;
+
 public class BaseExtractorsHelper implements ExtractorsHelper {
   public static final BaseExtractorsHelper INSTANCE = new BaseExtractorsHelper();
 
@@ -112,7 +114,11 @@ public class BaseExtractorsHelper implements ExtractorsHelper {
       }
 
       ExtensionScriptsUtil.prepareScript(script);
-      IdeScriptEngine engine = ExtensionScriptsUtil.getEngineFor(config.getProject(), ExtractorScripts.getPluginId(), script, myInstallPlugin);
+      IdeScriptEngine engine = ExtensionScriptsUtil.getEngineFor(config.getProject(),
+                                                                 getDefaultClassLoader(ExtractorScripts.getPluginId()),
+                                                                 script,
+                                                                 myInstallPlugin,
+                                                                 true);
       return engine == null ? null : new NoDbScriptDataExtractor(config.getProject(), script, engine, config.getObjectFormatter(), false, true /* TODO: support detection */);
     }
 
@@ -125,7 +131,11 @@ public class BaseExtractorsHelper implements ExtractorsHelper {
 
       ExtensionScriptsUtil.prepareScript(script);
 
-      IdeScriptEngine engine = ExtensionScriptsUtil.getEngineFor(config.getProject(), ExtractorScripts.getPluginId(), script, null, false);
+      IdeScriptEngine engine = ExtensionScriptsUtil.getEngineFor(config.getProject(),
+                                                                 getDefaultClassLoader(ExtractorScripts.getPluginId()),
+                                                                 script,
+                                                                 null,
+                                                                 false);
       return engine == null ? null : new NoDbScriptDataExtractor(config.getProject(), script, engine, config.getObjectFormatter(), true, true /* TODO: support detection */);
     }
   }
