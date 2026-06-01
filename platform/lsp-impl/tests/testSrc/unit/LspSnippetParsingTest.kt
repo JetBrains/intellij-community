@@ -13,8 +13,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.platform.lsp.impl.completion.LspCompletionItemInsertHandler
-import com.intellij.platform.lsp.impl.completion.SnippetToTemplateConverter
+import com.intellij.platform.lsp.impl.features.completion.LspCompletionItemInsertHandler
+import com.intellij.platform.lsp.impl.features.completion.SnippetToTemplateConverter
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication

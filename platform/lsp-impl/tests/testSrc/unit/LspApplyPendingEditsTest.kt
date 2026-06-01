@@ -1,9 +1,9 @@
 package com.intellij.platform.lsp.unit
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.lsp.impl.highlightingCommon.LspCachedHighlighting
-import com.intellij.platform.lsp.impl.highlightingCommon.PendingEdit
-import com.intellij.platform.lsp.impl.highlightingCommon.applyPendingEdits
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
+import com.intellij.platform.lsp.impl.features.highlightingCommon.PendingEdit
+import com.intellij.platform.lsp.impl.features.highlightingCommon.applyPendingEdits
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

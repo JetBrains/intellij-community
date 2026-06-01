@@ -4,8 +4,8 @@ import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
-import com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoContext
-import com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoHandler
+import com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoContext
+import com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoHandler
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
