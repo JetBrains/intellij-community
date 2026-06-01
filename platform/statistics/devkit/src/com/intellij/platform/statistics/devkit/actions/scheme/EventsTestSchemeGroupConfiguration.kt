@@ -316,21 +316,35 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       return eventsScheme
     }
 
+    /**
+     * Builds validation rules for the given group based on the current event scheme.
+     *
+     * Note: default_value and required rules are annotated with the current group version
+     * ([GroupDescriptor.version]) and event ID, as required by the FUS metadata format.
+     * However, the DevKit scheme is built from the current source code state and is not aware
+     * of the actual version ranges defined in the production metadata (e.g. a rule valid for
+     * versions `1..3` in production will appear here as version `5` if that is the current group version).
+     *
+     * When testing events that use `default_value` or `required` rules, ensure the group version
+     * and event ID in the generated scheme match what you intend to validate against.
+     */
     private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
       val eventIds = hashSetOf<String>()
       val eventData = hashMapOf<String, MutableSet<String>>()
+      val version = group.version
       val events = group.schema
       for (event in events) {
         eventIds.add(event.event)
         for (dataField in event.fields) {
-          val validationRule = dataField.value
-          val validationRules = eventData[dataField.path]
-          if (validationRules == null) {
-            eventData[dataField.path] = validationRule.toHashSet()
+          val processedRules = dataField.value.mapTo(hashSetOf()) { rule ->
+            if ((rule.startsWith("{default_value:") || rule.startsWith("{required:")) && rule.endsWith("}")) {
+              "${rule.dropLast(1)}|${event.event}|$version}"
+            }
+            else {
+              rule
+            }
           }
-          else {
-            validationRules.addAll(validationRule)
-          }
+          eventData.getOrPut(dataField.path) { hashSetOf() }.addAll(processedRules)
         }
       }
 
