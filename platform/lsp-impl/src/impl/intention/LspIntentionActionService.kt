@@ -92,7 +92,7 @@ internal class LspIntentionActionService : Disposable {
       }
 
       lsp4jResults.forEach {
-        val codeAction = it.asCodeAction()
+        val codeAction = it.toCodeAction()
         // filter out quick fixes when asking for intentions, otherwise quick fixes are added twice
         val kind = codeAction.kind
         if (kind == null || !kind.startsWith(CodeActionKind.QuickFix)) {
@@ -122,7 +122,7 @@ internal class LspIntentionActionService : Disposable {
 }
 
 
-internal fun Either<Command, CodeAction>.asCodeAction(): CodeAction =
+internal fun Either<Command, CodeAction>.toCodeAction(): CodeAction =
   if (isLeft) {
     CodeAction().apply {
       title = left!!.title

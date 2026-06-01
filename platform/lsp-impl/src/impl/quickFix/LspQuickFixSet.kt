@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.intention.asCodeAction
+import com.intellij.platform.lsp.impl.intention.toCodeAction
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
 import org.eclipse.lsp4j.CodeAction
@@ -88,7 +88,7 @@ internal class LspQuickFixSet(
             psiModCountWhenRequestSent = psiModCount
             vfsModCountWhenRequestSent = vfsModCount
 
-            lsp4jResults?.let { codeActionsReceived(it.map { lsp4jResult -> lsp4jResult.asCodeAction() }) }
+            lsp4jResults?.let { codeActionsReceived(it.map { lsp4jResult -> lsp4jResult.toCodeAction() }) }
           }
         }
     }
