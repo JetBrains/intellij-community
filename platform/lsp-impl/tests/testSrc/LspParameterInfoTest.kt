@@ -3,7 +3,7 @@ package com.intellij.platform.lsp
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoContext
 import com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoHandler
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -36,7 +36,7 @@ internal class LspParameterInfoTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       signatureHelpProvider = SignatureHelpOptions()
     },

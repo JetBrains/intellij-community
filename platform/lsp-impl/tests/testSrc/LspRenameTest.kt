@@ -9,7 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspRenameSupport
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.actions.RenameElementAction
@@ -69,7 +69,7 @@ internal class LspRenameTest {
   @Nested
   inner class PrepareRename {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
           override fun shouldRunRename(psiFile: PsiFile): Boolean = true
@@ -173,7 +173,7 @@ internal class LspRenameTest {
   @Nested
   inner class PrepareRenameDisabled {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
           override fun shouldRunRename(psiFile: PsiFile): Boolean = true
@@ -213,7 +213,7 @@ internal class LspRenameTest {
   @Nested
   inner class PerformRename {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
           override fun shouldRunRename(psiFile: PsiFile): Boolean = true

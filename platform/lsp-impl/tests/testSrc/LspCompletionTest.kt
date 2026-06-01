@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
@@ -51,7 +51,7 @@ internal class LspCompletionTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       completionProvider = CompletionOptions().apply {
         resolveProvider = true

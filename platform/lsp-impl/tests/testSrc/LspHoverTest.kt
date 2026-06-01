@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,7 +41,7 @@ internal class LspHoverTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       hoverProvider = Either.forLeft(true)
     },

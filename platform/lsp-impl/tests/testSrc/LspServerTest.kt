@@ -4,7 +4,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.common.FakeLspServerDescriptor
 import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -31,7 +31,7 @@ internal class LspServerTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture()
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
 
   @Test
   fun `module initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {

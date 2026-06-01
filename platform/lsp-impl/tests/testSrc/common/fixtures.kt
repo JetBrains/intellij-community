@@ -16,12 +16,12 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.ServerCapabilities
 
-internal fun TestFixture<Project>.lspServerSupportFixture(
+internal fun TestFixture<Project>.fakeLspServerProviderFixture(
   lspCustomization: LspCustomization = LspCustomization(),
   configureClientCapabilities: (ClientCapabilities.() -> Unit)? = null,
   configureServerCapabilities: (ServerCapabilities.() -> Unit)? = null,
-): TestFixture<LspServerSupport> = testFixture { _ ->
-  val projectFixture = this@lspServerSupportFixture
+): TestFixture<FakeLspServerHandle> = testFixture { _ ->
+  val projectFixture = this@fakeLspServerProviderFixture
   val project = projectFixture.init()
 
   extensionPointFixture(LspServerSupportProvider.EP_NAME) {
@@ -32,14 +32,14 @@ internal fun TestFixture<Project>.lspServerSupportFixture(
   project.putUserData(FAKE_LSP_CLIENT_CAPABILITIES_KEY, configureClientCapabilities)
   project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, configureServerCapabilities)
 
-  initialized(LspServerSupport()) {
+  initialized(FakeLspServerHandle()) {
     project.putUserData(FAKE_LSP_CUSTOMIZATION_KEY, null)
     project.putUserData(FAKE_LSP_CLIENT_CAPABILITIES_KEY, null)
     project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, null)
   }
 }
 
-internal class LspServerSupport {
+internal class FakeLspServerHandle {
   // todo move fun configureServerSession here
 }
 

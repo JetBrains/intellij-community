@@ -17,7 +17,7 @@ import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -81,7 +81,7 @@ internal class LspTextDocumentProtocolTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     lspCustomization = object : LspCustomization() {
       override val formattingCustomizer = object : LspFormattingSupport() {
         override fun shouldFormatThisFileExclusivelyByServer(

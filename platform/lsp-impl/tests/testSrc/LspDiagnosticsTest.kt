@@ -11,7 +11,7 @@ import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.SpaceTokenizingFileType
 import com.intellij.platform.lsp.common.assertCustomPsiTree
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.common.problemFileHighlightFilterFixture
 import com.intellij.platform.lsp.common.spaceTokenizingLanguageFixture
 import com.intellij.platform.lsp.common.wolfFixture
@@ -62,7 +62,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class PublishDiagnostics {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture()
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
 
     @Test
     fun `publish diagnostics twice for the same document version`() = timeoutRunBlocking {
@@ -201,7 +201,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class PullDiagnostics {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -356,7 +356,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class WolfTheProblemSolverInterop {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -506,7 +506,7 @@ internal class LspDiagnosticsTest {
     private val spaceTokenizingLang = spaceTokenizingLanguageFixture()
 
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture(
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -558,7 +558,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class DiagnosticsClearedOnServerStop {
     @Suppress("unused")
-    private val lspServerSupport by projectFixture.lspServerSupportFixture()
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
 
     @Test
     fun `diagnostics are cleared when the server stops`(): Unit = timeoutRunBlocking {

@@ -4,7 +4,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.platform.lsp.common.TestNotebookDocumentAdapter
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.lspServerSupportFixture
+import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.impl.LspDocumentAdapter
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -35,7 +35,7 @@ internal class LspTextDocumentIncrementalSyncTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
         openClose = true
@@ -87,7 +87,7 @@ internal class LspNotebookIncrementalSyncTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val lspServerSupport by projectFixture.lspServerSupportFixture(
+  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
         openClose = true
