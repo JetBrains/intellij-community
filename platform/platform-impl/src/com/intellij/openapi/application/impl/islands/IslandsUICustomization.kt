@@ -97,12 +97,16 @@ import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
+import java.awt.Shape
 import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.awt.geom.AffineTransform
 import java.awt.geom.Path2D
+import java.awt.geom.PathIterator
+import java.awt.geom.Rectangle2D
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -951,6 +955,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return JBPoint(if (xDelta == 0) 0 else 1, if (yDelta == 0) 0 else 1)
   }
 
+  // Shared path container and wrapper shape to avoid object instantiations on the EDT repaint cycle
+  private val sharedPath = Path2D.Float()
+  private val cachedShape = CachedBoundsShape(sharedPath)
+
   private fun paintIslandAreaRaw(component: JComponent, g: Graphics2D) {
     val ctx = ScaleContext.create(g)
 
@@ -984,38 +992,45 @@ internal class IslandsUICustomization : InternalUICustomization() {
     g.fillRect(0, offset, offset, height - offset2)
     g.fillRect(width - offset, offset, offset, height - offset2)
 
-    val topLeft = Path2D.Float()
-    topLeft.moveTo(offsetF, offsetF)
-    topLeft.lineTo(arcSizeF + offsetF, offsetF)
-    topLeft.quadTo(offsetF, offsetF, offsetF, arcSizeF + offsetF)
-    topLeft.closePath()
-
-    val topRight = Path2D.Float()
-    topRight.moveTo(widthF - arcSizeF - offsetF, offsetF)
-    topRight.quadTo(widthF - offsetF, offsetF, widthF - offsetF, arcSizeF + offsetF)
-    topRight.lineTo(widthF - offsetF, offsetF)
-    topRight.closePath()
-
-    val bottomLeft = Path2D.Float()
-    bottomLeft.moveTo(offsetF, heightF - arcSizeF - offsetF)
-    bottomLeft.quadTo(offsetF, heightF - offsetF, arcSizeF + offsetF, heightF - offsetF)
-    bottomLeft.lineTo(offsetF, heightF - offsetF)
-    bottomLeft.closePath()
-
-    val bottomRight = Path2D.Float()
-    bottomRight.moveTo(widthF - arcSizeF - offsetF, heightF - offsetF)
-    bottomRight.quadTo(widthF - offsetF, heightF - offsetF, widthF - offsetF, heightF - arcSizeF - offsetF)
-    bottomRight.lineTo(widthF - offsetF, heightF - offsetF)
-    bottomRight.closePath()
-
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
     g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
 
-    g.fill(topLeft)
-    g.fill(topRight)
-    g.fill(bottomLeft)
-    g.fill(bottomRight)
+    // 1. Top Left Corner
+    sharedPath.reset()
+    sharedPath.moveTo(offsetF, offsetF)
+    sharedPath.lineTo(arcSizeF + offsetF, offsetF)
+    sharedPath.quadTo(offsetF, offsetF, offsetF, arcSizeF + offsetF)
+    sharedPath.closePath()
+    cachedShape.updateBounds(offsetF, offsetF, arcSizeF, arcSizeF)
+    g.fill(cachedShape)
+
+    // 2. Top Right Corner
+    sharedPath.reset()
+    sharedPath.moveTo(widthF - arcSizeF - offsetF, offsetF)
+    sharedPath.quadTo(widthF - offsetF, offsetF, widthF - offsetF, arcSizeF + offsetF)
+    sharedPath.lineTo(widthF - offsetF, offsetF)
+    sharedPath.closePath()
+    cachedShape.updateBounds(widthF - arcSizeF - offsetF, offsetF, arcSizeF, arcSizeF)
+    g.fill(cachedShape)
+
+    // 3. Bottom Left Corner
+    sharedPath.reset()
+    sharedPath.moveTo(offsetF, heightF - arcSizeF - offsetF)
+    sharedPath.quadTo(offsetF, heightF - offsetF, arcSizeF + offsetF, heightF - offsetF)
+    sharedPath.lineTo(offsetF, heightF - offsetF)
+    sharedPath.closePath()
+    cachedShape.updateBounds(offsetF, heightF - arcSizeF - offsetF, arcSizeF, arcSizeF)
+    g.fill(cachedShape)
+
+    // 4. Bottom Right Corner
+    sharedPath.reset()
+    sharedPath.moveTo(widthF - arcSizeF - offsetF, heightF - offsetF)
+    sharedPath.quadTo(widthF - offsetF, heightF - offsetF, widthF - offsetF, heightF - arcSizeF - offsetF)
+    sharedPath.lineTo(widthF - offsetF, heightF - offsetF)
+    sharedPath.closePath()
+    cachedShape.updateBounds(widthF - arcSizeF - offsetF, heightF - offsetF, arcSizeF, arcSizeF)
+    g.fill(cachedShape)
 
     if (isIslandBorderLineNeeded(component)) {
       val arcSize = JBUI.scale(arc)
@@ -1030,11 +1045,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       g.drawLine(width - offset, halfArcSize, width - offset, height - halfArcSize)
 
       g.drawArc(offset, offset, arcSize, arcSize, 90, 90) // top left
-
       g.drawArc(width - arcSize - offset, offset, arcSize, arcSize, 0, 90) // top right
-
       g.drawArc(width - arcSize - offset, height - arcSize - offset, arcSize, arcSize, 270, 90) // bottom right
-
       g.drawArc(offset, height - arcSize - offset, arcSize, arcSize, 180, 90) // bottom left
     }
   }
@@ -1333,4 +1345,29 @@ private class ManyIslandDivider(isVertical: Boolean, splitter: Splittable) : One
       super.paint(g)
     }
   }
+}
+
+private class CachedBoundsShape(private val delegate: Shape) : Shape {
+  private val cachedBounds2D = Rectangle2D.Float()
+  private val cachedBounds = java.awt.Rectangle()
+
+  fun updateBounds(x: Float, y: Float, w: Float, h: Float) {
+    cachedBounds2D.setRect(x, y, w, h)
+    val x1 = Math.floor(x.toDouble()).toInt()
+    val y1 = Math.floor(y.toDouble()).toInt()
+    val x2 = Math.ceil((x + w).toDouble()).toInt()
+    val y2 = Math.ceil((y + h).toDouble()).toInt()
+    cachedBounds.setBounds(x1, y1, x2 - x1, y2 - y1)
+  }
+
+  override fun getBounds(): java.awt.Rectangle = cachedBounds
+  override fun getBounds2D(): Rectangle2D = cachedBounds2D
+  override fun contains(x: Double, y: Double): Boolean = delegate.contains(x, y)
+  override fun contains(p: java.awt.geom.Point2D): Boolean = delegate.contains(p)
+  override fun intersects(x: Double, y: Double, w: Double, h: Double): Boolean = delegate.intersects(x, y, w, h)
+  override fun intersects(r: Rectangle2D): Boolean = delegate.intersects(r)
+  override fun contains(x: Double, y: Double, w: Double, h: Double): Boolean = delegate.contains(x, y, w, h)
+  override fun contains(r: Rectangle2D): Boolean = delegate.contains(r)
+  override fun getPathIterator(at: AffineTransform?): PathIterator = delegate.getPathIterator(at)
+  override fun getPathIterator(at: AffineTransform?, flatness: Double): PathIterator = delegate.getPathIterator(at, flatness)
 }
