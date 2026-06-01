@@ -245,7 +245,9 @@ class PluginInstallOperation(
                                DynamicPlugins.checkCanReconfigureWithoutRestart(
                                  addNewCustomPlugins = newPluginVersions,
                                  forceRemovePlugins = emptyList(),
-                                 extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId })
+                                 extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId }),
+                                 pretendEnabled = emptyList(),
+                                 pretendDisabled = emptyList(),
                                )
                              }
                              else {
