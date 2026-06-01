@@ -18,6 +18,8 @@ class GradleTaskExecutionListener(val handler: GradleTaskExecutionHandler) {
 
     private const val UP_TO_DATE = "UP-TO-DATE"
     private const val FROM_CACHE = "FROM-CACHE"
+
+    private val QUOTED_IDENTIFIER: Regex = Regex("'([^']+)'")
   }
 
   private val inflightTasks: MutableMap<String, AggregatedTaskReport> = HashMap()
@@ -77,7 +79,10 @@ class GradleTaskExecutionListener(val handler: GradleTaskExecutionHandler) {
     .trim()
     .let { classifyTaskName(it) }
 
-  private fun DefaultTaskFinishEvent.getTaskSource(): String = descriptor.originPlugin?.displayName ?: UNKNOWN
+  private fun DefaultTaskFinishEvent.getTaskSource(): String {
+    val displayName = descriptor.originPlugin?.displayName ?: return UNKNOWN
+    return QUOTED_IDENTIFIER.find(displayName)?.groupValues?.get(1) ?: displayName
+  }
 
   private fun DefaultFinishEvent<*, *>.duration(): Long = result.run { endTime - startTime }
 
