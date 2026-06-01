@@ -44,7 +44,7 @@ import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -442,7 +442,7 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
 
 fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
   when (val symbol = polySymbolAtCaret()) {
-    is PsiSourcedPolySymbol -> symbol.source
+    is PsiLinkedPolySymbol -> symbol.source
     is PolySymbolDeclaredInPsi -> symbol.sourceElement
     else -> null
   }
@@ -516,7 +516,7 @@ private fun <T> injectionThenHost(file: PsiFile, offset: Int, computation: (PsiF
 
 fun CodeInsightTestFixture.resolveToPolySymbolSource(signature: String): PsiElement {
   val polySymbol = resolvePolySymbolReference(signature)
-  val result = assertInstanceOf<PsiSourcedPolySymbol>(polySymbol).source
+  val result = assertInstanceOf<PsiLinkedPolySymbol>(polySymbol).source
   assertNotNull("PolySymbol $polySymbol source is null", result)
   return result!!
 }
@@ -692,7 +692,7 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
 
 fun CodeInsightTestFixture.canRenamePolySymbolAtCaret(): Boolean =
   polySymbolAtCaret().let {
-    it is RenameTarget || it?.renameTarget != null || (it is PsiSourcedPolySymbol && it.source != null)
+    it is RenameTarget || it?.renameTarget != null || (it is PsiLinkedPolySymbol && it.source != null)
   }
 
 fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
@@ -706,7 +706,7 @@ fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
   if (target == null) {
     target = when (symbol) {
       is RenameTarget -> symbol
-      is PsiSourcedPolySymbol -> {
+      is PsiLinkedPolySymbol -> {
         val psiTarget = symbol.source
                         ?: throw AssertionError("Symbol $symbol provides null source")
         renameElement(psiTarget, newName)

@@ -40,7 +40,7 @@ import com.intellij.psi.PsiElement
  * @see [PolySymbolDeclaredInPsi]
  *
  */
-interface PsiSourcedPolySymbol : PolySymbol {
+interface PsiLinkedPolySymbol : PolySymbol {
 
   override val psiContext: PsiElement?
     get() = source
@@ -50,7 +50,7 @@ interface PsiSourcedPolySymbol : PolySymbol {
    */
   val source: PsiElement?
 
-  override fun createPointer(): Pointer<out PsiSourcedPolySymbol>
+  override fun createPointer(): Pointer<out PsiLinkedPolySymbol>
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     source?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
@@ -61,7 +61,7 @@ interface PsiSourcedPolySymbol : PolySymbol {
     val target = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     return when {
       target != null -> target.manager.areElementsEquivalent(source, target)
-      symbol is PsiSourcedPolySymbol -> source == symbol.source
+      symbol is PsiLinkedPolySymbol -> source == symbol.source
       else -> false
     }
   }

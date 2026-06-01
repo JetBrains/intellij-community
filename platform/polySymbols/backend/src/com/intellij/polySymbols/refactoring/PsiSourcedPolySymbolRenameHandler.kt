@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -16,12 +16,12 @@ import com.intellij.refactoring.rename.RenameHandler
 
 internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
-  private var symbol: PsiSourcedPolySymbol? = null
+  private var symbol: PsiLinkedPolySymbol? = null
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
     if (editor == null || file == null || dataContext == null) return
     val target = dataContext.getData(CommonDataKeys.SYMBOLS)
-                   ?.filterIsInstance<PsiSourcedPolySymbol>()
+                   ?.filterIsInstance<PsiLinkedPolySymbol>()
                    ?.map { it.source }
                    ?.singleOrNull() ?: return
 
@@ -35,7 +35,7 @@ internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler 
     dataContext.getData(CommonDataKeys.SYMBOLS)
       ?.singleOrNull { acceptSymbolForPsiSourcedPolySymbolRenameHandler(it) }
       ?.also {
-        symbol = it as PsiSourcedPolySymbol
+        symbol = it as PsiLinkedPolySymbol
       } != null
 
   override fun getActionTitle(): @NlsActions.ActionText String? =

@@ -13,7 +13,7 @@ class PolySymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
   override fun searchTarget(project: Project, symbol: PolySymbol): SearchTarget? =
     when (symbol) {
       is SearchTarget -> null
-      is PsiSourcedPolySymbol ->
+      is PsiLinkedPolySymbol ->
         symbol.searchTarget
         ?: if (symbol.source is PsiNamedElement)
           PolySymbolSearchTarget.create(symbol)

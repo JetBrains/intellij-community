@@ -16,7 +16,7 @@ import com.intellij.polySymbols.html.getHtmlAttributeValue
 import com.intellij.polySymbols.js.JsSymbolKindProperty
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolWithPattern
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport.TypeSupportProperty
 import com.intellij.polySymbols.utils.completeMatch
@@ -97,7 +97,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level,
                     "origin",
                     "${documentation?.library} ($framework)")
-      printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
+      printProperty(level, "source", (source as? PsiLinkedPolySymbol)?.source)
       printProperty(level, "type", source[TypeSupportProperty]?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.getHtmlAttributeValue(null))
       printProperty(level, "complete", source.completeMatch)

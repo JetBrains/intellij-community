@@ -23,7 +23,7 @@ import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
@@ -62,7 +62,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
     private val queryExecutor: PolySymbolQueryExecutor,
-  ) : CustomElementsSymbol, PsiSourcedPolySymbol {
+  ) : CustomElementsSymbol, PsiLinkedPolySymbol {
 
     private var _superContributions: List<PolySymbol>? = null
 

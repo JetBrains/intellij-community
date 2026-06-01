@@ -26,7 +26,7 @@ import com.intellij.polySymbols.patterns.polySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
@@ -342,12 +342,12 @@ internal class BuiltPolySymbolWithPattern(
   override fun createPointer(): Pointer<out PolySymbol> = createPointerImpl()
 }
 
-internal class BuiltPsiSourcedPolySymbol(
+internal class BuiltPsiLinkedPolySymbol(
   config: BuiltConfig,
   dependencySource: DependencySource,
   dependencyScope: DependencyScope,
   private val sourceGetter: () -> PsiElement?,
-) : BuiltPolySymbolBase(config, dependencySource, dependencyScope), PsiSourcedPolySymbol {
+) : BuiltPolySymbolBase(config, dependencySource, dependencyScope), PsiLinkedPolySymbol {
 
   override val source: PsiElement?
     get() = dependencyScope.withinScope { sourceGetter() }
@@ -358,30 +358,30 @@ internal class BuiltPsiSourcedPolySymbol(
     if (config.navigationTargetsGetter != null)
       super<BuiltPolySymbolBase>.getNavigationTargets(project)
     else
-      super<PsiSourcedPolySymbol>.getNavigationTargets(project)
+      super<PsiLinkedPolySymbol>.getNavigationTargets(project)
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =
-    super<PsiSourcedPolySymbol>.isEquivalentTo(symbol)
+    super<PsiLinkedPolySymbol>.isEquivalentTo(symbol)
     || super<BuiltPolySymbolBase>.isEquivalentTo(symbol)
 
   override fun buildConstructor(): (config: BuiltConfig, source: DependencySource, scope: DependencyScope) -> PolySymbol {
     val sourceGetter = sourceGetter
     return { config, source, scope ->
-      BuiltPsiSourcedPolySymbol(config, source, scope, sourceGetter)
+      BuiltPsiLinkedPolySymbol(config, source, scope, sourceGetter)
     }
   }
 
   override fun equals(other: Any?): Boolean =
     super.equals(other)
-    && other is BuiltPsiSourcedPolySymbol
+    && other is BuiltPsiLinkedPolySymbol
     && other.sourceGetter == sourceGetter
 
   override fun hashCode(): Int =
     super.hashCode() * 31 + sourceGetter.hashCode()
 
   @Suppress("UNCHECKED_CAST")
-  override fun createPointer(): Pointer<out PsiSourcedPolySymbol> =
-    createPointerImpl() as Pointer<out PsiSourcedPolySymbol>
+  override fun createPointer(): Pointer<out PsiLinkedPolySymbol> =
+    createPointerImpl() as Pointer<out PsiLinkedPolySymbol>
 }
 
 internal class BuiltPolySymbolDeclaredInPsi(

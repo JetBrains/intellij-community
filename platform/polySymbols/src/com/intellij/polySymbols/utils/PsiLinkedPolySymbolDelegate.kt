@@ -4,10 +4,10 @@ package com.intellij.polySymbols.utils
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 
-interface PsiSourcedPolySymbolDelegate<T : PsiSourcedPolySymbol> : PolySymbolDelegate<T>, PsiSourcedPolySymbol {
+interface PsiLinkedPolySymbolDelegate<T : PsiLinkedPolySymbol> : PolySymbolDelegate<T>, PsiLinkedPolySymbol {
 
   override val source: PsiElement?
     get() = delegate.source
@@ -18,6 +18,6 @@ interface PsiSourcedPolySymbolDelegate<T : PsiSourcedPolySymbol> : PolySymbolDel
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     delegate.getNavigationTargets(project)
 
-  override fun createPointer(): Pointer<out PsiSourcedPolySymbolDelegate<T>>
+  override fun createPointer(): Pointer<out PsiLinkedPolySymbolDelegate<T>>
 
 }

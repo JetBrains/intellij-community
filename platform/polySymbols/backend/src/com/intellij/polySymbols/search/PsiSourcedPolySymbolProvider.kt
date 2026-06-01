@@ -11,7 +11,7 @@ import org.jetbrains.annotations.TestOnly
  */
 interface PsiSourcedPolySymbolProvider {
 
-  fun getSymbols(element: PsiElement): List<PsiSourcedPolySymbol>
+  fun getSymbols(element: PsiElement): List<PsiLinkedPolySymbol>
 
   @Suppress("TestOnlyProblems")
   companion object {
@@ -19,7 +19,7 @@ interface PsiSourcedPolySymbolProvider {
     @JvmField
     val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.Companion.create<PsiSourcedPolySymbolProvider>("com.intellij.polySymbols.psiSourcedSymbolProvider")
 
-    fun getAllSymbols(element: PsiElement): Collection<PsiSourcedPolySymbol> =
+    fun getAllSymbols(element: PsiElement): Collection<PsiLinkedPolySymbol> =
       EP_NAME.extensionList.flatMap { it.getSymbols(element) }
 
   }

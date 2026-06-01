@@ -21,7 +21,7 @@ import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.coalesceApiStatus
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
@@ -112,7 +112,7 @@ internal open class PolySymbolMatchBase internal constructor(
 
 }
 
-private class PsiSourcedPolySymbolMatch(
+private class PsiLinkedPolySymbolMatch(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
   kind: PolySymbolKind,
@@ -120,10 +120,10 @@ private class PsiSourcedPolySymbolMatch(
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
 ) : PolySymbolMatchBase(matchedName, nameSegments, kind, explicitPriority, explicitProximity, additionalProperties),
-    PsiSourcedPolySymbolMatchMixin {
+    PsiLinkedPolySymbolMatchMixin {
 
-  override fun createPointer(): Pointer<PsiSourcedPolySymbolMatch> =
-    PolySymbolMatchPointer<PsiSourcedPolySymbolMatch>(this, ::PsiSourcedPolySymbolMatch)
+  override fun createPointer(): Pointer<PsiLinkedPolySymbolMatch> =
+    PolySymbolMatchPointer<PsiLinkedPolySymbolMatch>(this, ::PsiLinkedPolySymbolMatch)
 
 }
 
@@ -136,10 +136,10 @@ private fun create(
   additionalProperties: Map<String, Any>,
 ): PolySymbolMatch {
   val psiSourcedMixin =
-    nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
+    nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiLinkedPolySymbol }) }
   return if (psiSourcedMixin) {
-    PsiSourcedPolySymbolMatch(matchedName, nameSegments, kind, explicitPriority,
-                              explicitProximity, additionalProperties)
+    PsiLinkedPolySymbolMatch(matchedName, nameSegments, kind, explicitPriority,
+                             explicitProximity, additionalProperties)
   }
   else {
     PolySymbolMatchBase(matchedName, nameSegments, kind,
@@ -237,7 +237,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
 
 }
 
-private interface PsiSourcedPolySymbolMatchMixin : PolySymbolMatchMixin, PsiSourcedPolySymbol {
+private interface PsiLinkedPolySymbolMatchMixin : PolySymbolMatchMixin, PsiLinkedPolySymbol {
 
   override val psiContext: PsiElement?
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -245,7 +245,7 @@ private interface PsiSourcedPolySymbolMatchMixin : PolySymbolMatchMixin, PsiSour
 
   override val source: PsiElement?
     get() = reversedSegments().flatMap { it.symbols }
-      .mapNotNull { (it as? PsiSourcedPolySymbol)?.source }.singleOrNull()
+      .mapNotNull { (it as? PsiLinkedPolySymbol)?.source }.singleOrNull()
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     super<PolySymbolMatchMixin>.getNavigationTargets(project)

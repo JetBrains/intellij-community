@@ -40,15 +40,15 @@ class PsiSourcedPolySymbolRequestResultProcessor(
         .forEach { ref ->
           ProgressManager.checkCanceled()
 
-          val psiSourcedPolySymbols = ref.resolveReference()
-            .filterIsInstance<PsiSourcedPolySymbol>()
+          val psiLinkedPolySymbols = ref.resolveReference()
+            .filterIsInstance<PsiLinkedPolySymbol>()
             .ifEmpty { return@forEach }
 
           val equivalentSymbol = if (targetSymbols.isEmpty()) {
-            psiSourcedPolySymbols.find { it.isEquivalentTo(myTargetSymbol) }
+            psiLinkedPolySymbols.find { it.isEquivalentTo(myTargetSymbol) }
           }
           else {
-            targetSymbols.find { targetSymbol -> psiSourcedPolySymbols.any { it.isEquivalentTo(targetSymbol) } }
+            targetSymbols.find { targetSymbol -> psiLinkedPolySymbols.any { it.isEquivalentTo(targetSymbol) } }
           }
 
           equivalentSymbol ?: return@forEach

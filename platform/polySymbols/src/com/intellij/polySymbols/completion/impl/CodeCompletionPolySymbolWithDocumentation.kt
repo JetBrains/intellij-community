@@ -7,9 +7,9 @@ import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDelegate
-import com.intellij.polySymbols.utils.PsiSourcedPolySymbolDelegate
+import com.intellij.polySymbols.utils.PsiLinkedPolySymbolDelegate
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 
@@ -39,18 +39,18 @@ class CodeCompletionPolySymbolWithDocumentation(
 
 }
 
-class PsiSourcedCodeCompletionPolySymbolWithDocumentation(
-  override val delegate: PsiSourcedPolySymbol,
+class PsiLinkedCodeCompletionPolySymbolWithDocumentation(
+  override val delegate: PsiLinkedPolySymbol,
   private val location: PsiElement,
-) : PsiSourcedPolySymbolDelegate<PsiSourcedPolySymbol>, DocumentationSymbol {
+) : PsiLinkedPolySymbolDelegate<PsiLinkedPolySymbol>, DocumentationSymbol {
 
-  override fun createPointer(): Pointer<PsiSourcedCodeCompletionPolySymbolWithDocumentation> {
+  override fun createPointer(): Pointer<PsiLinkedCodeCompletionPolySymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()
     val locationPtr = location.createSmartPointer()
     return Pointer {
       val delegate = delegatePtr.dereference() ?: return@Pointer null
       val location = locationPtr.dereference() ?: return@Pointer null
-      PsiSourcedCodeCompletionPolySymbolWithDocumentation(delegate, location)
+      PsiLinkedCodeCompletionPolySymbolWithDocumentation(delegate, location)
     }
   }
 
