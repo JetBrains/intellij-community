@@ -66,54 +66,94 @@ class WindowsPathUtilsTest {
 
   @Test
   fun `expandPerDriveRoots inserts drive zone when mount has no marker`() {
-    val roots = WindowsPathUtils.expandPerDriveRoots("/\$tcp.ij/abc")
+    val roots = WindowsPathUtils.expandPerDriveRoots($$"""/$tcp.ij/abc""")
     assertEquals(26, roots.size)
-    assertEquals("/\$tcp.ij/abc/@/A", roots.first())
-    assertEquals("/\$tcp.ij/abc/@/Z", roots.last())
+    assertEquals($$"""/$tcp.ij/abc/@/A""", roots.first())
+    assertEquals($$"""/$tcp.ij/abc/@/Z""", roots.last())
   }
 
   @Test
   fun `expandPerDriveRoots reuses drive zone when mount already ends with it`() {
-    val roots = WindowsPathUtils.expandPerDriveRoots("/\$tcp.ij/abc/@")
+    val roots = WindowsPathUtils.expandPerDriveRoots($$"""/$tcp.ij/abc/@""")
     assertEquals(26, roots.size)
-    assertEquals("/\$tcp.ij/abc/@/A", roots.first())
-    assertEquals("/\$tcp.ij/abc/@/Z", roots.last())
+    assertEquals($$"""/$tcp.ij/abc/@/A""", roots.first())
+    assertEquals($$"""/$tcp.ij/abc/@/Z""", roots.last())
   }
 
   @Test
   fun `extractUncRoot returns null for drive letter paths`() {
-    assertNull(WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc/@", "/\$tcp.ij/abc/@/C/Users"))
-    assertNull(WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc", "/\$tcp.ij/abc/@/C/Users"))
+    assertNull(WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc/@""", $$"""/$tcp.ij/abc/@/C/Users"""))
+    assertNull(WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc""", $$"""/$tcp.ij/abc/@/C/Users"""))
   }
 
   @Test
   fun `extractUncRoot returns server-share for UNC under mount with marker`() {
     assertEquals(
-      "/\$tcp.ij/abc/@/server/share",
-      WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc/@", "/\$tcp.ij/abc/@/server/share/dir/file"),
+      $$"""/$tcp.ij/abc/@/server/share""",
+      WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc/@""", $$"""/$tcp.ij/abc/@/server/share/dir/file"""),
     )
   }
 
   @Test
   fun `extractUncRoot returns server-share for UNC under mount without marker`() {
     assertEquals(
-      "/\$tcp.ij/abc/server/share",
-      WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc", "/\$tcp.ij/abc/server/share/dir/file"),
+      $$"""/$tcp.ij/abc/server/share""",
+      WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc""", $$"""/$tcp.ij/abc/server/share/dir/file"""),
     )
   }
 
   @Test
   fun `extractUncRoot returns null for path outside mount`() {
-    assertNull(WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc/@", "/\$tcp.ij/xyz/@/server/share"))
+    assertNull(WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc/@""", $$"""/$tcp.ij/xyz/@/server/share"""))
   }
 
   @Test
   fun `extractUncRoot returns null when share segment is missing`() {
-    assertNull(WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc/@", "/\$tcp.ij/abc/@/server"))
+    assertNull(WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc/@""", $$"""/$tcp.ij/abc/@/server"""))
   }
 
   @Test
   fun `extractUncRoot rejects path that only shares string prefix with mount`() {
-    assertNull(WindowsPathUtils.extractUncRoot("/\$tcp.ij/abc", "/\$tcp.ij/abcdef/server/share"))
+    assertNull(WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc""", $$"""/$tcp.ij/abcdef/server/share"""))
+  }
+
+  @Test
+  fun `expandPerDriveRoots trims trailing slash on mount`() {
+    val roots = WindowsPathUtils.expandPerDriveRoots($$"""/$tcp.ij/abc/@/""")
+    assertEquals(26, roots.size)
+    assertEquals($$"""/$tcp.ij/abc/@/A""", roots.first())
+    assertEquals($$"""/$tcp.ij/abc/@/Z""", roots.last())
+  }
+
+  @Test
+  fun `expandPerDriveRoots trims trailing slash on mount without marker`() {
+    val roots = WindowsPathUtils.expandPerDriveRoots($$"""/$tcp.ij/abc/""")
+    assertEquals(26, roots.size)
+    assertEquals($$"""/$tcp.ij/abc/@/A""", roots.first())
+    assertEquals($$"""/$tcp.ij/abc/@/Z""", roots.last())
+  }
+
+  @Test
+  fun `expandPerDriveRoots normalizes backslashes on Windows-host mount`() {
+    val roots = WindowsPathUtils.expandPerDriveRoots("""\\tcp.ij\abc""")
+    assertEquals(26, roots.size)
+    assertEquals("//tcp.ij/abc/@/A", roots.first())
+    assertEquals("//tcp.ij/abc/@/Z", roots.last())
+  }
+
+  @Test
+  fun `extractUncRoot accepts mount with trailing slash`() {
+    assertEquals(
+      $$"""/$tcp.ij/abc/@/server/share""",
+      WindowsPathUtils.extractUncRoot($$"""/$tcp.ij/abc/@/""", $$"""/$tcp.ij/abc/@/server/share/dir/file"""),
+    )
+  }
+
+  @Test
+  fun `extractUncRoot accepts backslash-separated mount`() {
+    assertEquals(
+      "//tcp.ij/abc/server/share",
+      WindowsPathUtils.extractUncRoot("""\\tcp.ij\abc""", "//tcp.ij/abc/server/share/dir/file"),
+    )
   }
 }

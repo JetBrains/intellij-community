@@ -33,10 +33,13 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     val (internalName, osFamily) = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
     val descriptor = TcpEelPathParser.toDescriptor(internalName, osFamily) ?: return null
 
-    if (descriptor.osFamily == EelOsFamily.Windows) {
-      WindowsPathUtils.extractUncRoot(descriptor.rootPathString, sanitizedPath)?.let { uncRoot ->
-        seenUncRoots.computeIfAbsent(descriptor) { ConcurrentHashMap.newKeySet() }.add(uncRoot)
+    when (descriptor.osFamily) {
+      EelOsFamily.Windows -> {
+        WindowsPathUtils.extractUncRoot(descriptor.rootPathString, sanitizedPath)?.let { uncRoot ->
+          seenUncRoots.computeIfAbsent(descriptor) { ConcurrentHashMap.newKeySet() }.add(uncRoot)
+        }
       }
+      EelOsFamily.Posix -> Unit
     }
 
     return cache.computeIfAbsent(descriptor) { createFilesystem(internalName, localFS, descriptor) }
@@ -75,10 +78,9 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     // Non-existent drives just return null from findRoot - VFS does not enumerate them eagerly.
     return cache.keys.flatMap { descriptor ->
       val root = descriptor.rootPathString
-      if (descriptor.osFamily == EelOsFamily.Windows) {
-        WindowsPathUtils.expandPerDriveRoots(root) + (seenUncRoots[descriptor] ?: emptySet())
-      } else {
-        listOf(root)
+      when (descriptor.osFamily) {
+        EelOsFamily.Windows -> WindowsPathUtils.expandPerDriveRoots(root) + (seenUncRoots[descriptor] ?: emptySet())
+        EelOsFamily.Posix -> listOf(root)
       }
     }
   }

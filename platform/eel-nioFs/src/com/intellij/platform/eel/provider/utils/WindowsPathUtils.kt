@@ -18,14 +18,19 @@ object WindowsPathUtils {
    * `Path.of(p).getRoot().toString()` and `getRootDirectories()`; for Windows targets `getRoot()`
    * is per-drive (`/<mount>/@/C`), so customRoots must list each drive.
    *
-   * If [mountRoot] already ends with `/@`, drive letters are appended directly; otherwise the
-   * `/@` drive-encoding zone is inserted to match composition in [resolveEelPathOntoRoot].
+   * [mountRoot] is normalized internally to forward slashes with no trailing `/` (matching the
+   * `@MultiRoutingFileSystemPath` convention enforced by `MultiRoutingFileSystem.sanitizeRoot`),
+   * so it is safe to pass a raw `Path.toString()` result from any host OS.
+   *
+   * If the normalized mount already ends with `/@`, drive letters are appended directly; otherwise
+   * the `/@` drive-encoding zone is inserted to match composition in [resolveEelPathOntoRoot].
    *
    * No I/O. Non-existent drives are filtered out lazily by VFS (`findRoot` returns null).
    */
   fun expandPerDriveRoots(mountRoot: String): List<String> {
-    val driveZone = if (mountRoot.endsWith("/$DRIVE_PATH_PREPEND")) "" else "/$DRIVE_PATH_PREPEND"
-    return ('A'..'Z').map { "$mountRoot$driveZone/$it" }
+    val root = mountRoot.replace('\\', '/').trimEnd('/')
+    val driveZone = if (root.endsWith("/$DRIVE_PATH_PREPEND")) "" else "/$DRIVE_PATH_PREPEND"
+    return ('A'..'Z').map { "$root$driveZone/$it" }
   }
 
   /**
@@ -36,16 +41,30 @@ object WindowsPathUtils {
    *
    * UNC composition does not insert the `/@` zone, so the resulting root is `<mountRoot>/<server>/<share>`.
    * Use in `MultiRoutingFileSystemBackend.compute` to lazily collect seen UNC roots for `getCustomRoots`.
+   *
+   * [mountRoot] is normalized internally to forward slashes with no trailing `/` (matching
+   * `MultiRoutingFileSystem.sanitizeRoot`); [path] is assumed already sanitized (it is the
+   * `sanitizedPath` passed to `compute`).
+   *
+   * Examples (mount with `/@` drive-encoding zone vs. without):
+   * ```
+   * extractUncRoot("/$tcp.ij/abc/@", "/$tcp.ij/abc/@/server/share/dir") == "/$tcp.ij/abc/@/server/share"
+   * extractUncRoot("/$tcp.ij/abc",   "/$tcp.ij/abc/server/share/dir")   == "/$tcp.ij/abc/server/share"
+   * extractUncRoot("/$tcp.ij/abc/@", "/$tcp.ij/abc/@/C/Users")          == null  // drive letter, not UNC
+   * extractUncRoot("/$tcp.ij/abc",   "/$tcp.ij/xyz/server/share")       == null  // outside mount
+   * extractUncRoot("/$tcp.ij/abc/@", "/$tcp.ij/abc/@/server")           == null  // missing share segment
+   * ```
    */
   fun extractUncRoot(mountRoot: String, path: String): String? {
-    if (path != mountRoot && !path.startsWith("$mountRoot/")) return null
-    var rest = path.removePrefix(mountRoot).removePrefix("/")
-    if (!mountRoot.endsWith("/$DRIVE_PATH_PREPEND")) rest = rest.removePrefix("$DRIVE_PATH_PREPEND/")
+    val root = mountRoot.replace('\\', '/').trimEnd('/')
+    if (path != root && !path.startsWith("$root/")) return null
+    var rest = path.removePrefix(root).removePrefix("/")
+    if (!root.endsWith("/$DRIVE_PATH_PREPEND")) rest = rest.removePrefix("$DRIVE_PATH_PREPEND/")
     // Drive letters are single-char (`C`, `D`, ...); UNC server names are >= 2 chars.
     val server = rest.substringBefore('/', "").takeIf { it.length > 1 } ?: return null
     val afterServer = rest.removePrefix(server).removePrefix("/")
     val share = afterServer.substringBefore('/', afterServer).takeIf { it.isNotEmpty() } ?: return null
-    return "$mountRoot/$server/$share"
+    return "$root/$server/$share"
   }
 
   /**
