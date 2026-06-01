@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -230,15 +231,30 @@ class PluginInstallOperation(
 
     val prepared = downloader.prepareToInstall(myIndicator)
     if (prepared) {
-      val descriptor = downloader.descriptor as IdeaPluginDescriptorImpl
+      val descriptor = downloader.descriptor as PluginMainDescriptor
       if (!checkMissingDependencies(descriptor, pluginIdsBeingInstalled)) {
         return false
       }
+      val newPluginVersions = buildList {
+        add(descriptor)
+        addAll(myPendingDynamicPluginInstalls.map { it.pluginDescriptor as PluginMainDescriptor })
+      }
       val allowNoRestart = myAllowInstallWithoutRestart &&
-                           DynamicPlugins.allowLoadUnloadWithoutRestart(
-                             descriptor, null,
-                             ContainerUtil.map(myPendingDynamicPluginInstalls) { pluginInstall -> pluginInstall.pluginDescriptor },
-                           )
+                           runBlockingCancellable {
+                             if (DynamicPluginsSupport.getInstance() != null) {
+                               DynamicPlugins.checkCanReconfigureWithoutRestart(
+                                 addNewCustomPlugins = newPluginVersions,
+                                 forceRemovePlugins = emptyList(),
+                                 extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId })
+                               )
+                             }
+                             else {
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(
+                                 descriptor, null,
+                                 ContainerUtil.map(myPendingDynamicPluginInstalls) { pluginInstall -> pluginInstall.pluginDescriptor },
+                               )
+                             }
+                           }
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(PendingDynamicPluginInstall(downloader.getFilePath(), descriptor))
         val state = InstalledPluginsState.getInstanceIfLoaded()
