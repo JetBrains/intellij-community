@@ -383,6 +383,7 @@ private val externalNonBundledPluginCompatibilityDependencies = listOf(
   "intellij.libraries.groovy",
   "intellij.platform.structureView.impl",
   "intellij.platform.todo",
+  "intellij.platform.bookmarks",
 ).map { DependencyRef.of(PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE)) }
 
 /**
