@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -119,6 +119,40 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(libScope.compare(file1, fileOutsideProject) > 0);
     assertTrue(libScope.compare(fileOutsideProject, file1) < 0);
     assertEquals(0, libScope.compare(fileOutsideProject, fileOutsideProject));
+  }
+
+  /**
+   * A library reachable both transitively-early and directly-late must be ranked by its EARLIEST occurrence
+   * on the runtime classpath:
+   * <pre>
+   *   Main -> Dep1 -> Lib1 (org/example/A)
+   *        -> Dep2 -> Lib2 (org/example/A)
+   *        -> Lib1            (the same library again, directly, listed last)
+   * </pre>
+   * Lib1 is first reachable via Dep1 (before Dep2/Lib2), so its {@code A} must win over Lib2's. This regressed
+   * when {@code ModuleWithDependenciesScope.calcRootsMultiverse} assigned priorities last-wins: the direct
+   * Lib1 entry (listed last) overwrote Lib1's early index, pushing it behind Lib2.
+   */
+  public void testRuntimeScopeRanksLibraryByFirstReachableEntry() {
+    Module main = getModule();
+    Module dep1 = createModule("dep1");
+    Module dep2 = createModule("dep2");
+
+    VirtualFile lib1Root = myFixture.findOrCreateDir("lib1");
+    VirtualFile lib2Root = myFixture.findOrCreateDir("lib2");
+    VirtualFile a1 = myFixture.createFile("lib1/org/example/A.class");
+    VirtualFile a2 = myFixture.createFile("lib2/org/example/A.class");
+
+    Library lib1 = PsiTestUtil.addProjectLibrary(dep1, "lib1", List.of(lib1Root), Collections.emptyList());
+    PsiTestUtil.addProjectLibrary(dep2, "lib2", List.of(lib2Root), Collections.emptyList());
+
+    ModuleRootModificationUtil.addDependency(main, dep1);
+    ModuleRootModificationUtil.addDependency(main, dep2);
+    ModuleRootModificationUtil.addDependency(main, lib1); // the same Lib1, directly — appended last
+
+    GlobalSearchScope runtimeScope = main.getModuleRuntimeScope(true);
+    assertTrue("A must resolve from Lib1 (reachable first via Dep1), not Lib2", runtimeScope.compare(a1, a2) > 0);
+    assertTrue(runtimeScope.compare(a2, a1) < 0);
   }
 
   public void testTestOnlyModuleDependency() throws Exception {

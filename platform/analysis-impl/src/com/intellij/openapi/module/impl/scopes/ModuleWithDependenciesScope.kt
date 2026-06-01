@@ -139,7 +139,7 @@ class ModuleWithDependenciesScope internal constructor(
       var i = 1
       val map = Object2IntOpenHashMap<VirtualFile>(roots.size)
       for (root in roots) {
-        map.put(root, i++)
+        map.putIfAbsent(root, i++)
       }
       return map
     }
@@ -153,7 +153,7 @@ class ModuleWithDependenciesScope internal constructor(
       var i = 1
       val map = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, ScopeRootDescriptor>(entries.size)
       for (root in entries) {
-        map[root.root] = ScopeRootDescriptor(root.orderEntry, i++)
+        map.putIfAbsent(root.root, ScopeRootDescriptor(root.orderEntry, i++))
       }
       return map
     }
