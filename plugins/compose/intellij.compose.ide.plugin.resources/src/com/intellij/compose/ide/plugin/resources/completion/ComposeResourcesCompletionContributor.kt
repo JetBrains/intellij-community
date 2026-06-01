@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.compose.ide.plugin.resources.getComposeResourcesDir
 import com.intellij.compose.ide.plugin.resources.getResourceItem
+import com.intellij.compose.ide.plugin.resources.isComposeResClass
 import com.intellij.compose.ide.plugin.resources.isComposeResourceProperty
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.util.module
@@ -42,23 +43,26 @@ internal class ComposeResourcesCompletionContributor : CompletionContributor() {
 
 private fun getComposeResourceType(parameters: CompletionParameters): ResourceType? {
   val position = parameters.position
-  val dotExpression = position.parent?.parent as? KtDotQualifiedExpression ?: return null
-  val receiverText = dotExpression.receiverExpression.text
-  return ResourceType.entries.firstOrNull { receiverText.endsWith(".${it.accessorName}") }
+  val outerExpression = position.parent?.parent as? KtDotQualifiedExpression ?: return null
+  val innerExpression = outerExpression.receiverExpression as? KtDotQualifiedExpression ?: return null
+  if (!innerExpression.isComposeResClass) return null
+  val accessorName = innerExpression.selectorExpression?.text ?: return null
+  return ResourceType.entries.firstOrNull { it.accessorName == accessorName }
 }
 
 private fun CompletionResult.decorateDrawable(psiElement: KtProperty, iconCache: ComposeResourcesGutterIconCache): CompletionResult {
-  val resourceFile = psiElement.resolveDrawableFile() ?: return this
+  val resourceFile = psiElement.resolveResourceFile() ?: return this
   val original = lookupElement
   val cachedIcon = iconCache.getIconIfCached(resourceFile)
 
-  val decorated = if (cachedIcon != null) FastDrawableResourceLookupElement(original, cachedIcon)
-  else SlowDrawableResourceLookupElement(original, resourceFile, iconCache)
+  val decorated =
+    if (cachedIcon != null) FastDrawableResourceLookupElement(original, cachedIcon)
+    else SlowDrawableResourceLookupElement(original, resourceFile, iconCache)
 
   return withLookupElement(decorated)
 }
 
-private fun KtProperty.resolveDrawableFile(): VirtualFile? {
+private fun KtProperty.resolveResourceFile(): VirtualFile? {
   val module = module ?: return null
   val resourceItem = getResourceItem(this) ?: return null
   val composeResourcesDir = module.getComposeResourcesDir() ?: return null

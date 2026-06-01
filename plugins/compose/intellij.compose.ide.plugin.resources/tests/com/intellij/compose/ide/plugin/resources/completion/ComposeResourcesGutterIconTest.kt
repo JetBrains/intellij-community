@@ -27,6 +27,7 @@ import javax.swing.Icon
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeBytes
+import kotlin.test.assertNotNull as kAssertNotNull
 
 private const val IMAGE_DIFF_THRESHOLD = 1.25f
 
@@ -41,15 +42,13 @@ class ComposeResourcesGutterIconTest : BasePlatformTestCase() {
     assertTrue("Test image not found: ${file.absolutePath}", file.exists())
 
     val vf = LocalFileSystem.getInstance().findFileByPath(file.absolutePath)
-    assertNotNull("Could not find VirtualFile for: ${file.absolutePath}", vf)
+    kAssertNotNull(vf, "Could not find VirtualFile for: ${file.absolutePath}")
 
-    val gutterIcon = createXmlAndroidGutterIcon(vf!!, maxWidth)
-    assertNotNull("Gutter icon should not be null", gutterIcon)
-    gutterIcon!!
+    val gutterIcon = createXmlAndroidGutterIcon(vf, maxWidth)
+    kAssertNotNull(gutterIcon, "Gutter icon should not be null")
 
     val composeIcon = renderXmlComposeIcon(vf, maxWidth)
-    assertNotNull("Compose icon should not be null", gutterIcon)
-    composeIcon!!
+    kAssertNotNull(composeIcon, "Compose icon should not be null")
 
     val composeRendered = IconUtil.toBufferedImage(composeIcon)
     val gutterRendered = IconUtil.toBufferedImage(gutterIcon)
@@ -141,12 +140,10 @@ class ComposeResourcesGutterIconTest : BasePlatformTestCase() {
 
   private fun assertBitmapIconsMatch(virtualFile: VirtualFile, compareImages: Boolean = true) {
     val composeIcon = ComposeResourcesGutterIconFactory.renderBitmapDrawable(virtualFile, maxWidth)
-    assertNotNull("renderBitmapDrawable should produce a non-null icon", composeIcon)
-    composeIcon!!
+    kAssertNotNull(composeIcon, "renderBitmapDrawable should produce a non-null icon")
 
     val gutterIcon = callGutterIconFactoryCreateBitmapIcon(virtualFile, maxWidth, maxWidth)
-    assertNotNull("GutterIconFactory should produce a non-null icon", gutterIcon)
-    gutterIcon!!
+    kAssertNotNull(gutterIcon, "GutterIconFactory should produce a non-null icon")
 
     assertEquals("Icon widths should match", gutterIcon.iconWidth, composeIcon.iconWidth)
     assertEquals("Icon heights should match", gutterIcon.iconHeight, composeIcon.iconHeight)
@@ -176,8 +173,8 @@ class ComposeResourcesGutterIconTest : BasePlatformTestCase() {
       }
       tempFile.writeBytes(bytes)
       val vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempFile)
-      assertNotNull("Should find temp file as VirtualFile", vf)
-      block(vf!!)
+      kAssertNotNull(vf, "Should find temp file as VirtualFile")
+      block(vf)
     }
     finally {
       tempFile.deleteIfExists()

@@ -18,6 +18,7 @@
 package com.intellij.compose.ide.plugin.resources.completion
 
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.Gray
 import com.intellij.ui.scale.ScaleContext
@@ -25,7 +26,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.Icon
@@ -39,21 +39,20 @@ internal object ComposeResourcesGutterIconFactory {
 
   fun renderDrawableIcon(file: VirtualFile): Icon? = try {
     val maxSize = JBUI.scale(ICON_SIZE)
-    if (file.extension.equals("xml")) renderXmlDrawableIcon(file, maxSize)
+    if (file.extension == "xml") renderXmlDrawableIcon(file, maxSize)
     else renderBitmapDrawable(file, maxSize)
   }
-  catch (_: Exception) {
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
     null
   }
 
   fun createScaledIcon(bufferedImage: BufferedImage, maxWidth: Int, maxHeight: Int): Icon {
-    var image: Image = ImageUtil.ensureHiDPI(bufferedImage, ScaleContext.create())
+    var image = ImageUtil.ensureHiDPI(bufferedImage, ScaleContext.create())
     val imageWidth = image.getWidth(null)
     val imageHeight = image.getHeight(null)
 
     if (imageWidth <= maxWidth && imageHeight <= maxHeight) return IconUtil.createImageIcon(bufferedImage)
-
-    var scale = (maxWidth / imageWidth.toDouble()).coerceAtMost(maxHeight / imageHeight.toDouble())
 
     if (bufferedImage.type == BufferedImage.TYPE_BYTE_INDEXED) {
       val bg = ImageUtil.createImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB)
@@ -65,13 +64,8 @@ internal object ComposeResourcesGutterIconFactory {
       image = bg
     }
 
+    val scale = (maxWidth / imageWidth.toDouble()).coerceAtMost(maxHeight / imageHeight.toDouble())
     image = ImageUtil.scaleImage(image, scale)
-    if (image.getWidth(null) > maxWidth || image.getHeight(null) > maxHeight) {
-      image = ImageUtil.toBufferedImage(image, false)
-      scale = (maxWidth / image.getWidth(null).toDouble()).coerceAtMost(maxHeight / image.getHeight(null).toDouble())
-      image = ImageUtil.scaleImage(image, scale)
-    }
-
     return IconUtil.createImageIcon(image)
   }
 
@@ -83,7 +77,7 @@ internal object ComposeResourcesGutterIconFactory {
   private fun renderXmlDrawableIcon(file: VirtualFile, maxSize: Int): Icon? {
     val pixelSize = JBUI.pixScale(maxSize.toFloat()).toInt()
     val renderer = BaseVectorDrawablePreviewRenderer.getInstance() ?: return null
-    val xmlContent = String(file.contentsToByteArray(), Charsets.UTF_8)
+    val xmlContent = String(file.contentsToByteArray(), file.charset)
     val result = renderer.renderPreview(xmlContent, pixelSize, pixelSize)
     val bufferedImage = (result as? BaseVectorDrawablePreviewRenderer.RenderResult.Success)?.image ?: return null
     val image = ImageUtil.ensureHiDPI(bufferedImage, ScaleContext.create())
