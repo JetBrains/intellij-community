@@ -7,41 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerSupportProvider
-import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import org.eclipse.lsp4j.ClientCapabilities
-import org.eclipse.lsp4j.ServerCapabilities
-
-internal fun TestFixture<Project>.fakeLspServerProviderFixture(
-  lspCustomization: LspCustomization = LspCustomization(),
-  configureClientCapabilities: (ClientCapabilities.() -> Unit)? = null,
-  configureServerCapabilities: (ServerCapabilities.() -> Unit)? = null,
-): TestFixture<FakeLspServerHandle> = testFixture { _ ->
-  val projectFixture = this@fakeLspServerProviderFixture
-  val project = projectFixture.init()
-
-  extensionPointFixture(LspServerSupportProvider.EP_NAME) {
-    FakeLspServerSupportProvider()
-  }.init()
-
-  project.putUserData(FAKE_LSP_CUSTOMIZATION_KEY, lspCustomization)
-  project.putUserData(FAKE_LSP_CLIENT_CAPABILITIES_KEY, configureClientCapabilities)
-  project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, configureServerCapabilities)
-
-  initialized(FakeLspServerHandle()) {
-    project.putUserData(FAKE_LSP_CUSTOMIZATION_KEY, null)
-    project.putUserData(FAKE_LSP_CLIENT_CAPABILITIES_KEY, null)
-    project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, null)
-  }
-}
-
-internal class FakeLspServerHandle {
-  // todo move fun configureServerSession here
-}
 
 /**
  * Registers the [PROBLEM_FILE_HIGHLIGHT_FILTER_EP] EP and a filter extension on the project's extension area.
