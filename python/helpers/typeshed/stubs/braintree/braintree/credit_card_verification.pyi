@@ -18,6 +18,7 @@ class CreditCardVerification(AttributeGetter):
 
     amount: Decimal | None
     currency_iso_code: Incomplete
+    mastercard_transaction_link_id: str | None
     processor_response_code: Incomplete
     processor_response_text: Incomplete
     network_response_code: Incomplete

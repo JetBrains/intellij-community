@@ -180,6 +180,7 @@ class Transaction(Resource):
     payment_facilitator: PaymentFacilitator
     transfer: Transfer
     partially_authorized: bool
+    mastercard_transaction_link_id: str | None
     subscription_id: str
     created_at: datetime
     def __init__(self, gateway, attributes) -> None: ...
