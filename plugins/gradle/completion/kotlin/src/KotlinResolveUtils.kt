@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
@@ -23,9 +24,14 @@ internal val GRADLE_DEPENDENCY_HANDLER_CLASS_ID = ClassId.topLevel(FqName("org.g
 internal val GRADLE_DEPENDENCY_CLASS_ID = ClassId.topLevel(FqName("org.gradle.api.artifacts.Dependency"))
 
 // TODO Move to a separate module in Gradle plugin for Kotlin resolution. Reuse in kotlinGradleTaskUtils.kt
-internal fun KtCallExpression.isCallWithReceiverSubtype(receiverFqn: FqName, callNames: Set<String>): Boolean {
+/**
+ * Checks if call expression name is in [callNames]. If not, returns false early.
+ * Then, if in dumb-mode, just returns true, otherwise, further checks if it's a subtype of [receiverFqn].
+ */
+internal fun KtCallExpression.isCallWithReceiverSubtypeDumbAware(receiverFqn: FqName, callNames: Set<String>): Boolean {
   val callName = this.calleeExpression?.text ?: return false
   if (callName !in callNames) return false
+  if (DumbService.isDumb(this.project)) return true
   return this.isReceiverSubtypeOf(receiverFqn)
 }
 

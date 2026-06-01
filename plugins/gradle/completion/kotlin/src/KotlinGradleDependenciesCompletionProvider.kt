@@ -146,7 +146,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   }
 
   private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
-    val dependencyConfigurations = getConfigurationsForDependencies(parameters.originalFile)
+    val dependencyConfigurations = findConfigurationsForDependencies(parameters.originalFile) ?: return
     val lookup = dependencyConfigurations.map { configurationName ->
       LookupElementBuilder.create(configurationName)
         .withInsertHandler(KotlinGradleConfigurationInsertHandler(

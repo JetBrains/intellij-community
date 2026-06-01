@@ -150,7 +150,7 @@ internal fun PsiElement.isExcludeArgument(): Boolean {
   val callExpression = stringTemplateExpr.parent.asSafely<KtValueArgument>()
                          ?.parent.asSafely<KtValueArgumentList>()
                          ?.parent.asSafely<KtCallExpression>() ?: return false
-  return callExpression.isCallWithReceiverSubtype(
+  return callExpression.isCallWithReceiverSubtypeDumbAware(
     FqName("org.gradle.api.artifacts.ModuleDependency"),
     setOf("exclude")
   )
@@ -212,26 +212,32 @@ private fun KtCallExpression.isDependencyConfiguration(): Boolean {
                    else -> null
                  } ?: return false
 
-  return getConfigurationsForDependencies(this)
-    .contains(callName)
+  val dependencyConfigurations = findConfigurationsForDependencies(this) ?: setOf(
+    "implementation", "api", "compileOnly", "compileOnlyApi", "runtimeOnly",
+    "testImplementation", "testCompileOnly", "testRuntimeOnly",
+    "annotationProcessor", "testAnnotationProcessor",
+  )
+  return dependencyConfigurations.contains(callName)
 }
 
 private val DEPENDENCY_HANDLER_FQN = FqName("org.gradle.api.artifacts.dsl.DependencyHandler")
 
 private fun KtCallExpression.acceptsVersionCatalogDependencyArgument(): Boolean {
-  return isCallWithReceiverSubtype(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures", "variantOf"))
+  return isCallWithReceiverSubtypeDumbAware(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures", "variantOf"))
 }
 
 private fun KtCallExpression.acceptsStringCoordinatesArgument(): Boolean =
-  isCallWithReceiverSubtype(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures"))
+  isCallWithReceiverSubtypeDumbAware(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures"))
 
 /**
  * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)
  * For older versions returns all configurations, even those that could not be used in the `dependencies { }` block.
+ *
+ * Returns null if the module or Gradle extensions data is not available.
  */
-internal fun getConfigurationsForDependencies(psiElement: PsiElement): List<String> {
-  val module = ModuleUtilCore.findModuleForPsiElement(psiElement) ?: return emptyList()
-  val extensionsData = GradleExtensionsSettings.getInstance(psiElement.project).getExtensionsFor(module) ?: return emptyList()
+internal fun findConfigurationsForDependencies(psiElement: PsiElement): List<String>? {
+  val module = ModuleUtilCore.findModuleForPsiElement(psiElement) ?: return null
+  val extensionsData = GradleExtensionsSettings.getInstance(psiElement.project).getExtensionsFor(module) ?: return null
   val configurations = extensionsData.configurations.values
   return configurations
     .filter { it.canBeUsedInDependenciesBlock() }
