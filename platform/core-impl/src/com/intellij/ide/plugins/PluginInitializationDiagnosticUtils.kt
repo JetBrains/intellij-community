@@ -39,11 +39,6 @@ object PluginInitializationDiagnosticUtils {
       }
     }
 
-    fun StringBuilder.appendIndentString(indent: Int) {
-      repeat(indent) { append("  ") }
-      if (indent > 0) append("└ ")
-    }
-
     fun StringBuilder.writeExclusionTree(descriptor: IdeaPluginDescriptorImpl, indent: Int) {
       val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)!!
       appendIndentString(indent)
@@ -66,16 +61,7 @@ object PluginInitializationDiagnosticUtils {
       append(logHeader)
       dependencyIsNotResolvedRoots.map { resolvedPluginSet.getExclusionReason(it) as DependencyIsNotResolved }.groupBy { it.dependency }
         .forEach { (ref, roots) ->
-          val disabledPlugin = broadResolveContext.resolveReference(ref).firstOrNull { resolvedPluginSet.initContext.isPluginDisabled(it.pluginId) }
-          if (disabledPlugin != null) {
-            appendLine("${disabledPlugin.shortLogDescription} is marked disabled")
-          } else {
-            when (ref) {
-              is DependencyRef.ContentModule -> append("module ${ref.moduleId.name} (namespace=${ref.moduleId.namespace})")
-              is DependencyRef.Plugin -> append("plugin ${ref.pluginId.idString}")
-            }
-            appendLine(" is not resolved")
-          }
+          appendDependencyIsNotResolvedLogMessage(ref, broadResolveContext, resolvedPluginSet)
 
           // a bit of duplication, but I guess it's alright for this code
           val (childFreeExclusions, otherRoots) = roots.partition { (exclusionChildren[it.descriptor]?.size ?: 0) == 0 }
@@ -108,6 +94,37 @@ object PluginInitializationDiagnosticUtils {
         }
       })
     }
+  }
+
+  fun buildSingleExclusionChainMessage(
+    resolvedPluginSet: ResolvedPluginSet,
+    incompletePlugins: Map<PluginId, PluginMainDescriptor>,
+    descriptor: IdeaPluginDescriptorImpl,
+  ): String? {
+    if (resolvedPluginSet.isResolved(descriptor)) {
+      return null
+    }
+    // TODO decrease code duplication
+    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
+    val chain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).toList().reversed()
+    val msgBuilder = StringBuilder().apply {
+      if (chain.firstOrNull()?.let { resolvedPluginSet.getExclusionReason(it) } is DependencyIsNotResolved) {
+        val rootCause = resolvedPluginSet.getExclusionReason(chain[0])!! as DependencyIsNotResolved
+        appendDependencyIsNotResolvedLogMessage(rootCause.dependency, broadResolveContext, resolvedPluginSet)
+        for ((index, excludedDescriptor) in chain.withIndex()) {
+          val exclusionReason = resolvedPluginSet.getExclusionReason(excludedDescriptor)!!
+          appendIndentString(index + 1)
+          appendLine(exclusionReason.logMessage())
+        }
+      } else {
+        for ((index, excludedDescriptor) in chain.withIndex()) {
+          val exclusionReason = resolvedPluginSet.getExclusionReason(excludedDescriptor)!!
+          appendIndentString(index)
+          appendLine(exclusionReason.logMessage())
+        }
+      }
+    }
+    return msgBuilder.toString()
   }
 
   private fun DescriptorExclusionReason.getDependencyCycleRepresentative(): IdeaPluginDescriptorImpl =
@@ -143,6 +160,29 @@ object PluginInitializationDiagnosticUtils {
       }
       is ProductRulesImposedExclusion -> "$logDescr is excluded by product rules: ${this.productReason}"
     }
+  }
+
+  private fun StringBuilder.appendDependencyIsNotResolvedLogMessage(
+    ref: DependencyRef,
+    broadResolveContext: AmbiguousPluginSet,
+    resolvedPluginSet: ResolvedPluginSet,
+  ) {
+    val disabledPlugin = broadResolveContext.resolveReference(ref).firstOrNull { resolvedPluginSet.initContext.isPluginDisabled(it.pluginId) }
+    if (disabledPlugin != null) {
+      appendLine("${disabledPlugin.shortLogDescription} is marked disabled")
+    }
+    else {
+      when (ref) {
+        is DependencyRef.ContentModule -> append("module ${ref.moduleId.name} (namespace=${ref.moduleId.namespace})")
+        is DependencyRef.Plugin -> append("plugin ${ref.pluginId.idString}")
+      }
+      appendLine(" is not resolved")
+    }
+  }
+
+  private fun StringBuilder.appendIndentString(indent: Int) {
+    repeat(indent) { append("  ") }
+    if (indent > 0) append("└ ")
   }
 
   private fun <N> StringBuilder.explainCycle(cycle: DependencyCycleInfo<N>, fmtNode: (N) -> String, fmtDeps: (List<N>) -> String = { it.joinToString(", ") { fmtNode(it) }}) {
