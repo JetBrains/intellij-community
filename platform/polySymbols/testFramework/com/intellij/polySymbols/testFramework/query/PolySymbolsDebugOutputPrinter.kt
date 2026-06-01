@@ -97,7 +97,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level,
                     "origin",
                     "${documentation?.library} ($framework)")
-      printProperty(level, "source", (source as? PsiLinkedPolySymbol)?.source)
+      printProperty(level, "source", (source as? PsiLinkedPolySymbol)?.linkedElement)
       printProperty(level, "type", source[TypeSupportProperty]?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.getHtmlAttributeValue(null))
       printProperty(level, "complete", source.completeMatch)

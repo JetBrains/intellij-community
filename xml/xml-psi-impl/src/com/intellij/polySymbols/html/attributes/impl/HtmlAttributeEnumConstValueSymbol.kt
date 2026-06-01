@@ -10,14 +10,14 @@ import com.intellij.psi.SmartPointerManager
 
 internal class HtmlAttributeEnumConstValueSymbol(
   override val name: String,
-  override val source: PsiElement?,
+  override val linkedElement: PsiElement?,
 ) : PsiLinkedPolySymbol {
   override val kind: PolySymbolKind
     get() = HTML_ATTRIBUTE_VALUES
 
   override fun createPointer(): Pointer<HtmlAttributeEnumConstValueSymbol> {
     val name = this.name
-    val source = this.source?.let { SmartPointerManager.createPointer(it) }
+    val source = this.linkedElement?.let { SmartPointerManager.createPointer(it) }
     return Pointer<HtmlAttributeEnumConstValueSymbol> {
       val newSource = source?.dereference()
       if (newSource == null && source != null) return@Pointer null
@@ -29,11 +29,11 @@ internal class HtmlAttributeEnumConstValueSymbol(
     other === this
     || other is HtmlAttributeEnumConstValueSymbol
     && other.name == name
-    && other.source == source
+    && other.linkedElement == linkedElement
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + source.hashCode()
+    result = 31 * result + linkedElement.hashCode()
     return result
   }
 

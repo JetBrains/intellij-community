@@ -349,7 +349,7 @@ internal class BuiltPsiLinkedPolySymbol(
   private val sourceGetter: () -> PsiElement?,
 ) : BuiltPolySymbolBase(config, dependencySource, dependencyScope), PsiLinkedPolySymbol {
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = dependencyScope.withinScope { sourceGetter() }
 
   // Use PsiSourcedPolySymbol's default navigation / equivalence impls (they

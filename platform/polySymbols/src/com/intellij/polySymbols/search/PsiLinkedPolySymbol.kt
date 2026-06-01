@@ -14,19 +14,19 @@ import com.intellij.psi.PsiElement
 /**
  * This interface servers as a bridge between Symbol-based functionality and the old
  * PSI-based functionality. Implementing this interface on a [PolySymbol] links it directly
- * to the [PsiElement] returned by the [source] property.
+ * to the [PsiElement] returned by the [linkedElement] property.
  *
  * If your symbol is part of a [PsiElement] (e.g. part of a string literal), or spans multiple PSI elements,
  * or does not relate 1-1 with a PSI element, instead of implementing this interface you should contribute
  * dedicated declaration provider ([com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider]).
  *
  * When a [PsiElement] usages are being searched for, or the element is being renamed,
- * any references, which resolve to a [PolySymbolDeclaredInPsi], of which [source]
+ * any references, which resolve to a [PolySymbolDeclaredInPsi], of which [linkedElement]
  * property is equivalent to the [PsiElement], are recognized as references to the symbol
  * and are being returned as usages, or rename usages.
  *
  * It works the other way too, so if a usage search or rename is performed on a reference
- * to a [PolySymbolDeclaredInPsi], the usage search or rename is also run for [source].
+ * to a [PolySymbolDeclaredInPsi], the usage search or rename is also run for [linkedElement].
  *
  * The PolySymbol, which implements this interface, should not override [renameTarget] or
  * [searchTarget] properties, as the framework already handles this functionality.
@@ -43,25 +43,25 @@ import com.intellij.psi.PsiElement
 interface PsiLinkedPolySymbol : PolySymbol {
 
   override val psiContext: PsiElement?
-    get() = source
+    get() = linkedElement
 
   /**
    * The [PsiElement], which is the symbol declaration.
    */
-  val source: PsiElement?
+  val linkedElement: PsiElement?
 
   override fun createPointer(): Pointer<out PsiLinkedPolySymbol>
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
-    source?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
+    linkedElement?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
 
   override fun isEquivalentTo(symbol: Symbol): Boolean {
     if (this == symbol) return true
-    val source = this.source ?: return false
+    val source = this.linkedElement ?: return false
     val target = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     return when {
       target != null -> target.manager.areElementsEquivalent(source, target)
-      symbol is PsiLinkedPolySymbol -> source == symbol.source
+      symbol is PsiLinkedPolySymbol -> source == symbol.linkedElement
       else -> false
     }
   }

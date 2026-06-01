@@ -97,7 +97,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
         .plus(this)
         .toList()
 
-    override val source: PsiElement?
+    override val linkedElement: PsiElement?
       get() = base.declaration.source?.let { origin.resolveSourceSymbol(it, base.cacheHolder) }
 
     override fun createPointer(): Pointer<CustomElementClassOrMixinDeclarationSymbol> {

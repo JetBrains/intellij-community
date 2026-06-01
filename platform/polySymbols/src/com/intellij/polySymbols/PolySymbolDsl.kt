@@ -238,7 +238,7 @@ interface PolySymbolBuilder : PolySymbolDslBuilderBase {
    * Override the symbol's [PolySymbol.psiContext].
    *
    * Only meaningful when neither [linkWithPsiElement] nor [declaredInPsi]
-   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.source]/
+   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.linkedElement]/
    * [PolySymbolDeclaredInPsi.sourceElement] respectively. Calling this setter in either of those
    * modes throws [IllegalStateException] at `build()`.
    *
@@ -250,7 +250,7 @@ interface PolySymbolBuilder : PolySymbolDslBuilderBase {
    * Override the symbol's [PolySymbol.psiContext].
    *
    * Only meaningful when neither [linkWithPsiElement] nor [declaredInPsi]
-   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.source]/
+   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.linkedElement]/
    * [PolySymbolDeclaredInPsi.sourceElement] respectively. Calling this setter in either of those
    * modes throws [IllegalStateException] at `build()`.
    *

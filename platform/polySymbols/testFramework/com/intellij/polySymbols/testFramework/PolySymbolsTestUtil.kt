@@ -442,7 +442,7 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
 
 fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
   when (val symbol = polySymbolAtCaret()) {
-    is PsiLinkedPolySymbol -> symbol.source
+    is PsiLinkedPolySymbol -> symbol.linkedElement
     is PolySymbolDeclaredInPsi -> symbol.sourceElement
     else -> null
   }
@@ -516,7 +516,7 @@ private fun <T> injectionThenHost(file: PsiFile, offset: Int, computation: (PsiF
 
 fun CodeInsightTestFixture.resolveToPolySymbolSource(signature: String): PsiElement {
   val polySymbol = resolvePolySymbolReference(signature)
-  val result = assertInstanceOf<PsiLinkedPolySymbol>(polySymbol).source
+  val result = assertInstanceOf<PsiLinkedPolySymbol>(polySymbol).linkedElement
   assertNotNull("PolySymbol $polySymbol source is null", result)
   return result!!
 }
@@ -692,7 +692,7 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
 
 fun CodeInsightTestFixture.canRenamePolySymbolAtCaret(): Boolean =
   polySymbolAtCaret().let {
-    it is RenameTarget || it?.renameTarget != null || (it is PsiLinkedPolySymbol && it.source != null)
+    it is RenameTarget || it?.renameTarget != null || (it is PsiLinkedPolySymbol && it.linkedElement != null)
   }
 
 fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
@@ -707,7 +707,7 @@ fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
     target = when (symbol) {
       is RenameTarget -> symbol
       is PsiLinkedPolySymbol -> {
-        val psiTarget = symbol.source
+        val psiTarget = symbol.linkedElement
                         ?: throw AssertionError("Symbol $symbol provides null source")
         renameElement(psiTarget, newName)
         return

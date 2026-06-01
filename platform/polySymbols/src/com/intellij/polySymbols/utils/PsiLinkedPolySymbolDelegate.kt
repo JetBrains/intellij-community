@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement
 
 interface PsiLinkedPolySymbolDelegate<T : PsiLinkedPolySymbol> : PolySymbolDelegate<T>, PsiLinkedPolySymbol {
 
-  override val source: PsiElement?
-    get() = delegate.source
+  override val linkedElement: PsiElement?
+    get() = delegate.linkedElement
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext

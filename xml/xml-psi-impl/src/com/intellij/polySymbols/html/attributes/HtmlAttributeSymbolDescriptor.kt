@@ -83,7 +83,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
         if (strictEnumValues) null
         else super.getEnumeratedValueDeclaration(xmlElement, value)
       }
-      else matches.firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.source } ?: xmlElement
+      else matches.firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.linkedElement } ?: xmlElement
     }
     else if (value.isNullOrEmpty())
       null
@@ -92,7 +92,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
 
   override fun getDefaultValueDeclaration(): PsiElement? =
     if (defaultValue != null && supportsEnums) {
-      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.source }
+      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.linkedElement }
     }
     else super.getDefaultValueDeclaration()
 

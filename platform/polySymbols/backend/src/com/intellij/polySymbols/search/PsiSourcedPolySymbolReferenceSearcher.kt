@@ -22,7 +22,7 @@ internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiRefe
     if (elementClasses.value.none { it.isInstance(targetElement) }) return
 
     val foundSymbols = PsiSourcedPolySymbolProvider.getAllSymbols(queryParameters.elementToSearch)
-      .filter { it.source == targetElement }
+      .filter { it.linkedElement == targetElement }
     val names = if (foundSymbols.isNotEmpty()) {
       val queryExecutor = PolySymbolQueryExecutorFactory.create(targetElement, true)
       val namesProvider = queryExecutor.namesProvider

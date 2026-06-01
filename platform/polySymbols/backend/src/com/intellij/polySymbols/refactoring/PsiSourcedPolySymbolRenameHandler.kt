@@ -22,7 +22,7 @@ internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler 
     if (editor == null || file == null || dataContext == null) return
     val target = dataContext.getData(CommonDataKeys.SYMBOLS)
                    ?.filterIsInstance<PsiLinkedPolySymbol>()
-                   ?.map { it.source }
+                   ?.map { it.linkedElement }
                    ?.singleOrNull() ?: return
 
     PsiElementRenameHandler.rename(target, target.project, target, editor)

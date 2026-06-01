@@ -149,7 +149,7 @@ interface PolySymbolCodeCompletionItem {
       lookupElement.psiElement
       ?: getPolySymbol(lookupElement)
         ?.let { it as? PsiLinkedPolySymbol }
-        ?.source
+        ?.linkedElement
 
   }
 

@@ -15,7 +15,7 @@ class PolySymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
       is SearchTarget -> null
       is PsiLinkedPolySymbol ->
         symbol.searchTarget
-        ?: if (symbol.source is PsiNamedElement)
+        ?: if (symbol.linkedElement is PsiNamedElement)
           PolySymbolSearchTarget.create(symbol)
         else null
       else -> symbol.searchTarget

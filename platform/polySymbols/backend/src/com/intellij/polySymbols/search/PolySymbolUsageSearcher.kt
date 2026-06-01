@@ -63,7 +63,7 @@ object PolySymbolUsageQueries {
   private fun findReferencesToSymbol(symbol: PolySymbol, leafOccurrence: LeafOccurrence): Collection<PsiUsage> =
     service<PsiSymbolReferenceService>().run {
       for ((element, offsetInElement) in walkUp(leafOccurrence.start, leafOccurrence.offsetInStart, leafOccurrence.scope)) {
-        val psiSource = (symbol as? PsiLinkedPolySymbol)?.source
+        val psiSource = (symbol as? PsiLinkedPolySymbol)?.linkedElement
 
         if (psiSource == element) {
           val nameIdentifier = (element as? PsiNameIdentifierOwner)?.nameIdentifier

@@ -243,9 +243,9 @@ private interface PsiLinkedPolySymbolMatchMixin : PolySymbolMatchMixin, PsiLinke
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
       .mapNotNull { it.psiContext }.firstOrNull()
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = reversedSegments().flatMap { it.symbols }
-      .mapNotNull { (it as? PsiLinkedPolySymbol)?.source }.singleOrNull()
+      .mapNotNull { (it as? PsiLinkedPolySymbol)?.linkedElement }.singleOrNull()
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     super<PolySymbolMatchMixin>.getNavigationTargets(project)

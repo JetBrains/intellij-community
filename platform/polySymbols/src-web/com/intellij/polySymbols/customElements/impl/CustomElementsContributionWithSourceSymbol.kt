@@ -16,7 +16,7 @@ abstract class CustomElementsContributionWithSourceSymbol<T : CustomElementsCont
 
   private val cacheHolder = UserDataHolderBase()
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = contribution.source?.let { origin.resolveSourceSymbol(it, cacheHolder) }
 
   override fun createPointer(): Pointer<out CustomElementsContributionWithSourceSymbol<T>> =
