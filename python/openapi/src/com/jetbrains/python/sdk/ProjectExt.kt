@@ -4,6 +4,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile

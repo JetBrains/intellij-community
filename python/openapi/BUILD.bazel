@@ -23,6 +23,9 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/execution",
     "//jps/model-api:model",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
   ],
   exports = [
     "//python/python-psi-api:psi",
@@ -56,6 +59,9 @@ jvm_library(
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/execution:execution_test_lib",
     "//jps/model-api:model_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community` end
