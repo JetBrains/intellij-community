@@ -51,7 +51,9 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 private const val KOTLIN_SOURCE_ENTRY = "src/main/kotlin"
 private const val KOTLIN_TEST_SOURCE_ENTRY = "src/test/kotlin"
@@ -91,7 +93,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         })
 
         require(projectElement != null) { "pom file should have project element" }
-        this.projectElement = projectElement!!
+        this.projectElement = projectElement
     }
 
     fun addProperty(name: String, value: String) {
@@ -228,13 +230,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
     fun findKotlinPlugins(): List<MavenDomPlugin> = domModel.build.plugins.plugins.filter { it.isKotlinMavenPlugin() }
     fun findKotlinExecutions(vararg goals: String): List<MavenDomPluginExecution> =
-        findKotlinExecutions().filter { it.goals.goals.any { it.rawText in goals } }
+        findKotlinExecutions().filter { it.goals.goals.any { goal -> goal.rawText in goals } }
 
     fun findKotlinExecutions(): List<MavenDomPluginExecution> = findKotlinPlugins().flatMap { it.executions.executions }
 
     private fun findExecutions(plugin: MavenDomPlugin) = plugin.executions.executions
     fun findExecutions(plugin: MavenDomPlugin, vararg goals: String): List<MavenDomPluginExecution> =
-        findExecutions(plugin).filter { it.goals.goals.any { it.rawText in goals } }
+        findExecutions(plugin).filter { it.goals.goals.any { goal -> goal.rawText in goals } }
 
     fun addExecution(plugin: MavenDomPlugin, executionId: String, phase: String, goals: List<String>): MavenDomPluginExecution {
         require(executionId.isNotEmpty()) { "executionId shouldn't be empty" }
@@ -265,7 +267,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         val contentEntries = ModuleRootManager.getInstance(module).contentEntries
 
         val sourceDirs = contentEntries
-            .flatMap { it.sourceFolders.filter { it.isRelatedSourceRoot(isTest) } }
+            .flatMap { it.sourceFolders.filter { sourceFolder -> sourceFolder.isRelatedSourceRoot(isTest) } }
             .mapNotNull { it.file } // filters out source paths for which directories don't exist
             .mapNotNull { VfsUtilCore.getRelativePath(it, xmlFile.virtualFile.parent, '/') }
             .toMutableSet()
@@ -277,8 +279,8 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             for (contentEntry in contentEntries) {
                 val contentEntryPath = contentEntry.file?.path ?: return
                 val kotlinEntry = if (isTest) KOTLIN_TEST_SOURCE_ENTRY else KOTLIN_SOURCE_ENTRY
-                val file = resolveRelativePath(kotlinEntry, contentEntryPath)
-                if (file.exists()) sourceDirs.add(kotlinEntry) else continue
+                val path = resolveRelativePath(kotlinEntry, contentEntryPath)
+                if (Files.exists(path)) sourceDirs.add(kotlinEntry) else continue
             }
             executionSourceDirs(execution, sourceDirs.toList())
         }
@@ -397,7 +399,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             ?.getChildrenOfType<XmlTag>()
             ?.firstOrNull { it.localName == "sourceDirs" }
             ?.getChildrenOfType<XmlTag>()
-            ?.map { it.getChildrenOfType<XmlText>().joinToString("") { it.text } }
+            ?.map { it.getChildrenOfType<XmlText>().joinToString("") { xmlText -> xmlText.text } }
             ?: emptyList()
     }
 
@@ -784,11 +786,9 @@ fun PomFile.changeFeatureConfiguration(
 private fun MavenDomElement.createChildTag(name: String, value: String? = null): XmlTag? =
     xmlTag?.createChildTag(name, value)
 
-@ApiStatus.Internal
 internal fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
     createChildTag(name, namespace, value, false)!!
 
-@ApiStatus.Internal
 internal fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
     findSubTags(name).firstOrNull() ?: run {
         val childTag = createChildTag(name)
@@ -804,7 +804,7 @@ private tailrec fun XmlTag.deleteCascade() {
     }
 }
 
-private fun resolveRelativePath(relativePath: String, contentEntryPath: String): File {
-    return File(contentEntryPath, relativePath.replace("/", File.separator))
+private fun resolveRelativePath(relativePath: String, contentEntryPath: String): Path {
+    return Paths.get(contentEntryPath, relativePath)
 }
 
