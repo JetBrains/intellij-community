@@ -602,7 +602,7 @@ public final class PsiImplUtil {
 
   public static boolean isDeprecatedByDocTag(@NotNull PsiJavaDocumentedElement owner) {
     PsiDocComment docComment = owner.getDocComment();
-    return docComment != null && docComment.findTagByName("deprecated") != null;
+    return docComment != null && !docComment.isMarkdownComment() && docComment.findTagByName("deprecated") != null;
   }
 
   /**
