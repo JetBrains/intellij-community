@@ -11,9 +11,8 @@ import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsVie
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+
 internal class BackendProblemsViewProjectErrorsPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
   override fun create(): ProblemsViewTab? {
     if (!isSplitProblemsViewKeyEnabled()) {

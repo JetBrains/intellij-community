@@ -11,14 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewKeyEnabled
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Used to create a mock highlighting panel, which will be replaced in frontend.
  * This provider needs to exist in the backend, since the entire toolwindow is created in the backend,
  * and we cannot move it to frontend since it would break compatibility with other not-split usages.
  */
-@ApiStatus.Internal
 internal class BackendProblemsViewHighlightingPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
 
   override fun create(): ProblemsViewTab? {
