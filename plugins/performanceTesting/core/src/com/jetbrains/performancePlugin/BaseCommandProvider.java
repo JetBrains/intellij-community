@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
+import com.jetbrains.performancePlugin.commands.OptimizeImportsOnDirectoryCommand;
 import com.jetbrains.performancePlugin.commands.AcceptDecompileNotice;
 import com.jetbrains.performancePlugin.commands.AddContentRootToModule;
 import com.jetbrains.performancePlugin.commands.AddFileCommand;
@@ -246,7 +247,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(DetectProjectLeaksCommand.PREFIX, DetectProjectLeaksCommand::new),
       Map.entry(WaitForReOpenedFileCommand.PREFIX, WaitForReOpenedFileCommand::new),
       Map.entry(WaitForCodeVisionCommand.PREFIX, WaitForCodeVisionCommand::new),
-      Map.entry(WaitForDebugSessionsEndCommand.PREFIX, WaitForDebugSessionsEndCommand::new)
+      Map.entry(WaitForDebugSessionsEndCommand.PREFIX, WaitForDebugSessionsEndCommand::new),
+      Map.entry(OptimizeImportsOnDirectoryCommand.PREFIX, OptimizeImportsOnDirectoryCommand::new)
     );
   }
 }

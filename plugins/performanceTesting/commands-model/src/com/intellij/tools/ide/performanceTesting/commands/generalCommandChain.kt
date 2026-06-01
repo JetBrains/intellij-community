@@ -1399,3 +1399,8 @@ fun <T : CommandChain> T.hideAllToolWindows(): T = apply {
   addCommand("${CMD_PREFIX}takeScreenshot before_close_all_tabs")
   addCommand("${CMD_PREFIX}hideAllToolWindows")
 }
+
+fun <T : CommandChain> T.optimizeImportsOnDirectory(directoryPath: String = ""): T = apply {
+  if (directoryPath.isEmpty()) addCommand("${CMD_PREFIX}optimizeImportsOnDirectory")
+  else addCommand("${CMD_PREFIX}optimizeImportsOnDirectory $directoryPath")
+}
