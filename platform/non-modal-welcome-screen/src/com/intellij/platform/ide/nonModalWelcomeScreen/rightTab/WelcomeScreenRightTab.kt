@@ -58,6 +58,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
@@ -284,13 +285,30 @@ class WelcomeScreenRightTab(
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 12.dp)) {
         for (model in row) {
           when (model) {
-            is ComboBoxInfoPanelModel -> InfoPanelItem(model.iconKey, model.itemPrefix, model.model, project)
+            is ComboBoxInfoPanelModel -> InfoPanelItem(model.iconKey, model.itemPrefix, model.model, project, getStatisticLogger(model))
             is ButtonInfoPanelModel -> InfoPanelButton(model.iconKey, model.itemPrefix, model.onClick, coroutineScope)
           }
         }
       }
     }
   }
+
+  private fun getStatisticLogger(comboBoxInfoPanelModel: ComboBoxInfoPanelModel): ((String, Int) -> Unit)? {
+    return when (comboBoxInfoPanelModel.model) {
+      is ThemeModel -> { newSelection, index ->
+        WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.THEME)
+      }
+      is KeymapModel -> { newSelection, index ->
+        WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.KEYMAP)
+      }
+      is StartupSwitchModel -> { newSelection, index ->
+        WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.STARTUP)
+        WelcomeScreenTabUsageCollector.logStartupOptionChanged(comboBoxInfoPanelModel.model.items[index])
+      }
+      else -> null
+    }
+  }
+
 
   sealed interface InfoPanelModel {
     val iconKey: IconKey
@@ -320,6 +338,7 @@ class WelcomeScreenRightTab(
     itemPrefix: String,
     model: WelcomeScreenRightTabComboBoxModel<out Any>,
     project: Project,
+    afterOnSelectedItemChanged: ((newSelection: String, index: Int) -> Unit)? = null
   ) {
     Box {
       WelcomeScreenCustomListComboBox(
@@ -333,6 +352,7 @@ class WelcomeScreenRightTab(
         initialSelectedIndex = model.currentItemIndex(),
         onSelectedItemChange = { index, newSelection ->
           model.setByIndex(index, newSelection)
+          afterOnSelectedItemChanged?.invoke(newSelection, index)
         },
       ) { item, isSelected, isActive ->
         SimpleListItem(
