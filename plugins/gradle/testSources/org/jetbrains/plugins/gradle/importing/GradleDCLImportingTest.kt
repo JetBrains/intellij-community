@@ -13,6 +13,7 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
   // references should be updated as soon as syntax is available in DCL
   fun `import basic java app project`() {
     val jvmEcosystemPluginVersion = when {
+      GradleVersionUtil.isGradleAtLeast(currentGradleVersion, "9.6.0") -> "0.1.62"
       GradleVersionUtil.isGradleAtLeast(currentGradleVersion, "9.5.0") -> "0.1.54"
       GradleVersionUtil.isGradleAtLeast(currentGradleVersion, "9.4.0") -> "0.1.50"
       else -> "0.1.21"
