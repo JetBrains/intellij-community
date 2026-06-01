@@ -180,7 +180,13 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
    * @param this The list of plugins to analyze for determining loadability without requiring a restart.
    * Acts as a context in [DynamicPlugins.allowLoadUnloadWithoutRestart]
    */
-  private fun List<PluginMainDescriptor>.splitPlugins(): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
+  private suspend fun List<PluginMainDescriptor>.splitPlugins(): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
+    if (DynamicPluginsSupport.getInstance() != null) {
+      val loadablePluginIds = DynamicPlugins.findMaxLoadableSubsetApproximation(this.map { it.pluginId }).toSet()
+      val (loadablePlugins, requireRestart) = this.partition { it.pluginId in loadablePluginIds }
+      return loadablePlugins to requireRestart
+    }
+
     tailrec fun doSplit(
       pluginsToLoad: List<PluginMainDescriptor>,
       loadablePlugins: List<PluginMainDescriptor>,
