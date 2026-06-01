@@ -1261,7 +1261,7 @@
                      implementationClass="com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MissingDeprecatedAnnotation" bundle="messages.InspectionGadgetsBundle"
                      key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.javadoc.MissingDeprecatedAnnotationInspection" cleanupTool="true"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="MissingPackageInfo" bundle="messages.InspectionGadgetsBundle"
                       key="missing.package.info.display.name" groupBundle="messages.InspectionsBundle"

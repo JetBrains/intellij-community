@@ -2573,6 +2573,11 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateDeprecatedSection(StringBuilder buffer, PsiDocComment comment) {
+    if (comment.isMarkdownComment() &&
+        comment.getOwner() instanceof PsiModifierListOwner owner &&
+        !owner.hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
+      return;
+    }
     generateSingleTagSection(buffer, comment, "deprecated", JavaBundle.messagePointer("javadoc.deprecated"));
   }
 

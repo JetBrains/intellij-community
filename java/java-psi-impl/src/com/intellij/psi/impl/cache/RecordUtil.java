@@ -14,6 +14,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
@@ -51,6 +52,9 @@ public final class RecordUtil {
   }
 
   public static boolean isDeprecatedByDocComment(@NotNull LighterAST tree, @NotNull LighterASTNode comment) {
+    if (comment.getTokenType() == JavaDocElementType.DOC_MARKDOWN_COMMENT) {
+      return false;
+    }
     String text = LightTreeUtil.toFilteredString(tree, comment, null);
     if (text.contains(DEPRECATED_TAG)) {
       JavaDocLexer lexer = new JavaDocLexer(LanguageLevel.HIGHEST);
