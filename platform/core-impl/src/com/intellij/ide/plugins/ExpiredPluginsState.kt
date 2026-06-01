@@ -52,7 +52,7 @@ class ExpiredPluginsState : PluginEnabler {
 
     @JvmStatic
     fun setExpiredState(pluginIds: Set<PluginId>, expired: Boolean): Boolean {
-      logger.info(pluginIds.joinedPluginIds("expire"))
+      logger.info(pluginIds.joinedPluginIds("expired"))
 
       val expiredPluginIds = expiredPluginIds as MutableSet
       return (if (expired) expiredPluginIds.addAll(pluginIds) else expiredPluginIds.removeAll(pluginIds))
@@ -61,7 +61,7 @@ class ExpiredPluginsState : PluginEnabler {
   }
 
   init {
-    logger.info(expiredPluginIds.joinedPluginIds("skip"))
+    logger.info(expiredPluginIds.joinedPluginIds("skipped"))
   }
 
   override fun isDisabled(pluginId: PluginId): Boolean = isExpired(pluginId)
