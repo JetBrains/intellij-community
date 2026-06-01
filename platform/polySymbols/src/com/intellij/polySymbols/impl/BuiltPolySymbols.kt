@@ -352,7 +352,7 @@ internal class BuiltPsiLinkedPolySymbol(
   override val linkedElement: PsiElement?
     get() = dependencyScope.withinScope { sourceGetter() }
 
-  // Use PsiSourcedPolySymbol's default navigation / equivalence impls (they
+  // Use PsiLinkedPolySymbol's default navigation / equivalence impls (they
   // read `source`) unless the builder explicitly supplied a custom getter.
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     if (config.navigationTargetsGetter != null)

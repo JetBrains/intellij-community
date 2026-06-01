@@ -420,7 +420,7 @@ fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTra
   }
 
 @ApiStatus.Internal
-fun acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol: Symbol): Boolean =
+fun acceptSymbolForPsiLinkedPolySymbolRenameHandler(symbol: Symbol): Boolean =
   symbol is PsiLinkedPolySymbol
   && symbol.linkedElement is PsiNamedElement
   && symbol.linkedElement !is SyntheticElement

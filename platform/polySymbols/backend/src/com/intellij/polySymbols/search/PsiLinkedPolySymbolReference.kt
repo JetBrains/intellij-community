@@ -19,7 +19,7 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedPolySymbolReference(
+class PsiLinkedPolySymbolReference(
   private val symbol: PolySymbol,
   private val sourceElement: PsiElement,
   private val host: PsiExternalReferenceHost,
@@ -58,7 +58,7 @@ class PsiSourcedPolySymbolReference(
   override fun isSoft(): Boolean =
     false
 
-  class RenameHandler(reference: PsiSourcedPolySymbolReference) {
+  class RenameHandler(reference: PsiLinkedPolySymbolReference) {
     private val symbol = reference.symbol
     private val symbolName = symbol.qualifiedName
     private val targetPointer = reference.resolve()

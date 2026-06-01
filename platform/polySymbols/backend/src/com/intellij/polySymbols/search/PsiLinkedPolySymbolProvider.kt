@@ -9,7 +9,7 @@ import org.jetbrains.annotations.TestOnly
  * Implement this interface if symbol name can have a different format and a name provider needs to be
  * called to allow for [com.intellij.polySymbols.PolySymbol] -> [PsiElement] reference to be found.
  */
-interface PsiSourcedPolySymbolProvider {
+interface PsiLinkedPolySymbolProvider {
 
   fun getSymbols(element: PsiElement): List<PsiLinkedPolySymbol>
 
@@ -17,7 +17,7 @@ interface PsiSourcedPolySymbolProvider {
   companion object {
     @TestOnly
     @JvmField
-    val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.Companion.create<PsiSourcedPolySymbolProvider>("com.intellij.polySymbols.psiSourcedSymbolProvider")
+    val EP_NAME: ExtensionPointName<PsiLinkedPolySymbolProvider> = ExtensionPointName.create("com.intellij.polySymbols.psiLinkedSymbolProvider")
 
     fun getAllSymbols(element: PsiElement): Collection<PsiLinkedPolySymbol> =
       EP_NAME.extensionList.flatMap { it.getSymbols(element) }

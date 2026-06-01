@@ -713,7 +713,7 @@ fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
         return
       }
       else -> symbol.renameTarget
-              ?: throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiSourcedPolySymbol")
+              ?: throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiLinkedPolySymbol")
     }
   }
   if (target.createPointer().dereference() == null) {

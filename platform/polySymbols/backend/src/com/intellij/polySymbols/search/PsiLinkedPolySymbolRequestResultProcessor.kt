@@ -17,7 +17,7 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedPolySymbolRequestResultProcessor(
+class PsiLinkedPolySymbolRequestResultProcessor(
   private val targetElement: PsiElement,
   private val targetSymbols: List<PolySymbol>,
   private val includeRegularReferences: Boolean,
@@ -53,7 +53,7 @@ class PsiSourcedPolySymbolRequestResultProcessor(
 
           equivalentSymbol ?: return@forEach
 
-          val equivalentSymbolReference = PsiSourcedPolySymbolReference(
+          val equivalentSymbolReference = PsiLinkedPolySymbolReference(
             symbol = equivalentSymbol,
             sourceElement = targetElement,
             host = element,

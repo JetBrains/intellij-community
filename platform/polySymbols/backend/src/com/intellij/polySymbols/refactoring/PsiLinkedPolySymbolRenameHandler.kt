@@ -8,13 +8,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.polySymbols.search.PsiLinkedPolySymbol
-import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
+import com.intellij.polySymbols.utils.acceptSymbolForPsiLinkedPolySymbolRenameHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 
-internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
+internal class PsiLinkedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
   private var symbol: PsiLinkedPolySymbol? = null
 
@@ -33,7 +33,7 @@ internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler 
 
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean =
     dataContext.getData(CommonDataKeys.SYMBOLS)
-      ?.singleOrNull { acceptSymbolForPsiSourcedPolySymbolRenameHandler(it) }
+      ?.singleOrNull { acceptSymbolForPsiLinkedPolySymbolRenameHandler(it) }
       ?.also {
         symbol = it as PsiLinkedPolySymbol
       } != null

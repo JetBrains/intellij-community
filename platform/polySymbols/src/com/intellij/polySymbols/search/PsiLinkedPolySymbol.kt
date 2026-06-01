@@ -16,6 +16,9 @@ import com.intellij.psi.PsiElement
  * PSI-based functionality. Implementing this interface on a [PolySymbol] links it directly
  * to the [PsiElement] returned by the [linkedElement] property.
  *
+ * Returned [PsiElement] class (or one of it's super classes) should be registered as a `host`
+ * through `com.intellij.polySymbols.psiLinkedSymbol`.
+ *
  * If your symbol is part of a [PsiElement] (e.g. part of a string literal), or spans multiple PSI elements,
  * or does not relate 1-1 with a PSI element, instead of implementing this interface you should contribute
  * dedicated declaration provider ([com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider]).
@@ -32,7 +35,7 @@ import com.intellij.psi.PsiElement
  * [searchTarget] properties, as the framework already handles this functionality.
  *
  * To properly support search and rename refactoring for symbols, which names can be modified
- * by [com.intellij.polySymbols.query.PolySymbolNameConversionRules], a `PsiSourcedPolySymbolProvider`
+ * by [com.intellij.polySymbols.query.PolySymbolNameConversionRules], a `PsiLinkedPolySymbolProvider`
  * should be implemented to allow the framework to search for alternative names.
  *
  * See also: [Declarations, References, Search, Refactoring](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#declarations-references-search-refactoring)

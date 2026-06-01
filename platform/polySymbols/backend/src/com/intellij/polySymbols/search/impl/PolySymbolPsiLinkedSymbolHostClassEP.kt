@@ -8,10 +8,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 
-internal class PolySymbolPsiSourcedSymbolHostClassEP : BaseKeyedLazyInstance<Class<PsiElement>>() {
+internal class PolySymbolPsiLinkedSymbolHostClassEP : BaseKeyedLazyInstance<Class<PsiElement>>() {
 
   companion object {
-    val EP_NAME = ExtensionPointName<PolySymbolPsiSourcedSymbolHostClassEP>("com.intellij.polySymbols.psiSourcedSymbol")
+    val EP_NAME = ExtensionPointName<PolySymbolPsiLinkedSymbolHostClassEP>("com.intellij.polySymbols.psiLinkedSymbol")
   }
 
   @Attribute("host")

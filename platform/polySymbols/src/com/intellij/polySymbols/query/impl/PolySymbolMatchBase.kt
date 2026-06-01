@@ -135,9 +135,9 @@ private fun create(
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
 ): PolySymbolMatch {
-  val psiSourcedMixin =
+  val psiLinkedMixin =
     nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiLinkedPolySymbol }) }
-  return if (psiSourcedMixin) {
+  return if (psiLinkedMixin) {
     PsiLinkedPolySymbolMatch(matchedName, nameSegments, kind, explicitPriority,
                              explicitProximity, additionalProperties)
   }
