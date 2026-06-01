@@ -13,15 +13,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeCallTypeParameterInfo
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
-import org.jetbrains.kotlin.lexer.KtToken
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 /**
  * A request to create Kotlin callable from the usage in Kotlin.
@@ -38,6 +37,7 @@ internal class CreateMethodFromKotlinUsageRequest private constructor(
     val isAbstractClassOrInterface: Boolean,
     val isForCompanion: Boolean,
     val operatorFunction: Boolean,
+    val callTypeParameterInfo: CallTypeParameterInfo = CallTypeParameterInfo.EMPTY,
 ) : CreateExecutableFromKotlinUsageRequest<KtElement>(functionCall, expectedParameters, modifiers), CreateMethodRequest {
 
     internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, functionCall)
@@ -66,6 +66,7 @@ internal class CreateMethodFromKotlinUsageRequest private constructor(
             isAbstractClassOrInterface: Boolean,
             isForCompanion: Boolean,
             operatorFunction: Boolean,
+            targetContainerClass: KtClassOrObject? = null,
         ): CreateMethodFromKotlinUsageRequest = analyze(functionCall) {
             when (functionCall) {
                 is KtCallExpression -> CreateMethodFromKotlinUsageRequest(
@@ -80,6 +81,7 @@ internal class CreateMethodFromKotlinUsageRequest private constructor(
                     isAbstractClassOrInterface = isAbstractClassOrInterface,
                     isForCompanion = isForCompanion,
                     operatorFunction = operatorFunction,
+                    callTypeParameterInfo = computeCallTypeParameterInfo(functionCall, targetContainerClass),
                 )
 
                 is KtBinaryExpression ->

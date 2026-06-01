@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asKaType
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.components.builtinTypes
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.defaultType
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.components.typeCreator
@@ -67,6 +69,7 @@ import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -108,9 +111,27 @@ import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.hasInnerModifier
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
+
+internal data class TypeArgumentInfo(
+    val typeParameterName: String,
+    val renderedTypeArgument: String,
+)
+
+internal data class CallTypeParameterInfo(
+    val typeParameterDeclarations: List<TypeArgumentInfo>,
+    val substitutionMap: Map<String, String>,
+) {
+    companion object {
+        val EMPTY = CallTypeParameterInfo(emptyList(), emptyMap())
+    }
+}
+
 
 object K2CreateFunctionFromUsageUtil {
     fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
@@ -554,6 +575,41 @@ object K2CreateFunctionFromUsageUtil {
         return call.valueArguments.mapIndexed { index, valueArgument ->
             valueArgument.getExpectedParameterInfo("p$index", isAnnotation && call.valueArguments.size == 1, receiverType)
         }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    internal fun computeCallTypeParameterInfo(
+        call: KtCallElement,
+        targetContainerClass: KtClassOrObject?,
+    ): CallTypeParameterInfo {
+        val typeArguments = call.typeArguments
+        if (typeArguments.isEmpty()) return CallTypeParameterInfo.EMPTY
+
+        val containerTypeParameters = generateSequence(targetContainerClass) {
+            if (it.hasInnerModifier()) it.containingClass() else null
+        }
+            .flatMap { it.typeParameters }
+            .toSet()
+
+        val renderedTypes = typeArguments.mapNotNull {
+            it.typeReference?.type?.render(WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, Variance.INVARIANT)
+        }
+
+        val validator = CollectingNameValidator(containerTypeParameters.mapNotNull { it.name })
+        val freshNames = KotlinNameSuggester.suggestNamesForTypeParameters(renderedTypes.size, validator)
+
+        val declarations = mutableListOf<TypeArgumentInfo>()
+        val substitutionMap = mutableMapOf<String, String>()
+        var freshIndex = 0
+
+        for (rendered in renderedTypes) {
+            val freshName = freshNames[freshIndex++]
+            declarations.add(TypeArgumentInfo(freshName, rendered))
+            substitutionMap[rendered] = freshName
+        }
+
+        return CallTypeParameterInfo(declarations, substitutionMap)
     }
 
     /**

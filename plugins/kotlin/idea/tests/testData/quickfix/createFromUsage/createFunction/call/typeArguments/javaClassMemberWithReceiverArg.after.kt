@@ -4,6 +4,6 @@
 
 class A<T> internal constructor(val b: B<T>) {
     fun test(): Int {
-        return b.foo<Int, String>(2, "2")
+        return b.<selection><caret></selection>foo<T, Int, String>(2, "2")
     }
 }

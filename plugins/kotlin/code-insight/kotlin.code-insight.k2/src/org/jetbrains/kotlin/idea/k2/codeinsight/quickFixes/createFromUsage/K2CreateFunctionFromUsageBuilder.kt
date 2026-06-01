@@ -187,6 +187,7 @@ object K2CreateFunctionFromUsageBuilder {
                     isAbstractClassOrInterface = false,
                     isForCompanion = shouldCreateCompanionClass,
                     operatorFunction = operatorFunction,
+                    targetContainerClass = container as? KtClassOrObject,
                 ))
             }
         }
@@ -206,6 +207,7 @@ object K2CreateFunctionFromUsageBuilder {
                     isExtension = false,
                     isForCompanion = false,
                     operatorFunction = operatorFunction,
+                    targetContainerClass = abstractContainerClass,
                 ))
             }
         }

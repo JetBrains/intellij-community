@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -79,8 +80,29 @@ internal class CreateKotlinCallableAction(
 
     internal data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
 
-    private val parameterCandidates: List<ParamCandidate> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } } ?: emptyList()
-    private val candidatesOfRenderedReturnType: List<String> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfReturnType(request, it) } } } ?: emptyList()
+    private val callTypeParamInfo: CallTypeParameterInfo =
+        (request as? CreateMethodFromKotlinUsageRequest)?.callTypeParameterInfo ?: CallTypeParameterInfo.EMPTY
+
+    private val parameterCandidates: List<ParamCandidate> = run {
+        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } } ?: emptyList()
+        if (callTypeParamInfo.substitutionMap.isEmpty()) return@run raw
+        val nameGenerator = UniqueNameGenerator()
+        raw.map { candidate ->
+            val names2Types = candidate.renderedTypes.zip(candidate.names) { type, name ->
+                val substitutedType = callTypeParamInfo.substitutionMap[type]
+                if (substitutedType != null) (nameGenerator.generateUniqueName(substitutedType.lowercase()) to substitutedType)
+                else (nameGenerator.generateUniqueName(name) to type)
+            }
+
+            ParamCandidate(names2Types.map { it.first }, names2Types.map { it.second })
+        }
+    }
+
+    private val candidatesOfRenderedReturnType: List<String> = run {
+        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfReturnType(request, it) } } } ?: emptyList()
+        if (callTypeParamInfo.substitutionMap.isEmpty()) return@run raw
+        raw.map { callTypeParamInfo.substitutionMap[it] ?: it }
+    }
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
 
     private val isForCompanion: Boolean =
@@ -240,6 +262,9 @@ internal class CreateKotlinCallableAction(
         container: KtElement,
         receiverTypeText: String
     ): String {
+        if (callTypeParamInfo.typeParameterDeclarations.isNotEmpty()) {
+            return "<${callTypeParamInfo.typeParameterDeclarations.joinToString(", ") { it.typeParameterName }}> "
+        }
         if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
             analyze(call as? KtElement ?: container) {
                 val receiverSymbol = request.receiverExpression.resolveExpression()

@@ -5669,6 +5669,70 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/unitFun.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments")
+        public static class TypeArguments extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callWithStarProjection.kt")
+            public void testCallWithStarProjection() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/callWithStarProjection.kt");
+            }
+
+            @TestMetadata("classMember.kt")
+            public void testClassMember() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/classMember.kt");
+            }
+
+            @TestMetadata("classMemberInFunctionLiteralWithReceiver.kt")
+            public void testClassMemberInFunctionLiteralWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/classMemberInFunctionLiteralWithReceiver.kt");
+            }
+
+            @TestMetadata("classMemberPartialSubstitution.kt")
+            public void testClassMemberPartialSubstitution() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/classMemberPartialSubstitution.kt");
+            }
+
+            @TestMetadata("classMemberWithReceiverArg.kt")
+            public void testClassMemberWithReceiverArg() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/classMemberWithReceiverArg.kt");
+            }
+
+            @TestMetadata("memberWithTypeParameterAsReceiver.kt")
+            public void testMemberWithTypeParameterAsReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/memberWithTypeParameterAsReceiver.kt");
+            }
+
+            @TestMetadata("noReceiver.kt")
+            public void testNoReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/noReceiver.kt");
+            }
+
+            @TestMetadata("noReceiverExtraArgs.kt")
+            public void testNoReceiverExtraArgs() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/noReceiverExtraArgs.kt");
+            }
+
+            @TestMetadata("noReceiverLongName.kt")
+            public void testNoReceiverLongName() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/noReceiverLongName.kt");
+            }
+
+            @TestMetadata("noReceiverPartialSubstitution.kt")
+            public void testNoReceiverPartialSubstitution() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/typeArguments/noReceiverPartialSubstitution.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

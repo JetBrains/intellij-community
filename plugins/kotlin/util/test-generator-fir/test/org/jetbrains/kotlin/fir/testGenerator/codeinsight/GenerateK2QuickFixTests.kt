@@ -86,7 +86,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/createFromUsage/createSecondaryConstructor", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createFunction/binaryOperations", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createFunction/call", pattern = pattern,
-                  excludedDirectories = listOf("extensionByExtensionReceiver", "typeArguments"))
+                  excludedDirectories = listOf("extensionByExtensionReceiver"))
             model("$idea/quickfix/createFromUsage/createVariable", pattern = pattern)
             model("$idea/quickfix/createLabel", pattern = pattern)
             model("$idea/quickfix/dataClassConstructorVsCopyVisibility", pattern = pattern)
