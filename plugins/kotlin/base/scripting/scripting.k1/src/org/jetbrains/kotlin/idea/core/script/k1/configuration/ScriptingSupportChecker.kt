@@ -13,10 +13,10 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.script.v1.hasUnknownScriptExt
@@ -46,12 +46,12 @@ class ScriptingSupportChecker: EditorNotificationProvider {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
                     val textKey = if (featureEnabled) "kotlin.script.in.project.sources.1.9" else "kotlin.script.in.project.sources"
-                    text = KotlinBundle.message(textKey)
+                    text = KotlinBaseScriptingBundle.message(textKey)
 
                     createActionLabel(
-                        KotlinBundle.message("kotlin.script.warning.more.info"),
+                        KotlinBaseScriptingBundle.message("kotlin.script.warning.more.info"),
                         Runnable {
-                            BrowserUtil.browse(KotlinBundle.message("kotlin.script.in.project.sources.link"))
+                            BrowserUtil.browse(KotlinBaseScriptingBundle.message("kotlin.script.in.project.sources.link"))
                         },
                         false
                     )
@@ -72,11 +72,11 @@ class ScriptingSupportChecker: EditorNotificationProvider {
         if (file.hasUnknownScriptExt()) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Info).apply {
-                    text = KotlinBundle.message("kotlin.script.in.beta.stage")
+                    text = KotlinBaseScriptingBundle.message("kotlin.script.in.beta.stage")
                     createActionLabel(
-                        KotlinBundle.message("kotlin.script.warning.more.info"),
+                        KotlinBaseScriptingBundle.message("kotlin.script.warning.more.info"),
                         Runnable {
-                            BrowserUtil.browse(KotlinBundle.message("kotlin.script.in.beta.stage.link"))
+                            BrowserUtil.browse(KotlinBaseScriptingBundle.message("kotlin.script.in.beta.stage.link"))
                         },
                         false
                     )
@@ -94,7 +94,7 @@ private fun EditorNotificationPanel.addHideAction(
     project: Project
 ) {
     createActionLabel(
-        KotlinBundle.message("kotlin.script.in.project.sources.hide"),
+        KotlinBaseScriptingBundle.message("kotlin.script.in.project.sources.hide"),
         Runnable {
             KotlinScriptingSettingsImpl.getInstance(project).showSupportWarning = false
             close(project, file)
@@ -108,7 +108,7 @@ private fun EditorNotificationPanel.addDecideLaterAction(
     project: Project
 ) {
     createActionLabel(
-        KotlinBundle.message("kotlin.script.in.project.sources.later"),
+        KotlinBaseScriptingBundle.message("kotlin.script.in.project.sources.later"),
         Runnable {
             KotlinScriptingSettingsImpl.getInstance(project).decideOnRemainingInSourceRootLater = true
             close(project, file)
@@ -122,7 +122,7 @@ private fun EditorNotificationPanel.addMoveOutOfSourceRootAction(
     project: Project
 ) {
     createActionLabel(
-        KotlinBundle.message("kotlin.script.in.project.sources.move"),
+        KotlinBaseScriptingBundle.message("kotlin.script.in.project.sources.move"),
         Runnable {
             close(project, file)
             val dataContext = DataManager.getInstance().getDataContext(this)
