@@ -1,29 +1,9 @@
 <idea-plugin>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.mcpServer"/>
-    <plugin id="org.jetbrains.plugins.terminal"/>
-    <module name="intellij.libraries.assertj.core"/>
-    <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.kotlinTest"/>
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
-    <module name="intellij.libraries.kotlinx.io"/>
-    <module name="intellij.libraries.kotlinx.serialization.core"/>
-    <module name="intellij.libraries.kotlinx.serialization.json"/>
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
-    <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.lang.impl"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
-    <module name="intellij.platform.util.ex"/>
-    <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- endregion -->
 </idea-plugin>
