@@ -17,6 +17,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -94,7 +95,7 @@ class PluginInstallOperation(
     myAllowInstallWithoutRestart = allowInstallWithoutRestart
   }
 
-  val pendingDynamicPluginInstalls: MutableList<PendingDynamicPluginInstall>
+  val pendingDynamicPluginInstalls: List<PendingDynamicPluginInstall>
     get() = myPendingDynamicPluginInstalls
 
   val isRestartRequired: Boolean
@@ -138,14 +139,12 @@ class PluginInstallOperation(
     for (node in myPluginsToInstall) {
       if (Strings.areSameInstance(node.repositoryName, PluginInstaller.UNKNOWN_HOST_MARKER)) {
         val descriptor = allPlugins[node.pluginId]
-        node.repositoryName = if (descriptor != null) descriptor.repositoryName else null
+        node.repositoryName = descriptor?.repositoryName
         val oldUrl = node.downloadUrl
         if (descriptor != null) {
           node.downloadUrl = descriptor.downloadUrl
         }
-        LOG.info("updateUrls for node: " +
-                 node.pluginId + " | " + node.version + " | " + oldUrl +
-                 " to: " + node.repositoryName + " | " + node.downloadUrl)
+        LOG.info("updateUrls for node: ${node.pluginId} | ${node.version} | $oldUrl to: ${node.repositoryName} | ${node.downloadUrl}")
       }
     }
   }
@@ -170,7 +169,6 @@ class PluginInstallOperation(
         return false
       }
     }
-
     return result
   }
 
@@ -213,17 +211,14 @@ class PluginInstallOperation(
     pluginIdsBeingInstalled: List<PluginId>,
   ): Boolean {
     if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode.getDescriptor())) {
-      LOG.warn("The plugin " + pluginNode.pluginId + " is not allowed to install for the organization")
+      LOG.warn("The plugin ${pluginNode.pluginId} is not allowed to install for the organization")
       return false
     }
     val toDisable = checkDependenciesAndReplacements(pluginNode.getDescriptor())
-
     myShownErrors = false
-
     val downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.repositoryName, null)
-
     val previousDescriptor = PluginManagerCore.getPlugin(pluginNode.pluginId)
-    val previousVersion = if (previousDescriptor == null) null else previousDescriptor.getVersion()
+    val previousVersion = previousDescriptor?.getVersion()
     PluginManagerUsageCollector.pluginInstallationStarted(
       pluginNode.getDescriptor(),
       if (downloader.isFromMarketplace()) InstallationSourceEnum.MARKETPLACE else InstallationSourceEnum.CUSTOM_REPOSITORY,
@@ -233,9 +228,9 @@ class PluginInstallOperation(
     val prepared = downloader.prepareToInstall(myIndicator)
     if (prepared) {
       val descriptor = downloader.descriptor as IdeaPluginDescriptorImpl
-
-      if (!checkMissingDependencies(descriptor, pluginIdsBeingInstalled)) return false
-
+      if (!checkMissingDependencies(descriptor, pluginIdsBeingInstalled)) {
+        return false
+      }
       val allowNoRestart = myAllowInstallWithoutRestart &&
                            DynamicPlugins.allowLoadUnloadWithoutRestart(
                              descriptor, null,
@@ -244,9 +239,7 @@ class PluginInstallOperation(
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(PendingDynamicPluginInstall(downloader.getFilePath(), descriptor))
         val state = InstalledPluginsState.getInstanceIfLoaded()
-        if (state != null) {
-          state.onPluginInstall(downloader.descriptor, false, false)
-        }
+        state?.onPluginInstall(downloader.descriptor, false, false)
       }
       else {
         myRestartRequired = true
@@ -257,12 +250,11 @@ class PluginInstallOperation(
       myDependant.add(PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart))
       val node = pluginNode.getDescriptor()
       if (node is PluginNode) {
-        node.setStatus(PluginNode.Status.DOWNLOADED)
+        node.status = PluginNode.Status.DOWNLOADED
       }
       if (toDisable != null) {
         myPluginEnabler.disable(setOf(toDisable))
       }
-
       return true
     }
     else {
@@ -273,23 +265,20 @@ class PluginInstallOperation(
 
   fun checkDependenciesAndReplacements(pluginNode: IdeaPluginDescriptor): IdeaPluginDescriptor? {
     val pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.extensionList) { r ->
-      r.getNewPluginId() == pluginNode.getPluginId().idString
+      r.newPluginId == pluginNode.getPluginId().idString
     }
     if (pluginReplacement == null) {
       return null
     }
-
-    val oldPluginId = pluginReplacement.getOldPluginDescriptor().getPluginId()
+    val oldPluginId = pluginReplacement.oldPluginDescriptor.getPluginId()
     val oldPlugin = PluginManagerCore.getPlugin(oldPluginId)
     if (oldPlugin == null) {
-      LOG.warn("Plugin with id '" + oldPluginId + "' not found")
+      LOG.warn("Plugin with id '$oldPluginId' not found")
       return null
     }
-
     if (myPluginEnabler.isDisabled(oldPlugin.getPluginId())) {
       return null
     }
-
     val toDisable = AtomicBoolean()
     ApplicationManager.getApplication().invokeAndWait({
       val choice = MessageDialogBuilder.yesNo(pluginReplacement.getReplacementMessage(oldPlugin, pluginNode),
@@ -298,7 +287,6 @@ class PluginInstallOperation(
         .guessWindowAndAsk()
       toDisable.set(choice)
     }, ModalityState.any())
-
     return if (toDisable.get()) oldPlugin else null
   }
 
@@ -306,13 +294,10 @@ class PluginInstallOperation(
     pluginNode: IdeaPluginDescriptor,
     pluginIdsBeingInstalled: List<PluginId>?,
   ): Boolean {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Checking missing dependencies for " + pluginNode +
-                ". Plugins being installed: " + pluginIdsBeingInstalled)
-    }
+    LOG.debug { "Checking missing dependencies for $pluginNode. Plugins being installed: $pluginIdsBeingInstalled" }
     val pluginSet = PluginManagerCore.getPluginSetOrNull() // TODO assert that plugins are initialized at this point
-    val existingPluginIds: Set<PluginId> = if (pluginSet != null) pluginSet.buildPluginIdMap().keys else Collections.emptySet()
-    val existingContentModuleIds: Set<PluginModuleId> = if (pluginSet != null) pluginSet.buildContentModuleIdMap().keys else Collections.emptySet()
+    val existingPluginIds: Set<PluginId> = pluginSet?.buildPluginIdMap()?.keys ?: Collections.emptySet()
+    val existingContentModuleIds: Set<PluginModuleId> = pluginSet?.buildContentModuleIdMap()?.keys ?: Collections.emptySet()
     val addedPluginIdsAfterInstallation: MutableSet<PluginId> = HashSet()
     val addedContentModuleIdsAfterInstallation: MutableSet<PluginModuleId> = HashSet()
     addedPluginIdsAfterInstallation.add(pluginNode.getPluginId())
@@ -331,7 +316,7 @@ class PluginInstallOperation(
     val missingOptionalPlugins: MutableMap<PluginId, PluginUiModel> = HashMap()
 
     for (dependency in pluginNode.getDependencies()) {
-      if (LOG.isDebugEnabled()) LOG.debug("Processing depends dependency: " + dependency.pluginId + " optional=" + dependency.isOptional)
+      LOG.debug { "Processing depends dependency: " + dependency.pluginId + " optional=" + dependency.isOptional }
       val dependencyId = dependency.pluginId
       val targetCollector = if (dependency.isOptional) missingOptionalPlugins else missingRequiredPlugins
 
@@ -347,34 +332,34 @@ class PluginInstallOperation(
         targetCollector.containsKey(pluginId)
       }
       if (shouldSkip.apply(dependencyId)) {
-        if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+        LOG.debug { "Dependency is already satisfied" }
         continue
       }
       var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyId.idString)
       if (resolvedDependencyId == null) {
         resolvedDependencyId = dependencyId
       }
-      if (LOG.isDebugEnabled() && resolvedDependencyId != dependencyId) LOG.debug("Dependency is resolved into " + resolvedDependencyId)
+      if (resolvedDependencyId != dependencyId) LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
       if (shouldSkip.apply(resolvedDependencyId)) {
-        if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+        LOG.debug { "Dependency is already satisfied" }
         continue
       }
       val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
       if (depPluginDescriptor != null) {
-        if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies (optional=" + dependency.isOptional + ")")
+        LOG.debug { "Adding " + resolvedDependencyId + " to missing dependencies (optional=" + dependency.isOptional + ")" }
         targetCollector[resolvedDependencyId] = depPluginDescriptor
       }
       else {
-        if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository")
+        LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
       }
     }
 
     if (pluginNode is PluginMainDescriptor) {
       val processRequiredModuleDependencies = Function<PluginModuleDescriptor, Void?> { module ->
         for (dependencyPluginId in module.moduleDependencies.plugins) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Processing v2 plugin dependency: " + dependencyPluginId.idString + " in " +
-                      (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor"))
+          LOG.debug {
+            "Processing v2 plugin dependency: " + dependencyPluginId.idString + " in " +
+            (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
           }
           val shouldSkip = Function<PluginId, Boolean> { pluginId ->
             existingPluginIds.contains(pluginId) ||
@@ -384,58 +369,58 @@ class PluginInstallOperation(
             missingRequiredPlugins.containsKey(pluginId)
           }
           if (shouldSkip.apply(dependencyPluginId)) {
-            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+            LOG.debug { "Dependency is already satisfied" }
             continue
           }
           var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyPluginId.idString)
           if (resolvedDependencyId == null) {
             resolvedDependencyId = dependencyPluginId
           }
-          if (LOG.isDebugEnabled() && resolvedDependencyId != dependencyPluginId) LOG.debug("Dependency is resolved into " + resolvedDependencyId)
+          if (resolvedDependencyId != dependencyPluginId) LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
           if (shouldSkip.apply(resolvedDependencyId)) {
-            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+            LOG.debug { "Dependency is already satisfied" }
             continue
           }
           val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
           if (depPluginDescriptor != null) {
-            if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies")
+            LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
             missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
           }
           else {
-            if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository")
+            LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
           }
         }
         for (dependencyModuleId in module.moduleDependencies.modules) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Processing v2 module dependency: " + dependencyModuleId.name + " in " +
-                      (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor"))
+          LOG.debug {
+            "Processing v2 module dependency: " + dependencyModuleId.name + " in " +
+            (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
           }
           if (existingContentModuleIds.contains(dependencyModuleId) ||
               addedContentModuleIdsAfterInstallation.contains(dependencyModuleId)) {
-            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+            LOG.debug { "Dependency is already satisfied" }
             continue
           }
           val resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyModuleId.name)
           if (resolvedDependencyId == null) {
-            if (LOG.isDebugEnabled()) LOG.debug("Dependency is not resolved")
+            LOG.debug { "Dependency is not resolved" }
             continue
           }
-          if (LOG.isDebugEnabled()) LOG.debug("Dependency is resolved into " + resolvedDependencyId)
+          LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
           if (existingPluginIds.contains(resolvedDependencyId) ||
               addedPluginIdsAfterInstallation.contains(resolvedDependencyId) ||
               InstalledPluginsState.getInstance().wasInstalled(resolvedDependencyId) ||
               InstalledPluginsState.getInstance().wasInstalledWithoutRestart(resolvedDependencyId) ||
               missingRequiredPlugins.containsKey(resolvedDependencyId)) {
-            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied")
+            LOG.debug { "Dependency is already satisfied" }
             continue
           }
           val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
           if (depPluginDescriptor != null) {
-            if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies")
+            LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
             missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
           }
           else {
-            if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository")
+            LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
           }
         }
         null
@@ -535,7 +520,7 @@ class PluginInstallOperation(
   }
 
   /**
-   * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
+   * Searches for a plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with a bigger version number
    */
   private fun findPluginInRepo(depPluginId: PluginId): PluginUiModel? {
     val pluginFromCustomRepos = myCustomReposPlugins.stream()
@@ -582,12 +567,10 @@ class PluginInstallOperation(
 
     private fun getPluginsText(nodes: List<PluginUiModel>): @Nls String {
       val pluginNames = ContainerUtil.map(nodes) { node -> StringUtil.wrapWithDoubleQuote(node.name!!) }
-
       val size = pluginNames.size
       if (size == 1) {
         return pluginNames[0]
       }
-
       return NlsMessages.formatAndList(pluginNames)
     }
 
@@ -596,14 +579,13 @@ class PluginInstallOperation(
      */
     private fun resolveModuleInMarketplaceWithCache(moduleId: String): PluginId? {
       val cachedResult = ourModuleResolutionCache.getIfPresent(moduleId)
-      //noinspection OptionalAssignedToNull
       if (cachedResult != null) {
         return cachedResult.orElse(null)
       }
-      LOG.debug("Resolving module " + moduleId + " in Marketplace")
+      LOG.debug("Resolving module $moduleId in Marketplace")
       val result = MarketplaceRequests.getInstance().getCompatibleUpdateByModule(moduleId)
       ourModuleResolutionCache.put(moduleId, Optional.ofNullable(result))
-      LOG.debug("Resolved module " + moduleId + " in Marketplace: " + result)
+      LOG.debug("Resolved module $moduleId in Marketplace: $result")
       return result
     }
   }
