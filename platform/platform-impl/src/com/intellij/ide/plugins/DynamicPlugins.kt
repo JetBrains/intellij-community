@@ -153,8 +153,9 @@ object DynamicPlugins {
       if (plugin == null) {
         return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
       }
-      if (!state.isResolved(plugin)) {
-        return@validator "plugin ${plugin.shortLogDescription} was expected to be loaded but was excluded"
+      if (state.isExcluded(plugin)) {
+        return@validator "plugin ${plugin.shortLogDescription} was expected to be loaded but was excluded:\n" +
+                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, emptyMap(), plugin)}"
       }
     }
     for (id in expectNotToLoad) {
