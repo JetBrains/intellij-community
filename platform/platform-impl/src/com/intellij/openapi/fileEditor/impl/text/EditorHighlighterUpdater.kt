@@ -76,7 +76,7 @@ open class EditorHighlighterUpdater(
     updateHighlightersOnExtensionChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME)
     updateHighlightersOnExtensionChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME)
 
-    SyntaxHighlighter.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedFactoryEPBean> {
+    addExtensionPointListener(SyntaxHighlighter.EP_NAME, object : ExtensionPointListener<KeyedFactoryEPBean> {
       override fun extensionAdded(extension: KeyedFactoryEPBean, pluginDescriptor: PluginDescriptor) {
         checkUpdateHighlighters(key = extension.key, updateSynchronously = false)
       }
@@ -101,8 +101,23 @@ open class EditorHighlighterUpdater(
     })
   }
 
+  @Suppress("DEPRECATION")
+  private fun <T : Any> addExtensionPointListener(
+    epName: ExtensionPointName<T>,
+    listener: ExtensionPointListener<T>,
+    parentDisposable: Disposable,
+  ) {
+    val coroutineScope = asyncLoader?.coroutineScope
+    if (coroutineScope == null) {
+      epName.addExtensionPointListener(listener, parentDisposable)
+    }
+    else {
+      epName.addExtensionPointListener(coroutineScope, listener)
+    }
+  }
+
   private fun <T> updateHighlightersOnExtensionChange(parentDisposable: Disposable, epName: ExtensionPointName<KeyedLazyInstance<T>>) {
-    epName.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<T>> {
+    addExtensionPointListener(epName, object : ExtensionPointListener<KeyedLazyInstance<T>> {
       override fun extensionAdded(extension: KeyedLazyInstance<T>, pluginDescriptor: PluginDescriptor) {
         checkUpdateHighlighters(extension.key, false)
       }
