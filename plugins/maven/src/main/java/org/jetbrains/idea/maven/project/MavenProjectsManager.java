@@ -399,10 +399,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         getGeneralSettings().setMavenHomeType(MavenWrapper.INSTANCE);
       }
     }
-    var tree = getProjectsTree();
     doAddManagedFiles(files);
     setExplicitProfiles(profiles);
-    setNewTreeFromSync(tree);
   }
 
   private void doAddManagedFiles(List<VirtualFile> files) {
