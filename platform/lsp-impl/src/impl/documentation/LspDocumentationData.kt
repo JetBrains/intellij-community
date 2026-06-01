@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.backend.documentation.DocumentationResult
-import com.intellij.platform.lsp.impl.documentation.LspDocumentationData.DescriptionMarkup
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import org.eclipse.lsp4j.MarkupContent
@@ -25,7 +24,7 @@ fun createLspDocumentationData(markupContent: MarkupContent): LspDocumentationDa
   val contents = StringUtilRt.convertLineSeparators(markupContent.value)
   val endOfDefinition = contents.indexOf("```", 3)
   if (!contents.startsWith("```") || contents.indexOf("\n") <= 0 || endOfDefinition < 0) {
-    return LspDocumentationData(description = contents, descriptionMarkup = DescriptionMarkup.MARKDOWN)
+    return LspDocumentationData(description = contents, descriptionMarkup = LspDocumentationData.DescriptionMarkup.MARKDOWN)
   }
   val definitionLanguage = contents.takeWhile { !it.isWhitespace() }.substring(3).takeIf { it.isNotEmpty() }
   val definition = contents.substring(contents.indexOf("\n") + 1, endOfDefinition).trimIndent().trimEnd()
@@ -36,7 +35,7 @@ fun createLspDocumentationData(markupContent: MarkupContent): LspDocumentationDa
     definitionCodeBlock = definition,
     definitionLanguage = definitionLanguage,
     description = description,
-    descriptionMarkup = DescriptionMarkup.MARKDOWN
+    descriptionMarkup = LspDocumentationData.DescriptionMarkup.MARKDOWN
   )
 }
 
