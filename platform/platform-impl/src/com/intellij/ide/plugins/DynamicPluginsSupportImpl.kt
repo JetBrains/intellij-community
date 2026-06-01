@@ -58,11 +58,23 @@ internal class DynamicPluginsSupportImpl(
 
   override suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid? {
     return withContext(Dispatchers.Default) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("validating dynamic reconfiguration to $targetState")
+        PluginInitializationDiagnosticUtils.logExclusionTree(
+          LOG,
+          targetState.resolvedPluginSet!!,
+          emptyMap() // FIXME may cause "id is not resolved" messages instead of "is marked disabled"
+        )
+      }
       reportSequentialProgress { reporter ->
         val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
         val current = getCurrentlyLoadedPluginSet()
         val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
-        validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)?.let(DynamicPluginsTransitionResult::Invalid)
+        validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
+          .also {
+            if (it != null) LOG.debug { "Dynamic plugins transition is not possible: ${it.logMessage}" }
+          }
+          ?.let(DynamicPluginsTransitionResult::Invalid)
       }
     }
   }
@@ -72,11 +84,19 @@ internal class DynamicPluginsSupportImpl(
       reportSequentialProgress { reporter ->
         val current = getCurrentlyLoadedPluginSet()
         val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        LOG.info("performing dynamic reconfiguration to $targetState")
+        PluginInitializationDiagnosticUtils.logExclusionTree(
+          LOG,
+          target,
+          emptyMap() // FIXME may cause "id is not resolved" messages instead of "is marked disabled"
+        )
         val sequence = buildTransitionSequence(current, target).also {
           LOG.info(it.getExplanationLogMessage())
         }
 
-        val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
+        val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter).also {
+          if (it != null) LOG.warn("Dynamic plugins transition is not possible: ${it.logMessage}")
+        }
         if (dynamicTransitionIsNotPossibleReason != null) {
           return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
         }
@@ -164,8 +184,6 @@ internal class DynamicPluginsSupportImpl(
         }
       }
       return@indeterminateStep null
-    }.also {
-      if (it != null) LOG.warn("Dynamic plugins transition is not possible: ${it.logMessage}")
     }
   }
 

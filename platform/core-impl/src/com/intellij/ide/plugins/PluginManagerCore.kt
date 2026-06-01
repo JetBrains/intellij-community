@@ -596,7 +596,7 @@ object PluginManagerCore {
 
     initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
     val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
-    PluginInitializationDiagnosticUtils.logExclusionTree(resolvedPluginSet, incompletePlugins)
+    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet, incompletePlugins)
     val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
       input = PluginSubsystemInput(initContext, discoveredPlugins),
       resolvedPluginSet = resolvedPluginSet,

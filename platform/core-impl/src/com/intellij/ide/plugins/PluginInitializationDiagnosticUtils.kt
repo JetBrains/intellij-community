@@ -2,14 +2,14 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
-import com.intellij.ide.plugins.PluginManagerCore.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
-  fun logExclusionTree(resolvedPluginSet: ResolvedPluginSet, incompletePlugins: Map<PluginId, PluginMainDescriptor>) {
+  fun logExclusionTree(logger: Logger, resolvedPluginSet: ResolvedPluginSet, incompletePlugins: Map<PluginId, PluginMainDescriptor>) {
     val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
     val exclusionChildren = LinkedHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>()
     val roots = LinkedHashSet<IdeaPluginDescriptorImpl>()

@@ -523,8 +523,6 @@ object DynamicPlugins {
       incompletePlugins[plugin.pluginId] = plugin
     }
     val resolvedSet = newInitContext.resolveConstraints(pluginsToLoad)
-    PluginInitializationDiagnosticUtils.logExclusionTree(resolvedSet, incompletePlugins)
-
     val newState = PluginManagerCore.adaptResolvedPluginSetAsOldPluginSet(
       PluginSubsystemInput(newInitContext, newDiscoveryResult),
       resolvedSet,
