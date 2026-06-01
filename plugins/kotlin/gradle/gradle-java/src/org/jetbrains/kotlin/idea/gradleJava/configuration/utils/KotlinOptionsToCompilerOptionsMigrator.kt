@@ -78,13 +78,6 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
     return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression)
 }
 
-/**
- * Returns the source-faithful textual form of [this] expression suitable for splicing into a
- * generated replacement expression. This is the only PSI→text bridge used by the migrator: every
- * other code path operates on [KtExpression] PSI instances.
- */
-private fun KtExpression.asReplacementSource(): String = text
-
 private fun getOptionValue(expression: KtExpression, optionName: String): Pair<String, Boolean>? {
     val optionValue: String
     val valueContainsMultipleValues: Boolean
@@ -97,9 +90,8 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
             val rightPart = expression.right ?: return null
             // The right-hand side of a `+` chain may be a string literal (KtStringTemplateExpression),
             // a qualified reference (e.g. `project.compilerArgs`), a `listOf(...)` call, or any other
-            // expression. We collect their source-faithful representations via PSI and later splice
-            // them into the generated replacement.
-            val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.asReplacementSource()))
+            // expression. We collect their representations via PSI and later splice them into the generated replacement.
+            val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.text))
                 ?: return null
             optionValue = StringUtil.join(optionValues.reversed(), ", ")
             valueContainsMultipleValues = true
@@ -107,7 +99,7 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
             return null
         }
     } else {
-        optionValue = expression.asReplacementSource()
+        optionValue = expression.text
         valueContainsMultipleValues = false
     }
     return Pair(optionValue, valueContainsMultipleValues)
@@ -119,10 +111,10 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
 private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, optionValues: MutableSet<String>): Set<String>? {
     if (expression is KtBinaryExpression) {
         if (expression.operationToken != KtTokens.PLUS) return null
-        // Each `+` operand is collected via PSI; the textual form is its source-faithful representation
+        // Each `+` operand is collected via PSI; the textual form is its as-is representation
         // (e.g. a quoted string literal such as `"-Xopt-in=kotlin.RequiresOptIn"`).
         val rightOperand = expression.right ?: return null
-        optionValues.add(rightOperand.asReplacementSource())
+        optionValues.add(rightOperand.text)
         getOptionsFromFreeCompilerArgsExpression(expression.left ?: return null, optionValues)
     } else {
         // expression.getReferencedName() may be `project.benchmark.compilerOpts`,
@@ -130,7 +122,7 @@ private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, o
         // or a leaf identifier/literal (e.g. `"-Xexport-kdoc"`).
         // The leaf `freeCompilerArgs` receiver itself is detected via PSI and skipped.
         if ((expression as? KtNameReferenceExpression)?.getReferencedName() != "freeCompilerArgs") {
-            optionValues.add(expression.asReplacementSource())
+            optionValues.add(expression.text)
         }
     }
     return optionValues
@@ -305,7 +297,7 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
 }
 
 /**
- * Returns the source-faithful text of [binaryExpression] with every `KtNameReferenceExpression`
+ * Returns the text of [binaryExpression] with every `KtNameReferenceExpression`
  * named `kotlinOptions` renamed to `compilerOptions`. Operates on a PSI clone using a tree
  * visitor so that the original [binaryExpression] is left intact and only the final textual form is produced at the API boundary
  * (the [Replacement.replacement] field, consumed by `KtPsiFactory.createExpression(...)` in the inspection's quick fix).

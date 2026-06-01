@@ -71,6 +71,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -499,7 +500,7 @@ class KotlinBuildScriptManipulator(
      * any other expression shape.
      */
     private fun KtExpression.extractStringValue(): String? {
-        val unwrapped = generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.last()
+        val unwrapped = KtPsiUtil.deparenthesize(this)
         val stringTemplate = unwrapped as? KtStringTemplateExpression ?: return null
         return stringTemplate.entries.singleOrNull()?.text
     }
