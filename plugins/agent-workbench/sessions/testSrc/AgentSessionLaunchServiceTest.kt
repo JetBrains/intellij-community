@@ -292,6 +292,45 @@ class AgentSessionLaunchServiceTest {
   }
 
   @Test
+  fun promptLaunchRejectsPendingNewThreadTarget() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = true,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val pendingThread = thread(id = "new-global-prompt", updatedAt = 200, provider = AgentSessionProvider.CODEX)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(listOf(pendingThread))) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          service.refresh()
+          waitForCondition { activeThreadIds(service.state.value).contains(pendingThread.id) }
+
+          val result = launchService.launchPromptRequest(
+            AgentPromptLaunchRequest(
+              provider = AgentSessionProvider.CODEX,
+              projectPath = PROJECT_PATH,
+              launchMode = AgentSessionLaunchMode.STANDARD,
+              initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Start another thread"),
+              targetThreadId = pendingThread.id,
+            )
+          )
+
+          assertThat(result.launched).isFalse()
+          assertThat(result.error).isEqualTo(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        }
+      }
+    }
+  }
+
+  @Test
   fun promptLaunchRejectsProvidersWithoutPromptLaunchSupport() {
     val descriptor = testDescriptor(
       supportsUnarchiveThread = false,

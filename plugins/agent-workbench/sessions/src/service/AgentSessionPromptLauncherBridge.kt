@@ -25,6 +25,7 @@ import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDis
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.DataContext
@@ -282,6 +283,7 @@ private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSess
     .asSequence()
     .filter { thread -> thread.provider == provider }
     .filter { thread -> !thread.archived }
+    .filter { thread -> !isAgentSessionNewSessionId(thread.id) }
     .toList()
     .let(::sortAgentSessionThreadsForDisplay)
   val hasProviderWarning = pathState.providerWarnings.any { warning -> warning.provider == provider }

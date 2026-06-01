@@ -900,6 +900,70 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testRebindOpenPendingCodexTabKeepsConcreteNewThreadAnchorTabOpen(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-old",
+      shellCommand = listOf("codex", "resume", "thread-old"),
+      threadId = "thread-old",
+      threadTitle = "Previous thread",
+      subAgentId = null,
+    )
+
+    val concreteFile = openedChatFiles().single()
+    concreteFile.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(concreteFile.toSnapshot())
+
+    openChatInModal(
+      threadIdentity = "CODEX:new-1",
+      shellCommand = listOf("codex"),
+      threadId = "",
+      threadTitle = "New thread",
+      subAgentId = null,
+      pendingCreatedAtMs = 1_100L,
+      pendingLaunchMode = "standard",
+    )
+
+    val pendingFile = openedChatFiles().single { file -> file.threadIdentity == "CODEX:new-1" }
+    val rebindReport = rebindOpenPendingCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatPendingTabRebindRequest(
+            pendingTabKey = pendingFile.tabKey,
+            pendingThreadIdentity = pendingFile.threadIdentity,
+            target = rebindTarget(
+              threadIdentity = "CODEX:thread-new",
+              threadId = "thread-new",
+              threadTitle = "Recovered thread",
+              threadActivity = AgentThreadActivity.UNREAD,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.requestedBindings).isEqualTo(1)
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+
+    val files = openedChatFiles()
+    assertThat(files.map { file -> file.threadIdentity })
+      .containsExactlyInAnyOrder("CODEX:thread-old", "CODEX:thread-new")
+
+    val previousThreadFile = files.single { file -> file.tabKey == concreteFile.tabKey }
+    assertThat(previousThreadFile.threadIdentity).isEqualTo("CODEX:thread-old")
+    assertThat(previousThreadFile.threadId).isEqualTo("thread-old")
+    assertThat(previousThreadFile.threadTitle).isEqualTo("Previous thread")
+    assertThat(previousThreadFile.newThreadRebindRequestedAtMs).isEqualTo(1_000L)
+
+    val reboundFile = files.single { file -> file.tabKey == pendingFile.tabKey }
+    assertThat(reboundFile.threadIdentity).isEqualTo("CODEX:thread-new")
+    assertThat(reboundFile.threadId).isEqualTo("thread-new")
+    assertThat(reboundFile.threadTitle).isEqualTo("Recovered thread")
+    assertThat(reboundFile.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+  }
+
+  @Test
   fun testRejectPendingCodexRebindTargetThatStillPointsToNewThread(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:new-1",

@@ -3,8 +3,6 @@
 
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
@@ -12,7 +10,6 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
 import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
-import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -75,10 +72,6 @@ internal class AgentSessionRefreshCoordinator(
     AgentSessionProvider,
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
-  private val openAgentChatConcreteTabsBinder: suspend (
-    AgentSessionProvider,
-    Map<String, List<AgentChatConcreteTabRebindRequest>>,
-  ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabSnapshot>>,
@@ -152,7 +145,6 @@ internal class AgentSessionRefreshCoordinator(
         AgentSessionThreadRebindSupport(
           provider = provider,
           openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
-          openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
           clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
         )
       }

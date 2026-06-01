@@ -120,18 +120,13 @@ internal class AgentSessionProviderRefreshRunner(
       val refreshSupport = refreshSupportProvider(provider)
       val pendingTabsSnapshotByPath = openChatSnapshot.pendingTabsByPath(provider)
       val concreteTabsSnapshotByPath = openChatSnapshot.concreteTabsAwaitingNewThreadRebindByPath(provider)
-      val openConcreteChatThreadIdentitiesByPath = LinkedHashMap<String, MutableSet<String>>()
-      for ((path, identities) in openChatSnapshot.concreteThreadIdentitiesByPath) {
-        openConcreteChatThreadIdentitiesByPath[path] = LinkedHashSet(identities)
-      }
 
       val hintThreadIdsByPath = refreshSupport?.collectRefreshHintThreadIdsByPath(
         targetPaths = targetPaths,
         outcomes = outcomes,
         knownThreadIdsByPath = knownThreadIdsByPath,
         pendingTabsByPath = pendingTabsSnapshotByPath,
-        concreteTabsByPath = concreteTabsSnapshotByPath,
-        openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
+        openConcreteThreadIdentitiesByPath = openChatSnapshot.concreteThreadIdentitiesByPath,
       ) ?: emptyMap()
 
       val refreshHintPaths = if (refreshSupport != null) {
@@ -139,8 +134,7 @@ internal class AgentSessionProviderRefreshRunner(
           .asSequence()
           .filter { path ->
             hintThreadIdsByPath.containsKey(path) ||
-            pendingTabsSnapshotByPath[path]?.isNotEmpty() == true ||
-            concreteTabsSnapshotByPath[path]?.isNotEmpty() == true
+            pendingTabsSnapshotByPath[path]?.isNotEmpty() == true
           }
           .toCollection(LinkedHashSet())
       }
@@ -175,11 +169,9 @@ internal class AgentSessionProviderRefreshRunner(
         null
       }
 
-      val concreteBindOutcome = refreshSupport?.bindConcreteOpenChatTabsAwaitingNewThread(
+      refreshSupport?.clearStaleConcreteOpenChatNewThreadRebindAnchors(
         refreshId = refreshId,
-        refreshHintsByPath = refreshHintsByPath,
         concreteTabsByPath = concreteTabsSnapshotByPath,
-        openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
       )
 
       val pendingBindOutcome = refreshSupport?.bindPendingOpenChatTabs(
@@ -188,7 +180,6 @@ internal class AgentSessionProviderRefreshRunner(
         allowedThreadIdsByPath = allowedNewThreadIdsByPath,
         refreshHintsByPath = refreshHintsByPath,
         pendingTabsByPath = pendingTabsSnapshotByPath,
-        reservedThreadIdentitiesByPath = concreteBindOutcome?.reboundThreadIdentitiesByPath.orEmpty(),
       )
 
       val pendingTabsForProjectionByPath =
@@ -248,10 +239,6 @@ internal class AgentSessionProviderRefreshRunner(
       val refreshSupport = refreshSupportProvider(provider)
       val pendingTabsSnapshotByPath = openChatSnapshot.pendingTabsByPath(provider)
       val concreteTabsSnapshotByPath = openChatSnapshot.concreteTabsAwaitingNewThreadRebindByPath(provider)
-      val openConcreteChatThreadIdentitiesByPath = LinkedHashMap<String, MutableSet<String>>()
-      for ((path, identities) in openChatSnapshot.concreteThreadIdentitiesByPath) {
-        openConcreteChatThreadIdentitiesByPath[path] = LinkedHashSet(identities)
-      }
 
       val outcomes = collectCurrentProviderOutcomes(
         state = stateSnapshot,
@@ -264,16 +251,14 @@ internal class AgentSessionProviderRefreshRunner(
         outcomes = outcomes,
         knownThreadIdsByPath = knownThreadIdsByPath,
         pendingTabsByPath = pendingTabsSnapshotByPath,
-        concreteTabsByPath = concreteTabsSnapshotByPath,
-        openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
+        openConcreteThreadIdentitiesByPath = openChatSnapshot.concreteThreadIdentitiesByPath,
       ) ?: knownThreadIdsByPath.filterKeys { path -> path in targetPaths }
 
       val refreshHintPaths = targetPaths
         .asSequence()
         .filter { path ->
           hintThreadIdsByPath.containsKey(path) ||
-          pendingTabsSnapshotByPath[path]?.isNotEmpty() == true ||
-          concreteTabsSnapshotByPath[path]?.isNotEmpty() == true
+          pendingTabsSnapshotByPath[path]?.isNotEmpty() == true
         }
         .toCollection(LinkedHashSet())
 
@@ -310,11 +295,9 @@ internal class AgentSessionProviderRefreshRunner(
         )
       }
 
-      val concreteBindOutcome = refreshSupport?.bindConcreteOpenChatTabsAwaitingNewThread(
+      refreshSupport?.clearStaleConcreteOpenChatNewThreadRebindAnchors(
         refreshId = refreshId,
-        refreshHintsByPath = refreshHintsByPath,
         concreteTabsByPath = concreteTabsSnapshotByPath,
-        openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
       )
 
       val pendingBindOutcome = refreshSupport?.bindPendingOpenChatTabs(
@@ -323,7 +306,6 @@ internal class AgentSessionProviderRefreshRunner(
         allowedThreadIdsByPath = null,
         refreshHintsByPath = refreshHintsByPath,
         pendingTabsByPath = pendingTabsSnapshotByPath,
-        reservedThreadIdentitiesByPath = concreteBindOutcome?.reboundThreadIdentitiesByPath.orEmpty(),
       )
 
       val pendingTabsForProjectionByPath =

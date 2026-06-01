@@ -45,16 +45,16 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
 - Rebinding updates tab identity, resume command, stored title/activity fallback, editor-tab presentation, and persisted snapshot without opening a second tab.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Concrete top-level Codex tabs detect exact terminal command `/new`, store a single anchor timestamp, and run bounded scoped-refresh retries for the tab path until the tab rebinds or the anchor expires.
+- Concrete top-level Codex tabs detect exact terminal command `/new`, store a single anchor timestamp, and run bounded scoped-refresh retries for the tab path until the tab-local title signal rebinds or the anchor expires.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../chat/testSrc/AgentChatConcreteThreadRebindControllerTest.kt
 
-- Concrete `/new` rebinding is Codex-only. It must use bounded refresh-hint candidates for the same normalized path, require an unambiguous target, skip already-open targets, and clear stale anchors.
-  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+- Concrete `/new` rebinding is Codex-only and tab-local. Provider refresh must not match concrete `/new` anchors to timestamp-bounded refresh candidates; the concrete tab identity changes only when the originating tab exposes a concrete thread id through its terminal title.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
-  [@test] ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 
-- If one candidate could satisfy both a pending tab and an explicit concrete `/new` rebind, the explicit `/new` rebind wins.
+- Provider refresh may clear stale concrete `/new` anchors, but concrete anchors must not reserve, steal, or prioritize candidates over pending new-thread tab rebinding.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Manual `Bind Pending Thread` is available only for pending tabs from providers that support pending editor-tab rebinding; it must not apply to already-concrete `/new` rebinding.

@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
@@ -15,8 +12,6 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_PRE_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
@@ -41,20 +36,12 @@ internal data class PendingTabBindOutcome(
   val pendingTabsForProjectionByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
 )
 
-internal data class ConcreteTabBindOutcome(
-  val reboundThreadIdentitiesByPath: Map<String, Set<String>>,
-)
-
 internal class AgentSessionThreadRebindSupport(
   private val provider: AgentSessionProvider,
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport,
-  private val openAgentChatConcreteTabsBinder: suspend (
-    AgentSessionProvider,
-    Map<String, List<AgentChatConcreteTabRebindRequest>>,
-  ) -> AgentChatConcreteTabRebindReport,
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabSnapshot>>,
@@ -68,7 +55,6 @@ internal class AgentSessionThreadRebindSupport(
     outcomes: Map<String, ProviderRefreshOutcome>,
     knownThreadIdsByPath: Map<String, Set<String>>,
     pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
-    concreteTabsByPath: Map<String, List<AgentChatConcreteTabSnapshot>> = emptyMap(),
     openConcreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
   ): Map<String, Set<String>> {
     if (targetPaths.isEmpty()) {
@@ -78,7 +64,6 @@ internal class AgentSessionThreadRebindSupport(
     val hintThreadIdsByPath = LinkedHashMap<String, LinkedHashSet<String>>()
     for (path in targetPaths) {
       val baselineKnownThreadIds = knownThreadIdsByPath[path].orEmpty()
-      val pathHasConcreteTabsAwaitingNewThreadRebind = concreteTabsByPath[path]?.isNotEmpty() == true
       val ids = LinkedHashSet<String>()
       baselineKnownThreadIds
         .asSequence()
@@ -92,11 +77,7 @@ internal class AgentSessionThreadRebindSupport(
         .filter { thread -> thread.provider == provider }
         .sortedByDescending { thread -> thread.updatedAt }
         .take(PROVIDER_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH)
-        .forEach { thread ->
-          if (!pathHasConcreteTabsAwaitingNewThreadRebind || thread.id in baselineKnownThreadIds) {
-            ids.add(thread.id)
-          }
-        }
+        .forEach { thread -> ids.add(thread.id) }
 
       pendingTabsByPath[path]
         .orEmpty()
@@ -188,7 +169,6 @@ internal class AgentSessionThreadRebindSupport(
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
     pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>> = emptyMap(),
-    reservedThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
   ): PendingTabBindOutcome {
     if (pendingTabsByPath.isEmpty()) {
       clearPendingThreadAmbiguityState()
@@ -209,15 +189,12 @@ internal class AgentSessionThreadRebindSupport(
       val threads = outcome.threads ?: continue
       val hasEligiblePendingTabs = eligiblePendingTabsByPath[path]?.isNotEmpty() == true
       val allowedThreadIds = allowedThreadIdsByPath?.get(path)
-      val reservedThreadIdentities = reservedThreadIdentitiesByPath[path].orEmpty()
       if (allowedThreadIdsByPath != null && allowedThreadIds == null && !hasEligiblePendingTabs) {
         continue
       }
       for (thread in threads) {
         if (thread.provider != provider) continue
         if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
-        val threadIdentity = buildAgentSessionIdentity(provider, thread.id)
-        if (threadIdentity in reservedThreadIdentities) continue
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
           buildAgentSessionChatRebindTarget(
             path = path,
@@ -241,12 +218,7 @@ internal class AgentSessionThreadRebindSupport(
         continue
       }
       val pathCandidates = candidatesByPath.getOrPut(path) { ArrayList(rebindCandidates.size) }
-      val reservedThreadIdentities = reservedThreadIdentitiesByPath[path].orEmpty()
       for (candidate in rebindCandidates) {
-        val threadIdentity = buildAgentSessionIdentity(provider, candidate.threadId)
-        if (threadIdentity in reservedThreadIdentities) {
-          continue
-        }
         pathCandidates.add(
           buildAgentSessionChatRebindTarget(
             path = path,
@@ -309,19 +281,16 @@ internal class AgentSessionThreadRebindSupport(
     )
   }
 
-  suspend fun bindConcreteOpenChatTabsAwaitingNewThread(
+  suspend fun clearStaleConcreteOpenChatNewThreadRebindAnchors(
     refreshId: Long,
-    refreshHintsByPath: Map<String, AgentSessionRefreshHints>,
     concreteTabsByPath: Map<String, List<AgentChatConcreteTabSnapshot>> = emptyMap(),
-    openConcreteThreadIdentitiesByPath: MutableMap<String, MutableSet<String>> = linkedMapOf(),
-  ): ConcreteTabBindOutcome {
+  ) {
     if (concreteTabsByPath.isEmpty()) {
-      return ConcreteTabBindOutcome(emptyMap())
+      return
     }
 
     val nowMs = System.currentTimeMillis()
     val staleTabsByPath = LinkedHashMap<String, List<AgentChatConcreteTabSnapshot>>()
-    val eligibleTabsByPath = LinkedHashMap<String, List<AgentChatConcreteTabSnapshot>>()
     for ((path, tabs) in concreteTabsByPath) {
       if (tabs.isEmpty()) {
         continue
@@ -335,128 +304,17 @@ internal class AgentSessionThreadRebindSupport(
       if (staleTabs.isNotEmpty()) {
         staleTabsByPath[path] = staleTabs
       }
-      val eligibleTabs = tabs.filterNot(staleTabs::contains)
-      if (eligibleTabs.isNotEmpty()) {
-        eligibleTabsByPath[path] = eligibleTabs
-      }
     }
 
-    if (staleTabsByPath.isNotEmpty()) {
-      val cleared = withContext(Dispatchers.UI) {
-        clearOpenConcreteNewThreadRebindAnchors(provider, staleTabsByPath)
-      }
-      LOG.debug {
-        "Provider refresh id=$refreshId provider=${provider.value} cleared stale /new tab anchors " +
-        "(paths=${staleTabsByPath.size}, cleared=$cleared)"
-      }
-    }
-
-    if (eligibleTabsByPath.isEmpty() || refreshHintsByPath.isEmpty()) {
-      return ConcreteTabBindOutcome(emptyMap())
-    }
-
-    val unavailableThreadIdentitiesByPath = LinkedHashMap<String, LinkedHashSet<String>>(openConcreteThreadIdentitiesByPath.size)
-    for ((path, threadIdentities) in openConcreteThreadIdentitiesByPath) {
-      unavailableThreadIdentitiesByPath[normalizeAgentWorkbenchPath(path)] = LinkedHashSet(threadIdentities)
-    }
-
-    val requestsByPath = LinkedHashMap<String, List<AgentChatConcreteTabRebindRequest>>()
-    for ((path, concreteTabs) in eligibleTabsByPath) {
-      val rebindCandidates = refreshHintsByPath[path]?.rebindCandidates.orEmpty()
-      if (rebindCandidates.isEmpty()) {
-        continue
-      }
-      val unavailableThreadIdentities = unavailableThreadIdentitiesByPath.getOrPut(path) { LinkedHashSet() }
-      val candidates = rebindCandidates.map { candidate ->
-        buildAgentSessionChatRebindTarget(
-          path = path,
-          provider = provider,
-          threadId = candidate.threadId,
-          title = candidate.title,
-          activity = candidate.activity,
-          updatedAt = candidate.updatedAt,
-        )
-      }
-      val bindings = matchConcreteNewThreadTabs(
-        concreteTabs = concreteTabs,
-        candidates = candidates,
-        unavailableThreadIdentities = unavailableThreadIdentities,
-      )
-      if (bindings.isEmpty()) {
-        continue
-      }
-      val requests = ArrayList<AgentChatConcreteTabRebindRequest>(bindings.size)
-      for (binding in bindings) {
-        requests.add(
-          AgentChatConcreteTabRebindRequest(
-            tabKey = binding.tabKey,
-            currentThreadIdentity = binding.currentThreadIdentity,
-            newThreadRebindRequestedAtMs = binding.newThreadRebindRequestedAtMs,
-            target = binding.target,
-          )
-        )
-        unavailableThreadIdentities.add(binding.target.threadIdentity)
-      }
-      requestsByPath[path] = requests
-    }
-
-    if (requestsByPath.isEmpty()) {
-      return ConcreteTabBindOutcome(emptyMap())
-    }
-
-    val rebindReport = openAgentChatConcreteTabsBinder(provider, requestsByPath)
-    applyConcreteRebindsToOpenIdentities(
-      openConcreteThreadIdentitiesByPath = openConcreteThreadIdentitiesByPath,
-      rebindReport = rebindReport,
-    )
-    val reboundThreadIdentitiesByPath = collectConcreteReboundThreadIdentitiesByPath(rebindReport)
-
-    LOG.debug {
-      "Provider refresh id=$refreshId provider=${provider.value} rebound concrete /new chat tabs " +
-      "(reboundBindings=${rebindReport.reboundBindings}, reboundFiles=${rebindReport.reboundFiles}, " +
-      "requestedBindings=${rebindReport.requestedBindings}, candidatePaths=${refreshHintsByPath.size}, matchedPaths=${requestsByPath.size})"
-    }
-    return ConcreteTabBindOutcome(reboundThreadIdentitiesByPath)
-  }
-
-  private fun collectConcreteReboundThreadIdentitiesByPath(
-    rebindReport: AgentChatConcreteTabRebindReport,
-  ): Map<String, Set<String>> {
-    if (rebindReport.outcomesByPath.isEmpty()) {
-      return emptyMap()
-    }
-
-    val reboundThreadIdentitiesByPath = LinkedHashMap<String, LinkedHashSet<String>>()
-    for ((path, outcomes) in rebindReport.outcomesByPath) {
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      for (outcome in outcomes) {
-        if (outcome.status != AgentChatConcreteTabRebindStatus.REBOUND) {
-          continue
-        }
-        reboundThreadIdentitiesByPath.getOrPut(normalizedPath) { LinkedHashSet() }.add(outcome.request.target.threadIdentity)
-      }
-    }
-    return reboundThreadIdentitiesByPath.mapValues { (_, identities) -> LinkedHashSet(identities) }
-  }
-
-  private fun applyConcreteRebindsToOpenIdentities(
-    openConcreteThreadIdentitiesByPath: MutableMap<String, MutableSet<String>>,
-    rebindReport: AgentChatConcreteTabRebindReport,
-  ) {
-    if (rebindReport.outcomesByPath.isEmpty()) {
+    if (staleTabsByPath.isEmpty()) {
       return
     }
-
-    for ((path, outcomes) in rebindReport.outcomesByPath) {
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      val openThreadIdentities = openConcreteThreadIdentitiesByPath.getOrPut(normalizedPath) { LinkedHashSet() }
-      for (outcome in outcomes) {
-        if (outcome.status != AgentChatConcreteTabRebindStatus.REBOUND) {
-          continue
-        }
-        openThreadIdentities.remove(outcome.request.currentThreadIdentity)
-        openThreadIdentities.add(outcome.request.target.threadIdentity)
-      }
+    val cleared = withContext(Dispatchers.UI) {
+      clearOpenConcreteNewThreadRebindAnchors(provider, staleTabsByPath)
+    }
+    LOG.debug {
+      "Provider refresh id=$refreshId provider=${provider.value} cleared stale /new tab anchors " +
+      "(paths=${staleTabsByPath.size}, cleared=$cleared)"
     }
   }
 
@@ -717,52 +575,6 @@ internal class AgentSessionThreadRebindSupport(
 
 }
 
-private fun matchConcreteNewThreadTabs(
-  concreteTabs: List<AgentChatConcreteTabSnapshot>,
-  candidates: List<AgentChatTabRebindTarget>,
-  unavailableThreadIdentities: Set<String>,
-): List<ConcreteNewThreadTabBinding> {
-  if (concreteTabs.isEmpty() || candidates.isEmpty()) {
-    return emptyList()
-  }
-
-  val uniqueConcreteTabs = concreteTabs
-    .asSequence()
-    .distinctBy { it.tabKey }
-    .toList()
-  val concreteTabByKey = uniqueConcreteTabs.associateBy { it.tabKey }
-  val matchResult = TimestampedRebindMatcher.match(
-    subjects = uniqueConcreteTabs.map { concreteTab ->
-      TimestampedRebindSubject(
-        key = concreteTab.tabKey,
-        timestampMs = concreteTab.newThreadRebindRequestedAtMs,
-      )
-    },
-    candidates = candidates.map { candidate ->
-      TimestampedRebindCandidate(
-        identity = candidate.threadIdentity,
-        updatedAtMs = candidate.threadUpdatedAt,
-        value = candidate,
-      )
-    },
-    unavailableCandidateIdentities = unavailableThreadIdentities,
-    preWindowMs = CONCRETE_CODEX_NEW_THREAD_MATCH_PRE_WINDOW_MS,
-    postWindowMs = CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS,
-  )
-
-  return matchResult.bindings
-    .mapNotNull { binding ->
-      val tabKey = binding.subjectKey
-      val concreteTab = concreteTabByKey[tabKey] ?: return@mapNotNull null
-      ConcreteNewThreadTabBinding(
-        tabKey = concreteTab.tabKey,
-        currentThreadIdentity = concreteTab.currentThreadIdentity,
-        newThreadRebindRequestedAtMs = concreteTab.newThreadRebindRequestedAtMs,
-        target = binding.candidate,
-      )
-    }
-}
-
 private fun resolveHintedSummaryActivity(
   thread: AgentSessionThread,
   hintedActivity: AgentThreadActivity,
@@ -778,13 +590,6 @@ private fun resolveHintedSummaryActivity(
 private data class PendingThreadAmbiguityState(
   @JvmField val pollCount: Int,
   @JvmField val lastWarnedAtMs: Long?,
-)
-
-private data class ConcreteNewThreadTabBinding(
-  val tabKey: String,
-  val currentThreadIdentity: String,
-  val newThreadRebindRequestedAtMs: Long,
-  val target: AgentChatTabRebindTarget,
 )
 
 private data class PendingTabRef(

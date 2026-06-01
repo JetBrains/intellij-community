@@ -1647,6 +1647,49 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
+  fun observeExistingThreadsFiltersPendingNewThreads() = withCliAvailableTestRegistry {
+    runBlocking(Dispatchers.Default) {
+      withServiceAndLaunch(
+        sessionSourcesProvider = {
+          listOf(
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CODEX,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) {
+                  listOf(
+                    thread(id = "new-global-prompt", updatedAt = 300, provider = AgentSessionProvider.CODEX),
+                    thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+                  )
+                }
+                else {
+                  emptyList()
+                }
+              },
+            ),
+          )
+        },
+        projectEntriesProvider = {
+          listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+        },
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition {
+          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        }
+
+        val bridge = promptLauncherBridge(service, launchService)
+        val snapshot = bridge.observeExistingThreads(
+          projectPath = PROJECT_PATH,
+          provider = AgentSessionProvider.CODEX,
+        ).first { it.hasLoaded }
+
+        assertThat(snapshot.threads.map { thread -> thread.id })
+          .containsExactly("codex-1")
+      }
+    }
+  }
+
+  @Test
   fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = withCliAvailableTestRegistry {
     runBlocking(Dispatchers.Default) {
       val openLoads = AtomicInteger(0)

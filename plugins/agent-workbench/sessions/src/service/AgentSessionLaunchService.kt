@@ -1649,5 +1649,5 @@ private fun showBranchMismatchDialog(project: Project?, originBranch: String, cu
 }
 
 private fun AgentSessionThread.matchesPromptTarget(provider: AgentSessionProvider, threadId: String): Boolean {
-  return this.provider == provider && !archived && id == threadId
+  return this.provider == provider && !archived && !isAgentSessionNewSessionId(id) && id == threadId
 }
