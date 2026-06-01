@@ -475,7 +475,7 @@ public class MavenGeneralSettings implements Cloneable {
 
     var files = MavenUtil.collectFiles(instance.getRootProjects());
     if (files.isEmpty()) {
-      files = instance.getState().originalFiles.stream()
+      files = instance.getState().getOriginalFiles().stream()
         .map(f -> VirtualFileManager.getInstance().findFileByNioPath(Path.of(f)))
         .filter(f -> f != null).toList();
     }

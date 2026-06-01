@@ -1,32 +1,41 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.project
 
-package org.jetbrains.idea.maven.project;
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.util.ArrayList
+import java.util.TreeSet
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+@ApiStatus.Internal
+class MavenProjectsManagerState {
+  private var _originalFiles: MutableList<String> = ArrayList()
 
-public class MavenProjectsManagerState {
-  public List<String> originalFiles = new ArrayList<>();
+  var originalFiles: List<String>
+    get() = _originalFiles
+    set(value) {
+      MavenLog.LOG.debug("setOriginalFiles: $value")
+      _originalFiles = value.distinct().toMutableList()
+    }
 
-  public Set<String> ignoredFiles = new TreeSet<>();
-  public List<String> ignoredPathMasks = new ArrayList<>();
+  fun addOriginalFile(file: String) {
+    MavenLog.LOG.debug("addOriginalFile: $file")
+    if (file !in _originalFiles) {
+      _originalFiles.add(file)
+    }
+  }
 
-  public List<String> enabledProfiles = new ArrayList<>();
-  public List<String> disabledProfiles = new ArrayList<>();
+  fun removeOriginalFiles(pathsToRemove: Set<String>) {
+    MavenLog.LOG.debug("removeOriginalFiles: $pathsToRemove")
+    originalFiles = originalFiles.filterNot(pathsToRemove::contains)
+  }
+
+  @JvmField
+  var ignoredFiles: MutableSet<String> = TreeSet()
+  @JvmField
+  var ignoredPathMasks: MutableList<String> = ArrayList()
+
+  @JvmField
+  var enabledProfiles: MutableList<String> = ArrayList()
+  @JvmField
+  var disabledProfiles: MutableList<String> = ArrayList()
 }

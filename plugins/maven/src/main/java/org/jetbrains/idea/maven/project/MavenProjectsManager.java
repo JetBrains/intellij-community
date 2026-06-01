@@ -133,12 +133,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected boolean wasMavenized() {
-    return !myState.originalFiles.isEmpty();
+    return !myState.getOriginalFiles().isEmpty();
   }
 
 
   @Override
   public void loadState(@NotNull MavenProjectsManagerState state) {
+    var originalFiles = new ArrayList<>(state.getOriginalFiles());
+    MavenLog.LOG.debug("loadState: originalFiles: " + originalFiles);
     myState = state;
   }
 
@@ -231,7 +233,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     doActivate();
     var tree = getProjectsTree();
 
-    if (!getState().originalFiles.isEmpty() && tree.getRootProjects().isEmpty()) {
+    if (!myState.getOriginalFiles().isEmpty() && tree.getRootProjects().isEmpty()) {
       MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
       scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
@@ -406,11 +408,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void doAddManagedFiles(List<VirtualFile> files) {
     var state = getState();
 
-    Set<String> existing = new HashSet<>(state.originalFiles);
     for (String path : MavenUtil.collectPaths(files)) {
-      if (existing.add(path)) {
-        state.originalFiles.add(path);
-      }
+      state.addOriginalFile(path);
     }
   }
 
@@ -418,7 +417,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     var state = getState();
 
     Set<String> pathsToRemove = new HashSet<>(MavenUtil.collectPaths(files));
-    state.originalFiles.removeIf(pathsToRemove::contains);
+    state.removeOriginalFiles(pathsToRemove);
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
@@ -437,7 +436,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isManagedFile(@NotNull VirtualFile f) {
-    return getState().originalFiles.contains(f.getPath());
+    return getState().getOriginalFiles().contains(f.getPath());
   }
 
   public @NotNull MavenExplicitProfiles getExplicitProfiles() {

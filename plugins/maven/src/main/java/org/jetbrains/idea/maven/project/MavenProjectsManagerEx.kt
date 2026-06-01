@@ -36,9 +36,16 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -50,7 +57,6 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.buildtool.incrementalMode
 import org.jetbrains.idea.maven.importing.MavenImportStats
-import org.jetbrains.idea.maven.statistics.MavenToolchainCollector
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
 import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
@@ -58,8 +64,14 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
-import org.jetbrains.idea.maven.server.*
-import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType.*
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType.DOWNLOAD_FAILED
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader
+import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
+import org.jetbrains.idea.maven.statistics.MavenToolchainCollector
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -684,8 +696,15 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   override suspend fun onProjectStartup() {
-    if (!isNormalProject) return
-    if (!wasMavenized()) return
+    MavenLog.LOG.debug("onProjectStartup")
+
+    val normalProject = isNormalProject
+    MavenLog.LOG.debug("isNormalProject: $normalProject")
+    if (!normalProject) return
+
+    val wasMavenized = wasMavenized()
+    MavenLog.LOG.debug("wasMavenized: $wasMavenized")
+    if (!wasMavenized) return
 
     MavenSettingsCache.getInstance(myProject).reloadAsync()
     initOnProjectStartup()
