@@ -180,12 +180,12 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
    * @param this The list of plugins to analyze for determining loadability without requiring a restart.
    * Acts as a context in [DynamicPlugins.allowLoadUnloadWithoutRestart]
    */
-  private fun List<IdeaPluginDescriptorImpl>.splitPlugins(): Pair<List<IdeaPluginDescriptorImpl>, List<IdeaPluginDescriptorImpl>> {
+  private fun List<PluginMainDescriptor>.splitPlugins(): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
     tailrec fun doSplit(
-      pluginsToLoad: List<IdeaPluginDescriptorImpl>,
-      loadablePlugins: List<IdeaPluginDescriptorImpl>,
-      requireRestartPlugins: List<IdeaPluginDescriptorImpl>,
-    ): Pair<List<IdeaPluginDescriptorImpl>, List<IdeaPluginDescriptorImpl>> {
+      pluginsToLoad: List<PluginMainDescriptor>,
+      loadablePlugins: List<PluginMainDescriptor>,
+      requireRestartPlugins: List<PluginMainDescriptor>,
+    ): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
       if (pluginsToLoad.isEmpty()) return loadablePlugins to requireRestartPlugins
 
       val (loadable, requireRestart) = pluginsToLoad.partition {
