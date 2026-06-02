@@ -7,7 +7,7 @@ package org.jetbrains.intellij.build.productLayout
  * Core platform module sets forming the foundation of IntelliJ products.
  *
  * This file contains the base module sets that provide the platform infrastructure:
- * - **libraries***: Library modules (platform, IDE, ktor, misc)
+ * - **libraries***: Library modules (platform, IDE, ktor, Jackson)
  * - **corePlatform**: Base platform without IDE (for analysis tools)
  * - **coreIde**: Platform + basic IDE functionality
  * - **coreLang**: Platform + IDE + language support
@@ -214,25 +214,6 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.ktor.server.cio")
     embeddedModule("intellij.libraries.ktor.client")
     embeddedModule("intellij.libraries.ktor.client.cio")
-  }
-
-  /**
-   * Miscellaneous library modules for specialized use cases.
-   *
-   * **Note:** All libs here must NOT be embedded. If embedded, move to `librariesPlatform()` or `librariesIde()`.
-   *
-   * **Typical use cases:** XML-RPC communication, CSV parsing, document storage
-   * **Usage pattern:** Product-specific, not universally needed by all products
-   */
-  fun librariesMisc(): ModuleSet = moduleSet("libraries.misc") {
-    // all libs here must not be embedded, if it is embedded, it should be moved to libs-core.xml
-    module("intellij.libraries.javax.activation")
-    module("intellij.libraries.xml.rpc")
-    module("intellij.libraries.kotlinx.document.store.mvstore")
-    module("intellij.libraries.opencsv")
-    module("intellij.libraries.lucene.common")
-    module("intellij.libraries.plexus.utils")
-    module("intellij.libraries.maven.resolver.provider")
   }
 
   // endregion

@@ -313,9 +313,6 @@
     <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
     <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
     <module name="intellij.platform.externalProcessAuthHelper" loading="embedded"/>
-    <module name="intellij.java.aetherDependencyResolver"/>
-    <module name="intellij.libraries.plexus.utils"/>
-    <module name="intellij.libraries.maven.resolver.provider"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
     <!-- endregion -->

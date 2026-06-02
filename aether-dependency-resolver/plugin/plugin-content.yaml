@@ -1,0 +1,90 @@
+- name: lib/intellij.libraries.maven.resolver.provider.jar
+  contentModules:
+  - name: intellij.libraries.maven.resolver.provider
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1/plexus-interpolation-1.jar
+  - name: $MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0/org.eclipse.sisu.inject-0.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/intellij.libraries.plexus.utils.jar
+  contentModules:
+  - name: intellij.libraries.plexus.utils
+    libraries:
+      plexus-utils:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3/plexus-utils-3.jar
+- name: lib/java-aetherDependencyResolver-plugin.jar
+  modules:
+  - name: intellij.java.aetherDependencyResolver.plugin
+- name: lib/maven-artifact.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-builder-support.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3/maven-builder-support-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-model-builder.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3/maven-model-builder-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-model.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model/3/maven-model-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-repository-metadata.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3/maven-repository-metadata-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-api.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1/maven-resolver-api-1.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-connector-basic.jar
+  library: org.apache.maven.resolver:maven-resolver-connector-basic
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1/maven-resolver-connector-basic-1.jar
+- name: lib/maven-resolver-impl.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/1/maven-resolver-impl-1.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-named-locks.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/1/maven-resolver-named-locks-1.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-provider.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3/maven-resolver-provider-3.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-spi.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1/maven-resolver-spi-1.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/maven-resolver-transport-file.jar
+  library: org.apache.maven.resolver:maven-resolver-transport-file
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1/maven-resolver-transport-file-1.jar
+- name: lib/maven-resolver-transport-http.jar
+  library: org.apache.maven.resolver:maven-resolver-transport-http
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1/maven-resolver-transport-http-1.jar
+- name: lib/maven-resolver-util.jar
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1/maven-resolver-util-1.jar
+  reason: <- intellij.libraries.maven.resolver.provider
+- name: lib/modules/intellij.java.aetherDependencyResolver.jar
+  contentModules:
+  - name: intellij.java.aetherDependencyResolver

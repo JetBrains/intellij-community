@@ -8,6 +8,7 @@ private const val MODULE_SET_PLUGIN_MODULE_PREFIX: String = "intellij.moduleSet.
 
 private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.grid.core.plugin",
+  "intellij.java.aetherDependencyResolver.plugin",
   "intellij.libraries.misc.plugin",
   "intellij.platform.bookmarks.plugin",
   "intellij.platform.execution.serviceView.plugin",

@@ -47,6 +47,7 @@ jvm_library(
         "//platform/navbar/plugin",
         "//platform/bookmarks/plugin",
         "//libraries/misc/plugin",
+        "//aether-dependency-resolver/plugin",
     ],
 )
 
@@ -97,6 +98,7 @@ jvm_library(
         "//platform/navbar/plugin:plugin_test_lib",
         "//platform/bookmarks/plugin:plugin_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

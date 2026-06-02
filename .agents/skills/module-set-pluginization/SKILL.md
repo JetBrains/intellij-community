@@ -168,6 +168,16 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
    `./tests.cmd --module intellij.rustrover.sql.tests --test com.jetbrains.rust.sql.SqlInjectorTest`
 14. ReSharper external services/DataGrip bridge:
       `./tests.cmd --module intellij.resharper.external.services.test.cases.rd --test com.jetbrains.resharper.external.services.test.cases.ReSharperDataGripRdTest`
+15. AI Assistant plugin loading:
+    `./tests.cmd --module intellij.ml.llm.chat.tests --test com.intellij.ml.llm.core.chat.ui.chat.navigation.FilePathMatcherTest`
+    `./tests.cmd --module intellij.ml.llm.completion.tests --test com.intellij.ml.llm.completion.cloud.context.mainEditor.RecentLocationsContextCollectorTest`
+    `./tests.cmd --module intellij.ml.llm.devkit.tests --test com.intellij.ml.llm.devkit.context.DevKitChatContextProviderTest`
+    `./tests.cmd --module intellij.ml.llm.java.embeddings.tests --test com.intellij.ml.llm.java.embeddings.JavaEmbeddingParsingTest`
+    `./tests.cmd --module intellij.ml.llm.java.inlinePromptDetector.tests --test com.intellij.ml.llm.java.inlinePromptDetector.JavaInlinePromptHighlightingTest`
+    `./tests.cmd --module intellij.ml.llm.nextEdits.tests --test 'com.intellij.ml.llm.nextEdits.tests.history.NextEditFileHistoryTest;com.intellij.ml.llm.nextEdits.tests.diff.CheckFileRangesSyntaxCorrectTest'`
+    `./tests.cmd --module intellij.ml.llm.ruby.test --test com.intellij.ml.llm.ruby.testGeneration.RubyLLMGenerateTestsSupportPromptTest`
+    `./tests.cmd --module intellij.ml.llm.ruby.test --test com.intellij.ml.llm.ruby.testGeneration.rails.RailsGenerateTestsPromptTest`
+    `./tests.cmd --module intellij.ml.llm.sql.tests --test com.intellij.ml.llm.sql.SqlObjectChatInputTest`
 
 ## Verification
 

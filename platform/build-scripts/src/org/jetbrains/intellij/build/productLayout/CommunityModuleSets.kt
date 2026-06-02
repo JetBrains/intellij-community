@@ -164,10 +164,6 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.externalSystem.impl")
     embeddedModule("intellij.platform.externalProcessAuthHelper")
 
-    module("intellij.java.aetherDependencyResolver")
-    // Required by embedded external-system/aether dependency paths until that closure is split.
-    module("intellij.libraries.plexus.utils")
-    module("intellij.libraries.maven.resolver.provider")
     module("intellij.platform.util.commonsLangV2Shim")
   }
 

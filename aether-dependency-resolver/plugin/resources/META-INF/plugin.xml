@@ -1,0 +1,12 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.java.aetherDependencyResolver.plugin</id>
+  <name>Aether Dependency Resolver</name>
+  <description>Provides Aether dependency resolver modules for IntelliJ-based IDEs.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.java.aetherDependencyResolver" loading="required"/>
+    <module name="intellij.libraries.maven.resolver.provider" loading="embedded"/>
+    <module name="intellij.libraries.plexus.utils" loading="embedded"/>
+  </content>
+</idea-plugin>
