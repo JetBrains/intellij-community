@@ -271,14 +271,13 @@ internal class DynamicPluginsSupportImpl(
     reusedGroups: List<RuntimeModuleGroup>,
     reporter: SequentialProgressReporter,
   ) {
-    reporter.indeterminateStep(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
-      if (groups.isEmpty()) {
-        application.runWriteAction {
-          PluginManagerCore.setPluginSet(targetPluginSet)
-        }
-        return@indeterminateStep
+    if (groups.isEmpty()) {
+      application.runWriteAction {
+        PluginManagerCore.setPluginSet(targetPluginSet)
       }
-
+      return
+    }
+    reporter.indeterminateStep(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
       val affectedPlugins = groups.asSequence().flatMap { it.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
       withContext(Dispatchers.EDT) {
         runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginsLoaded() }
