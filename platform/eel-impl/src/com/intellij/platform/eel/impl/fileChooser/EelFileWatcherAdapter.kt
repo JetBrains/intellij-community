@@ -51,6 +51,10 @@ class EelFileWatcherAdapter : FileWatcherAdapter {
 
   override suspend fun unsubscribe(path: Path) {
     if (!watchedPaths.remove(path)) return
+    unwatch(path)
+  }
+
+  private suspend fun unwatch(path: Path) {
     try {
       val descriptor = path.getEelDescriptor()
       val eelApi = descriptor.toEelApi()
@@ -59,6 +63,16 @@ class EelFileWatcherAdapter : FileWatcherAdapter {
     }
     catch (e: Exception) {
       LOG.debug("Error unwatching $path", e)
+    }
+  }
+
+  override suspend fun stop() {
+    val paths = watchedPaths.toList()
+    watchedPaths.clear()
+    if (paths.isNotEmpty()) {
+      for (path in paths) {
+        unwatch(path)
+      }
     }
   }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -10,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.EelProviderUtil
 import com.intellij.util.PlatformIcons
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
@@ -69,5 +72,12 @@ internal object NioFileChooserUtil {
   fun getLastOpenedPath(project: Project?): Path? {
     val last = FileChooserUtil.getLastOpenedFilePath(project)
     return if (last != null) NioFiles.toPath(FileUtil.toSystemDependentName(last)) else null
+  }
+}
+
+@Service(Service.Level.APP)
+internal class FileWatcherAppScopeHolder(val scope: CoroutineScope) {
+  companion object {
+    fun getInstance(): FileWatcherAppScopeHolder = service<FileWatcherAppScopeHolder>()
   }
 }

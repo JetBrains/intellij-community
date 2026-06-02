@@ -11,4 +11,6 @@ interface FileWatcherAdapter {
   suspend fun subscribe(path: Path): Flow<FileChangeType>?
 
   suspend fun unsubscribe(path: Path)
+
+  suspend fun stop()
 }
