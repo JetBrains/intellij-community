@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.system.OS;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
@@ -177,38 +176,33 @@ public final class DirectoryLock {
       var command = ProcessHandle.current().info().command().orElse("???");
       LOG.debug("current command: " + command);
 
-      for (int attempt = 0; attempt < 1; attempt++) {
-        try {
-          return tryListen();
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          suppressed.add(e);
-        }
+      try {
+        return tryListen();
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        suppressed.add(e);
+      }
 
-        try {
-          return tryConnect(args, currentDirectory);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          suppressed.add(e);
-        }
+      try {
+        return tryConnect(args, currentDirectory);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        suppressed.add(e);
+      }
 
-        try {
-          var otherPid = remotePID();
-          var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
-          LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
-          if (command.equals(otherCommand)) {
-            cannotActivate(command, otherPid, suppressed);
-          }
+      try {
+        var otherPid = remotePID();
+        var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
+        LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
+        if (command.equals(otherCommand)) {
+          cannotActivate(command, otherPid, suppressed);
         }
-        catch (IOException | NumberFormatException e) {
-          LOG.debug(e);
-          suppressed.add(e);
-        }
-
-        LOG.debug("retrying in 200 ms ...");
-        TimeoutUtil.sleep(200);
+      }
+      catch (IOException | NumberFormatException e) {
+        LOG.debug(e);
+        suppressed.add(e);
       }
 
       if (!Path.of(command).endsWith(OS.CURRENT == OS.Windows ? "java.exe" : "java")) {
