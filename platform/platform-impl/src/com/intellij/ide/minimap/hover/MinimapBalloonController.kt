@@ -5,6 +5,9 @@ import com.intellij.ide.minimap.MinimapPanel
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import java.awt.Rectangle
@@ -34,12 +37,22 @@ class MinimapBalloonController(private val panel: MinimapPanel) {
     val createdLabel = JBLabel(text, icon, SwingConstants.LEADING)
     val created = createBalloon(createdLabel)
     val newTracker = MinimapHoverBalloonTracker(panel, settingsState) { balloonState.lastRect }
+    created.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        MinimapHoverBalloonRegistry.release(created)
+        balloonState.clearIfMatches(created)
+      }
+    })
+    Disposer.register(panel, created)
 
     balloonState.install(created, createdLabel, newTracker, text, rect, icon)
-    created.show(newTracker, Balloon.Position.atLeft)
+    MinimapHoverBalloonRegistry.claim(created)
+    val position = if (settingsState.rightAligned) Balloon.Position.atLeft else Balloon.Position.atRight
+    created.show(newTracker, position)
   }
 
   fun hide() {
+    MinimapHoverBalloonRegistry.release(balloonState.balloon)
     balloonState.hideAndClear()
   }
 
@@ -55,5 +68,23 @@ class MinimapBalloonController(private val panel: MinimapPanel) {
       .setHideOnLinkClick(false)
       .setFadeoutTime(0)
       .createBalloon()
+  }
+}
+
+private object MinimapHoverBalloonRegistry {
+  private var activeBalloon: Balloon? = null
+
+  fun claim(balloon: Balloon) {
+    val previousBalloon = activeBalloon
+    if (previousBalloon !== balloon && previousBalloon?.isDisposed == false) {
+      previousBalloon.hideImmediately()
+    }
+    activeBalloon = balloon
+  }
+
+  fun release(balloon: Balloon?) {
+    if (activeBalloon === balloon) {
+      activeBalloon = null
+    }
   }
 }

@@ -36,10 +36,6 @@ class MinimapHoverController(
     Disposer.register(this, it)
   }
 
-  init {
-    hoverStateMachine.start()
-  }
-
   override fun dispose() {
     presenter.hide()
     lastSnapshot = null

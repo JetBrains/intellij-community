@@ -5,6 +5,7 @@ import com.intellij.ide.minimap.MinimapPanel
 import com.intellij.ide.minimap.settings.MinimapSettingsState
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import org.jetbrains.annotations.NotNull
 import java.awt.Point
@@ -21,7 +22,13 @@ class MinimapHoverBalloonTracker(
   override fun recalculateLocation(@NotNull balloon: Balloon): RelativePoint {
     val rect = rectProvider() ?: return RelativePoint(panel, Point(0, 0))
     val halfWidth = balloon.preferredSize.width / 2
-    val anchorX = if (minimapState.rightAligned) -halfWidth else panel.width + halfWidth
+    val edgeOffset = JBUI.scale(BALLOON_VISUAL_EDGE_OFFSET_PX).coerceAtMost(halfWidth)
+    val anchorX = if (minimapState.rightAligned) {
+      -halfWidth + edgeOffset
+    }
+    else {
+      panel.width + halfWidth - edgeOffset
+    }
     val anchorY = clampToEditorY(rect.y)
 
     return RelativePoint(panel, Point(anchorX, anchorY))
@@ -40,5 +47,9 @@ class MinimapHoverBalloonTracker(
     val minY = editorBoundsInPanel.y
     val maxY = (editorBoundsInPanel.y + editorBoundsInPanel.height - 1).coerceAtLeast(minY)
     return anchorY.coerceIn(minY, maxY)
+  }
+
+  private companion object {
+    private const val BALLOON_VISUAL_EDGE_OFFSET_PX = 16
   }
 }

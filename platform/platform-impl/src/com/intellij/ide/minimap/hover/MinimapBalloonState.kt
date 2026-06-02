@@ -20,7 +20,7 @@ data class MinimapBalloonState(
   }
 
   fun hasActiveBalloon(): Boolean {
-    return balloon != null && label != null
+    return balloon?.isDisposed == false && label != null
   }
 
   fun updateLabelIfNeeded(@NlsSafe text: String, icon: Icon?) {
@@ -48,8 +48,17 @@ data class MinimapBalloonState(
     lastIcon = icon
   }
 
+  fun clearIfMatches(balloon: Balloon) {
+    if (this.balloon !== balloon) return
+    clear()
+  }
+
   fun hideAndClear() {
-    balloon?.hide(true)
+    balloon?.hideImmediately()
+    clear()
+  }
+
+  private fun clear() {
     balloon = null
     tracker = null
     label = null
