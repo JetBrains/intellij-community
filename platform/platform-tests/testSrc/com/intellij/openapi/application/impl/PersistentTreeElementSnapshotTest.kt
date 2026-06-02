@@ -32,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
@@ -41,11 +43,19 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @TestApplication
-@RegistryKey(key = "psi.enable.persistent.syntax.tree", value = "true")
 internal class PersistentTreeElementSnapshotTest {
 
   private val psiManager: PsiManager
     get() = PsiManager.getInstance(ProjectManager.getInstance().defaultProject)
+
+  companion object {
+    @BeforeAll
+    @JvmStatic
+    fun ensureVersionedTreeEnabled() {
+      // dynamic registry is a performance hit, so we disable this test if the versioned syntax is not enabled
+      Assumptions.assumeTrue(InternalPsiVersioning.isVersionedSyntaxTreeEnabled())
+    }
+  }
 
   @Test
   fun `freezePsiVersion preserves snapshot and removed element relations during concurrent edits`(

@@ -27,6 +27,9 @@ import kotlin.coroutines.CoroutineContext
 // object is used for namespace qualification
 @Internal
 object InternalPsiVersioning {
+
+  private val PERSISTENT_PSI_ENABLED: Boolean by lazy { Registry.`is`("psi.enable.persistent.syntax.tree", false) }
+
   // a reading operation with the available psi version
   fun <T> freezePsiVersion(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
@@ -76,7 +79,7 @@ object InternalPsiVersioning {
    */
   @JvmStatic
   fun getCreationPsiVersionForElement(): Long {
-    return if (Registry.`is`("psi.enable.persistent.syntax.tree", false) && isVersionedComputation()) {
+    return if (PERSISTENT_PSI_ENABLED && isVersionedComputation()) {
       getCurrentPsiVersion()
     } else {
       -1
@@ -399,6 +402,6 @@ object InternalPsiVersioning {
 
   @JvmStatic
   fun isVersionedSyntaxTreeEnabled(): Boolean {
-    return Registry.`is`("psi.enable.persistent.syntax.tree", false)
+    return PERSISTENT_PSI_ENABLED
   }
 }
