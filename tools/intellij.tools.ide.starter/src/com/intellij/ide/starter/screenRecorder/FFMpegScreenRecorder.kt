@@ -71,6 +71,18 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
     }
   }
 
+  private fun buildDrawTimeFilterArgs(): List<String> {
+    val filter = buildString {
+      append("drawtext=")
+      append("text='%{localtime\\:%F %T}':")
+      append("fontcolor=white:")
+      append("fontsize=20:")
+      append("box=1:boxcolor=black@0.6:boxborderw=6:")
+      append("x=10:y=10")
+    }
+    return listOf("-vf", filter)
+  }
+
   private suspend fun startFFMpegRecording() {
     ensureRecordingDirExists()
 
@@ -85,8 +97,9 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
                       "-framerate",
                       "24",
                       "-i",
-                      display,
-                      "-codec:v",
+                      display) +
+               buildDrawTimeFilterArgs() +
+               listOf("-codec:v",
                       "libx264",
                       "-preset",
                       "superfast",
