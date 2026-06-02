@@ -11,8 +11,10 @@
     to improve code completion's performance perception. Currently, it works only for Kotlin.
   ]]></description>
 
+  <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
-    <module name="intellij.turboComplete.languages.kotlin.k1"/>
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.xml.analysis.impl), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
   </content>
 
   <dependencies>

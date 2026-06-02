@@ -62,18 +62,12 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
   reason: <- intellij.devkit.workspaceModel
-- name: lib/modules/intellij.devkit.workspaceModel.k1.jar
-  contentModules:
-  - name: intellij.devkit.workspaceModel.k1
 - name: lib/modules/intellij.devkit.workspaceModel.k2.jar
   contentModules:
   - name: intellij.devkit.workspaceModel.k2
 - name: lib/modules/intellij.kotlin.devkit.jar
   contentModules:
   - name: intellij.kotlin.devkit
-- name: lib/modules/intellij.kotlin.devkit.k1.jar
-  contentModules:
-  - name: intellij.kotlin.devkit.k1
 - name: lib/modules/intellij.kotlin.devkit.k2.jar
   contentModules:
   - name: intellij.kotlin.devkit.k2

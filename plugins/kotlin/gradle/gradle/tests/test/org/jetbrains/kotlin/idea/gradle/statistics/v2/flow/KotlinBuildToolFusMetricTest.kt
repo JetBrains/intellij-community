@@ -15,7 +15,7 @@ class KotlinBuildToolFusMetricTest {
         val result = metric.process(rawValues)
 
         assertNotNull(result)
-        assertEquals("value1;value2;value3;value4;value4", result.value)
+        assertEquals("value1;value3;value4;value4", result.value)
     }
 
     @Test

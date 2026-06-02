@@ -20935,21 +20935,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.completion/performance-kotlin-0.0.9.jar_copy",
-    src = "@org_jetbrains_intellij_deps_completion-performance-kotlin-0_0_9_http//file",
-    out = "org.jetbrains.intellij.deps.completion/performance-kotlin-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "turbo_complete-languages-kotlin-k1-completion-performance-kotlin",
-    jar = "@org_jetbrains_intellij_deps_completion-performance-kotlin-0_0_9_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_completion-performance-kotlin-0_0_9-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "io.consensys.tuweni/tuweni-toml-2.7.1.jar_copy",
     src = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
     out = "io.consensys.tuweni/tuweni-toml-2.7.1.jar",

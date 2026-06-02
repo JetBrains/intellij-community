@@ -2,7 +2,6 @@
   modules:
   - name: intellij.compose.ide.plugin
   contentModules:
-  - name: intellij.compose.ide.plugin.k1
   - name: intellij.compose.ide.plugin.k2
   - name: intellij.compose.ide.plugin.resources
   - name: intellij.compose.ide.plugin.resources.android

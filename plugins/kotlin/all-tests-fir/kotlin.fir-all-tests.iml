@@ -120,7 +120,6 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="RUNTIME" />
