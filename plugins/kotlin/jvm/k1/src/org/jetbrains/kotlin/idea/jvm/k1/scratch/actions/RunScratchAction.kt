@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.printDebugMessage
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG as log
 
 @K1Deprecation
@@ -61,7 +60,7 @@ class RunScratchAction : ScratchAction(
             log.printDebugMessage("Run Action: isMakeBeforeRun = $isMakeBeforeRun")
 
             ScriptConfigurationManager.getInstance(project).updateScriptDependenciesIfNeeded(scratchFile.virtualFile)
-            val module = scratchFile.currentModule
+            val module = scratchFile.module
             log.printDebugMessage("Run Action: module = ${module?.name}")
 
             if (!isAutoRun && module != null && isMakeBeforeRun) {

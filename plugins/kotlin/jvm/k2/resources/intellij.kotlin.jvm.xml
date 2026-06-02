@@ -7,12 +7,17 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.base.scripting"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
     <module name="intellij.kotlin.base.scripting.scratch.definition"/>
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="kotlin.jvm.shared"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchDefinitionSource"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <scratch.creationHelper language="kotlin"

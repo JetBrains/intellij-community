@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.jvm.shared.scratch.ui
 
+import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -18,10 +19,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.hasProductionSource
 import org.jetbrains.kotlin.idea.base.projectStructure.hasTestSource
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.scratchToolbarLabel
 import javax.swing.JComponent
 
-class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSelectedListener: (Module) -> Unit) :
-  LabeledComboBoxAction(KotlinJvmBundle.message("scratch.module.combobox")) {
+class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSelectedListener: (Module?) -> Unit) :
+    LabeledComboBoxAction(KotlinJvmBundle.message("scratch.module.combobox")) {
     override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
         actionGroup.add(ModuleIsNotSelectedAction(KotlinJvmBundle.message("list.item.no.module")))
@@ -47,11 +49,15 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSele
 
     override fun update(e: AnActionEvent) {
         super.update(e)
-        val selectedModule = scratchFile.currentModule?.takeIf { !it.isDisposed }
+        val selectedModule = scratchFile.module?.takeIf { !it.isDisposed }
 
         e.presentation.apply {
-            icon = selectedModule?.let { ModuleType.get(it).icon }
-            text = selectedModule?.name ?: KotlinJvmBundle.message("list.item.no.module")
+            val moduleIcon = selectedModule?.let { ModuleType.get(it).icon }
+            icon = moduleIcon
+            selectedIcon = moduleIcon
+            disabledIcon = moduleIcon
+            text = scratchToolbarLabel(selectedModule?.name ?: KotlinJvmBundle.message("list.item.no.module"))
+            description = selectedModule?.name ?: templatePresentation.description
         }
 
         e.presentation.isVisible = true
@@ -62,13 +68,16 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSele
     private inner class ModuleIsNotSelectedAction(@NlsActions.ActionText placeholder: String) : DumbAwareAction(placeholder) {
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.setModule(null)
+            ActivityTracker.getInstance().inc()
+            moduleSelectedListener(null)
         }
     }
 
     private inner class SelectModuleAction(private val module: Module) :
-      DumbAwareAction(module.name, null, ModuleType.get(module).icon) {
+        DumbAwareAction(module.name, null, ModuleType.get(module).icon) {
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.setModule(module)
+            ActivityTracker.getInstance().inc()
             moduleSelectedListener(module)
         }
     }

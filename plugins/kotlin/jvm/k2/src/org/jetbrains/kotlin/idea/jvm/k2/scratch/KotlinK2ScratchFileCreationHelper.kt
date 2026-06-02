@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
+import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
@@ -52,7 +52,9 @@ class KotlinK2ScratchFileCreationHelper : ScratchFileCreationHelper() {
         scratchFile: PsiFile
     ) {
         val sourceKtFile = context.sourceFile as? KtFile ?: return
-        ScriptRelatedModuleNameFile[project, scratchFile.virtualFile] = ModuleUtilCore.findModuleForFile(sourceKtFile)?.name
+        ScratchFileOptionsByFile.update(project, scratchFile.virtualFile) {
+            copy(selectedModule = ModuleUtilCore.findModuleForFile(sourceKtFile)?.name)
+        }
 
         val sourceFileCopy = sourceKtFile.createTempCopy(sourceKtFile.text)
         project.service<KotlinScratchCoroutineScopeService>().scope.launch {

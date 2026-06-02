@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
+import org.jetbrains.kotlin.idea.core.script.shared.definition.BundledScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.shared.definition.getBundledScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
@@ -154,7 +155,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * @return Definition bundled with IDEA and aimed for basic '.kts' scripts support.
      */
     override fun getDefaultDefinition(): ScriptDefinition {
-        return project.defaultDefinition
+        val (compilationConfiguration, evaluationConfiguration) = getBundledScriptDefinition(project)
+        return BundledScriptDefinition(compilationConfiguration, evaluationConfiguration)
     }
 
     // This function is aimed to fix locks acquisition order.

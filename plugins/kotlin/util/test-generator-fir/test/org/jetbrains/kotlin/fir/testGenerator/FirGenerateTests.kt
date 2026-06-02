@@ -41,9 +41,9 @@ import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionFull
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionStdlibDuplicationTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionTestWithResolveExtension
-import org.jetbrains.kotlin.idea.fir.completion.AbstractK2LiveTemplateCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2KotlinInJavaCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2KotlinSourceInJavaWithMockLibCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2LiveTemplateCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2MultiPlatformCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2SmartCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractK2TypeCodeFragmentCompletionTest
@@ -180,7 +180,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2InjectionTests()
     generateProjectStructureTest()
     generateK2GradleTests()
-    generateK2ScratchTests()
 
     testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideSourceKotlinModificationTrackerTest> {

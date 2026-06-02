@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This module contains the definition of `KotlinScratchScript` - the script definition used for Kotlin scratch files (`.kts`) in the IDE.
+This module contains the definition of `KotlinScratchExplainScript` - the script definition used for Kotlin scratch files (`.kts`) in the IDE.
 
 ## Design Rationale
 

@@ -3,11 +3,16 @@ package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
+import org.jetbrains.kotlin.idea.core.script.shared.definition.BundledScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.shared.definition.getBundledScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 
 @K1Deprecation
 class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
-    override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultDefinition)
+    override val definitions: Sequence<ScriptDefinition>
+        get() {
+            val (compilationConfiguration, evaluationConfiguration) = getBundledScriptDefinition(project)
+            return sequenceOf(BundledScriptDefinition(compilationConfiguration, evaluationConfiguration))
+        }
 }

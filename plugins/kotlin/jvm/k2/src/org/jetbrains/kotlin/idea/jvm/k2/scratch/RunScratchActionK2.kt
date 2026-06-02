@@ -10,13 +10,18 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 
 class RunScratchActionK2 : ScratchAction(
-  KotlinJvmBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute
+    KotlinJvmBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute
 ) {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val scratchFile = e.currentScratchFile as? K2KotlinScratchFile ?: return
         val executor = scratchFile.executor
-        val module = scratchFile.currentModule
+        val module = scratchFile.module
+
+        if (scratchFile.jdk == null) {
+            executor.errorOccurs(KotlinJvmBundle.message("scratch.no.jdk.selected"))
+            return
+        }
 
         ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
 
@@ -38,14 +43,24 @@ class RunScratchActionK2 : ScratchAction(
 
         val scratchFile = e.currentScratchFile ?: return
 
-        e.presentation.isVisible = !scratchFile.options.isInteractiveMode
+        val hasJdk = scratchFile.jdk != null
+        val isInteractiveMode = scratchFile.options.isInteractiveMode
+        val isExecutionInProgress = ScratchCompilationSupport.isAnyInProgress()
+        val disabledByInteractiveModeMessage = KotlinJvmBundle.message("scratch.run.disabled.interactive.description")
+        e.presentation.isVisible = true
+        e.presentation.isEnabled = hasJdk && !(isExecutionInProgress || isInteractiveMode)
+        e.presentation.description = when {
+            isInteractiveMode -> disabledByInteractiveModeMessage
+            !hasJdk -> KotlinJvmBundle.message("scratch.no.jdk.selected")
+            isExecutionInProgress -> KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
+            else -> templatePresentation.description
+        }
 
-        e.presentation.isEnabled = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
-
-        if (e.presentation.isEnabled) {
-            e.presentation.setTextWithMnemonic(templatePresentation.textWithPossibleMnemonic)
-        } else {
-            e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
+        when {
+            isInteractiveMode -> e.presentation.text = disabledByInteractiveModeMessage
+            !hasJdk -> e.presentation.text = KotlinJvmBundle.message("scratch.no.jdk.selected.action")
+            isExecutionInProgress -> e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
+            else -> e.presentation.setTextWithMnemonic(templatePresentation.textWithPossibleMnemonic)
         }
     }
 }

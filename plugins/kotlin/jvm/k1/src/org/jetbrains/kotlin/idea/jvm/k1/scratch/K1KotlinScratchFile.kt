@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
@@ -45,7 +45,9 @@ class K1KotlinScratchFile(project: Project, file: VirtualFile) : ScratchFile(pro
     }
 
     override fun setModule(module: Module?) {
-        ScriptRelatedModuleNameFile[project, virtualFile] = module?.name
+        ScratchFileOptionsByFile.update(project, virtualFile) {
+            copy(selectedModule = module?.name)
+        }
 
         val psiFile = ktFile ?: return
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
@@ -58,7 +59,7 @@ class KotlinConsoleKeeper(val project: Project) {
         @JvmStatic
         fun getInstance(project: Project): KotlinConsoleKeeper = project.service()
 
-        fun createReplCommandLine(project: Project, module: Module?): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
+        fun createReplCommandLine(project: Project, module: Module?, jdk: Sdk? = null): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
             val javaParameters = JavaParametersBuilder(project)
                 .withSdkFrom(module)
                 .withMainClassName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")

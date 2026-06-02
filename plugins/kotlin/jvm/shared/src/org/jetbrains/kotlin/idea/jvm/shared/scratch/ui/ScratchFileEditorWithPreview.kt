@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.jvm.shared.scratch.ui
 
 import com.intellij.diff.tools.util.BaseSyncScrollable
 import com.intellij.diff.tools.util.SyncScrollSupport
+import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -19,7 +18,6 @@ import com.intellij.pom.Navigatable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
@@ -30,12 +28,19 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.PreviewOutputBlocksMa
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchToolWindowHandlerKeeper
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 abstract class ScratchFileEditorWithPreview(
-    kotlinScratchFile: ScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
-) : TextEditorWithPreview(sourceTextEditor, previewTextEditor), TextEditor, ScratchEditorLinesTranslator {
+    kotlinScratchFile: ScratchFile,
+    sourceTextEditor: TextEditor,
+    previewTextEditor: TextEditor,
+    initialLayout: Layout? = null,
+) : TextEditorWithPreview(
+    sourceTextEditor,
+    previewTextEditor,
+    defaultLayout = Layout.SHOW_EDITOR,
+    layout = initialLayout,
+), TextEditor, ScratchEditorLinesTranslator {
 
     val scratchFile: ScratchFile = kotlinScratchFile
 
@@ -127,37 +132,37 @@ abstract class ScratchFileEditorWithPreview(
         get() = false
 
     override fun createViewActionGroup(): ActionGroup {
-        return DefaultActionGroup(showEditorAction, showEditorAndPreviewAction)
+        return DefaultActionGroup()
     }
 
-    /**
-     * For simple actions, [com.intellij.openapi.actionSystem.Presentation.getText] is shown in the tooltip in the [ActionToolbar], and [com.intellij.openapi.actionSystem.Presentation.getDescription] is shown
-     * in the bottom tool panel. But when action implements [com.intellij.openapi.actionSystem.ex.CustomComponentAction], its tooltip is
-     * controlled only by its [javax.swing.JComponent.setToolTipText] method.
-     *
-     * That's why we set long and descriptive [com.intellij.openapi.actionSystem.Presentation.getText], but short [com.intellij.openapi.actionSystem.Presentation.getDescription].
-     */
-
-    override val showEditorAction: ToggleAction
-        get() {
-            return super.showEditorAction.apply {
-                templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode.title")
-                templatePresentation.description = KotlinJvmBundle.message("scratch.inlay.output.mode.description")
-            }
+    fun setExplainModeEnabled(isExplainEnabled: Boolean) {
+        saveExplainOption(isExplainEnabled)
+        val targetLayout = if (isExplainEnabled) Layout.SHOW_EDITOR_AND_PREVIEW else Layout.SHOW_EDITOR
+        if (getLayout() != targetLayout) {
+            setLayout(targetLayout)
         }
+        ActivityTracker.getInstance().inc()
+    }
 
-    override val showEditorAndPreviewAction: ToggleAction
-        get() {
-            return super.showEditorAndPreviewAction.apply {
-                templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode.title")
-                templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
-            }
+    private fun syncExplainOptionWithLayout(layout: Layout?) {
+        val isExplainEnabled = layout == Layout.SHOW_EDITOR_AND_PREVIEW
+        if (scratchFile.options.isExplainEnabled != isExplainEnabled) {
+            saveExplainOption(isExplainEnabled)
+            ActivityTracker.getInstance().inc()
         }
+    }
+
+    private fun saveExplainOption(isExplainEnabled: Boolean) {
+        if (scratchFile.options.isExplainEnabled != isExplainEnabled) {
+            scratchFile.saveOptions { copy(isExplainEnabled = isExplainEnabled) }
+        }
+    }
 
     override fun onLayoutChange(oldValue: Layout?, newValue: Layout?) {
         when {
             oldValue != newValue -> clearOutputHandlers()
         }
+        syncExplainOptionWithLayout(newValue)
     }
 
     @TestOnly

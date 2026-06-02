@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
@@ -40,3 +42,9 @@ fun ActionToolbar.updateToolbar() {
         updateActionsAsync()
     }
 }
+
+const val SCRATCH_TOOLBAR_MAX_LABEL_LENGTH: Int = 20
+
+@NlsActions.ActionText
+fun scratchToolbarLabel(text: String, maxLength: Int = SCRATCH_TOOLBAR_MAX_LABEL_LENGTH): String =
+    StringUtil.shortenTextWithEllipsis(text, maxLength, maxLength / 3, /* useEllipsisSymbol = */ true)

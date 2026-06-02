@@ -27,9 +27,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.compileToDirectory
@@ -132,7 +129,7 @@ class KtScratchExecutionSession(
         }
 
         try {
-            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.currentModule, result.mainClassName, tempDir.path)
+            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.module, result.mainClassName, tempDir.path)
             val environment = environmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
 
             val commandLinePresentation = commandLine.getCommandPresentation(environment)

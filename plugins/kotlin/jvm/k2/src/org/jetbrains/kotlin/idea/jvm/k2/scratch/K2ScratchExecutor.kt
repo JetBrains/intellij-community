@@ -36,7 +36,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutModeProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.downloadAtomically
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KOTLIN_SCRATCH_EXPLAIN_FILE
-import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchScript
+import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchExplainScript
+import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchPlainScript
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
@@ -54,6 +55,11 @@ private val log = Logger.getInstance(K2ScratchExecutor::class.java)
 class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
     ScratchExecutor(scratchFile) {
     override fun execute() {
+        if (scratchFile.jdk == null) {
+            handler.error(scratchFile, KotlinJvmBundle.message("scratch.no.jdk.selected"))
+            return
+        }
+
         handler.onStart(scratchFile)
 
         scope.launch {
@@ -78,6 +84,7 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
             PsiDocumentManager.getInstance(project).commitDocument(document)
             FileDocumentManager.getInstance().saveDocument(document)
         }
+        val isExplainEnabled = scratchFile.options.isExplainEnabled
 
         val (code, stdout, stderr) = withBackgroundProgress(
             project, title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
@@ -91,7 +98,12 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
             val scratchCompilerJar = scratchCompilerArtifact(scratchCompilerHome, KotlinArtifactNames.KOTLIN_COMPILER)
             log.info("Using scratch compiler: home=$scratchCompilerHome, compilerJar=$scratchCompilerJar, distJar=$distJar")
 
-            val process = getJavaCommandLine(scratchFile.virtualFile, scratchFile.currentModule, scratchCompilerHome).createProcess()
+            val process = getJavaCommandLine(
+                scratchFile.virtualFile,
+                scratchFile.module,
+                scratchCompilerHome,
+                isExplainEnabled,
+            ).createProcess()
             process.awaitExit()
             val stdout = withContext(Dispatchers.IO) {
                 process.inputStream.bufferedReader().use { it.readText() }
@@ -108,40 +120,56 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
                 handler.handle(scratchFile, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
             }
 
-            val explanations = if (!Files.exists(scriptFile.explainFilePath)) emptyList() else {
-                scriptFile.explainFilePath.readLines().associate {
-                    it.substringBefore('=', "") to unescapeExplainValue(it.substringAfter('='))
-                }.filterKeys { it.isNotBlank() }.map { (key, value) ->
-                    val leftBracketIndex = key.indexOf("(")
-                    val rightBracketIndex = key.indexOf(")")
-                    val commaIndex = key.indexOf(",")
-
-                    val offsets =
-                        key.substring(leftBracketIndex + 1, commaIndex).trim().toInt() to key.substring(commaIndex + 1, rightBracketIndex)
-                            .trim().toInt()
-
-                    ExplainInfo(
-                        key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.first)
-                    )
-                }
+            if (isExplainEnabled) {
+                handler.handle(scratchFile, readExplanations(scriptFile), scope)
             }
-
-            handler.handle(scratchFile, explanations, scope)
         } else if (!scratchFile.options.isInteractiveMode) {
             handler.error(scratchFile, "Compilation failed: $stderr")
         }
     }
 
-    private fun getJavaCommandLine(scriptVirtualFile: VirtualFile, module: Module?, scratchCompilerHome: Path): GeneralCommandLine {
+    private fun readExplanations(scriptFile: VirtualFile): List<ExplainInfo> {
+        if (!Files.exists(scriptFile.explainFilePath)) return emptyList()
+
+        return scriptFile.explainFilePath.readLines().associate {
+            it.substringBefore('=', "") to unescapeExplainValue(it.substringAfter('='))
+        }.filterKeys { it.isNotBlank() }.map { (key, value) ->
+            val leftBracketIndex = key.indexOf("(")
+            val rightBracketIndex = key.indexOf(")")
+            val commaIndex = key.indexOf(",")
+
+            val offsets =
+                key.substring(leftBracketIndex + 1, commaIndex).trim().toInt() to key.substring(commaIndex + 1, rightBracketIndex)
+                    .trim().toInt()
+
+            ExplainInfo(
+                key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.first)
+            )
+        }
+    }
+
+    private fun getJavaCommandLine(
+        scriptVirtualFile: VirtualFile,
+        module: Module?,
+        scratchCompilerHome: Path,
+        isExplainEnabled: Boolean,
+    ): GeneralCommandLine {
         val javaParameters =
-            JavaParametersBuilder(project).withSdkFrom(module).withMainClassName("org.jetbrains.kotlin.preloading.Preloader").build()
+            JavaParametersBuilder(project)
+                .withMainClassName("org.jetbrains.kotlin.preloading.Preloader")
+                .build()
+        javaParameters.jdk = checkNotNull(scratchFile.jdk) {
+            "Scratch JDK must be selected before execution; guarded by execute() and RunScratchActionK2.update()."
+        }
 
         javaParameters.charset = null
-        javaParameters.vmParametersList.add("-D$KOTLIN_SCRATCH_EXPLAIN_FILE=${scriptVirtualFile.explainFilePath}")
+        if (isExplainEnabled) {
+            javaParameters.vmParametersList.add("-D$KOTLIN_SCRATCH_EXPLAIN_FILE=${scriptVirtualFile.explainFilePath}")
+        }
 
         val classPath = buildSet {
             add(ideaScriptingJar)
-            addAll(requiredKotlinArtifacts(scratchCompilerHome))
+            addAll(requiredKotlinArtifacts(scratchCompilerHome, isExplainEnabled))
             if (module != null) addAll(JavaParametersBuilder.getModuleDependencies(module))
         }
 
@@ -150,33 +178,55 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
                 scratchCompilerHome, KotlinArtifactNames.KOTLIN_PRELOADER
             ).absolutePathString()
         )
+        val scriptTemplate = if (isExplainEnabled) {
+            KotlinScratchExplainScript::class.java
+        } else {
+            KotlinScratchPlainScript::class.java
+        }
+
         @Suppress("IO_FILE_USAGE")
-        javaParameters.programParametersList.addAll(
-            "-cp",
-            scratchCompilerArtifact(scratchCompilerHome, KotlinArtifactNames.KOTLIN_COMPILER).absolutePathString(),
-            "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
-            "-cp",
-            classPath.joinToString(java.io.File.pathSeparator),
-            "-kotlin-home",
-            scratchCompilerHome.absolutePathString(),
-            "-script",
-            scriptVirtualFile.path,
-            "-Xplugin=${
-                scratchCompilerArtifact(
+        val programParameters = buildList {
+            addAll(
+                listOf(
+                    "-cp",
+                    scratchCompilerArtifact(scratchCompilerHome, KotlinArtifactNames.KOTLIN_COMPILER).absolutePathString(),
+                    "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
+                    "-cp",
+                    classPath.joinToString(java.io.File.pathSeparator),
+                    "-kotlin-home",
+                    scratchCompilerHome.absolutePathString(),
+                    "-script",
+                    scriptVirtualFile.path,
+                )
+            )
+
+            if (isExplainEnabled) {
+                val powerAssertPluginPath = scratchCompilerArtifact(
                     scratchCompilerHome, KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN
                 ).absolutePathString()
-            }",
-            "-P",
-            "plugin:kotlin.scripting:script-templates=${KotlinScratchScript::class.java.name}",
-            "-Xuse-fir-lt=false",
-            "-Xallow-any-scripts-in-source-roots",
-            "-P",
-            "plugin:kotlin.scripting:disable-script-definitions-autoloading=true",
-            "-P",
-            "plugin:kotlin.scripting:disable-standard-script=true",
-            "-P",
-            "plugin:kotlin.scripting:enable-script-explanation=true",
-        )
+                add("-Xplugin=$powerAssertPluginPath")
+            }
+
+            addAll(
+                listOf(
+                    "-P",
+                    "plugin:kotlin.scripting:script-templates=${scriptTemplate.name}",
+                    "-Xuse-fir-lt=false",
+                    "-Xallow-any-scripts-in-source-roots",
+                    "-P",
+                    "plugin:kotlin.scripting:disable-script-definitions-autoloading=true",
+                    "-P",
+                    "plugin:kotlin.scripting:disable-standard-script=true",
+                )
+            )
+
+            if (isExplainEnabled) {
+                add("-P")
+                add("plugin:kotlin.scripting:enable-script-explanation=true")
+            }
+        }
+
+        javaParameters.programParametersList.addAll(programParameters)
 
         val commandLine = javaParameters.toCommandLine()
         log.info("commandLine=${commandLine.commandLineString}")
@@ -184,14 +234,16 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
         return commandLine
     }
 
-    private fun requiredKotlinArtifacts(scratchCompilerHome: Path): List<String> =
-        kotlincIdeScratchClasspathArtifactFileNames.map { scratchCompilerArtifact(scratchCompilerHome, it) }
+    private fun requiredKotlinArtifacts(scratchCompilerHome: Path, includePowerAssert: Boolean): List<String> =
+        kotlincIdeScratchClasspathArtifactFileNames
+            .filter { includePowerAssert || it != KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN }
+            .map { scratchCompilerArtifact(scratchCompilerHome, it) }
             .filter(Files::exists).map(Path::absolutePathString)
 
     private fun scratchCompilerArtifact(scratchCompilerHome: Path, fileName: String): Path =
         scratchCompilerHome.resolve("lib").resolve(fileName)
 
-    private val ideaScriptingJar by lazy { PathUtil.getJarPathForClass(KotlinScratchScript::class.java) }
+    private val ideaScriptingJar by lazy { PathUtil.getJarPathForClass(KotlinScratchExplainScript::class.java) }
 
     private val explainScratchesDirectory: Path by lazy {
         FileUtilRt.createTempDirectory("kotlin-scratches-explain", null, true).toPath()
@@ -218,9 +270,11 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
             KotlinPluginLayoutMode.SOURCES -> withScratchCompilerFallback("Failed to prepare scratch compiler artifacts from sources.") {
                 resolveKotlincIdeScratchHomeFromSources()
             }
+
             KotlinPluginLayoutMode.INTELLIJ -> withScratchCompilerFallback("Failed to download scratch compiler artifacts.") {
                 resolveKotlincIdeScratchHomeInProduction()
             }
+
             KotlinPluginLayoutMode.LSP -> error("LSP doesn't not include kotlinc")
         }
 

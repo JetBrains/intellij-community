@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigur
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.toLanguageVersionSettings
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -161,7 +160,7 @@ private fun Iterable<String>.addGradleSpecificsIfNeeded(definition: ScriptDefini
 }
 
 private fun getScriptModule(project: Project, virtualFile: VirtualFile): Module? {
-    val scriptModuleName = ScriptRelatedModuleNameFile.Companion[project, virtualFile]
+    val scriptModuleName = ScratchFileOptionsByFile[project, virtualFile]?.selectedModule
     return if (scriptModuleName != null) {
         ModuleManager.getInstance(project).findModuleByName(scriptModuleName)
     } else {

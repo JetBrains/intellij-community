@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.register
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -89,7 +89,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
 
     override suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
         if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
-            ScriptRelatedModuleNameFile.Companion[project, virtualFile]?.let { scratchModuleName ->
+            ScratchFileOptionsByFile[project, virtualFile]?.selectedModule?.let { scratchModuleName ->
                 val moduleManager = ModuleManager.getInstance(project)
                 yieldIfNotNull(moduleManager.findModuleByName(scratchModuleName))
             }
