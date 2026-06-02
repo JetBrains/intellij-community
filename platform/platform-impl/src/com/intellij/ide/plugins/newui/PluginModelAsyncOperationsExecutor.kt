@@ -30,6 +30,7 @@ internal object PluginModelAsyncOperationsExecutor {
     descriptor: PluginUiModel,
     customizer: PluginManagerCustomizer?,
     component: JComponent,
+    pluginUpdateSourceApplier: PluginUpdateSourceApplier,
   ) {
     cs.launch(Dispatchers.IO) {
       val stateForComponent = ModalityState.stateForComponent(component)
@@ -40,9 +41,10 @@ internal object PluginModelAsyncOperationsExecutor {
           customAction()
           return@withContext
         }
-        modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+        val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+        pluginUpdateSourceApplier.revertIfNeeded(result)
       }
-    }
+    }.invokeOnCompletion (pluginUpdateSourceApplier::revertIfNeeded)
   }
 
   suspend fun performMarketplaceSearch(
@@ -104,6 +106,7 @@ internal object PluginModelAsyncOperationsExecutor {
     pluginManagerCustomizer: PluginManagerCustomizer?,
     modalityState: ModalityState,
     component: JComponent?,
+    pluginUpdateSourceApplier: PluginUpdateSourceApplier,
   ) {
     cs.launch(Dispatchers.IO) {
       val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
@@ -112,10 +115,11 @@ internal object PluginModelAsyncOperationsExecutor {
           model.action()
         }
         else {
-          modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
+          val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
+          pluginUpdateSourceApplier.revertIfNeeded(result)
         }
       }
-    }
+    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
   }
 
   fun loadPopupMenuActions(
