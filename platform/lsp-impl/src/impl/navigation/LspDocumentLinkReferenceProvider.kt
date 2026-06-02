@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile
  * [textDocument/documentLink](https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentLink) request.
  * These links are rendered as links in the editor by [com.intellij.platform.lsp.impl.highlighting.LspHighlightingApplier].
  */
-class LspDocumentLinkReferenceProvider : ImplicitReferenceProvider {
+internal class LspDocumentLinkReferenceProvider : ImplicitReferenceProvider {
   override fun getImplicitReference(element: PsiElement, offsetInElement: Int): PsiSymbolReference? {
     val psiFile = element as? PsiFile ?: return null
     if (psiFile.project.isDefault) return null

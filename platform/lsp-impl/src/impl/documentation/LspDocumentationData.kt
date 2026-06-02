@@ -12,8 +12,10 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 fun createLspDocumentationData(markupContent: MarkupContent): LspDocumentationData {
   if (markupContent.kind != MarkupKind.MARKDOWN) {
     if (markupContent.kind != MarkupKind.PLAINTEXT) {
@@ -50,6 +52,7 @@ fun createLspDocumentationData(markupContent: MarkupContent): LspDocumentationDa
  *
  * The [description] contains description in [descriptionMarkup] format.
  */
+@ApiStatus.Internal
 data class LspDocumentationData(
   val definitionCodeBlock: @NlsSafe String? = null,
   val definitionLanguage: @NonNls String? = null,

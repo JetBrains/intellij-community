@@ -6,7 +6,9 @@ import com.intellij.platform.lsp.util.getRangeInDocument
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class TextRangeAndMarkupContent(val textRange: TextRange, val markupContent: MarkupContent) {
   internal companion object {
     internal fun fromHover(hover: Hover, document: Document?, offset: Int): TextRangeAndMarkupContent? {
