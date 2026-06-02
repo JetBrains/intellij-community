@@ -9,7 +9,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.text.Normalizer
 import java.util.stream.Collectors
-import kotlin.collections.mapValues
 import kotlin.io.path.name
 
 // Lightweight model of an IntelliJ Run Configuration as stored under .idea/runConfigurations/*.xml
@@ -189,7 +188,7 @@ internal class RunConfigurationsFile : BuildFile() {
       val prefix = runConfiguration.vmOptions.properties["idea.platform.prefix"]
                    ?: error("idea.platform.prefix not found in VM options")
       option("platform_prefix", prefix)
-      if (prefix.startsWith("IntelliJServer") || prefix == "KotlinServer") {
+      if (prefix.startsWith("IntelliJServer") || prefix == "KotlinServer" || prefix == "DataGripServer") {
         option("data", listOf("//language-server/build:filewatcher_jni_all_platforms"))
       }
 
