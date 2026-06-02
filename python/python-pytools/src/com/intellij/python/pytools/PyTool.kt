@@ -87,6 +87,7 @@ interface PyTool {
     return PyToolFusSnapshot(
       enabled = entry.enabled,
       executableDiscoveryMode = entry.discoveryMode,
+      customPath = entry.customToolBinaryPath != null,
     )
   }
 

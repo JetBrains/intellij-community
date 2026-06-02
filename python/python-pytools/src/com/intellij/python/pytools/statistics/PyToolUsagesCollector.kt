@@ -32,6 +32,7 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
         formattingField with s.formatting.toThreeState,
         sortImportsField with s.sortImports.toThreeState,
         executableDiscoveryModeField with s.executableDiscoveryMode,
+        customPathField with s.customPath,
       )
     }
 
@@ -49,7 +50,7 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
 
 }
 
-private val GROUP = EventLogGroup("python.lsp", 6)
+private val GROUP = EventLogGroup("python.lsp", 7)
 
 /**
  * UI place from which a Python-tool action (install / upgrade / configuration change) was
@@ -73,6 +74,11 @@ private val documentationField = EventFields.Enum("documentation", ThreeState::c
 private val formattingField = EventFields.Enum("formatting", ThreeState::class.java)
 private val sortImportsField = EventFields.Enum("sort_imports", ThreeState::class.java)
 private val executableDiscoveryModeField = EventFields.Enum("executable_discovery_mode", ExecutableDiscoveryMode::class.java)
+/**
+ * True when the user has overridden the tool's executable with a "Browse for executable"
+ * custom path; false when the executable is auto-detected (via SDK or `$PATH`).
+ */
+private val customPathField = EventFields.Boolean("custom_path")
 
 private val CONFIGURATION_CHANGED = GROUP.registerVarargEvent(
   "configuration.changed",
@@ -86,6 +92,7 @@ private val CONFIGURATION_CHANGED = GROUP.registerVarargEvent(
   formattingField,
   sortImportsField,
   executableDiscoveryModeField,
+  customPathField,
 )
 
 private val DISABLE_RULE = GROUP.registerEvent(

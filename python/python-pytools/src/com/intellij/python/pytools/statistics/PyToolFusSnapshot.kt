@@ -8,13 +8,18 @@ import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
  * `configuration.changed` FUS event. Each [com.intellij.python.pytools.PyTool] populates every field it actually owns;
  * fields the tool does not own stay null and are reported as `UNSURE`.
  *
- * The default [com.intellij.python.pytools.PyTool.configurationFusSnapshot] returns a snapshot with just [enabled] and
- * [executableDiscoveryMode] filled in — enough for tools without LSP-style feature flags.
+ * The default [com.intellij.python.pytools.PyTool.configurationFusSnapshot] returns a snapshot with [enabled],
+ * [executableDiscoveryMode], and [customPath] filled in — enough for tools without LSP-style feature flags.
  * LSP-backed tools override and `copy(...)` the default to add their feature fields.
  */
 data class PyToolFusSnapshot(
   val enabled: Boolean,
   val executableDiscoveryMode: ExecutableDiscoveryMode,
+  /**
+   * True when the tool's executable is overridden by a user-supplied custom path
+   * (set via "Browse for executable" in the External Tools settings).
+   */
+  val customPath: Boolean = false,
   val inspections: Boolean? = null,
   val completions: Boolean? = null,
   val inlayHints: Boolean? = null,
