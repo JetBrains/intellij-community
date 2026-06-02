@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI
  * @param width Fixed width (scaled).
  * @param rightAligned If false, Minimap will be on the left side.
  * @param insideScrollbar If true and [rightAligned] is true, the vertical scrollbar stays to the right of the minimap.
+ * @param showHover If true, structure hover popups are shown over supported minimaps.
  *
  * The set of file types that support the minimap is determined by the
  * [com.intellij.ide.minimap.model.MinimapFileSupportPolicy] extension point rather than
@@ -17,7 +18,8 @@ data class MinimapSettingsState(var enabled: Boolean = false,
                                 var width: Int = FIXED_WIDTH,
                                 var scaleMode: MinimapScaleMode = MinimapScaleMode.FILL,
                                 var rightAligned: Boolean = true,
-                                var insideScrollbar: Boolean = true) {
+                                var insideScrollbar: Boolean = true,
+                                var showHover: Boolean = true) {
   companion object {
     val FIXED_WIDTH: Int = JBUI.scale(120)
   }

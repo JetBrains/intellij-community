@@ -28,6 +28,7 @@ class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settin
       state.width = it.width
       state.scaleMode = it.scaleMode
       state.insideScrollbar = it.insideScrollbar
+      state.showHover = it.showHover
     }
 
     lateinit var enabled: JBCheckBox
@@ -58,6 +59,10 @@ class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settin
           radioButton(MiniMessagesBundle.message("settings.scale.fit"), MinimapScaleMode.FIT)
         }
       }.bind(state::scaleMode)
+      row {
+        checkBox(MiniMessagesBundle.message("settings.hover"))
+          .bindSelected(state::showHover)
+      }
     }.enabledIf(enabled.selected)
   }
 

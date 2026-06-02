@@ -33,11 +33,10 @@ class MinimapBalloonController(private val panel: MinimapPanel) {
 
     val createdLabel = JBLabel(text, icon, SwingConstants.LEADING)
     val created = createBalloon(createdLabel)
-    val position = if (settingsState.rightAligned) Balloon.Position.atLeft else Balloon.Position.atRight
     val newTracker = MinimapHoverBalloonTracker(panel, settingsState) { balloonState.lastRect }
 
     balloonState.install(created, createdLabel, newTracker, text, rect, icon)
-    created.show(newTracker, position)
+    created.show(newTracker, Balloon.Position.atLeft)
   }
 
   fun hide() {
