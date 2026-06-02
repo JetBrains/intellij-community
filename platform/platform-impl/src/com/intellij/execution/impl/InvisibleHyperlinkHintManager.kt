@@ -15,8 +15,6 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -77,15 +75,6 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
           // Capture editor selection state before editor's mousePressed removes it.
           hadTextSelection = editor.selectionModel.hasSelection()
           lastMousePressTime = event.mouseEvent.`when`
-        }
-      }
-    }, parentDisposable)
-    editor.document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        val hintInfo = getHintInfoIfVisible() ?: return
-        val changeIsBeforeCurrentLink = event.offset < hintInfo.link.endOffset
-        if (!hintInfo.link.isValid || changeIsBeforeCurrentLink) {
-          cancelPopup()
         }
       }
     }, parentDisposable)
