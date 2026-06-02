@@ -28,7 +28,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.aiCodeReview.api" />
+    <orderEntry type="module" module-name="intellij.aiCodeReview" />
     <orderEntry type="module" module-name="intellij.aiCodeReview.vcs" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
