@@ -20,6 +20,44 @@ c:com.intellij.platform.lsp.api.Lsp4jClient
 - telemetryEvent(java.lang.Object):V
 - f:unregisterCapability(org.eclipse.lsp4j.UnregistrationParams):java.util.concurrent.CompletableFuture
 - f:workspaceFolders():java.util.concurrent.CompletableFuture
+a:com.intellij.platform.lsp.api.LspClientDescriptor
+- sf:Companion:com.intellij.platform.lsp.api.LspClientDescriptor$Companion
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile[]):V
+- createCommandLine():com.intellij.execution.configurations.GeneralCommandLine
+- createInitializationOptions():java.lang.Object
+- createInitializeParams():org.eclipse.lsp4j.InitializeParams
+- createLsp4jClient(com.intellij.platform.lsp.api.LspServerNotificationsHandler):com.intellij.platform.lsp.api.Lsp4jClient
+- findFileByUri(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- p:findLocalFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- getClientCapabilities():org.eclipse.lsp4j.ClientCapabilities
+- p:getFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getFileUri(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getLsp4jServerClass():java.lang.Class
+- getLspCodeActionsSupport():com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
+- getLspCommandsSupport():com.intellij.platform.lsp.api.customization.LspCommandsSupport
+- getLspCommunicationChannel():com.intellij.platform.lsp.api.LspCommunicationChannel
+- getLspCompletionSupport():com.intellij.platform.lsp.api.customization.LspCompletionSupport
+- getLspCustomization():com.intellij.platform.lsp.api.customization.LspCustomization
+- getLspDiagnosticsSupport():com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
+- getLspDocumentColorSupport():com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
+- getLspDocumentLinkSupport():com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
+- getLspFindReferencesSupport():com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
+- getLspFormattingSupport():com.intellij.platform.lsp.api.customization.LspFormattingSupport
+- getLspGoToDefinitionSupport():Z
+- getLspGoToTypeDefinitionSupport():Z
+- getLspHoverSupport():Z
+- getLspSemanticTokensSupport():com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
+- getLspServerListener():com.intellij.platform.lsp.api.LspServerListener
+- f:getPresentableName():java.lang.String
+- f:getProject():com.intellij.openapi.project.Project
+- f:getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getWorkspaceConfiguration(org.eclipse.lsp4j.ConfigurationItem):java.lang.Object
+- a:isSupportedFile(com.intellij.openapi.vfs.VirtualFile):Z
+- startServerProcess():com.intellij.execution.process.OSProcessHandler
+f:com.intellij.platform.lsp.api.LspClientDescriptor$Companion
+- f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 a:com.intellij.platform.lsp.api.LspCommunicationChannel
 f:com.intellij.platform.lsp.api.LspCommunicationChannel$Socket
 - com.intellij.platform.lsp.api.LspCommunicationChannel
@@ -55,41 +93,10 @@ com.intellij.platform.lsp.api.LspServer
 f:com.intellij.platform.lsp.api.LspServer$Companion
 - sf:DEFAULT_REQUEST_TIMEOUT_MS:I
 a:com.intellij.platform.lsp.api.LspServerDescriptor
+- com.intellij.platform.lsp.api.LspClientDescriptor
 - sf:Companion:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile[]):V
-- createCommandLine():com.intellij.execution.configurations.GeneralCommandLine
-- createInitializationOptions():java.lang.Object
-- createInitializeParams():org.eclipse.lsp4j.InitializeParams
-- createLsp4jClient(com.intellij.platform.lsp.api.LspServerNotificationsHandler):com.intellij.platform.lsp.api.Lsp4jClient
-- findFileByUri(java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- p:findLocalFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- getClientCapabilities():org.eclipse.lsp4j.ClientCapabilities
-- p:getFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getFileUri(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getLsp4jServerClass():java.lang.Class
-- getLspCodeActionsSupport():com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
-- getLspCommandsSupport():com.intellij.platform.lsp.api.customization.LspCommandsSupport
-- getLspCommunicationChannel():com.intellij.platform.lsp.api.LspCommunicationChannel
-- getLspCompletionSupport():com.intellij.platform.lsp.api.customization.LspCompletionSupport
-- getLspCustomization():com.intellij.platform.lsp.api.customization.LspCustomization
-- getLspDiagnosticsSupport():com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
-- getLspDocumentColorSupport():com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
-- getLspDocumentLinkSupport():com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
-- getLspFindReferencesSupport():com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
-- getLspFormattingSupport():com.intellij.platform.lsp.api.customization.LspFormattingSupport
-- getLspGoToDefinitionSupport():Z
-- getLspGoToTypeDefinitionSupport():Z
-- getLspHoverSupport():Z
-- getLspSemanticTokensSupport():com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
-- getLspServerListener():com.intellij.platform.lsp.api.LspServerListener
-- f:getPresentableName():java.lang.String
-- f:getProject():com.intellij.openapi.project.Project
-- f:getRoots():com.intellij.openapi.vfs.VirtualFile[]
-- getWorkspaceConfiguration(org.eclipse.lsp4j.ConfigurationItem):java.lang.Object
-- a:isSupportedFile(com.intellij.openapi.vfs.VirtualFile):Z
-- startServerProcess():com.intellij.execution.process.OSProcessHandler
 f:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
 - f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.platform.lsp.api.LspServerListener
@@ -143,6 +150,9 @@ f:com.intellij.platform.lsp.api.LspServerSupportProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.platform.lsp.api.LspServerSupportProvider$LspServerStarter
 - a:ensureServerStarted(com.intellij.platform.lsp.api.LspServerDescriptor):V
+a:com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
+- com.intellij.platform.lsp.api.LspClientDescriptor
+- <init>(com.intellij.openapi.project.Project,java.lang.String):V
 a:com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
 - com.intellij.platform.lsp.api.LspServerDescriptor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
