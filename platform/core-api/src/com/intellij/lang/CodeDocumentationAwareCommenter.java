@@ -81,7 +81,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   }
 
   /// Returns the types of the documentation **line** comment token in the language,
-  /// or `null` if the language does not support documentation  **line** comments.
+  /// or `null` if the language does not support documentation **line** comments.
   ///
   /// It is assumed that [#getDocumentationLineCommentPrefixes()] does not return `null` when the documentation comment type is not `null`.
   /// Implementations are expected to have [List]s of the same length between this function and [#getDocumentationLineCommentPrefixes()]
@@ -90,6 +90,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
     return ContainerUtil.createMaybeSingletonList(getDocumentationLineCommentTokenType());
   }
 
+  /// Variant of [getDocumentationLineCommentPrefixes] that returns a single prefix
   @Nullable
   default String getDocumentationLineCommentPrefix() {
     return null;

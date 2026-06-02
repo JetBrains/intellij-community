@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.CodeDocumentationAwareCommenterEx;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -319,6 +320,10 @@ public final class FixDocCommentAction extends EditorAction {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
     if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
       if (comment == null) {
+        if (docCommenter instanceof CodeDocumentationAwareCommenterEx docCommenterEx) {
+          return docCommenterEx
+            .shouldUseDocumentationLineComments(file, CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED);
+        }
         return CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED;
       }
       return docCommenter.isDocumentationLineComment(comment);

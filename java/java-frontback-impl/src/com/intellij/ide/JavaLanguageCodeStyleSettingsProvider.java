@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.DocCommentSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -416,6 +417,12 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     else {
       consumer.showAllStandardOptions();
     }
+  }
+
+  @Override
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   CommonCodeStyleSettings.@NotNull IndentOptions indentOptions) {
+    commonSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED = true;
   }
 
   @Override

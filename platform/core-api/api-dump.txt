@@ -211,6 +211,7 @@ com.intellij.lang.CodeDocumentationAwareCommenter
 com.intellij.lang.CodeDocumentationAwareCommenterEx
 - com.intellij.lang.CodeDocumentationAwareCommenter
 - a:isDocumentationCommentText(com.intellij.psi.PsiElement):Z
+- shouldUseDocumentationLineComments(com.intellij.psi.PsiFile,Z):Z
 com.intellij.lang.Commenter
 - blockCommentRequiresFullLineSelection():Z
 - a:getBlockCommentPrefix():java.lang.String

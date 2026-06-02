@@ -16,6 +16,8 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -30,4 +32,14 @@ public interface CodeDocumentationAwareCommenterEx extends CodeDocumentationAwar
    * @return true if the element is a documentation comment part with text
    */
   boolean isDocumentationCommentText(PsiElement element);
+
+  /// Dictates whether a new documentation comment should use the line or block format.
+  /// This method is only useful if the implementing class supports [getDocumentationLineCommentPrefix]
+  ///
+  /// @param file                   The current file being worked on
+  /// @param isLineCommentPreferred The preferred user setting, generally `CommonCodeStyleSettings#DOCUMENTATION_LINE_COMMENT_PREFERRED`.
+  /// @return `true` if documentation line comment should be used, `false` otherwise
+  default boolean shouldUseDocumentationLineComments(@NotNull PsiFile file, boolean isLineCommentPreferred) {
+    return isLineCommentPreferred;
+  }
 }
