@@ -37,7 +37,7 @@ public final class ChameleonAction extends AnAction {
                     @Nullable ProjectType projectType,
                     @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
     if (action instanceof ActionStub actionStub) {
-      action = ActionManagerImplKt.convertStub(actionStub, actionSupplier);
+      action = ActionManagerXmlSupportKt.convertActionStub(actionStub, actionSupplier);
       if (action == null) {
         return true;
       }
@@ -77,7 +77,6 @@ public final class ChameleonAction extends AnAction {
     AnAction action = myActions.get(projectType);
     return action != null ? action : myActions.get(null);
   }
-
 
   public Map<ProjectType, AnAction> getActions() {
     return myActions;
