@@ -6,6 +6,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -50,6 +51,9 @@ class ModuleStructureValidator(
   private val errors = ArrayList<AssertionError>()
   private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
   private val libraryClasses = HashMap<JpsLibrary, Set<String>>()
+  private val allProductModuleNames = allProductModules.mapTo(HashSet()) { it.moduleName }
+  private val productModuleItems = allProductModules.associateBy { it.moduleName }
+  private val bundledPluginModuleNames by lazy(LazyThreadSafetyMode.NONE) { computeBundledPluginModuleNames() }
 
   private fun getLibraryFiles(library: JpsLibrary): Set<String> {
     @Suppress("NAME_SHADOWING")
@@ -146,7 +150,10 @@ class ModuleStructureValidator(
           continue
         }
 
-        if (allProductModules.none { it.moduleName == dependantModule.name }) {
+        if (!allProductModuleNames.contains(dependantModule.name)) {
+          if (canDependOnBundledPluginModule(module.name, dependantModule.name)) {
+            continue
+          }
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }
@@ -154,6 +161,34 @@ class ModuleStructureValidator(
         validateModuleDependencies(visitedModules, dependantModule)
       }
     }
+  }
+
+  private fun canDependOnBundledPluginModule(moduleName: String, dependencyModuleName: String): Boolean {
+    return productModuleItems.get(moduleName)?.reason == ModuleIncludeReasons.PRODUCT_MODULES &&
+           bundledPluginModuleNames.contains(dependencyModuleName)
+  }
+
+  private fun computeBundledPluginModuleNames(): Set<String> {
+    val result = HashSet<String>()
+    val contentModuleFilter = context.getContentModuleFilter()
+    val bundledPluginLayouts = getPluginLayoutsByJpsModuleNames(
+      modules = context.getBundledPluginModules(),
+      productLayout = context.productProperties.productLayout,
+    )
+    for (plugin in bundledPluginLayouts) {
+      result.add(plugin.mainModule)
+      plugin.includedModules.mapTo(result) { it.moduleName }
+
+      val pluginModule = context.outputProvider.findRequiredModule(plugin.mainModule)
+      val pluginXml = context.findFileInModuleSources(pluginModule, PLUGIN_XML_RELATIVE_PATH) ?: continue
+      for ((moduleName, loadingRule) in readPluginContentFromDescriptor(readXmlAsModel(pluginXml))) {
+        if (isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, plugin.mainModule)) {
+          continue
+        }
+        result.add(moduleName)
+      }
+    }
+    return result
   }
 
   private fun validateXmlDescriptors() {

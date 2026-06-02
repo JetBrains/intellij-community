@@ -95,7 +95,7 @@ private fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule, c
   }
 }
 
-private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
+internal fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
   return sequence {
     for (content in pluginDescriptor.children("content")) {
       for (module in content.children("module")) {
