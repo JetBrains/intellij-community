@@ -974,7 +974,8 @@ open class EditorComposite internal constructor(
         currentInTab = false,
         ideFingerprint = null,
         managingFsCreationTimestamp = getManagingFsCreationTimestamp(file),
-        protocol = getProtocol(file)
+        protocol = getProtocol(file),
+        isExcludedFromTabLimit = !EditorAutoClosingHandler.isClosingAllowed(this@EditorComposite),
       )
     }
   }

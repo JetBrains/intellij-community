@@ -12,7 +12,12 @@ import org.jetbrains.annotations.ApiStatus
 interface EditorAutoClosingHandler {
   companion object {
     val EP_NAME = ExtensionPointName.create<EditorAutoClosingHandler>("com.intellij.editorAutoClosingHandler")
+
+    fun isClosingAllowed(composite: EditorComposite): Boolean {
+      val extensions = EP_NAME.extensionList
+      return extensions.isEmpty() || extensions.all { it.isClosingAllowed(composite) }
+    }
   }
 
-  fun isClosingAllowed(composite : EditorComposite): Boolean
+  fun isClosingAllowed(composite: EditorComposite): Boolean
 }

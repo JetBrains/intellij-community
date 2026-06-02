@@ -5,6 +5,7 @@ package com.intellij.platform.fileEditor
 
 import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.fileEditor.impl.EDITOR_TYPE_ID_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.EditorAutoClosingHandler
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.HistoryEntry
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NonNls
 
 private const val PINNED: @NonNls String = "pinned"
 private const val CURRENT_IN_TAB = "current-in-tab"
+private const val EXCLUDED_FROM_TAB_LIMIT = "excluded-from-tab-limit"
 
 @Internal
 class FileEntry(
@@ -44,6 +46,7 @@ class FileEntry(
   val ideFingerprint: IdeFingerprint?,
   @JvmField val isPreview: Boolean,
   @JvmField val providers: Map<String, Element?>,
+  @JvmField val isExcludedFromTabLimit: Boolean,
 )
 
 private const val TAB = "tab"
@@ -85,7 +88,8 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
     providers = providers,
     ideFingerprint = storedIdeFingerprint,
     managingFsCreationTimestamp = historyElement.getAttributeValue(HistoryEntry.MANAGING_FS_ATTRIBUTE)?.toLongOrNull(),
-    protocol = historyElement.getAttributeValue(HistoryEntry.PROTOCOL_ATTRIBUTE)
+    protocol = historyElement.getAttributeValue(HistoryEntry.PROTOCOL_ATTRIBUTE),
+    isExcludedFromTabLimit = fileElement.getAttributeBooleanValue(EXCLUDED_FROM_TAB_LIMIT)
   )
 }
 
@@ -112,6 +116,10 @@ private fun writeFileEntry(
   }
   if (isSelected) {
     fileElement.setAttribute(CURRENT_IN_TAB, "true")
+  }
+
+  if (!EditorAutoClosingHandler.isClosingAllowed(composite)) {
+    fileElement.setAttribute(EXCLUDED_FROM_TAB_LIMIT, "true")
   }
 
   fileElement.addContent(Element(TAB).addContent(CDATA(json.encodeToString(FileEntryTab.serializer(), FileEntryTab(

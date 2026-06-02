@@ -1177,13 +1177,8 @@ class EditorWindow internal constructor(
   }
 
   private fun isClosingAllowed(file: VirtualFile): Boolean {
-    val extensions = EditorAutoClosingHandler.EP_NAME.extensionList
-    if (extensions.isEmpty()) {
-      return true
-    }
-
     val composite = getComposite(file) ?: return true
-    return extensions.all { it.isClosingAllowed(composite) }
+    return EditorAutoClosingHandler.isClosingAllowed(composite)
   }
 
   override fun toString(): String {
