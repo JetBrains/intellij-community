@@ -37,6 +37,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -521,6 +522,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
+    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(descriptorForActions!!)
     coroutineScope.launch {
       val modalityState = ModalityState.stateForComponent(updateButton!!)
       val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
@@ -533,14 +535,16 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           customizedAction()
         }
         else {
-          pluginModel.installOrUpdatePlugin(
+          pluginUpdateSourceApplier.applyPluginUpdateSourceId()
+          val result = pluginModel.installOrUpdatePlugin(
             this@PluginDetailsPageComponent,
             descriptorForActions!!, updateDescriptor,
             modalityState,
           )
+          pluginUpdateSourceApplier.revertIfNeeded(result)
         }
       }
-    }
+    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -1225,6 +1229,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {
         scheduleNotificationsUpdate()
+        descriptorForActions?.let {
+          PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.pluginId)
+        }
       })
   }
 
@@ -1610,10 +1617,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun installOrUpdatePlugin() {
+    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(plugin!!)
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      pluginUpdateSourceApplier.applyPluginUpdateSourceId()
       val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-      pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
-    }
+      val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
+      pluginUpdateSourceApplier.revertIfNeeded(result)
+    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
   }
 
   private fun updateEnableForNameAndIcon() {
