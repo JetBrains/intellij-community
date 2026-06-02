@@ -6279,20 +6279,6 @@ http_file(
 )
 
 http_file(
-  name = "org_junit_jupiter-junit-jupiter-params-5_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.13.4/junit-jupiter-params-5.13.4.jar",
-  sha256 = "3a8c6365716dbb698c0d49a05456c1e1ad05c406613c550f9dd50037872efc41",
-  downloaded_file_path = "junit-jupiter-params-5.13.4.jar"
-)
-
-http_file(
-  name = "org_junit_jupiter-junit-jupiter-params-5_13_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.13.4/junit-jupiter-params-5.13.4-sources.jar",
-  sha256 = "173be0fd56d5befb60e4ee812eb3e1faea05181ec948299661592222aef0e352",
-  downloaded_file_path = "junit-jupiter-params-5.13.4-sources.jar"
-)
-
-http_file(
   name = "org_junit-pioneer-junit-pioneer-2_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit-pioneer/junit-pioneer/2.3.0/junit-pioneer-2.3.0.jar",
   sha256 = "8b09db32c8cf5b2112a00262411ccd4ef6ca3bae695a0015ecad4def23dea9fd",
@@ -9930,6 +9916,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.13.4/junit-platform-engine-1.13.4-sources.jar",
   sha256 = "a460d1398df481d6bc6e8e41646fb2f71dfa6e1d3514a571c97ed3c86846f1ec",
   downloaded_file_path = "junit-platform-engine-1.13.4-sources.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-params-5_13_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.13.4/junit-jupiter-params-5.13.4.jar",
+  sha256 = "3a8c6365716dbb698c0d49a05456c1e1ad05c406613c550f9dd50037872efc41",
+  downloaded_file_path = "junit-jupiter-params-5.13.4.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-params-5_13_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.13.4/junit-jupiter-params-5.13.4-sources.jar",
+  sha256 = "173be0fd56d5befb60e4ee812eb3e1faea05181ec948299661592222aef0e352",
+  downloaded_file_path = "junit-jupiter-params-5.13.4-sources.jar"
 )
 
 http_file(

@@ -39,7 +39,8 @@ jvm_library(
   runtime_deps = [
     ":impl",
     "@lib//:junit5",
-    "@lib//:junit5Params",
+    "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/kotlinx/coroutines/core:core_test_lib",

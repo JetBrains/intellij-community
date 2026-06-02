@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" exported="" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />

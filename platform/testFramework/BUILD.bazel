@@ -258,7 +258,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   exports = [
     "@lib//:junit5-provided",
-    "@lib//:junit5Params-provided",
+    "//libraries/junit5-params",
     "//libraries/junit4",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
@@ -284,7 +284,8 @@ jvm_library(
   deps = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
-    "@lib//:junit5Params-provided",
+    "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
     "@lib//:byte-buddy",
@@ -425,7 +426,8 @@ jvm_library(
   ],
   exports = [
     "@lib//:junit5-provided",
-    "@lib//:junit5Params-provided",
+    "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/junit4",
     "//libraries/junit4:junit4_test_lib",
     "//platform/ide-core-impl",
