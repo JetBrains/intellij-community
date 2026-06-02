@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar
@@ -37,7 +36,10 @@ import com.intellij.xdebugger.ui.VisualizedContentTab
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -45,7 +47,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.CardLayout
 import java.awt.Dimension
-import java.awt.Font
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicBoolean
@@ -122,7 +123,10 @@ object VisualizedTextPopupUtil {
       calcNonTrivialVisualizedTabs(fullValue).isNotEmpty()
 }
 
-internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLayout()), Disposable.Default  {
+internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLayout()), Disposable {
+  private val cs = project.service<VisualizedTextPopupUtilProjectCoroutineScope>().cs.childScope("showVisualizedText")
+  private val visualizationRequests = Channel<VisualizationRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   private sealed class State
   private data class Showing(val text: String) : State()
   private data class Editing(val initText: String, val editor: Editor) : State()
@@ -131,7 +135,30 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   private var state: State = Other
 
   init {
-    showTextMessage(XDebuggerUIConstants.getEvaluatingExpressionMessage())
+    cs.launch(Dispatchers.EDT) {
+      // evaluating...
+      showTextMessage(XDebuggerUIConstants.getEvaluatingExpressionMessage())
+
+      // since text visualization computation may be slow and non-cancellable,
+      // we will just asynchronously cancel previous requests, don't wait and start a new computation
+      var requestHandlingJob: Job? = null
+
+      for (request in visualizationRequests) {
+        requestHandlingJob?.cancel()
+        when (request) {
+          is VisualizationRequest.Text -> {
+            requestHandlingJob = launch(Dispatchers.EDT) {
+              handleTextVisualization(request.text, request.onDone)
+            }
+          }
+          is VisualizationRequest.Error -> {
+            showTextMessage("ERROR OCCURRED: ${request.errorMessage}") {
+              it.foreground = XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.fgColor
+            }
+          }
+        }
+      }
+    }
   }
 
   private fun showComponent(component: JComponent) {
@@ -142,7 +169,7 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
     repaint()
   }
 
-  fun showTextMessage(value: String, format: (TextViewer) -> Unit = {}) {
+  private fun showTextMessage(value: String, format: (TextViewer) -> Unit = {}) {
     val textArea = DebuggerUIUtil.createTextViewer(value, project)
     format(textArea)
     textArea.preferredSize = JBUI.size(300, 60)
@@ -151,49 +178,41 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   }
 
   fun showError(errorMessage: String) {
-    AppUIUtil.invokeOnEdt {
-      showTextMessage("ERROR OCCURRED: $errorMessage") {
-        it.foreground = XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.fgColor
-      }
-    }
+    visualizationRequests.trySend(VisualizationRequest.Error(errorMessage))
   }
 
   /** Visualize the text and show it nicely. */
   fun showVisualizedText(value: String, onDone: Runnable? = null) {
-    val cs = project.service<VisualizedTextPopupUtilProjectCoroutineScope>().cs.childScope("showVisualizedText")
-    if (!Disposer.tryRegister(this) { cs.cancel() }) {
-      cs.cancel()
-      return
+    visualizationRequests.trySend(VisualizationRequest.Text(value, onDone))
+  }
+
+  private suspend fun handleTextVisualization(value: String, onDone: Runnable?) {
+    try {
+      val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this@VisualizedTextPanel)
+      if (!currentCoroutineContext().isActive || tabs.isEmpty()) {
+        // popup might already be canceled, ignore it
+        return
+      }
+
+      val component = if (tabs.size > 1) {
+        createTabbedPane(tabs)
+      }
+      else {
+        val (tab, component) = tabs.first()
+        tab.onShown(project, firstTime = true)
+        component
+      }
+      showComponent(component)
+      state = Showing(value)
     }
-
-    cs.launch(Dispatchers.EDT) {
-      try {
-        val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this@VisualizedTextPanel)
-        if (tabs.isEmpty()) {
-          // popup might already be canceled, ignore it
-          return@launch
-        }
-
-        val component = if (tabs.size > 1) {
-          createTabbedPane(tabs)
-        }
-        else {
-          val (tab, component) = tabs.first()
-          tab.onShown(project, firstTime = true)
-          component
-        }
-        showComponent(component)
-        state = Showing(value)
-      }
-      catch (e: Exception) {
-        if (e is CancellationException || e is ControlFlowException) throw e
-        LOG.error(e)
-        showError(e.toString())
-      }
-      finally {
-        if (currentCoroutineContext().isActive) {
-          onDone?.run()
-        }
+    catch (e: Exception) {
+      if (e is CancellationException || e is ControlFlowException) throw e
+      LOG.error(e)
+      showError(e.toString())
+    }
+    finally {
+      if (currentCoroutineContext().isActive) {
+        onDone?.run()
       }
     }
   }
@@ -270,6 +289,16 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
     val newValue = if (saveChanges) state.editor.document.text else state.initText
     showVisualizedText(newValue)
     return newValue
+  }
+
+  override fun dispose() {
+    cs.cancel()
+  }
+
+  private sealed interface VisualizationRequest {
+    class Error(val errorMessage: String) : VisualizationRequest
+
+    class Text(val text: String, val onDone: Runnable?) : VisualizationRequest
   }
 }
 
