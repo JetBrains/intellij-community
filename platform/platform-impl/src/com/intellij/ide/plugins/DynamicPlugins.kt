@@ -319,7 +319,7 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
-      val newState = computeNewPluginsState(emptyList(), listOf(plugin))
+      val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
       // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
       expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
@@ -338,7 +338,7 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
-      val newState = computeNewPluginsState(listOf(plugin), listOf())
+      val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
       // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
       expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
