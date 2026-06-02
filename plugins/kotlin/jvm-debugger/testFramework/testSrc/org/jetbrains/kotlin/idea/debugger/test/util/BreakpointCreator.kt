@@ -124,17 +124,20 @@ internal class BreakpointCreator(
     }
 
     private fun getPropertyFromComment(comment: String, propertyName: String): String? {
-        if (comment.contains("$propertyName = ")) {
-            val result = comment.substringAfter("$propertyName = ")
-            if (result.contains(", ")) {
-                return result.substringBefore(", ")
+        val marker = "$propertyName = "
+        val markerIndex = comment.indexOf(marker)
+        if (markerIndex == -1) return null
+        val start = markerIndex + marker.length
+        // Balance parentheses so that expressions like `(a + b).n > 0` are not truncated at the first ')'.
+        var depth = 0
+        for (i in start until comment.length) {
+            when (comment[i]) {
+                '(' -> depth++
+                ')' -> if (depth == 0) return comment.substring(start, i) else depth--
+                ',' -> if (depth == 0 && comment.getOrNull(i + 1) == ' ') return comment.substring(start, i)
             }
-            if (result.contains(")")) {
-                return result.substringBefore(")")
-            }
-            return result
         }
-        return null
+        return comment.substring(start)
     }
 
     private fun createBreakpoint(fileName: String, lineMarker: String, action: (PsiFile, Int) -> Unit) {
