@@ -3,15 +3,26 @@ package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.AppFontOptions;
+import com.intellij.openapi.options.BackedByPersistentState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class AppEditorFontConfigurable extends AppFontConfigurable {
+import java.util.Collection;
+import java.util.List;
+
+public final class AppEditorFontConfigurable extends AppFontConfigurable implements BackedByPersistentState {
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(AppEditorFontOptions.getInstance());
+  }
   public static final @NonNls String ID = "editor.preferences.fonts.default";
   
   private AppEditorFontOptionsPanel myPanel;

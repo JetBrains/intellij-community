@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunner;
@@ -16,17 +19,27 @@ import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenImportingConfigurable;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenTestRunningConfigurable;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable;
 
 import javax.swing.JComponent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public final class MavenSettings implements SearchableConfigurable.Parent {
+public final class MavenSettings implements SearchableConfigurable.Parent, BackedByPersistentState {
+  private final Project myProject;
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
 
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(MavenWorkspaceSettingsComponent.getInstance(myProject));
+  }
+
   public MavenSettings(@NotNull Project project) {
+    myProject = project;
 
     myConfigurable = new MavenGeneralConfigurable(project);
 
@@ -95,9 +108,15 @@ public final class MavenSettings implements SearchableConfigurable.Parent {
     return myConfigurable.getHelpTopic();
   }
 
-  public static class MyMavenRunnerConfigurable extends MavenRunnerConfigurable {
+  public static class MyMavenRunnerConfigurable extends MavenRunnerConfigurable implements BackedByPersistentState {
     public MyMavenRunnerConfigurable(Project project) {
       super(project, false);
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+      return List.of(MavenRunner.getInstance(myProject));
     }
 
     @Override

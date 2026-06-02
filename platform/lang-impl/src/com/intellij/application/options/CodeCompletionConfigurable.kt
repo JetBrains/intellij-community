@@ -9,11 +9,14 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundCompositeConfigurable
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -37,12 +40,20 @@ import com.intellij.ui.layout.selected
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion.popup"), "reference.settingsdialog.IDE.editor.code.completion"),
-                              EditorOptionsProvider, WithEpDependencies {
+                              EditorOptionsProvider, WithEpDependencies, BackedByPersistentState {
 
   companion object {
     const val ID: String = "editor.preferences.completion.popup"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
+
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(
+      CodeInsightSettings.getInstance(),
+      UISettings.getInstance(),
+      EditorSettingsExternalizable.getInstance(),
+    )
 
   private lateinit var cbMatchCase: JBCheckBox
   private lateinit var rbLettersOnly: JBRadioButton

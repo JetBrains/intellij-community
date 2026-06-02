@@ -2,12 +2,15 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +20,10 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public class MavenImportingConfigurable implements SearchableConfigurable {
+public class MavenImportingConfigurable implements SearchableConfigurable, BackedByPersistentState {
   public static final String SETTINGS_ID = "reference.settings.project.maven.importing";
 
   private final MavenImportingSettings myImportingSettings;
@@ -29,6 +33,12 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   private final @NotNull Disposable myDisposable;
 
   private final Project myProject;
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(MavenWorkspaceSettingsComponent.getInstance(myProject));
+  }
 
   public MavenImportingConfigurable(@NotNull Project project) {
     myProject = project;

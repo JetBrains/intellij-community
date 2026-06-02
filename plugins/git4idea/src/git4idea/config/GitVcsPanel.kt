@@ -10,8 +10,11 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundCompositeConfigurable
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -145,7 +148,17 @@ private fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
 
 internal class GitVcsPanel(private val project: Project) :
   BoundCompositeConfigurable<UnnamedConfigurable>(message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
-  SearchableConfigurable {
+  SearchableConfigurable,
+  BackedByPersistentState {
+
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(
+      GitVcsSettings.getInstance(project),
+      GitVcsApplicationSettings.getInstance(),
+      GitSharedSettings.getInstance(project),
+      VcsConfiguration.getInstance(project),
+    )
 
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 

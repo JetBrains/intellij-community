@@ -1,22 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import java.util.Collection;
+import java.util.List;
 
-public class CompilerConfigurable implements SearchableConfigurable.Parent {
+public class CompilerConfigurable implements SearchableConfigurable.Parent, BackedByPersistentState {
   static final String CONFIGURABLE_ID = "project.propCompiler";
 
   private final CompilerUIConfigurableKt myCompilerUIConfigurable;
 
   public CompilerConfigurable(Project project) {
     myCompilerUIConfigurable = new CompilerUIConfigurableKt(project);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(
+      (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myCompilerUIConfigurable.getProject()),
+      CompilerWorkspaceConfiguration.getInstance(myCompilerUIConfigurable.getProject())
+    );
   }
 
   @Override

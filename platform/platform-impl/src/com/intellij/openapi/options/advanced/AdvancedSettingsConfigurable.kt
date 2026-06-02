@@ -9,7 +9,9 @@ import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCo
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
@@ -78,7 +80,11 @@ private class SettingsRow(
 }
 
 @ApiStatus.Internal
-class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
+class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll, BackedByPersistentState {
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(AdvancedSettings.getInstance() as AdvancedSettingsImpl)
+
   private val settingsGroups = mutableListOf<SettingsGroup>()
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false

@@ -257,8 +257,8 @@ a:com.intellij.analysis.problemsView.toolWindow.Root
 - bs:structureChanged$default(com.intellij.analysis.problemsView.toolWindow.Root,javax.swing.tree.TreePath,I,java.lang.Object):V
 - p:update(com.intellij.openapi.project.Project,com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.application.options.CodeCompletionConfigurable
-- com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.application.options.editor.EditorOptionsProvider
+- com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.openapi.options.Configurable$WithEpDependencies
 - sf:Companion:com.intellij.application.options.CodeCompletionConfigurable$Companion
 - sf:ID:java.lang.String

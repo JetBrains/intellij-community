@@ -6,6 +6,8 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -13,6 +15,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -24,7 +27,12 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
+public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable, BackedByPersistentState {
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(myCompilerConfiguration);
+  }
   private JavaCompilersTabUi myUi;
 
   private final Project myProject;

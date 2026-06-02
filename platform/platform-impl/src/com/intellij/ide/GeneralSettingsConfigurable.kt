@@ -4,10 +4,13 @@ package com.intellij.ide
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -75,8 +78,13 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
 @Suppress("unused")
 internal class GeneralSettingsConfigurable :
   BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
-  SearchableConfigurable
+  SearchableConfigurable,
+  BackedByPersistentState
 {
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(GeneralSettings.getInstance())
+
   private val model = GeneralSettings.getInstance().state
 
   override fun createPanel(): DialogPanel =

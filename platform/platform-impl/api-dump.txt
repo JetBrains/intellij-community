@@ -52,6 +52,7 @@ com.intellij.application.options.editor.EditorOptionsListener
 - a:changesApplied():V
 com.intellij.application.options.editor.EditorOptionsProvider
 - com.intellij.openapi.options.SearchableConfigurable
+f:com.intellij.application.options.editor.fonts.AppEditorFontConfigurable
 com.intellij.application.options.schemes.SchemesModel
 - a:canDeleteScheme(com.intellij.openapi.options.Scheme):Z
 - a:canDuplicateScheme(com.intellij.openapi.options.Scheme):Z
@@ -570,6 +571,7 @@ com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 - getOrdinal():I
 - isEnabled(com.intellij.ide.util.projectWizard.WizardContext):Z
 com.intellij.notification.impl.NotificationFullContent
+f:com.intellij.notification.impl.NotificationsConfigurable
 a:com.intellij.openapi.actionSystem.ex.ActionButtonLook
 - sf:INPLACE_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
 - sf:SYSTEM_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook

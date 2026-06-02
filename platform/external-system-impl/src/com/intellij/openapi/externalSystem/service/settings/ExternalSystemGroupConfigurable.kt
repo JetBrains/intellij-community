@@ -2,12 +2,15 @@
 package com.intellij.openapi.externalSystem.service.settings
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.ALL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.NONE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
@@ -20,7 +23,10 @@ class ExternalSystemGroupConfigurable(private val project: Project) : BoundSearc
   message("settings.build.tools.display.name"),
   "Settings_Build_Tools",
   "build.tools"
-) {
+), BackedByPersistentState {
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(ExternalSystemProjectTrackerSettings.getInstance(project) as PersistentStateComponent<*>)
 
   override fun createPanel() = panel {
     val settings = ExternalSystemProjectTrackerSettings.getInstance(project)

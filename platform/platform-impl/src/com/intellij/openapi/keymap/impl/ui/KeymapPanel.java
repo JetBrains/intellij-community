@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -35,11 +36,13 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.NationalKeyboardSupport;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.SystemShortcuts;
 import com.intellij.openapi.keymap.impl.SystemShortcutsListener;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
@@ -72,6 +75,7 @@ import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +108,12 @@ import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
-public final class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, SystemShortcutsListener, Disposable {
+public final class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, SystemShortcutsListener, Disposable, BackedByPersistentState {
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of((PersistentStateComponent<?>)KeymapManagerEx.getInstanceEx());
+  }
   private JCheckBox nationalKeyboardsSupport;
 
   private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);

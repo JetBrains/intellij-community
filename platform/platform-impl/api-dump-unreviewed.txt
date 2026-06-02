@@ -7699,11 +7699,11 @@ a:com.intellij.openapi.keymap.impl.ui.Hyperlink
 - getTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:onClick(java.awt.event.MouseEvent):V
 f:com.intellij.openapi.keymap.impl.ui.KeymapPanel
-- javax.swing.JPanel
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.keymap.impl.ui.KeymapListener
 - com.intellij.openapi.options.Configurable$NoScroll
 - com.intellij.openapi.options.SearchableConfigurable
+- javax.swing.JPanel
 - <init>():V
 - <init>(Z):V
 - s:addKeyboardShortcut(java.lang.String,com.intellij.openapi.keymap.impl.ShortcutRestrictions,com.intellij.openapi.keymap.Keymap,java.awt.Component,com.intellij.openapi.actionSystem.KeyboardShortcut,com.intellij.openapi.keymap.impl.SystemShortcuts,com.intellij.openapi.actionSystem.ex.QuickList[]):V

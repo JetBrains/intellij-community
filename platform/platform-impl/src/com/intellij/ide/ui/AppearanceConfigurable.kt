@@ -39,6 +39,8 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
@@ -196,7 +198,11 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
-internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
+internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel"), BackedByPersistentState {
+  @Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(UISettings.getInstance(), GeneralSettings.getInstance())
+
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }

@@ -32,6 +32,8 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.observable.util.not
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.Scheme
@@ -66,6 +68,7 @@ import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
@@ -187,10 +190,19 @@ internal fun restartDaemons() {
   }
 }
 
-internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
+internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies, BackedByPersistentState {
   companion object {
     const val ID: String = "preferences.editor"
   }
+
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(
+      EditorSettingsExternalizable.getInstance(),
+      CodeInsightSettings.getInstance(),
+      RichCopySettings.getInstance(),
+      DaemonCodeAnalyzerSettings.getInstance() as PersistentStateComponent<*>,
+    )
 
   override fun createConfigurables(): List<UnnamedConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
 
@@ -358,10 +370,18 @@ internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurab
   }
 }
 
-internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
+internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies, BackedByPersistentState {
   companion object {
     const val ID = "preferences.editor.code.editing"
   }
+
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(
+      EditorSettingsExternalizable.getInstance(),
+      CodeInsightSettings.getInstance(),
+      DaemonCodeAnalyzerSettings.getInstance() as PersistentStateComponent<*>,
+    )
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {

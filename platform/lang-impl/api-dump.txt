@@ -68,6 +68,7 @@ com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
 - orientationChangedTo(Z):V
 - selectionChangedTo(Z):V
 - visibilityChangedTo(Z):V
+f:com.intellij.application.options.CodeCompletionConfigurable
 com.intellij.application.options.CodeCompletionOptionsCustomSection
 - com.intellij.openapi.options.UnnamedConfigurable
 com.intellij.application.options.GeneralCodeStyleOptionsProvider
