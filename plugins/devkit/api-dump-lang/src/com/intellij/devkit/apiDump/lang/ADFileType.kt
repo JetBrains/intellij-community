@@ -2,7 +2,7 @@
 package com.intellij.devkit.apiDump.lang
 
 import com.intellij.devkit.apiDump.ApiDumpUtil
-import com.intellij.devkit.apiDump.DevkitApiDumpIcons
+import com.intellij.devkit.apiDump.icons.DevkitApiDumpIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.util.NlsContexts

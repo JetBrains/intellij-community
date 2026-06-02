@@ -4,20 +4,11 @@
 - name: lib/devkit.jar
   modules:
   - name: intellij.devkit
+- name: lib/modules/intellij.devkit.apiDump.jar
   contentModules:
-  - name: intellij.devkit.gradle
-  - name: intellij.devkit.i18n
-  - name: intellij.devkit.intelliLang
-  - name: intellij.devkit.uiDesigner
-  - name: intellij.devkit.workspaceModel
-  - name: intellij.devkit.workspaceModel.k1
-  - name: intellij.devkit.workspaceModel.k2
-  - name: intellij.kotlin.devkit
-  - name: intellij.kotlin.devkit.k1
-  - name: intellij.kotlin.devkit.k2
-  - name: intellij.devkit.debugger
-  - name: intellij.devkit.stacktrace
   - name: intellij.devkit.apiDump
+- name: lib/modules/intellij.devkit.apiDump.lang.jar
+  contentModules:
   - name: intellij.devkit.apiDump.lang
 - name: lib/modules/intellij.devkit.compose.jar
   contentModules:
@@ -25,6 +16,18 @@
 - name: lib/modules/intellij.devkit.core.jar
   contentModules:
   - name: intellij.devkit.core
+- name: lib/modules/intellij.devkit.debugger.jar
+  contentModules:
+  - name: intellij.devkit.debugger
+- name: lib/modules/intellij.devkit.gradle.jar
+  contentModules:
+  - name: intellij.devkit.gradle
+- name: lib/modules/intellij.devkit.i18n.jar
+  contentModules:
+  - name: intellij.devkit.i18n
+- name: lib/modules/intellij.devkit.intelliLang.jar
+  contentModules:
+  - name: intellij.devkit.intelliLang
 - name: lib/modules/intellij.devkit.mcp.jar
   contentModules:
   - name: intellij.devkit.mcp
@@ -34,20 +37,46 @@
 - name: lib/modules/intellij.devkit.scaffolding.jar
   contentModules:
   - name: intellij.devkit.scaffolding
+- name: lib/modules/intellij.devkit.smartupdate.jar
+  contentModules:
+  - name: intellij.devkit.smartupdate
+- name: lib/modules/intellij.devkit.stacktrace.jar
+  contentModules:
+  - name: intellij.devkit.stacktrace
 - name: lib/modules/intellij.devkit.themes.jar
   contentModules:
   - name: intellij.devkit.themes
 - name: lib/modules/intellij.devkit.threading.jar
   contentModules:
   - name: intellij.devkit.threading
+- name: lib/modules/intellij.devkit.uiDesigner.jar
+  contentModules:
+  - name: intellij.devkit.uiDesigner
 - name: lib/modules/intellij.devkit.uiDsl.jar
   contentModules:
   - name: intellij.devkit.uiDsl
-- name: lib/modules/intellij.platform.jewel.samples.showcase.jar
+- name: lib/modules/intellij.devkit.workspaceModel.jar
   contentModules:
-  - name: intellij.platform.jewel.samples.showcase
-- name: lib/workspace-model-codegen.jar
+  - name: intellij.devkit.workspaceModel
   library: workspace-model-codegen
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
   reason: <- intellij.devkit.workspaceModel
+- name: lib/modules/intellij.devkit.workspaceModel.k1.jar
+  contentModules:
+  - name: intellij.devkit.workspaceModel.k1
+- name: lib/modules/intellij.devkit.workspaceModel.k2.jar
+  contentModules:
+  - name: intellij.devkit.workspaceModel.k2
+- name: lib/modules/intellij.kotlin.devkit.jar
+  contentModules:
+  - name: intellij.kotlin.devkit
+- name: lib/modules/intellij.kotlin.devkit.k1.jar
+  contentModules:
+  - name: intellij.kotlin.devkit.k1
+- name: lib/modules/intellij.kotlin.devkit.k2.jar
+  contentModules:
+  - name: intellij.kotlin.devkit.k2
+- name: lib/modules/intellij.platform.jewel.samples.showcase.jar
+  contentModules:
+  - name: intellij.platform.jewel.samples.showcase

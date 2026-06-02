@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.idea.devkit.debugger">
+<idea-plugin>
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.debugger.impl"/>

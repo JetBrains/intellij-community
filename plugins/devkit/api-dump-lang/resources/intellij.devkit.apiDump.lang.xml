@@ -1,5 +1,4 @@
-<idea-plugin package="com.intellij.devkit.apiDump.lang">
-
+<idea-plugin>
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.devkit.apiDump"/>
@@ -33,7 +32,7 @@
   <actions resource-bundle="messages.ApiDumpLangBundle">
     <group id="UsageFilteringActionGroup.ApiDump">
       <action id="UsageFiltering.ApiDump"
-              icon="com.intellij.devkit.apiDump.DevkitApiDumpIcons.ApiDump"
+              icon="com.intellij.devkit.apiDump.icons.DevkitApiDumpIcons.ApiDump"
               class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <add-to-group group-id="UsageFilteringActionGroup" anchor="last"/>
     </group>

@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.idea.devkit.uiDesigner">
+<idea-plugin>
   <dependencies>
     <module name="intellij.devkit.core"/>
     <plugin id="com.intellij.uiDesigner"/>
