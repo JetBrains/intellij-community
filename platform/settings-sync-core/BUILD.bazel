@@ -188,6 +188,10 @@ jvm_library(
         "//platform/settings-sync-core:settingsSync-core",
         "//platform/settings-sync-core:settingsSync-core_test_lib",
     ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
     runtime_deps = [
