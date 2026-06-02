@@ -26,11 +26,14 @@ internal object AddNameToArgumentFixFactory {
         )
     }
 
-    private data class ElementContext(
+    fun createFix(argument: KtValueArgument, argumentName: Name): AddNameToArgumentFix =
+        AddNameToArgumentFix(argument, ElementContext(argumentName))
+
+    internal data class ElementContext(
         val argumentName: Name,
     )
 
-    private class AddNameToArgumentFix(
+    class AddNameToArgumentFix(
         element: KtValueArgument,
         elementContext: ElementContext,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtValueArgument, ElementContext>(element, elementContext) {

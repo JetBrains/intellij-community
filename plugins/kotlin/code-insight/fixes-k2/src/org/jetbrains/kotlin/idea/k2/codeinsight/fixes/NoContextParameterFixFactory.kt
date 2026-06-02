@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -42,12 +45,13 @@ internal object NoContextParameterFixFactory {
                 add(AddContextParameterToExistingContextFix(it))
             }
             if (expression is KtCallElement) {
+                nameExistingArgumentForExplicitContextParameter(expression, symbol)?.let { add(it) }
+
                 val wrapper = if (expression.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2) {
                     SurroundCallWithContextFix.Wrapper.CONTEXT
                 } else {
                     SurroundCallWithContextFix.Wrapper.WITH
                 }
-                add(SurroundCallWithContextFix(expression, wrapper))
                 add(SurroundCallWithContextFix(expression, wrapper))
                 if (!wouldCauseOverloadAmbiguity(expression, contextName)) {
                     add(
@@ -64,6 +68,7 @@ internal object NoContextParameterFixFactory {
             }
         }
     }
+
     private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val lambdaArg = element.getStrictParentOfType<KtLambdaArgument>() ?: return null
         val parentCall = lambdaArg.parent as? KtCallExpression ?: return null
@@ -74,7 +79,7 @@ internal object NoContextParameterFixFactory {
 
     context(_: KaSession)
     private fun wouldCauseOverloadAmbiguity(
-        callElement: KtExpression,
+        callElement: KtCallElement,
         contextParamName: String,
     ): Boolean {
         return callElement.resolveToCallCandidates().any { candidateInfo ->
@@ -82,4 +87,42 @@ internal object NoContextParameterFixFactory {
             symbol.valueParameters.any { it.name.asString() == contextParamName }
         }
     }
+
+    context(_: KaSession)
+    private fun nameExistingArgumentForExplicitContextParameter(
+        callElement: KtCallElement,
+        contextSymbol: KaContextParameterSymbol,
+    ): AddNameToArgumentFixFactory.AddNameToArgumentFix? {
+        val arguments = callElement.valueArgumentList?.arguments ?: return null
+
+        if (wouldCauseOverloadAmbiguity(callElement, contextSymbol.name.asString())) return null
+
+        for ((index, argument) in arguments.withIndex()) {
+            if (argument.getArgumentName() != null) continue
+            val argType = argument.getArgumentExpression()?.expressionType ?: continue
+            if (!argType.isSubtypeOf(contextSymbol.returnType)) continue
+
+            if (arguments.drop(index + 1).any { it.getArgumentName() == null }) continue
+
+            val others = arguments.filter { it != argument }
+            val namedNames = others.mapNotNull { it.getArgumentName()?.asName }.toSet()
+            val positionalCount = others.count { it.getArgumentName() == null }
+            val unnamedRequired = requiredValueParameterNames(callElement).count { it !in namedNames }
+            if (unnamedRequired > positionalCount) continue
+
+            return AddNameToArgumentFixFactory.createFix(argument, contextSymbol.name)
+        }
+        return null
+    }
+
+    context(_: KaSession)
+    private fun requiredValueParameterNames(callElement: KtCallElement): List<Name> {
+        val call = callElement.resolveToCallCandidates()
+            .firstNotNullOfOrNull { it.candidate as? KaFunctionCall<*> }
+            ?: return emptyList()
+        return call.symbol.valueParameters
+            .filter { !it.hasDefaultValue && !it.isVararg }
+            .map { it.name }
+    }
+
 }

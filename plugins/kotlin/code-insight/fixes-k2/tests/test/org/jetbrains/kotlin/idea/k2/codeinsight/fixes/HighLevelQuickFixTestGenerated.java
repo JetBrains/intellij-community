@@ -3516,6 +3516,70 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument")
+        public static class AddNameToExplicitContextArgument extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("allNamed.kt")
+            public void testAllNamed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/allNamed.kt");
+            }
+
+            @TestMetadata("ambiguity.kt")
+            public void testAmbiguity() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/ambiguity.kt");
+            }
+
+            @TestMetadata("mixedArguments.kt")
+            public void testMixedArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/mixedArguments.kt");
+            }
+
+            @TestMetadata("mixedNameAndPosition.kt")
+            public void testMixedNameAndPosition() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/mixedNameAndPosition.kt");
+            }
+
+            @TestMetadata("noMatch.kt")
+            public void testNoMatch() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/noMatch.kt");
+            }
+
+            @TestMetadata("noSurrounding.kt")
+            public void testNoSurrounding() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/noSurrounding.kt");
+            }
+
+            @TestMetadata("nullableContext.kt")
+            public void testNullableContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/nullableContext.kt");
+            }
+
+            @TestMetadata("oneContextMissing.kt")
+            public void testOneContextMissing() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/oneContextMissing.kt");
+            }
+
+            @TestMetadata("requiredParameterUnmapped.kt")
+            public void testRequiredParameterUnmapped() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/requiredParameterUnmapped.kt");
+            }
+
+            @TestMetadata("singleOverload.kt")
+            public void testSingleOverload() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/singleOverload.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments")
         public static class ExplicitContextArguments extends AbstractHighLevelQuickFixTest {
             @java.lang.Override
