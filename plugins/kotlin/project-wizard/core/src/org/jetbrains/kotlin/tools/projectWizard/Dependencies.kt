@@ -57,32 +57,60 @@ object Dependencies {
         return descriptor
     }
 
-    val JUNIT by lazy {
+    val JUNIT: LibraryDescriptor by lazy {
         Cancellation.forceNonCancellableSectionInClassInitializer {
             registerMavenLibrary(DefaultRepository.MAVEN_CENTRAL, "junit", "junit", "4.13.2")
         }
     }
-    val JUNIT5 by lazy { registerMavenLibrary(DefaultRepository.MAVEN_CENTRAL, "org.junit.jupiter", "junit-jupiter-engine", "5.8.2") }
+    val JUNIT5: MavenLibraryDescriptor by lazy {
+        registerMavenLibrary(
+            DefaultRepository.MAVEN_CENTRAL,
+            "org.junit.jupiter",
+            "junit-jupiter-engine",
+            "5.8.2"
+        )
+    }
 
     object ANDROID {
         private const val DEFAULT_COMPOSE_VERSION = "1.2.1"
 
-        val COMPOSE_UI by lazy { registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui", DEFAULT_COMPOSE_VERSION) }
-        val COMPOSE_UI_TOOLING by lazy {
+        val COMPOSE_UI: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                DefaultRepository.GOOGLE,
+                "androidx.compose.ui",
+                "ui",
+                DEFAULT_COMPOSE_VERSION
+            )
+        }
+        val COMPOSE_UI_TOOLING: MavenLibraryDescriptor by lazy {
             registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling", DEFAULT_COMPOSE_VERSION)
         }
-        val COMPOSE_UI_TOOLING_PREVIEW by lazy {
+        val COMPOSE_UI_TOOLING_PREVIEW: MavenLibraryDescriptor by lazy {
             registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling-preview", DEFAULT_COMPOSE_VERSION)
         }
-        val COMPOSE_FOUNDATION by lazy {
+        val COMPOSE_FOUNDATION: MavenLibraryDescriptor by lazy {
             registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.compose.foundation", "foundation", DEFAULT_COMPOSE_VERSION)
         }
-        val COMPOSE_MATERIAL by lazy {
+        val COMPOSE_MATERIAL: MavenLibraryDescriptor by lazy {
             registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.compose.material", "material", DEFAULT_COMPOSE_VERSION)
         }
-        val ACTIVITY by lazy { registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.activity", "activity-compose", "1.5.1") }
-        val MATERIAL by lazy { registerMavenLibrary(DefaultRepository.GOOGLE, "com.google.android.material", "material", "1.5.0") }
-        val CONSTRAINT_LAYOUT by lazy {
+        val ACTIVITY: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                DefaultRepository.GOOGLE,
+                "androidx.activity",
+                "activity-compose",
+                "1.5.1"
+            )
+        }
+        val MATERIAL: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                DefaultRepository.GOOGLE,
+                "com.google.android.material",
+                "material",
+                "1.5.0"
+            )
+        }
+        val CONSTRAINT_LAYOUT: MavenLibraryDescriptor by lazy {
             registerMavenLibrary(
                 DefaultRepository.GOOGLE,
                 "androidx.constraintlayout",
@@ -90,17 +118,52 @@ object Dependencies {
                 "2.1.3"
             )
         }
-        val APP_COMPAT by lazy { registerMavenLibrary(DefaultRepository.GOOGLE, "androidx.appcompat", "appcompat", "1.4.1") }
+        val APP_COMPAT: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                DefaultRepository.GOOGLE,
+                "androidx.appcompat",
+                "appcompat",
+                "1.4.1"
+            )
+        }
     }
 
     object KOTLINX {
-        val KOTLINX_HTML by lazy { registerMavenLibrary(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html-jvm", "0.7.2") }
-        val KOTLINX_NODEJS by lazy { registerMavenLibrary(DefaultRepository.JCENTER, "org.jetbrains.kotlinx", "kotlinx-nodejs", "0.0.7") }
+        val KOTLINX_HTML: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                Repositories.KOTLINX_HTML,
+                "org.jetbrains.kotlinx",
+                "kotlinx-html-jvm",
+                "0.7.2"
+            )
+        }
+        val KOTLINX_NODEJS: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                DefaultRepository.JCENTER,
+                "org.jetbrains.kotlinx",
+                "kotlinx-nodejs",
+                "0.0.7"
+            )
+        }
     }
 
     object KTOR {
-        val KTOR_SERVER_NETTY by lazy { registerMavenLibrary(Repositories.KTOR, "io.ktor", "ktor-server-netty", "2.0.2") }
-        val KTOR_SERVER_HTML_BUILDER by lazy { registerMavenLibrary(Repositories.KTOR, "io.ktor", "ktor-server-html-builder-jvm", "2.0.2") }
+        val KTOR_SERVER_NETTY: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                Repositories.KTOR,
+                "io.ktor",
+                "ktor-server-netty",
+                "2.0.2"
+            )
+        }
+        val KTOR_SERVER_HTML_BUILDER: MavenLibraryDescriptor by lazy {
+            registerMavenLibrary(
+                Repositories.KTOR,
+                "io.ktor",
+                "ktor-server-html-builder-jvm",
+                "2.0.2"
+            )
+        }
     }
 
     object JS_WRAPPERS {
@@ -131,12 +194,12 @@ object Dependencies {
             )
         }
 
-        val KOTLIN_REACT by lazy { wrapperDependency("kotlin-react", "18.2.0") }
-        val KOTLIN_REACT_DOM by lazy { wrapperDependency("kotlin-react-dom", "18.2.0") }
-        val KOTLIN_REACT_ROUTER_DOM by lazy { wrapperDependency("kotlin-react-router-dom", "6.3.0") }
-        val KOTLIN_EMOTION by lazy { wrapperDependency("kotlin-emotion", "11.9.3") }
-        val KOTLIN_REDUX by lazy { wrapperDependency("kotlin-redux", "4.1.2") }
-        val KOTLIN_REACT_REDUX by lazy { wrapperDependency("kotlin-react-redux", "7.2.6") }
+        val KOTLIN_REACT: LibraryDescriptor by lazy { wrapperDependency("kotlin-react", "18.2.0") }
+        val KOTLIN_REACT_DOM: LibraryDescriptor by lazy { wrapperDependency("kotlin-react-dom", "18.2.0") }
+        val KOTLIN_REACT_ROUTER_DOM: LibraryDescriptor by lazy { wrapperDependency("kotlin-react-router-dom", "6.3.0") }
+        val KOTLIN_EMOTION: LibraryDescriptor by lazy { wrapperDependency("kotlin-emotion", "11.9.3") }
+        val KOTLIN_REDUX: LibraryDescriptor by lazy { wrapperDependency("kotlin-redux", "4.1.2") }
+        val KOTLIN_REACT_REDUX: LibraryDescriptor by lazy { wrapperDependency("kotlin-react-redux", "7.2.6") }
     }
 }
 
