@@ -1,15 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs
 
+import com.intellij.ide.actions.bigPopup.ShowFilterAction
 import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.bigPopup.ShowFilterAction
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.toProviderId
@@ -30,6 +32,8 @@ class SeAdaptedTab private constructor(delegate: SeTabDelegate,
                                        override val id: String,
                                        override val priority: Int,
                                        private val filterEditor: SeAdaptedTabFilterEditor?): SeDefaultTabBase(delegate) {
+  val autoToggleAction: AutoToggleAction? get() = filterEditor as? AutoToggleAction
+
   override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor
 
   companion object {
@@ -54,11 +58,19 @@ class SeAdaptedTab private constructor(delegate: SeTabDelegate,
 }
 
 @ApiStatus.Internal
-class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>) : SeFilterEditor {
+class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>) : SeFilterEditor, AutoToggleAction {
   override val resultFlow: StateFlow<SeFilterState> get() = _resultFlow.asStateFlow()
   private val _resultFlow = MutableStateFlow(SeAdaptedTabFilter().toState())
 
+  private var isAutoToggleEnabled: Boolean = true
+  private var lastAutoToggleValue: Boolean = true
+
   private val actions: List<AnAction> = contributor.getActions {
+    if (toggleAction?.isEverywhere?.let { it == lastAutoToggleValue } == false) {
+      // If the autoToggled value differs from the applied value, we disable autoToggling.
+      isAutoToggleEnabled = false
+    }
+
     // Generate the new value to restart the search
     _resultFlow.value = SeAdaptedTabFilter().toState()
   }.filter {
@@ -66,10 +78,23 @@ class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>
     it !is PreviewAction
   }
 
+  private val toggleAction = actions.filterIsInstance<SearchEverywhereToggleAction>().firstOrNull()?.also {
+    lastAutoToggleValue = it.isEverywhere
+  }
+
   override fun getHeaderActions(): List<AnAction> = actions
 
   override fun closeFilterPopup() {
     actions.filterIsInstance<ShowFilterAction>().forEach { it.closeFilterPopup() }
+  }
+
+  override fun autoToggle(everywhere: Boolean): Boolean {
+    toggleAction ?: return false
+
+    if (!toggleAction.canToggleEverywhere() || !isAutoToggleEnabled || toggleAction.isEverywhere == everywhere) return false
+    lastAutoToggleValue = everywhere
+    toggleAction.setEverywhere(everywhere)
+    return true
   }
 }
 
