@@ -36,7 +36,8 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
-    <iw.actionProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionInfoWidgetProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptingGroupSettingProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"

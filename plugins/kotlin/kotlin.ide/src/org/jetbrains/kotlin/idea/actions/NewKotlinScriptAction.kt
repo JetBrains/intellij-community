@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplate
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import java.awt.BorderLayout
@@ -79,7 +79,7 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
         if (definitions.isNotEmpty()) {
             definitions
                 .filter { isScriptLocationAccepted(it, directory.virtualFile, project) }
-                .mapNotNull { it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo] }
+                .mapNotNull { it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplate] }
                 .distinct()
                 .forEach { builder.addKind(it.title, it.icon, it.templateName) }
         } else {
@@ -119,7 +119,7 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
 
         return definitions
             .filter { directory == null || isScriptLocationAccepted(it, directory.virtualFile, project) }
-            .mapNotNull { it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo] }
+            .mapNotNull { it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplate] }
             .distinct()
             .map { ScriptTypeItem(it.title, it.icon, it.templateName, it.description) }
     }

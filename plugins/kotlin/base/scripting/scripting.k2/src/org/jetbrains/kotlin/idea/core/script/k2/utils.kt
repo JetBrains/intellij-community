@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigu
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplate
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -18,13 +20,23 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.fileExtension
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.script.experimental.util.PropertiesCollection.Key
+
+val IdeScriptCompilationConfigurationKeys.kotlinScriptDefinitionInlayHint: Key<((ScriptCompilationConfiguration) -> String)?>
+        by PropertiesCollection.key({ configuration ->
+            val title = configuration[ScriptCompilationConfiguration.ide.kotlinScriptTemplate]?.title
+            val displayName = title ?: ".${configuration[ScriptCompilationConfiguration.fileExtension] ?: "kts"}"
+            KotlinBaseScriptingBundle.message("hints.codevision.script.definition", displayName)
+        })
 
 fun ScriptCompilationConfiguration.asEntity(): ScriptCompilationConfigurationData = ScriptCompilationConfigurationData(this.asBytes())
 
