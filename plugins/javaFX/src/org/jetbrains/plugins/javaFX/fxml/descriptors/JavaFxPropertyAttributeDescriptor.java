@@ -28,7 +28,7 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxBindingExpressionParser;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxExpressionParser;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -171,20 +171,20 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     }
     final List<String> propertyNames;
     if (JavaFxPsiUtil.isExpressionBinding(value)) {
-      JavaFxBindingExpressionParser.ParsedBinding parsed =
-        JavaFxBindingExpressionParser.parse(value.substring(2, value.length() - 1));
+      JavaFxExpressionParser.ParsedBinding parsed =
+        JavaFxExpressionParser.parse(value.substring(2, value.length() - 1));
       if (!parsed.syntacticallyValid) {
         return JavaFXBundle.message("incorrect.expression.syntax");
       }
-      for (JavaFxBindingExpressionParser.PropertyChain chain : parsed.chains) {
+      for (JavaFxExpressionParser.PropertyChain chain : parsed.chains) {
         if (chain.incomplete) return JavaFXBundle.message("incorrect.expression.syntax");
       }
       // For complex expressions (with operators, literals, multiple chains), the result type is unknown to us,
       // so skip the target-property type-coercion check: the per-segment references handle resolution.
       if (parsed.hasNonChainTokens || parsed.chains.size() != 1) return null;
-      JavaFxBindingExpressionParser.PropertyChain only = parsed.chains.getFirst();
+      JavaFxExpressionParser.PropertyChain only = parsed.chains.getFirst();
       propertyNames = new ArrayList<>(only.segments.size());
-      for (JavaFxBindingExpressionParser.Segment segment : only.segments) {
+      for (JavaFxExpressionParser.Segment segment : only.segments) {
         propertyNames.add(segment.name);
       }
     }

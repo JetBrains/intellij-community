@@ -22,9 +22,9 @@ import java.util.List;
  * references. This parser understands {@code &amp;}, {@code &lt;}, {@code &gt;}, {@code &quot;},
  * {@code &apos;} as the corresponding single characters while preserving original offsets for segments.
  */
-public final class JavaFxBindingExpressionParser {
+public final class JavaFxExpressionParser {
 
-  private JavaFxBindingExpressionParser() { }
+  private JavaFxExpressionParser() { }
 
   /** Single dotted property navigation, e.g. {@code a.b.c}. */
   public static final class PropertyChain {
@@ -160,6 +160,7 @@ public final class JavaFxBindingExpressionParser {
           expectOperand = false;
         }
         else if (isOperatorStart(c)) {
+          if (c != '-' && c != '!' && expectOperand) valid = false;
           consumeOperator();
           expectOperand = true;
           hasNonChainTokens = true;
@@ -170,7 +171,7 @@ public final class JavaFxBindingExpressionParser {
         }
       }
       if (parenDepth != 0) valid = false;
-      if (expectOperand && !chains.isEmpty()) {
+      if (expectOperand) {
         valid = false;
       }
     }
@@ -234,6 +235,7 @@ public final class JavaFxBindingExpressionParser {
         pos++;
         if (pos >= len || !isIdentStart(chars[pos])) {
           incomplete = true;
+          valid = false;
           break;
         }
         int segStart = pos;

@@ -79,14 +79,14 @@ public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvid
                                                                   @NotNull String value,
                                                                   @NotNull Map<String, XmlAttributeValue> fileIds) {
     final String expressionBody = value.endsWith("}") ? value.substring(2, value.length() - 1) : value.substring(2);
-    final JavaFxBindingExpressionParser.ParsedBinding parsed = JavaFxBindingExpressionParser.parse(expressionBody);
+    final JavaFxExpressionParser.ParsedBinding parsed = JavaFxExpressionParser.parse(expressionBody);
     final boolean incompleteBinding = JavaFxPsiUtil.isIncompleteExpressionBinding(value);
     if (!parsed.syntacticallyValid && !incompleteBinding) return PsiReference.EMPTY_ARRAY;
     if (parsed.chains.isEmpty()) return PsiReference.EMPTY_ARRAY;
 
     // The single-chain case keeps the existing single property reference behavior
     if (!parsed.hasNonChainTokens && parsed.chains.size() == 1) {
-      final JavaFxBindingExpressionParser.PropertyChain only = parsed.chains.getFirst();
+      final JavaFxExpressionParser.PropertyChain only = parsed.chains.getFirst();
       if (only.incomplete) return PsiReference.EMPTY_ARRAY;
       if (only.segments.size() == 1) {
         return getSinglePropertyReferences(xmlAttributeValue, fileIds, only.segments.getFirst().name, 2);
@@ -95,7 +95,7 @@ public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvid
 
     final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
     final List<PsiReference> result = new ArrayList<>();
-    for (JavaFxBindingExpressionParser.PropertyChain chain : parsed.chains) {
+    for (JavaFxExpressionParser.PropertyChain chain : parsed.chains) {
       if (chain.incomplete) continue;
       addChainReferences(xmlAttributeValue, fileIds, controllerClass, chain, result);
     }
@@ -105,10 +105,10 @@ public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvid
   private static void addChainReferences(@NotNull XmlAttributeValue xmlAttributeValue,
                                          @NotNull Map<String, XmlAttributeValue> fileIds,
                                          PsiClass controllerClass,
-                                         @NotNull JavaFxBindingExpressionParser.PropertyChain chain,
+                                         @NotNull JavaFxExpressionParser.PropertyChain chain,
                                          @NotNull List<PsiReference> out) {
-    final List<JavaFxBindingExpressionParser.Segment> segments = chain.segments;
-    final JavaFxBindingExpressionParser.Segment first = segments.getFirst();
+    final List<JavaFxExpressionParser.Segment> segments = chain.segments;
+    final JavaFxExpressionParser.Segment first = segments.getFirst();
     final PsiReferenceBase<?> firstReference =
       getIdReferenceBase(xmlAttributeValue, first.name, fileIds, Collections.emptyMap(), controllerClass);
     setSegmentRange(firstReference, first);
@@ -118,7 +118,7 @@ public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvid
                                   ? controllerClass
                                   : JavaFxPsiUtil.getTagClass(fileIds.get(first.name));
     for (int i = 1; i < segments.size(); i++) {
-      JavaFxBindingExpressionParser.Segment seg = segments.get(i);
+      JavaFxExpressionParser.Segment seg = segments.get(i);
       JavaFxExpressionReferenceBase reference =
         new JavaFxExpressionReferenceBase(xmlAttributeValue, propertyOwnerClass, seg.name);
       setSegmentRange(reference, seg);
@@ -129,7 +129,7 @@ public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvid
   }
 
   private static void setSegmentRange(@NotNull PsiReferenceBase<?> reference,
-                                      @NotNull JavaFxBindingExpressionParser.Segment segment) {
+                                      @NotNull JavaFxExpressionParser.Segment segment) {
     int valueStart = reference.getRangeInElement().getStartOffset();
     int start = valueStart + 2 + segment.offsetInBody;
     reference.setRangeInElement(new TextRange(start, start + segment.name.length()));
