@@ -11,6 +11,7 @@ import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class DiagnosticAndQuickFixes(
   val diagnostic: Diagnostic,
   val quickFixes: List<IntentionAction>,

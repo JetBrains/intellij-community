@@ -20,6 +20,7 @@ import kotlinx.coroutines.sync.Semaphore
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.jetbrains.annotations.ApiStatus
 
 internal class LspCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -64,6 +65,7 @@ internal class LspCompletionContributor : CompletionContributor(), DumbAware {
  * @param createLookupElement converts an instance of [T] to the [LookupElement], or returns `null` if the completion item is not needed.
  * Created `LookupElement` MUST return the corresponding [org.eclipse.lsp4j.CompletionItem] object from its [LookupElement.getObject].
  */
+@ApiStatus.Internal
 fun <T> processCompletionItemsImpl(
   lspServer: LspServerImpl,
   document: Document,
