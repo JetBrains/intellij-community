@@ -247,6 +247,13 @@ enum class ProjectViewOption {
 
 @ApiStatus.Internal
 @Serializable
+data class ProjectViewActionState(
+  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
+  val sortKeyState: ProjectViewSortKeyState,
+)
+
+@ApiStatus.Internal
+@Serializable
 data class ProjectViewOptionState(
   val isSelected: Boolean,
   val isEnabled: Boolean,

@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
@@ -53,7 +54,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
-import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
@@ -174,7 +174,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
         }
       }
       is ProjectViewActionStateEvent -> {
-        optionSupport.updateActionStates(event.optionStates, event.sortKeyState)
+        optionSupport.updateActionState(event.actionState)
       }
     }
   }
@@ -232,12 +232,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
   
   private inner class OptionSupport : ProjectViewOptionSupport {
-    private val optionStates = ConcurrentHashMap<ProjectViewOption, ProjectViewOptionState>()
-    private val sortKeyState = AtomicReference<ProjectViewSortKeyState?>(null)
+    private val actionState = AtomicReference<ProjectViewActionState?>(null)
 
-    override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = optionStates[option]
+    override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = actionState.load()?.optionStates?.get(option)
 
-    override fun getSortKeyState(): ProjectViewSortKeyState? = sortKeyState.load()
+    override fun getSortKeyState(): ProjectViewSortKeyState? = actionState.load()?.sortKeyState
 
     override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
       sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
@@ -247,10 +246,9 @@ internal abstract class TreeBasedFrontendProjectViewPane(
       sendRequest(ProjectViewPaneUpdateSortKeyRequest(sortKey))
     }
 
-    fun updateActionStates(optionStates: Map<ProjectViewOption, ProjectViewOptionState>, sortKeyState: ProjectViewSortKeyState) {
-      LOG.debug { "Received updated actions: $optionStates, $sortKeyState" }
-      this.optionStates.putAll(optionStates)
-      this.sortKeyState.store(sortKeyState)
+    fun updateActionState(actionState: ProjectViewActionState) {
+      LOG.debug { "Received updated actions: $actionState" }
+      this.actionState.store(actionState)
       ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
     }
   }

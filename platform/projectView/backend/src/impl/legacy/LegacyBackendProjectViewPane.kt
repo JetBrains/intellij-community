@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
@@ -272,7 +273,7 @@ private class AbstractProjectViewPaneStateManager(
         ProjectViewChildRemoved(request.parentId, request.index)
       }
       is ModelActionStatesUpdated -> {
-        ProjectViewActionStateEvent(request.optionStates, request.sortKeyState)
+        ProjectViewActionStateEvent(request.actionState)
       }
     }
   }
@@ -496,8 +497,7 @@ private class AbstractProjectViewPaneStateManager(
     )
     LOG.debug { "Updated option states: $updatedOptionStates" }
     handleModelUpdate(ModelActionStatesUpdated(
-      updatedOptionStates,
-      updatedSortKeyState,
+      ProjectViewActionState(updatedOptionStates, updatedSortKeyState)
     ))
   }
 
@@ -584,8 +584,7 @@ private data class ModelChildrenRemoved(val parentId: Long) : ModelUpdateRequest
 private data class ModelChildRemoved(val parentId: Long, val index: Int) : ModelUpdateRequest()
 
 private data class ModelActionStatesUpdated(
-  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
-  val sortKeyState: ProjectViewSortKeyState,
+  val actionState: ProjectViewActionState,
 ) : ModelUpdateRequest()
 
 private data class LegacyProjectViewNode(

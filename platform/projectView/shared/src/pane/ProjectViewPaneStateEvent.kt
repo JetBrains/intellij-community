@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
-import com.intellij.platform.projectView.actions.ProjectViewOption
-import com.intellij.platform.projectView.actions.ProjectViewOptionState
-import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
+import com.intellij.platform.projectView.actions.ProjectViewActionState
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -29,8 +27,7 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewActionStateEvent(
-  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
-  val sortKeyState: ProjectViewSortKeyState,
+  val actionState: ProjectViewActionState,
 ) : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal
