@@ -36,10 +36,8 @@ class PythonContentEntriesConfigurable(project: Project) : ModuleAwareProjectCon
 
   override fun createComponent(): JComponent? {
     when (PyProjectModelSettings.featureStateInRegistry) {
-      ON, OFF -> {
-        return super.createComponent()
-      }
-      ASK -> Unit
+      OFF -> return super.createComponent()
+      ON, ASK -> Unit
     }
 
     val settings = PyProjectModelSettings.getInstance(project)
