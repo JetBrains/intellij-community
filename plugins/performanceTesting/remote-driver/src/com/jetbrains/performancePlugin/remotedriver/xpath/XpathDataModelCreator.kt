@@ -134,12 +134,7 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
         }
       }
 
-    val accessibleName = try {
-      accessibleContext?.accessibleName
-    }
-    catch (e: NullPointerException) {
-      null
-    }
+    val accessibleName = getAccessibleName(this)
     if (accessibleName != null) {
       element.setAttribute("accessiblename", accessibleName)
       TextToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
@@ -240,6 +235,17 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
     "com.intellij.openapi.wm.impl.status.TextPanel\$WithIconAndArrows",
     "com.intellij.openapi.wm.impl.status.TextPanel"
   )
+
+  @Suppress("UNUSED_PARAMETER")
+  private fun getAccessibleName(component: Component): String? {
+    if (component is JComponent && component::class.java.name in componentsWithBlockingModalTextSupplier) return null
+    return try {
+      component.accessibleContext?.accessibleName
+    }
+    catch (e: NullPointerException) {
+      null
+    }
+  }
 
   private fun getTooltipText(component: Component): String? {
     if (component is JComponent) {
