@@ -124,6 +124,7 @@ fun startApplication(
     mainClassLoaderDeferred?.await()
     coroutineScope {
       // required for logging essential info about the IDE
+      @Suppress("DeferredResultUnused")
       async(CoroutineName("app name info")) {
         ApplicationNamesInfo.getInstance()
       }
@@ -416,7 +417,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     if (OS.CURRENT == OS.macOS && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
       // JNA and Swing are used - invoke only after both are loaded
       initUiDeferred.join()
-      launch(CoroutineName("mac app init")) {
+      launch(CoroutineName("macOS app init")) {
         runCatching {
           initMacApplication(mainScope)
         }.getOrLogException(log)
@@ -432,7 +433,7 @@ fun setActivationListener(processor: (List<String>) -> Deferred<CliResult>) {
 }
 
 private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: String) {
-  span("pre app class running") {
+  span("pre-app class running") {
     try {
       val aClass = AppStarter::class.java.classLoader.loadClass(classBeforeAppProperty)
       MethodHandles.lookup()
