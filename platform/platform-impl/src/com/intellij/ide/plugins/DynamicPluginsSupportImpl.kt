@@ -440,9 +440,9 @@ internal class DynamicPluginsSupportImpl(
           if (addedDependencies.isEmpty() && removedDependencies.isEmpty()) {
             append("same set, different order")
           } else {
-            if (addedDependencies.isNotEmpty()) append("added=${addedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }} ")
+            if (addedDependencies.isNotEmpty()) append("added=${addedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.shortLogDescription }} ")
             if (removedDependencies.isNotEmpty()) {
-              append("removed=${removedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }}")
+              append("removed=${removedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.shortLogDescription }}")
             }
           }
         }
