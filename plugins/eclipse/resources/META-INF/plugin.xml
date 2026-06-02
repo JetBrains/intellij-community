@@ -17,14 +17,17 @@
     </description>
 
   <vendor>JetBrains</vendor>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.ui"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <!-- endregion -->
   </dependencies>
-  <!-- endregion -->
-  <depends>com.intellij.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <workspaceModel.customModuleRootsSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleRootsSerializer"/>
