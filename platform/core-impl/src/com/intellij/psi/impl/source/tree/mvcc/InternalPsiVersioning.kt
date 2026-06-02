@@ -29,6 +29,8 @@ import kotlin.coroutines.CoroutineContext
 object InternalPsiVersioning {
 
   private val PERSISTENT_PSI_ENABLED: Boolean by lazy { Registry.`is`("psi.enable.persistent.syntax.tree", false) }
+  private const val RAD_EXTERNAL_FORMATTER_CLASS_NAME = "com.intellij.clion.radler.core.format.RadExternalFormatter"
+  private const val RAD_EXTERNAL_FORMATTER_FORMAT_METHOD_NAME = "doFormat"
 
   // a reading operation with the available psi version
   fun <T> freezePsiVersion(action: () -> T): T {
@@ -380,7 +382,8 @@ object InternalPsiVersioning {
         }
       }
     } else {
-      if (correctVersion != value) {
+      // we hope that eventually the problem with suspending write actions will be resolved; but we suppress the error for a known offender for now
+      if (correctVersion != value && !isInRadExternalFormatterDoFormat()) {
         try {
           // known case: this breaks is someone executed "suspending write action"
           thisLogger().error("Expected version $correctVersion, but found $value")
@@ -393,6 +396,13 @@ object InternalPsiVersioning {
         }
       }
       AccessToken.EMPTY_ACCESS_TOKEN
+    }
+  }
+
+  private fun isInRadExternalFormatterDoFormat(): Boolean {
+    return Throwable().stackTrace.any { stackTraceElement ->
+      stackTraceElement.className == RAD_EXTERNAL_FORMATTER_CLASS_NAME &&
+      stackTraceElement.methodName == RAD_EXTERNAL_FORMATTER_FORMAT_METHOD_NAME
     }
   }
 
