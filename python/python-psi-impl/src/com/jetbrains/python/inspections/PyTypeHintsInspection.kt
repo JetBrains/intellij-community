@@ -86,6 +86,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
@@ -180,6 +181,7 @@ class PyTypeHintsInspection : PyInspection() {
       checkPlainGenericInheritance(superClassExpressions)
       checkGenericDuplication(superClassExpressions)
       checkGenericCompleteness(node)
+      checkInconsistentGenericBaseSubstitutions(node)
       reportTypeParametersUsedByOuterScope(node)
       checkMetaClass(node.metaClassExpression)
     }
@@ -307,6 +309,8 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
+      checkTypingGenericAsTypeExpression(node)
+
       if (node.referencedName == PyNames.CANONICAL_SELF) {
         val refType = myTypeEvalContext.getType(node)
         val typeName = (if (refType is PySelfType) refType.scopeClassType else refType)?.name
@@ -354,6 +358,21 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
+    }
+
+    private fun checkTypingGenericAsTypeExpression(node: PyReferenceExpression) {
+      if (!resolvesToAnyOfQualifiedNames(node, PyTypingTypeProvider.GENERIC)) return
+      if (isClassSupertypeReference(node)) return
+      registerProblem(node,
+                      PyPsiBundle.message("INSP.type.hints.generic.cannot.be.used.as.a.type.expression"),
+                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    }
+
+    private fun isClassSupertypeReference(node: PyReferenceExpression): Boolean {
+      val pyClass = PsiTreeUtil.getParentOfType(node, PyClass::class.java, false, PyStatement::class.java) ?: return false
+      return pyClass.superClassExpressions
+        .filterNot { it is PyKeywordArgument }
+        .any { PsiTreeUtil.isAncestor(it, node, false) }
     }
 
     private fun isGenericTypeArgument(node: PyReferenceExpression): Boolean {
@@ -1082,6 +1101,101 @@ class PyTypeHintsInspection : PyInspection() {
         }
 
       return Pair(if (seenGeneric) genericTypeVars else null, nonGenericTypeVars)
+    }
+
+    private fun checkInconsistentGenericBaseSubstitutions(cls: PyClass) {
+      val seenSubstitutions = mutableMapOf<PyClass, PyCollectionType>()
+
+      for (superClassExpression in cls.superClassExpressions) {
+        val superClassType = Ref.deref(PyTypingTypeProvider.getType(superClassExpression, myTypeEvalContext)) as? PyClassType ?: continue
+        val substitutions = canonicalizeOwnTypeParameterSubstitutions(superClassType)
+        val classesToCheck = linkedSetOf(superClassType.pyClass)
+        for (ancestorType in superClassType.getAncestorTypes(myTypeEvalContext)) {
+          if (ancestorType is PyClassType) {
+            classesToCheck.add(ancestorType.pyClass)
+          }
+        }
+
+        for (pyClass in classesToCheck) {
+          val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, myTypeEvalContext) ?: continue
+          val concreteType = PyTypeChecker.substitute(genericDefinitionType, substitutions, myTypeEvalContext) as? PyCollectionType ?: continue
+          if (concreteType.elementTypes.isEmpty()) continue
+
+          val previous = seenSubstitutions.putIfAbsent(pyClass, concreteType)
+          if (previous != null && !sameTypeArguments(previous.elementTypes, concreteType.elementTypes)) {
+            val msg = PyPsiBundle.message(
+              "INSP.type.hints.inconsistent.type.var.order",
+              pyClass.name ?: "<unknown>",
+              PythonDocumentationProvider.getTypeName(previous, myTypeEvalContext),
+              PythonDocumentationProvider.getTypeName(concreteType, myTypeEvalContext),
+            )
+            registerProblem(superClassExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+            return
+          }
+        }
+      }
+    }
+
+    private fun canonicalizeOwnTypeParameterSubstitutions(superClassType: PyClassType): PyTypeChecker.GenericSubstitutions {
+      val substitutions = PyTypeChecker.collectTypeSubstitutions(superClassType, myTypeEvalContext)
+      val typeArguments = (superClassType as? PyCollectionType)?.elementTypes ?: return substitutions
+      if (typeArguments.isEmpty()) return substitutions
+
+      val ownTypeParameters = PyTypeChecker
+        .findGenericDefinitionType(superClassType.pyClass, myTypeEvalContext)
+        ?.elementTypes
+        ?.filterIsInstance<PyTypeParameterType>()
+        ?: return substitutions
+
+      if (ownTypeParameters.isEmpty()) return substitutions
+
+      val stubSafeOrdering = ownTypeParameters
+        .mapNotNull { it.declarationElement as? PsiElement }
+        .all { myTypeEvalContext.maySwitchToAST(it) }
+
+      val orderedTypeParameters = if (stubSafeOrdering) {
+        ownTypeParameters.sortedBy { (it.declarationElement as? PsiElement)?.textOffset ?: Int.MAX_VALUE }
+      }
+      else {
+        // Avoid forcing AST load for stub-based declarations (e.g., typeshed builtins).
+        ownTypeParameters
+      }
+
+      val mapping = PyTypeParameterMapping.mapByShape(
+        orderedTypeParameters,
+        typeArguments,
+        PyTypeParameterMapping.Option.USE_DEFAULTS,
+      ) ?: return substitutions
+
+      val typeVars = LinkedHashMap(substitutions.typeVars)
+      val typeVarTuples = LinkedHashMap(substitutions.typeVarTuples)
+      val paramSpecs = LinkedHashMap(substitutions.paramSpecs)
+
+      for (pair in mapping.mappedTypes) {
+        val expected = pair.first
+        val actual = pair.second
+        when (expected) {
+          is PyTypeVarType -> typeVars[expected] = Ref(actual)
+          is PyTypeVarTupleType -> typeVarTuples[expected] = actual as? PyPositionalVariadicType
+          is PyParamSpecType -> paramSpecs[expected] = actual as? PyCallableParameterVariadicType
+        }
+      }
+
+      return PyTypeChecker.GenericSubstitutions(typeVars, typeVarTuples, paramSpecs, substitutions.qualifierType)
+    }
+
+    private fun sameTypeArguments(left: List<PyType?>, right: List<PyType?>): Boolean {
+      if (left.size != right.size) return false
+      for (i in left.indices) {
+        val leftType = left[i]
+        val rightType = right[i]
+        val sameTypeArgument = leftType == rightType ||
+                               (leftType !is PyTypeParameterType || rightType !is PyTypeParameterType) &&
+                               PyTypeChecker.match(leftType, rightType, myTypeEvalContext) &&
+                               PyTypeChecker.match(rightType, leftType, myTypeEvalContext)
+        if (!sameTypeArgument) return false
+      }
+      return true
     }
 
     private fun reportTypeParametersUsedByOuterScope(typeParameterListOwner: PyTypeParameterListOwner) {
