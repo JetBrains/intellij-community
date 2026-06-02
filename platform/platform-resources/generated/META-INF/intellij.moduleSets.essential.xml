@@ -292,7 +292,7 @@
     <!-- region direct modules -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>
-    <module name="intellij.platform.find" loading="embedded"/>
+    <module name="intellij.platform.find"/>
     <module name="intellij.platform.find.backend"/>
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache"/>
