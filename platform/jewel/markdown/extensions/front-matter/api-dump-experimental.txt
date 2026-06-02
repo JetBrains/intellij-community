@@ -1,0 +1,7 @@
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
+- org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
+- getBlockProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
+- getParserExtension():org.commonmark.parser.Parser$ParserExtension
+- getTextRendererExtension():org.commonmark.renderer.text.TextContentRenderer$TextContentRendererExtension

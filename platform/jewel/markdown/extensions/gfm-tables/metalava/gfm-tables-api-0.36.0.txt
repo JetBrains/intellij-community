@@ -62,5 +62,56 @@ package org.jetbrains.jewel.markdown.extensions.github.tables {
     enum_constant public static final org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle Striped;
   }
 
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class TableBlock implements org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    ctor public TableBlock(org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader? header, java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableRow> rows);
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader? component1();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableRow> component2();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableBlock copy(optional org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader? header, optional java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableRow> rows);
+    method public int getColumnCount();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader? getHeader();
+    method public int getRowCount();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableRow> getRows();
+    property public int columnCount;
+    property public org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader? header;
+    property public int rowCount;
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableRow> rows;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class TableCell implements org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    ctor public TableCell(int rowIndex, int columnIndex, org.jetbrains.jewel.markdown.MarkdownBlock content, androidx.compose.ui.Alignment.Horizontal? alignment);
+    method public int component1();
+    method public int component2();
+    method public org.jetbrains.jewel.markdown.MarkdownBlock component3();
+    method public androidx.compose.ui.Alignment.Horizontal? component4();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableCell copy(optional int rowIndex, optional int columnIndex, optional org.jetbrains.jewel.markdown.MarkdownBlock content, optional androidx.compose.ui.Alignment.Horizontal? alignment);
+    method public androidx.compose.ui.Alignment.Horizontal? getAlignment();
+    method public int getColumnIndex();
+    method public org.jetbrains.jewel.markdown.MarkdownBlock getContent();
+    method public int getRowIndex();
+    property public androidx.compose.ui.Alignment.Horizontal? alignment;
+    property public int columnIndex;
+    property public org.jetbrains.jewel.markdown.MarkdownBlock content;
+    property public int rowIndex;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class TableHeader implements org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    ctor public TableHeader(java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells);
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader copy(optional java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells);
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> getCells();
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class TableRow implements org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    ctor public TableRow(int rowIndex, java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells);
+    method public int component1();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> component2();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.TableRow copy(optional int rowIndex, optional java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells);
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> getCells();
+    method public int getRowIndex();
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.github.tables.TableCell> cells;
+    property public int rowIndex;
+  }
+
 }
 

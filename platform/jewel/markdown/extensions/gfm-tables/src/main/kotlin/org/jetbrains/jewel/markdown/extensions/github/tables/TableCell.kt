@@ -2,12 +2,15 @@
 package org.jetbrains.jewel.markdown.extensions.github.tables
 
 import androidx.compose.ui.Alignment
-import org.jetbrains.jewel.markdown.InlineMarkdown
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
-internal data class TableCell(
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public data class TableCell(
     val rowIndex: Int,
     val columnIndex: Int,
-    val content: List<InlineMarkdown>,
+    val content: MarkdownBlock,
     val alignment: Alignment.Horizontal?,
 ) : MarkdownBlock.CustomBlock
