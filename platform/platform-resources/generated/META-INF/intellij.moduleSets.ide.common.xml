@@ -463,6 +463,9 @@
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.buildView.backend"/>
     <module name="intellij.platform.buildView.frontend"/>
+    <module name="intellij.platform.projectView"/>
+    <module name="intellij.platform.projectView.backend"/>
+    <module name="intellij.platform.projectView.frontend"/>
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>

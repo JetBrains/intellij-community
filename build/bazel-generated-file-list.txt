@@ -942,6 +942,9 @@ platform/project/backend
 platform/project/shared
 platform/projectModel-api
 platform/projectModel-impl
+platform/projectView/backend
+platform/projectView/frontend
+platform/projectView/shared
 platform/rd-platform-community
 platform/recentFiles/backend
 platform/recentFiles/frontend

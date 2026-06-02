@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.projectView.frontend.jar
+  modules:
+  - name: intellij.platform.projectView.frontend
