@@ -19,7 +19,7 @@ internal class TodoConfigurationCollector: ApplicationUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("todo.configuration", 3)
+  private val GROUP = EventLogGroup("todo.configuration", 4)
   private val TODO_PATTERNS = GROUP.registerEvent("todo.patterns", EventFields.Count)
   private val NON_DEFAULT_TODO_PATTERNS = GROUP.registerEvent("non.default.todo.patterns", EventFields.Count)
   private val TODO_FILTERS = GROUP.registerEvent("todo.filters", EventFields.Count)

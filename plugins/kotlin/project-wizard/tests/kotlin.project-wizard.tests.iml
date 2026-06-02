@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.idea" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.servicesView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />

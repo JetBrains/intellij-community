@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh.core" />
     <orderEntry type="module" module-name="intellij.sh.backend" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />

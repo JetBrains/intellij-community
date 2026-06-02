@@ -24,8 +24,8 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />

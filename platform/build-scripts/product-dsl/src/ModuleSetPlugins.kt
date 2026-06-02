@@ -7,9 +7,17 @@ import com.intellij.platform.pluginGraph.TargetName
 private const val MODULE_SET_PLUGIN_MODULE_PREFIX: String = "intellij.moduleSet.plugin."
 
 private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
+  "intellij.grid.core.plugin",
   "intellij.libraries.misc.plugin",
   "intellij.platform.bookmarks.plugin",
+  "intellij.platform.execution.serviceView.plugin",
   "intellij.platform.navbar.plugin",
+  "intellij.platform.recentFiles.plugin",
+  "intellij.platform.structuralSearch.plugin",
+  "intellij.platform.structureView.plugin",
+  "intellij.platform.todo.plugin",
+  "intellij.platform.vcs.frontend.plugin",
+  "intellij.platform.vcs.split.plugin",
 )
 
 fun moduleSetPluginModuleName(moduleSetName: String): TargetName {

@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.structureView.plugin` start
+
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structureView.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structureView.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.platform.structureView.plugin` end
+
+### auto-generated section `iml intellij.platform.structureView.plugin` start
+exports_files(
+    [
+        "intellij.platform.structureView.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.structureView.plugin` end

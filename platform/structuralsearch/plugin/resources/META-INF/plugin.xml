@@ -1,0 +1,11 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.structuralSearch.plugin</id>
+  <name>Structural Search</name>
+  <description>Provides Structural Search platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.structuralSearch" loading="required"/>
+  </content>
+</idea-plugin>

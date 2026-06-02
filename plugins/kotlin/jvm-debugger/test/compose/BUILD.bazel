@@ -30,7 +30,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin/plugin/k2",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
+        "//platform/execution.serviceView/plugin",
     ],
 )
 
@@ -54,7 +54,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compose",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
+        "//platform/execution.serviceView/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

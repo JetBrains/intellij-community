@@ -1,0 +1,12 @@
+- name: lib/modules/intellij.platform.todo.backend.jar
+  contentModules:
+  - name: intellij.platform.todo.backend
+- name: lib/modules/intellij.platform.todo.jar
+  contentModules:
+  - name: intellij.platform.todo
+- name: lib/modules/intellij.platform.vcs.impl.lang.todo.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.lang.todo
+- name: lib/platform-todo-plugin.jar
+  modules:
+  - name: intellij.platform.todo.plugin

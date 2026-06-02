@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object StructureViewEventsCollector: CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("structure.view", 2)
+  private val GROUP = EventLogGroup("structure.view", 3)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val TAB = EventFields.Enum<StructureViewTab>("tab")

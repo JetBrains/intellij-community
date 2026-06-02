@@ -27,19 +27,19 @@ class ModelBuildingStageTest {
   fun `execute reads static module set wrapper from disk`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
-        module("intellij.moduleSet.plugin.grid.core") {
+        module("intellij.grid.core.plugin") {
           resourceRoot = "resources"
         }
       }
       val outputProvider = createTestModuleOutputProvider(jps.project)
-      val wrapperModule = TargetName("intellij.moduleSet.plugin.grid.core")
-      val pluginXmlPath = tempDir.resolve("intellij/moduleSet/plugin/grid/core/resources/META-INF/plugin.xml")
+      val wrapperModule = TargetName("intellij.grid.core.plugin")
+      val pluginXmlPath = tempDir.resolve("intellij/grid/core/plugin/resources/META-INF/plugin.xml")
       Files.createDirectories(pluginXmlPath.parent)
       Files.writeString(
         pluginXmlPath,
         """
         <idea-plugin>
-          <id>com.intellij.moduleSet.grid.core</id>
+          <id>intellij.grid.core.plugin</id>
           <content namespace="jetbrains">
             <module name="intellij.grid"/>
           </content>
@@ -82,7 +82,7 @@ class ModelBuildingStageTest {
       assertThat(wrapperPlugin).isNotNull
       assertThat(wrapperPlugin!!.pluginXmlPath).isEqualTo(pluginXmlPath)
       assertThat(wrapperPlugin.pluginId).isNotNull
-      assertThat(wrapperPlugin.pluginId!!.value).isEqualTo("com.intellij.moduleSet.grid.core")
+      assertThat(wrapperPlugin.pluginId!!.value).isEqualTo("intellij.grid.core.plugin")
 
       model.pluginGraph.query {
         val plugin = requireNotNull(plugin(wrapperModule.value))

@@ -1,0 +1,12 @@
+- name: lib/modules/intellij.platform.structureView.backend.jar
+  contentModules:
+  - name: intellij.platform.structureView.backend
+- name: lib/modules/intellij.platform.structureView.frontend.jar
+  contentModules:
+  - name: intellij.platform.structureView.frontend
+- name: lib/modules/intellij.platform.structureView.impl.jar
+  contentModules:
+  - name: intellij.platform.structureView.impl
+- name: lib/platform-structureView-plugin.jar
+  modules:
+  - name: intellij.platform.structureView.plugin

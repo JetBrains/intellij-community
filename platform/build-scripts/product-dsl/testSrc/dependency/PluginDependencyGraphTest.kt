@@ -319,9 +319,9 @@ class PluginDependencyGraphTest {
   @Test
   fun `module set wrapper flag survives extraction merge`() {
     runBlocking(Dispatchers.Default) {
-      val pluginModule = TargetName("intellij.moduleSet.plugin.recentFiles")
+      val pluginModule = TargetName("intellij.platform.recentFiles.plugin")
       val info = pluginInfo(
-        pluginId = "com.intellij.moduleSet.recentFiles",
+        pluginId = "intellij.recentFiles.plugin",
         contentModules = listOf(
           ContentModuleInfo(
             moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", PluginModuleId.DEFAULT_NAMESPACE),
@@ -334,7 +334,7 @@ class PluginDependencyGraphTest {
       builder.addPlugin(
         name = pluginModule,
         isTest = false,
-        pluginId = PluginId("com.intellij.moduleSet.recentFiles"),
+        pluginId = PluginId("intellij.recentFiles.plugin"),
         isModuleSetWrapper = true,
       )
       builder.addPluginWithContent(pluginModule, info, emptySet())

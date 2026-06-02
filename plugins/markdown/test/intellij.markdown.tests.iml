@@ -64,7 +64,7 @@
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />

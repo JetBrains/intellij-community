@@ -42,7 +42,7 @@ jvm_library(
         "//plugins/toml",
         "//plugins/toml/core",
         "//plugins/yaml/backend",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+        "//platform/structure-view-impl/plugin",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-core",
     ],
@@ -70,7 +70,7 @@ jvm_library(
         ":tests",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

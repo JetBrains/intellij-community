@@ -1,0 +1,11 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.vcs.frontend.plugin</id>
+  <name>VCS Frontend</name>
+  <description>Provides VCS Frontend platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.vcs.impl.frontend" loading="required"/>
+  </content>
+</idea-plugin>

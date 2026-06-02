@@ -363,9 +363,9 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie.properties" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />

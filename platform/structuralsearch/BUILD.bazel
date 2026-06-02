@@ -116,7 +116,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/structuralsearch:structuralSearch",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+        "//platform/structuralsearch/plugin",
         "//xml/impl",
     ],
 )
@@ -157,8 +157,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch:structuralSearch_test_lib",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
         "//xml/impl",
         "//xml/impl:impl_test_lib",
         "//platform/util/jdom",

@@ -116,7 +116,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/sh/core",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+        "//platform/structure-view-impl/plugin",
         "//libraries/misc/plugin",
         "//plugins/sh/plugin:plugin-main",
         "//platform/analysis-impl",
@@ -148,7 +148,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
         "//plugins/sh/plugin:plugin-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",

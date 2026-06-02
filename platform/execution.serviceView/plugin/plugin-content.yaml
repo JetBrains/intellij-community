@@ -1,0 +1,24 @@
+- name: lib/modules/intellij.platform.clouds.jar
+  contentModules:
+  - name: intellij.platform.clouds
+- name: lib/modules/intellij.platform.execution.dashboard.backend.jar
+  contentModules:
+  - name: intellij.platform.execution.dashboard.backend
+- name: lib/modules/intellij.platform.execution.dashboard.frontend.jar
+  contentModules:
+  - name: intellij.platform.execution.dashboard.frontend
+- name: lib/modules/intellij.platform.execution.dashboard.jar
+  contentModules:
+  - name: intellij.platform.execution.dashboard
+- name: lib/modules/intellij.platform.execution.serviceView.backend.jar
+  contentModules:
+  - name: intellij.platform.execution.serviceView.backend
+- name: lib/modules/intellij.platform.execution.serviceView.frontend.jar
+  contentModules:
+  - name: intellij.platform.execution.serviceView.frontend
+- name: lib/modules/intellij.platform.execution.serviceView.jar
+  contentModules:
+  - name: intellij.platform.execution.serviceView
+- name: lib/platform-execution-serviceView-plugin.jar
+  modules:
+  - name: intellij.platform.execution.serviceView.plugin

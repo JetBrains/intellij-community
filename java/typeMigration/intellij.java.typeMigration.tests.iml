@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

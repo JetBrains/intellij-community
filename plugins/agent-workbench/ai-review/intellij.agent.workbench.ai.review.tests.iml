@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ai.review" scope="TEST" />
   </component>

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
-  public static final EventLogGroup GROUP = new EventLogGroup("run.dashboard", 6);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.dashboard", 7);
   public static final EventId1<Boolean> RUN_DASHBOARD = GROUP.registerEvent("run.dashboard", EventFields.Boolean("enabled"));
   public static final VarargEventId ADDED_RUN_CONFIGURATION = GROUP.registerVarargEvent("added.run.configuration",
                                                                                         RunConfigurationTypeUsagesCollector.ID_FIELD);

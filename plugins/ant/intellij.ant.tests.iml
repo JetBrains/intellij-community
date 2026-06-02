@@ -64,9 +64,9 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.ant" />

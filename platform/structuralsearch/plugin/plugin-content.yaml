@@ -1,0 +1,6 @@
+- name: lib/modules/intellij.platform.structuralSearch.jar
+  contentModules:
+  - name: intellij.platform.structuralSearch
+- name: lib/platform-structuralSearch-plugin.jar
+  modules:
+  - name: intellij.platform.structuralSearch.plugin

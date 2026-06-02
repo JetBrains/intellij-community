@@ -1,0 +1,17 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.execution.serviceView.plugin</id>
+  <name>Services View</name>
+  <description>Provides Services View platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.execution.serviceView" loading="required"/>
+    <module name="intellij.platform.clouds"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.dashboard.backend"/>
+    <module name="intellij.platform.execution.dashboard.frontend"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
+    <module name="intellij.platform.execution.serviceView.frontend"/>
+  </content>
+</idea-plugin>

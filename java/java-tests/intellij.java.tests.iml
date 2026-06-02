@@ -21,9 +21,9 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />

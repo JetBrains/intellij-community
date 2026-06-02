@@ -26,7 +26,7 @@ jvm_library(
         "//plugins/kotlin/project-wizard/idea",
         "//plugins/kotlin/gradle/gradle",
         "//platform/execution",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
+        "//platform/execution.serviceView/plugin",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/gradle:gradle-common",
         "@lib//:kotlinc-analysis-api",
@@ -51,7 +51,7 @@ jvm_library(
         # do not sort,
         ":tests",
         "//plugins/kotlin/plugin/k2:k2_test_lib",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
+        "//platform/execution.serviceView/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [

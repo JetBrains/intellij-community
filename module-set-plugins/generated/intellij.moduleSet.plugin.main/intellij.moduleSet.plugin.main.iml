@@ -10,13 +10,13 @@
     <orderEntry type="module" module-name="intellij.grid.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.impl.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.grid.core" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.servicesView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structureView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.vcs.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.core.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.recentFiles.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.frontend.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />

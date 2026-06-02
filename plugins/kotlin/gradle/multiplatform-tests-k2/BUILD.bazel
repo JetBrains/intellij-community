@@ -26,7 +26,7 @@ jvm_library(
         "@lib//:kotlin-tooling-core",
         "//plugins/kotlin/base/indices",
         "//platform/util/jdom",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
+        "//platform/execution.serviceView/plugin",
     ],
 )
 
@@ -46,7 +46,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-multiplatform-tests",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
+        "//platform/execution.serviceView/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

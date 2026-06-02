@@ -112,7 +112,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />

@@ -1,0 +1,13 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.structureView.plugin</id>
+  <name>Structure View</name>
+  <description>Provides Structure View platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.structureView.impl" loading="required"/>
+    <module name="intellij.platform.structureView.backend"/>
+    <module name="intellij.platform.structureView.frontend"/>
+  </content>
+</idea-plugin>

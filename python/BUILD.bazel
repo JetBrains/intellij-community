@@ -1112,8 +1112,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/testFramework",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+        "//platform/structure-view-impl/plugin",
+        "//platform/todo/plugin",
         "//platform/testRunner/plugin",
         "//libraries/misc/plugin",
         "//libraries/guava",
@@ -1160,8 +1160,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":python-community-tests",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
-        "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
         "//platform/observable:observable_test_lib",

@@ -1,6 +1,0 @@
-- name: lib/moduleSet-plugin-structuralSearch.jar
-  modules:
-  - name: intellij.moduleSet.plugin.structuralSearch
-- name: lib/modules/intellij.platform.structuralSearch.jar
-  contentModules:
-  - name: intellij.platform.structuralSearch

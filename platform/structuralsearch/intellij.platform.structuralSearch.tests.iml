@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" />
-    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
