@@ -59,6 +59,12 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     coroutineScope.launch {
       val data = MarkdownLinkOpenerRemoteApi.Companion.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
       val uri = createUri(data.uri) ?: return@launch
+      if (!BrowserUtil.isAbsoluteURL(link) && data.virtualFileId == null) {
+        val project = currentProject ?: data.projectId?.findProject() ?: return@launch
+        val name = link.substringBefore('#').substringAfterLast('/')
+        withContext(Dispatchers.EDT) { showUnresolvedFileNotification(project, name) }
+        return@launch
+      }
       if (uri.scheme != "file") {
         openExternalLink(currentProject, uri)
         return@launch
@@ -277,11 +283,16 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
 
     private fun showCannotNavigateNotification(project: Project, anchor: String, point: RelativePoint) {
-      val balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-        MarkdownBundle.message("markdown.navigate.to.header.no.headers", anchor),
-        MessageType.WARNING,
-        null
-      )
+      showWarningBalloon(project, MarkdownBundle.message("markdown.navigate.to.header.no.headers", anchor), point)
+    }
+
+    private fun showUnresolvedFileNotification(project: Project, fileName: String) {
+      val point = obtainHeadersPopupPosition(project) ?: return
+      showWarningBalloon(project, MarkdownBundle.message("markdown.cannot.resolve.file.error.message", fileName), point)
+    }
+
+    private fun showWarningBalloon(project: Project, message: String, point: RelativePoint) {
+      val balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.WARNING, null)
       val balloon = balloonBuilder.createBalloon()
       Disposer.register(MarkdownDisposable.Companion.getInstance(project), balloon)
       balloon.show(point, Balloon.Position.below)
