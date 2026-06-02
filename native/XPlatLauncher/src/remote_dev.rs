@@ -198,8 +198,8 @@ impl RemoteDevLaunchConfiguration {
             // TODO: remove once all of this is disabled for remote dev
             ("ide.show.tips.on.startup.default.value", "false"),
 
-            // Prevent CWM plugin from being disabled, as it's required for Remote Dev
-            ("idea.required.plugins.id", "com.jetbrains.codeWithMe"),
+            // Prevent Remote Development plugin from being disabled
+            ("idea.required.plugins.id", "com.jetbrains.remoteDevelopment"),
 
             // Automatic updates are not supported by Remote Development
             // It should be done manually by selecting the correct IDE version in JetBrains Gateway
