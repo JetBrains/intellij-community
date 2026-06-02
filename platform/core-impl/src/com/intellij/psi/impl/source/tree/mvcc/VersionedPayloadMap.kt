@@ -5,9 +5,139 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Debug
 
 /**
- * A copy-on-write map from [Long] to [Any], tailored to the use-case of persistent syntax trees.
+ * A copy-on-write sorted map from [Long] to [Any], tailored to the use-case of persistent syntax trees.
  * Has small memory footprint. `null` values are permitted.
+ *
+ * Some modification operations can return `null` if no modifications were performed --
+ * it helps to avoid unnecessary `compareAndSet` operations for the client of this data structure.
+ *
+ * The map is untyped because we did not want to annoy ourselves with the array factories; this data structure is low-level anyway.
  */
+@ApiStatus.Internal
+sealed interface VersionedPayloadMap {
+  companion object {
+    @JvmStatic
+    fun create(firstVersion: Long, firstPayload: Any?, secondVersion: Long, secondPayload: Any?): VersionedPayloadMap {
+      return if (firstVersion <= secondVersion) {
+        VersionedPayloadMap2(firstVersion, firstPayload, secondVersion, secondPayload)
+      }
+      else {
+        VersionedPayloadMap2(secondVersion, secondPayload, firstVersion, firstPayload)
+      }
+    }
+  }
+
+  fun size(): Int
+
+  /**
+   * Inserts [payload] with [version] into the map.
+   * The invariant of sortedness is retained after insertion.
+   *
+   * @return `null` if insertion is not needed (i.e. [payload] is already present for [version]),
+   * or a new instance with the updated data otherwise
+   */
+  fun insert(version: Long, payload: Any?): VersionedPayloadMap?
+
+  /**
+   * Removes all entries where the version is smaller than [threshold].
+   *
+   * At least one version that is not greater than [threshold] must remain,
+   * because the map needs to return the same results on [lowerBound] as if [cleanupStaleVersions] was not invoked:
+   * ```kotlin
+   * map.cleanupStaleVersions(100).lowerBound(100) == map.lowerBound(100)
+   * ```
+   *
+   * @return `null` if no changes in the map were performed, or a new instance of with the updated data otherwise
+   */
+  fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap?
+
+  /**
+   * Returns the payload with the biggest version that is not greater than [targetVersion],
+   * or `null` if there is no such element or the element was explicitly removed.
+   *
+   * ```kotlin
+   * emptyMap.insert(10, "a").lowerBound(11) == "a"
+   * emptyMap.insert(10, "a").lowerBound(9) == null
+   * ```
+   *
+   */
+  fun lowerBound(targetVersion: Long): Any?
+
+  /**
+   * Returns `true` if the element with [targetVersion] was explicitly removed (by setting `null`), `false` otherwise.
+   */
+  fun explicitlyRemoved(targetVersion: Long): Boolean
+}
+
+/**
+ * Space-optimized flavor of [VersionedPayloadMap] that stores two versions and payloads.
+ * Avoids memory overhead on arrays.
+ */
+@Debug.Renderer(hasChildren = "size() != 0", childrenArray = "arrayOfPairs()")
+private class VersionedPayloadMap2(
+  private val version1: Long,
+  private val payload1: Any?,
+  private val version2: Long,
+  private val payload2: Any?
+): VersionedPayloadMap {
+
+  override fun size(): Int = 2
+
+  override fun insert(version: Long, payload: Any?): VersionedPayloadMap? {
+    if (version == version2) {
+      return if (payload2 === payload) null else VersionedPayloadMap2(version1, payload1, version, payload)
+    }
+    if (version == version1) {
+      return if (payload1 === payload) null else VersionedPayloadMap2(version, payload, version2, payload2)
+    }
+
+    if (version > version2) {
+      return ArrayVersionedPayloadMap(longArrayOf(version1, version2, version), arrayOf(payload1, payload2, payload))
+    }
+    if (version > version1) {
+      return ArrayVersionedPayloadMap(longArrayOf(version1, version, version2), arrayOf(payload1, payload, payload2))
+    }
+    return ArrayVersionedPayloadMap(longArrayOf(version, version1, version2), arrayOf(payload, payload1, payload2))
+  }
+
+  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? {
+    return if (version2 <= threshold) {
+      ArrayVersionedPayloadMap(longArrayOf(version2), arrayOf(payload2))
+    }
+    else {
+      null
+    }
+  }
+
+  override fun lowerBound(targetVersion: Long): Any? {
+    if (targetVersion >= version2) {
+      return payload2
+    }
+    if (targetVersion >= version1) {
+      return payload1
+    }
+    return null
+  }
+
+  override fun explicitlyRemoved(targetVersion: Long): Boolean {
+    if (targetVersion == version2) {
+      return payload2 == null
+    }
+    if (targetVersion == version1) {
+      return payload1 == null
+    }
+    return false
+  }
+
+  @Suppress("unused") // user in `@Debug.Renderer`
+  fun arrayOfPairs(): Array<VersionedPayload> {
+    return arrayOf(VersionedPayload(version1, payload1), VersionedPayload(version2, payload2))
+  }
+
+  override fun toString(): String =
+    "[$version1 => $payload1, $version2 => $payload2]"
+}
+
 // implementation details:
 // Although this structure is a map, we can treat it as an array of tuples, since it saves us from overhead on map internals.
 // But we go even further, and instead represent this structure as a tuple of arrays.
@@ -15,30 +145,17 @@ import org.jetbrains.annotations.Debug
 // The tuples are sorted by versions, as it allows us to perform efficient lookups.
 // Every operation produces a new instance of this structure in order to make it friendlier to lock-free algorithms.
 // `versions` and `payloads` are always of the same size
-@ApiStatus.Internal
 @Debug.Renderer(hasChildren = "size() != 0", childrenArray = "arrayOfPairs()")
-class VersionedPayloadMap private constructor(
+private class ArrayVersionedPayloadMap(
   private val versions: LongArray,
   private val payloads: Array<Any?>,
-) {
-  companion object {
-    @JvmStatic
-    fun create(firstVersion: Long, firstPayload: Any?, secondVersion: Long, secondPayload: Any?): VersionedPayloadMap {
-      return VersionedPayloadMap(longArrayOf(firstVersion, secondVersion), arrayOf(firstPayload, secondPayload))
-    }
-  }
+) : VersionedPayloadMap {
 
-  fun size(): Int {
+  override fun size(): Int {
     return versions.size
   }
 
-  /**
-   * Inserts [payload] with [version] into the map.
-   * The invariant of sortedness is retained after insertion.
-   *
-   * @return `null` if insertion is not needed, or a new instance with the updated data otherwise
-   */
-  fun insert(version: Long, payload: Any?): VersionedPayloadMap? {
+  override fun insert(version: Long, payload: Any?): VersionedPayloadMap? {
     var index = payloads.size - 1
     val newVersions: LongArray
     val newPayloads: Array<Any?>
@@ -51,7 +168,7 @@ class VersionedPayloadMap private constructor(
         newPayloads = arrayOfNulls(payloads.size)
         System.arraycopy(payloads, 0, newPayloads, 0, payloads.size)
         newPayloads[index] = payload
-        return VersionedPayloadMap(newVersions, newPayloads)
+        return ArrayVersionedPayloadMap(newVersions, newPayloads)
       }
       if (versions[index] < version) {
         newVersions = versions.copyOf(versions.size + 1)
@@ -60,7 +177,7 @@ class VersionedPayloadMap private constructor(
         newPayloads = payloads.copyOf(payloads.size + 1)
         newPayloads[index + 1] = payload
         System.arraycopy(payloads, index + 1, newPayloads, index + 2, payloads.size - index - 1)
-        return VersionedPayloadMap(newVersions, newPayloads)
+        return ArrayVersionedPayloadMap(newVersions, newPayloads)
       }
       index--
     }
@@ -70,15 +187,10 @@ class VersionedPayloadMap private constructor(
     newPayloads = arrayOfNulls(payloads.size + 1)
     newPayloads[0] = payload
     System.arraycopy(payloads, 0, newPayloads, 1, payloads.size)
-    return VersionedPayloadMap(newVersions, newPayloads)
+    return ArrayVersionedPayloadMap(newVersions, newPayloads)
   }
 
-  /**
-   * Removes all entries where version is smaller than [threshold].
-   *
-   * @return `null` if no cleanup is needed, or a new instance of with the updated data otherwise
-   */
-  fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? {
+  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? {
     var i = 0
     // since versions are ordered, we can perform garbage collection efficiently
     while (i < payloads.size) {
@@ -93,14 +205,13 @@ class VersionedPayloadMap private constructor(
     }
     val newElements: Array<Any?> = payloads.copyOfRange(i - 1, payloads.size)
     val newVersions: LongArray = versions.copyOfRange(i - 1, versions.size)
-    return VersionedPayloadMap(newVersions, newElements)
+    if (newElements.size == 2) {
+      return VersionedPayloadMap2(newVersions[0], newElements[0], newVersions[1], newElements[1])
+    }
+    return ArrayVersionedPayloadMap(newVersions, newElements)
   }
 
-  /**
-   * Returns the payload with the biggest version that is not greater than [targetVersion],
-   * or `null` if there is no such element or the element was explicitly removed.
-   */
-  fun lowerBound(targetVersion: Long): Any? {
+  override fun lowerBound(targetVersion: Long): Any? {
     var i = versions.size - 1
     while (i >= 0) {
       if (targetVersion >= versions[i]) {
@@ -111,10 +222,7 @@ class VersionedPayloadMap private constructor(
     return null
   }
 
-  /**
-   * Returns `true` if the element with [targetVersion] was explicitly removed (by setting `null`), `false` otherwise.
-   */
-  fun explicitlyRemoved(targetVersion: Long): Boolean {
+  override fun explicitlyRemoved(targetVersion: Long): Boolean {
     var i = versions.size - 1
     while (i >= 0) {
       if (targetVersion == versions[i]) {
@@ -132,8 +240,8 @@ class VersionedPayloadMap private constructor(
   private fun arrayOfPairs(): Array<VersionedPayload> =
     versions.zip(payloads).map { VersionedPayload(it.first, it.second) }.toTypedArray()
 
-  private data class VersionedPayload(val version: Long, val payload: Any?)
-
   override fun toString(): String =
     arrayOfPairs().joinToString(prefix = "[", postfix = "]", separator = ", ") { (v, p) -> "$v => $p" }
 }
+
+private data class VersionedPayload(val version: Long, val payload: Any?)

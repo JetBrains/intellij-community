@@ -28,6 +28,19 @@ internal class VersionedPayloadMapTest {
   }
 
   @Test
+  fun `create keeps entries ordered when versions are reversed`() {
+    val first = Payload("first")
+    val second = Payload("second")
+    val map = VersionedPayloadMap.create(20, second, 10, first)
+
+    assertNull(map.lowerBound(9))
+    assertSame(first, map.lowerBound(10))
+    assertSame(first, map.lowerBound(19))
+    assertSame(second, map.lowerBound(20))
+    assertSame(second, map.lowerBound(30))
+  }
+
+  @Test
   fun `ordered insert replaces latest version in place and appends newer version`() {
     val first = Payload("first")
     val second = Payload("second")
@@ -167,6 +180,20 @@ internal class VersionedPayloadMapTest {
     val map = VersionedPayloadMap.create(10, first, 20, second)
 
     assertNull(map.cleanupStaleVersions(15))
+  }
+
+  @Test
+  fun `cleanup of two-entry map keeps only closest predecessor when both versions are stale`() {
+    val first = Payload("first")
+    val second = Payload("second")
+    val map = VersionedPayloadMap.create(10, first, 20, second)
+
+    val cleaned = map.cleanupStaleVersions(20)!!
+
+    assertEquals(1, cleaned.size())
+    assertNull(cleaned.lowerBound(19))
+    assertSame(second, cleaned.lowerBound(20))
+    assertSame(second, cleaned.lowerBound(30))
   }
 
   private class Payload(private val name: String) {
