@@ -815,6 +815,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         val closeDialog = myMessageClusters.size == 1
 
         NOTIFY_SUCCESS_EACH_REPORT.set(true)
+        SHOW_NEW_BUILD_DIALOG.set(true)
 
         val selectedCluster = selectedCluster()
         val reportingStarted = selectedCluster != null && reportMessage(selectedCluster, getParentComponentForReport(closeDialog))
@@ -903,6 +904,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         IdeErrorDialogUsageCollector.logReportAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name)
 
+        SHOW_NEW_BUILD_DIALOG.set(true)
         val parentComponent = getParentComponentForReport(true)
         service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
           val reportingStarted = reportAll(myMessageClusters, parentComponent)
@@ -924,6 +926,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         IdeErrorDialogUsageCollector.logReportAndClearAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name)
 
+        SHOW_NEW_BUILD_DIALOG.set(true)
         val parentComponent = getParentComponentForReport(true)
         service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
           val reportingStarted = reportAll(myMessageClusters, parentComponent)

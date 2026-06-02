@@ -31,6 +31,7 @@ import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, reporter API does not support any optional args
+internal val SHOW_NEW_BUILD_DIALOG = AtomicBoolean(true) // ensures the "New Build Available" dialog is shown at most once per user action
 
 /**
  * This is an internal implementation of [ErrorReportSubmitter] which is used to report exceptions in IntelliJ platform
@@ -135,11 +136,13 @@ open class ITNReporter internal constructor(private val postUrl: String?) : Erro
     LOG.debug(e)
     withContext(Dispatchers.EDT) {
       if (e is UpdateAvailableException) {
-        val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
-        val title = DiagnosticBundle.message("error.report.new.build.title")
-        val icon = Messages.getWarningIcon()
-        if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-        else Messages.showMessageDialog(project, message, title, icon)
+        if (SHOW_NEW_BUILD_DIALOG.compareAndSet(true, false)) {
+          val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
+          val title = DiagnosticBundle.message("error.report.new.build.title")
+          val icon = Messages.getWarningIcon()
+          if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
+          else Messages.showMessageDialog(project, message, title, icon)
+        }
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
       else if (e is CancellationException) {
