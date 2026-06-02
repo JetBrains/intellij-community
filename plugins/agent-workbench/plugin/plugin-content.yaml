@@ -1,27 +1,9 @@
 - name: lib/agent-workbench-plugin.jar
   modules:
   - name: intellij.agent.workbench.plugin
-- name: lib/modules/intellij.agent.workbench.acp.jar
+- name: lib/modules/intellij.agent.workbench.ai.code.review.integration.jar
   contentModules:
-  - name: intellij.agent.workbench.acp
-- name: lib/modules/intellij.agent.workbench.acp.runtime.jar
-  projectLibraries:
-  - name: agentclientprotocol.acp.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-jvm/0/acp-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-model-jvm/0/acp-model-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0/atomicfu-jvm-0.jar
-    reason: <- intellij.agent.workbench.acp.runtime
-  - name: agentclientprotocol.acp.ktor
-    files:
-    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-ktor-jvm/0/acp-ktor-jvm-0.jar
-    reason: <- intellij.agent.workbench.acp.runtime
-  - name: io.github.oshai.kotlin.logging.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
-    reason: <- intellij.agent.workbench.acp.runtime
-  contentModules:
-  - name: intellij.agent.workbench.acp.runtime
+  - name: intellij.agent.workbench.ai.code.review.integration
 - name: lib/modules/intellij.agent.workbench.ai.review.agents.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review.agents
@@ -34,18 +16,21 @@
 - name: lib/modules/intellij.agent.workbench.ai.review.space.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review.space
+- name: lib/modules/intellij.agent.workbench.chat.jar
+  contentModules:
+  - name: intellij.agent.workbench.chat
 - name: lib/modules/intellij.agent.workbench.claude.awb.jar
   contentModules:
   - name: intellij.agent.workbench.claude.awb
+- name: lib/modules/intellij.agent.workbench.codex.chat.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.chat
 - name: lib/modules/intellij.agent.workbench.codex.ide.jar
   contentModules:
   - name: intellij.agent.workbench.codex.ide
 - name: lib/modules/intellij.agent.workbench.codex.prompt.suggestions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.prompt.suggestions
-- name: lib/modules/intellij.agent.workbench.codex.thread.view.jar
-  contentModules:
-  - name: intellij.agent.workbench.codex.thread.view
 - name: lib/modules/intellij.agent.workbench.container.eel.jar
   contentModules:
   - name: intellij.agent.workbench.container.eel
@@ -62,9 +47,6 @@
   - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
   reason: <- intellij.agent.workbench.container.mcp
-- name: lib/modules/intellij.agent.workbench.engine.jar
-  contentModules:
-  - name: intellij.agent.workbench.engine
 - name: lib/modules/intellij.agent.workbench.pi.awb.jar
   contentModules:
   - name: intellij.agent.workbench.pi.awb
@@ -101,18 +83,12 @@
 - name: lib/modules/intellij.agent.workbench.sessions.launch.config.backend.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.launch.config.backend
-- name: lib/modules/intellij.agent.workbench.sessions.task.folders.jar
-  contentModules:
-  - name: intellij.agent.workbench.sessions.task.folders
 - name: lib/modules/intellij.agent.workbench.sessions.toolwindow.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.toolwindow
 - name: lib/modules/intellij.agent.workbench.settings.jar
   contentModules:
   - name: intellij.agent.workbench.settings
-- name: lib/modules/intellij.agent.workbench.thread.view.jar
-  contentModules:
-  - name: intellij.agent.workbench.thread.view
 - name: lib/modules/intellij.agent.workbench.ui.jar
   contentModules:
   - name: intellij.agent.workbench.ui

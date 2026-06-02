@@ -9,14 +9,12 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="25" />
-            <stringArg name="apiVersion" arg="2.4" />
-            <stringArg name="languageVersion" arg="2.4" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -31,34 +29,33 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.platform.problemsView.shared" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.aiCodeReview.ui.shared" />
+    <orderEntry type="module" module-name="intellij.aiCodeReview.api" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.backend" />
-    <orderEntry type="module" module-name="fleet.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.project" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
-    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.platform.concurrency" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.markdown" />
   </component>
 </module>
