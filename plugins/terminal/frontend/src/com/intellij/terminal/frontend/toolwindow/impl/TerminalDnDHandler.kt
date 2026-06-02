@@ -131,24 +131,33 @@ internal object TerminalDnDHandler {
   }
 
   private fun getPathToInsert(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
+    // RemDev and Monolith modes expose different VFS shapes, so keep the checks separate.
     return if (IdeProductMode.isFrontend) getPathInFrontend(file) else getPathInMonolith(file, eelDescriptor)
   }
 
   private fun getPathInFrontend(file: VirtualFile): String? {
+    // In RemDev frontend, only paths from the remote machine should be inserted.
+    // This proxy is intentionally conservative: it is not a perfect remote-file check,
+    // but it accepts files dropped from the remote Project View.
     return file.path.takeIf { !file.isInLocalFileSystem }
   }
 
   private fun getPathInMonolith(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
+    // In monolith, VFS files should be local first.
     if (!file.isInLocalFileSystem) return null
 
     val nioPath = file.toNioPathOrNull() ?: return null
     val fileDescriptor = nioPath.getEelDescriptor()
     val fileMachine = fileDescriptor.getResolvedEelMachine() ?: return null
     val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return null
+    // Normal case: paste only paths from the same EEL machine as the shell. This covers local,
+    // WSL, and Docker paths that already belong to the shell environment.
     if (fileMachine == eelMachine) {
       return runCatching { nioPath.asEelPath(fileDescriptor).toString() }.getOrNull()
     }
 
+    // Special case for WSL shells: Windows drives are mounted inside WSL, so a local Windows file
+    // can still be meaningful to the shell after translation, for example C:\work -> /mnt/c/work.
     return translateLocalPathToWsl(nioPath, fileDescriptor, eelDescriptor)
   }
 
