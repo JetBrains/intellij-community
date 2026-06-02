@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
 /**
  * Works like {@link BasePlatformTestCase}
  * or {@link CodeInsightFixtureTestCase}
- * depending on {@link #mode}
+ * depending on {@link #getMode()}
  *
  * @implNote
  * Cannot be converted to Kotlin because <code>myFixture</code> is used in Java and in Kotlin child classes as not-null.
@@ -45,23 +45,31 @@ import java.lang.annotation.Target;
 public abstract class HybridTestCase extends UsefulTestCase {
 
   protected HybridTestCase() {
-    TestMode annotation = getClass().getAnnotation(TestMode.class);
-    this.mode = annotation != null ? annotation.value() : HybridTestMode.BasePlatform;
+    forcedMode = null;
   }
 
   protected HybridTestCase(@NotNull HybridTestMode mode) {
-    this.mode = mode;
+    forcedMode = mode;
   }
 
-  public final @NotNull HybridTestMode mode;
+  private final HybridTestMode forcedMode;
+  private HybridTestMode mode;
 
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
+
+  public @NotNull HybridTestMode getMode() {
+    if (mode == null) {
+      mode = initializeTestMode();
+    }
+    return mode;
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    var mode = getMode();
     if (mode == HybridTestMode.BasePlatform) {
       myFixture = createAndSetupLightFixture();
       myModule = myFixture.getModule();
@@ -91,6 +99,13 @@ public abstract class HybridTestCase extends UsefulTestCase {
     fixture.setUp();
 
     return fixture;
+  }
+
+  protected @NotNull HybridTestMode initializeTestMode() {
+    if (forcedMode != null)
+      return forcedMode;
+    TestMode annotation = getClass().getAnnotation(TestMode.class);
+    return annotation != null ? annotation.value() : HybridTestMode.BasePlatform;
   }
 
   private Pair<CodeInsightTestFixture, Module> createAndSetupFullFixtureAndModule() throws Exception {
