@@ -235,22 +235,28 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         result.addSeparator()
       }
 
-    val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
-    result.addAll(group.getChildren(initEvent).asList())
-    val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
-    val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)
-      .asSequence()
-      .take(MAX_RECENT_COUNT)
-      .groupBy { openProjectsPredicate.test(it) }
-
-    actionsMap.get(true)?.let {
-      result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
-      result.addAll(it)
+    val hide = ProjectWidgetActionsFilter.EP_NAME.extensionList.any {
+      it.shouldHideProjectSwitchingActions(initEvent)
     }
+    if (!hide) {
+      val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
+      result.addAll(group.getChildren(initEvent).asList())
 
-    actionsMap.get(false)?.let {
-      result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
-      result.addAll(it)
+      val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
+      val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)
+        .asSequence()
+        .take(MAX_RECENT_COUNT)
+        .groupBy { openProjectsPredicate.test(it) }
+
+      actionsMap.get(true)?.let {
+        result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
+        result.addAll(it)
+      }
+
+      actionsMap.get(false)?.let {
+        result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
+        result.addAll(it)
+      }
     }
 
     return result
