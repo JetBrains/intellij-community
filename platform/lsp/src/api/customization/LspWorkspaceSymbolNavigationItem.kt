@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.util.PathUtil
@@ -17,14 +18,18 @@ import javax.swing.Icon
  * Navigation item for LSP Workspace Symbol. Construct with server and original WorkspaceSymbol.
  */
 data class LspWorkspaceSymbolNavigationItem(
-  private val lspServer: LspServer,
+  private val lspClient: LspClient,
   private val workspaceSymbol: WorkspaceSymbol,
 ) : NavigationItem {
+
+  @Deprecated("Use the LspClient constructor")
+  @Suppress("DEPRECATION")
+  constructor(lspServer: LspServer, workspaceSymbol: WorkspaceSymbol) : this(lspServer as LspClient, workspaceSymbol)
 
   override fun getName(): String = workspaceSymbol.name
 
   override fun getPresentation(): ItemPresentation {
-    val symbolKindCustomizer = lspServer.descriptor.lspCustomization.symbolKindCustomizer
+    val symbolKindCustomizer = lspClient.descriptor.lspCustomization.symbolKindCustomizer
     val icon: Icon? = symbolKindCustomizer.getIcon(workspaceSymbol.kind)
     return object : ItemPresentation {
       override fun getPresentableText(): String = name
@@ -39,7 +44,7 @@ data class LspWorkspaceSymbolNavigationItem(
     val virtualFile = resolveVirtualFile()
     if (virtualFile == null) return
     val range = workspaceSymbol.location.left?.range
-    val project = lspServer.project
+    val project = lspClient.project
     if (range != null) {
       val document = FileDocumentManager.getInstance().getDocument(virtualFile)
       val startOffset = document?.let { getOffsetInDocument(it, range.start) } ?: 0
@@ -59,6 +64,6 @@ data class LspWorkspaceSymbolNavigationItem(
 
   private fun resolveVirtualFile(): VirtualFile? {
     val uri = workspaceSymbol.location.left?.uri ?: workspaceSymbol.location.right?.uri
-    return uri?.let { lspServer.descriptor.findFileByUri(it) }
+    return uri?.let { lspClient.descriptor.findFileByUri(it) }
   }
 }

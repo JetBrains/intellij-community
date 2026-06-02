@@ -32,7 +32,7 @@ internal class LspUsageSearcher : UsageSearcher {
 
 private class LspReferencesQuery(private val searchTarget: LspSearchTarget) : AbstractQuery<Usage>() {
   override fun processResults(consumer: Processor<in Usage>): Boolean {
-    for (lspServer in searchTarget.lspServers) {
+    for (lspServer in searchTarget.lspClients) {
       val docPosition = runReadActionBlocking {
         val document = FileDocumentManager.getInstance().getDocument(searchTarget.file) ?: return@runReadActionBlocking null
         val offset = getOffsetInDocument(document, searchTarget.position) ?: return@runReadActionBlocking null

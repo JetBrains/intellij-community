@@ -2,7 +2,7 @@ package com.intellij.platform.lsp.impl
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer.Companion.DEFAULT_REQUEST_TIMEOUT_MS
+import com.intellij.platform.lsp.api.LspClient.Companion.DEFAULT_REQUEST_TIMEOUT_MS
 import com.intellij.platform.lsp.impl.cache.LspCache
 import com.intellij.platform.lsp.impl.cache.LspPerFileCache
 import com.intellij.platform.lsp.impl.cache.LspSingleSlotCache

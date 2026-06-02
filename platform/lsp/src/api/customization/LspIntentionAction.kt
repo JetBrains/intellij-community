@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.psi.PsiDocumentManager
@@ -44,12 +45,21 @@ import org.eclipse.lsp4j.WorkspaceEdit
  * In IntelliJ Platform terms, other kinds of `CodeActions` are handled as
  * [Intention actions](https://www.jetbrains.com/help/idea/intention-actions.html).
  */
-open class LspIntentionAction(protected val lspServer: LspServer, private val initialCodeAction: CodeAction) : IntentionAction {
+open class LspIntentionAction(protected val lspClient: LspClient, private val initialCodeAction: CodeAction) : IntentionAction {
+  @Deprecated("Use the LspClient constructor")
+  @Suppress("DEPRECATION")
+  constructor(lspServer: LspServer, initialCodeAction: CodeAction) : this(lspServer as LspClient, initialCodeAction)
+
+  @Deprecated("Use lspClient", ReplaceWith("lspClient"))
+  @Suppress("DEPRECATION")
+  protected val lspServer: LspServer
+    get() = lspClient as LspServer
+
   // 1. If the `initialCodeAction` contains the `edit` property, it means that it is already resolved.
   // 2. If the server doesn't support code actions resolve, it also means that the `initialCodeAction` is already resolved.
   private var resolvedCodeAction: CodeAction? =
     if (initialCodeAction.edit != null ||
-        lspServer.initializeResult?.capabilities?.codeActionProvider?.right?.resolveProvider != true) {
+        lspClient.initializeResult?.capabilities?.codeActionProvider?.right?.resolveProvider != true) {
       initialCodeAction
     }
     else null
@@ -98,7 +108,7 @@ open class LspIntentionAction(protected val lspServer: LspServer, private val in
   private fun resolveCodeAction() {
     if (resolvedCodeAction != null) return
 
-    val resolved = lspServer.sendRequestSync { it.textDocumentService.resolveCodeAction(codeAction) }
+    val resolved = lspClient.sendRequestSync { it.textDocumentService.resolveCodeAction(codeAction) }
     resolvedCodeAction = resolved ?: initialCodeAction
   }
 
@@ -112,19 +122,19 @@ open class LspIntentionAction(protected val lspServer: LspServer, private val in
   fun invoke(contextFile: VirtualFile?) {
     val uriToDocumentMap = this.uriToDocumentMap ?: return
     val files = uriToDocumentMap.map { FileDocumentManager.getInstance().getFile(it.value) }
-    if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(lspServer.project, files)) return
+    if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(lspClient.project, files)) return
 
     val workspaceEdit = codeAction.edit
     if (workspaceEdit?.changes?.isNotEmpty() == true || workspaceEdit?.documentChanges?.isNotEmpty() == true) {
       WriteAction.run<Throwable> { applyWorkspaceEdit(workspaceEdit, uriToDocumentMap) }
     }
 
-    applyCommand(lspServer.descriptor.lspCustomization.commandsCustomizer, codeAction.command, contextFile)
+    applyCommand(lspClient.descriptor.lspCustomization.commandsCustomizer, codeAction.command, contextFile)
   }
 
   private fun applyCommand(commandsSupport: LspCommandsCustomizer, command: Command?, contextFile: VirtualFile?) {
     if (commandsSupport is LspCommandsSupport && command != null && contextFile != null) {
-      commandsSupport.executeCommand(lspServer, contextFile, command)
+      commandsSupport.executeCommand(lspClient, contextFile, command)
     }
   }
 
@@ -172,10 +182,10 @@ open class LspIntentionAction(protected val lspServer: LspServer, private val in
   private fun createFile(createFile: CreateFile): Document? {
     val fileUri = createFile.uri
     var existingDirUri = PathUtil.getParentPath(fileUri)
-    var existingDir = lspServer.descriptor.findFileByUri(existingDirUri)
+    var existingDir = lspClient.descriptor.findFileByUri(existingDirUri)
     while (existingDir == null && !existingDirUri.isEmpty()) {
       existingDirUri = PathUtil.getParentPath(existingDirUri)
-      existingDir = lspServer.descriptor.findFileByUri(existingDirUri)
+      existingDir = lspClient.descriptor.findFileByUri(existingDirUri)
     }
 
     if (existingDir == null) {
@@ -233,13 +243,13 @@ open class LspIntentionAction(protected val lspServer: LspServer, private val in
   }
 
   private fun getDocument(documentUri: String, version: Int = -1): Document? {
-    val file = lspServer.descriptor.findFileByUri(documentUri)
+    val file = lspClient.descriptor.findFileByUri(documentUri)
     if (file == null) {
       thisLogger().warn("File not found: $documentUri")
       return null
     }
 
-    if (!ProjectFileIndex.getInstance(lspServer.project).isInContent(file)) {
+    if (!ProjectFileIndex.getInstance(lspClient.project).isInContent(file)) {
       thisLogger().warn("File is not within the project content: $documentUri")
       return null
     }
@@ -250,7 +260,7 @@ open class LspIntentionAction(protected val lspServer: LspServer, private val in
       return null
     }
 
-    val documentVersion = lspServer.getDocumentVersion(document)
+    val documentVersion = lspClient.getDocumentVersion(document)
     if (version != -1 && documentVersion != version) {
       thisLogger().info("Ignoring CodeAction for document version $version (${file.name}); " +
                         "current document version: $documentVersion")

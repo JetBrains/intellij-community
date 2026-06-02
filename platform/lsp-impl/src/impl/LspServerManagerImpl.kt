@@ -21,14 +21,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.Lsp4jServerWrapper
+import com.intellij.platform.lsp.api.LspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerManager.Companion.getInstance
 import com.intellij.platform.lsp.api.LspServerManagerListener
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
-import com.intellij.platform.lsp.api.LspServerSupportProvider.LspServerStarter
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.util.EventDispatcher
@@ -47,6 +48,7 @@ private const val MAX_LSP_SERVERS = 10
  */
 @ApiStatus.Internal
 class LspServerManagerImpl internal constructor(private val project: Project, internal val cs: CoroutineScope) :
+  @Suppress("DEPRECATION")
   LspServerManager, Disposable {
   init {
     assert(!project.isDefault) { "LspServerManager doesn't make sense for the default project" }
@@ -60,6 +62,11 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
 
   private val eventDispatcher = EventDispatcher.create(LspServerManagerListener::class.java)
 
+  override fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspServerImpl> =
+    lspServers.filter { it.providerClass == providerClass }
+
+  @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
   override fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspServerImpl> =
     lspServers.filter { it.providerClass == providerClass }
 
@@ -71,10 +78,17 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   internal fun findRunningServer(condition: (LspServerImpl) -> Boolean): LspServerImpl? =
     lspServers.find { it.state == LspServerState.Running && condition(it) }
 
-  override fun startServersIfNeeded(providerClass: Class<out LspServerSupportProvider>) {
+  override fun startClientsIfNeeded(providerClass: Class<out LspClientProvider>): Unit = startIfNeeded(providerClass)
+
+  @Deprecated("Use startClientsIfNeeded", ReplaceWith("startClientsIfNeeded(providerClass)"))
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION", "UNCHECKED_CAST")
+  override fun startServersIfNeeded(providerClass: Class<out LspServerSupportProvider>): Unit =
+    startIfNeeded(providerClass)
+
+  private fun startIfNeeded(providerClass: Class<out LspClientProvider>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
 
-    val provider = LspServerSupportProvider.EP_NAME.findExtension(providerClass)
+    val provider = findProvider(providerClass)
     if (provider == null) {
       logger.error(providerClass.name + " is not loaded")
       return
@@ -82,8 +96,8 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
 
     cs.launch {
       val descriptorsToStart = readAction {
-        val runningServers = getServersForProvider(providerClass)
-        val descriptorsToStart = mutableListOf<LspServerDescriptor>()
+        val runningServers = getClientsForProvider(providerClass)
+        val descriptorsToStart = mutableListOf<LspClientDescriptor>()
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
           ProgressManager.checkCanceled()
@@ -104,20 +118,35 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
             continue
           }
 
-          val starter = LspServerStarterImpl()
-          provider.fileOpened(project, file, starter)
+          val starter = LspStarterImpl()
+          callFileOpened(provider, file, starter)
           descriptorsToStart.addIfNotNull(starter.descriptor)
         }
         descriptorsToStart
       }
 
-      descriptorsToStart.forEach { ensureServerStarted(providerClass, it) }
+      descriptorsToStart.forEach { ensureStarted(providerClass, it) }
     }
   }
 
-  private fun LspServerDescriptor.getServerId(): String = "${javaClass.name}:${presentableName}:${roots.joinToString(":") { it.path }}"
+  /** Finds the registered provider with the given class among both the new and the deprecated extension points. */
+  private fun findProvider(providerClass: Class<*>): LspClientProvider? =
+    LspClientProvider.getAllExtensions().firstOrNull { it.javaClass == providerClass }
 
-  override fun ensureServerStarted(providerClass: Class<out LspServerSupportProvider>, descriptor: LspServerDescriptor) {
+  private fun callFileOpened(provider: LspClientProvider, file: VirtualFile, starter: LspStarterImpl): Unit =
+    provider.fileOpened(project, file, starter)
+
+  private fun LspClientDescriptor.getServerId(): String = "${javaClass.name}:${presentableName}:${roots.joinToString(":") { it.path }}"
+
+  override fun ensureClientStarted(providerClass: Class<out LspClientProvider>, descriptor: LspClientDescriptor): Unit =
+    ensureStarted(providerClass, descriptor)
+
+  @Deprecated("Use ensureClientStarted", ReplaceWith("ensureClientStarted(providerClass, descriptor)"))
+  @Suppress("DEPRECATION", "UNCHECKED_CAST")
+  override fun ensureServerStarted(providerClass: Class<out LspServerSupportProvider>, descriptor: LspServerDescriptor): Unit =
+    ensureStarted(providerClass as Class<out LspClientProvider>, descriptor)
+
+  private fun ensureStarted(providerClass: Class<out LspClientProvider>, descriptor: LspClientDescriptor) {
     if (!TrustedProjects.isProjectTrusted(project)) return
 
     cs.launch {
@@ -142,8 +171,13 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     }
   }
 
+  override fun stopClients(providerClass: Class<out LspClientProvider>): Unit =
+    getClientsForProvider(providerClass).forEach { stopRunningServer(it) }
+
+  @Deprecated("Use stopClients", ReplaceWith("stopClients(providerClass)"))
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION", "UNCHECKED_CAST")
   override fun stopServers(providerClass: Class<out LspServerSupportProvider>): Unit =
-    getServersForProvider(providerClass).forEach { stopRunningServer(it) }
+    stopClients(providerClass as Class<out LspClientProvider>)
 
   /**
    * Called when the server works fine but needs to be stopped for some reason.
@@ -199,10 +233,15 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     }
   }
 
-  override fun stopAndRestartIfNeeded(providerClass: Class<out LspServerSupportProvider>) {
-    stopServers(providerClass)
-    startServersIfNeeded(providerClass)
+  override fun stopAndRestartClientsIfNeeded(providerClass: Class<out LspClientProvider>) {
+    stopClients(providerClass)
+    startClientsIfNeeded(providerClass)
   }
+
+  @Deprecated("Use stopAndRestartClientsIfNeeded", ReplaceWith("stopAndRestartClientsIfNeeded(providerClass)"))
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION", "UNCHECKED_CAST")
+  override fun stopAndRestartIfNeeded(providerClass: Class<out LspServerSupportProvider>): Unit =
+    stopAndRestartClientsIfNeeded(providerClass as Class<out LspClientProvider>)
 
   @TestOnly
   override fun addLsp4jServerWrapper(wrapper: Lsp4jServerWrapper, parentDisposable: Disposable) {
@@ -236,15 +275,27 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   }
 
   private fun addExtensionPointListener() {
+    LspClientProvider.EP_NAME.point.addExtensionPointListener(
+      cs,
+      false,
+      object : ExtensionPointListener<LspClientProvider> {
+        override fun extensionAdded(extension: LspClientProvider, pluginDescriptor: PluginDescriptor): Unit =
+          startClientsIfNeeded(extension.javaClass)
+
+        override fun extensionRemoved(extension: LspClientProvider, pluginDescriptor: PluginDescriptor): Unit =
+          stopClients(extension.javaClass)
+      },
+    )
+    @Suppress("DEPRECATION")
     LspServerSupportProvider.EP_NAME.point.addExtensionPointListener(
       cs,
       false,
       object : ExtensionPointListener<LspServerSupportProvider> {
-        override fun extensionAdded(extension: LspServerSupportProvider, pluginDescriptor: PluginDescriptor) =
-          startServersIfNeeded(extension.javaClass)
+        override fun extensionAdded(extension: LspServerSupportProvider, pluginDescriptor: PluginDescriptor): Unit =
+          startIfNeeded(extension.javaClass)
 
-        override fun extensionRemoved(extension: LspServerSupportProvider, pluginDescriptor: PluginDescriptor) =
-          stopServers(extension.javaClass)
+        override fun extensionRemoved(extension: LspServerSupportProvider, pluginDescriptor: PluginDescriptor): Unit =
+          stopClients(extension.javaClass)
       },
     )
   }
@@ -279,8 +330,13 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   override fun dispose(): Unit = lspServers.forEach { stopRunningServer(it) }
 
 
-  internal class LspServerStarterImpl : LspServerStarter {
-    var descriptor: LspServerDescriptor? = null
+  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+  internal class LspStarterImpl : LspClientProvider.LspClientStarter, LspServerSupportProvider.LspServerStarter {
+    var descriptor: LspClientDescriptor? = null
+
+    override fun ensureClientStarted(descriptor: LspClientDescriptor) {
+      this.descriptor = descriptor
+    }
 
     override fun ensureServerStarted(descriptor: LspServerDescriptor) {
       this.descriptor = descriptor
@@ -289,7 +345,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
 
 
   companion object {
-    fun getInstanceImpl(project: Project): LspServerManagerImpl = getInstance(project) as LspServerManagerImpl
+    fun getInstanceImpl(project: Project): LspServerManagerImpl = LspClientManager.getInstance(project) as LspServerManagerImpl
 
     internal inline fun forEachRunningServerInEachProject(action: (LspServerImpl) -> Unit) =
       ProjectManager.getInstance().openProjects.forEach { project ->

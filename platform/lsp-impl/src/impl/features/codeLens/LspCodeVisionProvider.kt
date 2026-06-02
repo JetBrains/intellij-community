@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.LspBundle
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeLensSupport
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import java.awt.event.MouseEvent
@@ -50,7 +51,7 @@ internal class LspCodeVisionProvider : CodeVisionProvider<Unit>, DumbAware {
 
 
       val handler = { mouseEvent: MouseEvent?, _: Editor ->
-        customizer.codeLensClicked(server, virtualFile, command, mouseEvent)
+        customizer.codeLensClicked(server as LspClient, virtualFile, command, mouseEvent)
       }
       val entry = ClickableTextCodeVisionEntry(title, id, handler)
 

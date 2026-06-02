@@ -12,14 +12,14 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
+import com.intellij.platform.lsp.api.LspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspCommunicationChannel.StdIO
 import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManagerListener
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorSocket
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorStdio
@@ -58,8 +58,8 @@ private val logger = logger<LspServerImpl>()
 
 @ApiStatus.Internal
 class LspServerImpl internal constructor(
-  override val providerClass: Class<out LspServerSupportProvider>,
-  override val descriptor: LspServerDescriptor,
+  override val providerClass: Class<out LspClientProvider>,
+  override val descriptor: LspClientDescriptor,
   private val eventBroadcaster: LspServerManagerListener,
 ) : LspServer {
   override val project: Project = descriptor.project

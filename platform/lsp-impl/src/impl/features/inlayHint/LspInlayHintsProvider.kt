@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.api.LspServerDescriptor
+import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
@@ -99,7 +99,7 @@ internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware
   private fun buildPresentation(
     factory: PresentationFactory,
     project: Project,
-    descriptor: LspServerDescriptor,
+    descriptor: LspClientDescriptor,
     inlayHint: InlayHint,
     maxChars: Int,
   ): InlayPresentation {
@@ -144,7 +144,7 @@ internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware
     return factory.smallText(shownText)
   }
 
-  private fun navigateTo(descriptor: LspServerDescriptor, project: Project, targetUri: String, targetRange: Range?) {
+  private fun navigateTo(descriptor: LspClientDescriptor, project: Project, targetUri: String, targetRange: Range?) {
     val targetFile = descriptor.findFileByUri(targetUri) ?: return
 
     val editor = FileEditorManager.getInstance(project).openTextEditor(
@@ -160,7 +160,7 @@ internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware
 }
 
 private data class InlayHintData(
-  val descriptor: LspServerDescriptor,
+  val descriptor: LspClientDescriptor,
   val cached: LspCachedHighlighting<InlayHint>,
   val maxChars: Int,
 )

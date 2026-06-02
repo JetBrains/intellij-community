@@ -1,7 +1,7 @@
 package com.intellij.platform.lsp.impl.features.highlighting
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
@@ -38,9 +38,9 @@ internal class LspDocumentLinkCache(private val lspServer: LspServerImpl) : LspH
 internal class LspDocumentLink(private val initialDocumentLink: DocumentLink) {
   private var resolvedDocumentLink: DocumentLink? = null
 
-  fun resolveDocumentLink(lspServer: LspServer) {
+  fun resolveDocumentLink(lspClient: LspClient) {
     if (initialDocumentLink.target == null && resolvedDocumentLink == null) {
-      resolvedDocumentLink = lspServer.sendRequestSync { it.textDocumentService.documentLinkResolve(initialDocumentLink) }
+      resolvedDocumentLink = lspClient.sendRequestSync { it.textDocumentService.documentLinkResolve(initialDocumentLink) }
                              ?: initialDocumentLink
     }
   }

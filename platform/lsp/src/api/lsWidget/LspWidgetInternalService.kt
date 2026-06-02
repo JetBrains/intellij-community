@@ -4,17 +4,17 @@ package com.intellij.platform.lsp.api.lsWidget
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class LspWidgetInternalService {
 
-  abstract fun createShowErrorOutputAction(lspServer: LspServer): AnAction?
+  abstract fun createShowErrorOutputAction(lspClient: LspClient): AnAction?
 
-  abstract fun restartLspServer(lspServer: LspServer)
+  abstract fun restartLspClient(lspClient: LspClient)
 
-  abstract fun stopLspServer(lspServer: LspServer)
+  abstract fun stopLspClient(lspClient: LspClient)
 
 
   internal companion object {

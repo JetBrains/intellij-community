@@ -41,7 +41,7 @@
                        bundle="messages.LspBundle"
                        key="notification.group.lsp.log.info.trace"/>
 
-    <projectService serviceInterface="com.intellij.platform.lsp.api.LspServerManager"
+    <projectService serviceInterface="com.intellij.platform.lsp.api.LspClientManager"
                     serviceImplementation="com.intellij.platform.lsp.impl.LspServerManagerImpl"/>
 
     <editorFactoryDocumentListener id="LspDocumentListener"
@@ -146,6 +146,8 @@
   </applicationListeners>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.lsp.clientProvider"
+                    interface="com.intellij.platform.lsp.api.LspClientProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSupportProvider"
                     interface="com.intellij.platform.lsp.api.LspServerSupportProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.documentAdapter"

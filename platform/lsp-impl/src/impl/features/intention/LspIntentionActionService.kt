@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -96,7 +97,7 @@ internal class LspIntentionActionService : Disposable {
         // filter out quick fixes when asking for intentions, otherwise quick fixes are added twice
         val kind = codeAction.kind
         if (kind == null || !kind.startsWith(CodeActionKind.QuickFix)) {
-          codeActionsSupport.createIntentionAction(lspServer, codeAction)?.let { intentionAction -> result.add(intentionAction) }
+          codeActionsSupport.createIntentionAction(lspServer as LspClient, codeAction)?.let { result.add(it) }
         }
       }
     }

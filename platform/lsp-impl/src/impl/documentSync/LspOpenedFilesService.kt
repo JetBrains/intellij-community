@@ -11,7 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerDescriptor
+import com.intellij.platform.lsp.api.LspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.LspServerImpl
@@ -42,7 +43,8 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun processOpenedFiles(files: Collection<VirtualFile>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
-    if (!LspServerSupportProvider.EP_NAME.hasAnyExtensions()) return
+    @Suppress("DEPRECATION")
+    if (!LspClientProvider.EP_NAME.hasAnyExtensions() && !LspServerSupportProvider.EP_NAME.hasAnyExtensions()) return
 
     val added = files.filter { it.isInLocalFileSystem }.let { openedFilesToHandle.addAll(it) }
     if (added) scheduleOpenedFilesProcessing()
@@ -52,7 +54,7 @@ internal class LspOpenedFilesService(private val project: Project) {
     class OpenedFilesData {
       val handledFiles: MutableSet<VirtualFile> = HashSet()
       val serversToSendDidOpen: MultiMap<LspServerImpl, VirtualFile> = MultiMap()
-      val newServersToStart: MutableCollection<Pair<LspServerSupportProvider, LspServerDescriptor>> = mutableListOf()
+      val newServersToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
     }
 
     val lspServerManager = LspServerManagerImpl.getInstanceImpl(project)
@@ -63,8 +65,9 @@ internal class LspOpenedFilesService(private val project: Project) {
         data.handledFiles.addAll(openedFilesToHandle)
       }
 
-      for (provider in LspServerSupportProvider.EP_NAME.extensionList) {
-        val serversForProvider = lspServerManager.getServersForProvider(provider.javaClass)
+      for (provider in LspClientProvider.getAllExtensions()) {
+        val providerClass: Class<out LspClientProvider> = provider.javaClass
+        val serversForProvider = lspServerManager.getClientsForProvider(providerClass)
         var fileWithinServerRootsAndSupported = false
 
         for (openedFile in data.handledFiles) {
@@ -82,9 +85,9 @@ internal class LspOpenedFilesService(private val project: Project) {
           }
 
           if (!fileWithinServerRootsAndSupported && ProjectFileIndex.getInstance(project).isInContent(openedFile)) {
-            val starter = LspServerManagerImpl.LspServerStarterImpl()
+            val starter = LspServerManagerImpl.LspStarterImpl()
             provider.fileOpened(project, openedFile, starter)
-            starter.descriptor?.let { descriptor -> data.newServersToStart.add(provider to descriptor) }
+            starter.descriptor?.let { descriptor -> data.newServersToStart.add(providerClass to descriptor) }
           }
         }
       }
@@ -104,8 +107,8 @@ internal class LspOpenedFilesService(private val project: Project) {
             }
           }
         }
-        data.newServersToStart.forEach { providerAndDescriptor ->
-          lspServerManager.ensureServerStarted(providerAndDescriptor.first.javaClass, providerAndDescriptor.second)
+        data.newServersToStart.forEach { (providerClass, descriptor) ->
+          lspServerManager.ensureClientStarted(providerClass, descriptor)
         }
       }
       .submit(AppExecutorUtil.getAppExecutorService())

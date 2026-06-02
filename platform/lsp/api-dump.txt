@@ -20,6 +20,22 @@ c:com.intellij.platform.lsp.api.Lsp4jClient
 - telemetryEvent(java.lang.Object):V
 - f:unregisterCapability(org.eclipse.lsp4j.UnregistrationParams):java.util.concurrent.CompletableFuture
 - f:workspaceFolders():java.util.concurrent.CompletableFuture
+com.intellij.platform.lsp.api.LspClient
+- sf:Companion:com.intellij.platform.lsp.api.LspClient$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
+- a:getDescriptor():com.intellij.platform.lsp.api.LspClientDescriptor
+- a:getDocumentIdentifier(com.intellij.openapi.vfs.VirtualFile):org.eclipse.lsp4j.TextDocumentIdentifier
+- a:getDocumentVersion(com.intellij.openapi.editor.Document):I
+- a:getInitializeResult():org.eclipse.lsp4j.InitializeResult
+- a:getProject():com.intellij.openapi.project.Project
+- a:getProviderClass():java.lang.Class
+- a:getState():com.intellij.platform.lsp.api.LspServerState
+- a:sendNotification(kotlin.jvm.functions.Function1):V
+- a:sendRequest(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- a:sendRequestSync(I,kotlin.jvm.functions.Function1):java.lang.Object
+- bs:sendRequestSync$default(com.intellij.platform.lsp.api.LspClient,I,kotlin.jvm.functions.Function1,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.lsp.api.LspClient$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
 a:com.intellij.platform.lsp.api.LspClientDescriptor
 - sf:Companion:com.intellij.platform.lsp.api.LspClientDescriptor$Companion
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
@@ -58,6 +74,25 @@ a:com.intellij.platform.lsp.api.LspClientDescriptor
 - startServerProcess():com.intellij.execution.process.OSProcessHandler
 f:com.intellij.platform.lsp.api.LspClientDescriptor$Companion
 - f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.platform.lsp.api.LspClientManager
+- sf:Companion:com.intellij.platform.lsp.api.LspClientManager$Companion
+- a:ensureClientStarted(java.lang.Class,com.intellij.platform.lsp.api.LspClientDescriptor):V
+- a:getClientsForProvider(java.lang.Class):java.util.Collection
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspClientManager
+- a:startClientsIfNeeded(java.lang.Class):V
+- a:stopAndRestartClientsIfNeeded(java.lang.Class):V
+- a:stopClients(java.lang.Class):V
+f:com.intellij.platform.lsp.api.LspClientManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspClientManager
+com.intellij.platform.lsp.api.LspClientProvider
+- sf:Companion:com.intellij.platform.lsp.api.LspClientProvider$Companion
+- createWidgetItem(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
+- createWidgetItems(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
+- a:fileOpened(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.lsp.api.LspClientProvider$LspClientStarter):V
+f:com.intellij.platform.lsp.api.LspClientProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+com.intellij.platform.lsp.api.LspClientProvider$LspClientStarter
+- a:ensureClientStarted(com.intellij.platform.lsp.api.LspClientDescriptor):V
 a:com.intellij.platform.lsp.api.LspCommunicationChannel
 f:com.intellij.platform.lsp.api.LspCommunicationChannel$Socket
 - com.intellij.platform.lsp.api.LspCommunicationChannel
@@ -77,21 +112,8 @@ f:com.intellij.platform.lsp.api.LspCommunicationChannel$StdIO
 - equals(java.lang.Object):Z
 - hashCode():I
 com.intellij.platform.lsp.api.LspServer
-- sf:Companion:com.intellij.platform.lsp.api.LspServer$Companion
-- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
-- a:getDescriptor():com.intellij.platform.lsp.api.LspServerDescriptor
-- a:getDocumentIdentifier(com.intellij.openapi.vfs.VirtualFile):org.eclipse.lsp4j.TextDocumentIdentifier
-- a:getDocumentVersion(com.intellij.openapi.editor.Document):I
-- a:getInitializeResult():org.eclipse.lsp4j.InitializeResult
-- a:getProject():com.intellij.openapi.project.Project
-- a:getProviderClass():java.lang.Class
-- a:getState():com.intellij.platform.lsp.api.LspServerState
-- a:sendNotification(kotlin.jvm.functions.Function1):V
-- a:sendRequest(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- a:sendRequestSync(I,kotlin.jvm.functions.Function1):java.lang.Object
-- bs:sendRequestSync$default(com.intellij.platform.lsp.api.LspServer,I,kotlin.jvm.functions.Function1,I,java.lang.Object):java.lang.Object
-f:com.intellij.platform.lsp.api.LspServer$Companion
-- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
+- com.intellij.platform.lsp.api.LspClient
+- getDescriptor():com.intellij.platform.lsp.api.LspServerDescriptor
 a:com.intellij.platform.lsp.api.LspServerDescriptor
 - com.intellij.platform.lsp.api.LspClientDescriptor
 - sf:Companion:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
@@ -103,6 +125,7 @@ com.intellij.platform.lsp.api.LspServerListener
 - serverInitialized(org.eclipse.lsp4j.InitializeResult):V
 - serverStopped(Z):V
 com.intellij.platform.lsp.api.LspServerManager
+- com.intellij.platform.lsp.api.LspClientManager
 - sf:Companion:com.intellij.platform.lsp.api.LspServerManager$Companion
 - a:ensureServerStarted(java.lang.Class,com.intellij.platform.lsp.api.LspServerDescriptor):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspServerManager
@@ -142,9 +165,13 @@ e:com.intellij.platform.lsp.api.LspServerState
 - s:valueOf(java.lang.String):com.intellij.platform.lsp.api.LspServerState
 - s:values():com.intellij.platform.lsp.api.LspServerState[]
 com.intellij.platform.lsp.api.LspServerSupportProvider
+- com.intellij.platform.lsp.api.LspClientProvider
 - sf:Companion:com.intellij.platform.lsp.api.LspServerSupportProvider$Companion
 - createLspServerWidgetItem(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 - createLspWidgetItems(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
+- createWidgetItem(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
+- createWidgetItems(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
+- fileOpened(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.lsp.api.LspClientProvider$LspClientStarter):V
 - a:fileOpened(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.lsp.api.LspServerSupportProvider$LspServerStarter):V
 f:com.intellij.platform.lsp.api.LspServerSupportProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
@@ -171,7 +198,9 @@ f:com.intellij.platform.lsp.api.customization.LspCodeActionsDisabled
 c:com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 - com.intellij.platform.lsp.api.customization.LspCodeActionsCustomizer
 - <init>():V
+- createIntentionAction(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
 - createIntentionAction(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
+- createQuickFix(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
 - createQuickFix(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
 - getIntentionActionsSupport():Z
 - getQuickFixesSupport():Z
@@ -182,6 +211,7 @@ f:com.intellij.platform.lsp.api.customization.LspCodeLensDisabled
 c:com.intellij.platform.lsp.api.customization.LspCodeLensSupport
 - com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
 - <init>():V
+- codeLensClicked(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command,java.awt.event.MouseEvent):V
 - codeLensClicked(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command,java.awt.event.MouseEvent):V
 - shouldAskServerForCodeLenses(com.intellij.openapi.vfs.VirtualFile):Z
 - shouldDisplayCodeLens(com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.CodeLens):Z
@@ -192,6 +222,7 @@ f:com.intellij.platform.lsp.api.customization.LspCommandsDisabled
 c:com.intellij.platform.lsp.api.customization.LspCommandsSupport
 - com.intellij.platform.lsp.api.customization.LspCommandsCustomizer
 - <init>():V
+- executeCommand(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command):V
 - executeCommand(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command):V
 a:com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
 f:com.intellij.platform.lsp.api.customization.LspCompletionDisabled
@@ -342,10 +373,12 @@ c:com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 - shouldDisplayInlayHint(com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.InlayHint):Z
 c:com.intellij.platform.lsp.api.customization.LspIntentionAction
 - com.intellij.codeInsight.intention.IntentionAction
+- <init>(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.CodeAction):V
 - <init>(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):V
 - p:applyWorkspaceEdit(org.eclipse.lsp4j.WorkspaceEdit,java.util.Map):V
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - f:getFamilyName():java.lang.String
+- pf:getLspClient():com.intellij.platform.lsp.api.LspClient
 - pf:getLspServer():com.intellij.platform.lsp.api.LspServer
 - getText():java.lang.String
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
@@ -368,6 +401,7 @@ f:com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
 c:com.intellij.platform.lsp.api.customization.LspOptimizeImportsSupport
 - com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
 - <init>():V
+- shouldOptimizeImportsInThisFileExclusivelyByServer(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile,Z):Z
 - shouldOptimizeImportsInThisFileExclusivelyByServer(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,Z):Z
 a:com.intellij.platform.lsp.api.customization.LspRenameCustomizer
 f:com.intellij.platform.lsp.api.customization.LspRenameDisabled
@@ -423,11 +457,12 @@ f:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolDisabled
 - sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolDisabled
 f:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
 - com.intellij.navigation.NavigationItem
+- <init>(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.WorkspaceSymbol):V
 - <init>(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):V
 - canNavigate():Z
 - canNavigateToSource():Z
-- f:copy(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
-- bs:copy$default(com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem,com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol,I,java.lang.Object):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
+- f:copy(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
+- bs:copy$default(com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem,com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.WorkspaceSymbol,I,java.lang.Object):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
 - equals(java.lang.Object):Z
 - getName():java.lang.String
 - getPresentation():com.intellij.navigation.ItemPresentation
@@ -436,16 +471,18 @@ f:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
 c:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolSupport
 - com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolCustomizer
 - <init>():V
+- createNavigationItem(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.navigation.NavigationItem
 - createNavigationItem(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.navigation.NavigationItem
-c:com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
+c:com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 - com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
-- <init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class):V
-- b:<init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class):V
+- b:<init>(com.intellij.platform.lsp.api.LspClient,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createAdditionalInlineActions():java.util.List
 - p:createStopOrRestartAction():com.intellij.openapi.actionSystem.AnAction
 - p:createWidgetInlineActions():java.util.List
 - p:createWidgetMainAction():com.intellij.openapi.actionSystem.AnAction
-- pf:getLspServer():com.intellij.platform.lsp.api.LspServer
+- p:getItemLabel():java.lang.String
+- pf:getLspClient():com.intellij.platform.lsp.api.LspClient
 - p:getRootPostfix():java.lang.String
 - p:getServerLabel():java.lang.String
 - getStatusBarIcon():javax.swing.Icon
@@ -454,6 +491,11 @@ c:com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 - getWidgetActionLocation():com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 - p:getWidgetActionText():java.lang.String
 - isError():Z
+c:com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
+- com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
+- <init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class):V
+- b:<init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pf:getLspServer():com.intellij.platform.lsp.api.LspServer
 a:com.intellij.platform.lsp.util.Lsp4jService
 - sf:Companion:com.intellij.platform.lsp.util.Lsp4jService$Companion
 - <init>():V

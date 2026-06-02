@@ -5,7 +5,7 @@ import com.intellij.navigation.ChooseByNameContributorEx2
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -75,14 +75,14 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
   }
 
   private fun createNavigationItemFromWorkspaceSymbol(
-    server: LspServer,
+    client: LspClient,
     scope: GlobalSearchScope,
     symbol: WorkspaceSymbol,
   ): NavigationItem? {
     val uri = symbol.location.left?.uri ?: symbol.location.right?.uri ?: return null
-    val virtualFile = server.descriptor.findFileByUri(uri) ?: return null
+    val virtualFile = client.descriptor.findFileByUri(uri) ?: return null
     if (!scope.contains(virtualFile) || !shouldAcceptSymbolKind(symbol.kind)) return null
-    val customizer = server.descriptor.lspCustomization.workspaceSymbolCustomizer as LspWorkspaceSymbolSupport
-    return customizer.createNavigationItem(server, symbol)
+    val customizer = client.descriptor.lspCustomization.workspaceSymbolCustomizer as LspWorkspaceSymbolSupport
+    return customizer.createNavigationItem(client, symbol)
   }
 }

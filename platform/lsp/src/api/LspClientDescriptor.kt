@@ -122,7 +122,7 @@ import java.net.URISyntaxException
  * Normally, `LspClientDescriptor` implementations don't store any modifiable state.
  *
  * As a rule, plugins don't keep references to the `LspClientDescriptor` implementations. To get an `LspClientDescriptor` that is used to
- * start a specific LSP server, use [LspServer.descriptor], where the [LspServer] itself could be found using
+ * start a specific LSP server, use [LspServer.descriptor], where the [LspClient] itself could be found using
  * [LspServerManager.getServersForProvider].
  *
  * To see all [window/logMessage](https://microsoft.github.io/language-server-protocol/specification/#window_logMessage)
@@ -361,7 +361,7 @@ abstract class LspClientDescriptor protected constructor(
         synchronization = SynchronizationCapabilities().apply {
           // `dynamicRegistration = false` because the IDE doesn't check dynamically registered capabilities before sending
           // `didOpen` / `didChange` / `didClose` notifications.
-          // It means that the IDE relies on static capability `LspServer.initializeResult.capabilities.textDocumentSync`
+          // It means that the IDE relies on static capability `LspClient.initializeResult.capabilities.textDocumentSync`
           dynamicRegistration = false
           willSave = false
           willSaveWaitUntil = false
@@ -521,7 +521,7 @@ abstract class LspClientDescriptor protected constructor(
   open fun createLsp4jClient(handler: LspServerNotificationsHandler): Lsp4jClient = Lsp4jClient(handler)
 
   /**
-   * Returns a class that should be used as a [Lsp4jServer] for this [LspServer].
+   * Returns a class that should be used as a [Lsp4jServer] for this [LspClient].
    *
    * A plugin needs to define a custom sub-interface of the [Lsp4jServer] interface only if it needs to send
    * some custom undocumented notifications or requests to the LSP server.

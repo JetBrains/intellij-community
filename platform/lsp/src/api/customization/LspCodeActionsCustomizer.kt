@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lsp.api.customization
 
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.Diagnostic
@@ -28,6 +29,15 @@ open class LspCodeActionsSupport : LspCodeActionsCustomizer() {
    * LSP server.
    * The request asked for quick fixes for a specific [Diagnostic] (see [CodeAction.diagnostics]).
    */
+  open fun createQuickFix(lspClient: LspClient, codeAction: CodeAction): LspIntentionAction? =
+    @Suppress("DEPRECATION")
+    createQuickFix(lspClient as LspServer, codeAction)
+
+  @Deprecated(
+    "Override or call createQuickFix(lspClient, codeAction) — the LspClient overload",
+    ReplaceWith("createQuickFix(lspServer as LspClient, codeAction)", "com.intellij.platform.lsp.api.LspClient"),
+  )
+  @Suppress("DEPRECATION")
   open fun createQuickFix(lspServer: LspServer, codeAction: CodeAction): LspIntentionAction? =
     LspIntentionAction(lspServer, codeAction)
 
@@ -51,6 +61,15 @@ open class LspCodeActionsSupport : LspCodeActionsCustomizer() {
    * The request asked for code edit suggestions based on the current text selection and caret position,
    * but not related to a specific [Diagnostic].
    */
+  open fun createIntentionAction(lspClient: LspClient, codeAction: CodeAction): LspIntentionAction? =
+    @Suppress("DEPRECATION")
+    createIntentionAction(lspClient as LspServer, codeAction)
+
+  @Deprecated(
+    "Override or call createIntentionAction(lspClient, codeAction) — the LspClient overload",
+    ReplaceWith("createIntentionAction(lspServer as LspClient, codeAction)", "com.intellij.platform.lsp.api.LspClient"),
+  )
+  @Suppress("DEPRECATION")
   open fun createIntentionAction(lspServer: LspServer, codeAction: CodeAction): LspIntentionAction? =
     LspIntentionAction(lspServer, codeAction)
 }

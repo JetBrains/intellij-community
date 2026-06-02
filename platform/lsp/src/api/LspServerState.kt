@@ -2,7 +2,7 @@
 package com.intellij.platform.lsp.api
 
 /**
- * @see LspServer.state
+ * @see LspClient.state
  */
 enum class LspServerState {
   /**

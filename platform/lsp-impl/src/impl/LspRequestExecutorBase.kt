@@ -3,7 +3,7 @@ package com.intellij.platform.lsp.impl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.lsp.api.Lsp4jServer
-import com.intellij.platform.lsp.api.LspServer.Companion.DEFAULT_REQUEST_TIMEOUT_MS
+import com.intellij.platform.lsp.api.LspClient.Companion.DEFAULT_REQUEST_TIMEOUT_MS
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
