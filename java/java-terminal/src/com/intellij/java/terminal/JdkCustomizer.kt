@@ -23,8 +23,10 @@ internal class JdkCustomizer : ShellExecOptionsCustomizer {
   }
 }
 
-/** Attempt to get the sdk bin path the best it can */
+/** Attempt to get the JDK bin path the best it can */
 private fun Sdk.getSdkBinPath(): Path? {
+  if (sdkType.name != "JavaSDK") return null
+
   var path = this.homeDirectory?.findDirectory("bin")?.toNioPathOrNull()
   if (path == null) {
     this.homePath?.let { path = Path.of(it, "bin") }
