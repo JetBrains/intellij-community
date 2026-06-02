@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.java.groovy.toml
+package com.intellij.gradle.java.groovy.codeInspection
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor
@@ -8,6 +8,7 @@ import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyDeprecatedCon
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyForeignDelegateInspectionVisitor
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyIncorrectDependencyNotationArgumentInspectionVisitor
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyPluginDslStructureInspectionVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyRedundantKotlinStdLibInspectionVisitor
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile

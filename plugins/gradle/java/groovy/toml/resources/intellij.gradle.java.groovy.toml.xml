@@ -14,8 +14,4 @@
     <gotoDeclarationHandler implementation="com.intellij.gradle.java.groovy.toml.service.GradleVersionCatalogTomlAwareGotoDeclarationHandler"/>
     <referencesSearch implementation="com.intellij.gradle.java.groovy.toml.service.GradleGroovyVersionCatalogReferencesSearcher"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <dslInspectionProvider language="Groovy" implementationClass="com.intellij.gradle.java.groovy.toml.GroovyGradleDslInspectionProvider"/>
-  </extensions>
 </idea-plugin>

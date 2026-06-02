@@ -40,6 +40,8 @@
     <executionEnvironmentProvider implementation="com.intellij.gradle.java.groovy.execution.build.GroovyGradleApplicationEnvironmentProvider"/>
     <frameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
+    <dslInspectionProvider language="Groovy"
+                           implementationClass="com.intellij.gradle.java.groovy.codeInspection.GroovyGradleDslInspectionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
