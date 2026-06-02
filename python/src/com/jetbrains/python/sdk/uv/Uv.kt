@@ -19,7 +19,7 @@ interface UvCli<P : PathHolder> {
 
 @ApiStatus.Internal
 interface UvLowLevel<P : PathHolder> {
-  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P>
+  suspend fun initializeEnvironment(init: Boolean, version: Version?, clearExisting: Boolean = false): PyResult<P>
 
   suspend fun listUvPythons(): PyResult<Set<Path>>
   suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<List<Version>>
