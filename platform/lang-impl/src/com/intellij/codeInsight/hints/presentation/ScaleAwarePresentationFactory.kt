@@ -169,7 +169,7 @@ class ScaleAwareIconPresentation(val icon: Icon,
   private val scaledIcon by valueOf<Icon, IconParameters> { (fontSize, scale) ->
     IconUtil.scaleByFont(icon = icon, ancestor = editor.component, fontSize = fontSize / scale)
   }.withState {
-    IconParameters(editor.colorsScheme.editorFontSize2D - fontShift)
+    IconParameters(editor.colorsScheme.editorFontSize2D - JBUIScale.scale(fontShift))
   }
 
   private data class IconParameters(val font: Float, val scale: Float = JBUIScale.scale(1.0f))
