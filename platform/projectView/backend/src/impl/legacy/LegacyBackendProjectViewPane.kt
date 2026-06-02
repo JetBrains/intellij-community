@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.backend.impl.legacy
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewImpl
@@ -20,19 +21,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
 import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
@@ -40,6 +42,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -235,6 +238,7 @@ private class AbstractProjectViewPaneStateManager(
                 is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
                 is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
                 is ProjectViewPaneUpdateOptionValueRequest -> updateOptionValue(request.option, request.newValue)
+                is ProjectViewPaneUpdateSortKeyRequest -> updateSortKey(request.sortKey)
               }
             }
           }
@@ -267,8 +271,8 @@ private class AbstractProjectViewPaneStateManager(
       is ModelChildRemoved -> {
         ProjectViewChildRemoved(request.parentId, request.index)
       }
-      is ModelOptionStatesUpdated -> {
-        ProjectViewOptionStateEvent(request.optionStates)
+      is ModelActionStatesUpdated -> {
+        ProjectViewActionStateEvent(request.optionStates, request.sortKeyState)
       }
     }
   }
@@ -308,7 +312,7 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private fun loadInitialState() {
-    updateOptionStates()
+    updateActionStates()
     LOG.trace("Adding the super root")
     addNode(null, 0, SuperRoot)
     LOG.trace("Loading the real root")
@@ -466,11 +470,17 @@ private class AbstractProjectViewPaneStateManager(
   private fun updateOptionValue(option: ProjectViewOption, newValue: Boolean) {
     val legacyOption = legacyProjectViewOption(project, option)
     legacyOption.isSelected = newValue
-    updateOptionStates()
+    updateActionStates()
   }
 
-  private fun updateOptionStates() {
-    val impl = ProjectViewImpl.getInstance(project)
+  private fun updateSortKey(sortKey: NodeSortKey) {
+    val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+    impl.setSortKey(id, sortKey)
+    updateActionStates()
+  }
+
+  private fun updateActionStates() {
+    val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     impl.changeView(id)
     val updatedOptionStates = ProjectViewOption.entries.associateWith { option ->
       val legacyOption = legacyProjectViewOption(project, option)
@@ -480,9 +490,14 @@ private class AbstractProjectViewPaneStateManager(
         isAlwaysVisible = legacyOption.isAlwaysVisible,
       )
     }
+    val updatedSortKeyState = ProjectViewSortKeyState(
+      sortKey = impl.getSortKey(id),
+      availableSortKeys = NodeSortKey.entries.filter { impl.isSortKeySupported(id, it) }.toSet()
+    )
     LOG.debug { "Updated option states: $updatedOptionStates" }
-    handleModelUpdate(ModelOptionStatesUpdated(
-      updatedOptionStates
+    handleModelUpdate(ModelActionStatesUpdated(
+      updatedOptionStates,
+      updatedSortKeyState,
     ))
   }
 
@@ -568,7 +583,10 @@ private data class ModelChildrenRemoved(val parentId: Long) : ModelUpdateRequest
 
 private data class ModelChildRemoved(val parentId: Long, val index: Int) : ModelUpdateRequest()
 
-private data class ModelOptionStatesUpdated(val optionStates: Map<ProjectViewOption, ProjectViewOptionState>) : ModelUpdateRequest()
+private data class ModelActionStatesUpdated(
+  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
+  val sortKeyState: ProjectViewSortKeyState,
+) : ModelUpdateRequest()
 
 private data class LegacyProjectViewNode(
   val id: Long,

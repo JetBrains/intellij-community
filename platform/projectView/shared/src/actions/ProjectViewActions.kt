@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.actions
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,6 +20,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.platform.projectView.window.isProjectViewSplit
@@ -55,6 +57,66 @@ internal abstract class OptionAction(
   }
 }
 
+internal abstract class SortKeyAction(
+  private val sortKey: NodeSortKey,
+  private val legacyActionSupplier: () -> ProjectViewImpl.Action.SortKeyAction,
+) : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
+
+  constructor(sortKey: NodeSortKey) : this(
+    sortKey,
+    legacyActionSupplier = { legacyProjectViewAction(sortKey) },
+  )
+
+  private val legacyAction: ProjectViewImpl.Action.SortKeyAction by lazy { legacyActionSupplier() }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun getBehavior(): ActionRemoteBehavior? = if (isProjectViewSplit()) {
+    ActionRemoteBehavior.FrontendOnly
+  }
+  else {
+    (legacyAction as ActionRemoteBehaviorSpecification?)?.getBehavior()
+  }
+
+  override fun update(e: AnActionEvent) {
+    if (!isProjectViewSplit()) {
+      legacyAction.update(e)
+      return
+    }
+    super.update(e)
+    if (e.isFromContextMenu) {
+      e.presentation.icon = null
+    }
+    e.presentation.isEnabledAndVisible = getSortKeyState(e)?.availableSortKeys?.contains(sortKey) == true
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    if (!isProjectViewSplit()) {
+      return legacyAction.isSelected(e)
+    }
+    return getSortKeyState(e)?.sortKey == sortKey
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    if (!isProjectViewSplit()) {
+      legacyAction.setSelected(e, state)
+      return
+    }
+    if (!state) return
+    val project = e.project ?: return
+    ProjectViewOptionSupport.getInstance(project).requestSortKeyChange(sortKey)
+    val menu = e.getActionMenu()
+    if (menu != null) {
+      LOG.debug { "Requested a sort key change to $sortKey, action menu update pending" }
+      ProjectViewOptionMenuUpdater.getInstance(project).markMenuNeedsUpdating(menu)
+    }
+  }
+
+  private fun getSortKeyState(e: AnActionEvent): ProjectViewSortKeyState? {
+    return ProjectViewOptionSupport.getInstance(e.project ?: return null).getSortKeyState()
+  }
+}
+
 internal class OpenInPreviewTab : OptionAction(ProjectViewOption.OPEN_IN_PREVIEW_TAB)
 internal class AutoscrollToSource : OptionAction(ProjectViewOption.AUTOSCROLL_TO_SOURCE)
 internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
@@ -70,6 +132,13 @@ internal class FlattenPackages : OptionAction(ProjectViewOption.FLATTEN_PACKAGES
 internal class AbbreviatePackageNames : OptionAction(ProjectViewOption.ABBREVIATE_PACKAGE_NAMES)
 internal class HideEmptyMiddlePackages : OptionAction(ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES)
 internal class CompactDirectories : OptionAction(ProjectViewOption.COMPACT_DIRECTORIES)
+
+internal class SortByName : SortKeyAction(NodeSortKey.BY_NAME)
+internal class SortByType : SortKeyAction(NodeSortKey.BY_TYPE)
+internal class SortByTimeDescending : SortKeyAction(NodeSortKey.BY_TIME_DESCENDING)
+internal class SortByTimeAscending : SortKeyAction(NodeSortKey.BY_TIME_ASCENDING)
+internal class FoldersAlwaysOnTop : OptionAction(ProjectViewOption.FOLDERS_ALWAYS_ON_TOP)
+internal class ManualOrder : OptionAction(ProjectViewOption.MANUAL_ORDER)
 
 private fun optionSupplier(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
@@ -102,6 +171,17 @@ private fun legacyProjectViewAction(option: ProjectViewOption): ProjectViewImpl.
     ProjectViewOption.ABBREVIATE_PACKAGE_NAMES -> ProjectViewImpl.Action.AbbreviatePackageNames()
     ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewImpl.Action.HideEmptyMiddlePackages()
     ProjectViewOption.COMPACT_DIRECTORIES -> ProjectViewImpl.Action.CompactDirectories()
+    ProjectViewOption.FOLDERS_ALWAYS_ON_TOP -> ProjectViewImpl.Action.FoldersAlwaysOnTop()
+    ProjectViewOption.MANUAL_ORDER -> ProjectViewImpl.Action.ManualOrder()
+  }
+}
+
+private fun legacyProjectViewAction(sortKey: NodeSortKey): ProjectViewImpl.Action.SortKeyAction {
+  return when (sortKey) {
+    NodeSortKey.BY_NAME -> ProjectViewImpl.Action.SortByName()
+    NodeSortKey.BY_TYPE -> ProjectViewImpl.Action.SortByType()
+    NodeSortKey.BY_TIME_ASCENDING -> ProjectViewImpl.Action.SortByTimeAscending()
+    NodeSortKey.BY_TIME_DESCENDING -> ProjectViewImpl.Action.SortByTimeDescending()
   }
 }
 
@@ -161,6 +241,8 @@ enum class ProjectViewOption {
   ABBREVIATE_PACKAGE_NAMES,
   HIDE_EMPTY_MIDDLE_PACKAGES,
   COMPACT_DIRECTORIES,
+  FOLDERS_ALWAYS_ON_TOP,
+  MANUAL_ORDER,
 }
 
 @ApiStatus.Internal
@@ -169,6 +251,13 @@ data class ProjectViewOptionState(
   val isSelected: Boolean,
   val isEnabled: Boolean,
   val isAlwaysVisible: Boolean,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewSortKeyState(
+  val sortKey: NodeSortKey,
+  val availableSortKeys: Set<NodeSortKey>,
 )
 
 @Service(Service.Level.PROJECT)

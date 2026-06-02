@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,8 +28,9 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewOptionStateEvent(
+data class ProjectViewActionStateEvent(
   val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
+  val sortKeyState: ProjectViewSortKeyState,
 ) : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal

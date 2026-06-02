@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.frontend.impl.pane
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.ide.util.treeView.PathElementIdProvider
@@ -17,15 +20,16 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
@@ -33,6 +37,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.platform.projectView.window.ProjectViewOptionSupport
@@ -53,6 +58,8 @@ import javax.swing.JComponent
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 internal abstract class TreeBasedFrontendProjectViewPane(
   private val project: Project,
@@ -166,8 +173,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
           treeModel.setChildren(parent, emptyList())
         }
       }
-      is ProjectViewOptionStateEvent -> {
-        optionSupport.updateOptionStates(event.optionStates)
+      is ProjectViewActionStateEvent -> {
+        optionSupport.updateActionStates(event.optionStates, event.sortKeyState)
       }
     }
   }
@@ -226,16 +233,24 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   
   private inner class OptionSupport : ProjectViewOptionSupport {
     private val optionStates = ConcurrentHashMap<ProjectViewOption, ProjectViewOptionState>()
+    private val sortKeyState = AtomicReference<ProjectViewSortKeyState?>(null)
 
     override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = optionStates[option]
+
+    override fun getSortKeyState(): ProjectViewSortKeyState? = sortKeyState.load()
 
     override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
       sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
     }
 
-    fun updateOptionStates(optionStates: Map<ProjectViewOption, ProjectViewOptionState>) {
-      LOG.debug { "Received updated option values: $optionStates" }
+    override fun requestSortKeyChange(sortKey: NodeSortKey) {
+      sendRequest(ProjectViewPaneUpdateSortKeyRequest(sortKey))
+    }
+
+    fun updateActionStates(optionStates: Map<ProjectViewOption, ProjectViewOptionState>, sortKeyState: ProjectViewSortKeyState) {
+      LOG.debug { "Received updated actions: $optionStates, $sortKeyState" }
       this.optionStates.putAll(optionStates)
+      this.sortKeyState.store(sortKeyState)
       ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
     }
   }

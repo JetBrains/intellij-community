@@ -2086,6 +2086,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return pane != null && pane.supportsSortKey(currentSortKey) ? currentSortKey : ProjectViewSettings.Immutable.DEFAULT.getSortKey();
   }
 
+  @ApiStatus.Internal
+  public boolean isSortKeySupported(@NotNull String paneId, @NotNull NodeSortKey sortKey) {
+    var pane = getProjectViewPaneById(paneId);
+    return pane != null && pane.supportsSortKey(sortKey);
+  }
+
   @Override
   public void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey) {
     setSortKey(this, getProjectViewPaneById(paneId), sortKey);
@@ -2293,8 +2299,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class FoldersAlwaysOnTop extends Action {
-      FoldersAlwaysOnTop() {
+    @ApiStatus.Internal
+    public static final class FoldersAlwaysOnTop extends Action {
+      public FoldersAlwaysOnTop() {
         super(view -> view.myFoldersAlwaysOnTop);
       }
     }
@@ -2313,8 +2320,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class ManualOrder extends Action {
-      ManualOrder() {
+    @ApiStatus.Internal
+    public static final class ManualOrder extends Action {
+      public ManualOrder() {
         super(view -> view.manualOrder);
       }
     }
@@ -2354,7 +2362,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    abstract static class SortKeyAction extends DumbAwareToggleAction {
+    @ApiStatus.Internal
+    public abstract static class SortKeyAction extends DumbAwareToggleAction {
       private final @NotNull NodeSortKey mySortKey;
 
       SortKeyAction(@NotNull NodeSortKey sortKey) {
@@ -2408,26 +2417,34 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class SortByName extends SortKeyAction {
-      SortByName() {
+    @ApiStatus.Internal
+    public static final class SortByName extends SortKeyAction {
+      @ApiStatus.Internal
+      public SortByName() {
         super(NodeSortKey.BY_NAME);
       }
     }
 
-    static final class SortByType extends SortKeyAction {
-      SortByType() {
+    @ApiStatus.Internal
+    public static final class SortByType extends SortKeyAction {
+      @ApiStatus.Internal
+      public SortByType() {
         super(NodeSortKey.BY_TYPE);
       }
     }
 
-    static final class SortByTimeDescending extends SortKeyAction {
-      SortByTimeDescending() {
+    @ApiStatus.Internal
+    public static final class SortByTimeDescending extends SortKeyAction {
+      @ApiStatus.Internal
+      public SortByTimeDescending() {
         super(NodeSortKey.BY_TIME_DESCENDING);
       }
     }
 
-    static final class SortByTimeAscending extends SortKeyAction {
-      SortByTimeAscending() {
+    @ApiStatus.Internal
+    public static final class SortByTimeAscending extends SortKeyAction {
+      @ApiStatus.Internal
+      public SortByTimeAscending() {
         super(NodeSortKey.BY_TIME_ASCENDING);
       }
     }

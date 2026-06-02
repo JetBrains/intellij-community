@@ -62,6 +62,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.projectView` end

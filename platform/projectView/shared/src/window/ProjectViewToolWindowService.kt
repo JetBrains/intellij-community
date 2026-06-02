@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.window
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,5 +30,9 @@ interface ProjectViewOptionSupport {
   
   fun getOptionState(option: ProjectViewOption): ProjectViewOptionState?
 
+  fun getSortKeyState(): ProjectViewSortKeyState?
+
   fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean)
+
+  fun requestSortKeyChange(sortKey: NodeSortKey)
 }

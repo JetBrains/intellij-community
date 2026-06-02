@@ -80,28 +80,28 @@
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
+                class="com.intellij.platform.projectView.actions.ManualOrder"
                 icon="AllIcons.ObjectBrowser.Sorted"/>
         <action id="ProjectView.SortByName"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName">
+                class="com.intellij.platform.projectView.actions.SortByName">
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.SortByType"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
+                class="com.intellij.platform.projectView.actions.SortByType"
                 icon="AllIcons.ObjectBrowser.SortByType">
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.SortByTimeDescending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeDescending">
+                class="com.intellij.platform.projectView.actions.SortByTimeDescending">
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.SortByTimeAscending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeAscending">
+                class="com.intellij.platform.projectView.actions.SortByTimeAscending">
           <override-text place="ToolwindowPopup"/>
         </action>
         <separator/>
         <action id="ProjectView.FoldersAlwaysOnTop"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
+                class="com.intellij.platform.projectView.actions.FoldersAlwaysOnTop"/>
       </group>
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"

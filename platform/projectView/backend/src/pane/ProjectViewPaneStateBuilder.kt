@@ -4,13 +4,14 @@ package com.intellij.platform.projectView.backend.pane
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
+import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
@@ -32,6 +33,7 @@ interface ProjectViewPaneStateBuilder {
 private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private val optionStates = EnumMap<ProjectViewOption, ProjectViewOptionState>(ProjectViewOption::class.java)
+    private var sortKeyState: ProjectViewSortKeyState? = null
     private val superRoot = Node(SuperRootModel)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     
@@ -68,8 +70,9 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
           val node = nodeById[update.model.id] ?: return null
           node.model = update.model
         }
-        is ProjectViewOptionStateEvent -> {
+        is ProjectViewActionStateEvent -> {
           optionStates.putAll(update.optionStates)
+          sortKeyState = update.sortKeyState
         }
       }
       LOG.debug("Handled update: $update")
@@ -78,13 +81,20 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
 
     override suspend fun takeSnapshot(): List<ProjectViewPaneStateEvent> {
       val result = ArrayList<ProjectViewPaneStateEvent>(nodeById.size)
-      addOptionStates(result)
+      addActionStates(result)
       addTreeSnapshot(result)
       return result
     }
 
-    private fun addOptionStates(result: ArrayList<ProjectViewPaneStateEvent>) {
-      result.add(ProjectViewOptionStateEvent(optionStates.toMap(EnumMap(ProjectViewOption::class.java))))
+    private fun addActionStates(result: ArrayList<ProjectViewPaneStateEvent>) {
+      val optionStates = optionStates.toMap(EnumMap(ProjectViewOption::class.java))
+      val sortKeyState = sortKeyState
+      if (sortKeyState != null) {
+        result.add(ProjectViewActionStateEvent(
+          optionStates,
+          sortKeyState,
+        ))
+      }
     }
 
     private fun addTreeSnapshot(result: ArrayList<ProjectViewPaneStateEvent>) {
