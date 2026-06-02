@@ -412,7 +412,7 @@ internal class TerminalToolWindowTabsManagerImpl(
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
 
-        TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope)
+        TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope.childScope("Terminal DnD handler"))
         TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
       }
     }
