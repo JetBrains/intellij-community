@@ -1490,6 +1490,7 @@ plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/spellchecker
 plugins/markdown/test
+plugins/markdown/textMate
 plugins/markdown/xml
 plugins/marketplace-ml
 plugins/maven
