@@ -1826,6 +1826,7 @@ a:com.intellij.openapi.vfs.VirtualFileSystem
 f:com.intellij.openapi.vfs.VirtualFileUtil
 - sf:findDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
 - sf:findPsiDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.psi.PsiDirectory
+- sf:findVirtualFileOrDirectory(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
 - sf:isFile(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isTooLargeForIntellijSense(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:originalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile

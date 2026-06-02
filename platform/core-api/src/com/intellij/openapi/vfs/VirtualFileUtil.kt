@@ -218,6 +218,14 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   return directory
 }
 
+/**
+ * Find [VirtualFile] by [Path] without refreshing the file system.
+ */
+fun Path.findVirtualFileOrDirectory(): VirtualFile? {
+  val fileManager = VirtualFileManager.getInstance()
+  return fileManager.findFileByNioPath(this.normalize())
+}
+
 fun Path.refreshAndFindVirtualFileOrDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   return fileManager.refreshAndFindFileByNioPath(this.normalize())
