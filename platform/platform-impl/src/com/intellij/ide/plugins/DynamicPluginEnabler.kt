@@ -64,21 +64,28 @@ class DynamicPluginEnabler : PluginEnabler {
       PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
     }
 
-    PluginEnabler.HEADLESS.enable(descriptors)
+    val disabledStateChanged = PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
-    val pluginsLoaded = if (progressTitle == null) {
+
+    val pluginsLoaded: Boolean
+    if (!disabledStateChanged && installedDescriptors.all { PluginManagerCore.isLoaded(it) }) {
+      // nothing to do
+      pluginsLoaded = true
+    }
+    else if (progressTitle == null) {
       val loaded = AtomicBoolean(false)
       runInEdt {
         loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
       }
-      loaded.get()
-    } else {
+      pluginsLoaded = loaded.get()
+    }
+    else {
       val progress = PotemkinProgress(progressTitle, project, null, null)
       var result = false
       progress.runInSwingThread {
         result = DynamicPlugins.loadPlugins(installedDescriptors, project)
       }
-      result
+      pluginsLoaded = result
     }
 
     for (listener in pluginEnableStateChangedListeners) {
