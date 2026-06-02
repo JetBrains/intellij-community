@@ -151,7 +151,7 @@ internal fun PsiElement.isExcludeArgument(): Boolean {
                          ?.parent.asSafely<KtValueArgumentList>()
                          ?.parent.asSafely<KtCallExpression>() ?: return false
   return callExpression.isCallWithReceiverSubtypeDumbAware(
-    FqName("org.gradle.api.artifacts.ModuleDependency"),
+    FqName("org.gradle.api.artifacts.Dependency"),
     setOf("exclude")
   )
 }
