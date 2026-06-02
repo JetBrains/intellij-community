@@ -47,7 +47,9 @@ import com.intellij.platform.structureView.impl.util.StructurePopupUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PlaceHolder
+import com.intellij.ui.speedSearch.ElementFilter
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineName
@@ -116,12 +118,19 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     try {
       dto = run {
         val createTreeModelStartTime = System.nanoTime()
-        val treeModel: StructureViewModel? = withContext(Dispatchers.EDT) {
+        data class InitialTreeModelContext(
+          val treeModel: StructureViewModel,
+          val backendActionOwner: BackendTreeActionOwner,
+          val wrapper: SmartTreeStructure,
+          val filteringStructure: FilteringTreeStructure,
+        )
+
+        val treeModelContext: InitialTreeModelContext? = withContext(Dispatchers.EDT) {
           writeIntentReadAction {
             PsiDocumentManager.getInstance(project).commitAllDocuments()
 
             val structureViewBuilder = fileEditor.structureViewBuilder ?: return@writeIntentReadAction null
-            when (structureViewBuilder) {
+            val treeModel = when (structureViewBuilder) {
               is PhysicalAndLogicalStructureViewBuilder -> {
                 val view = structureViewBuilder.createPhysicalStructureView(fileEditor, project)
                 Disposer.register(disposable, view)
@@ -136,43 +145,51 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
                 StructurePopupUtil.createStructureViewModel(project, fileEditor, view)
               }
             }
+
+            //todo flag for tw
+            (treeModel as? PlaceHolder)?.setPlace(TreeStructureUtil.PLACE)
+
+            val backendActionOwner = BackendTreeActionOwner(allNodeProvidersActive = false)
+            val treeModelWrapper = TreeModelWrapper(treeModel, backendActionOwner)
+
+            Disposer.register(disposable, treeModelWrapper)
+
+            // to get the same tree deduplication as in com.intellij.ui.treeStructure.filtered.FilteringTreeStructure.addToCache
+            lateinit var filteringStructure: FilteringTreeStructure
+            val wrapper = object : SmartTreeStructure(project, treeModelWrapper) {
+              override fun rebuildTree() {
+                if (!structureViews.containsKey(id.id)) return
+                ProgressManager.getInstance().computePrioritized(ThrowableComputable<Unit?, Throwable?> {
+                  super.rebuildTree()
+                  filteringStructure.rebuild()
+                })
+              }
+
+              override fun createTree(): TreeElementWrapper {
+                return StructureViewComponent.createWrapper(myProject, myModel.getRoot(), myModel)
+              }
+            }
+
+            filteringStructure = FilteringTreeStructure(ElementFilter<Any> { true }, wrapper, false)
+            InitialTreeModelContext(treeModel, backendActionOwner, wrapper, filteringStructure)
           }
         }
         logger.trace { "createStructureViewModel[$id]: tree model creation completed in ${(System.nanoTime() - createTreeModelStartTime).asTraceDuration()}" }
 
-        if (treeModel == null) return@run null
+        if (treeModelContext == null) return@run null
 
-        //todo flag for tw
-        (treeModel as? PlaceHolder)?.setPlace(TreeStructureUtil.PLACE)
-
-        val backendActionOwner = BackendTreeActionOwner(allNodeProvidersActive = false)
-        val treeModelWrapper = TreeModelWrapper(treeModel, backendActionOwner)
-
-        Disposer.register(disposable, treeModelWrapper)
-
-        val wrapper = object : SmartTreeStructure(project, treeModelWrapper) {
-          override fun rebuildTree() {
-            if (!structureViews.containsKey(id.id)) return
-            super.rebuildTree()
-          }
-
-          override fun createTree(): TreeElementWrapper {
-            return StructureViewComponent.createWrapper(myProject, myModel.getRoot(), myModel)
-          }
-        }
-
-        val myStructureTreeModel = StructureTreeModel<SmartTreeStructure>(wrapper, disposable)
+        val myStructureTreeModel = StructureTreeModel<FilteringTreeStructure>(treeModelContext.filteringStructure, disposable)
 
         val requestFlow = MutableSharedFlow<StructureViewEvent>(
           extraBufferCapacity = 1,
           onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
         val nodesFlow = MutableStateFlow<TreeNodesDto?>(null)
-        val entry = StructureViewEntry(wrapper,
+        val entry = StructureViewEntry(treeModelContext.wrapper,
                                        myStructureTreeModel,
-                                       treeModel,
+                                       treeModelContext.treeModel,
                                        requestFlow,
-                                       backendActionOwner,
+                                       treeModelContext.backendActionOwner,
                                        fileEditor,
                                        disposable,
                                        project,
@@ -219,10 +236,12 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
         val (root, actions) = try {
           myStructureTreeModel.invoker.compute {
-            val rootModel = createRootModel(wrapper.rootElement as TreeElementWrapper,
-                                            treeModel as? ExpandInfoProvider,
-                                            getElementInfoProvider(treeModel))
-            val actions = createActionModels(treeModel)
+            //to initialize FilteringTreeStructure
+            treeModelContext.wrapper.rebuildTree()
+            val rootModel = createRootModel(treeModelContext.wrapper.rootElement as TreeElementWrapper,
+                                            treeModelContext.treeModel as? ExpandInfoProvider,
+                                            getElementInfoProvider(treeModelContext.treeModel))
+            val actions = createActionModels(treeModelContext.treeModel)
 
             rootModel to actions
           }.asDeferred().await()
@@ -246,8 +265,8 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
         return@run StructureViewModelDto(
           root,
           nodesFlow.toRpc(),
-          (treeModel as? ExpandInfoProvider)?.isSmartExpand ?: false,
-          (treeModel as? ExpandInfoProvider)?.minimumAutoExpandDepth ?: 2,
+          (treeModelContext.treeModel as? ExpandInfoProvider)?.isSmartExpand ?: false,
+          (treeModelContext.treeModel as? ExpandInfoProvider)?.minimumAutoExpandDepth ?: 2,
           false, /*todo for tw*/
           actions
         )
@@ -310,9 +329,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     visit(root, entry.structureTreeModel, TreePath(root)) {
       StructureViewComponent.visitPathForElementSelection(it, currentEditorElement, editorOffset, state)
 
-      val element = TreeUtil.getUserObject(it.lastPathComponent) as? TreeElementWrapper ?: return@visit false
-
-      processTreeElement(expandInfoProvider, elementInfoProvider, element, mainNodes, nodeProvidersMap, filters, entry)
+      processTreeElement(expandInfoProvider, elementInfoProvider, it, mainNodes, nodeProvidersMap, filters, entry)
       false
     }
 
@@ -327,8 +344,6 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
     val nodeProviders = nodeProvidersMap.entries.mapNotNull { (provider, nodes) ->
       val nodesLoaded = entry.backendActionOwner.isActionActive(provider)
-
-      logger.info("Node provider ${provider.name} has nodes loaded: $nodesLoaded")
 
       if (!nodesLoaded) return@mapNotNull null
       NodeProviderNodesDto(
@@ -412,8 +427,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     val root = entry.structureTreeModel.root ?: return null
 
     visit(root, entry.structureTreeModel, TreePath(root)) {
-      val element = TreeUtil.getUserObject(it.lastPathComponent) as? TreeElementWrapper ?: return@visit false
-      processTreeElement(expandInfoProvider, elementInfoProvider, element, mainNodes, providerNodesMap, filters, entry)
+      processTreeElement(expandInfoProvider, elementInfoProvider, it, mainNodes, providerNodesMap, filters, entry)
       false
     }
 
@@ -454,7 +468,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
   private fun processTreeElement(
     expandInfoProvider: ExpandInfoProvider?,
     elementInfoProvider: ElementInfoProvider?,
-    wrapper: TreeElementWrapper,
+    path: TreePath,
     nodes: MutableList<StructureViewTreeElementDto>,
     nodeProvidersMap: Map<FileStructureNodeProvider<*>, MutableList<StructureViewTreeElementDto>>?,
     filters: List<FileStructureFilter>,
@@ -462,13 +476,17 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
   ) {
     check(structureViewEntry.structureTreeModel.invoker.isValidThread)
 
+    val wrapper = unwrapTreeElementWrapper(path.lastPathComponent) ?: return
     val element = wrapper.getValue() as? StructureViewTreeElement ?: return
 
     val id = structureViewEntry.nodeToId.getOrPut(element.value) {
       structureViewEntry.idRef.get().also { structureViewEntry.idRef.inc() }
     }
 
-    val parentId = (wrapper.parent?.value as? StructureViewTreeElement)?.let { structureViewEntry.nodeToId[it.value] } ?: 0
+    val parentId = unwrapTreeElementWrapper(path.parentPath?.lastPathComponent)
+      ?.getValue()
+      ?.let { it as? StructureViewTreeElement }
+      ?.let { structureViewEntry.nodeToId[it.value] } ?: 0
 
     val model = element.toDto(
       id,
@@ -495,7 +513,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
   internal data class StructureViewEntry(
     val wrapper: SmartTreeStructure,
-    val structureTreeModel: StructureTreeModel<SmartTreeStructure>,
+    val structureTreeModel: StructureTreeModel<FilteringTreeStructure>,
     val treeModel: StructureViewModel,
     val requestFlow: MutableSharedFlow<StructureViewEvent>,
     val backendActionOwner: BackendTreeActionOwner, // should only be accessed at StructureTreeModel.invoker
@@ -510,7 +528,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
   companion object {
     private val logger = logger<BackendStructureTreeService>()
 
-    internal fun visit(element: TreeNode, model: StructureTreeModel<SmartTreeStructure>, path: TreePath, action: (TreePath) -> Boolean): Boolean {
+    internal fun visit(element: TreeNode, model: StructureTreeModel<*>, path: TreePath, action: (TreePath) -> Boolean): Boolean {
       if (model.isDisposed) return true
 
       for (child in model.getChildren(element)) {
@@ -521,16 +539,30 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       return false
     }
 
+    internal fun unwrapTreeElementWrapper(node: Any?): TreeElementWrapper? {
+      val userObject = TreeUtil.getUserObject(node)
+      return when (userObject) {
+        is TreeElementWrapper -> userObject
+        is FilteringTreeStructure.FilteringNode -> userObject.delegate as? TreeElementWrapper
+        else -> null
+      }
+    }
+
+    private fun unwrapStructureValue(node: Any?): Any? {
+      val wrapper = unwrapTreeElementWrapper(node) ?: return null
+      val element = wrapper.value as? StructureViewTreeElement ?: return null
+      return element.value
+    }
+
     internal fun processStateToGetSelectedValue(state: StructureViewSelectVisitorState, entry: StructureViewEntry, currentEditorElement: Any?): Any? {
-      val adjusted = state.bestMatch
-      val value = if (adjusted != null && !state.isExactMatch && currentEditorElement is PsiElement) {
-        val minChild = FileStructurePopup.findClosestPsiElement(currentEditorElement, adjusted, entry.structureTreeModel)
-        if (minChild != null) StructureViewComponent.unwrapValue(minChild) else StructureViewComponent.unwrapValue(TreeUtil.getAbstractTreeNode(adjusted))
+      val adjusted = state.bestMatch ?: return null
+      val selectedNode = if (!state.isExactMatch && currentEditorElement is PsiElement) {
+        FileStructurePopup.findClosestPsiElement(currentEditorElement, adjusted, entry.structureTreeModel) ?: adjusted.lastPathComponent
       }
       else {
-        StructureViewComponent.unwrapValue(TreeUtil.getAbstractTreeNode(adjusted))
+        adjusted.lastPathComponent
       }
-      return if (adjusted == null) null else value
+      return unwrapStructureValue(selectedNode)
     }
   }
 }

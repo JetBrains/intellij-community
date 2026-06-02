@@ -596,7 +596,12 @@ class FileStructurePopup(
     rebuildVisibleChildren(rootNode, snapshot)
     treeModel.nodeStructureChanged(rootNode)
     treeState.applyTo(tree)
-    expandAutoNodes()
+    if (snapshot.narrowDown) {
+      expandAllVisibleNodes()
+    }
+    else {
+      expandAutoNodes()
+    }
 
     if (selectedNode == null) {
       val editorSelection = myModel.editorSelection.value?.let { findPathForElementOrAncestor(it) }
@@ -638,24 +643,26 @@ class FileStructurePopup(
     children.sortBy { it.indexInParent }
 
     node.visibleChildren.clear()
+    var hasMatchingDescendant = false
     for (child in children) {
+      val childMatchesSpeedSearch = snapshot.matchesSpeedSearch(child)
       if (!snapshot.enabledFilters.all { it.isVisible(child) }) {
         clearVisibleChildren(child)
         continue
       }
 
-      // Rebuild children before deciding whether to keep this node: narrow-down speed search keeps direct matches and ancestors of
-      // matching descendants.
-      val hasVisibleChildren = rebuildVisibleChildren(child, snapshot)
-      if (!snapshot.narrowDown || snapshot.matchesSpeedSearch(child) || hasVisibleChildren) {
+      // Match the old FilteringTreeStructure-based popup: keep direct matches and all of their visible ancestors.
+      val hasMatchingDescendantInChild = rebuildVisibleChildren(child, snapshot)
+      if (!snapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
         node.visibleChildren.add(child)
+        hasMatchingDescendant = hasMatchingDescendant || childMatchesSpeedSearch || hasMatchingDescendantInChild
       }
       else {
         clearVisibleChildren(child)
       }
     }
 
-    return node.visibleChildren.isNotEmpty()
+    return hasMatchingDescendant
   }
 
   private fun clearVisibleChildren(node: StructureViewNode) {

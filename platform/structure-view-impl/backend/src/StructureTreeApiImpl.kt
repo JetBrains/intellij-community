@@ -13,7 +13,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.smartTree.Filter
 import com.intellij.ide.util.treeView.smartTree.NodeProvider
 import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel
-import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.lang.LangBundle
@@ -37,7 +36,6 @@ import com.intellij.platform.structureView.impl.StructureTreeApi
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
 import com.intellij.util.application
-import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -146,7 +144,7 @@ internal class StructureTreeApiImpl : StructureTreeApi {
 
       val root = entry.structureTreeModel.root ?: return@compute null to null
       visit(root, entry.structureTreeModel, TreePath(root)) {
-        val wrapper = TreeUtil.getUserObject(it.lastPathComponent) as? TreeElementWrapper
+        val wrapper = BackendStructureTreeService.unwrapTreeElementWrapper(it.lastPathComponent)
         val element = wrapper?.getValue() as? StructureViewTreeElement
         return@visit if (element?.value == elementValue) {
           targetElement = element
