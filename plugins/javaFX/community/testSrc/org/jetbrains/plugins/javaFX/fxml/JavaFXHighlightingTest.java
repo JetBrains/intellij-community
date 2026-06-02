@@ -13,12 +13,14 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
  */
+@TestDataPath("$CONTENT_ROOT/../../testData/highlighting")
 public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   public void testLoginForm() {

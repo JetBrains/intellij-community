@@ -26,6 +26,7 @@ internal class JavaFxExpressionParserTest {
   fun testValid() {
     assert(parse("a.b.c.d.e.f").syntacticallyValid)
     assert(parse("a.b.c.d.e.f + h.i.j.k.l").syntacticallyValid)
+    assert(parse("null").syntacticallyValid)
     assert(parse("-1").syntacticallyValid)
     assert(parse("!a.b").syntacticallyValid)
     assert(parse("--1").syntacticallyValid)

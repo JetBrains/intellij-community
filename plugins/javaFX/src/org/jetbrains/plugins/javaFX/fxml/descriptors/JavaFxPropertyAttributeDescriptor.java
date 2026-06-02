@@ -33,7 +33,6 @@ import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxExpressionParser;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -137,11 +136,11 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     if (parent instanceof XmlAttribute && JavaFxPsiUtil.isEventHandlerProperty((XmlAttribute)parent)) {
       return validateAttributeHandler(xmlAttributeValue, value);
     }
-    if (value.startsWith("$")) {
-      return validatePropertyExpression(xmlAttributeValue, value);
-    }
-    else if (StringUtil.trimLeading(value).startsWith("$")) {
+    if (!value.startsWith("$") && StringUtil.trimLeading(value).startsWith("$")) {
       return JavaFXBundle.message("spaces.not.allowed.before.property.or.expression");
+    }
+    else if (value.startsWith("$")) {
+      return validatePropertyExpression(xmlAttributeValue, value);
     }
     else if (value.startsWith("%")) {
       return null;
@@ -170,9 +169,21 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return JavaFXBundle.message("incorrect.expression.syntax");
     }
     final List<String> propertyNames;
-    if (JavaFxPsiUtil.isExpressionBinding(value)) {
-      JavaFxExpressionParser.ParsedBinding parsed =
-        JavaFxExpressionParser.parse(value.substring(2, value.length() - 1));
+    if (JavaFxPsiUtil.isChainExpression(value)) {
+      JavaFxExpressionParser.ParsedBinding parsed = JavaFxExpressionParser.parse(value.substring(1));
+      if (!parsed.syntacticallyValid || parsed.chains.size() > 1) {
+        return JavaFXBundle.message("incorrect.expression.syntax");
+      }
+      propertyNames = new ArrayList<>();
+      if (!parsed.chains.isEmpty()) {
+        JavaFxExpressionParser.PropertyChain only = parsed.chains.getFirst();
+        for (JavaFxExpressionParser.Segment segment : only.segments) {
+          propertyNames.add(segment.name);
+        }
+      }
+    }
+    else if (JavaFxPsiUtil.isExpressionBinding(value)) {
+      JavaFxExpressionParser.ParsedBinding parsed = JavaFxExpressionParser.parse(value.substring(2, value.length() - 1));
       if (!parsed.syntacticallyValid) {
         return JavaFXBundle.message("incorrect.expression.syntax");
       }
@@ -189,8 +200,9 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       }
     }
     else {
-      propertyNames = Collections.singletonList(value.substring(1));
-      if (isIncompletePropertyChain(propertyNames)) {
+      String reference = value.substring(1);
+      propertyNames = StringUtil.split(reference, ".");
+      if (reference.endsWith(".") || isIncompletePropertyChain(propertyNames)) {
         return JavaFXBundle.message("incorrect.expression.syntax");
       }
     }
@@ -300,7 +312,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
-    return !text.startsWith("${") && !FxmlConstants.isNullValue(text) ? super.getValueReferences(element, text) : PsiReference.EMPTY_ARRAY;
+    return !text.startsWith("$") && !FxmlConstants.isNullValue(text) ? super.getValueReferences(element, text) : PsiReference.EMPTY_ARRAY;
   }
 
   @Override

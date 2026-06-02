@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@TestDataPath("$CONTENT_ROOT/../../testData/completion")
 public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   @NotNull

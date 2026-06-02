@@ -443,6 +443,10 @@ public final class JavaFxPsiUtil {
     return false;
   }
 
+  public static boolean isChainExpression(@Nullable String value) {
+    return value != null && value.startsWith("$") && (value.length() == 1 || value.charAt(1) != '{');
+  }
+
   public static boolean isExpressionBinding(@Nullable String value) {
     return value != null && value.startsWith("${") && value.endsWith("}");
   }
