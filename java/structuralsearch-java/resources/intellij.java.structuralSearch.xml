@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <plugin id="com.intellij.modules.structuralsearch"/>
     <module name="intellij.java.indexing"/>
