@@ -413,7 +413,13 @@ object DynamicPlugins {
 
     val externalConflict = ObjectUtils.sentinel("external conflict")
 
-    suspend fun testConfiguration(newState: PluginSet): Any? {
+    suspend fun testConfiguration(candidates: Set<PluginId>): Any? {
+      val newState = computeNewPluginsState(
+        include = emptyList(),
+        exclude = emptyList(),
+        pretendEnabled = candidates.toList(),
+        pretendDisabled = emptyList(),
+      )
       val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
         val candidate = newState.resolvedPluginSet!!.originalPluginSet.resolvePluginId(candidateId)
         candidate == null || !newState.resolvedPluginSet!!.isResolved(candidate)
@@ -434,13 +440,7 @@ object DynamicPlugins {
     }
 
     while (true) {
-      val newState = computeNewPluginsState(
-        include = emptyList(),
-        exclude = emptyList(),
-        pretendEnabled = candidates.toList(),
-        pretendDisabled = emptyList(),
-      )
-      when (val testResult = testConfiguration(newState)) {
+      when (val testResult = testConfiguration(candidates)) {
         null -> return candidates.toList()
         externalConflict -> break
         is List<*> -> candidates.removeAll(testResult.toSet())
@@ -450,13 +450,7 @@ object DynamicPlugins {
     // let's make a single pass trying to greedily include as many plugins as possible
     val acceptedCandidates = mutableListOf<PluginId>()
     for (candidate in candidates) {
-      val newState = computeNewPluginsState(
-        include = emptyList(),
-        exclude = emptyList(),
-        pretendEnabled = acceptedCandidates + candidate,
-        pretendDisabled = emptyList(),
-      )
-      if (testConfiguration(newState) == null) {
+      if (testConfiguration(acceptedCandidates.toSet() + candidate) == null) {
         acceptedCandidates.add(candidate)
       }
     }
