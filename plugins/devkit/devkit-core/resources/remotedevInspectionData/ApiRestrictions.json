@@ -59,7 +59,7 @@
   {"apiName": "com.intellij.psi.codeStyle.lineIndent.LineIndentProvider", "extensionPointNames": ["com.intellij.lineIndentProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate", "extensionPointNames": ["com.intellij.enterBetweenBracesDelegate"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor", "extensionPointNames": ["com.intellij.lang.smartEnterProcessor"], "targetModules": ["frontend"]},
- {"apiName": "com.intellij.codeInsight.editorActions.TypingActionsExtension", "extensionPointNames": ["com.intellij.typingActionsExtension"], "targetModules": ["frontend"]},
+  {"apiName": "com.intellij.codeInsight.editorActions.TypingActionsExtension", "extensionPointNames": ["com.intellij.typingActionsExtension"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.ide.PasteProvider", "extensionPointNames": ["com.intellij.customPasteProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean", "extensionPointNames": ["com.intellij.preserveIndentOnPaste"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.lookup.impl.LookupDisplayStrategy", "extensionPointNames": ["com.intellij.lookup.displayStrategy"], "targetModules": ["frontend"]},
@@ -265,6 +265,10 @@
   {"apiName": "com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider", "extensionPointNames": ["com.intellij.safeDeleteTargetProvider"], "targetModules": ["backend"]},
   {"apiName": "com.intellij.navigation.DirectNavigationProvider", "extensionPointNames": ["com.intellij.lang.directNavigationProvider"], "targetModules": ["backend"]},
   {"apiName": "com.intellij.codeInsight.navigation.SymbolTypeProvider", "extensionPointNames": ["com.intellij.lang.symbolTypeProvider"], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.openapi.application.ApplicationListener", "extensionPointNames": [], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.openapi.project.ProjectListener", "extensionPointNames": [], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.openapi.project.ProjectCloseListener", "extensionPointNames": [], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.openapi.project.VetoableProjectManagerListener", "extensionPointNames": [], "targetModules": ["backend"]},
 
 
 
@@ -284,18 +288,16 @@
   {"apiName": "com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider", "extensionPointNames": ["com.intellij.langCodeStyleSettingsProvider"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.codeStyle.LanguageCodeStyleSettingsContributor", "extensionPointNames": ["com.intellij.langCodeStyleSettingsContributor"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.codeStyle.PredefinedCodeStyle", "extensionPointNames": ["com.intellij.predefinedCodeStyle"], "targetModules": ["shared"]},
-  {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["shared"]},
-  {"apiName": "com.intellij.openapi.application.ApplicationListener", "extensionPointNames": [], "targetModules": ["backend"]},
-  {"apiName": "com.intellij.openapi.project.ProjectListener", "extensionPointNames": [], "targetModules": ["backend"]},
-  {"apiName": "com.intellij.openapi.project.ProjectCloseListener", "extensionPointNames": [], "targetModules": ["backend"]},
-  {"apiName": "com.intellij.openapi.project.VetoableProjectManagerListener", "extensionPointNames": [], "targetModules": ["backend"]},
 
 
 
+  {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"]},
   {"apiName": "com.intellij.ide.plugins.DynamicPluginListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"]},
   {"apiName": "com.intellij.openapi.options.Configurable", "extensionPointNames": ["com.intellij.applicationConfigurable", "com.intellij.projectConfigurable"], "targetModules": ["frontend", "backend"]},
   {"apiName": "com.intellij.lang.annotation.Annotator", "extensionPointNames": ["com.intellij.annotator"], "targetModules": ["frontend", "backend"]},
   {"apiName": "com.intellij.lang.annotation.ContributedReferencesAnnotator", "extensionPointNames": ["com.intellij.contributedReferencesAnnotator"], "targetModules": ["frontend", "backend"]},
+
+
 
   {"apiName": "com.intellij.lang.folding.FoldingBuilder", "extensionPointNames": ["com.intellij.lang.foldingBuilder"], "targetModules": ["frontend", "shared"], "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},
   {"apiName": "com.intellij.formatting.FormattingModelBuilder", "extensionPointNames": ["com.intellij.lang.formatter"], "targetModules": ["frontend", "shared"], "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},
