@@ -58,21 +58,35 @@ interface WelcomeRightTabContentProvider {
     val onClick: (Project, CoroutineScope) -> Unit,
   )
 
+  /**
+   * Components displayed below the feature grid (above the banner) on the welcome right tab.
+   * The outer list is a list of rows stacked vertically; the inner list is the row's components
+   * laid out left-to-right, so a component's position in the row defines its column.
+   */
   @Composable
-  fun getAdditionalLinks(project: Project): List<LinkModel> = emptyList()
+  fun getAdditionalComponents(project: Project): List<List<WelcomeContent>> = emptyList()
 
   fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
 
   /**
-   * Optional link rendered below the feature grid (above the banner) on the welcome right tab.
-   * Rendered as an external link with the standard external-arrow icon.
+   * A single component placed in the additional-components area returned by [getAdditionalComponents].
    */
-  class LinkModel(
-    val text: @Nls String,
-    val onClick: (Project) -> Unit,
-    val tint: Color = Color.Unspecified,
-    val tintHovered: Color = Color.Unspecified,
-  )
+  sealed interface WelcomeContent {
+    /** Non-interactive text label with an optional trailing [icon] (e.g. a Beta badge). */
+    class Text(
+      val text: @Nls String,
+      val icon: IconKey? = null,
+      val tint: Color = Color.Unspecified,
+    ) : WelcomeContent
+
+    /** Clickable external link rendered with the standard trailing external-arrow icon. */
+    class Link(
+      val text: @Nls String,
+      val onClick: (Project) -> Unit,
+      val tint: Color = Color.Unspecified,
+      val tintHovered: Color = Color.Unspecified,
+    ) : WelcomeContent
+  }
 
   /**
    * Base feature button model. Use for frontend-only features.

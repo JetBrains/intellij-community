@@ -61,6 +61,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBund
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.StartupSwitchModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
@@ -168,16 +169,26 @@ class WelcomeScreenRightTab(
 
             FeatureGrid(modifier = Modifier.wrapContentSize(Alignment.Center))
 
-            val additionalLinks = contentProvider.getAdditionalLinks(project)
-            if (additionalLinks.isNotEmpty()) {
+            val additionalComponents = contentProvider.getAdditionalComponents(project)
+            if (additionalComponents.isNotEmpty()) {
               Spacer(modifier = Modifier.height(24.dp))
               Column(
                 modifier = Modifier.wrapContentSize(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
               ) {
-                for (link in additionalLinks) {
-                  WelcomeScreenLink(link)
+                for (row in additionalComponents) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                  ) {
+                    for (component in row) {
+                      when (component) {
+                        is WelcomeContent.Text -> WelcomeScreenText(component)
+                        is WelcomeContent.Link -> WelcomeScreenLink(component)
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -295,13 +306,13 @@ class WelcomeScreenRightTab(
 
   private fun getStatisticLogger(comboBoxInfoPanelModel: ComboBoxInfoPanelModel): ((String, Int) -> Unit)? {
     return when (comboBoxInfoPanelModel.model) {
-      is ThemeModel -> { newSelection, index ->
+      is ThemeModel -> { _, _ ->
         WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.THEME)
       }
-      is KeymapModel -> { newSelection, index ->
+      is KeymapModel -> { _, _ ->
         WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.KEYMAP)
       }
-      is StartupSwitchModel -> { newSelection, index ->
+      is StartupSwitchModel -> { _, index ->
         WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.STARTUP)
         WelcomeScreenTabUsageCollector.logStartupOptionChanged(comboBoxInfoPanelModel.model.items[index])
       }
@@ -507,7 +518,28 @@ class WelcomeScreenRightTab(
   }
 
   @Composable
-  private fun WelcomeScreenLink(model: WelcomeRightTabContentProvider.LinkModel) {
+  private fun WelcomeScreenText(model: WelcomeContent.Text) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+      Text(
+        text = model.text,
+        color = model.tint.takeIf { it != Color.Unspecified } ?: fontColor,
+        fontSize = 13.sp,
+        lineHeight = 16.sp,
+      )
+      model.icon?.let { icon ->
+        Icon(
+          key = icon,
+          contentDescription = null,
+        )
+      }
+    }
+  }
+
+  @Composable
+  private fun WelcomeScreenLink(model: WelcomeContent.Link) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val restingColor = model.tint.takeIf { it != Color.Unspecified } ?: fontColor
