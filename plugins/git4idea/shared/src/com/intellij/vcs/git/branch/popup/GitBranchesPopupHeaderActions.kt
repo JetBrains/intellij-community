@@ -71,7 +71,7 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitBranchesPo
   }
 }
 
-internal class GitBranchesTreePopupGroupByPrefixAction :
+internal class GitBranchesTreePopupGroupByDirectoryAction :
   ToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend, DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
