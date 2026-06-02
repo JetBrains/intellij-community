@@ -7866,50 +7866,6 @@ java_library(
 )
 
 copy_file(
-  name = "org.junit.platform/junit-platform-launcher-1.13.4.jar_copy",
-  src = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
-  out = "org.junit.platform/junit-platform-launcher-1.13.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.junit.platform/junit-platform-engine-1.13.4.jar_copy",
-  src = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
-  out = "org.junit.platform/junit-platform-engine-1.13.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "junit5Launcher",
-  exports = [
-    ":org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-    ":org_junit_platform-junit-platform-engine-1_13_4_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
-  source_jar = "@org_junit_platform-junit-platform-launcher-1_13_4-sources_http//file"
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-engine-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
-  source_jar = "@org_junit_platform-junit-platform-engine-1_13_4-sources_http//file"
-)
-
-java_library(
-  name = "junit5Launcher-provided",
-  exports = [":junit5Launcher"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.junit.jupiter/junit-jupiter-params-5.13.4.jar_copy",
   src = "@org_junit_jupiter-junit-jupiter-params-5_13_4_http//file",
   out = "org.junit.jupiter/junit-jupiter-params-5.13.4.jar",
@@ -12588,6 +12544,43 @@ jvm_import(
   jar = "@org_junit_jupiter-junit-jupiter-engine-5_13_4_http//file",
   source_jar = "@org_junit_jupiter-junit-jupiter-engine-5_13_4-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-launcher-1.13.4.jar_copy",
+  src = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
+  out = "org.junit.platform/junit-platform-launcher-1.13.4.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-engine-1.13.4.jar_copy",
+  src = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
+  out = "org.junit.platform/junit-platform-engine-1.13.4.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-junit5-launcher-_j_unit5_launcher",
+  exports = [
+    ":org_junit_platform-junit-platform-launcher-1_13_4_http_import",
+    ":org_junit_platform-junit-platform-engine-1_13_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-launcher-1_13_4_http_import",
+  jar = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
+  source_jar = "@org_junit_platform-junit-platform-launcher-1_13_4-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-engine-1_13_4_http_import",
+  jar = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
+  source_jar = "@org_junit_platform-junit-platform-engine-1_13_4-sources_http//file"
 )
 
 copy_file(

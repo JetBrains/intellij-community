@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.libraries.junit5",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   exports = ["@lib//:junit5"],
   runtime_deps = [":junit5"]
 )

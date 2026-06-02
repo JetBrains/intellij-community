@@ -27,7 +27,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" exported="" name="JUnit5Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" exported="" />
     <orderEntry type="library" exported="" name="hamcrest" level="project" />
     <orderEntry type="library" exported="" name="kotlin-test-junit5" level="project" />
     <orderEntry type="library" exported="" name="kotlin-test" level="project" />

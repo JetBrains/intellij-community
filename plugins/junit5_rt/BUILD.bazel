@@ -1,5 +1,10 @@
 ### auto-generated section `build intellij.junit.v5.rt` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "libraries_junit5-launcher_provided",
+  lib = "//libraries/junit5-launcher"
+)
 
 jvm_library(
   name = "junit-v5-rt",
@@ -10,8 +15,8 @@ jvm_library(
   deps = [
     "//plugins/junit_rt:junit-rt",
     "//java/java-runtime:rt",
-    "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
+    ":libraries_junit5-launcher_provided",
   ],
   exports = [
     "//plugins/junit_rt:junit-rt",
@@ -36,7 +41,8 @@ jvm_library(
     ":junit-v5-rt",
     "//plugins/junit_rt:junit-rt_test_lib",
     "//java/java-runtime:rt_test_lib",
-    "@lib//:junit5Launcher-provided",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
     "@lib//:junit5-provided",
   ]
 )

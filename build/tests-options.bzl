@@ -73,7 +73,7 @@ TEST_FRAMEWORK_DEPS = [
   # Provide test engines to run actual tests
   # Junit 3/4 is also run by junit5 via junit vintage
   "@community//libraries/junit5-vintage",
-  "@lib//:junit5Launcher",
+  "@community//libraries/junit5-launcher",
 ]
 
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel

@@ -12,7 +12,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:junit5Params",
     "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "@lib//:junit5Launcher",
+    "//libraries/junit5-launcher",
     "@lib//:hamcrest",
     "@lib//:kotlin-test-junit5",
     "@lib//:kotlin-test",
@@ -21,7 +21,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:junit5Params",
     "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "@lib//:junit5Launcher",
+    "//libraries/junit5-launcher",
     "@lib//:hamcrest",
     "@lib//:kotlin-test-junit5",
     "@lib//:kotlin-test",
@@ -38,12 +38,16 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:junit5Params",
     "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "@lib//:junit5Launcher",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
     "@lib//:hamcrest",
     "@lib//:kotlin-test-junit5",
     "@lib//:kotlin-test",
   ],
-  runtime_deps = [":test-runtime"]
+  runtime_deps = [
+    ":test-runtime",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+  ]
 )
 ### auto-generated section `build fleet.test.runtime` end
 
