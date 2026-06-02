@@ -605,6 +605,9 @@ private fun requiresQueuedProviderRefresh(updateEvent: AgentSessionSourceUpdateE
   if (updateEvent.isUnscoped()) {
     return false
   }
+  if (!updateEvent.threadIds.isNullOrEmpty()) {
+    return true
+  }
   return updateEvent.activityHintsByThreadId.isEmpty() && updateEvent.summaryActivityHintsByThreadId.isEmpty()
 }
 
