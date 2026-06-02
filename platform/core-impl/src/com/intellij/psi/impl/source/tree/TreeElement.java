@@ -39,11 +39,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable, LighterASTNode {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
 
-  /**
-   * The threshold after which we try to clean up stale versions. There is no particular reason behind this number, it was chosen empirically.
-   */
-  private static final int GARBAGE_COLLECTION_LIMIT = 4;
-
 
   // We need to perform atomic operations on fields of this class.
   // AtomicReference takes more space than a plain reference (since it is a wrapper over `VarHandle`), so we use `VarHandle`s directly.
@@ -135,8 +130,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
         if (newMap != null && !wrapper.compareAndSet(this, currentlyStoredValue, newMap)) {
           continue;
         }
-        if (newMap != null && versionedMap.size() > GARBAGE_COLLECTION_LIMIT) {
-          // if a map is too big, we make an attempt to compact it.
+        if (newMap != null) {
+          // we make an attempt to compact a map.
           runGarbageCollection(wrapper, newMap);
         }
         return;
@@ -153,10 +148,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   /**
    * A procedure to clean up stale versions.
-   * First, cleanup is relevant only for maps -- only then we know that there are multiple versions, of which some can be cleaned up.
-   * Second, since maps are based on atomic references, the cleanup itself is wait-free -- it makes an attempt to remove stale values.
-   * Third, we do not do a traditional compare-and-swap loop here -- if an attempt of garbage collection fails,
+   * <p>
+   * This cleanup is relevant only for maps -- only then we know that there are multiple versions, of which some can be cleaned up.
+   * We do not do the traditional compare-and-swap loop here -- if an attempt of garbage collection fails,
    * then it means that someone else made progress, and they themselves will initiate another round of garbage collection.
+   * This makes the cleanup procedure wait-free.
    */
   private void runGarbageCollection(@NotNull VarHandleWrapper wrapper, @NotNull VersionedPayloadMap versionedMap) {
     PsiVersionRegistry service = PsiVersionRegistry.getInstance();
