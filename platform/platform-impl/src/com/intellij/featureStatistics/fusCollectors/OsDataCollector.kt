@@ -18,7 +18,7 @@ import kotlin.io.path.name
 
 @OptIn(LowLevelLocalMachineAccess::class)
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.os", 21)
+  private val GROUP = EventLogGroup("system.os", 22)
 
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Other")
 
@@ -33,10 +33,10 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   @Suppress("SpellCheckingInspection")
   private val DISTROS = listOf(
-    "almalinux", "alpine", "amzn", "arch", "bunsenlabs", "centos", "chromeos", "debian", "deepin", "devuan", "elementary",
-    "endeavouros", "fedora", "galliumos", "garuda", "gentoo", "kali", "linuxmint", "mageia", "manjaro", "neon", "nixos", "ol",
-    "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
-    "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown"
+    "almalinux", "alpine", "amzn", "arch", "bunsenlabs", "cachyos", "centos", "chromeos", "debian", "deepin", "devuan",
+    "elementary", "endeavouros", "fedora", "galliumos", "garuda", "gentoo", "kali", "linuxmint", "mageia", "manjaro",
+    "neon", "nixos", "nobara", "ol", "omarchy", "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos",
+    "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown"
   )
 
   private val OS_NAME = String("name", OS_NAMES)
