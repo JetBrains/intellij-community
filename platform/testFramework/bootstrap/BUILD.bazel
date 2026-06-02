@@ -2,6 +2,11 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
+  name = "libraries_junit5-launcher_provided",
+  lib = "//libraries/junit5-launcher"
+)
+
+jvm_provided_library(
   name = "libraries_junit5_provided",
   lib = "//libraries/junit5"
 )
@@ -21,13 +26,13 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/junit4",
-    "@lib//:junit5Launcher-provided",
     "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
     "//libraries/asm-tools",
     "//platform/bazel-runfiles",
     "//platform/util/base",
+    ":libraries_junit5-launcher_provided",
     ":libraries_junit5_provided",
     ":libraries_junit5-vintage_provided",
   ],
@@ -47,7 +52,8 @@ jvm_library(
     ":tools-testsBootstrap",
     "//platform/boot:boot_test_lib",
     "//libraries/junit4:junit4_test_lib",
-    "@lib//:junit5Launcher-provided",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
     "//libraries/junit5-vintage",
