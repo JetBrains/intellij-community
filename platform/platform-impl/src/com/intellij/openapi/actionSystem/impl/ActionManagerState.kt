@@ -4,6 +4,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionStubBase
 import com.intellij.openapi.extensions.PluginId
 
 internal class ActionManagerState {
@@ -21,7 +22,15 @@ internal class ActionManagerState {
 
   private val baseActions: MutableMap<String, AnAction> = HashMap()
 
-  val lock: Any = Any()
+  // Protects the registration indexes below, but must not be used as an outer lock for DefaultActionGroup mutation.
+  // Group methods may call back into ActionManager.getId(), so callers should take state snapshots before entering a group monitor.
+  private val lock: Any = Any()
+
+  fun <T> withLock(action: () -> T): T {
+    synchronized(lock) {
+      return action()
+    }
+  }
 
   fun isActionProhibited(actionId: String): Boolean = prohibitedActionIds.contains(actionId)
 
@@ -43,6 +52,40 @@ internal class ActionManagerState {
   fun getActionId(action: Any): String? {
     synchronized(lock) {
       return actionToId.get(action)
+    }
+  }
+
+  /**
+   * Creates an id resolver for use from `DefaultActionGroup` synchronized sections.
+   *
+   * The returned lambda must not touch this state again; otherwise group mutation can deadlock with code that already holds
+   * a group monitor and asks `ActionManager` for an id.
+   */
+  fun createActionIdResolver(actions: List<AnAction>): (AnAction) -> String? {
+    synchronized(lock) {
+      val ids = HashMap<AnAction, String?>()
+      for (action in actions) {
+        ids.put(action, getActionIdForSnapshot(action))
+      }
+      return { action ->
+        ids.get(action) ?: getStableActionId(action)
+      }
+    }
+  }
+
+  private fun getActionIdForSnapshot(action: AnAction): String? {
+    return when (action) {
+      is ActionStubBase -> action.id
+      is ChameleonAction -> action.actionId
+      else -> actionToId.get(action)
+    }
+  }
+
+  private fun getStableActionId(action: AnAction): String? {
+    return when (action) {
+      is ActionStubBase -> action.id
+      is ChameleonAction -> action.actionId
+      else -> null
     }
   }
 

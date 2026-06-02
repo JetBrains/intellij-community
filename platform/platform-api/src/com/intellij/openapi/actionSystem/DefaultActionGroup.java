@@ -198,10 +198,36 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, constraint, actionManager);
   }
 
-  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
-                                                             @NotNull Constraints constraint,
-                                                             @NotNull ActionManager actionManager) {
-    return addAction(action, constraint, actionManager::getId);
+  public final @NotNull ActionInGroup addAction(@NotNull AnAction action,
+                                                @NotNull Constraints constraint,
+                                                @NotNull ActionManager actionManager) {
+    return addAction(action, constraint, createActionIdResolver(action, actionManager));
+  }
+
+  /**
+   * Captures ids before entering the synchronized add path.
+   * <p>
+   * Sorting pending actions by relative constraints calls the resolver while the group monitor is held. Calling
+   * {@link ActionManager#getId(AnAction)} from there can invert locks with action registration code, so the resolver below
+   * serves only immutable data collected before group mutation starts.
+   */
+  private @NotNull Function<@NotNull AnAction, @Nullable String> createActionIdResolver(@NotNull AnAction action,
+                                                                                        @NotNull ActionManager actionManager) {
+    AnAction[] children = getChildActionsOrStubs();
+    Map<AnAction, String> actionIds = new HashMap<>(children.length + 1);
+    collectActionId(actionIds, action, actionManager);
+    for (AnAction child : children) {
+      collectActionId(actionIds, child, actionManager);
+    }
+    return candidate -> candidate instanceof ActionStubBase stub ? stub.getId() : actionIds.get(candidate);
+  }
+
+  private static void collectActionId(@NotNull Map<AnAction, String> actionIds,
+                                      @Nullable AnAction action,
+                                      @NotNull ActionManager actionManager) {
+    if (action != null && !(action instanceof ActionStubBase)) {
+      actionIds.put(action, actionManager.getId(action));
+    }
   }
 
   @ApiStatus.Internal
@@ -433,7 +459,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private synchronized void replaceStubsAndNulls(@NotNull Map<ActionStubBase, AnAction> stubMap) {
-    for (ListIterator<AnAction> it = mySortedChildren.listIterator(); it.hasNext();) {
+    for (ListIterator<AnAction> it = mySortedChildren.listIterator(); it.hasNext(); ) {
       AnAction action = it.next();
       if (action == null) {
         LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + it.previousIndex());
