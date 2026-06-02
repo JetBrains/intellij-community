@@ -77,6 +77,17 @@ class MarkdownStylingActionsConsistencyTest {
       checkResultByText(content)
     }
 
+    fun `test disabled inside test link`() {
+      // language=Markdown
+      val content = """
+      [@test] ../path/he<caret>re.py
+      """.trimIndent()
+      configureFromFileText("some.md", content)
+      val action = ActionManager.getInstance().getAction(actionId)
+      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
+      checkResultByText(content)
+    }
+
     fun `test whole line`() {
       // language=Markdown
       val content = """

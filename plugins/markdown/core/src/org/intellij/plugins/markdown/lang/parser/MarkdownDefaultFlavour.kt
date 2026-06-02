@@ -28,6 +28,7 @@ import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
 import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
+import org.intellij.plugins.markdown.lang.parser.testlink.TestLinkSequentialParser
 import org.intellij.plugins.markdown.ui.preview.html.HeaderAnchorCache
 import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider
 import java.net.URI
@@ -80,6 +81,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
         MathParser(),
         ImageParser(),
         InlineLinkParser(),
+        TestLinkSequentialParser(),
         ReferenceLinkParser(),
         EmphasisLikeParser(EmphStrongDelimiterParser(), StrikeThroughDelimiterParser())
       )

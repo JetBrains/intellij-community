@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTestLink
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownWrappedAutoLink
 
 object MarkdownPsiFactory {
@@ -41,6 +42,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.LIST_ITEM -> MarkdownListItem(node)
       MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockQuote(node)
       MarkdownElementTypes.SHORT_REFERENCE_LINK -> MarkdownShortReferenceLink(node)
+      MarkdownElementTypes.TEST_LINK -> MarkdownTestLink(node)
       MarkdownElementTypes.LINK_DEFINITION -> MarkdownLinkDefinition(node)
       MarkdownElementTypes.LINK_DESTINATION -> MarkdownLinkDestination(node)
       MarkdownElementTypes.LINK_LABEL -> MarkdownLinkLabel(node)

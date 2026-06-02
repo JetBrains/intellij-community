@@ -6,11 +6,14 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.excludeHtml
+import com.intellij.grazie.utils.hasType
+import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.parser.testlink.TestLinkElementTypes
 
 class MarkdownTextExtractor : TextExtractor() {
   private val markup = setOf(MarkdownTokenTypes.EMPH, MarkdownTokenTypes.TILDE)
@@ -18,19 +21,23 @@ class MarkdownTextExtractor : TextExtractor() {
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
-      val content = excludeHtml(TextContentBuilder.FromPsi
-        .withUnknown { it.node.isMarkdownCodeType() }
+      val content = TextContentBuilder.FromPsi
+        .withUnknown { it.node.isMarkdownCodeType() || it.node.isTestLink() }
         .withMarkup { e ->
           e.elementType in markup ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e) && !isShortRefLinkLabel(e)
         }
         .excluding { it.elementType == MarkdownElementTypes.IMAGE }
         .removingIndents(" \t").removingLineSuffixes(" \t")
-        .build(root, TextContent.TextDomain.PLAIN_TEXT))
-      return content
+        .build(root, TextContent.TextDomain.PLAIN_TEXT)
+      return excludeHtml(content)
     }
     return emptyList()
   }
+
+  private fun ASTNode.isTestLink(): Boolean =
+    this.hasType(MarkdownElementTypes.TEST_LINK)
+    || this.hasType(MarkdownElementTypes.SHORT_REFERENCE_LINK) && this.text == "[${TestLinkElementTypes.LABEL_NAME}]"
 
   private fun isLinkText(e: PsiElement) =
     (e.elementType == MarkdownTokenTypes.TEXT || e.elementType == MarkdownTokenTypes.GFM_AUTOLINK || e is PsiWhiteSpace) &&

@@ -31,6 +31,10 @@ class MarkdownSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/markdown/Spellcheck.md")
   }
 
+  fun `test no false positives in test links`() {
+    runHighlightTestForFile("ide/language/markdown/TestLink.md")
+  }
+
   fun `test replacement with markup inside`() {
     myFixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
     myFixture.checkHighlighting()
