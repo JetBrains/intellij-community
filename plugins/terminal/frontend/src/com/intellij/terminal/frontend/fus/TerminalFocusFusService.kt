@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -28,11 +29,11 @@ import java.awt.AWTEvent.WINDOW_FOCUS_EVENT_MASK
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
-import java.awt.Window
 import java.awt.event.AWTEventListener
 import java.awt.event.FocusEvent
 import java.awt.event.WindowEvent
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 internal class TerminalFocusFusService(private val coroutineScope: CoroutineScope) {
@@ -41,27 +42,13 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
 
   private val stateFlow = MutableStateFlow<FocusedComponent>(InitialState)
 
-  private var focusedWindow: Window? = null
-    set(value) {
-      field = value
-      updateState()
-    }
-
-  private var focusedComponent: Component? = null
-    set(value) {
-      field = value
-      updateState()
-    }
-
-  private fun updateState() {
-    stateFlow.value = computeCurrentState()
+  private fun updateState(hasFocusedWindow: Boolean, focusedComponent: Component?) {
+    stateFlow.value = computeCurrentState(hasFocusedWindow, focusedComponent)
   }
 
-  private fun computeCurrentState(): FocusedComponent {
-    val focusedComponent = this.focusedComponent
-    val focusedWindow = this.focusedWindow
+  private fun computeCurrentState(hasFocusedWindow: Boolean, focusedComponent: Component?): FocusedComponent {
     return when {
-      focusedComponent == null || focusedWindow == null -> {
+      focusedComponent == null || !hasFocusedWindow -> {
         FocusedNonToolWindow(TerminalNonToolWindowFocus.OTHER_APPLICATION)
       }
       ComponentUtil.getParentOfType(TerminalPanelMarker::class.java, focusedComponent) != null -> {
@@ -99,61 +86,61 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
   }
 
   private fun initializeState() {
-    focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-    focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    updateState(focusManager.focusedWindow != null, focusManager.focusOwner)
   }
 
   private fun installAWTListener() {
     val listener = AWTEventListener { event ->
-      when (event.id) {
-        WindowEvent.WINDOW_GAINED_FOCUS -> focusedWindow = event.source as? Window?
-        WindowEvent.WINDOW_LOST_FOCUS -> focusedWindow = null
-        FocusEvent.FOCUS_GAINED -> focusedComponent = event.source as? Component
-      }
+      val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      reduceFocusEvent(event.id, event.source as? Component, focusManager.focusedWindow != null, focusManager.focusOwner)
+        ?.let { updateState(it.hasFocusedWindow, it.focusedComponent) }
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, FOCUS_EVENT_MASK or WINDOW_FOCUS_EVENT_MASK)
-    // Some defensive coding here. We could've passed coroutineScope.asDisposable(),
-    // but then the references will continue pointing to the last components stored there.
-    // It shouldn't be an issue because the scope is only canceled when the entire service is disposed,
-    // but just in case the service leaks somewhere, let's make sure that the references are set to null anyway.
+    // Remove the listener once the service scope completes. No Component/Window references are
+    // retained anywhere (only the derived focus category is stored), so no extra nulling is needed.
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-      focusedWindow = null
-      focusedComponent = null
     }
+  }
+
+  internal fun updateFocusStateForTest(hasFocusedWindow: Boolean, focusedComponent: Component?): String? {
+    updateState(hasFocusedWindow, focusedComponent)
+    return stateFlow.value.toFusString()
   }
 
   private suspend fun collectState() {
     var previousState: FocusedComponent = InitialState
-    stateFlow.debounce(500).distinctUntilChanged().collectLatest { state ->
-      if (!previousState.isTerminalFocused && state.isTerminalFocused) {
-        logFocusEnteringTerminal(previousState)
-      }
-      else if (previousState.isTerminalFocused && !state.isTerminalFocused) {
-        logFocusLeavingTerminal(state)
+    stateFlow.debounce(500.milliseconds).distinctUntilChanged().collectLatest { state ->
+      val action = focusLogAction(
+        previousState.isTerminalFocused, previousState.toFusString(),
+        state.isTerminalFocused, state.toFusString(),
+      )
+      when (action) {
+        is FocusLogAction.EnterTerminal -> logFocusEnteringTerminal(action.from)
+        is FocusLogAction.LeaveTerminal -> logFocusLeavingTerminal(action.to)
+        FocusLogAction.None -> {}
       }
       previousState = state
     }
   }
 
-  private fun logFocusEnteringTerminal(previousState: FocusedComponent) {
-    val fusString = previousState.toFusString()
-    if (fusString == null) {
+  private fun logFocusEnteringTerminal(previousFus: String?) {
+    if (previousFus == null) {
       LOG.debug("Not logging the terminal focus event because it's the first focused component")
       return
     }
-    LOG.debug("The terminal gained focus from '$fusString'")
-    ReworkedTerminalUsageCollector.logFocusGained(fusString)
+    LOG.debug("The terminal gained focus from '$previousFus'")
+    ReworkedTerminalUsageCollector.logFocusGained(previousFus)
   }
 
-  private fun logFocusLeavingTerminal(nextState: FocusedComponent) {
-    val fusString = nextState.toFusString()
-    if (fusString == null) {
+  private fun logFocusLeavingTerminal(nextFus: String?) {
+    if (nextFus == null) {
       LOG.warn("Focus is leaving the terminal, but it's not known where it's going. This is a bug")
       return
     }
-    LOG.debug("Focus is going from the terminal to '$fusString'")
-    ReworkedTerminalUsageCollector.logFocusLost(fusString)
+    LOG.debug("Focus is going from the terminal to '$nextFus'")
+    ReworkedTerminalUsageCollector.logFocusLost(nextFus)
   }
 
   companion object {
@@ -163,8 +150,82 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
   }
 }
 
+@TestOnly
+fun createTerminalFocusFusServiceForTest(coroutineScope: CoroutineScope): Any {
+  return TerminalFocusFusService(coroutineScope)
+}
+
+@TestOnly
+fun updateTerminalFocusFusStateForTest(service: Any, hasFocusedWindow: Boolean, focusedComponent: Component?): String? {
+  return (service as TerminalFocusFusService).updateFocusStateForTest(hasFocusedWindow, focusedComponent)
+}
+
+/** Returns the (hasFocusedWindow, focusedComponent) inputs the given AWT focus event maps to, or `null` for an unrelated event. */
+@TestOnly
+fun reduceTerminalFocusEventForTest(
+  eventId: Int,
+  eventSource: Component?,
+  focusedWindowPresent: Boolean,
+  focusOwner: Component?,
+): Pair<Boolean, Component?>? =
+  reduceFocusEvent(eventId, eventSource, focusedWindowPresent, focusOwner)?.let { it.hasFocusedWindow to it.focusedComponent }
+
+/** Returns the focus-transition logging decision as (action, fusString), where action is "ENTER", "LEAVE", or "NONE". */
+@TestOnly
+fun terminalFocusLogActionForTest(
+  previousTerminalFocused: Boolean,
+  previousFus: String?,
+  nextTerminalFocused: Boolean,
+  nextFus: String?,
+): Pair<String, String?> =
+  when (val action = focusLogAction(previousTerminalFocused, previousFus, nextTerminalFocused, nextFus)) {
+    is FocusLogAction.EnterTerminal -> "ENTER" to action.from
+    is FocusLogAction.LeaveTerminal -> "LEAVE" to action.to
+    FocusLogAction.None -> "NONE" to null
+  }
+
 private sealed class FocusedComponent {
   abstract fun toFusString(): String?
+}
+
+private data class FocusInputs(val hasFocusedWindow: Boolean, val focusedComponent: Component?)
+
+/**
+ * Maps a raw AWT focus event to the focus inputs the state is derived from, without retaining the event.
+ * `focusedWindowPresent`/`focusOwner` come from the [KeyboardFocusManager] at the time of the event.
+ */
+private fun reduceFocusEvent(
+  eventId: Int,
+  eventSource: Component?,
+  focusedWindowPresent: Boolean,
+  focusOwner: Component?,
+): FocusInputs? = when (eventId) {
+  WindowEvent.WINDOW_GAINED_FOCUS -> FocusInputs(hasFocusedWindow = true, focusedComponent = focusOwner)
+  WindowEvent.WINDOW_LOST_FOCUS -> FocusInputs(hasFocusedWindow = false, focusedComponent = null)
+  FocusEvent.FOCUS_GAINED -> FocusInputs(hasFocusedWindow = focusedWindowPresent, focusedComponent = eventSource)
+  else -> null
+}
+
+private sealed interface FocusLogAction {
+  data object None : FocusLogAction
+
+  /** Focus entered the terminal. [from] is the previous FUS string, or `null` for the first focused component (skip logging). */
+  data class EnterTerminal(val from: String?) : FocusLogAction
+
+  /** Focus left the terminal. [to] is the next FUS string, or `null` if the destination is unknown (a bug). */
+  data class LeaveTerminal(val to: String?) : FocusLogAction
+}
+
+/** Decides what to log on a focus transition. Depends only on whether each state is the terminal and its FUS string. */
+private fun focusLogAction(
+  previousTerminalFocused: Boolean,
+  previousFus: String?,
+  nextTerminalFocused: Boolean,
+  nextFus: String?,
+): FocusLogAction = when {
+  !previousTerminalFocused && nextTerminalFocused -> FocusLogAction.EnterTerminal(previousFus)
+  previousTerminalFocused && !nextTerminalFocused -> FocusLogAction.LeaveTerminal(nextFus)
+  else -> FocusLogAction.None
 }
 
 private data object InitialState : FocusedComponent() {
