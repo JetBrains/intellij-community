@@ -49,6 +49,19 @@ jvm_library(
     ":backend",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/projectView/shared:projectView_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.projectView.backend` end
