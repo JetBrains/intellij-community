@@ -19,13 +19,5 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"
                      isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection"
-                     isInternal="false"/>
   </extensions>
 </idea-plugin>

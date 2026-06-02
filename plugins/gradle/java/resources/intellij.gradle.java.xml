@@ -170,6 +170,14 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"
+                     isInternal="false"/>
+
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practices"
