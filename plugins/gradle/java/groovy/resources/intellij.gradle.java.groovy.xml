@@ -5,6 +5,7 @@
     <module name="intellij.gradle.java"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.properties.psi"/>
+    <module name="intellij.gradle.java.properties"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
@@ -124,6 +125,7 @@
     <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleTaskContainerContributor"/>
     <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleNamedDomainCollectionContributor"/>
     <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleExtensionMembersContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributor"/>
     <callTypeCalculator implementation="com.intellij.gradle.java.groovy.service.resolve.GradleProjectCallTypeCalculator"/>
     <callTypeCalculator implementation="com.intellij.gradle.java.groovy.service.resolve.GradleArtifactCallTypeCalculator"/>
     <delegatesToProvider implementation="com.intellij.gradle.java.groovy.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>

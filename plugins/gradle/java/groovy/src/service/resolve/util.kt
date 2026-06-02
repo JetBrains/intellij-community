@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.groovy.service.resolve
 
+import com.intellij.gradle.java.properties.util.module
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiClass
@@ -38,10 +37,6 @@ val DECLARATION_ALTERNATIVES: Key<List<String>> = Key.create("gradle.declaration
 internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass && this.containingFile.isGradleScript()
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
-
-@get:ApiStatus.Internal
-val PsiElement.module: Module?
-  get() = containingFile?.originalFile?.virtualFile?.let { ProjectFileIndex.getInstance(project).getModuleForFile(it) }
 
 @ApiStatus.Internal
 fun PsiElement.getLinkedGradleProjectPath() : String? {

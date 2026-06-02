@@ -8,12 +8,13 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
-import com.intellij.gradle.java.groovy.service.resolve.module
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
 import java.nio.file.Path
 
-internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
+@ApiStatus.Internal
+fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
   val projectPath = place.getRootGradleProjectPath()?.let { Path.of(it) } ?: return emptySequence()
   return GradlePropertiesFile.getPropertyPaths(place.project, projectPath).asSequence()
     .mapNotNull { it.parent.getGradlePropertiesFile(place.project) }

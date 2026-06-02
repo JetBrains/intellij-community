@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.java.properties.service
+package com.intellij.gradle.java.groovy.service.resolve
 
-import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil
 import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.PROPERTIES_FILE_ORIGINAL_INFO
 import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.getExtensionsFor
-import com.intellij.gradle.java.groovy.service.resolve.GradleGroovyProperty
 import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
