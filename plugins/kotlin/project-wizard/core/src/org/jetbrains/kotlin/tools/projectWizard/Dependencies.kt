@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import java.util.Collections
 
-@Suppress("ClassName", "SpellCheckingInspection")
+@Suppress("ClassName")
 object Dependencies {
     private val registeredArtifacts = Collections.synchronizedList(mutableListOf<LibraryDescriptor>())
 
