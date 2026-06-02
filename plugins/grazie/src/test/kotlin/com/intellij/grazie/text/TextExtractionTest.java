@@ -1,7 +1,9 @@
 package com.intellij.grazie.text;
 
+import ai.grazie.text.exclusions.Exclusion;
 import com.intellij.grazie.ide.language.java.JavaTextExtractor;
 import com.intellij.grazie.ide.language.markdown.MarkdownTextExtractor;
+import com.intellij.grazie.rule.SentenceTokenizer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -93,6 +95,23 @@ public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
     assertEquals("you can use a number of predefined fields (e.g. |)", unknownOffsets(extracted));
+  }
+
+  public void testSentenceTokenizationKeepsExclusionsPerSentence() {
+    TextContent content = extractText("a.md", "First **one** here. Second *two* there.", 3);
+    assertEquals("First one here. Second two there.", content.toString());
+    Assertions.assertArrayEquals(new int[]{6, 9, 23, 26}, content.markupOffsets());
+
+    List<SentenceTokenizer.Sentence> sentences = SentenceTokenizer.tokenize(content);
+    assertEquals(2, sentences.size());
+
+    SentenceTokenizer.Sentence first = sentences.getFirst();
+    assertEquals("First one here. ", first.text());
+    assertEquals(List.of(new Exclusion(6, Exclusion.Kind.Markup), new Exclusion(9, Exclusion.Kind.Markup)), first.exclusions());
+
+    SentenceTokenizer.Sentence second = sentences.get(1);
+    assertEquals("Second two there.", second.text());
+    assertEquals(List.of(new Exclusion(7, Exclusion.Kind.Markup), new Exclusion(10, Exclusion.Kind.Markup)), second.exclusions());
   }
 
   public void testInjectedMarkdownListBullet() {

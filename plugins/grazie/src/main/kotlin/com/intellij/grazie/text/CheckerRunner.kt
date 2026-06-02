@@ -239,7 +239,7 @@ class CheckerRunner(val text: TextContent) {
 
     private fun findSentence(problem: TextProblem): String? =
       SentenceTokenizer.toTokens(problem.text)
-        .find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token?.token
+        .find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token
 
     private fun getShortName(problem: TextProblem): String =
       if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION
