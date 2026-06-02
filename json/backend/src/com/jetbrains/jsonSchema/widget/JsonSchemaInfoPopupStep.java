@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.scale.JBUIScale;
@@ -27,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
 import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.ADD_MAPPING;
@@ -124,7 +121,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   }
 
   protected void runSchemaEditorForCurrentFile() {
-    assert myVirtualFile != null: "override this method to do without a virtual file!";
+    assert myVirtualFile != null : "override this method to do without a virtual file!";
     ShowSettingsUtil.getInstance().showSettingsDialog(myProject, JsonSchemaMappingsConfigurable.class, (configurable) -> {
       // For some reason, JsonSchemaMappingsConfigurable.reset is called right after this callback, leading to resetting the customization.
       // Workaround: move this logic inside JsonSchemaMappingsConfigurable.reset.
@@ -176,50 +173,9 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     if (!configuration.isIgnoredFile(virtualFile)) return;
     configuration.unmarkAsIgnored(virtualFile);
   }
+
   protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
-    assert virtualFile != null: "override this method to do without a virtual file!";
-    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
-
-    VirtualFile projectBaseDir = project.getBaseDir();
-
-    UserDefinedJsonSchemaConfiguration mappingForFile = configuration.findMappingForFile(virtualFile);
-    if (mappingForFile != null) {
-      for (UserDefinedJsonSchemaConfiguration.Item pattern : mappingForFile.patterns) {
-        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts()), virtualFile)
-              || virtualFile.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
-          mappingForFile.patterns.remove(pattern);
-          if (mappingForFile.patterns.isEmpty() && mappingForFile.isApplicationDefined()) {
-            configuration.removeConfiguration(mappingForFile);
-          }
-          else {
-            mappingForFile.refreshPatterns();
-          }
-          break;
-        }
-      }
-    }
-
-    if (selectedValue == null) return;
-
-    String path = projectBaseDir == null ? null : VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
-    if (path == null) {
-      path = virtualFile.getUrl();
-    }
-
-    UserDefinedJsonSchemaConfiguration existing = configuration.findMappingBySchemaInfo(selectedValue);
-    UserDefinedJsonSchemaConfiguration.Item item = new UserDefinedJsonSchemaConfiguration.Item(path, false, false);
-    if (existing != null) {
-      if (!existing.patterns.contains(item)) {
-        existing.patterns.add(item);
-        existing.refreshPatterns();
-      }
-    }
-    else {
-      configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
-                                                                            selectedValue.getSchemaVersion(),
-                                                                            selectedValue.getUrl(project),
-                                                                            true,
-                                                                            Collections.singletonList(item)));
-    }
+    assert virtualFile != null : "override this method to do without a virtual file!";
+    JsonSchemaMappingsProjectConfiguration.getInstance(project).setSchemaForFile(selectedValue, virtualFile);
   }
 }

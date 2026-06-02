@@ -8,9 +8,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -198,7 +196,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     // 1) user providers
     // 2) $schema property
     // 3) built-in providers
-    // 4) schema catalog
+    // SchemaStore matches are suggested separately via editor notification.
 
     boolean checkSchemaProperty = true;
     if (!onlyUserSchemas && providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
@@ -245,11 +243,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       if (schemaUrl == null) schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
       VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
       if (virtualFile != null) return Collections.singletonList(virtualFile);
-    }
-
-    VirtualFile schemaFromOtherSources = resolveSchemaFromOtherSources(file);
-    if (schemaFromOtherSources != null) {
-      return ContainerUtil.createMaybeSingletonList(schemaFromOtherSources);
     }
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -459,19 +452,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private static boolean isProviderAvailable(final @NotNull VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
     return provider.isAvailable(file);
-  }
-
-  private @Nullable VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
-    try {
-      return myCatalogManager.getSchemaFileForFile(file);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeExceptionWithAttachments("Unable to resolve JSON schema from file " + file.getName(), e,
-                                                new Attachment("Schema URL", file.getUrl()));
-    }
   }
 
   @Override

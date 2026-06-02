@@ -50,6 +50,13 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
     }
   }
 
+  public void setCatalogEnabled(boolean isEnabled) {
+    MyState state = getState();
+    setState(isEnabled,
+             state == null || state.myIsRemoteActivityEnabled,
+             state != null && state.myIsPreferRemoteSchemas);
+  }
+
   @Override
   public @Nullable MyState getState() {
     return myState;

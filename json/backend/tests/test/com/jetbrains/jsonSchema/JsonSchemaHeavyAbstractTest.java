@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
@@ -41,7 +42,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     myItems = null;
     try {
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-      instance.setState(Collections.emptyMap());
+      instance.setState(new TreeMap<>());
     }
     catch (Throwable e) {
       addSuppressedException(e);

@@ -8,7 +8,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -52,12 +54,13 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   }
 
   public @Nullable UserDefinedJsonSchemaConfiguration findMappingForFile(VirtualFile file) {
-    VirtualFile projectBaseDir = myProject.getBaseDir();
+    VirtualFile projectBaseDir = getProjectBaseDir();
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : configuration.patterns) {
         if (pattern.mappingKind != JsonMappingKind.File) continue;
         VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts());
-        if (Objects.equals(relativeFile, file) || file.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
+        if (Objects.equals(relativeFile, file) ||
+            file.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
           return configuration;
         }
       }
@@ -81,13 +84,13 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   public void schemaFileMoved(final @NotNull Project project,
                               final @NotNull String oldRelativePath,
                               final @NotNull String newRelativePath) {
-      final Optional<UserDefinedJsonSchemaConfiguration> old = myState.myState.values().stream()
-        .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
-        .findFirst();
-      old.ifPresent(configuration -> {
-        configuration.setRelativePathToSchema(newRelativePath);
-        JsonSchemaService.Impl.get(project).reset();
-      });
+    final Optional<UserDefinedJsonSchemaConfiguration> old = myState.myState.values().stream()
+      .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
+      .findFirst();
+    old.ifPresent(configuration -> {
+      configuration.setRelativePathToSchema(newRelativePath);
+      JsonSchemaService.Impl.get(project).reset();
+    });
   }
 
   public void removeConfiguration(UserDefinedJsonSchemaConfiguration configuration) {
@@ -137,6 +140,58 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   public boolean isIgnoredFile(VirtualFile virtualFile) {
     UserDefinedJsonSchemaConfiguration mappingForFile = findMappingForFile(virtualFile);
     return mappingForFile != null && mappingForFile.isIgnoredFile();
+  }
+
+  public void setSchemaForFile(@Nullable JsonSchemaInfo selectedValue, @NotNull VirtualFile virtualFile) {
+    VirtualFile projectBaseDir = getProjectBaseDir();
+
+    UserDefinedJsonSchemaConfiguration mappingForFile = findMappingForFile(virtualFile);
+    if (mappingForFile != null) {
+      for (UserDefinedJsonSchemaConfiguration.Item pattern : mappingForFile.patterns) {
+        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts()), virtualFile)
+            || virtualFile.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
+          mappingForFile.patterns.remove(pattern);
+          if (mappingForFile.patterns.isEmpty() && mappingForFile.isApplicationDefined()) {
+            removeConfiguration(mappingForFile);
+          }
+          else {
+            mappingForFile.refreshPatterns();
+          }
+          break;
+        }
+      }
+    }
+
+    if (selectedValue == null) return;
+
+    String path = projectBaseDir == null ? null : VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
+    if (path == null) {
+      path = virtualFile.getUrl();
+    }
+
+    UserDefinedJsonSchemaConfiguration existing = findMappingBySchemaInfo(selectedValue);
+    UserDefinedJsonSchemaConfiguration.Item item = new UserDefinedJsonSchemaConfiguration.Item(path, false, false);
+    if (existing != null) {
+      if (!existing.patterns.contains(item)) {
+        existing.patterns.add(item);
+        existing.refreshPatterns();
+      }
+    }
+    else {
+      addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
+                                                              selectedValue.getSchemaVersion(),
+                                                              selectedValue.getUrl(myProject),
+                                                              true,
+                                                              Collections.singletonList(item)));
+    }
+  }
+
+  private @Nullable VirtualFile getProjectBaseDir() {
+    String basePath = myProject.getBasePath();
+    if (basePath == null) {
+      return null;
+    }
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(basePath));
   }
 
   public void markAsIgnored(VirtualFile virtualFile) {
