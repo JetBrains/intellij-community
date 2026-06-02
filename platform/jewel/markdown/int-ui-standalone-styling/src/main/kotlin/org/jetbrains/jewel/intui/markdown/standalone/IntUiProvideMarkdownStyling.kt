@@ -9,10 +9,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
-import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
@@ -53,7 +54,10 @@ public fun ProvideMarkdownStyling(
                 MarkdownBlockRenderer.light(markdownStyling)
             }
         },
-    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    codeHighlighter: CodeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalMarkdownImageSourceResolver provides imageSourceResolver) {
@@ -98,7 +102,10 @@ public fun ProvideMarkdownStyling(
                 MarkdownBlockRenderer.light(markdownStyling)
             }
         },
-    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    codeHighlighter: CodeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        },
     content: @Composable () -> Unit,
 ) {
     ProvideMarkdownStyling(
@@ -119,7 +126,7 @@ public fun ProvideMarkdownStyling(
     imageSourceResolver: ImageSourceResolver,
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
-    codeHighlighter: CodeHighlighter,
+    codeHighlighter: CodeHighlighter = SimpleCodeHighlighter(SyntaxHighlightColors.light()),
     markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
     content: @Composable () -> Unit,
