@@ -324,6 +324,9 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - setCaretPosition(I):V
 - setText(java.lang.String):V
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
+a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
+- com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+- *p:createSplitEditorAsync(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
 - *f:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest):com.intellij.openapi.fileEditor.FileEditorComposite

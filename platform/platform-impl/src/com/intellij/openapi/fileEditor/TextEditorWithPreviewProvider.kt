@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private const val FIRST_EDITOR = "first_editor"
 private const val SECOND_EDITOR = "second_editor"
@@ -61,9 +62,7 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
       document = document,
       editorCoroutineScope = editorCoroutineScope,
     )
-    return withContext(Dispatchers.EDT) {
-      createSplitEditor(firstEditor = firstBuilder as TextEditor, secondEditor = secondBuilder)
-    }
+    return createSplitEditorAsync(project, firstEditor = firstBuilder as TextEditor, secondEditor = secondBuilder)
   }
 
   private fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
@@ -126,6 +125,13 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
   private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, targetElement: Element) {
     val value = layout?.name ?: return
     targetElement.setAttribute(SPLIT_LAYOUT, value)
+  }
+
+  @ApiStatus.Experimental
+  protected open suspend fun createSplitEditorAsync(project: Project, firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
+    return withContext(Dispatchers.EDT) {
+      createSplitEditor(firstEditor, firstEditor)
+    }
   }
 
   protected open fun createSplitEditor(firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
