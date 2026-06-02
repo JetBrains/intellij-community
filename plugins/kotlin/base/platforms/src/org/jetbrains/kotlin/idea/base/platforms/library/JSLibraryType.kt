@@ -58,6 +58,7 @@ class JSLibraryType : LibraryType<DummyLibraryProperties>(KotlinJavaScriptLibrar
             val descriptor = FileChooserDescriptor(true, true, true, false, true, true)
                 .withExtensionFilter(ProjectBundle.message("library.attach.files.label"), "js", "kjsm")
                 .withFileFilter { FileElement.isArchive(it) || isAcceptedForJsLibrary(it.extension) }
+                .withEnvironmentRestricted(true)
             descriptor.title = if (StringUtil.isEmpty(libraryName))
                 ProjectBundle.message("library.attach.files.action")
             else

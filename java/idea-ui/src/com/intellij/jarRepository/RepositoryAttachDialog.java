@@ -290,9 +290,10 @@ public final class RepositoryAttachDialog extends DialogWrapper {
 
     var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"))
-      .withDescription(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"));
+      .withDescription(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"))
+      .withEnvironmentRestricted(true);
     descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
-    myDirectoryField.addBrowseFolderListener(null, descriptor);
+    myDirectoryField.addBrowseFolderListener(project, descriptor);
     updateInfoLabel();
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
     mySearchOptionsPanel.setVisible(mode == Mode.SEARCH);

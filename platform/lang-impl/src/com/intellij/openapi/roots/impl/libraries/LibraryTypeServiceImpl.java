@@ -41,7 +41,7 @@ public final class LibraryTypeServiceImpl extends LibraryTypeService {
                                                         @Nullable VirtualFile contextDirectory,
                                                         LibraryType<?> type,
                                                         final Project project) {
-    final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor(null);
+    final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor(null).withEnvironmentRestricted(true);
     chooserDescriptor.setTitle(ProjectBundle.message("chooser.title.select.library.files"));
     final VirtualFile[] rootCandidates = FileChooser.chooseFiles(chooserDescriptor, parentComponent, project, contextDirectory);
     if (rootCandidates.length == 0) {

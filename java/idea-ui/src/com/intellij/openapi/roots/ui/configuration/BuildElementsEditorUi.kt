@@ -100,6 +100,7 @@ class BuildElementsEditorUi(
     return FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(title)
       .withHideIgnored(false)
+      .withEnvironmentRestricted(true)
       .apply {
         putUserData(LangDataKeys.MODULE_CONTEXT, module)
       }
