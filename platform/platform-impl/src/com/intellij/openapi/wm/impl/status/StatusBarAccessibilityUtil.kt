@@ -19,10 +19,6 @@ object StatusBarAccessibilityUtil {
     PrimaryAccessibleAction(component, component, action)
 
   @JvmStatic
-  fun getClickActionDescription(index: Int): String? =
-    if (index == 0) UIManager.getString("AbstractButton.clickText") else null
-
-  @JvmStatic
   @Suppress("HardCodedStringLiteral")
   fun getAccessibleDescription(component: JComponent): @Nls String? {
     val toolTipText = component.toolTipText ?: return null
@@ -44,7 +40,7 @@ object StatusBarAccessibilityUtil {
   ) : AccessibleAction {
     override fun getAccessibleActionCount(): Int = 1
 
-    override fun getAccessibleActionDescription(i: Int): String? = getClickActionDescription(i)
+    override fun getAccessibleActionDescription(i: Int): String? = if (i == 0) UIManager.getString("AbstractButton.clickText") else null
 
     override fun doAccessibleAction(i: Int): Boolean = i == 0 && StatusBarUtil.performPrimaryAction(component, activationTarget, action)
   }
