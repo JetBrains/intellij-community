@@ -33,7 +33,6 @@ import java.util.Properties;
 public final class ScreenReader {
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
-  public static final String ASSISTIVE_TECHNOLOGIES_PROPERTY = "javax.accessibility.assistive_technologies";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new ScreenReader());
   public static final String SCREEN_READER_ACTIVE_PROPERTY = "ScreenReader.active";
