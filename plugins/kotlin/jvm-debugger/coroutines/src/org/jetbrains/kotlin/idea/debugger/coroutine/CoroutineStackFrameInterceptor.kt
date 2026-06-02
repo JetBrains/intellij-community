@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.Location
 import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -260,6 +261,13 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     }
 }
 
+/**
+ * Invokes a debugger helper method in the debuggee VM.
+ *
+ * Returns `null` when the helper class or method is unavailable, or when helper invocation fails because an object was
+ * already collected in the debuggee. Other helper failures are logged as errors with the helper-side stack trace when it
+ * is available.
+ */
 internal fun callMethodFromHelper(
     helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>,
     vararg additionalClassesToLoad: String
@@ -271,6 +279,10 @@ internal fun callMethodFromHelper(
     } catch (e: MethodNotFoundException) {
         fileLogger().warn(e)
     } catch (e: Exception) {
+        if (e is ObjectCollectedException || e.cause is ObjectCollectedException) {
+            fileLogger().warn("Exception from helper: object was collected in the debuggee", e)
+            return null
+        }
         val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
         DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
                                    *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
