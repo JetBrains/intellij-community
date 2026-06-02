@@ -186,6 +186,8 @@
     </experimentalFeature>
     <registryKey defaultValue="false" description="Show unhandled exceptions that were thrown during interactive operation"
                  key="ide.exceptions.show.interactive"/>
+    <registryKey key="ide.settings.external.change.conflict.show.notification" defaultValue="false" restartRequired="false"
+                 description="Show a warning notification for external change conflicts in non-modal settings dialog"/>
     <registryKey defaultValue="true" description="Refresh VFS periodically while there is no user activity in the IDE instead of when window is not focused.
 The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | System Settings -> Periodically when IDE is inactive (experimental)"
                  restartRequired="true"
@@ -1698,6 +1700,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                        key="notification.group.failed.to.generate.module.descriptors"/>
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
+    <notificationGroup id="Settings External Change Conflict" displayType="STICKY_BALLOON" hideFromSettings="true"/>
     <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <notificationGroup id="proxy.auth.failed" displayType="STICKY_BALLOON" bundle="messages.UIBundle" key="proxy.auth.notification.title"/>

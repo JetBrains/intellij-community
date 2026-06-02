@@ -70,7 +70,7 @@ internal class ListValidationRule : CustomValidationRule() {
 }
 
 internal object SettingsCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("ui.settings", 63)
+  private val GROUP = EventLogGroup("ui.settings", 64)
 
   private val CONFIGURABLE_CLASS = EventFields.Class("configurable")
   val SELECT: EventId3<Class<*>?, Boolean, Long> = GROUP.registerEvent("select",
@@ -87,6 +87,8 @@ internal object SettingsCounterUsagesCollector : CounterUsagesCollector() {
                                                                                   EventFields.Int("hits"),
                                                                                   EventFields.Int("characters"),
                                                                                   EventFields.Boolean("modifiedOnly"))
+  @JvmField
+  val EXTERNAL_CHANGE_WHILE_MODIFIED: EventId1<Class<*>?> = GROUP.registerEvent("external.change.while.modified", CONFIGURABLE_CLASS)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

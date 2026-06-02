@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ide.actions.BackAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ide.actions.ForwardAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,10 +20,12 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.MutableConfigurableGroup;
@@ -31,6 +35,8 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -44,10 +50,13 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import kotlin.Unit;
+import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +109,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
   private final @NotNull ConfigurableEditorBanner myBanner;
+  private final @NotNull Project myProject;
   private final History myHistory = new History(this);
   /** Whether to auto-reset unmodified configurables when navigating back to them (non-modal windows). */
   private final boolean myUseLeaveState;
@@ -107,6 +117,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final @Nullable AnAction myExtraHeaderAction;
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
+
+  /**
+   * Snapshots of backing {@link PersistentStateComponent} states, captured when the window loses focus
+   * for configurables that were modified at that time. Used to detect external changes on focus regain.
+   * Key: configurable, Value: map from PersistentStateComponent to its serialized XML state.
+   */
+  private final Map<Configurable, Map<PersistentStateComponent<?>, Element>> myStateSnapshots = new HashMap<>();
 
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
     @Override
@@ -134,6 +151,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @NotNull SpotlightPainterFactory spotlightPainterFactory,
                  @Nullable AnAction extraHeaderAction) {
     super(parent);
+    myProject = project;
     myUseLeaveState = useLeaveState;
     myExtraHeaderAction = extraHeaderAction;
     properties = PropertiesComponent.getInstance(project);
@@ -685,6 +703,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   /**
    * Records the current configurable's modified state at window deactivation time.
    * Call this when the settings window loses focus so the result can be used on reactivation.
+   * Also, snapshots the backing {@link PersistentStateComponent} states for all modified
+   * configurables that implement {@link BackedByPersistentState}, so that external changes
+   * can be detected on focus regain
    */
   public void recordWindowLeaveState() {
     Configurable current = filter.context.getCurrentConfigurable();
@@ -692,6 +713,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       Boolean modified = isModifiedSafely(current);
       if (modified != null) myLeaveState.put(current, modified);
     }
+    snapshotModifiedConfigurablesState();
   }
 
   /**
@@ -702,6 +724,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
    * are not blocked by a stale entry in the apply loop.
    * Non-current configurables are handled lazily: reset on navigation via postUpdateCurrent,
    * and protected at apply time by the myLeaveState skip in the apply loop.
+   * Also detects external changes to backing state for modified configurables.
    */
   public void resetUnmodifiedOnWindowFocus() {
     Configurable current = filter.context.getCurrentConfigurable();
@@ -714,6 +737,62 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
       current.reset();
       filter.context.fireReset(current);
+    }
+    detectExternalChangesOnFocusGain();
+  }
+
+  private void snapshotModifiedConfigurablesState() {
+    myStateSnapshots.clear();
+    for (Configurable c : filter.context.getModified()) {
+      BackedByPersistentState backed = ConfigurableWrapper.cast(BackedByPersistentState.class, c);
+      if (backed == null) continue;
+      Map<PersistentStateComponent<?>, Element> snapshots = new LinkedHashMap<>();
+      for (PersistentStateComponent<?> psc : backed.getBackingComponents()) {
+        Element snapshot = snapshotOf(psc);
+        if (snapshot != null) {
+          snapshots.put(psc, snapshot);
+        }
+      }
+      if (!snapshots.isEmpty()) {
+        myStateSnapshots.put(c, snapshots);
+      }
+    }
+  }
+
+  private void detectExternalChangesOnFocusGain() {
+    for (Map.Entry<Configurable, Map<PersistentStateComponent<?>, Element>> entry : myStateSnapshots.entrySet()) {
+      Configurable c = entry.getKey();
+      for (Map.Entry<PersistentStateComponent<?>, Element> pscEntry : entry.getValue().entrySet()) {
+        PersistentStateComponent<?> psc = pscEntry.getKey();
+        Element oldSnapshot = pscEntry.getValue();
+        Element currentSnapshot = snapshotOf(psc);
+        if (currentSnapshot != null && !JDOMUtil.areElementsEqual(oldSnapshot, currentSnapshot)) {
+          String message = UIBundle.message("settings.external.change.conflict.notification",
+                                             c.getDisplayName(), psc.getClass().getName());
+          LOG.warn(message);
+          if (Registry.is("ide.settings.external.change.conflict.show.notification")) {
+            NotificationGroupManager.getInstance()
+              .getNotificationGroup("Settings External Change Conflict")
+              .createNotification(message, NotificationType.WARNING)
+              .notify(myProject);
+          }
+          SettingsCounterUsagesCollector.EXTERNAL_CHANGE_WHILE_MODIFIED.log(
+            (c instanceof ConfigurableWrapper w ? w.getConfigurable() : c).getClass());
+        }
+      }
+    }
+    myStateSnapshots.clear();
+  }
+
+  private static @Nullable Element snapshotOf(@NotNull PersistentStateComponent<?> psc) {
+    try {
+      Object state = psc.getState();
+      if (state == null) return null;
+      return XmlSerializer.serialize(state);
+    }
+    catch (Exception e) {
+      LOG.debug("Failed to snapshot state of " + psc.getClass().getName(), e);
+      return null;
     }
   }
 
