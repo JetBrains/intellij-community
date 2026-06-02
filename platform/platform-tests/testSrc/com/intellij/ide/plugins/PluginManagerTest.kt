@@ -192,7 +192,7 @@ class PluginManagerTest {
 
   @Test
   fun `remote development plugin is essential only in remote dev host mode`() {
-    val remoteDevelopmentPlugin = PluginManagerCore.REMOTE_DEVELOPMENT_PLUGIN_ID
+    val remoteDevelopmentPlugin = PluginId.getId("com.jetbrains.remoteDevelopment")
     try {
       AppMode.setFlags(listOf(WellKnownCommand.SERVER_MODE))
       assertThat(ProductPluginInitContext().essentialPlugins).contains(remoteDevelopmentPlugin)
