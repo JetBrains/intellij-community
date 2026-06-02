@@ -74,5 +74,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.base" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.gradle.java.properties" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
   </component>
 </module>

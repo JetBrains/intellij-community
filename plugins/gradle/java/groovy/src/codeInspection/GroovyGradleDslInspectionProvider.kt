@@ -9,6 +9,7 @@ import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyForeignDelega
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyIncorrectDependencyNotationArgumentInspectionVisitor
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyPluginDslStructureInspectionVisitor
 import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyRedundantKotlinStdLibInspectionVisitor
+import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -39,8 +40,15 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
 
-  override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean =
-    FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)
+  override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
+    if (!FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return false
+
+    val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
+      it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
+    }
+    // the default value is "true"
+    return kotlinStdlibDefaultDependencyProp != "false"
+  }
 
   override fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     GroovyPsiElementVisitor(GroovyRedundantKotlinStdLibInspectionVisitor(holder))

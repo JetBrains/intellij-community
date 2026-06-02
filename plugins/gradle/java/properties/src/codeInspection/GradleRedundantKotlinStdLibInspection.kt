@@ -3,19 +3,12 @@ package com.intellij.gradle.java.properties.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
 
 class GradleRedundantKotlinStdLibInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
-    val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
-      it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
-    }
-    // the default value is "true"
-    if (kotlinStdlibDefaultDependencyProp == "false") return false
-
     val language = file.language
     val inspectionProvider = GradleDslInspectionProvider.Companion.INSTANCE.forLanguage(language) ?: return false
     return inspectionProvider.isRedundantKotlinStdLibInspectionAvailable(file)

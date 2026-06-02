@@ -92,6 +92,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
         "//platform/lang-api:lang",
+        "//plugins/gradle/java/properties",
+        "//plugins/properties/properties-psi-api:psi",
     ],
 )
 
@@ -149,6 +151,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//plugins/gradle/java/properties:properties_test_lib",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

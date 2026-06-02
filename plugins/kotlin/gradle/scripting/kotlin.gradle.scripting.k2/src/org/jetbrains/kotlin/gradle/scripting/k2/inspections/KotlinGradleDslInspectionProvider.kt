@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -58,8 +59,15 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         return KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder)
     }
 
-    override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableGradleKtsFile(file)
+    override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
+        if (!isSuitableGradleKtsFile(file)) return false
+
+        val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
+            it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
+        }
+        // the default value is "true"
+        return kotlinStdlibDefaultDependencyProp != "false"
+    }
 
     override fun getRedundantKotlinStdLibInspectionVisitor(
         holder: ProblemsHolder,
