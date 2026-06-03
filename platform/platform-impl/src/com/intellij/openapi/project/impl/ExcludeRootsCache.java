@@ -86,12 +86,12 @@ final class ExcludeRootsCache {
         var result = new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
         // WSM contributors
         var collector = new ExcludedRootsCollector(result);
-        for (var contributor : WorkspaceFileIndexImpl.EP_NAME.getExtensionList()) {
+        WorkspaceFileIndexImpl.EP_NAME.forEachExtensionSafe(contributor -> {
           switch (contributor.getStorageKind()) {
             case MAIN -> collectExcludedRootsFromContributor(contributor, wsm.getCurrentSnapshot(), collector);
             case UNLOADED -> collectExcludedRootsFromContributor(contributor, wsm.getCurrentSnapshotOfUnloadedEntities(), collector);
           }
-        }
+        });
         // legacy extensions
         for (var policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
           ContainerUtil.addAll(result, policy.getExcludeUrlsForProject());

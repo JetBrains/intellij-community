@@ -3,6 +3,7 @@
 
 package com.intellij.util.indexing.roots
 
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
@@ -156,10 +157,10 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     fun registerEntitiesFromContributors(entityStorage: EntityStorage,
                                          settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
       val builder = WorkspaceIndexingRootsBuilder(!settings.collectExplicitRootsForModules)
-      for (contributor in WorkspaceFileIndexImpl.EP_NAME.extensionList) {
+      WorkspaceFileIndexImpl.EP_NAME.forEachExtensionSafeInline { contributor ->
         ProgressManager.checkCanceled()
         if (settings.shouldIgnore(contributor)) {
-          continue
+          return@forEachExtensionSafeInline
         }
         builder.registerEntitiesFromContributor(contributor, entityStorage)
       }

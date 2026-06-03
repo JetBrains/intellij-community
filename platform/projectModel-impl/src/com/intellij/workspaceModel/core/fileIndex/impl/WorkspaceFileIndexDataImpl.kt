@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
@@ -37,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
@@ -441,7 +443,7 @@ internal class WorkspaceFileIndexDataImpl(
     ThreadingAssertions.assertWriteAccess()
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
-    contributorList.filter { it.storageKind == storageKind }.forEach {
+    contributorList.filter { it.storageKind == storageKind }.forEachLoggingErrors(logger) {
       processChangesByContributor(it, event, storeRegistrar, removeRegistrar)
     }
     resetFileCache()
@@ -631,6 +633,8 @@ private fun registerAllEntities(
   }
 }
 
+private val logger = Logger.getInstance(WorkspaceFileIndexDataImpl::class.java)
+
 private fun <E : WorkspaceEntity> registerFileSets(
   entity: E,
   storage: EntityStorage,
@@ -638,7 +642,7 @@ private fun <E : WorkspaceEntity> registerFileSets(
   contributors: List<WorkspaceFileIndexContributor<WorkspaceEntity>>,
 ) {
   WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-    for (contributor in contributors) {
+    contributors.forEachLoggingErrors(logger) { contributor ->
       contributor.registerFileSets(entity, registrar, storage)
     }
   }
