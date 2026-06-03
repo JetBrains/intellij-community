@@ -34,7 +34,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-class PySdkPathsTest {
+internal class PySdkPathsTest {
 
   companion object {
     @JvmField
@@ -251,9 +251,9 @@ class PySdkPathsTest {
 
   @Test
   fun sysPathEntryPointingToAnotherModuleRootConfiguresModuleDependency() {
-    assumeTrue("The registry key 'python.detect.cross.module.dependencies' is not enabled", 
+    assumeTrue("The registry key 'python.detect.cross.module.dependencies' is not enabled",
                Registry.`is`("python.detect.cross.module.dependencies"))
-    
+
     val (module1, moduleRoot1) = createModule("m1")
     val (module2, moduleRoot2) = createModule("m2")
 
@@ -262,12 +262,12 @@ class PySdkPathsTest {
       module1.pythonSdk = it
     }
     mockPythonPluginDisposable()
-    
+
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(moduleRoot2.path))
     updateSdkPaths(sdk)
-    checkRoots(sdk, module1, 
-               moduleRoots = listOf(moduleRoot1), 
-               sdkRoots = listOf(), 
+    checkRoots(sdk, module1,
+               moduleRoots = listOf(moduleRoot1),
+               sdkRoots = listOf(),
                moduleDependencies = listOf(module2))
 
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf())
@@ -310,8 +310,8 @@ class PySdkPathsTest {
       sdk.writeExternal(element)
       sdk.readExternal(element)
 
-      assertThat(sdk.sdkAdditionalData).isSameAs(PyInvalidSdk)
-      assertThat(sdk.pySdkAdditionalData).isSameAs(PyInvalidSdk)
+      assertThat(sdk.sdkAdditionalData).isInstanceOf(PyInvalidSdk::class.java)
+      assertThat(sdk.pySdkAdditionalData).isInstanceOf(PyInvalidSdk::class.java)
     }
   }
 
@@ -329,7 +329,7 @@ class PySdkPathsTest {
     val module = projectModel.createModule(name)
     assertThat(PyUtil.getSourceRoots(module)).isEmpty()
 
-   ModuleRootManager.getInstance(module).modifiableModel.apply {
+    ModuleRootManager.getInstance(module).modifiableModel.apply {
       addContentEntry(moduleRoot)
       runWriteActionAndWait { commit() }
     }
@@ -374,7 +374,7 @@ class PySdkPathsTest {
     module: Module,
     moduleRoots: List<VirtualFile>,
     sdkRoots: List<VirtualFile>,
-    moduleDependencies: List<Module> = emptyList<Module>(),
+    moduleDependencies: List<Module> = emptyList(),
   ) {
     assertThat(PyUtil.getSourceRoots(module)).containsExactlyInAnyOrder(*moduleRoots.toTypedArray())
 

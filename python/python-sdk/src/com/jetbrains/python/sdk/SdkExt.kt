@@ -93,7 +93,7 @@ fun Sdk.isRunAsRootViaSudo(): Boolean {
 val Sdk.isSdkSeemsValid: Boolean
   get() {
     if (!isPythonSdk(this, true)) return false
-    if (this.sdkAdditionalData == PyInvalidSdk) {
+    if (this.sdkAdditionalData is PyInvalidSdk) {
       return false
     }
 

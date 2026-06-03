@@ -9,4 +9,4 @@ import org.jetbrains.annotations.ApiStatus
  * and returns it early instead of crashing on flavor detection. See PY-88807.
  */
 @ApiStatus.Internal
-object PyInvalidSdk : PythonSdkAdditionalData()
+class PyInvalidSdk : PythonSdkAdditionalData()
