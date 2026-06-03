@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -161,6 +162,7 @@ abstract class PyCodeInsightTestCase {
     val languageLevel: LanguageLevel = LanguageLevel.getLatest(),
     val assertRecursionPrevention: Boolean = true,
     val assertSdkRootsNotParsed: Boolean = true,
+    val enablePyAnyType: Boolean = true,
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
   )
@@ -257,11 +259,16 @@ abstract class PyCodeInsightTestCase {
     }
     setLanguageLevel(options.languageLevel)
 
+    val anyTypeKey = Registry.get("python.type.any")
+    val oldAnyType = anyTypeKey.asBoolean()
+    anyTypeKey.setValue(options.enablePyAnyType)
+
     try {
       doTest(options, fileName, fileContent, otherFiles)
     }
     finally {
       setLanguageLevel(null)
+      anyTypeKey.setValue(oldAnyType)
       testCallCount++
     }
   }
