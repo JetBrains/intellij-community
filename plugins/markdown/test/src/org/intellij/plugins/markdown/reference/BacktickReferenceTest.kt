@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -31,6 +32,54 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val javaClass = createJavaClass()
     val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
     assertTrue(myFixture.psiManager.areElementsEquivalent(javaClass, reference!!.resolve()))
+  }
+
+  @Test
+  fun `test short symbol references are not resolved`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+           public void short() {}
+        }
+      """.trimIndent()
+    )
+    val reference = configureAndGetReferenceAtCaret("some.md", "There is an `sh<caret>ort` backtick")
+    assertTrue(reference is BacktickReference)
+    assertNull(reference!!.resolve())
+
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void longlonglong() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some1.md", "There is an `longlo<caret>nglong` backtick")
+  }
+
+  @Test
+  fun `test short symbol references are resolved if look like code`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+           public void sho_test() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some.md", "There is an `sho<caret>_test` backtick")
+
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void shoTest() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some1.md", "There is an `sho<caret>Test` backtick")
   }
 
   @Test
@@ -158,6 +207,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     assertInstanceOf(reference, FileReference::class.java)
     assertTrue(reference!!.isReferenceTo(target))
     assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+  }
+
+  private fun assertResolvesToPsiMethod(fileName: String, text: String) {
+    val reference = configureAndGetReferenceAtCaret(fileName, text)
+    assertTrue(reference is BacktickReference)
+    assertTrue(reference!!.resolve() is PsiMethod)
   }
 
   companion object {

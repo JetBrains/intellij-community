@@ -79,6 +79,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//fleet/rhizomedb",
         "//platform/util:util-ui",
+        "//platform/util/text-matching",
     ],
 )
 
@@ -154,6 +155,7 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/util/text-matching:text-matching_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown` end
