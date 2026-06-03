@@ -1,0 +1,53 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.junit5.suites` start
+
+jvm_library(
+    name = "junit5-suites",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5.suites",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-suites-_j_unit5_suites"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-junit5-suites-_j_unit5_suites",
+        "//libraries/junit5",
+        "//libraries/junit5-launcher",
+    ],
+)
+
+jvm_library(
+    name = "junit5-suites_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.junit5.suites",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-suites-_j_unit5_suites"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5-suites",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.junit5.suites` end
+
+### auto-generated section `iml intellij.libraries.junit5.suites` start
+exports_files(
+    [
+        "intellij.libraries.junit5.suites.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.junit5.suites` end

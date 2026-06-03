@@ -78,7 +78,8 @@ jvm_library(
         "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
         "//plugins/agent-workbench/sessions-launch-config/backend:backend_test_lib",
         "@lib//:junit5",
-        "@lib//:junit5Suites",
+        "//libraries/junit5-suites",
+        "//libraries/junit5-suites:junit5-suites_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.plugin` end
@@ -173,7 +174,8 @@ jvm_library(
         "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
         "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
         "@lib//:junit5",
-        "@lib//:junit5Suites",
+        "//libraries/junit5-suites",
+        "//libraries/junit5-suites:junit5-suites_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",

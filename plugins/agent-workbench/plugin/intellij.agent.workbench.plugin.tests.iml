@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.terminal.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.suites" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

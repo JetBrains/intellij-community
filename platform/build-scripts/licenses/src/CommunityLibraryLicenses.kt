@@ -816,6 +816,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("JUnit5Params", libraryName = "JUnit5Params", url = "https://junit.org/junit5/")
       .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
 
+    LibraryLicense("JUnit5Suites", libraryName = "JUnit5Suites", url = "https://junit.org/junit5/")
+      .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
+
     LibraryLicense("JUnit5Vintage", libraryName = "JUnit5Vintage", url = "https://junit.org/junit5/")
       .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
 
