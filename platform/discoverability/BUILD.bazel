@@ -99,10 +99,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.discoverability.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":discoverability-tests",
-    ],
+    runtime_deps = [":discoverability-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
