@@ -2,6 +2,7 @@
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
@@ -895,9 +896,13 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     refresh()
     updateChangeListManager()
 
-    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
-    `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
-    GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
+    runBlocking {
+      coroutineToIndicator { indicator ->
+        val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+        `when`(uiHandler.progressIndicator).thenReturn(indicator)
+        GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
+      }
+    }
 
     assertSuccessfulRebaseNotification(expectedNotification())
     repo.`assert feature rebased on master`()

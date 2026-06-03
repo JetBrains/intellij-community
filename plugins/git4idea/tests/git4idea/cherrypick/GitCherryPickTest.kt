@@ -2,6 +2,7 @@
 package git4idea.cherrypick
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.HashImpl
@@ -19,6 +20,7 @@ import git4idea.test.checkoutNew
 import git4idea.test.prepareConflict
 import git4idea.test.tac
 import git4idea.test.waitScheduledChangelistDeletions
+import kotlinx.coroutines.runBlocking
 
 abstract class GitCherryPickTest : GitSingleRepoTest() {
   protected lateinit var vcsAppSettings: VcsApplicationSettings
@@ -99,7 +101,11 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
   protected fun cherryPick(vararg hashes: String, expectSuccess: Boolean = true) {
     updateChangeListManager()
     val details = readDetails(*hashes)
-    val cherryPickResult = GitCherryPicker(project).cherryPick(details)
+    val cherryPickResult = runBlocking {
+      coroutineToIndicator {
+        GitCherryPicker(project).cherryPick(details)
+      }
+    }
     assertEquals(expectSuccess, cherryPickResult)
   }
 

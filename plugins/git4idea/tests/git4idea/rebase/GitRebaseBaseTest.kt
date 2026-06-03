@@ -3,7 +3,7 @@ package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
@@ -21,6 +21,7 @@ import git4idea.test.createRepository
 import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.resolveConflicts
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Locale
@@ -241,12 +242,29 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     }
   }
 
-  protected open class GitTestingRebaseProcess(project: Project, params: GitRebaseParams, val repositories: Collection<GitRepository>) :
-    GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, EmptyProgressIndicator()), null) {
+  protected open class GitTestingRebaseProcess(
+    private val project: Project,
+    private val params: GitRebaseParams,
+    private val repositories: Collection<GitRepository>,
+  ) {
+    constructor(project: Project, params: GitRebaseParams, repository: GitRepository) :
+      this(project, params, listOf(repository))
 
-    constructor(project: Project, params: GitRebaseParams, repository: GitRepository) : this(project, params, listOf(repository))
+    fun rebase() {
+      runBlocking {
+        coroutineToIndicator { indicator ->
+          val spec = GitRebaseSpec.forNewRebase(project, params, repositories, indicator)
+          val process = object : GitRebaseProcess(project, spec, null) {
+            override fun getDirtyRoots(repos: Collection<GitRepository>): Collection<GitRepository> {
+              return this@GitTestingRebaseProcess.getDirtyRoots(repos)
+            }
+          }
+          process.rebase()
+        }
+      }
+    }
 
-    override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
+    protected open fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
       return repositories.filter { it.isDirty() }
     }
 
