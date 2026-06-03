@@ -83,6 +83,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GuiUtils
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
@@ -224,57 +225,6 @@ open class IdeStatusBarImpl @Internal constructor(
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
-
-    private val WIDGET_FLAVOR = DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=javax.swing.JComponent")
-  }
-
-  private class WidgetTransferable(val component: JComponent) : Transferable {
-    override fun getTransferDataFlavors(): Array<DataFlavor> =
-      arrayOf(WIDGET_FLAVOR)
-
-    override fun isDataFlavorSupported(flavor: DataFlavor): Boolean =
-      flavor == WIDGET_FLAVOR
-
-    override fun getTransferData(flavor: DataFlavor): Any =
-      if (isDataFlavorSupported(flavor)) return component
-      else throw UnsupportedFlavorException(flavor)
-  }
-
-  private inner class WidgetTransferHandler : TransferHandler() {
-    override fun getSourceActions(c: JComponent): Int =
-      MOVE
-
-    override fun createTransferable(c: JComponent): Transferable =
-      WidgetTransferable(c)
-
-    override fun canImport(support: TransferSupport): Boolean =
-      support.isDataFlavorSupported(WIDGET_FLAVOR) &&
-      support.isDrop
-
-    override fun importData(support: TransferSupport): Boolean {
-      try {
-        if (!canImport(support)) return false
-
-        val sourceWidgetId = (support.transferable.getTransferData(WIDGET_FLAVOR) as JComponent)
-                               .let { ClientProperty.get(it, WIDGET_ID) }
-                             ?: return false
-
-        val targetWidgetId = (support.component as? JComponent)
-                               ?.let { findWidgetComponent(it) }
-                               ?.let { ClientProperty.get(it, WIDGET_ID) }
-                             ?: return false
-
-        if (sourceWidgetId == targetWidgetId) return false
-
-        reorderWidgets(sourceWidgetId, targetWidgetId)
-
-        return true
-      }
-      catch (e: Exception) { // it appears escaping exceptions are swallowed
-        LOG.error("Unexpected error when reordering widget", e)
-        throw e
-      }
-    }
   }
 
   /**
@@ -303,24 +253,36 @@ open class IdeStatusBarImpl @Internal constructor(
     private val order: MutableMap<String, Int> = initialOrder.toMutableMap()
 
     fun reorder(sourceWidgetId: String, targetWidgetId: String, currentVisibleOrder: List<String>) {
-      val visible = currentVisibleOrder.toMutableList()
-      val sourceIdx = visible.indexOf(sourceWidgetId)
-      val targetIdx = visible.indexOf(targetWidgetId)
+      val finalVisible = currentVisibleOrder.toMutableList()
+      val sourceIdx = finalVisible.indexOf(sourceWidgetId)
+      val targetIdx = finalVisible.indexOf(targetWidgetId)
       if (sourceIdx == -1 || targetIdx == -1) return
 
-      visible.removeAt(sourceIdx)
-      val insertIdx = if (sourceIdx < targetIdx) targetIdx - 1 else targetIdx
-      visible.add(insertIdx, sourceWidgetId)
-
-      // Snapshot dense positions for visible widgets; orphan entries for currently-invisible
-      // widgets are intentionally kept so their order is restored if the widget reappears.
-      visible.forEachIndexed { i, id -> order[id] = i }
+      finalVisible.removeAt(sourceIdx)
+      finalVisible.add(targetIdx, sourceWidgetId)
+      finalVisible.forEachIndexed { i, id ->
+        if (id == sourceWidgetId || order.containsKey(id)) {
+          order[id] = i
+        }
+      }
       persist(order.toMap())
     }
 
     fun sortWidgets(sorted: MutableList<Orderable>) {
       LoadingOrder.sortByLoadingOrder(sorted)
-      sorted.sortBy { order[it.orderId] ?: Int.MAX_VALUE }
+
+      val customMoves = order.entries.sortedBy { it.value }
+      for (entry in customMoves) {
+        val widgetId = entry.key
+        val targetIdx = entry.value
+
+        val itemIdx = sorted.indexOfFirst { it.orderId == widgetId }
+        if (itemIdx != -1) {
+          val item = sorted.removeAt(itemIdx)
+          val safeIdx = targetIdx.coerceIn(0, sorted.size)
+          sorted.add(safeIdx, item)
+        }
+      }
     }
   }
 
@@ -344,6 +306,49 @@ open class IdeStatusBarImpl @Internal constructor(
     sortRightWidgets()
     rightPanel.revalidate()
     rightPanel.repaint()
+  }
+
+  /**
+   * Detects drag-to-reorder of right-side widgets at the status bar glass-pane level.
+   * Reordering is committed on drop to prevent layout flickering on dynamic-width widgets.
+   */
+  private inner class WidgetDragHelper(parent: Disposable) : MouseDragHelper<JPanel>(parent, rightPanel) {
+    private var pressedWidgetId: String? = null
+
+    override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
+      widgetIdAt(dragComponentPoint) != null
+
+    override fun processMousePressed(event: MouseEvent) {
+      val pointInRightPanel = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
+      pressedWidgetId = widgetIdAt(pointInRightPanel)
+    }
+
+    override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+      // Do nothing during live drag to prevent dynamic-width layouts from flickering
+    }
+
+    override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+      val sourceId = pressedWidgetId
+      pressedWidgetId = null // Clear state immediately
+
+      if (sourceId == null || willDragOutStart) return
+
+      val pointInRightPanel = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
+      val targetId = widgetIdAt(pointInRightPanel)
+
+      if (targetId != null && sourceId != targetId) {
+        reorderWidgets(sourceId, targetId)
+      }
+    }
+
+    private fun widgetIdAt(point: Point): String? {
+      if (point.x < 0 || point.y < 0 || point.x >= rightPanel.width || point.y >= rightPanel.height) {
+        return null
+      }
+      return SwingUtilities.getDeepestComponentAt(rightPanel, point.x, point.y)
+        ?.let { findWidgetComponent(it) }
+        ?.let { ClientProperty.get(it, WIDGET_ID) }
+    }
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -408,6 +413,7 @@ open class IdeStatusBarImpl @Internal constructor(
     rightPanel.isOpaque = false
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
+    WidgetDragHelper(disposable).start()
 
     if (addToolWindowWidget) {
       val disposable = Disposer.newDisposable()
@@ -663,20 +669,6 @@ open class IdeStatusBarImpl @Internal constructor(
     val panel = getTargetPanel(bean.position)
     if (bean.position == Position.LEFT && panel.componentCount == 0) {
       bean.component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
-    }
-
-    // Enable drag and drop for right panel widgets
-    if (bean.position == Position.RIGHT) {
-      bean.component.transferHandler = WidgetTransferHandler()
-
-      // For generic JComponents, we need to manually trigger drag via MouseMotionListener
-      // since setDragEnabled() is only available on specific components (JList, JTable, etc.)
-      bean.component.addMouseMotionListener(object : java.awt.event.MouseMotionAdapter() {
-        override fun mouseDragged(e: MouseEvent) {
-          val handler = bean.component.transferHandler
-          handler?.exportAsDrag(bean.component, e, TransferHandler.MOVE)
-        }
-      })
     }
 
     panel.add(bean.component)
