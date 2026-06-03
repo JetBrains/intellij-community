@@ -448,7 +448,9 @@
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
-    <group id="Diff.EditorPopupMenu"/>
+    <group id="Diff.EditorPopupMenu">
+      <reference ref="CompareClipboardWithSelection"/>
+    </group>
     <group id="Diff.ViewerPopupMenu"/>
     <group id="Diff.ViewerToolbar"/>
     <group id="Diff.DiffModes"/>

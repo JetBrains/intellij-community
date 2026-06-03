@@ -71,13 +71,6 @@ import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 public final class TextDiffViewerUtil {
   private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
 
-  public static @NotNull List<AnAction> createEditorPopupActions() {
-    List<AnAction> result = new ArrayList<>();
-    result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
-    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
-    return result;
-  }
-
   public static void installGutterPopup(@NotNull List<? extends Editor> editors, @NotNull ActionGroup actionGroup) {
     for (Editor editor : editors) {
       if (editor.getGutter() instanceof EditorGutterComponentEx gutterEx) {

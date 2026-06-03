@@ -46,6 +46,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -330,7 +331,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   private @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(createEditorPopupChangesActions());
     group.add(Separator.getInstance());
-    group.addAll(TextDiffViewerUtil.createEditorPopupActions());
+    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     group.add(Separator.getInstance());
     group.add(new MyToggleExpandByDefaultAction());
