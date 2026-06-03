@@ -214,3 +214,11 @@ private fun formatValue(value: Any?): String {
 
 internal const val INDENT = "    "
 internal object DoNotSortIndicator
+
+internal fun List<Any>.unsorted(): List<Any> {
+  return if (this.size < 2) {
+    this
+  } else {
+    listOf<Any>(DoNotSortIndicator) + this
+  }
+}

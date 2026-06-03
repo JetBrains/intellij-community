@@ -1369,7 +1369,7 @@ private fun renderDeps(
 ) {
   if (deps != null) {
     if (deps.exports.isNotEmpty()) {
-      target.option("exports", deps.exports.sorted())
+      target.option("exports", deps.exports.unsorted())
     }
   }
 
@@ -1409,8 +1409,6 @@ private fun renderDeps(
     }
   }
 }
-
-private fun List<BazelLabel>.unsorted() = listOf<Any>(DoNotSortIndicator) + this
 
 private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
   return labels.associateWith { path ->

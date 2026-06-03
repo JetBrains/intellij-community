@@ -147,14 +147,13 @@ internal fun BuildFile.generateMavenLib(
 
     target("jvm_import") {
       option("name", targetName)
+      if (targetName == "kotlinx-serialization-core") {
+        option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
+      }
       option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
       if (sourceJar != null) {
         option("source_jar", "@${fileToHttpRuleFile(sourceJar.mavenCoordinates)}")
       }
-      if (targetName == "kotlinx-serialization-core") {
-        option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
-      }
-
       libVisibility?.let {
         visibility(arrayOf(it))
       }
@@ -169,7 +168,7 @@ internal fun BuildFile.generateMavenLib(
       }
       option("exports", lib.jars.map {
         ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates)}_import"
-      }.sorted())
+      }.unsorted())
     }
 
     for (jar in lib.jars) {
@@ -222,23 +221,23 @@ internal fun BuildFile.generateProvidedMavenLib(
   if (exportedCompilerPlugins.isEmpty()) {
     target("java_library") {
       option("name", targetName + PROVIDED_SUFFIX)
-      option("exports", listOf(exportsLabel))
       option("neverlink", true)
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", listOf(exportsLabel))
     }
   }
   else {
     load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
     target("kt_jvm_library") {
       option("name", targetName + PROVIDED_SUFFIX)
-      option("exports", listOf(exportsLabel))
-      option("neverlink", true)
       option("exported_compiler_plugins", exportedCompilerPlugins)
+      option("neverlink", true)
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", listOf(exportsLabel))
     }
   }
 }
