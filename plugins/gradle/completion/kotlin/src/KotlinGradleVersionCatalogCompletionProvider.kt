@@ -20,9 +20,12 @@ import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection
 import org.jetbrains.plugins.gradle.service.resolve.findVersionCatalogEntriesFromSections
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
+import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    if (!useDependencyCompletionService()) return
+
     val element = parameters.position
     val input = getInput(parameters)
 
