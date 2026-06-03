@@ -271,7 +271,7 @@ public final class JobLauncherImpl extends JobLauncher {
     private final Runnable myAction;
     private final ForkJoinPool myForkJoinPool;
     private final Consumer<? super Future<?>> myOnDoneCallback;
-    private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
+    private enum Status { STARTED, EXECUTED, CANCELED } // null=not yet executed, STARTED=started execution, EXECUTED=finished, CANCELED=finished exceptionally
     private volatile Status myStatus;
     private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
       @Override
@@ -289,13 +289,13 @@ public final class JobLauncherImpl extends JobLauncher {
         try {
           myAction.run();
           complete(null); // complete manually before calling callback
+          myStatus = Status.EXECUTED;
         }
         catch (Throwable throwable) {
-          myStatus = Status.EXECUTED;
+          myStatus = Status.CANCELED;
           completeExceptionally(throwable);
         }
         finally {
-          myStatus = Status.EXECUTED;
           if (myOnDoneCallback != null) {
             myOnDoneCallback.accept(this);
           }
@@ -324,7 +324,7 @@ public final class JobLauncherImpl extends JobLauncher {
     public boolean isDone() {
       boolean wasCancelled = myForkJoinTask.isCancelled(); // must be before status check
       Status status = myStatus;
-      return status == Status.EXECUTED || status == null && wasCancelled;
+      return status == Status.EXECUTED || status == Status.CANCELED || status == null && wasCancelled;
     }
 
     @Override
@@ -372,7 +372,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
     @Override
     public String toString() {
-      return "VoidForkJoinTask: status="+myStatus+"; task:"+myForkJoinTask;
+      return "VoidForkJoinTask: status:"+myStatus+"; task:"+myForkJoinTask;
     }
   }
 
