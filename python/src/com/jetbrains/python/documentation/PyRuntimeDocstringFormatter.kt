@@ -4,26 +4,36 @@ package com.jetbrains.python.documentation
 import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PySdkUtil.getLanguageLevelForSdk
 import com.jetbrains.python.sdk.PythonSdkType
 import org.jetbrains.annotations.Nls
-import java.io.File
+import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 
 object PyRuntimeDocstringFormatter {
   fun runExternalTool(module: Module, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
     val sdk = PythonSdkType.findLocalCPython(module) ?: return logSdkNotFound(format)
-    if (getLanguageLevelForSdk(sdk).isPython2) {
+    val languageLevel = getLanguageLevelForSdk(sdk)
+    if (languageLevel.isPython2) {
       return logPy2NotSupported()
     }
     val sdkHome = sdk.homePath ?: return null
 
+    return formatCached(sdkHome, languageLevel, format, formatterFlags, input) {
+      runProcess(sdk, sdkHome, format, formatterFlags, input)
+    }
+  }
+
+  private fun runProcess(sdk: Sdk, sdkHome: String, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
     val encodedInput = DEFAULT_CHARSET.encode(input)
     val data = ByteArray(encodedInput.limit()).also { encodedInput.get(it) }
     val arguments = formatterFlags.toMutableList().apply {
@@ -37,12 +47,27 @@ object PyRuntimeDocstringFormatter {
 
     LOG.debug("Command for launching docstring formatter: ${commandLine.commandLineString}")
 
-    val output = PySdkUtil.getProcessOutput(commandLine, File(sdkHome).parent, null, 5000, data, false)
+    val output = PySdkUtil.getProcessOutput(commandLine, Path.of(sdkHome).parent?.toString(),
+                                            null, 5000, data, false)
 
     return if (output.checkSuccess(LOG)) {
       output.stdout
     }
     else logScriptError(input)
+  }
+
+  @VisibleForTesting
+  fun formatCached(
+    sdkHome: String,
+    languageLevel: LanguageLevel,
+    format: DocStringFormat,
+    formatterFlags: List<String>,
+    input: String,
+    cache: PyDocstringFormatterCache = PyDocstringFormatterCache.getInstance(),
+    compute: () -> String?,
+  ): String? {
+    val key = PyDocstringFormatterCache.Key(sdkHome, languageLevel, format.formatterCommand, formatterFlags, input)
+    return cache.getOrCompute(key, compute)
   }
 
   private fun logErrorToJsonBody(@Nls message: String): String {
