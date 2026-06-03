@@ -520,11 +520,6 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
         )
         return eelJdkPathString
       }
-      if (isSupported(gradleVersion, currentJavaVersion()) &&
-          !javaVersionRestriction.isRestricted(gradleVersion, currentJavaVersion())
-      ) {
-        return IdeaTestUtil.requireRealJdkHome()
-      }
       // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
       return resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction)
