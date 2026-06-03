@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.plugins.terminal.original
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -51,15 +52,14 @@ val CONNECTOR_CLOSING_TIMEOUT: Duration = Duration.ofSeconds(3)
 suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
   // It is a cleanup activity - it shouldn't be canceled in the middle
   withContext(Dispatchers.IO + NonCancellable) {
+    // No exception is expected there, but let's use `try` for extra safety to ensure that `requestEmulatorStop` is called in any case.
     try {
       when (val connector = ttyConnector) {
         is LocalTerminalTtyConnector -> connector.closeSafely()
         else -> connector.close()
       }
-      // Synchronously wait for the connector to close for some time.
-      // Important in case of IDE closing and remote process termination.
-      // We delay this scope cancellation (project-based),
-      // so application-level logic can handle the connector closing before being canceled by the platform.
+      // `connector.close()` case above might schedule the termination as a background task.
+      // Let's await the connector closing here for some meaningful time.
       ttyConnector.waitFor(CONNECTOR_CLOSING_TIMEOUT)
     }
     finally {
@@ -70,7 +70,7 @@ suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
 }
 
 /**
- * Waits for the TtyConnector closing synchronously until [timeout] elapses.
+ * Waits for the [TtyConnector] closing until [timeout] elapses.
  * @return the exit code of the process if it was closed successfully, null otherwise.
  */
 @ApiStatus.Internal
@@ -79,7 +79,7 @@ suspend fun TtyConnector.waitFor(timeout: Duration): Int? {
     return waitFor() // should return the exit code of the process immediately
   }
   return withTimeoutOrNull(timeout) {
-    val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(this@waitFor)
+    val processTtyConnector = original as? ProcessTtyConnector
     if (processTtyConnector != null) {
       processTtyConnector.process.awaitExit()
     }

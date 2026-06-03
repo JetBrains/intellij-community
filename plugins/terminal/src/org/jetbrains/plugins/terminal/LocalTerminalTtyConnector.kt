@@ -60,6 +60,12 @@ class LocalTerminalTtyConnector internal constructor(
     }
   }
 
+  /**
+   * Terminates the underlying [ptyProcess] and awaits its completion for some meaningful time.
+   * It is expected that process should exit before this function returns in most cases.
+   *
+   * Uses [NonCancellable] to avoid being canceled in the middle in case of IDE closing.
+   */
   suspend fun closeSafely(): Unit = withContext(Dispatchers.IO + NonCancellable) {
     if (!ptyProcess.isAlive) return@withContext
 
