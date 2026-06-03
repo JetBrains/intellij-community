@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util;
 
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -27,11 +29,15 @@ public final class PsiNavigateUtil {
 
   public static @Nullable Navigatable getNavigatable(@NotNull PsiElement psiElement) {
     final PsiElement navigationElement = psiElement.getNavigationElement();
-    final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
 
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navigationElement);
     Navigatable navigatable;
-    if (virtualFile != null && virtualFile.isValid()) {
+    if (virtualFile != null && virtualFile.isValid() &&
+        //if it has a decompiler, allow it to go through Navigatable path
+        (Registry.is("hyperlink.ide.decompiler.open.file") &&
+         navigationElement instanceof Navigatable &&
+         !BinaryFileTypeDecompilers.getInstance().hasDecompiler(virtualFile))) {
+      final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
       navigatable = PsiNavigationSupport.getInstance().createNavigatable(navigationElement.getProject(), virtualFile, offset);
     }
     else if (navigationElement instanceof Navigatable) {
