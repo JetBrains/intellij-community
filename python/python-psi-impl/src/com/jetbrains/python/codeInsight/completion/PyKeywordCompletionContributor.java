@@ -78,6 +78,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyWithItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -417,6 +418,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
 
   private static final FilterPattern IN_BEGIN_STMT = new FilterPattern(new StatementFitFilter());
 
+  private static final PsiElementPattern.Capture<PsiElement> IS_TYPE_PARAMETER_NAME =
+    psiElement().withElementType(PyTokenTypes.IDENTIFIER).withParent(PyTypeParameter.class);
+
   /*
   private static final FilterPattern INSIDE_EXPR = new FilterPattern(new PrecededByFilter(
     psiElement(PyExpression.class)
@@ -743,6 +747,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL).andNot(TARGET_AFTER_QUALIFIER)
         .andNot(IN_PATTERN)
+        .andNot(IS_TYPE_PARAMETER_NAME)
       ,
       new PyKeywordCompletionProvider(PyNames.NOT, PyNames.LAMBDA)
     );
@@ -756,6 +761,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
         .andNot(IN_COMMENT)
         .andNot(IN_IMPORT_STMT)
         .and(NOT_PARAMETER_OR_DEFAULT_VALUE)
+        .andNot(IS_TYPE_PARAMETER_NAME)
         .andNot(AFTER_QUALIFIER)
         .andNot(IN_FUNCTION_HEADER)
         .andNot(IN_STRING_LITERAL)
@@ -815,7 +821,8 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
              .andNot(AFTER_QUALIFIER)
              .andNot(IN_STRING_LITERAL)
              .andNot(TARGET_AFTER_QUALIFIER)
-             .andNot(IN_PATTERN),
+             .andNot(IN_PATTERN)
+             .andNot(IS_TYPE_PARAMETER_NAME),
            new PyKeywordCompletionProvider(PyNames.ASYNC));
     extend(CompletionType.BASIC,
            psiElement()

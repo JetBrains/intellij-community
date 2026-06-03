@@ -318,6 +318,30 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON39, this::doTest);
   }
 
+  // PY-90073
+  public void testNoTrueAsTypeParameterName() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.TRUE);
+  }
+
+  // PY-90073
+  public void testNoExpressionKeywordsAsTypeParameterName() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.TRUE, PyNames.FALSE, PyNames.NONE, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-90073
+  public void testExpressionKeywordsAllowedInTypeParameterBound() {
+    List<String> variants = doTestByTestName();
+    assertContainsElements(variants, PyNames.TRUE, PyNames.FALSE, PyNames.NONE, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-90073
+  public void testExpressionKeywordsAllowedInTypeParameterDefault() {
+    List<String> variants = doTestByTestName();
+    assertContainsElements(variants, PyNames.TRUE, PyNames.FALSE, PyNames.NONE, PyNames.NOT, PyNames.LAMBDA);
+  }
+
   // PY-48039
   public void testNoCaseOutsideMatchStatement() {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
