@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SmartList;
@@ -234,8 +235,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     var tree = getProjectsTree();
 
     if (!myState.getOriginalFiles().isEmpty() && tree.getRootProjects().isEmpty()) {
-      MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
-      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
+      boolean autoImportDisabled = Registry.is("external.system.auto.import.disabled");
+      MavenLog.LOG.warn("MavenProjectsTree is inconsistent, auto import disabled = " + autoImportDisabled);
+      if (!autoImportDisabled) {
+        scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
+      }
     }
   }
 
