@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlinx.collections.immutable.ExtensionsKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -486,12 +487,15 @@ public final class SdkConfigurationUtil {
     catch (InterruptedException | ExecutionException | TimeoutException ignored) {
     }
 
+    var chooserBuilder = new NioFileChooserBuilder(sdkType.getHomeChooserDescriptor()).withEnvironmentRestricted(true);
+    if (OS.CURRENT == OS.OHOS && suggestedSdkRoot != null) {
+      chooserBuilder.withPathRoots(suggestedSdkRoot).withShowFileSystemRoots(false);
+    }
+
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
-    Path chosen = new NioFileChooserBuilder(sdkType.getHomeChooserDescriptor())
-      .withEnvironmentRestricted(true)
-      .chooseFile(project, suggestedSdkRoot, component);
+    Path chosen = chooserBuilder.chooseFile(project, suggestedSdkRoot, component);
     if (chosen == null) return;
     if (!EelProviderUtil.getEelDescriptor(chosen).equals(EelProviderUtil.getEelDescriptor(path))) {
       Messages.showErrorDialog(
