@@ -305,6 +305,55 @@ class TestPluginPluginDependencyValidatorTest {
   }
 
   @Test
+  fun `runtime plugin-owned content dependency available from product does not report error`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("TestProduct") { includesModuleSet("test.product.modules") }
+      moduleSet("test.product.modules") { module("dep.module") }
+      plugin("dep.plugin") {
+        pluginId("dep.plugin")
+        content("dep.module")
+      }
+      testPlugin("test.plugin") {
+        pluginId("test.plugin")
+        content("consumer.module")
+      }
+      target("test.plugin") {
+        dependsOn("dep.module", TargetDependencyScope.RUNTIME)
+      }
+      linkPluginMainTarget("test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("test.plugin"),
+      name = "Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      spec = productModules {
+        module("consumer.module")
+      }
+    )
+
+    writePluginXml(tempDir, spec.pluginXmlPath, pluginXml("test.plugin"))
+
+    val model = testGenerationModel(graph, fileUpdater = DeferredFileUpdater(tempDir)).copy(
+      projectRoot = tempDir,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val planOutput = buildPlanOutput(model, emptyList())
+    val plan = planOutput.plans.single()
+    assertThat(plan.moduleDependencies).contains(ContentModuleName("dep.module"))
+    assertThat(plan.pluginDependencies).doesNotContain(PluginId("dep.plugin"))
+
+    val errors = runValidationRule(
+      TestPluginPluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.TEST_PLUGIN_DEPENDENCY_PLAN to planOutput),
+    )
+
+    assertThat(errors.filterIsInstance<DslTestPluginDependencyError>()).isEmpty()
+  }
+
+  @Test
   fun `allowed missing suppresses unresolvable runtime plugin-owned content dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct")

@@ -359,7 +359,7 @@ This filtering applies to:
 - **Content module dependencies** (only for content modules **in plugins**, not directly in products)
 - **DSL test plugin dependency planning**
 
-For DSL test plugin main targets, an explicit `RUNTIME`-scoped dependency keeps a valid target as a generated module dependency. This is used when the test plugin needs a specific content module in its plugin classloader even though the module is already supplied by a bundled plugin. It does not bypass plugin-owner availability checks: plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error.
+For DSL test plugin main targets, an explicit `RUNTIME`-scoped dependency keeps a valid target as a generated module dependency. This is used when the test plugin needs a specific content module in its plugin classloader even though the module is already supplied by a bundled plugin, product content, or module set. It does not bypass plugin-owner availability checks: plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error unless another graph source makes the same module resolvable in the DSL test plugin scope.
 
 Content modules directly in products (via module sets) and content modules owned by module-set wrapper plugins do NOT skip embedded deps because they're module-set/product-layout content, not regular plugin content.
 Plugin-only embedded sources also stay explicit because plugin content alone does not make a target globally embedded.
