@@ -29,6 +29,7 @@ import kotlinx.coroutines.time.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -49,10 +50,12 @@ val CONNECTOR_CLOSING_TIMEOUT: Duration = Duration.ofSeconds(3)
 @ApiStatus.Internal
 suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
   // It is a cleanup activity - it shouldn't be canceled in the middle
-  withContext(NonCancellable) {
-    // Schedule connector closing activities
-    ttyConnector.close()
+  withContext(Dispatchers.IO + NonCancellable) {
     try {
+      when (val connector = ttyConnector) {
+        is LocalTerminalTtyConnector -> connector.closeSafely()
+        else -> connector.close()
+      }
       // Synchronously wait for the connector to close for some time.
       // Important in case of IDE closing and remote process termination.
       // We delay this scope cancellation (project-based),
