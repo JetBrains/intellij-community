@@ -15,6 +15,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/testRunner",
+        "//libraries/misc/plugin",
     ],
 )
 
@@ -42,6 +43,7 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/testRunner:testRunner_test_lib",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
     ],

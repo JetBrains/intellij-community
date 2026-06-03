@@ -12,6 +12,7 @@
     <orderEntry type="library" scope="TEST" name="eclipse.lsp4j" level="project" />
     <orderEntry type="library" scope="TEST" name="eclipse.lsp4j.jsonrpc" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lsp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lsp.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lsp.testFramework" scope="TEST" />
