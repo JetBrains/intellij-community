@@ -258,8 +258,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val restartButton = x { byType("com.intellij.ide.plugins.newui.RestartButton") }
     val uninstallButton = x { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
-    val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
-    val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
+    val disableButton = x { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
+    val enableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
     val arrowButton = x { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton")}
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
     val tabbedPane = tabbedPane()
@@ -287,8 +287,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
-      val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
-      val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
+      val disableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
+      val enableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
     }
   }
 }
