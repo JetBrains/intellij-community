@@ -4,6 +4,7 @@ package com.intellij.terminal.frontend.action
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.NamedColorUtil
@@ -34,6 +35,11 @@ object TerminalAgentsSelectorPresentationUtil {
     mode: TerminalAgentMode,
     showNewBadge: Boolean,
   ) {
+    if (!ApplicationInfoEx.getInstanceEx().isVendorJetBrains &&
+        mode == TerminalAgentMode.INSTALL_AND_RUN) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
     presentation.text = buildText(terminalAgent, mode)
     presentation.icon = terminalAgent.icon
     presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, null)
