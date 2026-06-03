@@ -27,6 +27,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -259,6 +260,10 @@ final class ProcessPopup {
     Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent());
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
     builder.setLocateWithinScreenBounds(false);
+    
+    if (StartupUiUtil.isWaylandToolkit()) {
+      builder.setHeaderAlwaysFocusable(true);
+    }
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 
