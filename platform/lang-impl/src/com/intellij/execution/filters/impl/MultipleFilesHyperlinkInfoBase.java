@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters.impl;
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
@@ -10,24 +10,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,20 +75,7 @@ public abstract class MultipleFilesHyperlinkInfoBase extends HyperlinkInfoBase i
   public abstract @NotNull List<PsiFile> getFiles(@NotNull Project project);
 
   private void open(@NotNull VirtualFile file, Editor originalEditor) {
-    Document document;
-    if (Registry.is("hyperlink.ide.decompiler.open.file") &&
-        BinaryFileTypeDecompilers.getInstance().hasDecompiler(file) &&
-        EDT.isCurrentThreadEdt() &&
-        !ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      document = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() ->
-                                               ReadAction.computeCancellable(
-                                                 () -> FileDocumentManager.getInstance().getDocument(file, myProject)),
-                                             UIBundle.message("progress.decompiling.file", file.getName()), true, myProject);
-    }
-    else {
-      document = FileDocumentManager.getInstance().getDocument(file, myProject);
-    }
+    Document document = MultiPsiElementHyperlinkInfo.loadDocument(myProject, file);
     int offset = 0;
     if (document != null && myLineNumber >= 0 && myLineNumber < document.getLineCount()) {
       offset = document.getLineStartOffset(myLineNumber);
