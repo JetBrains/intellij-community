@@ -20,10 +20,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.images.build",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/commons/imaging",
-    ],
+    runtime_deps = ["//libraries/commons/imaging"],
     deps = [
         # do not sort,
         "//jps/model-api:model",
@@ -117,10 +114,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.images.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/commons/imaging",
-    ],
+    runtime_deps = ["//libraries/commons/imaging"],
 )
 
 jvm_library(

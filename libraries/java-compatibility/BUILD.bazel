@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-java-compatibility-java-compatibility"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-java-compatibility-java-compatibility",
-    ],
+    runtime_deps = ["@lib//:libraries-java-compatibility-java-compatibility"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.java.compatibility",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-java-compatibility-java-compatibility"],
-    runtime_deps = [
-        # do not sort,
-        ":java-compatibility",
-    ],
+    runtime_deps = [":java-compatibility"],
 )
 ### auto-generated section `build intellij.libraries.java.compatibility` end
 

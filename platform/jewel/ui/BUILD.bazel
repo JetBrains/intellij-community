@@ -36,12 +36,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
-        "//platform/icons-api",
-        "//platform/icons-api/rendering",
+        # do not sort,
         "//platform/jewel/foundation",
         "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+        "//libraries/compose-foundation-desktop",
+        "//platform/icons-api",
+        "//platform/icons-api/rendering",
     ],
     deps = [
         # do not sort,
@@ -71,16 +72,17 @@ jvm_library(
     module_name = "intellij.platform.jewel.ui",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/jewel/foundation",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//platform/icons-api",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-api/rendering",
         "//platform/icons-api/rendering:rendering_test_lib",
-        "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     ],
     runtime_deps = [
         # do not sort,
@@ -133,10 +135,11 @@ jvm_library(
     module_name = "intellij.platform.jewel.ui.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
+        # do not sort,
         "//platform/jewel/foundation",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
+        "//libraries/compose-foundation-desktop",
     ],
 )
 
@@ -162,17 +165,15 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":ui-tests",
-    ],
+    runtime_deps = [":ui-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

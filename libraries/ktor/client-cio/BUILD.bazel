@@ -15,9 +15,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
         "//libraries/ktor/client",
         "//libraries/ktor/network-tls:libraries-ktor-network-tls",
-        "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
     ],
     runtime_deps = [
         # do not sort,
@@ -38,11 +39,12 @@ jvm_library(
     module_name = "intellij.libraries.ktor.client.cio",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
         "//libraries/ktor/client",
         "//libraries/ktor/client:client_test_lib",
         "//libraries/ktor/network-tls:libraries-ktor-network-tls",
         "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
-        "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
     ],
     runtime_deps = [
         # do not sort,

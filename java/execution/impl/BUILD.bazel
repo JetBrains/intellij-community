@@ -93,6 +93,7 @@ jvm_library(
     module_name = "intellij.java.execution.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/execution/openapi:java-execution",
         "//java/execution/openapi:java-execution_test_lib",
     ],

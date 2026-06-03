@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.netbeans",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-netbeans",
-    ],
+    runtime_deps = [":keymap-netbeans"],
 )
 ### auto-generated section `build intellij.keymap.netbeans` end
 

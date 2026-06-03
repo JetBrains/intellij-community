@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-api",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":test-generator-api",
-    ],
+    runtime_deps = [":test-generator-api"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

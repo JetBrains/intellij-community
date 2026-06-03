@@ -66,6 +66,7 @@ jvm_library(
     module_name = "intellij.java.frontback.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
     ],

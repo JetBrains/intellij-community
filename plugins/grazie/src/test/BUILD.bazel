@@ -12,6 +12,7 @@ jvm_library(
     module_name = "intellij.grazie.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/grazie",
         "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
         "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
@@ -53,6 +54,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/grazie",
         "//plugins/grazie:grazie_test_lib",
         "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",

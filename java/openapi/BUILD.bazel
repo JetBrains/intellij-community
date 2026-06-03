@@ -33,13 +33,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-analysis-api:analysis",
-        "//platform/util",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/util",
+        "//java/java-analysis-api:analysis",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -90,10 +88,11 @@ jvm_library(
     module_name = "intellij.java",
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-analysis-api:analysis",
-        "//java/java-analysis-api:analysis_test_lib",
+        # do not sort,
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//java/java-analysis-api:analysis",
+        "//java/java-analysis-api:analysis_test_lib",
     ],
     runtime_deps = [
         # do not sort,

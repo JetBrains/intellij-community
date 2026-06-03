@@ -15,8 +15,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/jackson/annotations",
+        # do not sort,
         "@lib//:libraries-jackson-databind-jackson-databind",
+        "//libraries/jackson/annotations",
     ],
     runtime_deps = [
         # do not sort,
@@ -37,9 +38,10 @@ jvm_library(
     module_name = "intellij.libraries.jackson.databind",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:libraries-jackson-databind-jackson-databind",
         "//libraries/jackson/annotations",
         "//libraries/jackson/annotations:annotations_test_lib",
-        "@lib//:libraries-jackson-databind-jackson-databind",
     ],
     runtime_deps = [
         # do not sort,

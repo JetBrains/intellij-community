@@ -34,8 +34,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/ktor/client/core",
+        # do not sort,
         "@lib//:kotlinx-coroutines-core",
+        "//fleet/ktor/client/core",
     ],
     deps = [
         # do not sort,
@@ -64,9 +65,10 @@ jvm_library(
     kotlinc_opts = ":custom_http",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:kotlinx-coroutines-core",
         "//fleet/ktor/client/core",
         "//fleet/ktor/client/core:core_test_lib",
-        "@lib//:kotlinx-coroutines-core",
     ],
     deps = [
         # do not sort,

@@ -54,6 +54,7 @@ jvm_library(
     module_name = "intellij.platform.navbar.frontend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/navbar/shared:navbar",
         "//platform/navbar/shared:navbar_test_lib",
     ],

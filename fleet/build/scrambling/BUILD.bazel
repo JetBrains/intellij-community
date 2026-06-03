@@ -50,10 +50,7 @@ jvm_library(
     kotlinc_opts = ":custom_scrambling",
     module_name = "fleet.build.scrambling",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":scrambling",
-    ],
+    runtime_deps = [":scrambling"],
 )
 ### auto-generated section `build fleet.build.scrambling` end
 

@@ -98,10 +98,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = ["@lib//:search_everywhere_ml-tests-ai-grazie-emb"],
-    runtime_deps = [
-        # do not sort,
-        ":searchEverywhereMl-tests",
-    ],
+    runtime_deps = [":searchEverywhereMl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

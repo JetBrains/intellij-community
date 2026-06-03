@@ -55,6 +55,7 @@ jvm_library(
     module_name = "intellij.json",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//json/syntax",
         "//json/syntax:syntax_test_lib",
     ],

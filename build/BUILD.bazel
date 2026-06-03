@@ -99,10 +99,7 @@ jvm_library(
     module_name = "intellij.idea.community.build",
     visibility = ["//visibility:public"],
     exports = ["//platform/build-scripts"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:test-discovery-plugin-base",
-    ],
+    runtime_deps = ["@lib//:test-discovery-plugin-base"],
     deps = [
         # do not sort,
         "//platform/build-scripts",
@@ -132,6 +129,7 @@ jvm_library(
     module_name = "intellij.idea.community.build",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/build-scripts",
         "//platform/build-scripts:build-scripts_test_lib",
     ],

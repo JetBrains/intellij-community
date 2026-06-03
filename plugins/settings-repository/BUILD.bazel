@@ -20,9 +20,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:jetbrains-intellij-deps-eclipse-jgit",
-        "@lib//:settings_repository-eclipse-jgit-ssh-apache",
         "@lib//:settings_repository-eclipse-jgit-ssh-apache-agent",
+        "@lib//:settings_repository-eclipse-jgit-ssh-apache",
     ],
     deps = [
         # do not sort,
@@ -73,9 +74,10 @@ jvm_library(
     module_name = "intellij.settingsRepository",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:jetbrains-intellij-deps-eclipse-jgit",
-        "@lib//:settings_repository-eclipse-jgit-ssh-apache",
         "@lib//:settings_repository-eclipse-jgit-ssh-apache-agent",
+        "@lib//:settings_repository-eclipse-jgit-ssh-apache",
     ],
     runtime_deps = [
         # do not sort,

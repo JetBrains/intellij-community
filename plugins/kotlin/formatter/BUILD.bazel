@@ -53,6 +53,7 @@ jvm_library(
     module_name = "intellij.kotlin.formatter",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
     ],

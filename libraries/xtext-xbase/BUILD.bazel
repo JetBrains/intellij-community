@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-xtext-xbase-xtext-xbase",
-    ],
+    runtime_deps = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.xtext.xbase",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
-    runtime_deps = [
-        # do not sort,
-        ":xtext-xbase",
-    ],
+    runtime_deps = [":xtext-xbase"],
 )
 ### auto-generated section `build intellij.libraries.xtext.xbase` end
 

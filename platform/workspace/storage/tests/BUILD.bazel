@@ -52,10 +52,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

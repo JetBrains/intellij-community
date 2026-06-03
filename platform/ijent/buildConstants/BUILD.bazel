@@ -30,10 +30,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.ijent.community.buildConstants",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":buildConstants",
-    ],
+    runtime_deps = [":buildConstants"],
 )
 ### auto-generated section `build intellij.platform.ijent.community.buildConstants` end
 

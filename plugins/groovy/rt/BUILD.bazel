@@ -16,6 +16,7 @@ jvm_library(
     module_name = "intellij.groovy.rt",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/groovy",
         "//plugins/groovy/rt-constants:constants-rt",
     ],
@@ -38,6 +39,7 @@ jvm_library(
     module_name = "intellij.groovy.rt",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
         "//plugins/groovy/rt-constants:constants-rt",

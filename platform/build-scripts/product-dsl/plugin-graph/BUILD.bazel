@@ -108,10 +108,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_pluginGraph-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":pluginGraph-tests",
-    ],
+    runtime_deps = [":pluginGraph-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-xml-groovy-xml"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-groovy-xml-groovy-xml",
-    ],
+    runtime_deps = ["@lib//:libraries-groovy-xml-groovy-xml"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.groovy.xml",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-xml-groovy-xml"],
-    runtime_deps = [
-        # do not sort,
-        ":xml",
-    ],
+    runtime_deps = [":xml"],
 )
 ### auto-generated section `build intellij.libraries.groovy.xml` end
 

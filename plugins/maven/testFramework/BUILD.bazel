@@ -150,10 +150,7 @@ jvm_library(
         "//plugins/maven/testFramework:testFramework_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework-tests",
-    ],
+    runtime_deps = [":testFramework-tests"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

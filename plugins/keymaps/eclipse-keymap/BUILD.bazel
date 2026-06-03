@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.eclipse",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-eclipse",
-    ],
+    runtime_deps = [":keymap-eclipse"],
 )
 ### auto-generated section `build intellij.keymap.eclipse` end
 

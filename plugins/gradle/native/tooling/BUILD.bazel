@@ -96,10 +96,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.native.tooling.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":gradle-native-tooling-tests",
-    ],
+    runtime_deps = [":gradle-native-tooling-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-all",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":test-generator-all",
-    ],
+    runtime_deps = [":test-generator-all"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

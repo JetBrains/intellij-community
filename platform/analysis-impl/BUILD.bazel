@@ -76,6 +76,7 @@ jvm_library(
     module_name = "intellij.platform.analysis.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/projectModel-impl",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],

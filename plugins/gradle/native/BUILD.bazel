@@ -19,6 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/gradle:gradle-common",
         "//plugins/gradle/native/tooling",
     ],
@@ -44,6 +45,7 @@ jvm_library(
     module_name = "intellij.gradle.native",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/gradle:gradle-common",
         "//plugins/gradle:gradle-common_test_lib",
         "//plugins/gradle/native/tooling",

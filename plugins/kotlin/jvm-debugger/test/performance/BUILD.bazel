@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.performance.test",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-jvm-debugger-performance-test",
-    ],
+    runtime_deps = [":kotlin-jvm-debugger-performance-test"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

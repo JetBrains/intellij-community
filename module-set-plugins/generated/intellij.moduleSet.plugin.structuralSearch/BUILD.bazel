@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.moduleSet.plugin.structuralSearch",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":moduleSet-plugin-structuralSearch",
-    ],
+    runtime_deps = [":moduleSet-plugin-structuralSearch"],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.structuralSearch` end
 

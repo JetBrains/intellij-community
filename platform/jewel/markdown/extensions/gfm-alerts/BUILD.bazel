@@ -123,10 +123,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_jewel-markdown-extensions-gfmAlerts-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jewel-markdown-extensions-gfmAlerts-tests",
-    ],
+    runtime_deps = [":jewel-markdown-extensions-gfmAlerts-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

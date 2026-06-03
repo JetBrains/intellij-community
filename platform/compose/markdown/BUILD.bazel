@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/compose",
         "//platform/jewel/markdown/core",
         "//platform/jewel/markdown/extensions/autolink",
@@ -47,6 +48,7 @@ jvm_library(
     module_name = "intellij.platform.compose.markdown",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/compose",
         "//platform/compose:compose_test_lib",
         "//platform/jewel/markdown/core",

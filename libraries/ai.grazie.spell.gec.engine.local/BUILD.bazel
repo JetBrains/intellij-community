@@ -15,10 +15,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
-        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+        # do not sort,
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
     ],
     runtime_deps = [
         # do not sort,
@@ -40,10 +41,11 @@ jvm_library(
     module_name = "intellij.libraries.ai.grazie.spell.gec.engine.local",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
-        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+        # do not sort,
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
     ],
     runtime_deps = [
         # do not sort,

@@ -53,6 +53,7 @@ jvm_library(
     module_name = "intellij.python.community.services.systemPython",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//python/services/shared",
         "//python/services/shared:shared_test_lib",
     ],
@@ -120,6 +121,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//python/services/shared",
         "//python/services/shared:shared_test_lib",
     ],

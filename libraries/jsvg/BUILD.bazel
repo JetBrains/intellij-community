@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsvg-jsvg"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-jsvg-jsvg",
-    ],
+    runtime_deps = ["@lib//:libraries-jsvg-jsvg"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jsvg",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsvg-jsvg"],
-    runtime_deps = [
-        # do not sort,
-        ":jsvg",
-    ],
+    runtime_deps = [":jsvg"],
 )
 ### auto-generated section `build intellij.libraries.jsvg` end
 

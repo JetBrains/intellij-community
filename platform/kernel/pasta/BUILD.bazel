@@ -15,9 +15,10 @@ jvm_library(
     module_name = "intellij.platform.pasta",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/kernel/rpc",
         "//fleet/andel",
         "//fleet/kernel",
-        "//platform/kernel/rpc",
     ],
     deps = [
         # do not sort,
@@ -46,12 +47,13 @@ jvm_library(
     module_name = "intellij.platform.pasta",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/kernel/rpc",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//fleet/andel",
         "//fleet/andel:andel_test_lib",
         "//fleet/kernel",
         "//fleet/kernel:kernel_test_lib",
-        "//platform/kernel/rpc",
-        "//platform/kernel/rpc:rpc_test_lib",
     ],
     runtime_deps = [
         # do not sort,

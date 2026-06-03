@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-jackson-jr-objects-jackson-jr-objects",
-    ],
+    runtime_deps = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jackson.jr.objects",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-jackson-jr-objects",
-    ],
+    runtime_deps = [":libraries-jackson-jr-objects"],
 )
 ### auto-generated section `build intellij.libraries.jackson.jr.objects` end
 

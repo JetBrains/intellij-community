@@ -110,6 +110,7 @@ jvm_library(
     module_name = "kotlin.fir",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
     ],

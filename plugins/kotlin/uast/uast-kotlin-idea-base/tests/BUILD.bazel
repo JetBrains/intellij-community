@@ -31,10 +31,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.uast.idea.base.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:junit4",

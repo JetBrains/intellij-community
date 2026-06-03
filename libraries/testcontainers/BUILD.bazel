@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:testcontainers",
         "@lib//:testcontainers-junit-jupiter",
     ],
@@ -37,6 +38,7 @@ jvm_library(
     module_name = "intellij.libraries.testcontainers",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:testcontainers",
         "@lib//:testcontainers-junit-jupiter",
     ],

@@ -15,11 +15,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
-        "//libraries/hamcrest",
-        "//libraries/junit4",
-        "//libraries/kotlinx/coroutines/test",
         "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/junit4",
+        "//libraries/hamcrest",
     ],
 )
 
@@ -33,15 +34,16 @@ jvm_library(
     module_name = "intellij.libraries.compose.foundation.desktop.junit",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/hamcrest",
-        "//libraries/hamcrest:hamcrest_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
+        "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
-        "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
     ],
     runtime_deps = [
         # do not sort,

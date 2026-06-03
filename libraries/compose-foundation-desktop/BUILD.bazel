@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-runtime-desktop",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
     ],
@@ -36,6 +37,7 @@ jvm_library(
     module_name = "intellij.libraries.compose.foundation.desktop",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-runtime-desktop",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",

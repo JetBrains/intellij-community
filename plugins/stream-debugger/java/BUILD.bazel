@@ -18,10 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//java/debugger/backend",
-    ],
+    runtime_deps = ["//java/debugger/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

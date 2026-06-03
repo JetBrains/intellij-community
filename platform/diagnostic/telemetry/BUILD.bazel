@@ -65,6 +65,7 @@ jvm_library(
     module_name = "intellij.platform.diagnostic.telemetry",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/diagnostic",
         "//platform/diagnostic:diagnostic_test_lib",
     ],
@@ -130,13 +131,11 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/diagnostic",
         "//platform/diagnostic:diagnostic_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":telemetry-tests",
-    ],
+    runtime_deps = [":telemetry-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib-provided",

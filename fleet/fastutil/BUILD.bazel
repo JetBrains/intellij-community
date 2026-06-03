@@ -32,10 +32,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -48,10 +45,7 @@ jvm_library(
     kotlinc_opts = ":custom_fastutil",
     module_name = "fleet.fastutil",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":fastutil",
-    ],
+    runtime_deps = [":fastutil"],
 )
 ### auto-generated section `build fleet.fastutil` end
 

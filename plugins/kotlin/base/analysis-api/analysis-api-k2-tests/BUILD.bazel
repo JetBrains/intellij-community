@@ -38,10 +38,7 @@ jvm_library(
     kotlinc_opts = ":custom_kotlin-base-analysis-analysis-api-k2-tests",
     module_name = "kotlin.base.analysis.analysis-api.k2.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-base-analysis-analysis-api-k2-tests",
-    ],
+    runtime_deps = [":kotlin-base-analysis-analysis-api-k2-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

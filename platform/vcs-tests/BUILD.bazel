@@ -134,6 +134,7 @@ jvm_library(
     module_name = "intellij.platform.vcs.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/vcs-tests:vcs-testFramework",
         "//platform/vcs-tests:vcs-testFramework_test_lib",
     ],

@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin.projectStructureTests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-plugin-projectStructureTests",
-    ],
+    runtime_deps = [":ide-plugin-projectStructureTests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

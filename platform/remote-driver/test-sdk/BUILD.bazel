@@ -19,6 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/remote-driver/client",
         "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
@@ -46,6 +47,7 @@ jvm_library(
     module_name = "intellij.driver.sdk",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/remote-driver/client",
         "//platform/remote-driver/client:client_test_lib",
         "@lib//:jetbrains-annotations",

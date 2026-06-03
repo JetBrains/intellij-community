@@ -82,10 +82,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.util.coroutines.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":coroutines-tests",
-    ],
+    runtime_deps = [":coroutines-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

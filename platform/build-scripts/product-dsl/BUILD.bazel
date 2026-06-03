@@ -132,10 +132,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_buildScripts-productDsl-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":buildScripts-productDsl-tests",
-    ],
+    runtime_deps = [":buildScripts-productDsl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

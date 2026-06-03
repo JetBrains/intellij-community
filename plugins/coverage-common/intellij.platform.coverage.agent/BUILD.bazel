@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:platform-coverage-agent-intellij-coverage",
-    ],
+    runtime_deps = ["@lib//:platform-coverage-agent-intellij-coverage"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.platform.coverage.agent",
     visibility = ["//visibility:public"],
     exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
-    runtime_deps = [
-        # do not sort,
-        ":coverage-agent",
-    ],
+    runtime_deps = [":coverage-agent"],
 )
 ### auto-generated section `build intellij.platform.coverage.agent` end
 

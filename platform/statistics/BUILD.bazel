@@ -20,8 +20,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     ],
     deps = [
         # do not sort,
@@ -74,8 +75,9 @@ jvm_library(
     module_name = "intellij.platform.statistics",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     ],
     runtime_deps = [
         # do not sort,
@@ -139,8 +141,9 @@ jvm_library(
     module_name = "intellij.platform.statistics.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     ],
 )
 
@@ -161,8 +164,9 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     ],
     runtime_deps = [
         # do not sort,

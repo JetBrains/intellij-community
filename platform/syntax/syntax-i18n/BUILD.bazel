@@ -99,10 +99,7 @@ jvm_library(
         "//platform/syntax/syntax-i18n:i18n_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":i18n-tests",
-    ],
+    runtime_deps = [":i18n-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

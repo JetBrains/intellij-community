@@ -20,9 +20,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/jewel/ui",
         "//platform/jewel/foundation",
         "//platform/jewel/ide-laf-bridge",
-        "//platform/jewel/ui",
         "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     ],
     deps = [
@@ -57,12 +58,13 @@ jvm_library(
     module_name = "intellij.platform.compose",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ide-laf-bridge",
         "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-        "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     ],
     runtime_deps = [
@@ -109,9 +111,10 @@ jvm_library(
     module_name = "intellij.platform.compose.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/jewel/ui",
         "//platform/jewel/foundation",
         "//platform/jewel/ide-laf-bridge",
-        "//platform/jewel/ui",
         "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     ],
 )
@@ -133,12 +136,13 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ide-laf-bridge",
         "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-        "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     ],
     runtime_deps = [

@@ -23,10 +23,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//plugins/performanceTesting/core:performanceTesting",

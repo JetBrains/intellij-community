@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/execution",
-    ],
+    runtime_deps = ["//platform/execution"],
 )
 
 jvm_library(
@@ -30,10 +27,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlinc-kotlin-compiler-common",

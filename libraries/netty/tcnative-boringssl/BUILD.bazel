@@ -11,10 +11,7 @@ jvm_library(
     module_name = "intellij.libraries.netty.tcnative.boringssl",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl",
-    ],
+    runtime_deps = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
 )
 
 jvm_library(
@@ -28,10 +25,7 @@ jvm_library(
     module_name = "intellij.libraries.netty.tcnative.boringssl",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-netty-tcnative-boringssl-netty-tcnative-boringssl"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-netty-tcnative-boringssl",
-    ],
+    runtime_deps = [":libraries-netty-tcnative-boringssl"],
 )
 ### auto-generated section `build intellij.libraries.netty.tcnative.boringssl` end
 

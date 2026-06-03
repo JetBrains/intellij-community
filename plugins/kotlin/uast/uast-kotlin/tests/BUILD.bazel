@@ -42,10 +42,7 @@ jvm_library(
     ),
     module_name = "kotlin.uast.uast-kotlin.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy",
-    ],
+    runtime_deps = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jsch.agent.proxy",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
-    runtime_deps = [
-        # do not sort,
-        ":jsch-agent-proxy",
-    ],
+    runtime_deps = [":jsch-agent-proxy"],
 )
 ### auto-generated section `build intellij.libraries.jsch.agent.proxy` end
 

@@ -92,10 +92,7 @@ jvm_library(
         "//plugins/maven/proofreading:proofreading_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":proofreading-tests",
-    ],
+    runtime_deps = [":proofreading-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

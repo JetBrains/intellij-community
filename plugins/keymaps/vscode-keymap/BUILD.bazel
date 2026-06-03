@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.vscode",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-vscode",
-    ],
+    runtime_deps = [":keymap-vscode"],
 )
 ### auto-generated section `build intellij.keymap.vscode` end
 

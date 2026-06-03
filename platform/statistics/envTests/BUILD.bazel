@@ -39,10 +39,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":envTests",
-    ],
+    runtime_deps = [":envTests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

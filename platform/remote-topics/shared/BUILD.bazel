@@ -43,6 +43,7 @@ jvm_library(
     module_name = "intellij.platform.rpc.topics",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/openmap",
         "//fleet/openmap:openmap_test_lib",
     ],

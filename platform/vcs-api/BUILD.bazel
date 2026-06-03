@@ -19,13 +19,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/vcs-api/shared",
-        "//platform/vcs-api/vcs-api-core:vcs-core",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/vcs-api/vcs-api-core:vcs-core",
+        "//platform/vcs-api/shared",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -60,10 +58,11 @@ jvm_library(
     module_name = "intellij.platform.vcs",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/vcs-api/shared",
-        "//platform/vcs-api/shared:shared_test_lib",
+        # do not sort,
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+        "//platform/vcs-api/shared",
+        "//platform/vcs-api/shared:shared_test_lib",
     ],
     runtime_deps = [
         # do not sort,

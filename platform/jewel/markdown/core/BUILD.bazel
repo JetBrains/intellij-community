@@ -132,10 +132,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
-    runtime_deps = [
-        # do not sort,
-        ":jewel-markdown-core-tests",
-    ],
+    runtime_deps = [":jewel-markdown-core-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

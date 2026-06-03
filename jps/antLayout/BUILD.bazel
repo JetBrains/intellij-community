@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//ant/lib:ant-provided",
-    ],
+    deps = ["@lib//ant/lib:ant-provided"],
 )
 
 jvm_library(

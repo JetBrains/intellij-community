@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rhino-rhino"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-rhino-rhino",
-    ],
+    runtime_deps = ["@lib//:libraries-rhino-rhino"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.rhino",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-rhino-rhino"],
-    runtime_deps = [
-        # do not sort,
-        ":rhino",
-    ],
+    runtime_deps = [":rhino"],
 )
 ### auto-generated section `build intellij.libraries.rhino` end
 

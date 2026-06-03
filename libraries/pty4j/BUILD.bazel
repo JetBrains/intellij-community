@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-pty4j-pty4j"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-pty4j-pty4j",
-    ],
+    runtime_deps = ["@lib//:libraries-pty4j-pty4j"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.pty4j",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-pty4j-pty4j"],
-    runtime_deps = [
-        # do not sort,
-        ":pty4j",
-    ],
+    runtime_deps = [":pty4j"],
 )
 ### auto-generated section `build intellij.libraries.pty4j` end
 

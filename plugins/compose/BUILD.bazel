@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":compose-ide-plugin",
-    ],
+    runtime_deps = [":compose-ide-plugin"],
 )
 ### auto-generated section `build intellij.compose.ide.plugin` end
 

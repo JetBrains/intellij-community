@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.junit.groovy.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":groovy-tests",
-    ],
+    runtime_deps = [":groovy-tests"],
     deps = [
         # do not sort,
         "//plugins/groovy",

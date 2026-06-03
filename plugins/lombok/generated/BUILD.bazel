@@ -28,10 +28,7 @@ jvm_library(
     ),
     module_name = "intellij.lombok.generated",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":generated",
-    ],
+    runtime_deps = [":generated"],
 )
 ### auto-generated section `build intellij.lombok.generated` end
 

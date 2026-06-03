@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:sqlite-native",
-    ],
+    runtime_deps = ["@lib//:sqlite-native"],
     deps = [
         # do not sort,
         "//platform/util",
@@ -74,10 +71,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.sqlite.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:sqlite-native",
-    ],
+    runtime_deps = ["@lib//:sqlite-native"],
 )
 
 jvm_library(
@@ -96,10 +90,7 @@ jvm_library(
         "//platform/sqlite:sqlite_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":sqlite-tests",
-    ],
+    runtime_deps = [":sqlite-tests"],
     deps = [
         # do not sort,
         "//platform/util",

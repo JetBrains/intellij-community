@@ -20,9 +20,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/coverage-common:coverage",
         "//java/execution/openapi:java-execution",
         "//java/openapi:java",
-        "//plugins/coverage-common:coverage",
     ],
     deps = [
         # do not sort,
@@ -82,12 +83,13 @@ jvm_library(
     module_name = "intellij.java.coverage",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/coverage-common:coverage",
+        "//plugins/coverage-common:coverage_test_lib",
         "//java/execution/openapi:java-execution",
         "//java/execution/openapi:java-execution_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
-        "//plugins/coverage-common:coverage",
-        "//plugins/coverage-common:coverage_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -164,9 +166,10 @@ jvm_library(
     module_name = "intellij.java.coverage.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/coverage-common:coverage",
         "//java/execution/openapi:java-execution",
         "//java/openapi:java",
-        "//plugins/coverage-common:coverage",
     ],
 )
 
@@ -187,12 +190,13 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/coverage-common:coverage",
+        "//plugins/coverage-common:coverage_test_lib",
         "//java/execution/openapi:java-execution",
         "//java/execution/openapi:java-execution_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
-        "//plugins/coverage-common:coverage",
-        "//plugins/coverage-common:coverage_test_lib",
     ],
     runtime_deps = [
         # do not sort,

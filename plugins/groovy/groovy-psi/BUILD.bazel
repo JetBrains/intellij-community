@@ -73,6 +73,7 @@ jvm_library(
     module_name = "intellij.groovy.psi",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
     ],

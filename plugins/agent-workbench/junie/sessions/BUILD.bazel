@@ -110,10 +110,7 @@ jvm_library(
         "//plugins/agent-workbench/junie/sessions:sessions_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-junie-sessions-tests",
-    ],
+    runtime_deps = [":agent-workbench-junie-sessions-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.debugger.streams.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":debugger-streams-plugin",
-    ],
+    runtime_deps = [":debugger-streams-plugin"],
 )
 ### auto-generated section `build intellij.debugger.streams.plugin` end
 
@@ -52,10 +49,7 @@ jvm_library(
     ),
     module_name = "intellij.java.debugger.streams.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//java/debugger/backend",
-    ],
+    runtime_deps = ["//java/debugger/backend"],
 )
 
 jvm_library(

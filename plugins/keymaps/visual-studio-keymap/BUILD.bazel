@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.visualStudio",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-visualStudio",
-    ],
+    runtime_deps = [":keymap-visualStudio"],
 )
 ### auto-generated section `build intellij.keymap.visualStudio` end
 

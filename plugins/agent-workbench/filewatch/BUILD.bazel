@@ -83,10 +83,7 @@ jvm_library(
         "//plugins/agent-workbench/filewatch:filewatch_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-filewatch-tests",
-    ],
+    runtime_deps = [":agent-workbench-filewatch-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

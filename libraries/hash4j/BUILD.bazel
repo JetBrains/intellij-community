@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-hash4j-hash4j"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-hash4j-hash4j",
-    ],
+    runtime_deps = ["@lib//:libraries-hash4j-hash4j"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.hash4j",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-hash4j-hash4j"],
-    runtime_deps = [
-        # do not sort,
-        ":hash4j",
-    ],
+    runtime_deps = [":hash4j"],
 )
 ### auto-generated section `build intellij.libraries.hash4j` end
 

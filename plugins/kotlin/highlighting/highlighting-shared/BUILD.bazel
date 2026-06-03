@@ -57,6 +57,7 @@ jvm_library(
     module_name = "kotlin.highlighting.shared",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],

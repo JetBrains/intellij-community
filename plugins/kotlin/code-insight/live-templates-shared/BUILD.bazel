@@ -143,10 +143,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-code-insight-live-templates-shared-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-code-insight-live-templates-shared-tests",
-    ],
+    runtime_deps = [":kotlin-code-insight-live-templates-shared-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

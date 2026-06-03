@@ -33,10 +33,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.copyright.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-copyright-tests",
-    ],
+    runtime_deps = [":kotlin-copyright-tests"],
     deps = [
         # do not sort,
         "//plugins/kotlin/plugin/k2",

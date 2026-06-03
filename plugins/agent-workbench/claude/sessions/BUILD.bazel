@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
-    ],
+    runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -120,10 +117,7 @@ jvm_library(
     ),
     module_name = "intellij.agent.workbench.claude.sessions.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
-    ],
+    runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"],
 )
 
 jvm_library(

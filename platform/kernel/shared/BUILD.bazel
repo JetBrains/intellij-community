@@ -19,8 +19,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/kernel",
+        # do not sort,
         "//platform/kernel/rpc",
+        "//fleet/kernel",
     ],
     deps = [
         # do not sort,
@@ -47,10 +48,11 @@ jvm_library(
     module_name = "intellij.platform.kernel",
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/kernel",
-        "//fleet/kernel:kernel_test_lib",
+        # do not sort,
         "//platform/kernel/rpc",
         "//platform/kernel/rpc:rpc_test_lib",
+        "//fleet/kernel",
+        "//fleet/kernel:kernel_test_lib",
     ],
     runtime_deps = [
         # do not sort,

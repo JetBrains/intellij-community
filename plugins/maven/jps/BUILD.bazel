@@ -109,10 +109,7 @@ jvm_library(
         "//plugins/maven/jps:jps_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jps-tests",
-    ],
+    runtime_deps = [":jps-tests"],
     deps = [
         # do not sort,
         "//jps/model-api:model",

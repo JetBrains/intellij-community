@@ -56,6 +56,7 @@ jvm_library(
     module_name = "intellij.java.analysis",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//uast/uast-common:uast",
         "//uast/uast-common:uast_test_lib",
     ],

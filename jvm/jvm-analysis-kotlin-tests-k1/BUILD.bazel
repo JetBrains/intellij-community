@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "intellij.jvm.analysis.kotlin.tests.k1",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin/plugin/k1",
-    ],
+    runtime_deps = ["//plugins/kotlin/plugin/k1"],
 )
 
 jvm_library(

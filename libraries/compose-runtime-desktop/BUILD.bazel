@@ -16,9 +16,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
-        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
     ],
     runtime_deps = [
         # do not sort,
@@ -39,9 +40,10 @@ jvm_library(
     module_name = "intellij.libraries.compose.runtime.desktop",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
-        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
     ],
     runtime_deps = [
         # do not sort,

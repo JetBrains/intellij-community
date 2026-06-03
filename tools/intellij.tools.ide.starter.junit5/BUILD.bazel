@@ -151,10 +151,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-starter-junit5-tests",
-    ],
+    runtime_deps = [":ide-starter-junit5-tests"],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",

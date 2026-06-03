@@ -45,6 +45,7 @@ jvm_library(
     module_name = "intellij.platform.vcs.log",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/vcs-log/graph-api:vcs-log-graph",
         "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
     ],

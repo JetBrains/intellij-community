@@ -41,6 +41,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
@@ -78,6 +79,7 @@ jvm_library(
     module_name = "intellij.gradle.toolingExtension.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
@@ -142,10 +144,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":toolingExtension-tests",
-    ],
+    runtime_deps = [":toolingExtension-tests"],
     deps = [
         # do not sort,
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",

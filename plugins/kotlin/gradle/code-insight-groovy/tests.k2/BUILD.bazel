@@ -31,10 +31,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.codeInsight.groovy.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-gradle-codeInsight-groovy-tests",
-    ],
+    runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

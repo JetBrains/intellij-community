@@ -15,10 +15,7 @@ jvm_library(
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.jps.build.launcher",
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -31,10 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.jps.build.launcher",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":build-launcher",
-    ],
+    runtime_deps = [":build-launcher"],
 )
 ### auto-generated section `build intellij.platform.jps.build.launcher` end
 

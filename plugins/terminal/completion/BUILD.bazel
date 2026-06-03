@@ -86,10 +86,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"],
-    runtime_deps = [
-        # do not sort,
-        ":completion-tests",
-    ],
+    runtime_deps = [":completion-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

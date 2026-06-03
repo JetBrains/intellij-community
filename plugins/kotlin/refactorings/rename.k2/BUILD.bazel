@@ -139,10 +139,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-refactorings-rename-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-refactorings-rename-tests",
-    ],
+    runtime_deps = [":kotlin-refactorings-rename-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlinc-kotlin-compiler-common",

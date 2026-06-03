@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-asm-asm"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-asm-asm",
-    ],
+    runtime_deps = ["@lib//:libraries-asm-asm"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.asm",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-asm-asm"],
-    runtime_deps = [
-        # do not sort,
-        ":asm",
-    ],
+    runtime_deps = [":asm"],
 )
 ### auto-generated section `build intellij.libraries.asm` end
 

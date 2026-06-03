@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-commons-imaging-commons-imaging",
-    ],
+    runtime_deps = ["@lib//:libraries-commons-imaging-commons-imaging"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.commons.imaging",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
-    runtime_deps = [
-        # do not sort,
-        ":imaging",
-    ],
+    runtime_deps = [":imaging"],
 )
 ### auto-generated section `build intellij.libraries.commons.imaging` end
 

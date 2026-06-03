@@ -123,10 +123,7 @@ jvm_library(
         "//java/structuralsearch-java:structuralSearch_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":structuralSearch-tests",
-    ],
+    runtime_deps = [":structuralSearch-tests"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",

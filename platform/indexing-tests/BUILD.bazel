@@ -31,10 +31,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.indexing.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":indexing-tests",
-    ],
+    runtime_deps = [":indexing-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

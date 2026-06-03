@@ -19,10 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/xdebugger-api:debugger"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//java/execution/openapi:java-execution",
@@ -57,6 +54,7 @@ jvm_library(
     module_name = "intellij.java.debugger",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/xdebugger-api:debugger",
         "//platform/xdebugger-api:debugger_test_lib",
     ],

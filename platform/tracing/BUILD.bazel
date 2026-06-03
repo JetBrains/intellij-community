@@ -15,10 +15,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.tracing.rt",
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -31,10 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.tracing.rt",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tracing-rt",
-    ],
+    runtime_deps = [":tracing-rt"],
 )
 ### auto-generated section `build intellij.platform.tracing.rt` end
 

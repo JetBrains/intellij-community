@@ -46,6 +46,7 @@ jvm_library(
     module_name = "intellij.platform.extensions",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],

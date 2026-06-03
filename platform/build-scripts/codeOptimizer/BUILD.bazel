@@ -30,10 +30,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":codeOptimizer",
-    ],
+    runtime_deps = [":codeOptimizer"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

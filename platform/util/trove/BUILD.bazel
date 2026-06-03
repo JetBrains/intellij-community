@@ -11,10 +11,7 @@ jvm_library(
     module_name = "intellij.platform.util.trove",
     visibility = ["//visibility:public"],
     exports = ["@lib//:platform-util-trove-trove"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:platform-util-trove-trove",
-    ],
+    runtime_deps = ["@lib//:platform-util-trove-trove"],
 )
 
 jvm_library(
@@ -28,10 +25,7 @@ jvm_library(
     module_name = "intellij.platform.util.trove",
     visibility = ["//visibility:public"],
     exports = ["@lib//:platform-util-trove-trove"],
-    runtime_deps = [
-        # do not sort,
-        ":trove",
-    ],
+    runtime_deps = [":trove"],
 )
 ### auto-generated section `build intellij.platform.util.trove` end
 

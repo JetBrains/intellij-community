@@ -27,10 +27,7 @@ jvm_library(
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.util.nanoxml",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":nanoxml",
-    ],
+    runtime_deps = [":nanoxml"],
 )
 ### auto-generated section `build intellij.platform.util.nanoxml` end
 

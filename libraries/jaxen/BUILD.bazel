@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jaxen-_jaxen"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-jaxen-_jaxen",
-    ],
+    runtime_deps = ["@lib//:libraries-jaxen-_jaxen"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jaxen",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jaxen-_jaxen"],
-    runtime_deps = [
-        # do not sort,
-        ":jaxen",
-    ],
+    runtime_deps = [":jaxen"],
 )
 ### auto-generated section `build intellij.libraries.jaxen` end
 

@@ -147,10 +147,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_devkit-workspaceModel-k1-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":devkit-workspaceModel-k1-tests",
-    ],
+    runtime_deps = [":devkit-workspaceModel-k1-tests"],
     deps = [
         # do not sort,
         "//platform/workspace/storage",

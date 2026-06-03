@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-fastutil-fastutil-min"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-fastutil-fastutil-min",
-    ],
+    runtime_deps = ["@lib//:libraries-fastutil-fastutil-min"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.fastutil",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-fastutil-fastutil-min"],
-    runtime_deps = [
-        # do not sort,
-        ":fastutil",
-    ],
+    runtime_deps = [":fastutil"],
 )
 ### auto-generated section `build intellij.libraries.fastutil` end
 

@@ -57,6 +57,7 @@ jvm_library(
     module_name = "intellij.platform.searchEverywhere",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
     ],

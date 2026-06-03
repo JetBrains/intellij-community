@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-cli-commons-cli"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-commons-cli-commons-cli",
-    ],
+    runtime_deps = ["@lib//:libraries-commons-cli-commons-cli"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.commons.cli",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-commons-cli-commons-cli"],
-    runtime_deps = [
-        # do not sort,
-        ":cli",
-    ],
+    runtime_deps = [":cli"],
 )
 ### auto-generated section `build intellij.libraries.commons.cli` end
 

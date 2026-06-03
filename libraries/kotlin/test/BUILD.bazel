@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlin-test"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-test",
-    ],
+    runtime_deps = ["@lib//:kotlin-test"],
 )
 
 jvm_library(
@@ -31,10 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinTest",
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlin-test"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlinTest",
-    ],
+    runtime_deps = [":libraries-kotlinTest"],
 )
 ### auto-generated section `build intellij.libraries.kotlinTest` end
 

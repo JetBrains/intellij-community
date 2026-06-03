@@ -36,6 +36,7 @@ jvm_library(
     module_name = "intellij.platform.icons.api.rendering",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/icons-api",
         "//platform/icons-api:icons-api_test_lib",
     ],

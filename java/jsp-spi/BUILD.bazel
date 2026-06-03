@@ -19,13 +19,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/jsp-openapi:jsp",
         "//java/openapi:java",
     ],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//java/jsp-openapi:jsp",
@@ -51,6 +49,7 @@ jvm_library(
     module_name = "intellij.jsp.spi",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/jsp-openapi:jsp",
         "//java/jsp-openapi:jsp_test_lib",
         "//java/openapi:java",

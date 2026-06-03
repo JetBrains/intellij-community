@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-batik-batik-transcoder",
         "@lib//:libraries-batik-xml-apis-ext",
     ],
@@ -35,13 +36,11 @@ jvm_library(
     module_name = "intellij.libraries.batik",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-batik-batik-transcoder",
         "@lib//:libraries-batik-xml-apis-ext",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":batik",
-    ],
+    runtime_deps = [":batik"],
 )
 ### auto-generated section `build intellij.libraries.batik` end
 

@@ -193,10 +193,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.eel.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":eel-tests",
-    ],
+    runtime_deps = [":eel-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

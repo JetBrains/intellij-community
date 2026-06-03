@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-androidx-collections-androidx-collection"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-androidx-collections-androidx-collection",
-    ],
+    runtime_deps = ["@lib//:libraries-androidx-collections-androidx-collection"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.androidx.collections",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-androidx-collections-androidx-collection"],
-    runtime_deps = [
-        # do not sort,
-        ":androidx-collections",
-    ],
+    runtime_deps = [":androidx-collections"],
 )
 ### auto-generated section `build intellij.libraries.androidx.collections` end
 

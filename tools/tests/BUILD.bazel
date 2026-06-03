@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.tools.cmd.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

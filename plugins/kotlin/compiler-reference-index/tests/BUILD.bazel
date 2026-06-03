@@ -58,10 +58,7 @@ jvm_library(
     kotlinc_opts = ":custom_tests",
     module_name = "kotlin.compiler-reference-index.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

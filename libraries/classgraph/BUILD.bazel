@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-classgraph-classgraph"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-classgraph-classgraph",
-    ],
+    runtime_deps = ["@lib//:libraries-classgraph-classgraph"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.classgraph",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-classgraph-classgraph"],
-    runtime_deps = [
-        # do not sort,
-        ":classgraph",
-    ],
+    runtime_deps = [":classgraph"],
 )
 ### auto-generated section `build intellij.libraries.classgraph` end
 

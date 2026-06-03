@@ -19,13 +19,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/rpc.server",
-        "//platform/kernel/rpc",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/kernel/rpc",
+        "//fleet/rpc.server",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",
@@ -46,10 +44,11 @@ jvm_library(
     module_name = "intellij.platform.rpc.backend",
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/rpc.server",
-        "//fleet/rpc.server:rpc.server_test_lib",
+        # do not sort,
         "//platform/kernel/rpc",
         "//platform/kernel/rpc:rpc_test_lib",
+        "//fleet/rpc.server",
+        "//fleet/rpc.server:rpc.server_test_lib",
     ],
     runtime_deps = [
         # do not sort,

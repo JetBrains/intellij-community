@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.java.jshell.execution",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/jshell/execution:java-jshell-execution-jshell-frontend",
-    ],
+    runtime_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
 )
 
 jvm_library(
@@ -41,10 +38,7 @@ jvm_library(
     ),
     module_name = "intellij.java.jshell.execution",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":execution",
-    ],
+    runtime_deps = [":execution"],
 )
 ### auto-generated section `build intellij.java.jshell.execution` end
 

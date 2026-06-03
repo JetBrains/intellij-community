@@ -28,6 +28,7 @@ jvm_library(
     module_name = "intellij.properties.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/properties:properties-backend",
         "//plugins/properties:properties-backend_test_lib",
     ],

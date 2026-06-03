@@ -140,10 +140,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-devkit-k1-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-devkit-k1-tests",
-    ],
+    runtime_deps = [":kotlin-devkit-k1-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

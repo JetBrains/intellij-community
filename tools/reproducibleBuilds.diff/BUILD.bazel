@@ -18,10 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/commons/compress",
-    ],
+    runtime_deps = ["//libraries/commons/compress"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

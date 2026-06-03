@@ -26,6 +26,7 @@ jvm_library(
     module_name = "intellij.platform.buildScripts",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/build-scripts/api",
         "//platform/build-scripts/product-dsl",
     ],
@@ -140,6 +141,7 @@ jvm_library(
     module_name = "intellij.platform.buildScripts",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/build-scripts/api",
         "//platform/build-scripts/api:api_test_lib",
         "//platform/build-scripts/product-dsl",

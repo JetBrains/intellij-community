@@ -108,10 +108,7 @@ jvm_library(
         "//platform/testFramework/monorepo:monorepo_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":monorepo-tests",
-    ],
+    runtime_deps = [":monorepo-tests"],
     deps = [
         # do not sort,
         "//libraries/junit5-jupiter",

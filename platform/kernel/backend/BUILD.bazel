@@ -29,13 +29,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/kernel/rpc.backend",
-        "//platform/kernel/shared:kernel",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/kernel/shared:kernel",
+        "//platform/kernel/rpc.backend",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/extensions",
@@ -61,10 +59,11 @@ jvm_library(
     module_name = "intellij.platform.kernel.backend",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/kernel/rpc.backend",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        # do not sort,
         "//platform/kernel/shared:kernel",
         "//platform/kernel/shared:kernel_test_lib",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
     runtime_deps = [
         # do not sort,

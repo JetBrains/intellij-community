@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-teamcity-service-messages-tc_service_messages"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-teamcity-service-messages-tc_service_messages",
-    ],
+    runtime_deps = ["@lib//:libraries-teamcity-service-messages-tc_service_messages"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.teamcity.service.messages",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-teamcity-service-messages-tc_service_messages"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-teamcity-service-messages",
-    ],
+    runtime_deps = [":libraries-teamcity-service-messages"],
 )
 ### auto-generated section `build intellij.libraries.teamcity.service.messages` end
 

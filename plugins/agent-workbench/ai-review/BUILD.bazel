@@ -114,10 +114,7 @@ jvm_library(
         "//plugins/agent-workbench/ai-review:agent-workbench-ai-review_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-ai-review-tests",
-    ],
+    runtime_deps = [":agent-workbench-ai-review-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

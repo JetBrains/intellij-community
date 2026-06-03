@@ -15,11 +15,12 @@ jvm_library(
     module_name = "intellij.mcpserver.stdio",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
-        "@lib//:io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:ktor-server-sse-jvm",
+        # do not sort,
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
+        "@lib//:ktor-server-sse-jvm",
+        "@lib//:io-modelcontextprotocol-kotlin-sdk",
+        "@lib//:io-github-oshai-kotlin-logging-jvm",
     ],
     deps = [
         # do not sort,
@@ -47,11 +48,12 @@ jvm_library(
     module_name = "intellij.mcpserver.stdio",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
-        "@lib//:io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:ktor-server-sse-jvm",
+        # do not sort,
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
+        "@lib//:ktor-server-sse-jvm",
+        "@lib//:io-modelcontextprotocol-kotlin-sdk",
+        "@lib//:io-github-oshai-kotlin-logging-jvm",
     ],
     runtime_deps = [
         # do not sort,

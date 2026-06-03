@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.groovy.uast.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":uast-tests",
-    ],
+    runtime_deps = [":uast-tests"],
     deps = [
         # do not sort,
         "//java/openapi:java",

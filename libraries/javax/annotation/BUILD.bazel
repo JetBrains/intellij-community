@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:javax-annotation-api"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:javax-annotation-api",
-    ],
+    runtime_deps = ["@lib//:javax-annotation-api"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.javax.annotation",
     visibility = ["//visibility:public"],
     exports = ["@lib//:javax-annotation-api"],
-    runtime_deps = [
-        # do not sort,
-        ":annotation",
-    ],
+    runtime_deps = [":annotation"],
 )
 ### auto-generated section `build intellij.libraries.javax.annotation` end
 

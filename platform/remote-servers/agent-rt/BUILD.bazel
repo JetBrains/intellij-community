@@ -31,10 +31,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.remoteServers.agent.rt",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":remoteServers-agent-rt",
-    ],
+    runtime_deps = [":remoteServers-agent-rt"],
 )
 ### auto-generated section `build intellij.platform.remoteServers.agent.rt` end
 

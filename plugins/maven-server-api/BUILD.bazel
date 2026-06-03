@@ -16,9 +16,10 @@ jvm_library(
     module_name = "intellij.maven.server",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
         "//platform/util-rt",
         "//plugins/maven/model",
-        "@lib//:jetbrains-annotations",
     ],
     deps = [
         # do not sort,
@@ -41,11 +42,12 @@ jvm_library(
     module_name = "intellij.maven.server",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
         "//platform/util-rt",
         "//platform/util-rt:util-rt_test_lib",
         "//plugins/maven/model",
         "//plugins/maven/model:model_test_lib",
-        "@lib//:jetbrains-annotations",
     ],
     runtime_deps = [
         # do not sort,

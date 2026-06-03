@@ -58,6 +58,7 @@ jvm_library(
     module_name = "intellij.platform.smRunner",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
     ],
@@ -141,6 +142,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
     ],

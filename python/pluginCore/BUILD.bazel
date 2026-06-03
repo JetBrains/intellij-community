@@ -14,10 +14,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/lang-api:lang",
-    ],
+    runtime_deps = ["//platform/lang-api:lang"],
 )
 
 jvm_library(

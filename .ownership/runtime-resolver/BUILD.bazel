@@ -38,6 +38,7 @@ jvm_library(
     module_name = "intellij.codeowners.runtime.resolver",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//.ownership:codeowners",
         "//.ownership:codeowners_test_lib",
     ],

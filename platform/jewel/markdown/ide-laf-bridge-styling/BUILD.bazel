@@ -43,9 +43,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/jewel/ide-laf-bridge",
+        # do not sort,
         "//platform/jewel/markdown/core",
         "//platform/jewel/ui",
+        "//platform/jewel/ide-laf-bridge",
     ],
     deps = [
         # do not sort,
@@ -80,12 +81,13 @@ jvm_library(
     module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/jewel/ide-laf-bridge",
-        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+        # do not sort,
         "//platform/jewel/markdown/core",
         "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/ui",
         "//platform/jewel/ui:ui_test_lib",
+        "//platform/jewel/ide-laf-bridge",
+        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
     ],
     runtime_deps = [
         # do not sort,

@@ -31,10 +31,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerReferenceIndex.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-compilerReferenceIndex-tests",
-    ],
+    runtime_deps = [":kotlin-compilerReferenceIndex-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

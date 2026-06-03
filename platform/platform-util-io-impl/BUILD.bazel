@@ -14,10 +14,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.ide.util.io.impl",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/rhino",
-    ],
+    runtime_deps = ["//libraries/rhino"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

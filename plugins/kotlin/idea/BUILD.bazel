@@ -55,8 +55,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//plugins/kotlin/frontend-independent",
+        # do not sort,
         "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
+        "//plugins/kotlin/frontend-independent",
     ],
     deps = [
         # do not sort,
@@ -203,10 +204,11 @@ jvm_library(
     module_name = "kotlin.idea",
     visibility = ["//visibility:public"],
     exports = [
-        "//plugins/kotlin/frontend-independent",
-        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+        # do not sort,
         "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
         "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1_test_lib",
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
     ],
     runtime_deps = [
         # do not sort,

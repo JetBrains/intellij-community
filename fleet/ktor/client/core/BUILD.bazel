@@ -24,10 +24,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:fleet-io-ktor-client-core",
         "@lib//:fleet-io-ktor-events",
         "@lib//:fleet-io-ktor-http",
-        "@lib//:fleet-io-ktor-http-cio",
         "@lib//:fleet-io-ktor-io",
         "@lib//:fleet-io-ktor-network",
         "@lib//:fleet-io-ktor-serialization",
@@ -35,6 +35,7 @@ jvm_library(
         "@lib//:fleet-io-ktor-utils",
         "@lib//:fleet-io-ktor-websocket-serialization",
         "@lib//:fleet-io-ktor-websockets",
+        "@lib//:fleet-io-ktor-http-cio",
     ],
     runtime_deps = [
         # do not sort,
@@ -70,10 +71,10 @@ jvm_library(
     module_name = "fleet.ktor.client.core",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:fleet-io-ktor-client-core",
         "@lib//:fleet-io-ktor-events",
         "@lib//:fleet-io-ktor-http",
-        "@lib//:fleet-io-ktor-http-cio",
         "@lib//:fleet-io-ktor-io",
         "@lib//:fleet-io-ktor-network",
         "@lib//:fleet-io-ktor-serialization",
@@ -81,11 +82,9 @@ jvm_library(
         "@lib//:fleet-io-ktor-utils",
         "@lib//:fleet-io-ktor-websocket-serialization",
         "@lib//:fleet-io-ktor-websockets",
+        "@lib//:fleet-io-ktor-http-cio",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":core",
-    ],
+    runtime_deps = [":core"],
 )
 ### auto-generated section `build fleet.ktor.client.core` end
 

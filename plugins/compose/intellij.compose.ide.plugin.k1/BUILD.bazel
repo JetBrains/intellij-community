@@ -132,10 +132,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_ide-plugin-k1-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-plugin-k1-tests",
-    ],
+    runtime_deps = [":ide-plugin-k1-tests"],
     deps = [
         # do not sort,
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",

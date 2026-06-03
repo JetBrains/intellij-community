@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:jvm-native-trusted-roots"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:jvm-native-trusted-roots",
-    ],
+    runtime_deps = ["@lib//:jvm-native-trusted-roots"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jvm.native.trusted.roots",
     visibility = ["//visibility:public"],
     exports = ["@lib//:jvm-native-trusted-roots"],
-    runtime_deps = [
-        # do not sort,
-        ":jvm-native-trusted-roots",
-    ],
+    runtime_deps = [":jvm-native-trusted-roots"],
 )
 ### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end
 

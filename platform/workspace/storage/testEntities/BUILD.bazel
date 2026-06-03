@@ -33,10 +33,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.workspace.storage.testEntities",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testEntities",
-    ],
+    runtime_deps = [":testEntities"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

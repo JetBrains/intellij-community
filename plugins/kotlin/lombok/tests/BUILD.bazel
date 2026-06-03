@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.lombok.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

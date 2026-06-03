@@ -87,10 +87,7 @@ jvm_library(
         "//platform/pluginSystem/parser/impl:impl_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":pluginSystem-parser-impl-tests",
-    ],
+    runtime_deps = [":pluginSystem-parser-impl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

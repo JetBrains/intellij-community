@@ -14,10 +14,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -29,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.jcef.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin",
-    ],
+    runtime_deps = [":plugin"],
 )
 ### auto-generated section `build intellij.jcef.plugin` end
 

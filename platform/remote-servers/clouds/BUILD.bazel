@@ -18,10 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/execution.dashboard",
-    ],
+    runtime_deps = ["//platform/execution.dashboard"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

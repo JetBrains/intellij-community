@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlin-test-assertions-core-jvm"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-test-assertions-core-jvm",
-    ],
+    runtime_deps = ["@lib//:kotlin-test-assertions-core-jvm"],
 )
 
 jvm_library(
@@ -31,10 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinTestAssertionsCoreJvm",
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlin-test-assertions-core-jvm"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlinTestAssertionsCoreJvm",
-    ],
+    runtime_deps = [":libraries-kotlinTestAssertionsCoreJvm"],
 )
 ### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` end
 

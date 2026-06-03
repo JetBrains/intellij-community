@@ -92,6 +92,7 @@ jvm_library(
     module_name = "intellij.markdown",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/ui.jcef",
         "//platform/ui.jcef:ui.jcef_test_lib",
     ],

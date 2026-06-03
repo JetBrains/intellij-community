@@ -113,10 +113,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-metrics-benchmark-tests",
-    ],
+    runtime_deps = [":ide-metrics-benchmark-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

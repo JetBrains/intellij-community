@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/searchEverywhere/shared:searchEverywhere",
@@ -134,10 +131,7 @@ jvm_library(
         "//platform/searchEverywhere/backend:backend_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend-tests",
-    ],
+    runtime_deps = [":backend-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

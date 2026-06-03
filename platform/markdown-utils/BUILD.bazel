@@ -92,10 +92,7 @@ jvm_library(
         "//platform/markdown-utils:markdown-utils_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":markdown-utils-tests",
-    ],
+    runtime_deps = [":markdown-utils-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-groovy-ant-groovy-ant",
-    ],
+    runtime_deps = ["@lib//:libraries-groovy-ant-groovy-ant"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.groovy.ant",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
-    runtime_deps = [
-        # do not sort,
-        ":ant",
-    ],
+    runtime_deps = [":ant"],
 )
 ### auto-generated section `build intellij.libraries.groovy.ant` end
 

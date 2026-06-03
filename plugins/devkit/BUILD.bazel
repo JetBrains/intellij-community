@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.devkit",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":devkit",
-    ],
+    runtime_deps = [":devkit"],
 )
 ### auto-generated section `build intellij.devkit` end
 

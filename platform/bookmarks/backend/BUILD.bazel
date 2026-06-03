@@ -19,10 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/bookmarks"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,6 +45,7 @@ jvm_library(
     module_name = "intellij.platform.bookmarks.backend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/bookmarks",
         "//platform/bookmarks:bookmarks_test_lib",
     ],

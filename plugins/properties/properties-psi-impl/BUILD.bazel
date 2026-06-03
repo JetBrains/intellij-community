@@ -19,13 +19,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//plugins/properties/properties-common:properties",
-        "//plugins/properties/properties-psi-api:psi",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//plugins/properties/properties-psi-api:psi",
+        "//plugins/properties/properties-common:properties",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/code-style-api:codeStyle",
@@ -69,10 +67,11 @@ jvm_library(
     module_name = "intellij.properties.backend.psi",
     visibility = ["//visibility:public"],
     exports = [
-        "//plugins/properties/properties-common:properties",
-        "//plugins/properties/properties-common:properties_test_lib",
+        # do not sort,
         "//plugins/properties/properties-psi-api:psi",
         "//plugins/properties/properties-psi-api:psi_test_lib",
+        "//plugins/properties/properties-common:properties",
+        "//plugins/properties/properties-common:properties_test_lib",
     ],
     runtime_deps = [
         # do not sort,

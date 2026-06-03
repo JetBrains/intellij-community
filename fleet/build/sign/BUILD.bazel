@@ -49,10 +49,7 @@ jvm_library(
     kotlinc_opts = ":custom_sign",
     module_name = "fleet.build.sign",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":sign",
-    ],
+    runtime_deps = [":sign"],
 )
 ### auto-generated section `build fleet.build.sign` end
 

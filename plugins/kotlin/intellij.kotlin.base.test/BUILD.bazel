@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.base.test",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/kotlin/reflect",
-    ],
+    runtime_deps = ["//libraries/kotlin/reflect"],
 )
 
 jvm_library(

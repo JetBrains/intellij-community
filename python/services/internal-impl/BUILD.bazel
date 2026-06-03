@@ -97,10 +97,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":python-community-services-internal-impl-tests",
-    ],
+    runtime_deps = [":python-community-services-internal-impl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

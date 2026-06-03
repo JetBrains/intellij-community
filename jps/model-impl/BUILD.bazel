@@ -97,10 +97,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":model-tests",
-    ],
+    runtime_deps = [":model-tests"],
     deps = [
         # do not sort,
         "//jps/model-api:model",

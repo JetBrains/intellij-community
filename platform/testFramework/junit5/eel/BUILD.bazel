@@ -97,10 +97,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.junit5.eel.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/testFramework/junit5",
-    ],
+    runtime_deps = ["//platform/testFramework/junit5"],
 )
 
 jvm_library(

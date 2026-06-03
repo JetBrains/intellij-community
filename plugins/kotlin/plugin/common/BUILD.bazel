@@ -34,10 +34,7 @@ jvm_library(
     ),
     module_name = "kotlin.plugin.common",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-    ],
+    runtime_deps = [":common"],
 )
 ### auto-generated section `build kotlin.plugin.common` end
 

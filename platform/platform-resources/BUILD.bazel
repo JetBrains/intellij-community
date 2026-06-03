@@ -23,10 +23,7 @@ jvm_library(
         ["generated/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/platform-impl/concurrency",
-    ],
+    runtime_deps = ["//platform/platform-impl/concurrency"],
 )
 
 jvm_library(

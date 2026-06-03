@@ -15,10 +15,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
+        # do not sort,
         "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
+        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
     ],
     runtime_deps = [
         # do not sort,
@@ -40,10 +41,11 @@ jvm_library(
     module_name = "intellij.libraries.coil",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
+        # do not sort,
         "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
+        "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
     ],
     runtime_deps = [
         # do not sort,

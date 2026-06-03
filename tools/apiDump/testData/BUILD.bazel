@@ -30,10 +30,7 @@ jvm_library(
     ),
     module_name = "intellij.tools.apiDump.testData",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testData",
-    ],
+    runtime_deps = [":testData"],
 )
 ### auto-generated section `build intellij.tools.apiDump.testData` end
 

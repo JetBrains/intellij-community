@@ -90,10 +90,7 @@ jvm_library(
         "//platform/util/text-matching:text-matching_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":text-matching-tests",
-    ],
+    runtime_deps = [":text-matching-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

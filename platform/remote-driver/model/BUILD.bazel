@@ -34,10 +34,7 @@ jvm_library(
     ),
     module_name = "intellij.driver.model",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":model",
-    ],
+    runtime_deps = [":model"],
 )
 ### auto-generated section `build intellij.driver.model` end
 

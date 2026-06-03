@@ -15,10 +15,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.buildScripts.usages",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//jps/model-impl",
-    ],
+    runtime_deps = ["//jps/model-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -104,10 +101,7 @@ jvm_library(
         "//platform/build-scripts/usages:usages_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":buildScripts-usages-tests",
-    ],
+    runtime_deps = [":buildScripts-usages-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -83,10 +83,7 @@ jvm_library(
         "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":junit5-jimfs-tests",
-    ],
+    runtime_deps = [":junit5-jimfs-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

@@ -190,6 +190,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/lang-impl:lang-tests",
         "//platform/lang-impl:lang-tests_test_lib",
     ],

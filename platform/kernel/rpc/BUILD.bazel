@@ -19,8 +19,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/rpc",
+        # do not sort,
         "@lib//:kotlin-stdlib",
+        "//fleet/rpc",
     ],
     deps = [
         # do not sort,
@@ -42,9 +43,10 @@ jvm_library(
     module_name = "intellij.platform.rpc",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
         "//fleet/rpc",
         "//fleet/rpc:rpc_test_lib",
-        "@lib//:kotlin-stdlib",
     ],
     runtime_deps = [
         # do not sort,

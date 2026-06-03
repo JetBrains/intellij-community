@@ -53,10 +53,7 @@ jvm_library(
     kotlinc_opts = ":custom_authentication",
     module_name = "fleet.build.authentication",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":authentication",
-    ],
+    runtime_deps = [":authentication"],
 )
 ### auto-generated section `build fleet.build.authentication` end
 

@@ -12,10 +12,7 @@ jvm_library(
     module_name = "intellij.python.community.junit5Tests.framework",
     visibility = ["//visibility:public"],
     exports = ["//libraries/system-stubs-jupiter"],
-    runtime_deps = [
-        # do not sort,
-        "//python/pluginCore:community-plugin",
-    ],
+    runtime_deps = ["//python/pluginCore:community-plugin"],
 )
 
 jvm_library(
@@ -36,6 +33,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/system-stubs-jupiter",
         "//libraries/system-stubs-jupiter:system-stubs-jupiter_test_lib",
     ],

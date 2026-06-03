@@ -107,6 +107,7 @@ jvm_library(
     module_name = "intellij.groovy",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
     ],
@@ -247,6 +248,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
     ],

@@ -50,6 +50,7 @@ jvm_library(
     module_name = "intellij.platform.externalProcessAuthHelper",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/built-in-server:builtInServer-impl",
         "//platform/built-in-server:builtInServer-impl_test_lib",
     ],
@@ -114,6 +115,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/built-in-server:builtInServer-impl",
         "//platform/built-in-server:builtInServer-impl_test_lib",
     ],

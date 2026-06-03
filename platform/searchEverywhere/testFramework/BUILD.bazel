@@ -19,9 +19,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/searchEverywhere/shared:searchEverywhere",
         "//platform/searchEverywhere/backend",
         "//platform/searchEverywhere/frontend",
-        "//platform/searchEverywhere/shared:searchEverywhere",
     ],
     deps = [
         # do not sort,
@@ -44,12 +45,13 @@ jvm_library(
     module_name = "intellij.platform.searchEverywhere.testFramework",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//platform/searchEverywhere/shared:searchEverywhere",
+        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
         "//platform/searchEverywhere/backend",
         "//platform/searchEverywhere/backend:backend_test_lib",
         "//platform/searchEverywhere/frontend",
         "//platform/searchEverywhere/frontend:frontend_test_lib",
-        "//platform/searchEverywhere/shared:searchEverywhere",
-        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
     ],
     runtime_deps = [
         # do not sort,

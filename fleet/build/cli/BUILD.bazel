@@ -41,8 +41,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:fleet-clikt",
+        # do not sort,
         "@lib//:fleet-clikt-core",
+        "@lib//:fleet-clikt",
     ],
     deps = [
         # do not sort,
@@ -70,13 +71,11 @@ jvm_library(
     module_name = "fleet.build.cli",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:fleet-clikt",
-        "@lib//:fleet-clikt-core",
-    ],
-    runtime_deps = [
         # do not sort,
-        ":cli",
+        "@lib//:fleet-clikt-core",
+        "@lib//:fleet-clikt",
     ],
+    runtime_deps = [":cli"],
 )
 ### auto-generated section `build fleet.build.cli` end
 

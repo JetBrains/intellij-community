@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:lucene-analysis-common",
         "@lib//:lucene-core",
     ],
@@ -35,13 +36,11 @@ jvm_library(
     module_name = "intellij.libraries.lucene.common",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:lucene-analysis-common",
         "@lib//:lucene-core",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":lucene.common",
-    ],
+    runtime_deps = [":lucene.common"],
 )
 ### auto-generated section `build intellij.libraries.lucene.common` end
 

@@ -15,10 +15,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.eval4j",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/core-api:core",
-    ],
+    runtime_deps = ["//platform/core-api:core"],
     deps = [
         # do not sort,
         "//java/debugger/openapi:java-debugger",
@@ -71,10 +68,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.eval4j.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/core-api:core",
-    ],
+    runtime_deps = ["//platform/core-api:core"],
 )
 
 jvm_library(

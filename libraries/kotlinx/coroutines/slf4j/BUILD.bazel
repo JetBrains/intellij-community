@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlinx-coroutines-slf4j"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlinx-coroutines-slf4j",
-    ],
+    runtime_deps = ["@lib//:kotlinx-coroutines-slf4j"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinx.coroutines.slf4j",
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlinx-coroutines-slf4j"],
-    runtime_deps = [
-        # do not sort,
-        ":slf4j",
-    ],
+    runtime_deps = [":slf4j"],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` end
 

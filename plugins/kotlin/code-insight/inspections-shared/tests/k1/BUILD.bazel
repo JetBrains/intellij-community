@@ -36,10 +36,7 @@ jvm_library(
     kotlinc_opts = ":custom_k1",
     module_name = "kotlin.code-insight.inspections-shared.tests.k1",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":k1",
-    ],
+    runtime_deps = [":k1"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

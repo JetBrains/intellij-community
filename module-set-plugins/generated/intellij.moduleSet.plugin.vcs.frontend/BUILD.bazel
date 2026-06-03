@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.moduleSet.plugin.vcs.frontend",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":moduleSet-plugin-vcs-frontend",
-    ],
+    runtime_deps = [":moduleSet-plugin-vcs-frontend"],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.vcs.frontend` end
 

@@ -136,10 +136,7 @@ jvm_library(
         "//plugins/evaluation-plugin/languages/java:java_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":evaluationPlugin-languages-java-tests",
-    ],
+    runtime_deps = [":evaluationPlugin-languages-java-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

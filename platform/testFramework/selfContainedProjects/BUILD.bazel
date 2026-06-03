@@ -104,10 +104,7 @@ jvm_library(
         "//platform/testFramework/selfContainedProjects:selfContainedProjects_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":selfContainedProjects-tests",
-    ],
+    runtime_deps = [":selfContainedProjects-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

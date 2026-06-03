@@ -27,10 +27,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.xpath.rt",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rt",
-    ],
+    runtime_deps = [":rt"],
 )
 ### auto-generated section `build intellij.xpath.rt` end
 

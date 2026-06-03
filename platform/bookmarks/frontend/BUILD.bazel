@@ -45,6 +45,7 @@ jvm_library(
     module_name = "intellij.platform.bookmarks.frontend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/bookmarks",
         "//platform/bookmarks:bookmarks_test_lib",
     ],

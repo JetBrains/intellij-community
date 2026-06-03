@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlinx-datetime-jvm"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlinx-datetime-jvm",
-    ],
+    runtime_deps = ["@lib//:kotlinx-datetime-jvm"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.kotlinx.datetime",
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlinx-datetime-jvm"],
-    runtime_deps = [
-        # do not sort,
-        ":datetime",
-    ],
+    runtime_deps = [":datetime"],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.datetime` end
 

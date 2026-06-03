@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:guava"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:guava",
-    ],
+    runtime_deps = ["@lib//:guava"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.guava",
     visibility = ["//visibility:public"],
     exports = ["@lib//:guava"],
-    runtime_deps = [
-        # do not sort,
-        ":guava",
-    ],
+    runtime_deps = [":guava"],
 )
 ### auto-generated section `build intellij.libraries.guava` end
 

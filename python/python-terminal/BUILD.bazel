@@ -124,10 +124,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":terminal-tests",
-    ],
+    runtime_deps = [":terminal-tests"],
     deps = [
         # do not sort,
         "//python:python-community-impl",

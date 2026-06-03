@@ -89,10 +89,7 @@ jvm_library(
         ["testData/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":freezeAnalyzer-tests",
-    ],
+    runtime_deps = [":freezeAnalyzer-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -84,10 +84,7 @@ jvm_library(
         "//updater:updater_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tools-updater-tests",
-    ],
+    runtime_deps = [":tools-updater-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

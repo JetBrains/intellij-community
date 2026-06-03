@@ -98,6 +98,7 @@ jvm_library(
     module_name = "kotlin.idea.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     ],

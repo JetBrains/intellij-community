@@ -42,6 +42,7 @@ jvm_library(
     module_name = "intellij.platform.ide.rpc",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/openmap",
         "//fleet/openmap:openmap_test_lib",
     ],

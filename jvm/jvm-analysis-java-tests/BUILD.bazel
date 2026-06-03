@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.jvm.analysis.java.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":analysis-java-tests",
-    ],
+    runtime_deps = [":analysis-java-tests"],
     deps = [
         # do not sort,
         "//java/openapi:java",

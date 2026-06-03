@@ -102,10 +102,7 @@ jvm_library(
         "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-terminal-sessions-tests",
-    ],
+    runtime_deps = [":agent-workbench-terminal-sessions-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

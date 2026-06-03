@@ -50,6 +50,7 @@ jvm_library(
     module_name = "intellij.platform.projectModel",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
     ],

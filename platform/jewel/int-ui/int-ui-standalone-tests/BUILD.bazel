@@ -49,10 +49,7 @@ jvm_library(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jewel-intUi-standalone-tests",
-    ],
+    runtime_deps = [":jewel-intUi-standalone-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

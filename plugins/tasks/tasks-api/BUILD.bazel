@@ -43,6 +43,7 @@ jvm_library(
     module_name = "intellij.tasks",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/tasks-platform-api:tasks",
         "//platform/tasks-platform-api:tasks_test_lib",
     ],

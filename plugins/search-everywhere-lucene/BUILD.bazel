@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.searchEverywhereLucene.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":searchEverywhereLucene-plugin",
-    ],
+    runtime_deps = [":searchEverywhereLucene-plugin"],
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
 

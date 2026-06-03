@@ -87,10 +87,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.declarativeSync.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -106,10 +103,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.declarativeSync.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":declarativeSync-tests",
-    ],
+    runtime_deps = [":declarativeSync-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

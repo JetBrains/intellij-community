@@ -43,10 +43,7 @@ jvm_library(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ui-tests",
-    ],
+    runtime_deps = [":ui-tests"],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",

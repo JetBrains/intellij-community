@@ -14,10 +14,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/gradle/tooling-extension-api:toolingExtension",
-    ],
+    runtime_deps = ["//plugins/gradle/tooling-extension-api:toolingExtension"],
 )
 
 jvm_library(

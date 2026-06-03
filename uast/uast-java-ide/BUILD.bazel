@@ -43,6 +43,7 @@ jvm_library(
     module_name = "intellij.java.uast.ide",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//uast/uast-java:java-uast",
         "//uast/uast-java:java-uast_test_lib",
     ],

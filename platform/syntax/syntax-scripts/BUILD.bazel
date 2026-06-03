@@ -30,10 +30,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.syntax.scripts",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":scripts",
-    ],
+    runtime_deps = [":scripts"],
 )
 ### auto-generated section `build intellij.platform.syntax.scripts` end
 

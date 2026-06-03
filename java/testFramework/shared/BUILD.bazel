@@ -52,6 +52,7 @@ jvm_library(
     module_name = "intellij.java.testFramework.shared",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
     ],

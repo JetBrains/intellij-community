@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.qtcreator",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-qtcreator",
-    ],
+    runtime_deps = [":keymap-qtcreator"],
 )
 ### auto-generated section `build intellij.keymap.qtcreator` end
 

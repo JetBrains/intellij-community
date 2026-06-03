@@ -28,10 +28,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -44,10 +41,7 @@ jvm_library(
     javac_opts = ":custom-javac-options",
     module_name = "intellij.platform.core.nio.fs",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":core-nio-fs",
-    ],
+    runtime_deps = [":core-nio-fs"],
 )
 ### auto-generated section `build intellij.platform.core.nio.fs` end
 
@@ -90,10 +84,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.core.nio.fs.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":core-nio-fs-tests",
-    ],
+    runtime_deps = [":core-nio-fs-tests"],
     deps = [
         # do not sort,
         "//platform/core-nio-fs",

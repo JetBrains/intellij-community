@@ -14,10 +14,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.externalProcessAuthHelper.rt",
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -29,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.externalProcessAuthHelper.rt",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rt",
-    ],
+    runtime_deps = [":rt"],
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper.rt` end
 

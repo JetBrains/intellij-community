@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//python/python-features-trainer:featuresTrainer",
-    ],
+    runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -196,10 +193,7 @@ jvm_library(
     ),
     module_name = "intellij.pycharm.community.ide.impl.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//python/python-features-trainer:featuresTrainer",
-    ],
+    runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
 )
 
 jvm_library(

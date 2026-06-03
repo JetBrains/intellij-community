@@ -33,10 +33,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerPlugins.support.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//plugins/kotlin/plugin/k2",

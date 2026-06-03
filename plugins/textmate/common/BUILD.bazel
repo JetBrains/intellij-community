@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/textmate"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/textmate",
-    ],
+    runtime_deps = ["//plugins/textmate"],
 )
 
 jvm_library(
@@ -31,6 +28,7 @@ jvm_library(
     module_name = "intellij.textmate.common",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/textmate",
         "//plugins/textmate:textmate_test_lib",
     ],

@@ -169,10 +169,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":python-processOutput-frontend-tests",
-    ],
+    runtime_deps = [":python-processOutput-frontend-tests"],
     deps = [
         # do not sort,
         "//platform/platform-frontend:frontend",

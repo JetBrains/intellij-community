@@ -41,12 +41,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/external-system-api:externalSystem",
+        # do not sort,
         "//plugins/gradle/settings",
+        "//platform/external-system-api:externalSystem",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
-        "@lib//:gradle",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
+        "@lib//:gradle",
     ],
     deps = [
         # do not sort,
@@ -126,15 +127,16 @@ jvm_library(
     module_name = "intellij.gradle",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/external-system-api:externalSystem",
-        "//platform/external-system-api:externalSystem_test_lib",
+        # do not sort,
         "//plugins/gradle/settings",
         "//plugins/gradle/settings:settings_test_lib",
+        "//platform/external-system-api:externalSystem",
+        "//platform/external-system-api:externalSystem_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-        "@lib//:gradle",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
+        "@lib//:gradle",
     ],
     runtime_deps = [
         # do not sort,
@@ -225,10 +227,7 @@ jvm_library(
     module_name = "intellij.gradle.common",
     visibility = ["//visibility:public"],
     exports = ["//plugins/gradle"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/gradle",
-    ],
+    runtime_deps = ["//plugins/gradle"],
 )
 
 jvm_library(
@@ -241,6 +240,7 @@ jvm_library(
     module_name = "intellij.gradle.common",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/gradle",
         "//plugins/gradle:gradle_test_lib",
     ],
@@ -309,6 +309,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/external-system-api/testFramework",
         "//platform/external-system-api/testFramework:testFramework_test_lib",
     ],

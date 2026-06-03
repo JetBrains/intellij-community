@@ -37,6 +37,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
     ],
@@ -59,6 +60,7 @@ jvm_library(
     module_name = "fleet.util.logging.api",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
     ],

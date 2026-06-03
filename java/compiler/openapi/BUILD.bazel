@@ -53,6 +53,7 @@ jvm_library(
     module_name = "intellij.java.compiler",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/workspace/jps",
         "//platform/workspace/jps:jps_test_lib",
     ],

@@ -27,10 +27,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.java.guiForms.rt",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java-guiForms-rt",
-    ],
+    runtime_deps = [":java-guiForms-rt"],
 )
 ### auto-generated section `build intellij.java.guiForms.rt` end
 

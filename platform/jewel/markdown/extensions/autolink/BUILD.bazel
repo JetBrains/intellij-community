@@ -122,10 +122,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_jewel-markdown-extensions-autolink-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jewel-markdown-extensions-autolink-tests",
-    ],
+    runtime_deps = [":jewel-markdown-extensions-autolink-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

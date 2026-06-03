@@ -19,8 +19,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/remote-driver/client",
+        # do not sort,
         "//platform/remote-driver/core:driver-impl",
+        "//platform/remote-driver/client",
     ],
     deps = [
         # do not sort,
@@ -58,10 +59,11 @@ jvm_library(
     module_name = "intellij.performanceTesting.remoteDriver",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/remote-driver/client",
-        "//platform/remote-driver/client:client_test_lib",
+        # do not sort,
         "//platform/remote-driver/core:driver-impl",
         "//platform/remote-driver/core:driver-impl_test_lib",
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/client:client_test_lib",
     ],
     runtime_deps = [
         # do not sort,

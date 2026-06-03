@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-oro-matcher-_oro_matcher",
-    ],
+    runtime_deps = ["@lib//:libraries-oro-matcher-_oro_matcher"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.oro.matcher",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
-    runtime_deps = [
-        # do not sort,
-        ":oro-matcher",
-    ],
+    runtime_deps = [":oro-matcher"],
 )
 ### auto-generated section `build intellij.libraries.oro.matcher` end
 

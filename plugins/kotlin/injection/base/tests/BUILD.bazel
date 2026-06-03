@@ -17,10 +17,7 @@ jvm_library(
     ),
     module_name = "kotlin.base.injection.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/editor-ui-ex:editor-ex",
-    ],
+    runtime_deps = ["//platform/editor-ui-ex:editor-ex"],
 )
 
 jvm_library(

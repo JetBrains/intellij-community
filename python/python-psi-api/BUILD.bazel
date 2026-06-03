@@ -21,13 +21,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//python/python-ast:ast",
-        "//python/python-parser:parser",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//python/python-parser:parser",
+        "//python/python-ast:ast",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -55,10 +53,11 @@ jvm_library(
     module_name = "intellij.python.psi",
     visibility = ["//visibility:public"],
     exports = [
-        "//python/python-ast:ast",
-        "//python/python-ast:ast_test_lib",
+        # do not sort,
         "//python/python-parser:parser",
         "//python/python-parser:parser_test_lib",
+        "//python/python-ast:ast",
+        "//python/python-ast:ast_test_lib",
     ],
     runtime_deps = [
         # do not sort,

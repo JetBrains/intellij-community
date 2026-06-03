@@ -29,10 +29,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -45,10 +42,7 @@ jvm_library(
     kotlinc_opts = ":custom_multiplatform",
     module_name = "fleet.util.multiplatform",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":multiplatform",
-    ],
+    runtime_deps = [":multiplatform"],
 )
 ### auto-generated section `build fleet.util.multiplatform` end
 

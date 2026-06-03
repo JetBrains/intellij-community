@@ -142,10 +142,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_ide-plugin-shared-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-plugin-shared-tests",
-    ],
+    runtime_deps = [":ide-plugin-shared-tests"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

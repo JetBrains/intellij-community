@@ -27,10 +27,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.test.parcelize.testFramework",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-    ],
+    runtime_deps = [":testFramework"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

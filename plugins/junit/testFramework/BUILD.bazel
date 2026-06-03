@@ -42,6 +42,7 @@ jvm_library(
     module_name = "intellij.junit.testFramework",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/junit",
         "//plugins/junit:junit_test_lib",
     ],

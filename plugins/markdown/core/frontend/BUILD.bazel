@@ -53,6 +53,7 @@ jvm_library(
     module_name = "intellij.markdown.frontend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/markdown/core:markdown",
         "//plugins/markdown/core:markdown_test_lib",
     ],

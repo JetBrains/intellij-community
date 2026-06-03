@@ -110,10 +110,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-gradle-tooling-impl-tests",
-    ],
+    runtime_deps = [":kotlin-gradle-tooling-impl-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

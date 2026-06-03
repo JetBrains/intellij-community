@@ -29,6 +29,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/bifurcan",
         "//fleet/openmap",
     ],
@@ -58,6 +59,7 @@ jvm_library(
     module_name = "fleet.andel",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/bifurcan",
         "//fleet/bifurcan:bifurcan_test_lib",
         "//fleet/openmap",

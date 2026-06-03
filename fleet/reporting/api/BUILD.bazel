@@ -45,10 +45,7 @@ jvm_library(
     kotlinc_opts = ":custom_api",
     module_name = "fleet.reporting.api",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":api",
-    ],
+    runtime_deps = [":api"],
 )
 ### auto-generated section `build fleet.reporting.api` end
 

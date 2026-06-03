@@ -28,10 +28,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -44,10 +41,7 @@ jvm_library(
     kotlinc_opts = ":custom_api",
     module_name = "fleet.modules.api",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":api",
-    ],
+    runtime_deps = [":api"],
 )
 ### auto-generated section `build fleet.modules.api` end
 

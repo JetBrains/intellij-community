@@ -39,10 +39,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":test",
-    ],
+    runtime_deps = [":test"],
     deps = [
         # do not sort,
         "//fleet/util/codepoints",

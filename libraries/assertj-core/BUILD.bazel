@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-assertj-core-assert_j"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-assertj-core-assert_j",
-    ],
+    runtime_deps = ["@lib//:libraries-assertj-core-assert_j"],
 )
 
 jvm_library(
@@ -31,10 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.assertj.core",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-assertj-core-assert_j"],
-    runtime_deps = [
-        # do not sort,
-        ":assertj-core",
-    ],
+    runtime_deps = [":assertj-core"],
 )
 ### auto-generated section `build intellij.libraries.assertj.core` end
 

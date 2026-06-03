@@ -29,10 +29,7 @@ jvm_library(
     ),
     module_name = "intellij.libraries.microba",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":microba",
-    ],
+    runtime_deps = [":microba"],
 )
 ### auto-generated section `build intellij.libraries.microba` end
 

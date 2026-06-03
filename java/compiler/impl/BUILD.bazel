@@ -116,6 +116,7 @@ jvm_library(
     module_name = "intellij.java.compiler.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/compiler/openapi:java-compiler",
         "//java/compiler/openapi:java-compiler_test_lib",
     ],

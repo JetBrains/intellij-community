@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv",
-    ],
+    runtime_deps = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.opentelemetry.semconv",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
-    runtime_deps = [
-        # do not sort,
-        ":opentelemetry-semconv",
-    ],
+    runtime_deps = [":opentelemetry-semconv"],
 )
 ### auto-generated section `build intellij.libraries.opentelemetry.semconv` end
 

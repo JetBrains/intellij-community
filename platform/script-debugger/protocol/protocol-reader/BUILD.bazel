@@ -35,6 +35,7 @@ jvm_library(
     module_name = "intellij.javascript.protocolReader",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/script-debugger/protocol/protocol-reader-runtime",
         "//platform/script-debugger/protocol/protocol-reader-runtime:protocol-reader-runtime_test_lib",
     ],

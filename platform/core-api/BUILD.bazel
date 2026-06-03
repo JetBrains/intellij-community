@@ -20,10 +20,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/extensions",
-        "//platform/util/base",
-        "//platform/util/base/multiplatform",
         "//platform/util/multiplatform",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base",
     ],
     deps = [
         # do not sort,
@@ -56,14 +57,15 @@ jvm_library(
     module_name = "intellij.platform.core",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/extensions",
         "//platform/extensions:extensions_test_lib",
-        "//platform/util/base",
-        "//platform/util/base:base_test_lib",
-        "//platform/util/base/multiplatform",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/multiplatform",
         "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base",
+        "//platform/util/base:base_test_lib",
     ],
     runtime_deps = [
         # do not sort,

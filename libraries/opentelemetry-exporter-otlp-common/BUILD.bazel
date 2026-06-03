@@ -15,9 +15,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-sdk-autoconfigure-spi",
-        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
     ],
     runtime_deps = [
         # do not sort,
@@ -39,11 +40,12 @@ jvm_library(
     module_name = "intellij.libraries.opentelemetry.exporter.otlp.common",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-sdk-autoconfigure-spi",
         "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
-        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
     ],
     runtime_deps = [
         # do not sort,

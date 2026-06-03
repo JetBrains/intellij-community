@@ -38,13 +38,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/dvcs-api:vcs-dvcs",
         "@lib//:cucumber-testing",
     ],
-    runtime_deps = [
-        # do not sort,
-        "//platform/lvcs-impl",
-    ],
+    runtime_deps = ["//platform/lvcs-impl"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -140,6 +138,7 @@ jvm_library(
     module_name = "intellij.vcs.git",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/dvcs-api:vcs-dvcs",
         "//platform/dvcs-api:vcs-dvcs_test_lib",
         "@lib//:cucumber-testing",
@@ -292,6 +291,7 @@ jvm_library(
     module_name = "intellij.vcs.git.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/dvcs-api:vcs-dvcs",
         "@lib//:cucumber-testing",
     ],
@@ -324,6 +324,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/dvcs-api:vcs-dvcs",
         "//platform/dvcs-api:vcs-dvcs_test_lib",
         "@lib//:cucumber-testing",

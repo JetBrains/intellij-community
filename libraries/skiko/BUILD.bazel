@@ -15,6 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
         "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
     ],
@@ -35,13 +36,11 @@ jvm_library(
     module_name = "intellij.libraries.skiko",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
         "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":skiko",
-    ],
+    runtime_deps = [":skiko"],
 )
 ### auto-generated section `build intellij.libraries.skiko` end
 

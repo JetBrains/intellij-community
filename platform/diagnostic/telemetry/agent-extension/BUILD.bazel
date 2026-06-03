@@ -99,10 +99,7 @@ jvm_library(
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":diagnostic-telemetry-agent-extension-tests",
-    ],
+    runtime_deps = [":diagnostic-telemetry-agent-extension-tests"],
     deps = [
         # do not sort,
         "//libraries/opentelemetry",

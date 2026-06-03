@@ -94,10 +94,7 @@ jvm_library(
         "//platform/execution-process-mediator/common:common_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":execution-process-mediator-common-tests",
-    ],
+    runtime_deps = [":execution-process-mediator-common-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

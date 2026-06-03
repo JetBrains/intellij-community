@@ -14,10 +14,7 @@ jvm_library(
     ),
     module_name = "intellij.cucumber.testRunner",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
-    ],
+    runtime_deps = ["//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

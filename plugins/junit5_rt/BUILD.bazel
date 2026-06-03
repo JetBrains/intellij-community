@@ -21,8 +21,9 @@ jvm_library(
     module_name = "intellij.junit.v5.rt",
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-runtime:rt",
+        # do not sort,
         "//plugins/junit_rt:junit-rt",
+        "//java/java-runtime:rt",
     ],
     deps = [
         # do not sort,
@@ -44,10 +45,11 @@ jvm_library(
     module_name = "intellij.junit.v5.rt",
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
+        # do not sort,
         "//plugins/junit_rt:junit-rt",
         "//plugins/junit_rt:junit-rt_test_lib",
+        "//java/java-runtime:rt",
+        "//java/java-runtime:rt_test_lib",
     ],
     runtime_deps = [
         # do not sort,

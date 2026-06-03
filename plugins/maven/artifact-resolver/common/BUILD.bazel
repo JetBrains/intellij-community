@@ -15,10 +15,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.maven.artifactResolver.common",
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided",
-    ],
+    deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"],
 )
 
 jvm_library(

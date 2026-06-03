@@ -81,6 +81,7 @@ jvm_library(
     module_name = "intellij.junit",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//jvm/jvm-analysis-api:analysis",
         "//jvm/jvm-analysis-api:analysis_test_lib",
     ],

@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -35,10 +32,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.maven.model",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":model",
-    ],
+    runtime_deps = [":model"],
 )
 ### auto-generated section `build intellij.maven.model` end
 

@@ -44,6 +44,7 @@ jvm_library(
     module_name = "intellij.platform.remoteServers",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
         "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
     ],

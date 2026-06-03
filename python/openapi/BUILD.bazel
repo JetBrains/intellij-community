@@ -19,8 +19,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/platform-util-io:ide-util-io",
+        # do not sort,
         "//python/python-psi-api:psi",
+        "//platform/platform-util-io:ide-util-io",
     ],
     deps = [
         # do not sort,
@@ -54,10 +55,11 @@ jvm_library(
     module_name = "intellij.python.community",
     visibility = ["//visibility:public"],
     exports = [
-        "//platform/platform-util-io:ide-util-io",
-        "//platform/platform-util-io:ide-util-io_test_lib",
+        # do not sort,
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     runtime_deps = [
         # do not sort,

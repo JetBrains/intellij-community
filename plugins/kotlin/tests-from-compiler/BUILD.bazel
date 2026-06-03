@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "kotlin.testsFromCompiler",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/util/trove",
-    ],
+    runtime_deps = ["//platform/util/trove"],
 )
 
 jvm_library(

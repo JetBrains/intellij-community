@@ -54,6 +54,7 @@ jvm_library(
     module_name = "intellij.java.decompiler",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/java-decompiler/engine",
         "//plugins/java-decompiler/engine:engine_test_lib",
     ],
@@ -130,6 +131,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/java-decompiler/engine",
         "//plugins/java-decompiler/engine:engine_test_lib",
     ],

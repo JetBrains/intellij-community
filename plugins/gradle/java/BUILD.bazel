@@ -22,10 +22,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/gradle:gradle-common"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//ant/lib:ant",
-    ],
+    runtime_deps = ["@lib//ant/lib:ant"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -102,6 +99,7 @@ jvm_library(
     module_name = "intellij.gradle.java",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/gradle:gradle-common",
         "//plugins/gradle:gradle-common_test_lib",
     ],

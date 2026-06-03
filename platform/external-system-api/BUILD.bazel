@@ -62,6 +62,7 @@ jvm_library(
     module_name = "intellij.platform.externalSystem",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/external-system-rt:externalSystem-rt",
         "//platform/external-system-rt:externalSystem-rt_test_lib",
     ],

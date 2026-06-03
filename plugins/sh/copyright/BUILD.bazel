@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//plugins/copyright",
@@ -96,10 +93,7 @@ jvm_library(
     ),
     module_name = "intellij.sh.copyright.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":copyright-tests",
-    ],
+    runtime_deps = [":copyright-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

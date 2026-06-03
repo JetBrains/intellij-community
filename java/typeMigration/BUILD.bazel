@@ -127,10 +127,7 @@ jvm_library(
         "//java/typeMigration:typeMigration_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":typeMigration-tests",
-    ],
+    runtime_deps = [":typeMigration-tests"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

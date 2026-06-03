@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-stream-_stream_ex"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-stream-_stream_ex",
-    ],
+    runtime_deps = ["@lib//:libraries-stream-_stream_ex"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.stream",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-stream-_stream_ex"],
-    runtime_deps = [
-        # do not sort,
-        ":stream",
-    ],
+    runtime_deps = [":stream"],
 )
 ### auto-generated section `build intellij.libraries.stream` end
 

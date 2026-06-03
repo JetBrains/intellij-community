@@ -98,10 +98,7 @@ jvm_library(
         "//build/launch:launch_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":idea-tools-launch-tests",
-    ],
+    runtime_deps = [":idea-tools-launch-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

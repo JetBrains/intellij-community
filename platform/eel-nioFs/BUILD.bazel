@@ -37,6 +37,7 @@ jvm_library(
     module_name = "intellij.platform.eel.nioFs",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/eel",
         "//platform/eel:eel_test_lib",
     ],

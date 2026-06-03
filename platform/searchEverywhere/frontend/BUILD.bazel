@@ -61,6 +61,7 @@ jvm_library(
     module_name = "intellij.platform.searchEverywhere.frontend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/searchEverywhere/shared:searchEverywhere",
         "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
     ],

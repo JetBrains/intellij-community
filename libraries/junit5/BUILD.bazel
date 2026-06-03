@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:junit5"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:junit5",
-    ],
+    runtime_deps = ["@lib//:junit5"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.junit5",
     visibility = ["//visibility:public"],
     exports = ["@lib//:junit5"],
-    runtime_deps = [
-        # do not sort,
-        ":junit5",
-    ],
+    runtime_deps = [":junit5"],
 )
 ### auto-generated section `build intellij.libraries.junit5` end
 

@@ -87,10 +87,7 @@ jvm_library(
         "//wintools:wintools_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":wintools-tests",
-    ],
+    runtime_deps = [":wintools-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

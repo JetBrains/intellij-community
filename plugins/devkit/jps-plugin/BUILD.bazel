@@ -100,10 +100,7 @@ jvm_library(
     ),
     module_name = "intellij.devkit.jps.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jps-tests",
-    ],
+    runtime_deps = [":jps-tests"],
     deps = [
         # do not sort,
         "//plugins/devkit/jps-plugin:jps",

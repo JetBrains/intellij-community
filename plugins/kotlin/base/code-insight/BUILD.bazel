@@ -92,6 +92,7 @@ jvm_library(
     module_name = "intellij.kotlin.base.codeInsight",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/base/code-insight/minimal",
         "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
     ],
@@ -201,6 +202,7 @@ jvm_library(
     kotlinc_opts = ":custom_kotlin-base-codeInsight-tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/kotlin/base/code-insight/minimal",
         "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
     ],

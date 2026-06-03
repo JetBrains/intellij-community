@@ -12,6 +12,7 @@ jvm_library(
     module_name = "intellij.platform.icons.impl.intellij.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/icons-api",
         "//platform/icons-api/rendering",
         "//platform/icons-impl",
@@ -33,6 +34,7 @@ jvm_library(
     module_name = "intellij.platform.icons.impl.intellij.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/icons-api",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-api/rendering",
@@ -42,10 +44,7 @@ jvm_library(
         "//platform/icons-impl/intellij",
         "//platform/icons-impl/intellij:intellij_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-    ],
+    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

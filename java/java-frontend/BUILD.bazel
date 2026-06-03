@@ -19,9 +19,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-frontback-impl:frontback-impl",
+        # do not sort,
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//java/java-psi-impl:psi-impl",
+        "//java/java-frontback-impl:frontback-impl",
     ],
     runtime_deps = [
         # do not sort,

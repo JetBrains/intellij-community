@@ -35,10 +35,7 @@ jvm_library(
     ),
     module_name = "kotlin.refactorings.common.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-refactorings-common-tests",
-    ],
+    runtime_deps = [":kotlin-refactorings-common-tests"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",

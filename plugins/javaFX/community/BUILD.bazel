@@ -33,6 +33,7 @@ jvm_library(
     module_name = "intellij.javaFX.community",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/javaFX",
         "//plugins/javaFX:javaFX_test_lib",
     ],
@@ -128,6 +129,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/javaFX",
         "//plugins/javaFX:javaFX_test_lib",
     ],

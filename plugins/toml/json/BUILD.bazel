@@ -19,10 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//json/backend"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -51,6 +48,7 @@ jvm_library(
     module_name = "intellij.toml.json",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//json/backend",
         "//json/backend:backend_test_lib",
     ],

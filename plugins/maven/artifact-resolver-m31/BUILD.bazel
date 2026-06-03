@@ -41,6 +41,7 @@ jvm_library(
     module_name = "intellij.maven.artifactResolver.m31",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/maven/artifact-resolver/common",
         "//plugins/maven/artifact-resolver/common:common_test_lib",
     ],

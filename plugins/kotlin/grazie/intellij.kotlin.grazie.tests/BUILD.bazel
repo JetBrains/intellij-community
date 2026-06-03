@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.grazie.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-grazie-tests",
-    ],
+    runtime_deps = [":kotlin-grazie-tests"],
     deps = [
         # do not sort,
         "//plugins/kotlin/plugin/k2",

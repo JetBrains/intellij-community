@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin:kotlin-plugin-community-main",
-    ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -97,10 +94,7 @@ jvm_library(
     ),
     module_name = "intellij.evaluationPlugin.languages.kotlin.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin:kotlin-plugin-community-main",
-    ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(

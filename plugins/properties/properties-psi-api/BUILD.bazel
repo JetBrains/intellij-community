@@ -49,6 +49,7 @@ jvm_library(
     module_name = "intellij.properties.psi",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/boot",
         "//platform/boot:boot_test_lib",
     ],

@@ -157,10 +157,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-analysis-platform-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-analysis-platform-tests",
-    ],
+    runtime_deps = [":kotlin-analysis-platform-tests"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

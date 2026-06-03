@@ -29,6 +29,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/diagnostic/telemetry.exporters",
         "//platform/diagnostic/telemetry/rt",
     ],
@@ -69,6 +70,7 @@ jvm_library(
     module_name = "intellij.platform.diagnostic.telemetry.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/diagnostic/telemetry.exporters",
         "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
         "//platform/diagnostic/telemetry/rt",

@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "kotlin.code-insight.inspections-shared.tests.k2",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":k2",
-    ],
+    runtime_deps = [":k2"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

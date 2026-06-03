@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.keymap.visualStudioForMac",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-visualStudioForMac",
-    ],
+    runtime_deps = [":keymap-visualStudioForMac"],
 )
 ### auto-generated section `build intellij.keymap.visualStudioForMac` end
 

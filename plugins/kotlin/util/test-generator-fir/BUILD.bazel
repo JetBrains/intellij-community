@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-fir",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin/copyright/fir-tests:kotlin-copyright-tests",
-    ],
+    runtime_deps = ["//plugins/kotlin/copyright/fir-tests:kotlin-copyright-tests"],
 )
 
 jvm_library(
@@ -30,10 +27,7 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-fir",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":test-generator-fir",
-    ],
+    runtime_deps = [":test-generator-fir"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

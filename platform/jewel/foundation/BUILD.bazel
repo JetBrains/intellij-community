@@ -36,6 +36,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
         "//libraries/skiko",
     ],
@@ -60,6 +61,7 @@ jvm_library(
     module_name = "intellij.platform.jewel.foundation",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/skiko",
@@ -109,6 +111,7 @@ jvm_library(
     module_name = "intellij.platform.jewel.foundation.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
         "//libraries/skiko",
     ],
@@ -132,15 +135,13 @@ jvm_library(
     kotlinc_opts = ":custom_foundation-tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/skiko",
         "//libraries/skiko:skiko_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":foundation-tests",
-    ],
+    runtime_deps = [":foundation-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

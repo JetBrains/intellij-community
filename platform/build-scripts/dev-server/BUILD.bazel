@@ -14,10 +14,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.buildScripts.devBuildServer",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/xz",
-    ],
+    runtime_deps = ["//libraries/xz"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

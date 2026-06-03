@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.mps.resources",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":mps-resources",
-    ],
+    runtime_deps = [":mps-resources"],
 )
 ### auto-generated section `build intellij.mps.resources` end
 

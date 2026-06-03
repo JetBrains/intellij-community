@@ -84,10 +84,7 @@ jvm_library(
         "//plugins/maven/maven-event-listener:server-eventListener_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":server-eventListener-tests",
-    ],
+    runtime_deps = [":server-eventListener-tests"],
     deps = [
         # do not sort,
         "@lib//:maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",

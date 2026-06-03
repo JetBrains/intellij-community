@@ -19,6 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/java-psi-impl:psi-impl",
         "//platform/indexing-api:indexing",
         "//platform/indexing-impl",
@@ -62,6 +63,7 @@ jvm_library(
     module_name = "intellij.java.indexing.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/java-psi-impl:psi-impl",
         "//java/java-psi-impl:psi-impl_test_lib",
         "//platform/indexing-api:indexing",

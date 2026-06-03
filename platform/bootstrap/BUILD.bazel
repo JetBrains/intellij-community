@@ -18,10 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/bootstrap/coroutine",
-    ],
+    runtime_deps = ["//platform/bootstrap/coroutine"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

@@ -81,10 +81,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.instanceContainer.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":instanceContainer-tests",
-    ],
+    runtime_deps = [":instanceContainer-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

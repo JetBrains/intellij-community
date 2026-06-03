@@ -103,10 +103,7 @@ jvm_library(
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java-aetherDependencyResolver-tests",
-    ],
+    runtime_deps = [":java-aetherDependencyResolver-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

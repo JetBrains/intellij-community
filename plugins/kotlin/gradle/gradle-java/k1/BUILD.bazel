@@ -30,8 +30,9 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:kotlin-gradle-plugin-idea",
+        # do not sort,
         "@lib//:kotlin-tooling-core",
+        "@lib//:kotlin-gradle-plugin-idea",
     ],
     deps = [
         # do not sort,
@@ -81,8 +82,9 @@ jvm_library(
     module_name = "kotlin.gradle.gradle-java.k1",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:kotlin-gradle-plugin-idea",
+        # do not sort,
         "@lib//:kotlin-tooling-core",
+        "@lib//:kotlin-gradle-plugin-idea",
     ],
     runtime_deps = [
         # do not sort,
@@ -145,8 +147,9 @@ jvm_library(
     module_name = "kotlin.gradle.gradle-java.k1.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:kotlin-gradle-plugin-idea",
+        # do not sort,
         "@lib//:kotlin-tooling-core",
+        "@lib//:kotlin-gradle-plugin-idea",
     ],
 )
 
@@ -168,8 +171,9 @@ jvm_library(
     kotlinc_opts = ":custom_kotlin-gradle-gradle-java-k1-tests",
     visibility = ["//visibility:public"],
     exports = [
-        "@lib//:kotlin-gradle-plugin-idea",
+        # do not sort,
         "@lib//:kotlin-tooling-core",
+        "@lib//:kotlin-gradle-plugin-idea",
     ],
     runtime_deps = [
         # do not sort,

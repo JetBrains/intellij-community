@@ -20,10 +20,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/extensions"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/util/concurrency",
@@ -71,6 +68,7 @@ jvm_library(
     module_name = "intellij.platform.inspect",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/extensions",
         "//platform/extensions:extensions_test_lib",
     ],
@@ -139,10 +137,7 @@ jvm_library(
     module_name = "intellij.platform.inspect.tests",
     visibility = ["//visibility:public"],
     exports = ["//platform/extensions"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
 )
 
 jvm_library(
@@ -162,6 +157,7 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/extensions",
         "//platform/extensions:extensions_test_lib",
     ],

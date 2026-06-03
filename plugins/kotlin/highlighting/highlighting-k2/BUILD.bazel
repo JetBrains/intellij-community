@@ -167,10 +167,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-highlighting-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-highlighting-tests",
-    ],
+    runtime_deps = [":kotlin-highlighting-tests"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",

@@ -64,6 +64,7 @@ jvm_library(
     module_name = "intellij.platform.structureView.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/util:util_test_lib",
     ],

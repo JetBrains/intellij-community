@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.moduleSet.plugin.todoView",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":moduleSet-plugin-todoView",
-    ],
+    runtime_deps = [":moduleSet-plugin-todoView"],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.todoView` end
 

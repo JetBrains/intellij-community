@@ -102,10 +102,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.util.progress.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":progress-tests",
-    ],
+    runtime_deps = [":progress-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -41,10 +41,7 @@ jvm_library(
     ),
     module_name = "kotlin.completion.tests.shared",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-completion-tests-shared",
-    ],
+    runtime_deps = [":kotlin-completion-tests-shared"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -54,6 +54,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/rhizomedb.transactor",
         "//fleet/rhizomedb.transactor.rebase",
     ],
@@ -77,10 +78,11 @@ jvm_library(
     module_name = "fleet.kernel",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//fleet/rhizomedb.transactor",
+        "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
         "//fleet/rhizomedb.transactor.rebase",
         "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_test_lib",
-        "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
     ],
     runtime_deps = [
         # do not sort,

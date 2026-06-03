@@ -124,10 +124,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_jewel-markdown-extensions-gfmTables-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jewel-markdown-extensions-gfmTables-tests",
-    ],
+    runtime_deps = [":jewel-markdown-extensions-gfmTables-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

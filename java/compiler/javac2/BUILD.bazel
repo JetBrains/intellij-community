@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
-    ],
+    runtime_deps = ["//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8"],
     deps = [
         # do not sort,
         "@lib//ant/lib:ant-provided",

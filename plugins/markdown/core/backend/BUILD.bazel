@@ -19,10 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/markdown/core:markdown"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
@@ -56,6 +53,7 @@ jvm_library(
     module_name = "intellij.markdown.backend",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/markdown/core:markdown",
         "//plugins/markdown/core:markdown_test_lib",
     ],

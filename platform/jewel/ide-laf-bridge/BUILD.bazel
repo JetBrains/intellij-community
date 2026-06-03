@@ -34,9 +34,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
+        # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/ui",
+        "//libraries/compose-foundation-desktop",
     ],
     deps = [
         # do not sort,
@@ -73,12 +74,13 @@ jvm_library(
     module_name = "intellij.platform.jewel.ideLafBridge",
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ui",
         "//platform/jewel/ui:ui_test_lib",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -146,9 +148,10 @@ jvm_library(
     module_name = "intellij.platform.jewel.ideLafBridge.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
+        # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/ui",
+        "//libraries/compose-foundation-desktop",
     ],
 )
 
@@ -173,12 +176,13 @@ jvm_library(
     kotlinc_opts = ":custom_ideLafBridge-tests",
     visibility = ["//visibility:public"],
     exports = [
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ui",
         "//platform/jewel/ui:ui_test_lib",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
     runtime_deps = [
         # do not sort,

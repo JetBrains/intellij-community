@@ -12,10 +12,11 @@ jvm_library(
     module_name = "intellij.java.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/java-i18n",
+        "//plugins/coverage",
         "//java/java-backend:backend",
         "//java/java-frontend:frontend",
-        "//plugins/coverage",
-        "//plugins/java-i18n",
     ],
     runtime_deps = [
         # do not sort,
@@ -84,14 +85,15 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
+        "//plugins/java-i18n",
+        "//plugins/java-i18n:java-i18n_test_lib",
+        "//plugins/coverage",
+        "//plugins/coverage:coverage_test_lib",
         "//java/java-backend:backend",
         "//java/java-backend:backend_test_lib",
         "//java/java-frontend:frontend",
         "//java/java-frontend:frontend_test_lib",
-        "//plugins/coverage",
-        "//plugins/coverage:coverage_test_lib",
-        "//plugins/java-i18n",
-        "//plugins/java-i18n:java-i18n_test_lib",
     ],
     runtime_deps = [
         # do not sort,

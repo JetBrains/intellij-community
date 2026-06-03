@@ -101,10 +101,7 @@ jvm_library(
         "//platform/syntax/syntax-extensions:extensions_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":extensions-tests",
-    ],
+    runtime_deps = [":extensions-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

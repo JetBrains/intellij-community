@@ -105,10 +105,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.objectSerializer.annotations",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":objectSerializer-annotations",
-    ],
+    runtime_deps = [":objectSerializer-annotations"],
 )
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` end
 
@@ -159,10 +156,7 @@ jvm_library(
         "//platform/object-serializer:object-serializer_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":objectSerializer-tests",
-    ],
+    runtime_deps = [":objectSerializer-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

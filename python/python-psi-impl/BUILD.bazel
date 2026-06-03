@@ -79,6 +79,7 @@ jvm_library(
     module_name = "intellij.python.psi.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//python/python-syntax-core:syntax-core",
         "//python/python-syntax-core:syntax-core_test_lib",
     ],

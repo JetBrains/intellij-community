@@ -151,10 +151,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":community-execService-tests",
-    ],
+    runtime_deps = [":community-execService-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

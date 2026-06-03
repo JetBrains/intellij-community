@@ -122,10 +122,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_decoratedWindow-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":decoratedWindow-tests",
-    ],
+    runtime_deps = [":decoratedWindow-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

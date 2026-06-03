@@ -74,10 +74,7 @@ jvm_library(
     kotlinc_opts = ":custom_kernel.plugins.processor",
     module_name = "fleet.build.kernel.plugins.processor",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kernel.plugins.processor",
-    ],
+    runtime_deps = [":kernel.plugins.processor"],
 )
 ### auto-generated section `build fleet.build.kernel.plugins.processor` end
 

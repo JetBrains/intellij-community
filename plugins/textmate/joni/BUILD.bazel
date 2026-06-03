@@ -86,10 +86,7 @@ jvm_library(
         "//plugins/textmate/joni:joni_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":joni-tests",
-    ],
+    runtime_deps = [":joni-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

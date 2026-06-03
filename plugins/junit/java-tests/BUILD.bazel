@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "intellij.junit.java.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/smRunner",
-    ],
+    runtime_deps = ["//platform/smRunner"],
 )
 
 jvm_library(

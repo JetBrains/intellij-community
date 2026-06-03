@@ -92,10 +92,7 @@ jvm_library(
         "//plugins/agent-workbench/json:json_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-json-tests",
-    ],
+    runtime_deps = [":agent-workbench-json-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

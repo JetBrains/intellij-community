@@ -26,10 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.util.immutableKeyValueStore.benchmark",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":benchmark",
-    ],
+    runtime_deps = [":benchmark"],
     deps = [
         # do not sort,
         "@lib//:jmh-core",

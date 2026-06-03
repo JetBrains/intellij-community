@@ -47,13 +47,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":junit5",
-    ],
+    runtime_deps = [":junit5"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

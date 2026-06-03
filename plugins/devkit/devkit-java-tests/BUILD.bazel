@@ -49,6 +49,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/java-backend:backend",
         "//java/java-backend:backend_test_lib",
     ],

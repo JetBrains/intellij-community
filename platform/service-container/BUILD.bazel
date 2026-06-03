@@ -113,10 +113,7 @@ jvm_library(
         "//platform/service-container:service-container_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":serviceContainer-tests",
-    ],
+    runtime_deps = [":serviceContainer-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

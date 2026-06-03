@@ -37,10 +37,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/multiplatform.shims",
+        # do not sort,
         "//fleet/util/logging/api",
-        "//fleet/util/serialization",
         "@lib//:kotlinx-collections-immutable",
+        "//fleet/multiplatform.shims",
+        "//fleet/util/serialization",
     ],
     deps = [
         # do not sort,
@@ -69,13 +70,14 @@ jvm_library(
     module_name = "fleet.util.core",
     visibility = ["//visibility:public"],
     exports = [
-        "//fleet/multiplatform.shims",
-        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+        # do not sort,
         "//fleet/util/logging/api",
         "//fleet/util/logging/api:api_test_lib",
+        "@lib//:kotlinx-collections-immutable",
+        "//fleet/multiplatform.shims",
+        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
         "//fleet/util/serialization",
         "//fleet/util/serialization:serialization_test_lib",
-        "@lib//:kotlinx-collections-immutable",
     ],
     runtime_deps = [
         # do not sort,

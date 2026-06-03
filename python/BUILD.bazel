@@ -264,10 +264,7 @@ jvm_library(
     ),
     module_name = "intellij.python.commonTests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/util",
-    ],
+    runtime_deps = ["//platform/util"],
 )
 
 jvm_library(
@@ -283,10 +280,7 @@ jvm_library(
     ),
     module_name = "intellij.python.commonTests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":python-commonTests",
-    ],
+    runtime_deps = [":python-commonTests"],
     deps = [
         # do not sort,
         "@lib//:junit4",
@@ -376,9 +370,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//RegExpSupport:regexp",
-        "//platform/ide-core-impl",
+        # do not sort,
         "//python/openapi:community",
+        "//platform/ide-core-impl",
+        "//RegExpSupport:regexp",
         "//python/python-psi-impl:psi-impl",
         "//python/python-requirements:requirements",
     ],
@@ -536,12 +531,13 @@ jvm_library(
     module_name = "intellij.python.community.impl",
     visibility = ["//visibility:public"],
     exports = [
-        "//RegExpSupport:regexp",
-        "//RegExpSupport:regexp_test_lib",
-        "//platform/ide-core-impl",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        # do not sort,
         "//python/openapi:community",
         "//python/openapi:community_test_lib",
+        "//platform/ide-core-impl",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//RegExpSupport:regexp",
+        "//RegExpSupport:regexp_test_lib",
         "//python/python-psi-impl:psi-impl",
         "//python/python-psi-impl:psi-impl_test_lib",
         "//python/python-requirements:requirements",
@@ -700,9 +696,10 @@ jvm_library(
     module_name = "intellij.python.community.impl.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "//RegExpSupport:regexp",
-        "//platform/ide-core-impl",
+        # do not sort,
         "//python/openapi:community",
+        "//platform/ide-core-impl",
+        "//RegExpSupport:regexp",
         "//python/python-psi-impl:psi-impl",
     ],
     runtime_deps = [
@@ -727,12 +724,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//RegExpSupport:regexp",
-        "//RegExpSupport:regexp_test_lib",
-        "//platform/ide-core-impl",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        # do not sort,
         "//python/openapi:community",
         "//python/openapi:community_test_lib",
+        "//platform/ide-core-impl",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//RegExpSupport:regexp",
+        "//RegExpSupport:regexp_test_lib",
         "//python/python-psi-impl:psi-impl",
         "//python/python-psi-impl:psi-impl_test_lib",
     ],
@@ -1441,10 +1439,7 @@ jvm_library(
     ),
     module_name = "intellij.python.helpers",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":python-helpers",
-    ],
+    runtime_deps = [":python-helpers"],
 )
 ### auto-generated section `build intellij.python.helpers` end
 

@@ -39,10 +39,7 @@ jvm_library(
     kotlinc_opts = ":custom_testFramework",
     module_name = "kotlin.fir.testFramework",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-    ],
+    runtime_deps = [":testFramework"],
     deps = [
         # do not sort,
         "@lib//:kotlinc-analysis-api",

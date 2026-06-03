@@ -44,10 +44,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":conda",
-    ],
+    runtime_deps = [":conda"],
     deps = [
         # do not sort,
         "//python/python-test-env/core",

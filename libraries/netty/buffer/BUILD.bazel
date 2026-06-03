@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-netty-buffer-netty-buffer",
-    ],
+    runtime_deps = ["@lib//:libraries-netty-buffer-netty-buffer"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.netty.buffer",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
-    runtime_deps = [
-        # do not sort,
-        ":buffer",
-    ],
+    runtime_deps = [":buffer"],
 )
 ### auto-generated section `build intellij.libraries.netty.buffer` end
 

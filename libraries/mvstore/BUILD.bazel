@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-mvstore-mvstore"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-mvstore-mvstore",
-    ],
+    runtime_deps = ["@lib//:libraries-mvstore-mvstore"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.mvstore",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-mvstore-mvstore"],
-    runtime_deps = [
-        # do not sort,
-        ":mvstore",
-    ],
+    runtime_deps = [":mvstore"],
 )
 ### auto-generated section `build intellij.libraries.mvstore` end
 

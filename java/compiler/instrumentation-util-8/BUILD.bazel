@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "//java/compiler/instrumentation-util",
-    ],
+    deps = ["//java/compiler/instrumentation-util"],
 )
 
 jvm_library(

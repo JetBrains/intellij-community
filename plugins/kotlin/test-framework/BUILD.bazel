@@ -42,6 +42,7 @@ jvm_library(
     module_name = "intellij.kotlin.testFramework",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
     ],

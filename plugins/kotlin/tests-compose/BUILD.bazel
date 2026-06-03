@@ -11,10 +11,7 @@ jvm_library(
     ),
     module_name = "kotlin.tests-compose",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -30,14 +27,8 @@ jvm_library(
     ),
     module_name = "kotlin.tests-compose",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests-compose",
-    ],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = [":tests-compose"],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 ### auto-generated section `build kotlin.tests-compose` end
 

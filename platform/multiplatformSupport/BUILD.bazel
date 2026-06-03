@@ -33,10 +33,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.multiplatformSupport",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":multiplatformSupport",
-    ],
+    runtime_deps = [":multiplatformSupport"],
 )
 ### auto-generated section `build intellij.platform.multiplatformSupport` end
 

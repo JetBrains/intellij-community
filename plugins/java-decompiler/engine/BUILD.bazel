@@ -19,10 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:jetbrains-annotations",
-    ],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
@@ -86,10 +83,7 @@ jvm_library(
         "//plugins/java-decompiler/engine:engine_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java-decompiler-engine-tests",
-    ],
+    runtime_deps = [":java-decompiler-engine-tests"],
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",

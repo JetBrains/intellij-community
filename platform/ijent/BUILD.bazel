@@ -39,6 +39,7 @@ jvm_library(
     module_name = "intellij.platform.ijent",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/eel",
         "//platform/eel:eel_test_lib",
     ],
@@ -96,13 +97,11 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/eel",
         "//platform/eel:eel_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":ijent-tests",
-    ],
+    runtime_deps = [":ijent-tests"],
     deps = [
         # do not sort,
         "@lib//:junit5",

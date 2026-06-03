@@ -37,10 +37,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.kotlin.base.scripting.scratch.definition",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":scripting.scratch.definition",
-    ],
+    runtime_deps = [":scripting.scratch.definition"],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` end
 

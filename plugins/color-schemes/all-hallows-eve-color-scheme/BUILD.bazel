@@ -25,10 +25,7 @@ jvm_library(
     ),
     module_name = "intellij.color.scheme.all_hallows_eve",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":color-scheme-all_hallows_eve",
-    ],
+    runtime_deps = [":color-scheme-all_hallows_eve"],
 )
 ### auto-generated section `build intellij.color.scheme.all_hallows_eve` end
 

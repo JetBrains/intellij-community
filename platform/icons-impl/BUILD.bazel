@@ -15,6 +15,7 @@ jvm_library(
     module_name = "intellij.platform.icons.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/icons-api",
         "//platform/icons-api/rendering",
     ],
@@ -39,6 +40,7 @@ jvm_library(
     module_name = "intellij.platform.icons.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/icons-api",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-api/rendering",

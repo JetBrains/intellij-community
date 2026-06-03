@@ -74,10 +74,7 @@ jvm_library(
         "//plugins/jshell/protocol:protocol_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java-jshell-protocol-tests",
-    ],
+    runtime_deps = [":java-jshell-protocol-tests"],
     deps = [
         # do not sort,
         "@lib//:junit4",

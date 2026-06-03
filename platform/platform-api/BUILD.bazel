@@ -82,6 +82,7 @@ jvm_library(
     module_name = "intellij.platform.ide",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/util:util_test_lib",
     ],

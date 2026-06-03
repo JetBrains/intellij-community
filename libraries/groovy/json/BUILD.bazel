@@ -15,10 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-json-groovy-json"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-groovy-json-groovy-json",
-    ],
+    runtime_deps = ["@lib//:libraries-groovy-json-groovy-json"],
 )
 
 jvm_library(
@@ -32,10 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.groovy.json",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-json-groovy-json"],
-    runtime_deps = [
-        # do not sort,
-        ":json",
-    ],
+    runtime_deps = [":json"],
 )
 ### auto-generated section `build intellij.libraries.groovy.json` end
 

@@ -90,10 +90,7 @@ jvm_library(
         "//plugins/agent-workbench/common:common_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":agent-workbench-common-tests",
-    ],
+    runtime_deps = [":agent-workbench-common-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -37,6 +37,7 @@ jvm_library(
     module_name = "intellij.maven.server.telemetry",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/diagnostic/telemetry/rt",
         "//platform/diagnostic/telemetry/rt:rt_test_lib",
     ],

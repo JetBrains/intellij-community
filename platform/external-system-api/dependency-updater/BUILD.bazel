@@ -74,10 +74,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.externalSystem.dependencyUpdater.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -97,10 +94,7 @@ jvm_library(
         ["testData/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":externalSystem-dependencyUpdater-tests",
-    ],
+    runtime_deps = [":externalSystem-dependencyUpdater-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

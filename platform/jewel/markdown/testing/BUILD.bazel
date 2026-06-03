@@ -49,10 +49,7 @@ jvm_library(
     kotlinc_opts = ":custom_testing",
     module_name = "intellij.platform.jewel.markdown.testing",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testing",
-    ],
+    runtime_deps = [":testing"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

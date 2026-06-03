@@ -28,10 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.mockito",
     visibility = ["//visibility:public"],
     exports = ["@lib//:mockito"],
-    runtime_deps = [
-        # do not sort,
-        ":mockito",
-    ],
+    runtime_deps = [":mockito"],
 )
 ### auto-generated section `build intellij.libraries.mockito` end
 

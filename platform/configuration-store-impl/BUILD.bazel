@@ -140,10 +140,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.configurationStore.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/ide-core/plugins",
-    ],
+    runtime_deps = ["//platform/ide-core/plugins"],
 )
 
 jvm_library(

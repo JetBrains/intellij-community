@@ -152,10 +152,7 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-codeInsight-postfixTemplates-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-codeInsight-postfixTemplates-tests",
-    ],
+    runtime_deps = [":kotlin-codeInsight-postfixTemplates-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

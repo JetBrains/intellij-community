@@ -20,6 +20,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/vcs-log/graph-api:vcs-log-graph",
     ],
@@ -45,6 +46,7 @@ jvm_library(
     module_name = "intellij.platform.vcs.log.graph.impl",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/vcs-log/graph-api:vcs-log-graph",
@@ -90,6 +92,7 @@ jvm_library(
     module_name = "intellij.platform.vcs.log.graph.impl.tests",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/vcs-log/graph-api:vcs-log-graph",
     ],
@@ -112,15 +115,13 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/vcs-log/graph-api:vcs-log-graph",
         "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":vcs-log-graph-impl-tests",
-    ],
+    runtime_deps = [":vcs-log-graph-impl-tests"],
     deps = [
         # do not sort,
         "//platform/util",

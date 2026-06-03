@@ -19,6 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/platform-api:ide",
         "@lib//:kotlin-stdlib",
     ],
@@ -64,6 +65,7 @@ jvm_library(
     module_name = "intellij.platform.lang",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
         "@lib//:kotlin-stdlib",

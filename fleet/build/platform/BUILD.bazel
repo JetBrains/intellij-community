@@ -51,10 +51,7 @@ jvm_library(
     kotlinc_opts = ":custom_platform",
     module_name = "fleet.build.platform",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":platform",
-    ],
+    runtime_deps = [":platform"],
 )
 ### auto-generated section `build fleet.build.platform` end
 

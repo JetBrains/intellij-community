@@ -37,6 +37,7 @@ jvm_library(
     module_name = "intellij.grazie",
     visibility = ["//visibility:public"],
     exports = [
+        # do not sort,
         "//plugins/grazie/src:core",
         "//plugins/grazie/src:core_test_lib",
     ],

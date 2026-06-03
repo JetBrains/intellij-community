@@ -20,13 +20,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-impl:impl",
-        "//plugins/properties:properties-backend",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//plugins/properties:properties-backend",
+        "//java/java-impl:impl",
     ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -85,10 +83,11 @@ jvm_library(
     module_name = "intellij.java.i18n",
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-impl:impl",
-        "//java/java-impl:impl_test_lib",
+        # do not sort,
         "//plugins/properties:properties-backend",
         "//plugins/properties:properties-backend_test_lib",
+        "//java/java-impl:impl",
+        "//java/java-impl:impl_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -175,13 +174,11 @@ jvm_library(
     module_name = "intellij.java.i18n.tests",
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-impl:impl",
-        "//plugins/properties:properties-backend",
-    ],
-    runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//plugins/properties:properties-backend",
+        "//java/java-impl:impl",
     ],
+    runtime_deps = ["//platform/backend"],
 )
 
 jvm_library(
@@ -201,10 +198,11 @@ jvm_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
-        "//java/java-impl:impl",
-        "//java/java-impl:impl_test_lib",
+        # do not sort,
         "//plugins/properties:properties-backend",
         "//plugins/properties:properties-backend_test_lib",
+        "//java/java-impl:impl",
+        "//java/java-impl:impl_test_lib",
     ],
     runtime_deps = [
         # do not sort,

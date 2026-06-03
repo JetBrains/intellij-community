@@ -19,14 +19,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [
-        "//xml/xml-analysis-impl:analysis-impl",
+        # do not sort,
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-ui-common:ui-common",
+        "//xml/xml-analysis-impl:analysis-impl",
     ],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -89,12 +87,13 @@ jvm_library(
     module_name = "intellij.xml.impl",
     visibility = ["//visibility:public"],
     exports = [
-        "//xml/xml-analysis-impl:analysis-impl",
-        "//xml/xml-analysis-impl:analysis-impl_test_lib",
+        # do not sort,
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-impl:psi-impl_test_lib",
         "//xml/xml-ui-common:ui-common",
         "//xml/xml-ui-common:ui-common_test_lib",
+        "//xml/xml-analysis-impl:analysis-impl",
+        "//xml/xml-analysis-impl:analysis-impl_test_lib",
     ],
     runtime_deps = [
         # do not sort,

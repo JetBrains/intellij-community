@@ -81,10 +81,7 @@ jvm_library(
     ),
     module_name = "intellij.mps.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-    ],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
@@ -100,10 +97,7 @@ jvm_library(
     ),
     module_name = "intellij.mps.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":build-tests",
-    ],
+    runtime_deps = [":build-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
