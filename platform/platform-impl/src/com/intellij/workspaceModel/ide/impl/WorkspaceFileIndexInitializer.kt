@@ -4,13 +4,15 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 internal class WorkspaceFileIndexInitializer : InitProjectActivity {
   override suspend fun run(project: Project) {
+    RegistryManager.getInstanceAsync()
     span("workspace file index initialization") {
       try {
         (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
