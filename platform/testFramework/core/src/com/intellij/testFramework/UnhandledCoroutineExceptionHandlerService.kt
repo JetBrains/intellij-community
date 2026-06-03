@@ -16,7 +16,8 @@ internal class UnhandledCoroutineExceptionHandlerService : CoroutineExceptionHan
     if (errorLog != null) {
       return
     }
-    logAsTeamcityTestFailure(LoggedError(null, exception))
+    // IJPL-246400
+    // logAsTeamcityTestFailure(LoggedError(null, exception))
   }
 
   override val key: CoroutineContext.Key<*>
