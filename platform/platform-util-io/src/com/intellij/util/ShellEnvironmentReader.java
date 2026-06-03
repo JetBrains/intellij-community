@@ -77,7 +77,7 @@ public final class ShellEnvironmentReader {
     var command = new ArrayList<String>();
 
     command.add(shell);
-    
+
     var name = Path.of(shell).getFileName().toString();
 
     if (!("csh".equals(name) || "tcsh".equals(name))) {
@@ -239,9 +239,10 @@ public final class ShellEnvironmentReader {
       @SuppressWarnings("IO_FILE_USAGE")
       var process = command
         .redirectErrorStream(true)
-        .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
+        .redirectOutput(logFile.toFile())
         .start();
-      int exitCode = waitAndTerminateAfter(process, timeoutMillis);
+      process.getOutputStream().close();
+      var exitCode = waitAndTerminateAfter(process, timeoutMillis);
 
       var envData = Files.exists(dataFile) ? Files.readString(dataFile) : "";
       var log = Files.exists(logFile) ? readLogFile(logFile) : "(no log file)";
