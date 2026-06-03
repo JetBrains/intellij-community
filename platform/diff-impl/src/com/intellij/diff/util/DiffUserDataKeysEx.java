@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffEditorTitleCustomizer;
@@ -103,6 +103,10 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
    */
   Key<Runnable> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
 
+  /**
+   * @deprecated There is no longer an "old" and "new" toolbar
+   */
+  @Deprecated(forRemoval = true)
   Key<Boolean> DIFF_NEW_TOOLBAR = Key.create("Diff.NewToolbar");
 
   //

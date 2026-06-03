@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.DiffExtension;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffManagerEx;
@@ -31,7 +30,6 @@ import com.intellij.diff.tools.external.ExternalDiffSettings;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup;
 import com.intellij.diff.tools.external.ExternalDiffTool;
-import com.intellij.diff.tools.intentions.IntentionDiffFeatureKeys;
 import com.intellij.diff.tools.util.CrossFilePrevNextDifferenceIterableSupport;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextFileIterable;
@@ -187,8 +185,6 @@ public abstract class DiffRequestProcessor
 
   private @Nullable ScrollToPolicy myCurrentScrollToPolicy;
 
-  private final boolean myIsNewToolbar;
-
   private final @NotNull DiffRequestProcessor.DiffNavigator navigator;
 
   public DiffRequestProcessor(@Nullable Project project) {
@@ -207,8 +203,6 @@ public abstract class DiffRequestProcessor
 
     mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
     myForcedDiffTool = ObjectUtils.tryCast(myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL), FrameDiffTool.class);
-
-    myIsNewToolbar = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, myContext);
 
     readToolOrderFromSettings();
     DiffTool.EP_NAME.addChangeListener(() -> {
@@ -235,9 +229,8 @@ public abstract class DiffRequestProcessor
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
     putContextUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, myToolbar);
-    if (myIsNewToolbar) {
-      myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
-    }
+
+    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myToolbar.setTargetComponent(myContentPanel);
     myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
@@ -271,18 +264,11 @@ public abstract class DiffRequestProcessor
 
   private @NotNull BorderLayoutPanel buildTopPanel() {
     BorderLayoutPanel topPanel;
-    if (myIsNewToolbar) {
-      BorderLayoutPanel rightPanel = JBUI.Panels.simplePanel(myRightToolbarWrapper).addToLeft(myProgressBar);
-      topPanel = JBUI.Panels.simplePanel(myDiffInfoWrapper).addToLeft(myToolbarWrapper).addToRight(rightPanel);
-      GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
-      GuiUtils.installVisibilityReferent(topPanel, myRightToolbar.getComponent());
-      RemoteTransferUIManager.forceDirectTransfer(topPanel);
-    }
-    else {
-      JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
-      topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
-      GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
-    }
+    BorderLayoutPanel rightPanel = JBUI.Panels.simplePanel(myRightToolbarWrapper).addToLeft(myProgressBar);
+    topPanel = JBUI.Panels.simplePanel(myDiffInfoWrapper).addToLeft(myToolbarWrapper).addToRight(rightPanel);
+    GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
+    GuiUtils.installVisibilityReferent(topPanel, myRightToolbar.getComponent());
+    RemoteTransferUIManager.forceDirectTransfer(topPanel);
 
     return topPanel;
   }
@@ -584,7 +570,7 @@ public abstract class DiffRequestProcessor
   private boolean isFocusedInWindow() {
     return DiffUtil.isFocusedComponentInWindow(myContentPanel) ||
            DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent()) ||
-           (myIsNewToolbar && DiffUtil.isFocusedComponentInWindow(myRightToolbar.getComponent()));
+           DiffUtil.isFocusedComponentInWindow(myRightToolbar.getComponent());
   }
 
   private void requestFocusInWindow() {
@@ -651,23 +637,13 @@ public abstract class DiffRequestProcessor
   protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
-    boolean oldToolbar = !myIsNewToolbar;
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
-    if (oldToolbar) {
-      navigationActions.add(new MyChangeDiffToolComboBoxAction());
-    }
-    else {
-      myRightToolbarGroup.add(new MyDiffToolChooser());
-    }
+    myRightToolbarGroup.add(new MyDiffToolChooser());
+
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
+    DiffUtil.addActionBlock(myRightToolbarGroup, viewerActions, false);
 
-    if (oldToolbar) {
-      DiffUtil.addActionBlock(myToolbarGroup, viewerActions, true);
-    }
-    else {
-      DiffUtil.addActionBlock(myRightToolbarGroup, viewerActions, false);
-    }
 
     List<AnAction> requestContextActions = myActiveRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(myToolbarGroup, requestContextActions);
@@ -675,10 +651,8 @@ public abstract class DiffRequestProcessor
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(myToolbarGroup, contextActions);
 
-    if (oldToolbar) {
       DiffUtil.addActionBlock(myToolbarGroup,
                               new ShowInExternalToolActionGroup());
-    }
 
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
