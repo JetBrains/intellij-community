@@ -4,7 +4,7 @@ package com.jetbrains.python.console
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 
-class PythonConsoleCustomizer : PyConsoleCustomizer {
+internal class PythonConsoleCustomizer : PyConsoleCustomizer {
   override fun guessConsoleModule(project: Project, contextModule: Module?): Module? {
     return contextModule
   }

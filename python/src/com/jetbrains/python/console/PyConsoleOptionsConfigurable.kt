@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -17,6 +18,7 @@ private const val CONSOLE_SETTINGS_HELP_REFERENCE: String = "reference.project.s
 private const val CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON: String = "reference.project.settings.console.python"
 
 
+@ApiStatus.Internal
 class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableConfigurable.Parent.Abstract(), Configurable.NoScroll {
 
   enum class CodeCompletionOption {

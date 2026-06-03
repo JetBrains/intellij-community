@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 /**
  * If static code insight is enabled then ignore unresolved reference from Debugger Console
  */
-class PyDebuggerConsoleUnresolvedReferenceSkipper : PyInspectionExtension() {
+internal class PyDebuggerConsoleUnresolvedReferenceSkipper : PyInspectionExtension() {
   override fun ignoreUnresolvedReference(node: PyElement, reference: PsiReference, context: TypeEvalContext): Boolean {
     return node.containingFile.virtualFile.getUserData(CONSOLE_KEY) == true &&
            context.origin !is PyExpressionCodeFragment

@@ -8,5 +8,5 @@ package com.jetbrains.python.console
  *
  * @see [synchronizedPythonConsoleClient]
  */
-class PyConsoleProcessFinishedException(exitValue: Int)
+internal class PyConsoleProcessFinishedException(exitValue: Int)
   : RuntimeException("Console already exited with value: $exitValue while waiting for an answer.")

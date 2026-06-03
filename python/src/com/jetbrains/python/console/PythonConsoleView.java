@@ -79,6 +79,7 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -97,7 +98,7 @@ import java.util.function.Function;
 
 import static com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY;
 
-public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor, PyTargetedCodeExecutor {
+public final class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor, PyTargetedCodeExecutor {
   public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Key<Map<Integer, Integer>> COUNTER_LINE_NUMBER = new Key<>("PYDEV_COUNTER_LINE_NUMBER");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
@@ -528,6 +529,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
+  @ApiStatus.Internal
   public void executeCode(@NotNull Function<TargetEnvironment, String> code) {
     myInitialized.doWhenDone(
       () -> {

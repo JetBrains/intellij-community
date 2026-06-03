@@ -10,14 +10,16 @@ import com.jetbrains.python.debugger.PositionConverterProvider;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
 
-public final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
+@ApiStatus.Internal
+final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
   private final ProcessHandler myConsoleProcessHandler;
 
-  public PyConsoleDebugProcessHandler(final ProcessHandler processHandler) {
+  PyConsoleDebugProcessHandler(final ProcessHandler processHandler) {
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override

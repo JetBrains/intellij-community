@@ -13,8 +13,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.icons.PythonIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware {
 
   public RunPythonOrDebugConsoleAction() {

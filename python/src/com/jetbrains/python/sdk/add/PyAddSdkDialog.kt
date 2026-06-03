@@ -37,7 +37,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * Use [show] to instantiate and show the dialog.
  *
  */
-class PyAddSdkDialog private constructor(
+internal class PyAddSdkDialog private constructor(
   private val project: Project,
   private val module: Module?,
   private val sdkAddedCallback: Consumer<Sdk>,

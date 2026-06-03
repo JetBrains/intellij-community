@@ -21,12 +21,14 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.icons.PythonIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleView, PythonConsoleView> implements PyCodeExecutor {
 
   public static final String DEBUG_CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))";

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * filter out some python inspections and annotations if we're in console
  */
-public final class ConsoleVisitorFilter implements PythonVisitorFilter {
+final class ConsoleVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(final @NotNull Class visitorClass, final @NotNull PsiFile file) {
     //if we're in console

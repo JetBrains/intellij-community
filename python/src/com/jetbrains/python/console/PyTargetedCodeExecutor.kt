@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see PyCodeExecutor
  * @see PythonConsoleView
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PyTargetedCodeExecutor {
   fun executeCode(code: TargetEnvironmentFunction<String>)
 }

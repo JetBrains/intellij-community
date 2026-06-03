@@ -15,9 +15,8 @@ import com.jetbrains.python.statistics.interpreterType
 import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 
-object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
+internal object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -39,8 +38,7 @@ object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
   }
 }
 
-@ApiStatus.Internal
-data class InterpreterStatisticsInfo(val type: InterpreterType,
+internal data class InterpreterStatisticsInfo(val type: InterpreterType,
                                      val target: InterpreterTarget,
                                      val globalSitePackage: Boolean,
                                      val makeAvailableToAllProjects: Boolean,

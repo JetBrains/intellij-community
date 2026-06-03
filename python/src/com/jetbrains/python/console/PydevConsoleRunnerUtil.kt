@@ -34,6 +34,7 @@ import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 /**
@@ -44,7 +45,8 @@ import java.util.function.Function
  * @param consoleSettings Python Console settings
  * @param targetEnvironment the target environment to add upload volumes to the result path mapper
  */
-fun createTargetEnvironmentPathMapper(project: Project,
+@ApiStatus.Internal
+internal fun createTargetEnvironmentPathMapper(project: Project,
                                       sdk: Sdk,
                                       consoleSettings: PyConsoleSettings,
                                       targetEnvironment: TargetEnvironment): PyRemotePathMapper {
@@ -55,6 +57,7 @@ fun createTargetEnvironmentPathMapper(project: Project,
   return pathMapper
 }
 
+@ApiStatus.Internal
 fun getPathMapper(project: Project,
                   sdk: Sdk?,
                   consoleSettings: PyConsoleSettings): PyRemotePathMapper? {
@@ -112,7 +115,8 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
   return pathMapper
 }
 
-fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
+@ApiStatus.Internal
+internal fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
   var sdk: Sdk? = null
   var module: Module? = null
   val settings = PyConsoleOptions.getInstance(project).pythonConsoleSettings
@@ -171,6 +175,7 @@ fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?,
   return Pair.create(sdk, module)
 }
 
+@ApiStatus.Internal
 fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<TargetEnvironment, String>>,
                                         workingDirFunction: TargetEnvironmentFunction<String>?,
                                         command: String): TargetEnvironmentFunction<String> {
@@ -190,7 +195,8 @@ private class ReplaceSubstringFunction(private val s: String,
   override fun toString(): String = "ReplaceSubstringFunction(s='$s', oldValue='$oldValue', newValue=$newValue)"
 }
 
-class ReplaceSubstringsFunction(private val s: String,
+@ApiStatus.Internal
+internal class ReplaceSubstringsFunction(private val s: String,
                                 private val replaces: List<kotlin.Pair<String, TargetEnvironmentFunction<String>>>)
   : TraceableTargetEnvironmentFunction<String>() {
   override fun applyInner(t: TargetEnvironment): String {
@@ -214,7 +220,8 @@ fun addDefaultEnvironments(sdk: Sdk,
  *
  * @param envs    map of envs to add variable
  */
-fun setCorrectStdOutEncoding(envs: Map<String, String>) {
+@ApiStatus.Internal
+internal fun setCorrectStdOutEncoding(envs: Map<String, String>) {
   val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   val encoding = defaultCharset.name()
   PythonEnvUtil.setPythonIOEncoding(PythonEnvUtil.setPythonUnbuffered(envs), encoding)
@@ -226,13 +233,15 @@ fun setCorrectStdOutEncoding(envs: Map<String, String>) {
  *
  * @param commandLine command line
  */
-fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
+@ApiStatus.Internal
+internal fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
   val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   commandLine.charset = defaultCharset
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }
 
-fun isInPydevConsole(element: PsiElement): Boolean {
+@ApiStatus.Internal
+internal fun isInPydevConsole(element: PsiElement): Boolean {
   return element is PydevConsoleElement || getConsoleCommunication(element) != null || hasConsoleKey(element)
 }
 
@@ -243,11 +252,12 @@ private fun hasConsoleKey(element: PsiElement): Boolean {
   return inConsole != null && inConsole
 }
 
+@ApiStatus.Internal
 fun isConsoleView(file: VirtualFile): Boolean {
   return file.getUserData(PythonConsoleView.CONSOLE_KEY) == true
 }
 
-fun getPythonConsoleData(element: ASTNode?): PythonConsoleData? {
+internal fun getPythonConsoleData(element: ASTNode?): PythonConsoleData? {
   if (element == null || element.psi == null || element.psi.containingFile == null) {
     return null
   }
@@ -260,12 +270,12 @@ private fun getConsoleCommunication(element: PsiElement): ConsoleCommunication? 
   return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY)
 }
 
-fun getConsoleSdk(element: PsiElement): Sdk? {
+internal fun getConsoleSdk(element: PsiElement): Sdk? {
   val containingFile = element.containingFile
   return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_SDK)
 }
 
-fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Module {
+internal fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Module {
   val selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles()
   val moduleForOpenedFile = selectedFiles.firstNotNullOfOrNull {
     val isLocalFs = it.isInLocalFileSystem

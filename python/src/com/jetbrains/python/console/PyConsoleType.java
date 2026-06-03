@@ -2,8 +2,10 @@
 package com.jetbrains.python.console;
 
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
+@ApiStatus.Internal
 public class PyConsoleType {
   public static final PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
 

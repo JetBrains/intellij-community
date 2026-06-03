@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
+@ApiStatus.Internal
+class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
   private final PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
   private int myNumberOfCommandToStop = 2;

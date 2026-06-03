@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
@@ -12,7 +13,8 @@ import javax.swing.Icon
   "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
   level = DeprecationLevel.ERROR
 )
-interface PyAddSdkView {
+@ApiStatus.Internal
+internal interface PyAddSdkView {
   val panelName: String
     @Nls(capitalization = Nls.Capitalization.Title) get
 

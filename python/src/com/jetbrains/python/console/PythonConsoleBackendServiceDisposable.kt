@@ -7,6 +7,6 @@ import com.jetbrains.python.console.protocol.PythonConsoleBackendService
  * Not really [com.intellij.openapi.Disposable] as [dispose] method is expected
  * to be called directly.
  */
-interface PythonConsoleBackendServiceDisposable : PythonConsoleBackendService.Iface {
+internal interface PythonConsoleBackendServiceDisposable : PythonConsoleBackendService.Iface {
   fun dispose()
 }

@@ -18,10 +18,12 @@ package com.jetbrains.python.console
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.ProcessHandler
 import com.jetbrains.python.console.pydev.ConsoleCommunication
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Created by kirylch on 4/12/2017.
  */
+@ApiStatus.Internal
 abstract class PythonConsoleExecuteActionHandler(processHandler: ProcessHandler, preserveMarkup: Boolean) : ProcessBackedConsoleExecuteActionHandler(processHandler, preserveMarkup) {
   abstract override fun processLine(line: String)
   abstract fun checkSingleLine(text: String): Boolean

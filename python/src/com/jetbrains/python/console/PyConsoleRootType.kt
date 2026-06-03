@@ -4,7 +4,9 @@ package com.jetbrains.python.console
 import com.intellij.execution.console.ConsoleRootType
 import com.intellij.ide.scratch.RootType
 import com.jetbrains.python.PyBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyConsoleRootType internal constructor() : ConsoleRootType("py", PyBundle.message("python.console.history.root")) {
   companion object {
 

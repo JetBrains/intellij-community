@@ -10,9 +10,11 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 
 @JvmField
-val pydevConsoleCommunicationKey: Key<PydevConsoleCommunication> = Key("PydevConsoleCommunication")
+@get:ApiStatus.Internal
+internal val pydevConsoleCommunicationKey: Key<PydevConsoleCommunication> = Key("PydevConsoleCommunication")
 
 internal fun configureProcessHandlerForPythonConsole(processHandler: ProcessHandler,
                                                      consoleView: PythonConsoleView,

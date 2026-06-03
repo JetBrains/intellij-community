@@ -13,19 +13,21 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.remote.RemoteProcessControl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ServerSocket;
 import java.util.Map;
 
-public class PyConsoleDebugProcess extends PyDebugProcess {
+@ApiStatus.Internal
+class PyConsoleDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
   private final PyConsoleDebugProcessHandler myConsoleDebugProcessHandler;
 
-  public PyConsoleDebugProcess(@NotNull XDebugSession session,
-                               final @NotNull ServerSocket serverSocket,
-                               final @NotNull ExecutionConsole executionConsole,
-                               final @NotNull PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
+  PyConsoleDebugProcess(@NotNull XDebugSession session,
+                        final @NotNull ServerSocket serverSocket,
+                        final @NotNull ExecutionConsole executionConsole,
+                        final @NotNull PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
     super(session, serverSocket, executionConsole, consoleDebugProcessHandler, false);
     myLocalPort = serverSocket.getLocalPort();
     myConsoleDebugProcessHandler = consoleDebugProcessHandler;

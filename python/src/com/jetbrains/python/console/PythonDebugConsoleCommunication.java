@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugProcessWithConsole> extends AbstractConsoleCommunication {
   private static final Logger LOG = Logger.getInstance(PythonDebugConsoleCommunication.class);
   private final T myDebugProcess;

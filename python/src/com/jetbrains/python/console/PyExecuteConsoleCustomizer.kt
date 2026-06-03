@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.PythonRunConfiguration
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PyExecuteConsoleCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyExecuteConsoleCustomizer> =

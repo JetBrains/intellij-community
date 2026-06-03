@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Yuli Fiterman
  */
-public final class PyConsoleHistoryModelProvider implements ConsoleHistoryModelProvider {
+final class PyConsoleHistoryModelProvider implements ConsoleHistoryModelProvider {
   @Override
   public @Nullable ConsoleHistoryModel createModel(@NotNull String persistenceId, @NotNull LanguageConsoleView consoleView) {
     return consoleView instanceof PythonConsoleView ? PrefixHistoryModelKt.createModel(persistenceId, consoleView) : null;

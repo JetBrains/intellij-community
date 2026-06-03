@@ -27,7 +27,7 @@ private fun getOptionString(name: String, value: TargetEnvironmentFunction<*>): 
  * @param ideServerPort           the host and port where the IDE being Python
  *                                Console frontend listens for the connection
  */
-fun createPythonConsoleScriptInClientMode(ideServerPort: Function<TargetEnvironment, HostPort>,
+internal fun createPythonConsoleScriptInClientMode(ideServerPort: Function<TargetEnvironment, HostPort>,
                                           helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonExecution {
   val pythonScriptExecution = prepareHelperScriptExecution(PythonHelper.CONSOLE, helpersAwareTargetRequest)
   pythonScriptExecution.addParameter(getOptionString(MODE_OPTION, MODE_OPTION_CLIENT_VALUE))

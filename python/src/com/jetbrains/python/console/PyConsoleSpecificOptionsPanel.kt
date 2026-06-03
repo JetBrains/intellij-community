@@ -22,7 +22,7 @@ import com.jetbrains.python.run.PyCommonOptionsFormFactory
 import java.awt.Dimension
 import javax.swing.JComponent
 
-class PyConsoleSpecificOptionsPanel(private val project: Project) {
+internal class PyConsoleSpecificOptionsPanel(private val project: Project) {
   private lateinit var consoleSettings: PyConsoleOptions.PyConsoleSettings
   private lateinit var editorTextField: EditorTextField
   private lateinit var commonOptionsForm: AbstractPyCommonOptionsForm

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeoutException
 
 private const val PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME: String = "Python Console Command Executor"
 
-fun synchronizedPythonConsoleClient(loader: ClassLoader,
+internal fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
   // DO NOT replace this ExecutorService with `SequentialTaskExecutor.createSequentialApplicationPoolExecutor()`!

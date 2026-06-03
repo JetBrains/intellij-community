@@ -4,8 +4,7 @@ package com.jetbrains.python.console
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-interface PyConsoleOutputCustomizer {
+internal interface PyConsoleOutputCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyConsoleOutputCustomizer> =
       ExtensionPointName.create("com.jetbrains.python.console.pyConsoleOutputCustomizer")
