@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.Disposable
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
@@ -13,6 +14,7 @@ import com.intellij.repository.search.completion.api.DependencyVersionCompletion
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -23,6 +25,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
@@ -60,11 +63,36 @@ class KotlinGradleDependenciesAutoPopupHandlerTest : K2GradleCodeInsightTestCase
     test(gradleVersion, GRADLE_KTS_JAVA_PLUGIN_FIXTURE) { autoPopupTester.runWithAutoPopupEnabled { test() } }
   }
 
+  private fun testAutoPopupAfterCompletion(
+    fileContent: String,
+    itemToComplete: String,
+    gradleVersion: GradleVersion,
+    assertion: () -> Unit,
+  ) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", fileContent)
+    fixture.configureFromExistingVirtualFile(file)
+    runInEdtAndWait {
+      val lookupElements = fixture.completeBasic()
+      assertNotNull(lookupElements) { "Autocompletion was not expected: fixture.completeBasic() returned null" }
+      val expectedElement = lookupElements.find { it.lookupString == itemToComplete }
+      assertNotNull(expectedElement) { "`$itemToComplete` should be suggested. " +
+                                       "\nActual lookup: ${fixture.lookupElementStrings}}" }
+      fixture.lookup.currentItem = expectedElement
+      fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      assertTrue(fixture.file.text != fileContent.replace("<caret>", "")) {
+        "File should be changed after completion"
+      }
+    }
+    autoPopupTester.joinAutopopup()
+    assertion()
+  }
+
   companion object {
     private val GRADLE_KTS_JAVA_PLUGIN_FIXTURE = GradleTestFixtureBuilder
       .create("KotlinGradleDependenciesAutoPopupHandlerTest") { gradleVersion ->
         withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
           withJavaPlugin()
+          withPrefix { code("val customSourceSet by sourceSets.creating {}") }
         }
       }
   }
@@ -297,5 +325,74 @@ class KotlinGradleDependenciesAutoPopupHandlerTest : K2GradleCodeInsightTestCase
     this.joinAutopopup()
     this.joinCompletion()
   }
-}
 
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupAfterCompletingDependencyConfiguration(gradleVersion: GradleVersion) =
+    testAutoPopupAfterCompletion(
+      fileContent = """
+          dependencies {
+              impl<caret>
+          }
+        """.trimIndent(),
+      itemToComplete = "implementation",
+      gradleVersion
+    ) {
+      assertNotNull(autoPopupTester.lookup) {
+        "Auto popup should be triggered after completing a dependency configuration"
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupAfterCompletingDependencyConfigurationWithoutAccessorClass(gradleVersion: GradleVersion) =
+    testAutoPopupAfterCompletion(
+      fileContent = """
+          val customSourceSet by sourceSets.creating {}
+          customSourceSet
+          dependencies {
+              customSourceSetImpl<caret>
+          }
+        """.trimIndent(),
+      itemToComplete = "customSourceSetImplementation",
+      gradleVersion
+    ) {
+      assertNotNull(autoPopupTester.lookup) {
+        "Auto popup should be triggered after completing a dependency configuration without accessor class (in quotes)"
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupAfterCompletingDependencyReturningMethodWithArgs(gradleVersion: GradleVersion) =
+    testAutoPopupAfterCompletion(
+      fileContent = """
+          dependencies {
+              implementation(p<caret>)
+          }
+        """.trimIndent(),
+      itemToComplete = "project",
+      gradleVersion
+    ) {
+      assertNotNull(autoPopupTester.lookup) {
+        "Auto popup should be triggered after completing a Dependency-returning method with arguments"
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoAutoPopupAfterCompletingDependencyReturningMethodWithoutArgs(gradleVersion: GradleVersion) =
+    testAutoPopupAfterCompletion(
+      fileContent = """
+          dependencies {
+              implementation(gradle<caret>)
+          }
+        """.trimIndent(),
+      itemToComplete = "gradleApi",
+      gradleVersion
+    ) {
+      assertNull(autoPopupTester.lookup) {
+        "Auto popup should not be triggered after completing a Dependency-returning method without arguments"
+      }
+    }
+}

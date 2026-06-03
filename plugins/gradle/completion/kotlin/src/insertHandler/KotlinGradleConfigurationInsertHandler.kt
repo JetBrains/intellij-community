@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin.insertHandler
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
@@ -23,6 +24,7 @@ internal class KotlinGradleConfigurationInsertHandler(val isPsiResolvable: Boole
       insertQuotesToWrapName(context)
     }
     parenthesesInsertHandler.handleInsert(context, item)
+    AutoPopupController.getInstance(context.project).scheduleAutoPopup(context.editor)
   }
 
   private fun insertQuotesToWrapName(context: InsertionContext) {
