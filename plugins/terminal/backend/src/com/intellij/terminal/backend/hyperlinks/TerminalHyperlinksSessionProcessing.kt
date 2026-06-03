@@ -66,13 +66,21 @@ private suspend fun collectHyperlinkResults(
   facade: BackendTerminalHyperlinkFacade,
   sink: SendChannel<TerminalHyperlinksOutputEvent>,
   facadeMutex: Mutex,
-) {
-  facade.heartbeatFlow.collect {
-    val events = facadeMutex.withLock {
-      collectResultsAndApplyToModel(facade)
+) = coroutineScope {
+  launch(CoroutineName("Heartbeat")) {
+    facade.heartbeatFlow.collect {
+      val events = facadeMutex.withLock {
+        collectResultsAndApplyToModel(facade)
+      }
+      for (event in events) {
+        sink.send(event)
+      }
     }
-    for (event in events) {
-      sink.send(event)
+  }
+
+  launch(CoroutineName("Filter updates")) {
+    facade.filterUpdatesFlow.collect {
+      sink.send(TerminalHyperlinksOutputEvent.FiltersUpdated)
     }
   }
 }

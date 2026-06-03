@@ -64,6 +64,7 @@ import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -121,8 +122,9 @@ private suspend fun processHyperlinks(
       debugName = "Frontend#${session.id.id}",
       outputModel = outputModel,
       applier = applier,
-      outputModelChangesTracker,
+      outputModelChangesTracker = outputModelChangesTracker,
       hyperlinkUpdatesChannel = session.hyperlinkUpdatesChannel,
+      inputEventsSink = session.inputEventsSink,
       lastFinishedTaskStamp = lastFinishedTaskStamp,
       onLinkClicked = { id, mouseEvent ->
         scope.launch {
@@ -234,6 +236,7 @@ private suspend fun processHyperlinkResults(
   applier: EditorTextDecorationApplier,
   outputModelChangesTracker: TerminalOutputModelChangesTracker,
   hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>,
+  inputEventsSink: SendChannel<TerminalHyperlinksInputEvent>,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
@@ -249,10 +252,14 @@ private suspend fun processHyperlinkResults(
         hyperlinksModel = hyperlinksModel,
         applier = applier,
         outputModelChangesTracker = outputModelChangesTracker,
+        inputEventsSink = inputEventsSink,
         event = event,
         lastFinishedTaskStamp = lastFinishedTaskStamp,
         onLinkClicked = onLinkClicked
       )
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       LOG.error("Error when processing hyperlinks update: $event", e)
@@ -260,11 +267,12 @@ private suspend fun processHyperlinkResults(
   }
 }
 
-private fun processHyperlinksOutputEvent(
+private suspend fun processHyperlinksOutputEvent(
   outputModel: TerminalOutputModel,
   hyperlinksModel: TerminalHyperlinksModel,
   applier: EditorTextDecorationApplier,
   outputModelChangesTracker: TerminalOutputModelChangesTracker,
+  inputEventsSink: SendChannel<TerminalHyperlinksInputEvent>,
   event: TerminalHyperlinksOutputEvent,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
@@ -282,6 +290,20 @@ private fun processHyperlinksOutputEvent(
     }
     is TerminalHyperlinksOutputEvent.TaskFinished -> {
       lastFinishedTaskStamp.value = event.documentModificationStamp
+    }
+    is TerminalHyperlinksOutputEvent.FiltersUpdated -> {
+      // Send the all-existing content to re-process it.
+      val contentUpdate = TerminalOutputContentUpdate(
+        charsSequence = outputModel.getText(outputModel.startOffset, outputModel.endOffset),
+        startLine = outputModel.firstLineIndex,
+        endLine = outputModel.lastLineIndex,
+        startOffset = outputModel.startOffset,
+        trimStartLine = outputModel.firstLineIndex,
+        trimStartOffset = outputModel.startOffset,
+        modificationStamp = outputModel.modificationStamp,
+      )
+      val event = TerminalHyperlinksInputEvent.ContentUpdated(contentUpdate.toDto())
+      inputEventsSink.send(event)
     }
   }
 }

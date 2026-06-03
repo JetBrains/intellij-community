@@ -8,7 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
@@ -29,7 +31,11 @@ class BackendTerminalHyperlinkFacade(
   coroutineScope: CoroutineScope,
 ) {
   private val filterContext = TerminalHyperlinkFilterContextImpl(eelDescriptor)
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, filterContext)
+  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext).also {
+    it.getFilter() // kickstart computation
+  }
+  private val highlighter = BackendTerminalHyperlinkHighlighter(filterWrapper, coroutineScope)
+
   private val trimOffset = AtomicReference(TerminalOffset.of(0))
   private val model = TerminalHyperlinksModel(
     debugName = debugName,
@@ -44,6 +50,10 @@ class BackendTerminalHyperlinkFacade(
       delay(20.milliseconds)
     }
   }
+
+  /** Fired when [com.intellij.execution.filters.Filter]'s list is changed in [filterWrapper] */
+  val filterUpdatesFlow: Flow<Unit>
+    get() = filterWrapper.getFilterFlow().map { /*Unit*/ }
 
   fun applyContentUpdate(update: TerminalOutputContentUpdate) {
     trimOffset.set(update.trimStartOffset)

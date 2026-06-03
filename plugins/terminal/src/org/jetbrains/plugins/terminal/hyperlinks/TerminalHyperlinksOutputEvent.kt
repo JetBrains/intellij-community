@@ -46,4 +46,13 @@ sealed interface TerminalHyperlinksOutputEvent {
     /** The document modification stamp of the task that just finished. */
     val documentModificationStamp: Long,
   ) : TerminalHyperlinksOutputEvent
+
+  /**
+   * Signals that [com.intellij.execution.filters.Filter]'s list used for hyperlink processing was updated.
+   * So, the whole terminal output needs to be re-processed to add new hyperlinks and remove stale ones.
+   * It is expected that the frontend should send the whole existing terminal output as
+   * [org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent.ContentUpdated] again to re-process it.
+   */
+  @Serializable
+  data object FiltersUpdated : TerminalHyperlinksOutputEvent
 }

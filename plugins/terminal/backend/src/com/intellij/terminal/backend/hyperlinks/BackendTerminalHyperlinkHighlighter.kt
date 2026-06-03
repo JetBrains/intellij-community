@@ -14,7 +14,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
-import com.intellij.openapi.project.Project
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.ImmutableCharSequence
 import kotlinx.coroutines.CancellationException
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
@@ -50,13 +48,11 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JLabel
 
 internal class BackendTerminalHyperlinkHighlighter(
-  project: Project,
+  private val filterWrapper: CompositeFilterWrapper,
   coroutineScope: CoroutineScope,
-  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
   private val hyperlinkId = AtomicLong()
-  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext)
 
   // The state is only modified from the model coroutine but can be read concurrently.
   private val currentTaskState = MutableStateFlow(TaskState(null, null))
@@ -105,7 +101,6 @@ internal class BackendTerminalHyperlinkHighlighter(
   fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
 
   init {
-    filterWrapper.getFilter() // kickstart computation
     coroutineScope.launch(CoroutineName("running filters")) {
       fakeMouseEventJob.await() // must complete before any attempt to show a context menu for a HyperlinkWithPopupMenuInfo
       currentTaskState.mapNotNull { it.currentTaskRunner }.distinctUntilChanged().collect { runner ->
@@ -256,10 +251,6 @@ internal class BackendTerminalHyperlinkHighlighter(
       }
       return
     }
-    // TODO: When the filter changes, previously highlighted ranges become stale. The OLD code reseeded
-    //  pendingTask to cover the entire model on filter change; with no snapshot access we can't do that
-    //  here. If reprocessing is needed, the consumer should re-emit a content update covering the
-    //  affected range. Tracked for follow-up.
     val newTaskRunner = HighlightTaskRunner(
       hyperlinkId = hyperlinkId,
       task = pending,
