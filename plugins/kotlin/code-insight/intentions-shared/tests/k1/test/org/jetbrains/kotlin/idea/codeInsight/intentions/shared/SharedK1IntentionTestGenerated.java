@@ -3001,6 +3001,85 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/specifyRemainingRequiredArgumentsByName")
+    public static class SpecifyRemainingRequiredArgumentsByName extends AbstractSharedK1IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("allArgumentsOptional.kt")
+        public void testAllArgumentsOptional() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/allArgumentsOptional.kt");
+        }
+
+        @TestMetadata("allArgumentsRequired.kt")
+        public void testAllArgumentsRequired() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/allArgumentsRequired.kt");
+        }
+
+        @TestMetadata("conflictingSignatures.kt")
+        public void testConflictingSignatures() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/conflictingSignatures.kt");
+        }
+
+        @TestMetadata("contextParameterAlreadySpecified.kt")
+        public void testContextParameterAlreadySpecified() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/contextParameterAlreadySpecified.kt");
+        }
+
+        @TestMetadata("contextParameterOnly.kt")
+        public void testContextParameterOnly() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/contextParameterOnly.kt");
+        }
+
+        @TestMetadata("functionOverloadsWithDefaults.kt")
+        public void testFunctionOverloadsWithDefaults() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/functionOverloadsWithDefaults.kt");
+        }
+
+        @TestMetadata("multipleOptionalArguments.kt")
+        public void testMultipleOptionalArguments() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/multipleOptionalArguments.kt");
+        }
+
+        @TestMetadata("simpleFunctionOverload.kt")
+        public void testSimpleFunctionOverload() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/simpleFunctionOverload.kt");
+        }
+
+        @TestMetadata("singleArgument.kt")
+        public void testSingleArgument() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleArgument.kt");
+        }
+
+        @TestMetadata("singleArgumentAndVararg.kt")
+        public void testSingleArgumentAndVararg() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleArgumentAndVararg.kt");
+        }
+
+        @TestMetadata("singleRequiredArgument.kt")
+        public void testSingleRequiredArgument() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleRequiredArgument.kt");
+        }
+
+        @TestMetadata("trailingLambdaWithImplicitContextAndDefault.kt")
+        public void testTrailingLambdaWithImplicitContextAndDefault() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/trailingLambdaWithImplicitContextAndDefault.kt");
+        }
+
+        @TestMetadata("valueSpecifiedContextNot.kt")
+        public void testValueSpecifiedContextNot() throws Exception {
+            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/valueSpecifiedContextNot.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment")
     public static class SpecifyTypeExplicitlyInDestructuringAssignment extends AbstractSharedK1IntentionTest {
         @java.lang.Override

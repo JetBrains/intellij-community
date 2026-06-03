@@ -8,11 +8,15 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemain
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.RemainingArgumentsData
 import org.jetbrains.kotlin.psi.KtElement
 
-internal class SpecifyAllRemainingArgumentsByNameIntention : SpecifyRemainingArgumentsByNameIntention() {
+internal class SpecifyRemainingRequiredArgumentsByNameIntention : SpecifyRemainingArgumentsByNameIntention() {
 
-    override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
+    override fun getFamilyName(): String = KotlinBundle.message("specify.remaining.required.arguments.by.name")
 
-    override fun shouldShowFor(remainingArgumentsData: RemainingArgumentsData): Boolean = true
+    override fun shouldShowFor(remainingArgumentsData: RemainingArgumentsData): Boolean {
+        // We return false in case `SpecifyAllRemainingArgumentsByNameIntention` would result in the same change.
+        return remainingArgumentsData.remainingRequiredArguments.isNotEmpty() &&
+                remainingArgumentsData.remainingRequiredArguments != remainingArgumentsData.allValueRemainingArguments
+    }
 
     override fun invoke(
         actionContext: ActionContext,
@@ -24,7 +28,7 @@ internal class SpecifyAllRemainingArgumentsByNameIntention : SpecifyRemainingArg
         SpecifyRemainingArgumentsByNameUtil.applyFix(
             project = actionContext.project,
             element = argumentList,
-            remainingValueArguments = elementContext.allValueRemainingArguments,
+            remainingValueArguments = elementContext.remainingRequiredArguments,
             remainingContextArguments = elementContext.allContextRemainingArguments,
             allContextParameterNames = elementContext.allContextParameterNames,
             updater = updater
