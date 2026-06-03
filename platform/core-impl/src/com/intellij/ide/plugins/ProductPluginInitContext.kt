@@ -14,6 +14,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.PlatformUtils
@@ -33,6 +34,8 @@ import javax.swing.JOptionPane
  *
  *     Right now an instance of ProductPluginInitContext is not immutable and it is instantiated in quite a few places
  */
+@VisibleForTesting
+@IntellijInternalApi
 @ApiStatus.Internal
 class ProductPluginInitContext(
   private val buildNumberOverride: BuildNumber? = null,
