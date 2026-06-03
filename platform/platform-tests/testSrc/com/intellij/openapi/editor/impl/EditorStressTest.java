@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +73,7 @@ public class EditorStressTest extends AbstractEditorTest {
     new RemoveFoldRegion(),
     new ExpandOrCollapseFoldRegions(),
     new ClearFoldRegions(),
-    new ChangeBulkModeState(),
+    new ValidateInBulkState(),
     new ChangeEditorVisibility(),
     new BatchInlayOperation(),
     new MoveCaret()
@@ -90,7 +91,6 @@ public class EditorStressTest extends AbstractEditorTest {
         doRandomAction(editor, myRandom, ACTIONS);
         editor.validateState();
       }
-      if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
@@ -235,11 +235,13 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class ChangeBulkModeState implements Action {
+  private static class ValidateInBulkState implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
-      document.setInBulkUpdate(!document.isInBulkUpdate());
+      DocumentUtil.executeInBulk(document, () -> {
+        ((EditorImpl)editor).validateState();
+      });
     }
   }
 
