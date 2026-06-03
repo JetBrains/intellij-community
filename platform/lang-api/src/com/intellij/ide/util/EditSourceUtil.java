@@ -20,6 +20,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -49,19 +51,23 @@ public final class EditSourceUtil {
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
+    Project project = navigationElement.getProject();
     OpenFileDescriptor desc;
     if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(virtualFile) &&
         FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
-      desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, () -> {
+      SmartPsiElementPointer<PsiElement> pointer =
+        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(navigationElement);
+      desc = new OpenFileDescriptor(project, virtualFile, () -> {
         if (FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
           return -1;
         }
-        return navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
+        PsiElement fromPointer = pointer.getElement();
+        return fromPointer == null || fromPointer instanceof PsiFile ? -1 : fromPointer.getTextOffset();
       });
     }
     else {
       final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
-      desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
+      desc = new OpenFileDescriptor(project, virtualFile, offset);
     }
     desc.setUseCurrentWindow(FileEditorManager.USE_CURRENT_WINDOW.isIn(navigationElement));
     if (UISettings.getInstance().getOpenInPreviewTabIfPossible() && Registry.is("editor.preview.tab.navigation")) {

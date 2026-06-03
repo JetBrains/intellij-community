@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
@@ -40,7 +40,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final int myOffset;
   private final RangeMarker myRangeMarker;
   private final @NotNull CodeInsightContext myContext;
-  private final @Nullable Supplier<@NotNull Integer> myOffsetSupplier;
+  private final @Nullable IntSupplier myOffsetSupplier;
 
   private boolean myUseCurrentWindow;
   private boolean myUsePreviewTab;
@@ -56,7 +56,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   @ApiStatus.Internal
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull Supplier<@NotNull Integer> offsetSupplier) {
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull IntSupplier offsetSupplier) {
     this(project, file, CodeInsightContexts.anyContext(), - 1, -1, -1, offsetSupplier, false);
   }
 
@@ -90,7 +90,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     int logicalLine,
     int logicalColumn,
     int offset,
-    @Nullable Supplier<@NotNull Integer> offsetSupplier,
+    @Nullable IntSupplier offsetSupplier,
     boolean persistent
   ) {
     myProject = project;
@@ -123,7 +123,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   public RangeMarker getRangeMarker() {
     if (myOffsetSupplier != null) {
-      int offset = myOffsetSupplier.get();
+      int offset = myOffsetSupplier.getAsInt();
       if (offset < 0) {
         return null;
       }
@@ -134,7 +134,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   public int getOffset() {
     if (myOffsetSupplier != null) {
-      Integer offset = myOffsetSupplier.get();
+      int offset = myOffsetSupplier.getAsInt();
       return offset;
     }
     return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;

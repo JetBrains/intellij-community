@@ -2,18 +2,17 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
-import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -119,14 +118,11 @@ class FileNavigatorImpl : FileNavigator {
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
   if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(descriptor.file)) {
-    val success = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        ReadAction.computeCancellable<Document, Throwable> {
-          FileDocumentManager.getInstance().getDocument(descriptor.file) //force decompilation
-        }
-      },
-      UIBundle.message("progress.decompiling.file", descriptor.file.name), true, descriptor.project)
-    if (!success) return false
+    runWithModalProgressBlocking(descriptor.project, IdeBundle.message("progress.title.preparing.navigation")) {
+      readAction {
+        FileDocumentManager.getInstance().getDocument(descriptor.file) //force decompilation
+      }
+    }
   }
   val editors = fileEditorManager.openFileEditor(descriptor, focusEditor)
   for (editor in editors) {
