@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Debug
  * it helps to avoid unnecessary `compareAndSet` operations for the client of this data structure.
  *
  * The map is untyped because we did not want to annoy ourselves with the array factories; this data structure is low-level anyway.
+ *
+ * Structural changes in these classes should be reflected in `org.jetbrains.idea.devkit.hprof.PersistentSyntaxTreeHprofProcessor`
  */
 @ApiStatus.Internal
 sealed interface VersionedPayloadMap {
