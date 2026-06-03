@@ -6,7 +6,7 @@ _files = []
 def download_file(name, url, sha256):
     _files.append(struct(name = name, url = url, sha256 = sha256))
 
-kotlinCompilerCliVersion = "2.4.20-dev-4439"
+kotlinCompilerCliVersion = "2.4.255-dev-255"
 kotlincKotlinJpsPluginTestsVersion = "2.3.20"
 
 download_file(

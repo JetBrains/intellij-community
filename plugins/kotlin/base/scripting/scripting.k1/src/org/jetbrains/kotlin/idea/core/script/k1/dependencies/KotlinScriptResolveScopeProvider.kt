@@ -10,17 +10,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
-import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,12 +42,11 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         // This is a workaround for completion in REPL to provide module dependencies
         if (scriptDefinition.baseClassType.fromClass == Any::class) return null
 
-        val featureEnabled = LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(ktFile.module, project)
         val backwardCompatibilityIsOn = compilerAllowsAnyScriptsInSourceRoots(project)
 
-        ktFile.debugLog { "language-feature: ${featureEnabled}, backward-compatibility-flag: ${backwardCompatibilityIsOn}" }
+        ktFile.debugLog { "backward-compatibility-flag: ${backwardCompatibilityIsOn}" }
 
-        if (featureEnabled && !backwardCompatibilityIsOn) {
+        if (!backwardCompatibilityIsOn) {
             return ktFile.getScopeAccordingToLanguageFeature(file, project, scriptDefinition)
         }
 
@@ -71,8 +67,6 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         project: Project,
         scriptDefinition: ScriptDefinition
     ): GlobalSearchScope? {
-        assert(LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(module, project)) { "SkipStandaloneScriptsInSourceRoots is off" }
-
         return if (isStandaloneScriptByDesign(project, scriptDefinition)) {
             getScopeForStandaloneScript(file, project)
         } else {

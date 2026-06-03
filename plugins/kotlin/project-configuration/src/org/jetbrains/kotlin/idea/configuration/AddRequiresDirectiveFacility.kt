@@ -10,7 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.findModuleInfoFile
 import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.resolve.jvm.modules.KOTLIN_STDLIB_MODULE_NAME
+
+internal const val KOTLIN_STDLIB_MODULE_NAME = "kotlin.stdlib"
 
 @ApiStatus.Internal
 fun addStdlibToJavaModuleInfo(module: Module, collector: NotificationMessageCollector): Boolean {

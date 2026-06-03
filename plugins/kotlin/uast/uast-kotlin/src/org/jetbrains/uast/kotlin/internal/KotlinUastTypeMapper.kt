@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
-import org.jetbrains.kotlin.codegen.state.isMostPreciseContravariantArgument
-import org.jetbrains.kotlin.codegen.state.isMostPreciseCovariantArgument
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.PossiblyInnerType
@@ -27,13 +25,15 @@ import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
-import org.jetbrains.kotlin.types.checker.convertVariance
-import org.jetbrains.kotlin.types.getEffectiveVariance
+import org.jetbrains.kotlin.types.isMostPreciseContravariantArgument
+import org.jetbrains.kotlin.types.isMostPreciseCovariantArgument
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.types.model.TypeArgumentMarker
 import org.jetbrains.kotlin.types.model.TypeParameterMarker
 import org.jetbrains.kotlin.types.model.TypeSystemContext
 import org.jetbrains.kotlin.types.model.TypeVariance
+import org.jetbrains.kotlin.types.model.convertVariance
+import org.jetbrains.kotlin.types.typeUtil.getEffectiveVariance
 import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
 import org.jetbrains.org.objectweb.asm.Type
 

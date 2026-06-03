@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.js.JsPlatforms;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
-import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleKt;
 import org.jetbrains.kotlin.utils.PathUtil;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
@@ -61,6 +60,7 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.kotlin.idea.configuration.AddRequiresDirectiveFacilityKt.KOTLIN_STDLIB_MODULE_NAME;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
@@ -332,12 +332,12 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         PsiJavaModule javaModule = JavaIndicesUtils.findModuleInfoFile(myProject, module.getModuleScope());
         assertNotNull(javaModule);
 
-        PsiRequiresStatement stdlibDirective = JavaPsiUtils.findRequireDirective(javaModule, JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME);
-        assertNotNull("Require directive for " + JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME + " is expected",
+        PsiRequiresStatement stdlibDirective = JavaPsiUtils.findRequireDirective(javaModule, KOTLIN_STDLIB_MODULE_NAME);
+        assertNotNull("Require directive for " + KOTLIN_STDLIB_MODULE_NAME + " is expected",
                       stdlibDirective);
 
         long numberOfStdlib = StreamSupport.stream(javaModule.getRequires().spliterator(), false)
-                .filter((statement) -> JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME.equals(statement.getModuleName()))
+                .filter((statement) -> KOTLIN_STDLIB_MODULE_NAME.equals(statement.getModuleName()))
                 .count();
 
         assertEquals("Only one standard library directive is expected", 1, numberOfStdlib);
