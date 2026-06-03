@@ -560,7 +560,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
 
-    activateToolWindow(entry = idToEntry.get(id)!!,
+    val entry = idToEntry.get(id)
+    if (entry == null) {
+      LOG.error(Throwable("No entry found for the tool window $id"))
+      return
+    }
+    activateToolWindow(entry = entry,
                        info = getRegisteredMutableInfoOrLogError(id),
                        autoFocusContents = autoFocusContents,
                        source = source)
