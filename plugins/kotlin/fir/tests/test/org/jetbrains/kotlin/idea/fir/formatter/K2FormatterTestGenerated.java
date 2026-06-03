@@ -1299,6 +1299,26 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/MultilineStringEntry6.after.kt");
             }
 
+            @TestMetadata("NameBasedDestructuring.after.kt")
+            public void testNameBasedDestructuring() throws Exception {
+                runTest("../../idea/tests/testData/formatter/NameBasedDestructuring.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringMultiline.after.kt")
+            public void testNameBasedDestructuringMultiline() throws Exception {
+                runTest("../../idea/tests/testData/formatter/NameBasedDestructuringMultiline.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringPositional.after.kt")
+            public void testNameBasedDestructuringPositional() throws Exception {
+                runTest("../../idea/tests/testData/formatter/NameBasedDestructuringPositional.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringPositionalMultiline.after.kt")
+            public void testNameBasedDestructuringPositionalMultiline() throws Exception {
+                runTest("../../idea/tests/testData/formatter/NameBasedDestructuringPositionalMultiline.after.kt");
+            }
+
             @TestMetadata("NewLineForRBrace.after.kt")
             public void testNewLineForRBrace() throws Exception {
                 runTest("../../idea/tests/testData/formatter/NewLineForRBrace.after.kt");

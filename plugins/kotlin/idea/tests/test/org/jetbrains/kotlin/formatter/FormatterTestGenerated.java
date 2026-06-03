@@ -1299,6 +1299,26 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
                 runTest("testData/formatter/MultilineStringEntry6.after.kt");
             }
 
+            @TestMetadata("NameBasedDestructuring.after.kt")
+            public void testNameBasedDestructuring() throws Exception {
+                runTest("testData/formatter/NameBasedDestructuring.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringMultiline.after.kt")
+            public void testNameBasedDestructuringMultiline() throws Exception {
+                runTest("testData/formatter/NameBasedDestructuringMultiline.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringPositional.after.kt")
+            public void testNameBasedDestructuringPositional() throws Exception {
+                runTest("testData/formatter/NameBasedDestructuringPositional.after.kt");
+            }
+
+            @TestMetadata("NameBasedDestructuringPositionalMultiline.after.kt")
+            public void testNameBasedDestructuringPositionalMultiline() throws Exception {
+                runTest("testData/formatter/NameBasedDestructuringPositionalMultiline.after.kt");
+            }
+
             @TestMetadata("NewLineForRBrace.after.kt")
             public void testNewLineForRBrace() throws Exception {
                 runTest("testData/formatter/NewLineForRBrace.after.kt");

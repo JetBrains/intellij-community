@@ -734,10 +734,19 @@ abstract class KotlinCommonBlock(
 
             elementType === DESTRUCTURING_DECLARATION -> {
                 nodePsi as KtDestructuringDeclaration
-                if (nodePsi.valOrVarKeyword == null) return defaultTrailingCommaWrappingStrategy(LPAR, RPAR)
+                val hasAnyValOrVarKeyword = nodePsi.valOrVarKeyword != null || nodePsi.entries.any { it.ownValOrVarKeyword != null }
+                val (destructuringLPar, destructuringRPar) = if (nodePsi.hasSquareBrackets()) {
+                    LBRACKET to RBRACKET
+                } else {
+                    LPAR to RPAR
+                }
+                if (!hasAnyValOrVarKeyword) return defaultTrailingCommaWrappingStrategy(destructuringLPar, destructuringRPar)
                 if (trailingCommaExistsOrCanExist(nodePsi, settings)) {
-                    val check = thisOrPrevIsMultiLineElement(LPAR, RPAR)
-                    return trailingCommaWrappingStrategy(leftAnchor = LPAR, rightAnchor = RPAR, filter = { it.elementType !== EQ }) {
+                    val check = thisOrPrevIsMultiLineElement(destructuringLPar, destructuringRPar)
+                    return trailingCommaWrappingStrategy(
+                        leftAnchor = destructuringLPar,
+                        rightAnchor = destructuringRPar,
+                        filter = { it.elementType !== EQ }) {
                         getSiblingWithoutWhitespaceAndComments(it, true) != null && check(it)
                     }
                 }
@@ -1160,7 +1169,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Indent for parts")
         .within(PROPERTY, FUN, DESTRUCTURING_DECLARATION, SECONDARY_CONSTRUCTOR)
-        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
+        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RBRACKET, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
         .set(Indent.getContinuationWithoutFirstIndent()),
 
     strategy("Chained calls")
