@@ -82,20 +82,6 @@ internal data class ModuleLibraryFileEntry(
 }
 
 /**
- * Represents test classes of a module
- */
-internal data class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
-  override val relativeOutputFile: String?
-    get() = null
-
-  override val type: String
-    get() = "module-test-output"
-
-  override val hash: Long
-    get() = 0
-}
-
-/**
  * Represents a project-level library
  */
 internal data class ProjectLibraryEntry(

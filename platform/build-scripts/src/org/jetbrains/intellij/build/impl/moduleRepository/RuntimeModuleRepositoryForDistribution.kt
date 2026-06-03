@@ -37,7 +37,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
@@ -236,9 +235,6 @@ private suspend fun generateRepositoryForDistribution(
             moduleTestPaths.putValue(module, entry.relativePath)
           }
         }
-      }
-      is ModuleTestOutputEntry -> {
-        moduleTestPaths.putValue(context.outputProvider.findRequiredModule(entry.origin.moduleName), entry.relativePath)
       }
       is ProjectLibraryEntry -> {
         val library = context.project.libraryCollection.findLibrary(entry.origin.data.libraryName) ?: error("Cannot find project-level library '${entry.origin.data.libraryName}'")

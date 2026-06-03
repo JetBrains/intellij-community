@@ -67,7 +67,9 @@ public final class RuntimeModuleId {
 
   /**
    * Creates ID of a runtime module corresponding to the test part of module {@code moduleName} in intellij project configuration.
+   * @deprecated use {@link #legacyJpsModule} or {@link #contentModule} instead
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId moduleTests(@NotNull String moduleName) {
     return new RuntimeModuleId(moduleName, LEGACY_JPS_MODULE_TESTS_NAMESPACE);
   }

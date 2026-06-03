@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntr
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.jps.model.JpsProject
 
@@ -45,8 +44,6 @@ private fun convertDistributionEntriesToIncludedModules(
       is ProjectLibraryEntry -> {
         IncludedRuntimeModuleImpl(RuntimeModuleId.projectLibrary(entry.data.libraryName), RuntimeModuleLoadingRule.EMBEDDED, null)
       }
-      is ModuleTestOutputEntry ->
-        IncludedRuntimeModuleImpl(RuntimeModuleId.moduleTests(entry.moduleName), RuntimeModuleLoadingRule.EMBEDDED, null)
       is ModuleLibraryFileEntry -> null // module-level libraries are included in the runtime descriptor for corresponding module
       is CustomAssetEntry -> null
     }?.takeIf { shouldIncludeInPluginHeader(it.moduleId, relativeOutputPath) }
