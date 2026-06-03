@@ -81,7 +81,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
 
   internal fun getAllRunningServers(): Collection<LspServerImpl> = lspServers.filter { it.state == Running }
 
-  internal inline fun findRunningServer(condition: (LspServerImpl) -> Boolean): LspServerImpl? =
+  internal fun findRunningServer(condition: (LspServerImpl) -> Boolean): LspServerImpl? =
     lspServers.find { it.state == Running && condition(it) }
 
   override fun startServersIfNeeded(providerClass: Class<out LspServerSupportProvider>) {
