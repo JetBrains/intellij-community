@@ -55,6 +55,12 @@ Agent Threads is a project-scoped Swing tree for browsing agent threads across p
   [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
+- Successful user thread renames must store the normalized user-provided title and keep it authoritative over later provider-generated titles in active loads, warm snapshots, provider refreshes, pending rebind candidates, and archived rows. Archive and unarchive must preserve the user title override; pruning is limited to paths that disappear from the session catalog.
+  [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+  [@test] ../sessions/testSrc/AgentArchivedSessionsServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionThreadTitleOverrideStateServiceTest.kt
+
 - The tool window must offer an archived-only thread view alongside the default active view. Opening an archived row unarchives it and refreshes both views; archived rows can also be explicitly unarchived. Active activity counters and warm snapshots stay driven by the active view, and archived filtering is limited to runtime `All`, `Today`, `Last 7 days`, and `Last 30 days` presets.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt

@@ -19,7 +19,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Agent Workbench state is intentionally split by lifetime and scope. Editor-provider state restores open chat tabs after restart, cache-backed state restores session UI and legacy chat metadata, non-roamable app state stores shared preferences, and project workspace state stores the prompt draft only.
+Agent Workbench state is intentionally split by lifetime and scope. Editor-provider state restores open chat tabs after restart, cache-backed state restores session UI and legacy chat metadata, non-roamable app state stores shared preferences and user-provided thread title overrides, and project workspace state stores the prompt draft only.
 
 ## Requirements
 - The persisted storage locations are exactly:
@@ -28,6 +28,7 @@ Agent Workbench state is intentionally split by lifetime and scope. Editor-provi
   - `AgentSessionWarmState`, app-level cache file, for warm-start session rows for open paths.
   - `AgentSessionTreeUiState`, app-level cache file, for collapsed project paths.
   - `AgentSessionUiPreferencesState`, app-level non-roamable file, for shared provider/mode preferences and Claude quota hint state.
+  - `AgentSessionThreadTitleOverrideState`, app-level non-roamable file, for user-provided thread title overrides keyed by normalized path, provider, and thread id.
   - `AgentWorkbenchTerminalSessions`, app-level non-roamable file, for user-created terminal session rows and bounded terminal restore context.
   - `AgentPromptUiState`, project-level workspace file, for prompt draft fields.
 
@@ -43,6 +44,7 @@ Agent Workbench state is intentionally split by lifetime and scope. Editor-provi
 - State payloads used by `SerializablePersistentStateComponent` must be Kotlin-serializable.
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionThreadTitleOverrideStateServiceTest.kt
   [@test] ../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 
 ## Testing / Local Run

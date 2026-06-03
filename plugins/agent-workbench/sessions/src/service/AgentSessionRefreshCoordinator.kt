@@ -29,6 +29,8 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.components.service
@@ -53,6 +55,7 @@ internal class AgentSessionRefreshCoordinator(
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
   private val isRefreshGateActive: suspend () -> Boolean,
+  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
@@ -84,6 +87,7 @@ internal class AgentSessionRefreshCoordinator(
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
     applyArchiveSuppressions = archiveSuppressionSupport::apply,
+    titleOverrides = titleOverrides,
     resolveErrorMessage = ::resolveErrorMessage,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
     providerDescriptorProvider = providerDescriptorProvider,
@@ -97,6 +101,7 @@ internal class AgentSessionRefreshCoordinator(
     projectEntriesProvider = projectEntriesProvider,
     stateStore = stateStore,
     contentRepository = contentRepository,
+    titleOverrides = titleOverrides,
   )
   private val providerRefreshRunner = AgentSessionProviderRefreshRunner(
     refreshMutex = refreshMutex,
@@ -104,6 +109,7 @@ internal class AgentSessionRefreshCoordinator(
     stateStore = stateStore,
     contentRepository = contentRepository,
     archiveSuppressionSupport = archiveSuppressionSupport,
+    titleOverrides = titleOverrides,
     refreshSupportProvider = ::refreshSupportFor,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
@@ -235,6 +241,9 @@ internal class AgentSessionRefreshCoordinator(
       val currentState = stateStore.snapshot()
       val bootstrap = refreshBootstrapBuilder.build(currentState = currentState, loadScope = loadScope)
       contentRepository.retainWarmSnapshots(bootstrap.openPaths)
+      if (bootstrap.knownPaths.isNotEmpty()) {
+        titleOverrides.retainPaths(bootstrap.knownPaths)
+      }
       stateStore.replaceProjects(
         projects = bootstrap.initialProjects,
         visibleThreadCounts = bootstrap.initialVisibleThreadCounts,

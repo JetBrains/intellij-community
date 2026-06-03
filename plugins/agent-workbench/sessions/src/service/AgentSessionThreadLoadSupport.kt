@@ -6,6 +6,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.applyTitleOverrides
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
@@ -27,6 +30,7 @@ internal class AgentSessionThreadLoadSupport(
   ) -> List<AgentSessionThread>,
   private val resolveErrorMessage: (AgentSessionProvider, Throwable) -> String,
   private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
+  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
 ) {
   suspend fun loadThreadsFromClosedProject(path: String): AgentSessionLoadResult {
@@ -72,7 +76,7 @@ internal class AgentSessionThreadLoadSupport(
       sourceResults = sourceResults,
       resolveErrorMessage = resolveErrorMessage,
       resolveWarningMessage = resolveProviderWarningMessage,
-    )
+    ).withTitleOverrides(path)
   }
 
   private suspend fun loadSourceResultForOpenProject(
@@ -155,7 +159,7 @@ internal class AgentSessionThreadLoadSupport(
             sourceResults = sourceResults.toList(),
             resolveErrorMessage = resolveErrorMessage,
             resolveWarningMessage = resolveProviderWarningMessage,
-          )
+          ).withTitleOverrides(normalizedPath)
           onPartialResult(partial, completedSourceCount.incrementAndGet() == totalSourceCount)
         }
       }
@@ -164,6 +168,11 @@ internal class AgentSessionThreadLoadSupport(
       sourceResults = sourceResults.toList(),
       resolveErrorMessage = resolveErrorMessage,
       resolveWarningMessage = resolveProviderWarningMessage,
-    )
+    ).withTitleOverrides(normalizedPath)
+  }
+
+  private fun AgentSessionLoadResult.withTitleOverrides(path: String): AgentSessionLoadResult {
+    val updatedThreads = titleOverrides.applyTitleOverrides(path = path, threads = threads)
+    return if (updatedThreads == threads) this else copy(threads = updatedThreads)
   }
 }

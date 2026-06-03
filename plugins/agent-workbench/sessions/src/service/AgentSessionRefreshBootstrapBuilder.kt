@@ -7,11 +7,14 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.applyTitleOverrides
 
 internal class AgentSessionRefreshBootstrapBuilder(
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
+  private val titleOverrides: AgentSessionThreadTitleOverrides,
 ) {
   suspend fun build(
     currentState: AgentSessionsState,
@@ -41,7 +44,10 @@ internal class AgentSessionRefreshBootstrapBuilder(
       else {
         null
       }
-      val cachedThreads = warmSnapshot?.threads.orEmpty()
+      val cachedThreads = titleOverrides.applyTitleOverrides(
+        path = normalizedEntryPath,
+        threads = warmSnapshot?.threads.orEmpty(),
+      )
       AgentProjectSessions(
         path = normalizedEntryPath,
         name = entry.name,
@@ -73,7 +79,10 @@ internal class AgentSessionRefreshBootstrapBuilder(
           else {
             null
           }
-          val cachedWorktreeThreads = warmWorktreeSnapshot?.threads.orEmpty()
+          val cachedWorktreeThreads = titleOverrides.applyTitleOverrides(
+            path = normalizedWorktreePath,
+            threads = warmWorktreeSnapshot?.threads.orEmpty(),
+          )
           AgentWorktree(
             path = normalizedWorktreePath,
             name = wt.name,
@@ -91,6 +100,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
     }
     return RefreshBootstrap(
       entries = entries,
+      knownPaths = knownPaths.toSet(),
       openPaths = openPaths,
       loadPaths = loadPaths,
       initialProjects = initialProjects,
@@ -128,6 +138,7 @@ internal enum class RefreshLoadScope {
 
 internal data class RefreshBootstrap(
   val entries: List<ProjectEntry>,
+  val knownPaths: Set<String>,
   val openPaths: Set<String>,
   val loadPaths: Set<String>,
   val initialProjects: List<AgentProjectSessions>,

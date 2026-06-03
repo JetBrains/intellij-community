@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ class AgentSessionRenameServiceTest {
   @Test
   fun renameThreadRefreshesScopedProviderOnSuccess(): Unit = runBlocking(Dispatchers.Default) {
     val refreshedPaths = mutableListOf<Pair<String, AgentSessionProvider>>()
+    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
     var renamedPath: String? = null
     var renamedThreadId: String? = null
     var renamedName: String? = null
@@ -51,6 +53,7 @@ class AgentSessionRenameServiceTest {
       serviceScope = scope,
       refreshProviderForPath = { path, provider -> refreshedPaths += path to provider },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
+      titleOverrides = titleOverrides,
       dispatchRenameInEditorTab = { _, _, _ -> error("editor rename dispatch should not be used") },
       dispatchRenameFromTree = { _, _, _ -> error("tree rename dispatch should not be used") },
       notifyRenameFailure = { error("rename failure notification should not be shown") },
@@ -70,6 +73,7 @@ class AgentSessionRenameServiceTest {
       assertThat(renamedPath).isEqualTo("/work/project")
       assertThat(renamedThreadId).isEqualTo("thread-1")
       assertThat(renamedName).isEqualTo("Renamed thread")
+      assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isEqualTo("Renamed thread")
       assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.CODEX)
     }
     finally {
@@ -123,6 +127,7 @@ class AgentSessionRenameServiceTest {
   fun renameThreadNotifiesOnFailureAndSkipsRefresh(): Unit = runBlocking(Dispatchers.Default) {
     var failureNotifications = 0
     var refreshCalls = 0
+    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -136,6 +141,7 @@ class AgentSessionRenameServiceTest {
       serviceScope = scope,
       refreshProviderForPath = { _, _ -> refreshCalls += 1 },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
+      titleOverrides = titleOverrides,
       dispatchRenameInEditorTab = { _, _, _ -> error("editor rename dispatch should not be used") },
       dispatchRenameFromTree = { _, _, _ -> error("tree rename dispatch should not be used") },
       notifyRenameFailure = { failureNotifications += 1 },
@@ -154,6 +160,7 @@ class AgentSessionRenameServiceTest {
 
       assertThat(failureNotifications).isEqualTo(1)
       assertThat(refreshCalls).isZero()
+      assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isNull()
     }
     finally {
       scope.cancel()
@@ -163,6 +170,7 @@ class AgentSessionRenameServiceTest {
   @Test
   fun renameThreadDispatchesToActiveEditorTabAndRefreshes(): Unit = runBlocking(Dispatchers.Default) {
     var refreshCalls = 0
+    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
     var dispatchedContext: AgentChatEditorTabActionContext? = null
     var dispatchedTarget: SessionActionTarget.Thread? = null
     var dispatchedPlan: AgentInitialMessageDispatchPlan? = null
@@ -182,6 +190,7 @@ class AgentSessionRenameServiceTest {
       serviceScope = scope,
       refreshProviderForPath = { _, _ -> refreshCalls += 1 },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
+      titleOverrides = titleOverrides,
       dispatchRenameInEditorTab = { context, target, plan ->
         dispatchedContext = context
         dispatchedTarget = target
@@ -220,6 +229,7 @@ class AgentSessionRenameServiceTest {
       assertThat(dispatchedTarget).isEqualTo(target)
       assertThat(renamePlan.postStartDispatchSteps.map { it.text }).containsExactly("/rename Renamed thread")
       assertThat(renamePlan.initialMessageToken).startsWith("rename:claude:thread-1:")
+      assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CLAUDE, "thread-1")).isNull()
     }
     finally {
       scope.cancel()

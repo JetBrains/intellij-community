@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ class AgentArchivedSessionsServiceTest {
   fun refreshIfLoadedQueuesRefreshWhileInitialLoadIsRunning() {
     runBlocking(Dispatchers.Default) {
       val job = Job(coroutineContext.job)
+
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(coroutineContext + job)
       val archivedThreads = CopyOnWriteArrayList<AgentSessionThread>()
@@ -88,6 +90,7 @@ class AgentArchivedSessionsServiceTest {
   fun archivedVisibleThreadCostIsHydratedOncePerUpdatedAt() {
     runBlocking(Dispatchers.Default) {
       val job = Job(coroutineContext.job)
+
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(coroutineContext + job)
       var updatedAt = 100L
@@ -141,6 +144,50 @@ class AgentArchivedSessionsServiceTest {
           thread.updatedAt == 200L && thread.cost?.amountUsd == BigDecimal.valueOf(2)
         }
         assertThat(costLoadCount.get()).isEqualTo(2)
+      }
+      finally {
+        job.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun archivedThreadsUseUserTitleOverrides() {
+    runBlocking(Dispatchers.Default) {
+      val job = Job(coroutineContext.job)
+
+      @Suppress("RAW_SCOPE_CREATION")
+      val scope = CoroutineScope(coroutineContext + job)
+      val provider = AgentSessionProvider.from("test-archived-title")
+      val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
+      titleOverrides.setTitle(PROJECT_PATH, provider, "archived-1", "User archived title")
+      val sessionSource = ScriptedSessionSource(
+        provider = provider,
+        supportsArchivedThreads = true,
+        listArchivedFromOpenProject = { path, _ ->
+          if (path != PROJECT_PATH) {
+            emptyList()
+          }
+          else {
+            listOf(
+              thread(id = "archived-1", updatedAt = 100L, title = "Automatic archived title", provider = provider).copy(archived = true)
+            )
+          }
+        },
+      )
+      val service = AgentArchivedSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = { listOf(sessionSource) },
+        projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+        titleOverrides = titleOverrides,
+      )
+
+      try {
+        service.ensureLoaded()
+
+        waitForCondition(timeoutMs = 6_000) {
+          archivedThreads(service).singleOrNull()?.title == "User archived title"
+        }
       }
       finally {
         job.cancelAndJoin()

@@ -27,6 +27,9 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.mergeAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.applyTitleOverrides
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -47,6 +50,7 @@ internal class AgentSessionProviderRefreshRunner(
   private val archiveSuppressionSupport: AgentSessionArchiveSuppressionSupport,
   private val refreshSupportProvider: (AgentSessionProvider) -> AgentSessionThreadRebindSupport?,
   private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
+  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
   private val openAgentChatTabPresentationUpdater: suspend (
     AgentSessionProvider,
@@ -106,6 +110,7 @@ internal class AgentSessionProviderRefreshRunner(
           refreshResult = refreshResult,
           outcomes = outcomes,
         )
+        applyTitleOverridesToOutcomes(outcomes)
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e
@@ -149,7 +154,7 @@ internal class AgentSessionProviderRefreshRunner(
         hintThreadIdsByPath = hintThreadIdsByPath,
         refreshHintPaths = refreshHintPaths,
         forcedThreadIds = updateEvent.threadIds,
-      )
+      ).withTitleOverrides(provider)
 
       if (refreshSupport != null && refreshHintsByPath.isNotEmpty()) {
         refreshSupport.applyActivityHints(
@@ -269,7 +274,7 @@ internal class AgentSessionProviderRefreshRunner(
         hintThreadIdsByPath = hintThreadIdsByPath,
         refreshHintPaths = refreshHintPaths,
         forcedThreadIds = updateEvent.threadIds,
-      )
+      ).withTitleOverrides(provider)
 
       if (refreshHintsByPath.isNotEmpty()) {
         applyRefreshHintsToOutcomes(
@@ -294,6 +299,7 @@ internal class AgentSessionProviderRefreshRunner(
           outcomes = outcomes,
         )
       }
+      applyTitleOverridesToOutcomes(outcomes)
 
       refreshSupport?.clearStaleConcreteOpenChatNewThreadRebindAnchors(
         refreshId = refreshId,
@@ -436,6 +442,40 @@ internal class AgentSessionProviderRefreshRunner(
         warningMessage = resolveProviderWarningMessage(provider, failure),
       )
     }
+  }
+
+  private fun applyTitleOverridesToOutcomes(outcomes: MutableMap<String, ProviderRefreshOutcome>) {
+    for ((path, outcome) in ArrayList(outcomes.entries)) {
+      val threads = outcome.threads ?: continue
+      val updatedThreads = titleOverrides.applyTitleOverrides(path = path, threads = threads)
+      if (updatedThreads != threads) {
+        outcomes[path] = outcome.copy(threads = updatedThreads)
+      }
+    }
+  }
+
+  private fun Map<String, AgentSessionRefreshHints>.withTitleOverrides(
+    provider: AgentSessionProvider,
+  ): Map<String, AgentSessionRefreshHints> {
+    if (isEmpty()) {
+      return this
+    }
+    var changed = false
+    val updated = mapValues { (path, hints) ->
+      val updatedCandidates = titleOverrides.applyTitleOverrides(
+        path = path,
+        provider = provider,
+        candidates = hints.rebindCandidates,
+      )
+      if (updatedCandidates == hints.rebindCandidates) {
+        hints
+      }
+      else {
+        changed = true
+        hints.copy(rebindCandidates = updatedCandidates)
+      }
+    }
+    return if (changed) updated else this
   }
 
   private fun applyProviderOutcomesToState(

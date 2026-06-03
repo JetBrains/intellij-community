@@ -14,6 +14,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrideStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -52,12 +55,14 @@ class AgentSessionRenameService internal constructor(
     AgentInitialMessageDispatchPlan,
   ) -> Unit,
   private val notifyRenameFailure: () -> Unit,
+  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path, provider) },
     findProviderDescriptor = AgentSessionProviders::find,
+    titleOverrides = service<AgentSessionThreadTitleOverrideStateService>(),
     dispatchRenameInEditorTab = ::dispatchRenameToOpenEditorTab,
     dispatchRenameFromTree = ::dispatchRenameFromTreePopup,
     notifyRenameFailure = ::showRenameFailureNotification,
@@ -158,6 +163,7 @@ class AgentSessionRenameService internal constructor(
             return@launch
           }
 
+          recordTitleOverride(target = target, normalizedRequestedName = normalizedRequestedName)
           refreshProviderForPath(target.path, target.provider)
         }
 
@@ -207,6 +213,15 @@ class AgentSessionRenameService internal constructor(
         }
       }
     }
+  }
+
+  private fun recordTitleOverride(target: SessionActionTarget.Thread, normalizedRequestedName: String) {
+    titleOverrides.setTitle(
+      path = target.path,
+      provider = target.provider,
+      threadId = target.threadId,
+      title = normalizedRequestedName,
+    )
   }
 }
 
