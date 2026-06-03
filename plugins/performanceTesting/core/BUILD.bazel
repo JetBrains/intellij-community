@@ -83,7 +83,8 @@ jvm_library(
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
         "@lib//:github-oshi-core",
         "@lib//:kotlin-stdlib",
-    ],
+    "@community//platform/welcome-screen",
+  ],
 )
 
 jvm_library(
