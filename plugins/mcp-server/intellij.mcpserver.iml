@@ -62,6 +62,8 @@
     <orderEntry type="library" name="io.modelcontextprotocol.kotlin.sdk" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
+    <orderEntry type="module" module-name="fleet.rhizomedb.transactor" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />

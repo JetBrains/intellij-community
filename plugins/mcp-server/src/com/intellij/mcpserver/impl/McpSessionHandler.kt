@@ -320,95 +320,99 @@ internal class McpSessionHandler(
       }
 
       val callResult = withContext(McpCallAdditionalDataElement(additionalData)) {
-        val span = getTracer().spanBuilder("mcp.tool.call", TracerLevel.DEFAULT)
-          .setAllAttributes(
-            Attributes.builder()
-              .put("mcp.tool.name", mcpTool.descriptor.name)
-              .put("mcp.client.name", clientVersion.name)
-              .put("mcp.client.version", clientVersion.version)
-              .put("mcp.call.id", additionalData.callId.toLong())
-              .put("mcp.session.id", session.sessionId)
-              .build()
-          )
-          .startSpan()
+        val toolExecution: suspend CoroutineScope.() -> McpToolCallResult = toolExecution@{
+          val span = getTracer().spanBuilder("mcp.tool.call", TracerLevel.DEFAULT)
+            .setAllAttributes(
+              Attributes.builder()
+                .put("mcp.tool.name", mcpTool.descriptor.name)
+                .put("mcp.client.name", clientVersion.name)
+                .put("mcp.client.version", clientVersion.version)
+                .put("mcp.call.id", additionalData.callId.toLong())
+                .put("mcp.session.id", session.sessionId)
+                .build()
+            )
+            .startSpan()
 
-        try {
-          span.makeCurrent().use {
-            @Suppress("IncorrectCancellationExceptionHandling")
-            try {
-              application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                .beforeMcpToolCall(mcpTool.descriptor, additionalData)
+          try {
+            span.makeCurrent().use {
+              @Suppress("IncorrectCancellationExceptionHandling")
+              try {
+                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
+                  .beforeMcpToolCall(mcpTool.descriptor, additionalData)
 
-              logger.trace { "Start calling tool '${mcpTool.descriptor.name}'. Arguments: ${request.arguments}" }
+                logger.trace { "Start calling tool '${mcpTool.descriptor.name}'. Arguments: ${request.arguments}" }
 
-              span.addEvent(
-                "mcp.tool.call.started",
-                Attributes.of(
-                  AttributeKey.stringKey("arguments.size"),
-                  request.arguments?.size?.toString() ?: "0"
+                span.addEvent(
+                  "mcp.tool.call.started",
+                  Attributes.of(
+                    AttributeKey.stringKey("arguments.size"),
+                    request.arguments?.size?.toString() ?: "0"
+                  )
                 )
-              )
 
-              val sideEffectResult = processSideEffects(additionalData.callId) {
-                mcpTool.call(request.arguments ?: EmptyJsonObject)
-              }
+                val sideEffectResult = processSideEffects(additionalData.callId) {
+                  mcpTool.call(request.arguments ?: EmptyJsonObject)
+                }
 
-              logger.trace {
-                "Tool call successful '${mcpTool.descriptor.name}'. Result: ${
-                  sideEffectResult.result.content.joinToString("\n") { it.toString() }
-                }"
-              }
+                logger.trace {
+                  "Tool call successful '${mcpTool.descriptor.name}'. Result: ${
+                    sideEffectResult.result.content.joinToString("\n") { it.toString() }
+                  }"
+                }
 
-              span.addEvent(
-                "mcp.tool.call.completed",
-                Attributes.of(
-                  AttributeKey.stringKey("result.content.count"),
-                  sideEffectResult.result.content.size.toString()
+                span.addEvent(
+                  "mcp.tool.call.completed",
+                  Attributes.of(
+                    AttributeKey.stringKey("result.content.count"),
+                    sideEffectResult.result.content.size.toString()
+                  )
                 )
-              )
-              span.setStatus(StatusCode.OK)
-              span.setAllAttributes(
-                Attributes.builder()
-                  .put("mcp.side_effects.vfs_events", sideEffectResult.vfsEventCount.toLong())
-                  .put("mcp.side_effects.document_changes", sideEffectResult.documentChangeCount.toLong())
-                  .build()
-              )
+                span.setStatus(StatusCode.OK)
+                span.setAllAttributes(
+                  Attributes.builder()
+                    .put("mcp.side_effects.vfs_events", sideEffectResult.vfsEventCount.toLong())
+                    .put("mcp.side_effects.document_changes", sideEffectResult.documentChangeCount.toLong())
+                    .build()
+                )
 
-              application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData)
-              sideEffectResult.result
-            }
-            catch (ce: CancellationException) {
-              val message = "MCP tool call has been cancelled likely by a user interaction: ${ce.message}"
-              logger.traceThrowable { CancellationException(message, ce) }
-              span.setStatus(StatusCode.ERROR, message)
-              application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                .afterMcpToolCall(mcpTool.descriptor, emptyList(), ce, additionalData)
-              McpToolCallResult.error(message)
-            }
-            catch (mcpException: McpExpectedError) {
-              logger.traceThrowable { mcpException }
-              span.setStatus(StatusCode.ERROR, "MCP expected error: ${mcpException.mcpErrorText}")
-              application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                .afterMcpToolCall(mcpTool.descriptor, emptyList(), mcpException, additionalData)
-              McpToolCallResult.error(mcpException.mcpErrorText, mcpException.mcpErrorStructureContent)
-            }
-            catch (t: Throwable) {
-              val errorMessage = "MCP tool call has been failed: ${t.message}"
-              logger.error(t)
-              span.setStatus(StatusCode.ERROR, errorMessage)
-              application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                .afterMcpToolCall(mcpTool.descriptor, emptyList(), t, additionalData)
-              McpToolCallResult.error(errorMessage)
-            }
-            finally {
-              McpServerCounterUsagesCollector.logMcpToolCall(mcpTool.descriptor)
+                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
+                  .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData)
+                sideEffectResult.result
+              }
+              catch (ce: CancellationException) {
+                val message = "MCP tool call has been cancelled likely by a user interaction: ${ce.message}"
+                logger.traceThrowable { CancellationException(message, ce) }
+                span.setStatus(StatusCode.ERROR, message)
+                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
+                  .afterMcpToolCall(mcpTool.descriptor, emptyList(), ce, additionalData)
+                McpToolCallResult.error(message)
+              }
+              catch (mcpException: McpExpectedError) {
+                logger.traceThrowable { mcpException }
+                span.setStatus(StatusCode.ERROR, "MCP expected error: ${mcpException.mcpErrorText}")
+                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
+                  .afterMcpToolCall(mcpTool.descriptor, emptyList(), mcpException, additionalData)
+                McpToolCallResult.error(mcpException.mcpErrorText, mcpException.mcpErrorStructureContent)
+              }
+              catch (t: Throwable) {
+                val errorMessage = "MCP tool call has been failed: ${t.message}"
+                logger.error(t)
+                span.setStatus(StatusCode.ERROR, errorMessage)
+                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
+                  .afterMcpToolCall(mcpTool.descriptor, emptyList(), t, additionalData)
+                McpToolCallResult.error(errorMessage)
+              }
+              finally {
+                McpServerCounterUsagesCollector.logMcpToolCall(mcpTool.descriptor)
+              }
             }
           }
+          finally {
+            span.end()
+          }
         }
-        finally {
-          span.end()
-        }
+
+        session.callToolWithProgressNotifications(project, request.meta?.progressToken, toolExecution)
       }
 
       val callToolResult = callResult.toSdkToolCallResult()

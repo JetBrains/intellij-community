@@ -3,25 +3,32 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.util.asTool
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.util.application
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
+import io.modelcontextprotocol.kotlin.sdk.shared.RequestOptions
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.Progress
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -29,11 +36,17 @@ import org.junit.platform.commons.annotation.Testable
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
+import kotlin.reflect.KFunction
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Testable
 @TestApplication
 abstract class McpToolsetTestBase {
   companion object {
+    private val TEST_TOOLS_UPDATE_DELAY = 500.milliseconds
+
     @BeforeAll
     @JvmStatic
     fun init() {
@@ -130,7 +143,61 @@ abstract class McpToolsetTestBase {
    * content kind.
    */
   protected val CallToolResult.textContent: TextContent get() = content.firstOrNull() as? TextContent
-                                                                ?: throw AssertionError("Tool call result should be TextContent")
+                                                                 ?: throw AssertionError("Tool call result should be TextContent")
+
+  protected data class ObservedProgress(
+    val progress: Progress,
+    val receivedAtNanos: Long,
+  )
+
+  protected data class ToolCallWithProgress(
+    val result: CallToolResult,
+    val progressEvents: List<ObservedProgress>,
+  )
+
+  protected suspend fun <T> withRegisteredTestTools(vararg toolFunctions: KFunction<*>, action: suspend () -> T): T {
+    var result: T? = null
+    Disposer.newDisposable().use { disposable ->
+      application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(
+        object : McpToolsProvider {
+          override fun getTools(): List<McpTool> = toolFunctions.map { toolFunction -> toolFunction.asTool() }
+        },
+        disposable
+      )
+      delay(TEST_TOOLS_UPDATE_DELAY)
+      result = action()
+      delay(TEST_TOOLS_UPDATE_DELAY)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return result as T
+  }
+
+  protected suspend fun callToolWithProgress(
+    toolName: String,
+    arguments: Map<String, Any?> = emptyMap(),
+    meta: Map<String, Any?> = emptyMap(),
+    timeout: Duration = 10.seconds,
+  ): ToolCallWithProgress {
+    val progressEvents = ArrayList<ObservedProgress>()
+    var result: CallToolResult? = null
+    withConnection { client ->
+      result = client.callTool(
+        name = toolName,
+        arguments = arguments,
+        meta = meta,
+        options = RequestOptions(
+          onProgress = { progress ->
+            progressEvents.add(ObservedProgress(progress = progress, receivedAtNanos = System.nanoTime()))
+          },
+          timeout = timeout,
+        ),
+      )
+    }
+    return ToolCallWithProgress(
+      result = requireNotNull(result),
+      progressEvents = progressEvents,
+    )
+  }
 
   /**
    * Calls an MCP tool and checks that the textual result matches [output] exactly.

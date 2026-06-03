@@ -88,6 +88,9 @@
     <registryKey defaultValue="false"
                  description="Show advanced filter options UI in MCP tool filter settings"
                  key="mcp.server.show.advanced.filter.options.ui"/>
+    <registryKey defaultValue="1000"
+                 description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
+                 key="mcp.server.progress.notification.interval.ms"/>
 
     <statusBarWidgetFactory id="McpServerStatusBarWidget"
                              implementation="com.intellij.mcpserver.widget.McpServerStatusBarWidgetFactory"

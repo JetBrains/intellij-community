@@ -38,6 +38,7 @@ jvm_library(
         ":tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
     ],
     deps = [
         # do not sort,
@@ -101,6 +102,9 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex",
         "//platform/util-ex:util-ex_test_lib",
+        "//platform/util/progress",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/progress/shared:ide-progress",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.tests` end

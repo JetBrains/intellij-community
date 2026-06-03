@@ -61,6 +61,8 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.mcpserver" />
 </module>
