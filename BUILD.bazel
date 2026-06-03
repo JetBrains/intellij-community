@@ -1112,6 +1112,8 @@ jvm_library(
         "//platform/remoteDev-util:remoteDev-util-tests_test_lib",
         "//platform/searchEverywhere/backend:backend-tests",
         "//platform/searchEverywhere/backend:backend-tests_test_lib",
+        "//platform/searchEverywhere/frontend:frontend-tests",
+        "//platform/searchEverywhere/frontend:frontend-tests_test_lib",
         "//plugins/search-everywhere-lucene/backend:searchEverywhereLucene-backend-tests",
         "//plugins/search-everywhere-lucene/backend:searchEverywhereLucene-backend-tests_test_lib",
         "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core-tests",

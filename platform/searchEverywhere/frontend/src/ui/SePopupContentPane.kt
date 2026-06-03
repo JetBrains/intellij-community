@@ -313,7 +313,7 @@ class SePopupContentPane(
             SeMlService.getInstanceIfEnabled()?.onStateFinished(currentResultsInList.toList())
           }
 
-          resultListModel.reset()
+          resultList.withProgrammaticSelectionChange { resultListModel.reset() }
           semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
         }
         it.searchResults.filterNotNull()
@@ -347,7 +347,7 @@ class SePopupContentPane(
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               isSearchCompleted.store(true)
-              resultListModel.removeLoadingItem()
+              resultList.withProgrammaticSelectionChange { resultListModel.removeLoadingItem() }
               searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, true)
 
               SeMlService.getInstanceIfEnabled()?.onStateFinished(currentResultsInList.toList())
@@ -367,7 +367,7 @@ class SePopupContentPane(
                 }
               }
 
-              if (!resultListModel.isValid) resultListModel.reset()
+              if (!resultListModel.isValid) resultList.withProgrammaticSelectionChange { resultListModel.reset() }
 
               if (resultListModel.isEmpty) {
                 hintHelper.setSearchInProgress(false)
@@ -386,7 +386,7 @@ class SePopupContentPane(
               hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
-              resultListModel.addFromThrottledEvent(searchContext, event)
+              resultList.withProgrammaticSelectionChange { resultListModel.addFromThrottledEvent(searchContext, event) }
               if (event.hasResultsUpdates()) {
                 SeMlService.getInstanceIfEnabled()?.notifySearchResultsUpdated()
               }
@@ -679,7 +679,7 @@ class SePopupContentPane(
 
             withContext(Dispatchers.EDT) {
               val index = resultListModel.indexOf(itemRow).takeIf { it != -1 } ?: return@withContext
-              resultListModel.set(index, newItemRow)
+              resultList.withProgrammaticSelectionChange { resultListModel.set(index, newItemRow) }
             }
           }
         }
@@ -718,7 +718,7 @@ class SePopupContentPane(
     }
 
     resultList.addListSelectionListener { _: ListSelectionEvent ->
-      if (!resultList.isAutoSelectionChange) {
+      if (!resultList.isProgrammaticSelectionChange) {
         selectionListener.saveSelectionState(textField.text)
       }
     }

@@ -8,8 +8,23 @@ import javax.swing.ListModel
 
 @ApiStatus.Internal
 class SeResultJBList<E : SeResultListRow>(model: ListModel<E>) : JBList<E>(model) {
-  var isAutoSelectionChange: Boolean = false
+  var isProgrammaticSelectionChange: Boolean = false
     private set
+
+  /**
+   * Runs [block] with [isProgrammaticSelectionChange] set, so that any [javax.swing.event.ListSelectionEvent]
+   * fired while [block] mutates the model or the selection is not treated as a user action.
+   */
+  fun <T> withProgrammaticSelectionChange(block: () -> T): T {
+    val prev = isProgrammaticSelectionChange
+    isProgrammaticSelectionChange = true
+    try {
+      return block()
+    }
+    finally {
+      isProgrammaticSelectionChange = prev
+    }
+  }
 
   /**
    * Returns the number of items in the result list, excluding the loading indicator.
@@ -29,8 +44,6 @@ class SeResultJBList<E : SeResultListRow>(model: ListModel<E>) : JBList<E>(model
 
   @RequiresEdt
   fun autoSelectIndex(index: Int) {
-    isAutoSelectionChange = true
-    selectedIndex = index
-    isAutoSelectionChange = false
+    withProgrammaticSelectionChange { selectedIndex = index }
   }
 }
