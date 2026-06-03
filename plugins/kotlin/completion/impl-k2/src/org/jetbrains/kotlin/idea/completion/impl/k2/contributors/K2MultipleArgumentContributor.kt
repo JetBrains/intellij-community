@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.Tail
@@ -39,7 +40,8 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
  * The contributor only generates items if at least 2 arguments could be matched (single variables already appear in regular completion).
  */
 internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<KotlinNameReferencePositionContext>(
-    KotlinNameReferencePositionContext::class
+    positionContextClass = KotlinNameReferencePositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
 ) {
 
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriatePosition(): Boolean {
