@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -699,8 +698,7 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   }
   catch (e: Throwable) {
     log.warn("can't get shell environment", e)
-    (e as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
-    envFuture.complete(emptyMap())
+    envFuture.complete(EnvironmentUtil.getSystemEnv())
     return false
   }
 }

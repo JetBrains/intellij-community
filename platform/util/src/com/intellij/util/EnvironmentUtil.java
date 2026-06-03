@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -105,11 +105,7 @@ public final class EnvironmentUtil {
       }
     }
     try {
-      Map<String, String> result = getter.isCompleted() ? getter.getCompleted() : FutureKt.asCompletableFuture(getter).join();
-      if (result.isEmpty()) {
-        ourEnvGetter.set(CompletableDeferredKt.CompletableDeferred(result = getSystemEnv()));  // loading failed
-      }
-      return result;
+      return getter.isCompleted() ? getter.getCompleted() : FutureKt.asCompletableFuture(getter).join();
     }
     catch (Throwable t) {
       throw new AssertionError(t);  // unknown state; not expected to happen
