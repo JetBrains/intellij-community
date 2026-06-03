@@ -3,6 +3,8 @@ package com.jetbrains.python.debugger
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
@@ -27,6 +29,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -36,7 +39,11 @@ private const val EVALUATION_TIMEOUT_STEP_MS = 500
 private const val PORT_MIN = 0
 private const val PORT_MAX = 65535
 
-class PyDebuggerConfigurable(private val myProject: Project) : SearchableConfigurable, Configurable.NoScroll {
+class PyDebuggerConfigurable(private val myProject: Project) : SearchableConfigurable, Configurable.NoScroll, BackedByPersistentState {
+
+  @ApiStatus.Internal
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
+    listOf(PyDebuggerOptionsProvider.getInstance(myProject))
 
   private enum class PyQtBackend(private val displayNameSupplier: () -> @Nls String) {
     AUTO({ PyBundle.message("python.debugger.qt.backend.auto") }),
