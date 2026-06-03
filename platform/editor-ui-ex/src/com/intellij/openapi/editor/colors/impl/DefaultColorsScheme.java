@@ -101,7 +101,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
     return true;
   }
 
-  public @NonNls String getEditableCopyName() {
+  public @NonNls @NotNull String getEditableCopyName() {
     return EDITABLE_COPY_PREFIX + myName;
   }
 
