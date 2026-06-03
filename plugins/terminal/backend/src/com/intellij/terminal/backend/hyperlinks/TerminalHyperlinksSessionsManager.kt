@@ -11,7 +11,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +21,7 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
   private val sessions = ConcurrentHashMap<TerminalHyperlinksSessionId, BackendTerminalHyperlinksSession>()
   private val sessionIdCounter = AtomicInteger(0)
 
-  fun getSession(sessionId: TerminalHyperlinksSessionId): TerminalHyperlinksSession? {
+  fun getSession(sessionId: TerminalHyperlinksSessionId): BackendTerminalHyperlinksSession? {
     return sessions[sessionId]
   }
 
@@ -33,7 +32,7 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
   /**
    * @param eelDescriptor environment where the terminal process is running.
    */
-  fun createNewSession(project: Project, eelDescriptor: EelDescriptor): TerminalHyperlinksSession {
+  fun createNewSession(project: Project, eelDescriptor: EelDescriptor): BackendTerminalHyperlinksSession {
     val newId = TerminalHyperlinksSessionId(sessionIdCounter.getAndIncrement())
 
     val sessionScope = coroutineScope.childScope("BackendTerminalHyperlinksSession#$newId")

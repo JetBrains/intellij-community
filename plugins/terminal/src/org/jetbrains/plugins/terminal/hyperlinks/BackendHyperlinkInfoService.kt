@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.hyperlinks
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import java.awt.event.MouseEvent
 
@@ -19,7 +19,8 @@ interface BackendHyperlinkInfoService {
   companion object {
     @JvmStatic fun getInstance(): BackendHyperlinkInfoService = service()
   }
-  fun getHyperlinkInfo(sessionId: TerminalSessionId, isAlternateBuffer: Boolean, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo?
+
+  fun getHyperlinkInfo(sessionId: TerminalHyperlinksSessionId, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo?
 }
 
 /**

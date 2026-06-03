@@ -24,6 +24,7 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.durable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -47,6 +49,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalCreateHyperlinksSessionRequest
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksRemoteApi
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.toDto
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
@@ -80,13 +83,14 @@ fun installHyperlinksProcessing(
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
+  val sessionIdDeferred = CompletableDeferred<TerminalHyperlinksSessionId>(coroutineScope.coroutineContext.job)
   val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
   coroutineScope.launch {
-    processHyperlinks(project, outputModel, sessionModel, eelDescriptor, applier, lastFinishedTaskStamp)
+    processHyperlinks(project, outputModel, sessionModel, eelDescriptor, sessionIdDeferred, applier, lastFinishedTaskStamp)
   }
 
-  return FrontendTerminalHyperlinkFacade(applier, lastFinishedTaskStamp)
+  return FrontendTerminalHyperlinkFacade(sessionIdDeferred, applier, lastFinishedTaskStamp)
 }
 
 private suspend fun processHyperlinks(
@@ -94,6 +98,7 @@ private suspend fun processHyperlinks(
   outputModel: TerminalOutputModel,
   sessionModel: TerminalSessionModel,
   eelDescriptor: EelDescriptor,
+  sessionIdDeferred: CompletableDeferred<TerminalHyperlinksSessionId>,
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
 ) = coroutineScope {
@@ -103,6 +108,8 @@ private suspend fun processHyperlinks(
     eelDescriptor = eelDescriptor,
     coroutineScope = scope.childScope("FrontendTerminalHyperlinksSession")
   )
+  sessionIdDeferred.complete(session.id)
+
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
   launch(CoroutineName("Output model tracking")) {

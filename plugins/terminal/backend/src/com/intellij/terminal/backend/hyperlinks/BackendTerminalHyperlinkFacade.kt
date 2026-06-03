@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
@@ -67,6 +68,12 @@ class BackendTerminalHyperlinkFacade(
     }
     model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
     return true
+  }
+
+  fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
+    return model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let { hyperlinkInfo ->
+      BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
+    }
   }
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {

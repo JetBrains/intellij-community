@@ -124,8 +124,7 @@
     <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
                      bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
 
-    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalSessionIdDataContextSerializer" />
-    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.IsAlternateBufferDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalHyperlinksSessionIdDataContextSerializer"/>
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.HyperlinkIdDataContextSerializer" />
 
     <notificationGroup displayType="BALLOON" id="terminal" bundle="messages.TerminalBundle" key="notification.group.terminal"/>

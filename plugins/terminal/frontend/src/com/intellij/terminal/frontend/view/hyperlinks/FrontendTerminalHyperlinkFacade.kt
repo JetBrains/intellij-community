@@ -1,15 +1,18 @@
 package com.intellij.terminal.frontend.view.hyperlinks
 
 import com.intellij.execution.impl.EditorTextDecorationApplier
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.toTerminalId
 
 @ApiStatus.Internal
 class FrontendTerminalHyperlinkFacade(
+  val sessionIdDeferred: Deferred<TerminalHyperlinksSessionId>,
   private val applier: EditorTextDecorationApplier,
   private val lastFinishedTaskStamp: Flow<Long>,
 ) {
