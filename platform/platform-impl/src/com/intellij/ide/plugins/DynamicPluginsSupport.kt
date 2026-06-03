@@ -14,36 +14,36 @@ import org.jetbrains.annotations.NonNls
 @IntellijInternalApi
 @ApiStatus.Internal
 interface DynamicPluginsSupport {
-  suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid?
+  suspend fun validateDynamicReconfigurationPossible(targetState: PluginSet): DynamicPluginsReconfigurationResult.Invalid?
 
-  suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult
+  suspend fun performDynamicReconfiguration(targetState: PluginSet): DynamicPluginsReconfigurationResult
 
   companion object
 }
 
 @ApiStatus.Internal
-abstract class DynamicPluginsTransitionResult private constructor() {
+abstract class DynamicPluginsReconfigurationResult private constructor() {
   /**
-   * Transition is not possible due to [reason]. The state of plugins is intact.
+   * Reconfiguration is not possible due to [reason]. The state of plugins is intact.
    */
-  open class Invalid(val reason: DynamicTransitionIsNotPossibleReason) : DynamicPluginsTransitionResult()
+  open class Invalid(val reason: DynamicReconfigurationIsNotPossibleReason) : DynamicPluginsReconfigurationResult()
 
   /**
-   * Transition was attempted but wasn't finished. The state of plugins is inconsistent and restart is required
+   * Reconfiguration was attempted but wasn't finished. The state of plugins is inconsistent and restart is required
    */
-  open class Incomplete: DynamicPluginsTransitionResult()
+  open class Incomplete: DynamicPluginsReconfigurationResult()
 
-  open class Success : DynamicPluginsTransitionResult()
+  open class Success : DynamicPluginsReconfigurationResult()
 }
 
 @ApiStatus.Internal
-interface DynamicTransitionIsNotPossibleReason {
+interface DynamicReconfigurationIsNotPossibleReason {
   val logMessage: @NonNls String
   val problematicPlugin: PluginMainDescriptor?
 
   companion object {
-    fun of(logMessage: @NonNls String, problematicPlugin: PluginMainDescriptor?): DynamicTransitionIsNotPossibleReason =
-      DynamicTransitionIsNotPossibleReasonImpl(logMessage, problematicPlugin)
+    fun of(logMessage: @NonNls String, problematicPlugin: PluginMainDescriptor?): DynamicReconfigurationIsNotPossibleReason =
+      DynamicReconfigurationIsNotPossibleReasonImpl(logMessage, problematicPlugin)
   }
 }
 
@@ -52,7 +52,7 @@ private val instance: DynamicPluginsSupport? by lazy {
   if (!Registry.`is`("dynamic.plugins.support.new.impl", false)) null
   else {
     val classloaderUnloadStrategy = when (Registry.get("dynamic.plugins.support.await.classloader.unload.strategy").selectedOption) {
-      "asyncPostTransition" -> AwaitClassloaderUnloadAsyncPostTransition()
+      "asyncPostReconfiguration" -> AwaitClassloaderUnloadAsyncPostReconfiguration()
       "beforeLoad" -> AwaitClassloaderUnloadBeforeLoading()
       else -> AwaitClassloaderUnloadBeforeLoading()
     }
@@ -63,10 +63,10 @@ private val instance: DynamicPluginsSupport? by lazy {
 @ApiStatus.Internal
 fun DynamicPluginsSupport.Companion.getInstance(): DynamicPluginsSupport? = instance
 
-private class DynamicTransitionIsNotPossibleReasonImpl(
+private class DynamicReconfigurationIsNotPossibleReasonImpl(
   override val logMessage: @NonNls String,
   override val problematicPlugin: PluginMainDescriptor?,
-): DynamicTransitionIsNotPossibleReason
+): DynamicReconfigurationIsNotPossibleReason
 
 @IntellijInternalApi
 @ApiStatus.Internal

@@ -68,7 +68,7 @@ object DynamicPlugins {
       LOG.info("new plugins state did not meet expectations: $it")
       return false
     }
-    return dynamicPlugins.validateDynamicTransitionPossible(newState) == null
+    return dynamicPlugins.validateDynamicReconfigurationPossible(newState) == null
   }
 
   /**
@@ -119,8 +119,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@withModalProgress false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
 
@@ -185,8 +185,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@runWithModalProgressBlocking false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
     return DynamicPluginsLegacyImpl.loadPlugins(plugins, project)
@@ -208,8 +208,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@runWithModalProgressBlocking false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
     return DynamicPluginsLegacyImpl.loadPlugin(pluginDescriptor, project)
@@ -238,8 +238,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@runWithModalProgressBlocking false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
     return DynamicPluginsLegacyImpl.unloadPlugins(plugins, project, parentComponent, options)
@@ -262,8 +262,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@runWithModalProgressBlocking false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
     return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
@@ -287,8 +287,8 @@ object DynamicPlugins {
           LOG.info("new plugins state did not meet expectations: $it")
           return@runWithModalProgressBlocking false
         }
-        val result = instance.performDynamicTransition(newState)
-        result is DynamicPluginsTransitionResult.Success
+        val result = instance.performDynamicReconfiguration(newState)
+        result is DynamicPluginsReconfigurationResult.Success
       }
     }
     return DynamicPluginsLegacyImpl.unloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
@@ -307,7 +307,7 @@ object DynamicPlugins {
       @Suppress("UNCHECKED_CAST")
       val newState = computeNewPluginsState(context as List<PluginMainDescriptor>, listOf(descriptor)) // treat as unload
       return runBlockingMaybeCancellable {
-        instance.validateDynamicTransitionPossible(newState) == null
+        instance.validateDynamicReconfigurationPossible(newState) == null
       }
     }
     return DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(descriptor, baseDescriptor, context)
@@ -326,7 +326,7 @@ object DynamicPlugins {
         return it
       }
       return runBlockingMaybeCancellable {
-        instance.validateDynamicTransitionPossible(newState)?.reason?.logMessage
+        instance.validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
       }
     }
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(plugin)
@@ -345,7 +345,7 @@ object DynamicPlugins {
         return it
       }
       return runBlockingMaybeCancellable {
-        instance.validateDynamicTransitionPossible(newState)?.reason?.logMessage
+        instance.validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
       }
     }
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(plugin) // old impl always assumes unload :igor-dead-inside:
@@ -428,11 +428,11 @@ object DynamicPlugins {
         // TODO log
         return excludedCandidates
       }
-      val dynamicTransitionImpossible = dynamicPluginsSupport.validateDynamicTransitionPossible(newState)
-      if (dynamicTransitionImpossible == null) {
+      val dynamicReconfigurationImpossible = dynamicPluginsSupport.validateDynamicReconfigurationPossible(newState)
+      if (dynamicReconfigurationImpossible == null) {
         return null
       }
-      val problematicPlugin = dynamicTransitionImpossible.reason.problematicPlugin
+      val problematicPlugin = dynamicReconfigurationImpossible.reason.problematicPlugin
       if (problematicPlugin == null || problematicPlugin.pluginId !in candidates) {
         return externalConflict
       }

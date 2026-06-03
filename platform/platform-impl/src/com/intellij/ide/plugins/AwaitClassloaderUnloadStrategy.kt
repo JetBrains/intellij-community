@@ -44,10 +44,10 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG get() = Logger.getInstance(AwaitClassloaderUnloadStrategy::class.java)
 
 internal interface AwaitClassloaderUnloadStrategy {
-  /** @return false if dynamic transition should be terminated and treated as incomplete */
+  /** @return false if dynamic reconfiguration should be terminated and treated as incomplete */
   suspend fun awaitClassloadersUnloadedBeforeLoad(classloaders: WeakList<PluginClassLoader>): Boolean
-  /** @return false if dynamic transition should be treated as incomplete */
-  suspend fun awaitClassloadersUnloadedPostTransition(classloaders: WeakList<PluginClassLoader>): Boolean
+  /** @return false if dynamic reconfiguration should be treated as incomplete */
+  suspend fun awaitClassloadersUnloadedPostReconfiguration(classloaders: WeakList<PluginClassLoader>): Boolean
 }
 
 internal class AwaitClassloaderUnloadBeforeLoading : AwaitClassloaderUnloadStrategy {
@@ -66,17 +66,17 @@ internal class AwaitClassloaderUnloadBeforeLoading : AwaitClassloaderUnloadStrat
     return collected
   }
 
-  override suspend fun awaitClassloadersUnloadedPostTransition(classloaders: WeakList<PluginClassLoader>): Boolean {
+  override suspend fun awaitClassloadersUnloadedPostReconfiguration(classloaders: WeakList<PluginClassLoader>): Boolean {
     return true
   }
 }
 
-internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloadStrategy {
+internal class AwaitClassloaderUnloadAsyncPostReconfiguration : AwaitClassloaderUnloadStrategy {
   override suspend fun awaitClassloadersUnloadedBeforeLoad(classloaders: WeakList<PluginClassLoader>): Boolean {
     return true
   }
 
-  override suspend fun awaitClassloadersUnloadedPostTransition(classloaders: WeakList<PluginClassLoader>): Boolean {
+  override suspend fun awaitClassloadersUnloadedPostReconfiguration(classloaders: WeakList<PluginClassLoader>): Boolean {
     if (classloaders.firstOrNull() == null) {
       return true
     }
@@ -90,16 +90,16 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
       val project = ProjectUtil.getActiveProject() ?: ProjectUtil.getOpenProjects().firstOrNull() // TODO this is kinda clumsy
       if (project != null) {
         withBackgroundProgress(project, IdeBundle.message("progress.text.waiting.for.plugins.to.fully.unload")) {
-          postTransitionAwaitImpl(classloaders)
+          postReconfigurationAwaitImpl(classloaders)
         }
       } else {
-        postTransitionAwaitImpl(classloaders)
+        postReconfigurationAwaitImpl(classloaders)
       }
     }
     return true
   }
 
-  private suspend fun postTransitionAwaitImpl(classloaders: WeakList<PluginClassLoader>) {
+  private suspend fun postReconfigurationAwaitImpl(classloaders: WeakList<PluginClassLoader>) {
     val unloaded = withContext(Dispatchers.IO) {
       awaitUnload(classloaders)
     }

@@ -493,7 +493,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  restartRequired="true"
                  description="Enable new dynamic plugin support implementation"/>
     <registryKey key="dynamic.plugins.support.await.classloader.unload.strategy"
-                 defaultValue="[beforeLoad|asyncPostTransition*]"
+                 defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"
                  description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
