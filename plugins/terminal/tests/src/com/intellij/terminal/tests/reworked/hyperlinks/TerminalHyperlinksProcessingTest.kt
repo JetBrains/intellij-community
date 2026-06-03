@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
@@ -647,7 +648,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
       project = project,
       outputModel = outputModel,
       editor = editor,
-      sessionModel = TerminalSessionModelImpl(),
+      sessionModel = createSessionModel(),
       eelDescriptor = LocalEelDescriptor,
       coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
     )
@@ -655,6 +656,14 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
     val filter = MyFilter()
 
     private val clickedLinks = MutableStateFlow(emptyList<String>())
+
+    private fun createSessionModel(): TerminalSessionModel {
+      val model = TerminalSessionModelImpl()
+      // Hyperlink frontend logic expects currentDirectory to be set
+      val state = model.terminalState.value.copy(currentDirectory = project.basePath)
+      model.updateTerminalState(state)
+      return model
+    }
 
     fun updateModel(fromLine: Long, newText: String) {
       val textWithEol = newText.ensureEOL()

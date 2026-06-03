@@ -32,8 +32,11 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
@@ -60,6 +63,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * @param eelDescriptor environment where the terminal process is running.
@@ -156,9 +160,20 @@ private suspend fun trackOutputModelChanges(
   tracker: TerminalOutputModelChangesTracker,
   sink: SendChannel<TerminalHyperlinksInputEvent>,
 ) = coroutineScope {
+  // Await the initial working directory received from the process
+  // to send it to the hyperlinks' backend before any terminal content.
+  // Otherwise, there can be a race, and some part of the initial output
+  // may be highlighted without taking the working directory into account.
+  val initialDirectory = withTimeoutOrNull(5.seconds) {
+    sessionModel.terminalState.map { it.currentDirectory }.first { it != null }
+  }
+  if (initialDirectory != null) {
+    sink.send(TerminalHyperlinksInputEvent.WorkingDirectoryChanged(initialDirectory))
+  }
+
   // Send working directory change events
   launch {
-    var currentDirectory: String? = null
+    var currentDirectory: String? = initialDirectory
     sessionModel.terminalState.collect { state ->
       val newDirectory = state.currentDirectory ?: return@collect
       if (newDirectory != currentDirectory) {
