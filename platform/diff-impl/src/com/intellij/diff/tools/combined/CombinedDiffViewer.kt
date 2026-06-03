@@ -159,7 +159,9 @@ class CombinedDiffViewer(
   }
 
   private val combinedEditorSettingsAction =
-    CombinedEditorSettingsActionGroup(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
+    CombinedEditorSettingsActionGroup(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors).apply {
+      TextDiffViewerUtil.installGutterPopup(editors, this)
+    }
 
   private val visibleBlocksUpdateQueue =
     MergingUpdateQueue("CombinedDiffViewer.visibleBlocksUpdateQueue", 100, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD)
@@ -569,7 +571,7 @@ class CombinedDiffViewer(
   }
 
   internal fun contentChanged() {
-    combinedEditorSettingsAction.installGutterPopup()
+    TextDiffViewerUtil.installGutterPopup(editors, combinedEditorSettingsAction)
     combinedEditorSettingsAction.applyDefaults()
     updateSearch() //as a possible optimization, this should be done after all requests were loaded
   }

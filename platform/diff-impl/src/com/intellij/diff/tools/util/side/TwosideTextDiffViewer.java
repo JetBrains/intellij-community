@@ -58,6 +58,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 

@@ -4,6 +4,7 @@ package com.intellij.diff.actions.impl
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.SyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil.installGutterPopup
 import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
@@ -36,6 +37,10 @@ class SetEditorSettingsAction @ApiStatus.Internal constructor(
 ) : DumbAwareAction(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain) {
 
   private val editorSettingsActionGroup = SetEditorSettingsActionGroup(settings, editors)
+
+  init {
+    installGutterPopup(editors, editorSettingsActionGroup)
+  }
 
   override fun update(e: AnActionEvent) {
     super.update(e)

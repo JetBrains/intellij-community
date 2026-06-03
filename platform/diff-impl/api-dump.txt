@@ -157,7 +157,6 @@ c:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - pf:getAppearanceGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:installGutterPopup():V
 - f:setDiffActions(java.util.List,java.util.List):V
 - f:setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V

@@ -135,6 +135,7 @@ internal class SideBySidePatchDiffViewer(
     editorSettingsAction = SetEditorSettingsActionGroup(textSettings, editors)
     editorSettingsAction.setSyncScrollSupport(syncScrollSupport)
     editorSettingsAction.applyDefaults()
+    TextDiffViewerUtil.installGutterPopup(editors, editorSettingsAction)
 
     listenTypingAttempts(diffContext, editor1)
     listenTypingAttempts(diffContext, editor2)

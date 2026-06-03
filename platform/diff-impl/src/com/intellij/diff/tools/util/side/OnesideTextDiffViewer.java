@@ -45,6 +45,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 

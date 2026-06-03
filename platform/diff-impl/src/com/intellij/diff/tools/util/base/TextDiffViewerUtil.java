@@ -15,6 +15,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,9 +32,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -73,6 +76,14 @@ public final class TextDiffViewerUtil {
     ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;
+  }
+
+  public static void installGutterPopup(@NotNull List<? extends Editor> editors, @NotNull ActionGroup actionGroup) {
+    for (Editor editor : editors) {
+      if (editor.getGutter() instanceof EditorGutterComponentEx gutterEx) {
+        gutterEx.setGutterPopupGroup(actionGroup);
+      }
+    }
   }
 
   public static @NotNull FoldingModelSupport.Settings getFoldingModelSettings(@NotNull DiffContext context) {

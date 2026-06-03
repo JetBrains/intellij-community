@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
@@ -45,10 +44,6 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   private var toolbarActions = emptyList<AnAction>()
   private var gutterActions = emptyList<AnAction>()
 
-  init {
-    installGutterPopup()
-  }
-
   fun setDiffActions(gutterActions: List<AnAction>, toolbarActions: List<AnAction>) {
     this.gutterActions = gutterActions
     this.toolbarActions = toolbarActions
@@ -56,12 +51,6 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
 
   fun setSyncScrollSupport(syncScrollSupport: SyncScrollSupport.Support?) {
     this.syncScrollSupport = syncScrollSupport
-  }
-
-  fun installGutterPopup() {
-    for (editor in editors) {
-      (editor.getGutter() as EditorGutterComponentEx).setGutterPopupGroup(this)
-    }
   }
 
   fun applyDefaults() {

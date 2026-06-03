@@ -80,6 +80,7 @@ internal class PatchDiffViewer(
     }
     editorSettingsAction = SetEditorSettingsActionGroup(TextDiffViewerUtil.getTextSettings(diffContext), editors)
     editorSettingsAction.applyDefaults()
+    TextDiffViewerUtil.installGutterPopup(editors, editorSettingsAction)
 
     listenTypingAttempts(diffContext, editor)
   }

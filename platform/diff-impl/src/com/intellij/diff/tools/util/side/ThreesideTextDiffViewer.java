@@ -63,6 +63,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 

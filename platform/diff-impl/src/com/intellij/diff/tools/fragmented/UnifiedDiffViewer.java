@@ -198,6 +198,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 

@@ -177,6 +177,7 @@ class ApplyPatchViewer implements Disposable {
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), editors);
     myEditorSettingsAction.applyDefaults();
+    TextDiffViewerUtil.installGutterPopup(editors, myEditorSettingsAction);
 
     ProxyUndoRedoAction.register(myProject, myResultEditor, myContentPanel);
   }
