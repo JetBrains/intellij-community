@@ -21,15 +21,15 @@ import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 
 /**
@@ -154,7 +154,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     commonPluginHeaders.add(header)
   }
   val targetDir = context.paths.tempDir.resolve("cross-platform-module-repository")
-  RuntimeModuleRepositoryGenerator.saveModuleRepository(commonDescriptors, commonPluginHeaders, targetDir)
+  saveModuleRepository(commonDescriptors, commonPluginHeaders, targetDir)
   return targetDir
 }
 
@@ -208,7 +208,7 @@ private suspend fun generateRepositoryForDistribution(
     )
   }
   withContext(Dispatchers.IO) {
-    RuntimeModuleRepositoryGenerator.saveModuleRepository(
+    saveModuleRepository(
       descriptors = distDescriptors,
       pluginHeaders = pluginHeaders,
       targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME)
@@ -276,6 +276,25 @@ internal fun hasTestSourcesAndNoProductionSources(module: JpsModule): Boolean {
   return sourceRoots.isNotEmpty() && sourceRoots.all { it.rootType.isForTests }
 }
 
+private const val GENERATOR_VERSION: Int = 3
+
+private fun saveModuleRepository(descriptors: List<RawRuntimeModuleDescriptor>, pluginHeaders: List<RuntimePluginHeader>,
+                         targetDirectory: Path) {
+  try {
+    val bootstrapModuleName = "intellij.platform.bootstrap"
+    targetDirectory.createDirectories()
+    RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors,
+                                                           pluginHeaders, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors,
+                                                   pluginHeaders, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+  }
+  catch (e: IOException) {
+    throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
+  }
+}
+
+private const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
+private const val COMPACT_REPOSITORY_FILE_NAME: String = "module-descriptors.dat"
 internal const val RUNTIME_REPOSITORY_MODULES_DIR_NAME = "modules"
 internal const val MODULE_DESCRIPTORS_JAR_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
 const val MODULE_DESCRIPTORS_COMPACT_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$COMPACT_REPOSITORY_FILE_NAME" 
