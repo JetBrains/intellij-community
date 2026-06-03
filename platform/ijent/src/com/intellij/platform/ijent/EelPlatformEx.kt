@@ -12,5 +12,6 @@ val EelPlatform.executableName: String
     is EelPlatform.Linux if arch == EelPlatform.Arch.ARM_32 -> @Suppress("SpellCheckingInspection") "ijent-armv7-unknown-linux-musleabihf-release"
     is EelPlatform.Windows if arch == EelPlatform.Arch.ARM_64 -> "ijent-aarch64-pc-windows-gnullvm-release.exe"
     is EelPlatform.Windows if arch == EelPlatform.Arch.X86_64 -> "ijent-x86_64-pc-windows-gnullvm-release.exe"
+    is EelPlatform.OHOS if arch == EelPlatform.Arch.ARM_64 -> "ijent-aarch64-unknown-linux-musl-release"
     else -> throw IllegalArgumentException("Unsupported platform: $this / $arch")
   }

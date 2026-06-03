@@ -146,6 +146,10 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
       JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(*checkPaths.toTypedArray())
     }
 
+    is EelPlatform.OHOS -> {
+      JavaHomeFinderOhos(systemInfoProvider)
+    }
+
     is EelPlatform.Posix -> JavaHomeFinderBasic(systemInfoProvider)
   }
 

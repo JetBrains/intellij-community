@@ -189,6 +189,9 @@ public abstract class JavaHomeFinder {
         eelPath = eel.getUserInfo().getHome().toString();
       }
     }
+    if (platform instanceof EelPlatform.OHOS) {
+      eelPath = JavaHomeFinderOhos.defaultJavaLocation;
+    }
     if (eelPath != null) {
       var absoluteLocation = EelPath.parse(eelPath, eel.getDescriptor());
       return EelNioBridgeServiceKt.asNioPath(absoluteLocation);

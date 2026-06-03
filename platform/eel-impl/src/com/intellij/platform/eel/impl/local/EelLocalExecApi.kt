@@ -185,7 +185,7 @@ class EelLocalExecPosixApi(
         }
       }
 
-      is EelPlatform.FreeBSD, is EelPlatform.Linux, is EelPlatform.OHOS -> { //todo[kb] double-check HOS
+      is EelPlatform.FreeBSD, is EelPlatform.Linux -> {
         // TODO This code wasn't checked on BSD.
         var passwdLines =
           try {
@@ -217,6 +217,8 @@ class EelLocalExecPosixApi(
 
         getShellFromPasswdRecords(passwdLines, userInfo.uid)
       }
+
+      is EelPlatform.OHOS -> null // no OS-specific shell detection yet; use SHELL fallback below
     }
 
     if (shell == null) {

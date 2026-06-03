@@ -294,6 +294,7 @@ class JdkInstaller : JdkInstallerBase() {
       OS.Windows -> home.resolve(".jdks")
       OS.macOS -> home.resolve("Library/Java/JavaVirtualMachines")
       OS.Linux -> home.resolve(".jdks")
+      OS.OHOS -> home.resolve(".jdks")
       else -> error("Unsupported OS: ${OS.CURRENT}")
     }
   }

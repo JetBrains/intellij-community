@@ -41,7 +41,6 @@ import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -87,9 +86,10 @@ internal class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.
   }
 
   @OptIn(LowLevelLocalMachineAccess::class)
-  override val platform: EelPlatform.Posix = when {
-    SystemInfo.isMac -> EelPlatform.Darwin(CpuArch.CURRENT.toEelArch())
-    SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(CpuArch.CURRENT.toEelArch())
+  override val platform: EelPlatform.Posix = when (OS.CURRENT) {
+    OS.macOS -> EelPlatform.Darwin(CpuArch.CURRENT.toEelArch())
+    OS.FreeBSD -> EelPlatform.FreeBSD(CpuArch.CURRENT.toEelArch())
+    OS.OHOS -> EelPlatform.OHOS(CpuArch.CURRENT.toEelArch())
     else -> EelPlatform.Linux(CpuArch.CURRENT.toEelArch())
   }
 
