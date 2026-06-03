@@ -45,8 +45,6 @@
                  description="Enable existence of multiple workspace models, one per each isolated environment"/>
     <registryKey key="ide.workspace.model.dump.on.every.wsm.update" defaultValue="false" restartRequired="false"
                  description="Dump workspace model to log directory on every WSM update"/>
-    <registryKey key="use.workspace.file.index.for.partial.scanning" defaultValue="true" restartRequired="true"
-                 description="If enabled, relies on events from WorkspaceFileIndex for partial scanning"/>
 
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>

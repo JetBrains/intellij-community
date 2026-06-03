@@ -444,7 +444,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Before
     public void setUp() {
-      Registry.get("use.workspace.file.index.for.partial.scanning").setValue(false, disposableRule.getDisposable());
       var policy = new DirectoryIndexExcludePolicy() {
         @Override
         public String @NotNull [] getExcludeUrlsForProject() {
@@ -556,60 +555,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         urls.add(sourcesDir.getUrl());
       });
       assertNothingToRescanAndFinishIndexing();
-    }
-
-    @Test
-    public void checkExcludingModuleLibraryPart() {
-      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
-        return;
-      }
-      doTestLibraryExcluding(libRootPair -> {
-        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
-          return Unit.INSTANCE;
-        });
-
-        ModuleRootModificationUtil.addModuleLibrary(
-          module, "libName", List.of(libRootPair.getFirst().getUrl()), List.of(libRootPair.getSecond().getUrl())
-        );
-      });
-    }
-
-    @Test
-    public void checkExcludingProjectLibraryPart() {
-      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
-        return;
-      }
-      doTestLibraryExcluding(libRootPair -> {
-        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
-          return Unit.INSTANCE;
-        });
-
-        var library = projectModelRule.addProjectLevelLibrary("libName", setup -> {
-          setup.addRoot(libRootPair.getFirst(), OrderRootType.CLASSES);
-          setup.addRoot(libRootPair.getSecond(), OrderRootType.SOURCES);
-          return Unit.INSTANCE;
-        });
-        ModuleRootModificationUtil.addDependency(module, library);
-      });
-    }
-
-    @Test
-    public void checkExcludingGlobalLibraryPart() {
-      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
-        return;
-      }
-      doTestLibraryExcluding(libRootPair -> {
-        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
-          return Unit.INSTANCE;
-        });
-
-        var library = projectModelRule.addApplicationLevelLibrary("libName", setup -> {
-          setup.addRoot(libRootPair.getFirst(), OrderRootType.CLASSES);
-          setup.addRoot(libRootPair.getSecond(), OrderRootType.SOURCES);
-          return Unit.INSTANCE;
-        });
-        ModuleRootModificationUtil.addDependency(module, library);
-      });
     }
 
     private void doTestLibraryExcluding(Consumer<Pair<VirtualFile, VirtualFile>> libraryCreator) {
