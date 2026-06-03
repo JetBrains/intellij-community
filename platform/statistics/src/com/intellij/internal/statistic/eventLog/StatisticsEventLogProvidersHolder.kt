@@ -71,6 +71,7 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     }
     val isJetBrainsProduct = isJetBrainsProduct()
     return providers.asSequence()
+      .distinctBy { it.javaClass }
       .filter { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }
   }
 
