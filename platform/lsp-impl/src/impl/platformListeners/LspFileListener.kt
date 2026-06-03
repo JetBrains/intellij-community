@@ -14,8 +14,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.lsp.impl.LspDynamicCapabilities
 import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerImpl.FileChangeInfo
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.fileEvents.FileChangeInfo
 import com.intellij.util.containers.MultiMap
 import org.eclipse.lsp4j.FileChangeType
 
@@ -130,7 +130,7 @@ internal class LspFileListener : AsyncFileListener {
       if (!serverToFileChangeInfos.isEmpty) {
         ApplicationManager.getApplication().executeOnPooledThread {
           for ((server, fileChangeInfos) in serverToFileChangeInfos.entrySet()) {
-            server.processFileEvents(fileChangeInfos)
+            server.watchedFiles.processFileEvents(fileChangeInfos)
           }
         }
       }
