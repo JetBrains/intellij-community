@@ -3,7 +3,6 @@ package git4idea.log
 
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.append
 import com.intellij.openapi.vcs.Executor.cd
@@ -35,11 +34,11 @@ import git4idea.test.last
 import git4idea.test.makeCommit
 import git4idea.test.modify
 import git4idea.test.mv
+import git4idea.test.runUnderProgress
 import git4idea.test.setupDefaultUsername
 import git4idea.test.setupUsername
 import git4idea.test.tac
 import junit.framework.TestCase
-import kotlinx.coroutines.runBlocking
 
 abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
@@ -239,10 +238,8 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
       }
       master {
         //cherry-pick with default user
-        runBlocking {
-          coroutineToIndicator {
-            GitCherryPicker(project).cherryPick(readDetails(hashToPick))
-          }
+        runUnderProgress {
+          GitCherryPicker(project).cherryPick(readDetails(hashToPick))
         }
       }
     }

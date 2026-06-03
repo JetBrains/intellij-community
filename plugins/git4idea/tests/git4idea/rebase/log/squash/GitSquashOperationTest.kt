@@ -3,9 +3,10 @@ package git4idea.rebase.log.squash
 
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.test.runUnderProgress
 
 internal class GitSquashOperationTest : GitSquashOperationTestBase() {
   override fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult {
-    return GitSquashOperation(repo).execute(commitsToSquash, newMessage)
+    return runUnderProgress { GitSquashOperation(repo).execute(commitsToSquash, newMessage) }
   }
 }

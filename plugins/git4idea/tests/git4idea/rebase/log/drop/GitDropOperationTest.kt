@@ -3,9 +3,10 @@ package git4idea.rebase.log.drop
 
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.test.runUnderProgress
 
 internal class GitDropOperationTest : GitDropOperationTestBase() {
   override fun execute(commitsToDrop: List<VcsCommitMetadata>): GitCommitEditingOperationResult {
-    return GitDropOperation(repo).execute(commitsToDrop)
+    return runUnderProgress { GitDropOperation(repo).execute(commitsToDrop) }
   }
 }

@@ -36,6 +36,7 @@ import git4idea.test.last
 import git4idea.test.log
 import git4idea.test.makeCommit
 import git4idea.test.makePushSpec
+import git4idea.test.runUnderProgress
 import git4idea.update.GitUpdateResult
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -154,15 +155,17 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
 
-    val result = object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
-      override fun update(rootsToUpdate: Collection<GitRepository>,
-                          updateMethod: UpdateMethod,
-                          checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
-        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        pushCommitFromBro()
-        return updateResult
-      }
-    }.execute()
+    val result = runUnderProgress {
+      object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
+        override fun update(rootsToUpdate: Collection<GitRepository>,
+                            updateMethod: UpdateMethod,
+                            checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
+          val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
+          pushCommitFromBro()
+          return updateResult
+        }
+      }.execute()
+    }
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
 
     cd(parentRepo)
@@ -180,20 +183,22 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
 
-    val result = object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
-      var updateHappened: Boolean = false
+    val result = runUnderProgress {
+      object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
+        var updateHappened: Boolean = false
 
-      override fun update(rootsToUpdate: Collection<GitRepository>,
-                          updateMethod: UpdateMethod,
-                          checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
-        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        if (!updateHappened) {
-          updateHappened = true
-          pushCommitFromBro()
+        override fun update(rootsToUpdate: Collection<GitRepository>,
+                            updateMethod: UpdateMethod,
+                            checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
+          val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
+          if (!updateHappened) {
+            updateHappened = true
+            pushCommitFromBro()
+          }
+          return updateResult
         }
-        return updateResult
-      }
-    }.execute()
+      }.execute()
+    }
 
     assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[repository]!!)
     cd(repository)
@@ -344,7 +349,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     if (fetchFirst) git("fetch")
 
     val map = singletonMap(repository, makePushSpec(repository, "master", "origin/master"))
-    val result = GitPushOperation(project, pushSupport, map, null, true, false).execute()
+    val result = runUnderProgress { GitPushOperation(project, pushSupport, map, null, true, false).execute() }
     return Pair.create(pushedHash, result)
   }
 
@@ -418,8 +423,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     updateRepositories()
     val spec = makePushSpec(repository, "master", "origin/master")
-    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec),
-                                      GitPushTagMode.ALL, false, false).execute()
+    val pushResult = runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec),
+                       GitPushTagMode.ALL, false, false).execute()
+    }
     val result = pushResult.results[repository]!!
     val pushedTags = result.pushedTags
     assertEquals(1, pushedTags.size)
@@ -432,14 +439,18 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     updateRepositories()
     val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
-    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val pushResult = runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    }
     val result = pushResult.results[repository]!!
     val pushedTags = result.pushedTags
     assertEquals(NEW_BRANCH, result.type)
     assertEquals(1, pushedTags.size)
     assertEquals("refs/tags/v1", pushedTags[0])
 
-    val secondPushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val secondPushResult = runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    }
     val secondResult = secondPushResult.results[repository]!!
     assertEmpty(secondResult.pushedTags)
     assertEquals(UP_TO_DATE, secondResult.type)
@@ -455,7 +466,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     updateRepositories()
     val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
-    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val pushResult = runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    }
     val result = pushResult.results[repository]!!
     val pushedTags = result.pushedTags
     assertEquals(REJECTED_OTHER, result.type)
@@ -522,7 +535,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateChangeListManager()
 
     val spec = makePushSpec(repository, from, to, canChangeUpstream)
-    return GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
+    return runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
+    }
   }
 
   private fun pushCommitFromBro(): String {

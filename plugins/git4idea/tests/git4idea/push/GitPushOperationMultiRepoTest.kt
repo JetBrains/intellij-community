@@ -12,6 +12,7 @@ import git4idea.test.git
 import git4idea.test.last
 import git4idea.test.makeCommit
 import git4idea.test.makePushSpec
+import git4idea.test.runUnderProgress
 import git4idea.test.tac
 import git4idea.update.GitUpdateResult
 import org.junit.After
@@ -77,7 +78,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     refresh()
     updateChangeListManager()
 
-    val result = GitPushOperation(project, pushSupport, map, null, false, false).execute()
+    val result = runUnderProgress { GitPushOperation(project, pushSupport, map, null, false, false).execute() }
 
     val result1 = result.results[ultimate]!!
     val result2 = result.results[community]!!
@@ -104,8 +105,10 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     refresh()
     updateChangeListManager()
 
-    val result = GitPushOperation(project, pushSupport,
-                                  Collections.singletonMap(ultimate, mainSpec), null, false, false).execute()
+    val result = runUnderProgress {
+      GitPushOperation(project, pushSupport,
+                       Collections.singletonMap(ultimate, mainSpec), null, false, false).execute()
+    }
 
     val result1 = result.results[ultimate]!!
     val result2 = result.results[community]
@@ -156,7 +159,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     // push only to 1 repo, otherwise the push would recreate the deleted branch, and the error won't reproduce
     val pushSpecs = mapOf(ultimate to makePushSpec(ultimate, "feature", "origin/feature"))
-    val result = GitPushOperation(project, pushSupport, pushSpecs, null, false, false).execute()
+    val result = runUnderProgress { GitPushOperation(project, pushSupport, pushSpecs, null, false, false).execute() }
 
     val result1 = result.results[ultimate]!!
     assertResult(GitPushRepoResult.Type.SUCCESS, 2, "feature", "origin/feature", GitUpdateResult.SUCCESS, result1)

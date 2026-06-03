@@ -2,7 +2,6 @@
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.mkdir
@@ -15,7 +14,7 @@ import git4idea.repo.GitRepository
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import git4idea.test.git
 import git4idea.test.resolveConflicts
-import kotlinx.coroutines.runBlocking
+import git4idea.test.runUnderProgress
 import org.mockito.Mockito
 
 class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
@@ -215,10 +214,8 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     try {
-      runBlocking {
-        coroutineToIndicator {
-          GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(allRepositories, "feature")
-        }
+      runUnderProgress {
+        GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(allRepositories, "feature")
       }
     }
     finally {

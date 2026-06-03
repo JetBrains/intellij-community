@@ -4,6 +4,8 @@
 package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.append
 import com.intellij.openapi.vcs.Executor.cd
@@ -14,6 +16,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.write
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -30,6 +33,7 @@ import git4idea.log.GitLogProvider
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,6 +45,18 @@ import java.nio.file.Paths
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
+
+/**
+ * Runs [action] under a thread-bound [ProgressIndicator] so that synchronous bridges that use
+ * `runBlockingCancellable` (e.g. [git4idea.isCommitPublishedBlocking]) find an enclosing job/indicator
+ * and don't trip the "no ProgressIndicator or Job in this thread" error.
+ *
+ * In production these code paths always run under an indicator; the helper makes tests behave
+ * the same way
+ */
+@RequiresBackgroundThread
+fun <T> runUnderProgress(action: (ProgressIndicator) -> T): T =
+  runBlocking { coroutineToIndicator { indicator -> action(indicator) } }
 
 /**
  *

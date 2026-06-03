@@ -14,6 +14,7 @@ import git4idea.test.assertMessage
 import git4idea.test.assertStagedChanges
 import git4idea.test.findGitLogProvider
 import git4idea.test.message
+import git4idea.test.runUnderProgress
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 
@@ -26,7 +27,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     assertLastMessage(newMessage, "Message reworded incorrectly")
   }
@@ -41,7 +42,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, initialCommit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, initialCommit, newMessage).execute() }
 
     assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
   }
@@ -54,7 +55,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, initialCommit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, initialCommit, newMessage).execute() }
 
     assertLastMessage(newMessage, "Message reworded incorrectly")
   }
@@ -67,7 +68,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     assertLastMessage(newMessage, "Message reworded incorrectly")
     repo.assertStagedChanges {
@@ -87,7 +88,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
   }
@@ -99,7 +100,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    val result = operation.execute() as Complete
+    val result = runUnderProgress { operation.execute() } as Complete
 
     assertTrue(runBlocking { result.checkUndoPossibility() } is Possible)
     result.undo()
@@ -114,7 +115,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    val result = operation.execute() as Complete
+    val result = runUnderProgress { operation.execute() } as Complete
 
     file("b").create().addCommit("New commit")
 
@@ -138,7 +139,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    val result = operation.execute() as Complete
+    val result = runUnderProgress { operation.execute() } as Complete
 
     git("update-ref refs/remotes/origin/master HEAD")
 
@@ -160,7 +161,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     assertLastMessage(newMessage)
   }
@@ -180,7 +181,7 @@ class GitRewordTest : GitSingleRepoTest() {
 
       #body starting with a hash
       """.trimIndent()
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     val actualMessage = git("log HEAD --no-walk --pretty=%B")
     assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
@@ -197,7 +198,7 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val newMessage = "Correct message"
-    GitRewordOperation(repo, commit, newMessage).execute()
+    runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
 
     repo.assertLatestHistory(
       "One more commit",

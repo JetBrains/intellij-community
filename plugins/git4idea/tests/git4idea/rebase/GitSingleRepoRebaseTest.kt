@@ -2,7 +2,6 @@
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
@@ -34,6 +33,7 @@ import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.makeCommit
 import git4idea.test.resolveConflicts
+import git4idea.test.runUnderProgress
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume
@@ -896,12 +896,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     refresh()
     updateChangeListManager()
 
-    runBlocking {
-      coroutineToIndicator { indicator ->
-        val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
-        `when`(uiHandler.progressIndicator).thenReturn(indicator)
-        GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
-      }
+    runUnderProgress { indicator ->
+      val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+      `when`(uiHandler.progressIndicator).thenReturn(indicator)
+      GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
     }
 
     assertSuccessfulRebaseNotification(expectedNotification())

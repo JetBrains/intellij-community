@@ -3,7 +3,6 @@ package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
@@ -21,7 +20,7 @@ import git4idea.test.createRepository
 import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.resolveConflicts
-import kotlinx.coroutines.runBlocking
+import git4idea.test.runUnderProgress
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Locale
@@ -251,16 +250,14 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
       this(project, params, listOf(repository))
 
     fun rebase() {
-      runBlocking {
-        coroutineToIndicator { indicator ->
-          val spec = GitRebaseSpec.forNewRebase(project, params, repositories, indicator)
-          val process = object : GitRebaseProcess(project, spec, null) {
-            override fun getDirtyRoots(repos: Collection<GitRepository>): Collection<GitRepository> {
-              return this@GitTestingRebaseProcess.getDirtyRoots(repos)
-            }
+      runUnderProgress { indicator ->
+        val spec = GitRebaseSpec.forNewRebase(project, params, repositories, indicator)
+        val process = object : GitRebaseProcess(project, spec, null) {
+          override fun getDirtyRoots(repos: Collection<GitRepository>): Collection<GitRepository> {
+            return this@GitTestingRebaseProcess.getDirtyRoots(repos)
           }
-          process.rebase()
         }
+        process.rebase()
       }
     }
 

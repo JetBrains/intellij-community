@@ -3,7 +3,6 @@ package git4idea.update
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.childPath
@@ -21,6 +20,7 @@ import git4idea.test.cd
 import git4idea.test.git
 import git4idea.test.last
 import git4idea.test.registerRepo
+import git4idea.test.runUnderProgress
 import git4idea.test.setupDefaultUsername
 import java.nio.file.Path
 import java.util.Locale
@@ -69,7 +69,9 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     git("push")
 
     insertLogMarker("update process")
-    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
+    val result = runUnderProgress { indicator ->
+      GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
+    }
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
     assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
@@ -90,7 +92,9 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
       git("push")
 
       insertLogMarker("update process")
-      val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
+      val result = runUnderProgress { indicator ->
+        GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
+      }
 
       assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
       assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
@@ -116,7 +120,9 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     addCommit("msg")
 
     insertLogMarker("update process")
-    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(REBASE)
+    val result = runUnderProgress { indicator ->
+      GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(REBASE)
+    }
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
     assertEquals("Submodule should be on branch", "master", sub.currentBranchName)

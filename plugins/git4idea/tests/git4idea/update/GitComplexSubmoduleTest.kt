@@ -18,6 +18,7 @@ import git4idea.test.cd
 import git4idea.test.git
 import git4idea.test.makePushSpec
 import git4idea.test.registerRepo
+import git4idea.test.runUnderProgress
 import git4idea.test.setupDefaultUsername
 import git4idea.test.tac
 import git4idea.test.tacp
@@ -95,7 +96,9 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
       reposInActualOrder.add(it)
     }
 
-    GitPushOperation(project, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
+    runUnderProgress {
+      GitPushOperation(project, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
+    }
     assertOrder(reposInActualOrder)
   }
 
