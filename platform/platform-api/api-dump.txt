@@ -4600,6 +4600,7 @@ com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setDimensionServiceKey(com.intellij.openapi.project.Project,java.lang.String,Z):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setFocusOwners(java.awt.Component[]):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setFocusable(Z):com.intellij.openapi.ui.popup.ComponentPopupBuilder
+- a:setHeaderAlwaysFocusable(Z):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setKeyEventHandler(com.intellij.util.BooleanFunction):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setKeyboardActions(java.util.List):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - a:setLocateByContent(Z):com.intellij.openapi.ui.popup.ComponentPopupBuilder

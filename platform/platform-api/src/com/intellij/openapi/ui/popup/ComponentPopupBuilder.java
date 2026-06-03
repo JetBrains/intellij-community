@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title);
@@ -170,6 +172,19 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setNormalWindowLevel(boolean b);
+
+  /**
+   * Allows the popup header to be always active.
+   * <p>
+   *   Useful for long-living popups that may need to accept input even if when inactive.
+   *   Normally it's not necessary to set this flag, because the popup will become active, for example, if clicked.
+   *   But in some environments (Wayland!) it may not happen automatically.
+   * </p>
+   * @param b the new value (the default is {@code false})
+   * @return this builder
+   */
+  @NotNull
+  ComponentPopupBuilder setHeaderAlwaysFocusable(boolean b);
 
   default @NotNull ComponentPopupBuilder setBorderColor(Color color) {
     return this;

@@ -86,6 +86,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component mySettingsButtons;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
+  private  boolean myHeaderAlwaysFocusable;
   private BooleanFunction<? super KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
   private boolean myNormalWindowLevel;
@@ -228,7 +229,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
       myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
-      false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
+      myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
 
@@ -371,6 +372,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public @NotNull ComponentPopupBuilder setNormalWindowLevel(boolean b) {
     myNormalWindowLevel = b;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setHeaderAlwaysFocusable(boolean b) {
+    myHeaderAlwaysFocusable = b;
     return this;
   }
 
