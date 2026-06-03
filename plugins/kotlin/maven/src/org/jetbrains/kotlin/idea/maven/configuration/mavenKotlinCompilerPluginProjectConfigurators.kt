@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.xml.XmlFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
@@ -108,7 +107,7 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
 
     private fun Module.findSuitablePomFileWithPlugin(pluginId: MavenId): XmlFile? {
         // try to find suitable maven kotlin plugin in current module pom file
-        val pomFile = findModulePomFile(this) as? XmlFile ?: return null
+        val pomFile = findModulePomFile(this) ?: return null
         if (pomFile.hasSuitablePlugin(pluginId, extraCheck = { it.findExecutionWithKotlinCompileGoal() != null })) return pomFile
 
         val project = this.project
@@ -192,7 +191,6 @@ private fun Module.findLombokConfigPath(): String? {
     return parentConfig?.toString()
 }
 
-@ApiStatus.Internal
 internal fun PomFile.addAllOpenKotlinCompilerPluginPreset(kotlinPlugin: MavenDomPlugin, kotlinCompilerPluginId: String) {
     val allOpenPluginName = "all-open"
 

@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -34,38 +35,37 @@ class KaptMavenKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginPro
   override val kotlinCompilerPluginId: String = KAPT_PLUGIN_ID
 
   override fun isApplicable(module: Module): Boolean =
-    module.findKaptPomFile() != null
+    module.findPomFileWithKotlinPlugin() != null
 
-  override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
-    val xmlFile = module.findKaptPomFile() ?: return
-    val pom = PomFile.forFileOrNull(xmlFile) ?: return
-    val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return
-    val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module)
-    val processors = pom.findMavenProcessorPaths(mavenProject)
-    if (processors.isEmpty()) return
-
-    module.project.executeWriteCommand(KotlinMavenBundle.message("command.name.configure.0", xmlFile.name), null) {
-      configurationResultBuilder.changedFile(xmlFile)
-      if (pom.configureKapt(module, xmlFile, kotlinPlugin, processors, module.hasLombokDependency())) {
-        configurationResultBuilder.configuredModule(module)
-      }
+    override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
+        val xmlFile = module.findPomFileWithKotlinPlugin() ?: return
+        val pom = PomFile.forFileOrNull(xmlFile) ?: return
+        configurationResultBuilder.changedFile(xmlFile)
+        val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return
+        val project = module.project
+        val mavenProject = MavenProjectsManager.getInstance(project).findProject(module)
+        val processors = pom.findMavenProcessorPaths(mavenProject).ifEmpty { return }
+        project.executeWriteCommand(KotlinMavenBundle.message("command.name.configure.0", xmlFile.name), null) {
+            if (pom.configureKapt(module, xmlFile, kotlinPlugin, processors)) {
+                configurationResultBuilder.configuredModule(module)
+            }
+        }
     }
-  }
 
-  override fun configureModuleModCommand(module: Module): ModCommand {
-    val xmlFile = module.findKaptPomFile() ?: return ModCommand.nop()
-    val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module)
-    val actionContext = ActionContext.from(null, xmlFile)
-    return ModCommand.psiUpdate(actionContext) { updater ->
-      val writablePomFile = updater.getWritable(xmlFile)
-      val pom = PomFile.forFileOrNull(writablePomFile) ?: return@psiUpdate
-      val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return@psiUpdate
-      val processors = pom.findMavenProcessorPaths(mavenProject)
-      if (processors.isEmpty()) return@psiUpdate
+    override fun configureModuleModCommand(module: Module): ModCommand {
+        val xmlFile = module.findPomFileWithKotlinPlugin() ?: return ModCommand.nop()
+        val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module)
+        val actionContext = ActionContext.from(null, xmlFile)
+        return ModCommand.psiUpdate(actionContext) { updater ->
+            val writablePomFile = updater.getWritable(xmlFile)
+            val pom = PomFile.forFileOrNull(writablePomFile) ?: return@psiUpdate
+            val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return@psiUpdate
+            val processors = pom.findMavenProcessorPaths(mavenProject)
+            if (processors.isEmpty()) return@psiUpdate
 
-      pom.configureKapt(module, writablePomFile, kotlinPlugin, processors, module.hasLombokDependency())
-    }.andThen(KotlinDependencyProvider.syncModCommand(xmlFile))
-  }
+            pom.configureKapt(module, writablePomFile, kotlinPlugin, processors)
+        }.andThen(KotlinDependencyProvider.syncModCommand(xmlFile))
+    }
 }
 
 class KaptMavenProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfigurator(KAPT_PLUGIN_ID) {
@@ -76,13 +76,13 @@ class KaptMavenProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfig
     module.hasNonLombokMavenAnnotationProcessor()
 }
 
-private fun Module.findKaptPomFile(): XmlFile? =
-  (findModulePomFile(this) as? XmlFile)?.takeIf { pomFile ->
+private fun Module.findPomFileWithKotlinPlugin(): XmlFile? =
+  findModulePomFile(this)?.takeIf { pomFile ->
     PomFile.forFileOrNull(pomFile)?.findPlugin(kotlinPluginId) != null
   }
 
 private fun Module.hasMavenKaptConfigured(): Boolean {
-  val xmlFile = findKaptPomFile() ?: return false
+  val xmlFile = findPomFileWithKotlinPlugin() ?: return false
   val pom = PomFile.forFileOrNull(xmlFile) ?: return false
   val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return false
   return kotlinPlugin.findKaptExecution() != null
@@ -92,7 +92,7 @@ private fun Module.hasNonLombokMavenAnnotationProcessor(): Boolean {
   val mavenProject = MavenProjectsManager.getInstance(project).findProject(this)
   if (mavenProject?.externalAnnotationProcessors?.any { it.artifactId != "lombok" } == true) return true
 
-  val xmlFile = findKaptPomFile() ?: return false
+  val xmlFile = findPomFileWithKotlinPlugin() ?: return false
   val pom = PomFile.forFileOrNull(xmlFile) ?: return false
   return pom.domModel.dependencies.dependencies.any { it.toKnownProcessorPath(mavenProject) != null } ||
          KNOWN_NON_LOMBOK_PROCESSOR_CLASSES.any { JavaLibraryUtil.hasLibraryClass(this, it) }
@@ -107,26 +107,25 @@ private fun PomFile.configureKapt(
   module: Module,
   xmlFile: XmlFile,
   kotlinPlugin: MavenDomPlugin,
-  processors: List<MavenProcessorPath>,
-  hasLombok: Boolean,
+  processors: List<MavenProcessorPath>
 ): Boolean {
-  val oldText = xmlFile.text
-  val kaptExecution = kotlinPlugin.findKaptExecution() ?: kotlinPlugin.createKaptExecution()
-  kaptExecution.configureSourceDirs(xmlFile)
-  kaptExecution.configureAnnotationProcessorPaths(processors)
+    val oldText = xmlFile.text
+    val kaptExecution = kotlinPlugin.findKaptExecution() ?: kotlinPlugin.createKaptExecution()
+    kaptExecution.configureSourceDirs(xmlFile)
+    kaptExecution.configureAnnotationProcessorPaths(processors)
 
-  if (processors.any { it.groupId == "org.mapstruct" && it.artifactId == "mapstruct-processor" }) {
-    kaptExecution.configureAnnotationProcessorPaths(
-      listOf(MavenProcessorPath("org.jetbrains.kotlin", "kotlin-metadata-jvm", $$"${$$KOTLIN_VERSION_PROPERTY}"))
-    )
-  }
+    if (processors.any { it in KNOWN_PROCESSORS_TO_WRAP }) {
+        kaptExecution.configureAnnotationProcessorPaths(
+            listOf(MavenProcessorPath("org.jetbrains.kotlin", "kotlin-metadata-jvm", $$"${$$KOTLIN_VERSION_PROPERTY}"))
+        )
+    }
 
-  if (!hasLombok) {
-    disableJavacAnnotationProcessing()
-  }
-  addJavacExecutions(module, kotlinPlugin)
+    if (!module.hasLombokDependency()) {
+        disableJavacAnnotationProcessing()
+    }
+    addJavacExecutions(module, kotlinPlugin)
 
-  return oldText != xmlFile.text
+    return oldText != xmlFile.text
 }
 
 private fun PomFile.disableJavacAnnotationProcessing() {
@@ -169,41 +168,53 @@ private fun MavenDomPluginExecution.configureAnnotationProcessorPaths(processors
     .map { it.findFirstSubTag("groupId")?.value?.text to it.findFirstSubTag("artifactId")?.value?.text }
     .toSet()
 
-  for (processor in processors) {
-    if (processor.groupId to processor.artifactId in existingPaths) continue
+  for ((groupId, artifactId, version) in processors) {
+    if (groupId to artifactId in existingPaths) continue
 
     val processorTag = annotationProcessorPaths.createChildTag("annotationProcessorPath")
-    processorTag.add(processorTag.createChildTag("groupId", processor.groupId))
-    processorTag.add(processorTag.createChildTag("artifactId", processor.artifactId))
-    processor.version?.let { processorTag.add(processorTag.createChildTag("version", it)) }
+    processorTag.add(processorTag.createChildTag("groupId", groupId))
+    processorTag.add(processorTag.createChildTag("artifactId", artifactId))
+    version?.let { processorTag.add(processorTag.createChildTag("version", it)) }
     annotationProcessorPaths.add(processorTag)
   }
 }
 
 private fun MavenDomDependency.toKnownProcessorPath(mavenProject: MavenProject?): MavenProcessorPath? {
-  val groupId = groupId.stringValue ?: return null
-  val artifactId = artifactId.stringValue ?: return null
-  if (groupId to artifactId !in KNOWN_PROCESSOR_ARTIFACTS) return null
+    val processorPath = MavenProcessorPath.of(this) ?: return null
+  if (processorPath !in KNOWN_PROCESSOR_ARTIFACTS) return null
   val version = version.stringValue?.takeIf { it.isNotBlank() }
-    ?: mavenProject?.findManagedDependencyVersion(groupId, artifactId)
-  return MavenProcessorPath(groupId, artifactId, version)
+    ?: mavenProject?.findManagedDependencyVersion(processorPath.groupId, processorPath.artifactId)
+  return processorPath.copy(version = version)
 }
 
 private fun Module.hasLombokDependency(): Boolean =
   JavaLibraryUtil.hasLibraryClass(this, LOMBOK_FQN)
 
-private data class MavenProcessorPath(val groupId: String, val artifactId: String, val version: String?)
+private data class MavenProcessorPath(val groupId: String, val artifactId: String, val version: String?) {
+    constructor(groupId: String, artifactId: String) : this(groupId, artifactId, null)
+    companion object {
+        fun of(coordinates: MavenDomShortArtifactCoordinates) : MavenProcessorPath? {
+            val groupId = coordinates.groupId?.stringValue ?: return null
+            val artifactId = coordinates.artifactId.stringValue ?: return null
+            return MavenProcessorPath(groupId, artifactId, null)
+        }
+    }
+}
 
 private val KNOWN_PROCESSOR_ARTIFACTS = setOf(
-  "org.mapstruct" to "mapstruct-processor",
-  "com.google.dagger" to "dagger-compiler",
-  "com.google.dagger" to "hilt-compiler",
-  "androidx.room" to "room-compiler",
-  "org.hibernate.orm" to "hibernate-jpamodelgen",
-  "org.hibernate" to "hibernate-jpamodelgen",
-  "io.micronaut" to "micronaut-inject-java",
-  "com.google.auto.service" to "auto-service",
-  "com.querydsl" to "querydsl-apt",
+    MavenProcessorPath("org.mapstruct", "mapstruct-processor"),
+    MavenProcessorPath("com.google.dagger", "dagger-compiler"),
+    MavenProcessorPath("com.google.dagger", "hilt-compiler"),
+    MavenProcessorPath("androidx.room", "room-compiler"),
+    MavenProcessorPath("org.hibernate.orm", "hibernate-jpamodelgen"),
+    MavenProcessorPath("org.hibernate", "hibernate-jpamodelgen"),
+    MavenProcessorPath("io.micronaut", "micronaut-inject-java"),
+    MavenProcessorPath("com.google.auto.service", "auto-service"),
+    MavenProcessorPath("com.querydsl", "querydsl-apt"),
+)
+
+private val KNOWN_PROCESSORS_TO_WRAP = setOf(
+    MavenProcessorPath("org.mapstruct", "mapstruct-processor"),
 )
 
 private val KNOWN_NON_LOMBOK_PROCESSOR_CLASSES = listOf(

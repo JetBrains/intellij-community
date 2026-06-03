@@ -84,13 +84,6 @@ abstract class KotlinMavenConfigurator protected constructor(
                 )
             }
 
-            psi !is XmlFile -> {
-                return logErrorAndReturnBrokenStatus(
-                    module.project,
-                    KotlinProjectConfigurationError.POM_IS_NOT_XML
-                )
-            }
-
             psi.virtualFile == null -> {
                 return logErrorAndReturnBrokenStatus(
                     module.project,
@@ -312,7 +305,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         forTests: Boolean
     ) {
         fun doUpdateMavenLanguageVersion(): PsiElement? {
-            val psi = findModulePomFile(module) as? XmlFile ?: return null
+            val psi = findModulePomFile(module) ?: return null
             val pom = PomFile.forFileOrNull(psi) ?: return null
             return pom.changeLanguageVersion(
                 languageVersion,
@@ -379,7 +372,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         state: LanguageFeature.State,
         @NlsContexts.DialogTitle messageTitle: String
     ): PsiElement? {
-        val psi = findModulePomFile(module) as? XmlFile ?: return null
+        val psi = findModulePomFile(module) ?: return null
         val pom = PomFile.forFileOrNull(psi) ?: return null
         val element = pom.changeFeatureConfiguration(feature, state)
         if (element == null) {
@@ -411,7 +404,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         fun kotlinPluginId(version: String? = null): MavenId =
             MavenId(GROUP_ID, MAVEN_PLUGIN_ID, version)
 
-        fun findModulePomFile(module: Module): PsiFile? {
+        fun findModulePomFile(module: Module): XmlFile? {
             val project = module.project
             val files = MavenProjectsManager.getInstance(project).projectsFiles
             files

@@ -95,7 +95,7 @@ abstract class AbstractMavenImportingTest : KotlinMavenImportingTestCase() {
         )
     }
 
-    protected suspend fun doMultiFileTest() {
+    protected suspend fun doMultiFileTest(customAction: (suspend () -> Unit)? = null) {
         val testName = getTestName(true)
         val file = KotlinRoot.DIR.resolve(testRoot).resolve(testName).path + ".test"
         val parts = KotlinTestUtils.loadBeforeAfterAndDependenciesText(file)
@@ -128,8 +128,18 @@ abstract class AbstractMavenImportingTest : KotlinMavenImportingTestCase() {
 
                 codeInsightTestFixture.configureFromExistingVirtualFile(mainVirtualFile)
                 codeInsightTestFixture.openFileInEditor(mainVirtualFile)
+            }
+            if (customAction == null) {
                 doTestAction(mainFile)
 
+                checkExpected(afterDirectory)
+            }
+        }
+
+        if (customAction != null) {
+            customAction()
+            withContext(Dispatchers.EDT) {
+                PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
                 checkExpected(afterDirectory)
             }
         }

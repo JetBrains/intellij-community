@@ -5,6 +5,7 @@ import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -82,8 +83,8 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         val result = resultBuilder.build()
         val error = result.error
         if (error == null) {
-            val configurationService = KotlinProjectConfigurationService.getInstance(project)
-            configurationService.queueSyncIfPossible()
+            FileDocumentManager.getInstance().saveAllDocuments()
+            KotlinProjectConfigurationService.getInstance(project).queueSyncIfPossible()
 
             val changes = readAction { result.changedFiles.calculateChanges() }
             notificationHolder

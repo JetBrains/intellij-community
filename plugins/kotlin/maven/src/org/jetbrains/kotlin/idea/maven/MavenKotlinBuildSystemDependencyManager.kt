@@ -35,7 +35,7 @@ class MavenKotlinBuildSystemDependencyManager(
     }
 
     private fun findPomFile(module: Module): XmlFile? {
-        return KotlinMavenConfigurator.findModulePomFile(module) as? XmlFile
+        return KotlinMavenConfigurator.findModulePomFile(module)
     }
 
     @Deprecated(
