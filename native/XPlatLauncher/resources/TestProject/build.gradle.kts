@@ -11,7 +11,8 @@ group = "com.intellij.idea"
 version = "SNAPSHOT"
 
 repositories {
-  mavenCentral()
+  maven { url = URI("https://cache-redirector.jetbrains.com/plugins.gradle.org") }
+  maven { url = URI("https://cache-redirector.jetbrains.com/maven-central") }
   maven { url = URI("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
@@ -21,11 +22,11 @@ dependencies {
 }
 
 tasks.compileJava {
-  @Suppress("SpellCheckingInspection")
   options.compilerArgs = listOf("-source", "17", "-target", "17", "--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
 }
 
 tasks.register<Jar>("fatJar") {
+  description = "Building the test app"
   dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
 
   archiveFileName.set("app.jar")
@@ -41,7 +42,9 @@ tasks.register<Jar>("fatJar") {
 val jbrSdkVersion: String by project
 val jbrSdkBuildNumber: String by project
 
-tasks.register<Task>("downloadJbr") {
+tasks.register<Task>(@Suppress("SpellCheckingInspection") "downloadJbr") {
+  description = "Downloading Java runtime"
+
   val (os, arch) = getOsAndArch()
   val buildDir = project.layout.buildDirectory.asFile.get().toPath()
   val output = buildDir.resolve("jbr")
@@ -78,6 +81,7 @@ tasks.register<Task>("downloadJbr") {
 
 fun getOsAndArch(): Pair<String, String> {
   val osName = System.getProperty("os.name", "").lowercase()
+  @Suppress("SpellCheckingInspection")
   val os = if (osName.startsWith("windows")) "windows"
     else if (osName.startsWith("mac")) "osx"
     else if (osName.startsWith("linux")) "linux"
