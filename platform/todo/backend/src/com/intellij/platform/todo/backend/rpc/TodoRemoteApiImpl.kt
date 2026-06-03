@@ -3,7 +3,10 @@ package com.intellij.platform.todo.backend.rpc
 
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoFilter
+import com.intellij.ide.todo.rpc.TodoFileEvent
+import com.intellij.ide.todo.rpc.TodoFileEventType
 import com.intellij.ide.todo.rpc.TodoFileResult
+import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
 import com.intellij.ide.todo.rpc.TodoFilterConfig
 import com.intellij.ide.todo.rpc.TodoPatternConfig
 import com.intellij.ide.todo.rpc.TodoQuerySettings
@@ -21,23 +24,156 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeChangeAdapter
+import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.psi.PsiTreeChangeListener
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoItem
 import com.intellij.psi.search.TodoPattern
 import com.intellij.util.text.CharArrayUtil
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.launch
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
+  override suspend fun watchTodoFiles(
+    projectId: ProjectId,
+    request: TodoFilesWatchRequest,
+  ): Flow<TodoFileEvent> = channelFlow {
+    val project = projectId.findProjectOrNull() ?: return@channelFlow
+    val resolvedFilter = resolveFilter(project, request.filter)
+    val watchedFile = request.fileId?.virtualFile()
+
+    val cache = linkedMapOf<VirtualFileId, TodoFileResult>()
+    val dirtyFiles = Channel<VirtualFile>(Channel.UNLIMITED)
+
+    suspend fun collectInitialSnapshot() {
+      val initialResults : List<TodoFileResult> = readAction {
+        blockingContextToIndicator {
+          if (watchedFile != null) {
+            val psiFile = PsiManager.getInstance(project).findFile(watchedFile) ?: return@blockingContextToIndicator emptyList()
+            val result = buildTodoFileResult(project, psiFile, watchedFile, resolvedFilter)
+
+            if (result != null) {
+              listOf(result)
+            }
+            else {
+              emptyList()
+            }
+          }
+          else {
+            val helper = PsiTodoSearchHelper.getInstance(project)
+            val fileResults = mutableListOf<TodoFileResult>()
+
+            helper.processFilesWithTodoItems { psiFile ->
+              val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+              val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
+              if (result != null) {
+                fileResults.add(result)
+              }
+              true
+            }
+            fileResults
+          }
+        }
+      }
+
+      for (result in initialResults) {
+        cache[result.fileId] = result
+        send(
+          TodoFileEvent(TodoFileEventType.Updated, result.fileId, result)
+        )
+      }
+      send(TodoFileEvent(TodoFileEventType.InitialScanFinished))
+    }
+
+    suspend fun updateFile(virtualFile: VirtualFile) {
+      if (!virtualFile.isValid) {
+        val fileId = virtualFile.rpcId()
+        if (cache.remove(fileId) != null) {
+          send(TodoFileEvent(TodoFileEventType.Removed, fileId))
+        }
+        return
+      }
+      if (watchedFile != null && watchedFile != virtualFile) {
+        return
+      }
+
+      val result = readAction {
+        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction null
+        buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
+      }
+
+      val fileId = virtualFile.rpcId()
+      if (result == null) {
+        if (cache.remove(fileId) != null) {
+          send(TodoFileEvent(TodoFileEventType.Removed, fileId))
+        }
+      }
+      else {
+        cache[fileId] = result
+        send(TodoFileEvent(TodoFileEventType.Updated, fileId, result))
+      }
+    }
+
+    collectInitialSnapshot()
+    val listenerDisposable = Disposer.newDisposable("TODO file watcher")
+    PsiManager.getInstance(project).addPsiTreeChangeListenerBackgroundable(object : PsiTreeChangeAdapter() {
+      override fun childAdded(event: PsiTreeChangeEvent) {
+        collectDirtyFile(event)?.let { dirtyFiles.trySend(it) }
+      }
+
+      override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
+        collectDirtyFile(event)?.let { dirtyFiles.trySend(it) }
+      }
+
+      override fun childReplaced(event: PsiTreeChangeEvent) {
+        collectDirtyFile(event)?.let { dirtyFiles.trySend(it) }
+      }
+
+      override fun childrenChanged(event: PsiTreeChangeEvent) {
+        collectDirtyFile(event)?.let { dirtyFiles.trySend(it) }
+      }
+
+      override fun propertyChanged(event: PsiTreeChangeEvent) {
+        collectDirtyFile(event)?.let { dirtyFiles.trySend(it) }
+      }
+    }, listenerDisposable)
+
+    val updateJob = launch {
+      dirtyFiles.consumeAsFlow().collect { file ->
+        updateFile(file)
+      }
+    }
+
+    awaitClose {
+      updateJob.cancel()
+      dirtyFiles.close()
+      Disposer.dispose(listenerDisposable)
+    }
+  }
+
+  private fun collectDirtyFile(event: PsiTreeChangeEvent): VirtualFile? {
+    val eventFile = event.file?.virtualFile
+    if (eventFile != null) {
+      return eventFile
+    }
+    return null
+  }
+
   override suspend fun listTodoFiles(
     projectId: ProjectId,
     filter: TodoFilterConfig?,
@@ -52,26 +188,10 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
         helper.processFilesWithTodoItems { psiFile ->
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
-
-          val matchesFilter = if (resolvedFilter != null) {
-            resolvedFilter.accept(helper, psiFile)
+          val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
+          if (result != null) {
+            fileResults.add(result)
           }
-          else {
-            helper.getTodoItemsCount(psiFile) > 0
-          }
-
-          if (!matchesFilter) {
-            return@processFilesWithTodoItems true
-          }
-
-          val todos = collectTodoResults(project, psiFile, virtualFile, resolvedFilter)
-          if (todos.isEmpty()) {
-            return@processFilesWithTodoItems true
-          }
-
-          fileResults.add(
-            TodoFileResult(virtualFile.rpcId(), virtualFile.name, virtualFile.presentableUrl, getModuleName(project, virtualFile), getPackageName(project, virtualFile), todos)
-          )
           true
         }
         fileResults
@@ -131,7 +251,39 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           length = todoItem.textRange.endOffset - todoItem.textRange.startOffset
         )
       }
+  }
 
+  private fun buildTodoFileResult(
+    project: Project,
+    psiFile: PsiFile,
+    virtualFile: VirtualFile,
+    filter: TodoFilter?
+  ) : TodoFileResult? {
+    val helper = PsiTodoSearchHelper.getInstance(project)
+
+    val matchesFilter = if (filter != null) {
+      filter.accept(helper, psiFile)
+    }
+    else {
+      helper.getTodoItemsCount(psiFile) > 0
+    }
+    if (!matchesFilter) {
+      return null
+    }
+
+    val todos = collectTodoResults(project, psiFile, virtualFile, filter)
+    if (todos.isEmpty()) {
+      return null
+    }
+
+    return TodoFileResult(
+      fileId = virtualFile.rpcId(),
+      name = virtualFile.name,
+      presentableUrl = virtualFile.presentableUrl,
+      moduleName = getModuleName(project, virtualFile),
+      packageName = getPackageName(project, virtualFile),
+      todos = todos,
+    )
   }
 
   override suspend fun getFilesWithTodos(
