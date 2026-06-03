@@ -1060,9 +1060,9 @@ jvm_import(
 
 java_library(
     name = "cucumber-core-1-provided",
+    exports = [":cucumber-core-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":cucumber-core-1"],
 )
 
 copy_file(
@@ -1149,9 +1149,9 @@ jvm_import(
 
 java_library(
     name = "cucumber-core-2-provided",
+    exports = [":cucumber-core-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":cucumber-core-2"],
 )
 
 copy_file(
@@ -1240,9 +1240,9 @@ jvm_import(
 
 java_library(
     name = "cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
+    exports = [":cucumber-jvm_formatter3-cucumber-core-3-0-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":cucumber-jvm_formatter3-cucumber-core-3-0-2"],
 )
 
 copy_file(
@@ -1331,9 +1331,9 @@ jvm_import(
 
 java_library(
     name = "cucumber-jvm_formatter4-cucumber-core-4-0-1-provided",
+    exports = [":cucumber-jvm_formatter4-cucumber-core-4-0-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":cucumber-jvm_formatter4-cucumber-core-4-0-1"],
 )
 
 copy_file(
@@ -1555,9 +1555,9 @@ jvm_import(
 
 java_library(
     name = "cucumber-jvm_formatter5-cucumber-java-5-0-0-_r_c1-provided",
+    exports = [":cucumber-jvm_formatter5-cucumber-java-5-0-0-_r_c1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":cucumber-jvm_formatter5-cucumber-java-5-0-0-_r_c1"],
 )
 
 copy_file(
@@ -2939,9 +2939,9 @@ jvm_import(
 
 java_library(
     name = "gradle-provided",
+    exports = [":gradle"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":gradle"],
 )
 
 copy_file(
@@ -5744,9 +5744,9 @@ jvm_import(
 
 java_library(
     name = "groovy-spock-rt-spockframework-spock-core-provided",
+    exports = [":groovy-spock-rt-spockframework-spock-core"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":groovy-spock-rt-spockframework-spock-core"],
 )
 
 copy_file(
@@ -6263,9 +6263,9 @@ jvm_import(
 
 java_library(
     name = "io-github-z4kn4fein-semver-jvm-provided",
+    exports = [":io-github-z4kn4fein-semver-jvm"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":io-github-z4kn4fein-semver-jvm"],
 )
 
 copy_file(
@@ -6872,9 +6872,9 @@ jvm_import(
 
 java_library(
     name = "java-rt-ant-1-7-1-provided",
+    exports = [":java-rt-ant-1-7-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":java-rt-ant-1-7-1"],
 )
 
 copy_file(
@@ -6893,9 +6893,9 @@ jvm_import(
 
 java_library(
     name = "java_f_x-scene_builder-_scene_builder_kit11-provided",
+    exports = [":java_f_x-scene_builder-_scene_builder_kit11"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":java_f_x-scene_builder-_scene_builder_kit11"],
 )
 
 copy_file(
@@ -6951,9 +6951,9 @@ jvm_import(
 
 java_library(
     name = "javax-inject-provided",
+    exports = [":javax-inject"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":javax-inject"],
 )
 
 jvm_import(
@@ -7093,9 +7093,9 @@ jvm_import(
 
 java_library(
     name = "jetbrains-annotations-provided",
+    exports = [":jetbrains-annotations"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":jetbrains-annotations"],
 )
 
 copy_file(
@@ -7756,9 +7756,9 @@ jvm_import(
 
 java_library(
     name = "jspecify-provided",
+    exports = [":jspecify"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":jspecify"],
 )
 
 jvm_import(
@@ -7785,9 +7785,9 @@ jvm_import(
 
 java_library(
     name = "junit4-provided",
+    exports = [":junit4"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":junit4"],
 )
 
 copy_file(
@@ -7859,9 +7859,9 @@ jvm_import(
 
 java_library(
     name = "junit5-provided",
+    exports = [":junit5"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":junit5"],
 )
 
 copy_file(
@@ -7988,9 +7988,9 @@ jvm_import(
 
 java_library(
     name = "junit6-provided",
+    exports = [":junit6"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":junit6"],
 )
 
 copy_file(
@@ -8033,9 +8033,9 @@ jvm_import(
 
 java_library(
     name = "junit6Launcher-provided",
+    exports = [":junit6Launcher"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":junit6Launcher"],
 )
 
 copy_file(
@@ -8171,9 +8171,9 @@ jvm_import(
 
 java_library(
     name = "kodein-di-jvm-provided",
+    exports = [":kodein-di-jvm"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kodein-di-jvm"],
 )
 
 copy_file(
@@ -8215,9 +8215,9 @@ jvm_import(
 
 java_library(
     name = "kotlin-compiler-embeddable-provided",
+    exports = [":kotlin-compiler-embeddable"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlin-compiler-embeddable"],
 )
 
 copy_file(
@@ -8252,9 +8252,9 @@ jvm_import(
 
 java_library(
     name = "kotlin-gradle-plugin-idea-provided",
+    exports = [":kotlin-gradle-plugin-idea"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlin-gradle-plugin-idea"],
 )
 
 copy_file(
@@ -8349,9 +8349,9 @@ jvm_import(
 
 java_library(
     name = "kotlin-stdlib-provided",
+    exports = [":kotlin-stdlib"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlin-stdlib"],
 )
 
 copy_file(
@@ -8484,9 +8484,9 @@ jvm_import(
 
 java_library(
     name = "kotlin-tooling-core-provided",
+    exports = [":kotlin-tooling-core"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlin-tooling-core"],
 )
 
 copy_file(
@@ -8506,9 +8506,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-allopen-compiler-plugin-provided",
+    exports = [":kotlinc-allopen-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-allopen-compiler-plugin"],
 )
 
 copy_file(
@@ -8528,9 +8528,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-analysis-api-provided",
+    exports = [":kotlinc-analysis-api"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api"],
 )
 
 copy_file(
@@ -8550,9 +8550,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-analysis-api-fe10-provided",
+    exports = [":kotlinc-analysis-api-fe10"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-fe10"],
 )
 
 copy_file(
@@ -8572,9 +8572,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-analysis-api-impl-base-provided",
+    exports = [":kotlinc-analysis-api-impl-base"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-impl-base"],
 )
 
 copy_file(
@@ -8594,9 +8594,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-analysis-api-k2-provided",
+    exports = [":kotlinc-analysis-api-k2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-k2"],
 )
 
 copy_file(
@@ -8616,9 +8616,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-analysis-api-platform-interface-provided",
+    exports = [":kotlinc-analysis-api-platform-interface"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-platform-interface"],
 )
 
 copy_file(
@@ -8638,9 +8638,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-assignment-compiler-plugin-provided",
+    exports = [":kotlinc-assignment-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-assignment-compiler-plugin"],
 )
 
 copy_file(
@@ -8660,9 +8660,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-compose-compiler-plugin-provided",
+    exports = [":kotlinc-compose-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-compose-compiler-plugin"],
 )
 
 copy_file(
@@ -8682,9 +8682,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-incremental-compilation-impl-tests-provided",
+    exports = [":kotlinc-incremental-compilation-impl-tests"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-incremental-compilation-impl-tests"],
 )
 
 copy_file(
@@ -8704,9 +8704,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-js-plain-objects-compiler-plugin-provided",
+    exports = [":kotlinc-js-plain-objects-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-js-plain-objects-compiler-plugin"],
 )
 
 copy_file(
@@ -8726,9 +8726,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-build-common-tests-provided",
+    exports = [":kotlinc-kotlin-build-common-tests"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-build-common-tests"],
 )
 
 copy_file(
@@ -8748,9 +8748,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-build-tools-api-provided",
+    exports = [":kotlinc-kotlin-build-tools-api"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-build-tools-api"],
 )
 
 copy_file(
@@ -8770,9 +8770,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-build-tools-cri-impl-provided",
+    exports = [":kotlinc-kotlin-build-tools-cri-impl"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-build-tools-cri-impl"],
 )
 
 copy_file(
@@ -8792,9 +8792,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-build-tools-impl-provided",
+    exports = [":kotlinc-kotlin-build-tools-impl"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-build-tools-impl"],
 )
 
 copy_file(
@@ -8814,9 +8814,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-cli-provided",
+    exports = [":kotlinc-kotlin-compiler-cli"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-cli"],
 )
 
 copy_file(
@@ -8836,9 +8836,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-common-provided",
+    exports = [":kotlinc-kotlin-compiler-common"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-common"],
 )
 
 copy_file(
@@ -8858,9 +8858,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-fe10-provided",
+    exports = [":kotlinc-kotlin-compiler-fe10"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-fe10"],
 )
 
 copy_file(
@@ -8880,9 +8880,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-fir-provided",
+    exports = [":kotlinc-kotlin-compiler-fir"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-fir"],
 )
 
 copy_file(
@@ -8902,9 +8902,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-ir-provided",
+    exports = [":kotlinc-kotlin-compiler-ir"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-ir"],
 )
 
 copy_file(
@@ -8924,9 +8924,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-compiler-tests-provided",
+    exports = [":kotlinc-kotlin-compiler-tests"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-tests"],
 )
 
 copy_file(
@@ -8946,9 +8946,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-dataframe-compiler-plugin-provided",
+    exports = [":kotlinc-kotlin-dataframe-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-dataframe-compiler-plugin"],
 )
 
 copy_file(
@@ -8968,9 +8968,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-dist-provided",
+    exports = [":kotlinc-kotlin-dist"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-dist"],
 )
 
 copy_file(
@@ -8990,9 +8990,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-gradle-statistics-provided",
+    exports = [":kotlinc-kotlin-gradle-statistics"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-gradle-statistics"],
 )
 
 copy_file(
@@ -9012,9 +9012,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-jps-common-provided",
+    exports = [":kotlinc-kotlin-jps-common"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-jps-common"],
 )
 
 copy_file(
@@ -9034,9 +9034,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-jps-plugin-classpath-provided",
+    exports = [":kotlinc-kotlin-jps-plugin-classpath"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-jps-plugin-classpath"],
 )
 
 copy_file(
@@ -9056,9 +9056,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests-provided",
+    exports = [":kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests"],
 )
 
 copy_file(
@@ -9078,9 +9078,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-jps-plugin-tests-provided",
+    exports = [":kotlinc-kotlin-jps-plugin-tests"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-jps-plugin-tests"],
 )
 
 copy_file(
@@ -9100,9 +9100,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-objcexport-header-generator-provided",
+    exports = [":kotlinc-kotlin-objcexport-header-generator"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-objcexport-header-generator"],
 )
 
 copy_file(
@@ -9122,9 +9122,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-script-runtime-provided",
+    exports = [":kotlinc-kotlin-script-runtime"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-script-runtime"],
 )
 
 copy_file(
@@ -9144,9 +9144,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-scripting-common-provided",
+    exports = [":kotlinc-kotlin-scripting-common"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-scripting-common"],
 )
 
 copy_file(
@@ -9166,9 +9166,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-scripting-compiler-impl-provided",
+    exports = [":kotlinc-kotlin-scripting-compiler-impl"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-scripting-compiler-impl"],
 )
 
 copy_file(
@@ -9188,9 +9188,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-scripting-dependencies-provided",
+    exports = [":kotlinc-kotlin-scripting-dependencies"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-scripting-dependencies"],
 )
 
 copy_file(
@@ -9210,9 +9210,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-scripting-jvm-provided",
+    exports = [":kotlinc-kotlin-scripting-jvm"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-scripting-jvm"],
 )
 
 copy_file(
@@ -9232,9 +9232,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlin-swift-export-provided",
+    exports = [":kotlinc-kotlin-swift-export"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-swift-export"],
 )
 
 copy_file(
@@ -9254,9 +9254,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-kotlinx-serialization-compiler-plugin-provided",
+    exports = [":kotlinc-kotlinx-serialization-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlinx-serialization-compiler-plugin"],
 )
 
 copy_file(
@@ -9276,9 +9276,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-lombok-compiler-plugin-provided",
+    exports = [":kotlinc-lombok-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-lombok-compiler-plugin"],
 )
 
 copy_file(
@@ -9298,9 +9298,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-low-level-api-fir-provided",
+    exports = [":kotlinc-low-level-api-fir"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-low-level-api-fir"],
 )
 
 copy_file(
@@ -9320,9 +9320,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-noarg-compiler-plugin-provided",
+    exports = [":kotlinc-noarg-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-noarg-compiler-plugin"],
 )
 
 copy_file(
@@ -9342,9 +9342,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-parcelize-compiler-plugin-provided",
+    exports = [":kotlinc-parcelize-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-parcelize-compiler-plugin"],
 )
 
 copy_file(
@@ -9364,9 +9364,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-sam-with-receiver-compiler-plugin-provided",
+    exports = [":kotlinc-sam-with-receiver-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-sam-with-receiver-compiler-plugin"],
 )
 
 copy_file(
@@ -9386,9 +9386,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-scripting-compiler-plugin-provided",
+    exports = [":kotlinc-scripting-compiler-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-scripting-compiler-plugin"],
 )
 
 copy_file(
@@ -9408,9 +9408,9 @@ jvm_import(
 
 java_library(
     name = "kotlinc-symbol-light-classes-provided",
+    exports = [":kotlinc-symbol-light-classes"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":kotlinc-symbol-light-classes"],
 )
 
 copy_file(
@@ -9580,9 +9580,9 @@ copy_file(
 
 jvm_import(
     name = "kotlinx-serialization-core",
-    exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
     jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
     source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0-sources_http//file",
+    exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
     visibility = ["//visibility:public"],
 )
 
@@ -11547,9 +11547,9 @@ jvm_import(
 
 java_library(
     name = "libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided",
+    exports = [":libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors"],
 )
 
 copy_file(
@@ -11569,9 +11569,9 @@ jvm_import(
 
 java_library(
     name = "libraries-dokka-jetbrains-dokka-cli-provided",
+    exports = [":libraries-dokka-jetbrains-dokka-cli"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":libraries-dokka-jetbrains-dokka-cli"],
 )
 
 copy_file(
@@ -11659,9 +11659,9 @@ jvm_import(
 
 java_library(
     name = "libraries-dokka-jetbrains-dokka-javadoc-plugin-provided",
+    exports = [":libraries-dokka-jetbrains-dokka-javadoc-plugin"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":libraries-dokka-jetbrains-dokka-javadoc-plugin"],
 )
 
 copy_file(
@@ -14174,9 +14174,9 @@ jvm_import(
 
 java_library(
     name = "maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided",
+    exports = [":maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5"],
 )
 
 copy_file(
@@ -14475,9 +14475,9 @@ jvm_import(
 
 java_library(
     name = "maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5-provided",
+    exports = [":maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5"],
 )
 
 jvm_import(
@@ -14489,9 +14489,9 @@ jvm_import(
 
 java_library(
     name = "maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5-provided",
+    exports = [":maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5"],
 )
 
 copy_file(
@@ -14511,9 +14511,9 @@ jvm_import(
 
 java_library(
     name = "maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2-provided",
+    exports = [":maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2"],
 )
 
 copy_file(
@@ -14562,9 +14562,9 @@ jvm_import(
 
 java_library(
     name = "maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0-provided",
+    exports = [":maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0"],
 )
 
 copy_file(
@@ -14823,9 +14823,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-event_listener-com-google-inject-guice-no_aop-4-0-provided",
+    exports = [":maven-server-event_listener-com-google-inject-guice-no_aop-4-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-com-google-inject-guice-no_aop-4-0"],
 )
 
 copy_file(
@@ -15199,9 +15199,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
+    exports = [":maven-server-event_listener-org-apache-maven-maven-core-3-3-9"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-org-apache-maven-maven-core-3-3-9"],
 )
 
 java_library(
@@ -15215,9 +15215,9 @@ java_library(
 
 java_library(
     name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
+    exports = [":maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0"],
 )
 
 java_library(
@@ -15255,9 +15255,9 @@ java_library(
 
 java_library(
     name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",
+    exports = [":maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9"],
 )
 
 copy_file(
@@ -16013,9 +16013,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
+    exports = [":maven-server-indexer-apache-maven-indexer-core-6-2-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-indexer-apache-maven-indexer-core-6-2-2"],
 )
 
 copy_file(
@@ -16064,9 +16064,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-com-google-inject-guicen-no_aop-4-2-1-provided",
+    exports = [":maven-server-m3-common-com-google-inject-guicen-no_aop-4-2-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-com-google-inject-guicen-no_aop-4-2-1"],
 )
 
 copy_file(
@@ -16086,9 +16086,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-apache-lucene-lucene-core-2-4-1-provided",
+    exports = [":maven-server-m3-common-org-apache-lucene-lucene-core-2-4-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-apache-lucene-lucene-core-2-4-1"],
 )
 
 copy_file(
@@ -16160,9 +16160,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-apache-maven-archetype-archetype-common-2-2-provided",
+    exports = [":maven-server-m3-common-org-apache-maven-archetype-archetype-common-2-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-apache-maven-archetype-archetype-common-2-2"],
 )
 
 copy_file(
@@ -16555,9 +16555,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-apache-maven-maven-compat-3-6-0-provided",
+    exports = [":maven-server-m3-common-org-apache-maven-maven-compat-3-6-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-apache-maven-maven-compat-3-6-0"],
 )
 
 copy_file(
@@ -16577,9 +16577,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+    exports = [":maven-server-m3-common-org-apache-maven-shared-maven-dependency-tree-1-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-apache-maven-shared-maven-dependency-tree-1-2"],
 )
 
 copy_file(
@@ -16599,9 +16599,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-sonatype-nexus-nexus-indexer-3-0-4-provided",
+    exports = [":maven-server-m3-common-org-sonatype-nexus-nexus-indexer-3-0-4"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-sonatype-nexus-nexus-indexer-3-0-4"],
 )
 
 copy_file(
@@ -16621,9 +16621,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1-provided",
+    exports = [":maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1"],
 )
 
 java_library(
@@ -16637,9 +16637,9 @@ java_library(
 
 java_library(
     name = "maven-server-m3-impl-com-google-inject-guice-no_aop-4-0-provided",
+    exports = [":maven-server-m3-impl-com-google-inject-guice-no_aop-4-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-com-google-inject-guice-no_aop-4-0"],
 )
 
 copy_file(
@@ -16667,9 +16667,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2"],
 )
 
 java_library(
@@ -16685,9 +16685,9 @@ java_library(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2"],
 )
 
 copy_file(
@@ -16755,9 +16755,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9"],
 )
 
 java_library(
@@ -16795,9 +16795,9 @@ java_library(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-maven-core-3-3-9"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-maven-core-3-3-9"],
 )
 
 copy_file(
@@ -16913,9 +16913,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9"],
 )
 
 jvm_import(
@@ -16927,9 +16927,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+    exports = [":maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
 )
 
 java_library(
@@ -16949,9 +16949,9 @@ java_library(
 
 java_library(
     name = "maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1-provided",
+    exports = [":maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1"],
 )
 
 java_library(
@@ -16994,9 +16994,9 @@ java_library(
 
 java_library(
     name = "maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0-provided",
+    exports = [":maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0"],
 )
 
 copy_file(
@@ -17059,9 +17059,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m36-impl-org-apache-maven-maven-core-3-6-0-provided",
+    exports = [":maven-server-m36-impl-org-apache-maven-maven-core-3-6-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-maven-core-3-6-0"],
 )
 
 copy_file(
@@ -17140,9 +17140,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0-provided",
+    exports = [":maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0"],
 )
 
 jvm_import(
@@ -17154,9 +17154,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+    exports = [":maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
 )
 
 copy_file(
@@ -17176,9 +17176,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m40-google-inject-guice-6-0-0-provided",
+    exports = [":maven-server-m40-google-inject-guice-6-0-0"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m40-google-inject-guice-6-0-0"],
 )
 
 jvm_import(
@@ -17190,9 +17190,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m40-javax-inject-1-provided",
+    exports = [":maven-server-m40-javax-inject-1"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m40-javax-inject-1"],
 )
 
 copy_file(
@@ -18053,9 +18053,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-5-provided",
+    exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-5"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-5"],
 )
 
 jvm_import(
@@ -18067,9 +18067,9 @@ jvm_import(
 
 java_library(
     name = "maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3-provided",
+    exports = [":maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3"],
 )
 
 copy_file(
@@ -18311,9 +18311,9 @@ jvm_import(
 
 java_library(
     name = "opentest4j-provided",
+    exports = [":opentest4j"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":opentest4j"],
 )
 
 copy_file(
@@ -19014,9 +19014,9 @@ jvm_import(
 
 java_library(
     name = "platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted-provided",
+    exports = [":platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted"],
 )
 
 jvm_import(
@@ -20449,9 +20449,9 @@ jvm_import(
 
 java_library(
     name = "studio-platform-provided",
+    exports = [":studio-platform"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":studio-platform"],
 )
 
 copy_file(
@@ -20604,9 +20604,9 @@ jvm_import(
 
 java_library(
     name = "test_n_g-provided",
+    exports = [":test_n_g"],
     neverlink = True,
     visibility = ["//visibility:public"],
-    exports = [":test_n_g"],
 )
 
 copy_file(
