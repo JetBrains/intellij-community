@@ -99,8 +99,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     return titleWithCheckbox
   }
 
-  override fun createEditorPopupActions(): List<AnAction> {
-    return super.createEditorPopupActions() +
+  override fun createEditorPopupChangesActions(): List<AnAction> {
+    return super.createEditorPopupChangesActions() +
            createTrackerEditorPopupActions(trackerActionProvider)
   }
 

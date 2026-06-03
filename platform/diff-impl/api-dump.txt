@@ -798,7 +798,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - p:clearDiffPresentation():V
 - p:computeDifferences(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:createAdditionalEditorGutterActions():java.util.List
-- p:createEditorPopupActions():java.util.List
+- p:createEditorPopupChangesActions():java.util.List
 - createPopupActions():java.util.List
 - p:createTitles():javax.swing.JComponent
 - createToolbarActions():java.util.List
@@ -946,6 +946,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:computeDifferences(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorPopupActions():java.util.List
+- p:createEditorPopupChangesActions():java.util.List
 - p:createPopupActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:createUi(com.intellij.diff.tools.simple.SimpleDiffChange):com.intellij.diff.tools.simple.SimpleDiffChangeUi

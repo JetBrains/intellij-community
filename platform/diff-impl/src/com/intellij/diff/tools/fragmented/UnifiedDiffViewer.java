@@ -327,11 +327,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   }
 
 
-  protected @NotNull List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.add(new ReplaceSelectedChangesAction(Side.LEFT));
-    group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
+  private @NotNull List<AnAction> createEditorPopupActions() {
+    List<AnAction> group = new ArrayList<>(createEditorPopupChangesActions());
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
@@ -339,6 +336,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     group.add(new MyToggleExpandByDefaultAction());
 
     return group;
+  }
+
+  protected @NotNull List<@NotNull AnAction> createEditorPopupChangesActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new ReplaceSelectedChangesAction(Side.LEFT));
+    actions.add(new ReplaceSelectedChangesAction(Side.RIGHT));
+    return actions;
   }
 
   @RequiresEdt

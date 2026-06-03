@@ -186,15 +186,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return actions;
   }
 
+  protected @NotNull List<@NotNull AnAction> createEditorPopupChangesActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new ReplaceSelectedChangesAction(Side.LEFT));
+    actions.add(new AppendSelectedChangesAction(Side.LEFT));
+    actions.add(new ReplaceSelectedChangesAction(Side.RIGHT));
+    actions.add(new AppendSelectedChangesAction(Side.RIGHT));
+    return actions;
+  }
+
   @Override
   protected @NotNull List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.add(new ReplaceSelectedChangesAction(Side.LEFT));
-    group.add(new AppendSelectedChangesAction(Side.LEFT));
-    group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
-    group.add(new AppendSelectedChangesAction(Side.RIGHT));
-
+    List<AnAction> group = new ArrayList<>(createEditorPopupChangesActions());
     group.add(Separator.getInstance());
     group.addAll(super.createEditorPopupActions());
 
