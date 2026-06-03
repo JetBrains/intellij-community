@@ -16,7 +16,7 @@ import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import java.util.Collections
@@ -57,7 +57,7 @@ internal class LspOpenedFilesService(private val project: Project) {
       val newServersToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
     }
 
-    val lspServerManager = LspServerManagerImpl.getInstanceImpl(project)
+    val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
 
     ReadAction.nonBlocking<OpenedFilesData> {
       val data = OpenedFilesData()
@@ -85,7 +85,7 @@ internal class LspOpenedFilesService(private val project: Project) {
           }
 
           if (!fileWithinServerRootsAndSupported && ProjectFileIndex.getInstance(project).isInContent(openedFile)) {
-            val starter = LspServerManagerImpl.LspStarterImpl()
+            val starter = LspClientManagerImpl.LspStarterImpl()
             provider.fileOpened(project, openedFile, starter)
             starter.descriptor?.let { descriptor -> data.newServersToStart.add(providerClass to descriptor) }
           }
@@ -119,7 +119,7 @@ internal class LspOpenedFilesService(private val project: Project) {
    * The work is coalesced across calls, so it's cheap to invoke after any event that might have made some files irrelevant.
    */
   fun scheduleClosingFilesThatAreNotOfInterest() {
-    val lspServerManager = LspServerManagerImpl.getInstanceImpl(project)
+    val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
     val runningServers = lspServerManager.getAllRunningServers()
     if (runningServers.isEmpty()) return
 

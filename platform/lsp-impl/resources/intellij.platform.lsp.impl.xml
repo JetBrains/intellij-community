@@ -42,7 +42,7 @@
                        key="notification.group.lsp.log.info.trace"/>
 
     <projectService serviceInterface="com.intellij.platform.lsp.api.LspClientManager"
-                    serviceImplementation="com.intellij.platform.lsp.impl.LspServerManagerImpl"/>
+                    serviceImplementation="com.intellij.platform.lsp.impl.LspClientManagerImpl"/>
 
     <editorFactoryDocumentListener id="LspDocumentListener"
                                    implementation="com.intellij.platform.lsp.impl.platformListeners.LspDocumentListener"/>

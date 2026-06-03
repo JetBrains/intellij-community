@@ -72,7 +72,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspServer: LspServe
   override fun applyEdit(params: ApplyWorkspaceEditParams): CompletableFuture<ApplyWorkspaceEditResponse> {
     val future = CompletableFuture<ApplyWorkspaceEditResponse>()
 
-    LspServerManagerImpl.getInstanceImpl(project).cs.launch {
+    LspClientManagerImpl.getInstanceImpl(project).cs.launch {
       try {
         readAndEdtWriteAction {
           val applier = LspWorkspaceEditApplier.create(lspServer, params.edit)
@@ -148,7 +148,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspServer: LspServe
 
     // Only restart daemon explicitly if neither inlay hints nor folding update was triggered (both already restart it)
     if (needsDaemonRestart && !needsInlayHintRefresh && !needsFoldingUpdate) {
-      DaemonCodeAnalyzer.getInstance(project).restart("LspServerManagerImpl.registerCapabilities")
+      DaemonCodeAnalyzer.getInstance(project).restart("LspClientManagerImpl.registerCapabilities")
     }
   }
 
@@ -237,7 +237,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspServer: LspServe
       is WorkDoneProgressBegin -> {
         progressJobs[tokenId]?.cancel()
 
-        val job = LspServerManagerImpl.getInstanceImpl(project).cs.launch {
+        val job = LspClientManagerImpl.getInstanceImpl(project).cs.launch {
 
           progressTasks[tokenId] = ProgressTask(
             text = value.title,
