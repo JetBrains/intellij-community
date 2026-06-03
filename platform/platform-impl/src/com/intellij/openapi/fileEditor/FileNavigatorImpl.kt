@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -117,7 +118,8 @@ class FileNavigatorImpl : FileNavigator {
 @RequiresEdt
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
-  if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(descriptor.file)) {
+  if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(descriptor.file) &&
+      Registry.`is`("hyperlink.ide.decompiler.open.file")) {
     runWithModalProgressBlocking(descriptor.project, IdeBundle.message("progress.title.preparing.navigation")) {
       readAction {
         FileDocumentManager.getInstance().getDocument(descriptor.file) //force decompilation

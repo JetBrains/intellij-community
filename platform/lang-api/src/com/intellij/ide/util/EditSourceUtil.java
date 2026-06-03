@@ -54,7 +54,8 @@ public final class EditSourceUtil {
     Project project = navigationElement.getProject();
     OpenFileDescriptor desc;
     if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(virtualFile) &&
-        FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
+        FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null &&
+        Registry.is("hyperlink.ide.decompiler.open.file")) {
       SmartPsiElementPointer<PsiElement> pointer =
         SmartPointerManager.getInstance(project).createSmartPsiElementPointer(navigationElement);
       desc = new OpenFileDescriptor(project, virtualFile, () -> {
