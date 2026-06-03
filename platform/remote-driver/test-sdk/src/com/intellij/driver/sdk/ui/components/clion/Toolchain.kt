@@ -8,6 +8,13 @@ data class Toolset(
   val path: String? = null
 )
 
+data class RemoteConnection(
+  val host: String = "localhost",
+  val port: String = "2222",
+  val username: String = System.getenv("USERNAME") ?: "",
+  val password: String = "wslpassword",
+)
+
 sealed class Toolchain(
   val name: ToolchainNames,
   val compiler: Compiler,
@@ -115,6 +122,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.REMOTE_GDB,
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.REMOTE_HOST,
+    val connection: RemoteConnection = RemoteConnection(),
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   companion object {
