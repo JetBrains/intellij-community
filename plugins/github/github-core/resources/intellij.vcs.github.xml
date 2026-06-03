@@ -254,7 +254,7 @@
         <keyboard-shortcut first-keystroke="shift meta S" keymap="QtCreator (Mac OS X)" remove="true"/>
 
         <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-        <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+        <add-to-group group-id="Code.Review.Diff.Editor.Popup" anchor="after" relative-to-action="Code.Review.Editor.New.Comment"/>
 
         <override-text place="EditorPopupMenu"/>
         <override-text place="Diff.EditorPopupMenu" use-text-of-place="EditorPopupMenu"/>
