@@ -23,6 +23,7 @@ jvm_library(
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
     deps = [
         # do not sort,
@@ -62,6 +63,7 @@ jvm_library(
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
 )
 
@@ -78,6 +80,7 @@ jvm_library(
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
     runtime_deps = [
         # do not sort,

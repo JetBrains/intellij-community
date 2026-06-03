@@ -45,7 +45,7 @@
   projectLibraries:
   - name: com.jetbrains.fus.reporting.ap.validation.all
     files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1/ap-validation-all-1.jar
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar
     reason: <- intellij.python.community.impl
   - name: jsr305
     files:

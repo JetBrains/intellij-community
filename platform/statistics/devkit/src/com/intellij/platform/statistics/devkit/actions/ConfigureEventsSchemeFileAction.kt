@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.components.dialog
@@ -61,7 +62,9 @@ internal class ConfigureEventsSchemeFileAction(private var myRecorderId: String 
         }
       }
       val validator = IntellijSensitiveDataValidator.getInstance(recorder)
-      validator.update()
+      runBlockingCancellable {
+        validator.update()
+      }
     }
   }
 

@@ -218,6 +218,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">
         <properties maven-id="io.netty:netty-all:4.2.15.Final">

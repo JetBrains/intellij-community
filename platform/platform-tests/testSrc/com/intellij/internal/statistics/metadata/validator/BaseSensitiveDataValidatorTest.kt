@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
+import com.intellij.internal.statistic.StatisticsServiceScope
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -59,7 +60,11 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
 
   private fun singleFileFileStorage(content: String): FileStorage = object : FileStorage {
     override fun exists(path: String): Boolean = true
+    override fun list(path: String): List<String> = emptyList()
+    override fun delete(path: String) = Unit
     override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = object : FileHandle {
+      override val name: String
+        get() = path
       override fun exists(): Boolean = true
       override fun length(): Long = content.length.toLong()
       override fun read(index: Int): Byte = content[index].code.toByte()
@@ -82,7 +87,12 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
       )
     }.flatten()
     .toMap()
+
     override fun exists(path: String): Boolean = if (path.isEmpty()) true else fileHandles.containsKey(path)
+
+    override fun list(path: String): List<String> = fileHandles.keys.toList()
+
+    override fun delete(path: String) = Unit
 
     override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = fileHandles[path]!!.openFileHandle(path, mode)
 
@@ -108,16 +118,20 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
       override fun post(url: String, data: String): HttpResponse = HttpResponse(200, "")
     }
 
-    val messageBus = MessageBus()
+    val messageBus = MessageBus(StatisticsServiceScope.getScope())
 
     val remoteConfig = object : RemoteConfig {
       override fun getDictionaryUrl(): String = ""
       override fun getMetadataUrl(): String = ""
       override fun getSendUrl(): String = ""
       override fun provideOptions(): Map<String, String> = emptyMap()
+      override suspend fun update(): Boolean = true
+      override suspend fun scheduleUpdate() = Unit
+      override fun isUnreachable(): Boolean = false
     }
 
     val fusConfig = FusClientConfig(
+      "IntelliJ",
       "TEST",
       "TEST",
       RECORDER_ID,

@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />
   </component>
 </module>

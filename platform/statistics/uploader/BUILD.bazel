@@ -31,6 +31,7 @@ jvm_library(
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
 )
 

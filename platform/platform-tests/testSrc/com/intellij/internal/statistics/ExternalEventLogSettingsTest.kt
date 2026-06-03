@@ -4,6 +4,7 @@ package com.intellij.internal.statistics
 import com.intellij.ide.Region
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.internal.statistic.eventLog.StatsAppConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.CachedConfigurationClient
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsClient
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
@@ -53,15 +54,17 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
 
   fun testSubstitution() {
     setupHttpClientRequestBuilders()
-    val configurationClient = ConfigurationClientFactory.create(
-      recorderId = RECORDER,
-      productCode = PRODUCT_CODE,
-      productVersion = PRODUCT_VERSION,
-      isTestConfiguration = false,
-      httpClient = httpClient,
-      regionCode = RegionCode.ALL,
+    val configurationClient = CachedConfigurationClient(
+      delegate = ConfigurationClientFactory.create(
+        recorderId = RECORDER,
+        productCode = PRODUCT_CODE,
+        productVersion = PRODUCT_VERSION,
+        isTestConfiguration = false,
+        httpClient = httpClient,
+        regionCode = RegionCode.ALL,
+        serializer = FusComponentProvider.FusJacksonSerializer()
+      ),
       cacheTimeoutMs = 1,
-      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isNotEqualTo(URL)
   }
@@ -71,15 +74,17 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    */
   fun testUsualRegionConfigurationUrl() {
     setupHttpClientRequestBuilders()
-    val configurationClient = ConfigurationClientFactory.create(
-      recorderId = RECORDER,
-      productCode = PRODUCT_CODE,
-      productVersion = PRODUCT_VERSION,
-      isTestConfiguration = false,
-      httpClient = httpClient,
-      regionCode = RegionCode.ALL,
+    val configurationClient = CachedConfigurationClient(
+      delegate = ConfigurationClientFactory.create(
+        recorderId = RECORDER,
+        productCode = PRODUCT_CODE,
+        productVersion = PRODUCT_VERSION,
+        isTestConfiguration = false,
+        httpClient = httpClient,
+        regionCode = RegionCode.ALL,
+        serializer = FusComponentProvider.FusJacksonSerializer()
+      ),
       cacheTimeoutMs = 1,
-      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CONFIG_URL)
   }
@@ -89,15 +94,17 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    */
   fun testChinaRegionConfigurationUrl() {
     setupHttpClientRequestBuilders()
-    val configurationClient = ConfigurationClientFactory.create(
-      recorderId = RECORDER,
-      productCode = PRODUCT_CODE,
-      productVersion = PRODUCT_VERSION,
-      isTestConfiguration = false,
-      httpClient = httpClient,
-      regionCode = RegionCode.CN,
+    val configurationClient = CachedConfigurationClient(
+      delegate = ConfigurationClientFactory.create(
+        recorderId = RECORDER,
+        productCode = PRODUCT_CODE,
+        productVersion = PRODUCT_VERSION,
+        isTestConfiguration = false,
+        httpClient = httpClient,
+        regionCode = RegionCode.CN,
+        serializer = FusComponentProvider.FusJacksonSerializer()
+      ),
       cacheTimeoutMs = 1,
-      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CHINA_CONFIG_URL)
   }
@@ -107,15 +114,17 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    */
   fun testTestEnvironmentConfigurationUrl() {
     setupHttpClientRequestBuilders()
-    val configurationClient = ConfigurationClientFactory.create(
-      recorderId = RECORDER,
-      productCode = PRODUCT_CODE,
-      productVersion = PRODUCT_VERSION,
-      isTestConfiguration = true,
-      httpClient = httpClient,
-      regionCode = RegionCode.ALL,
+    val configurationClient = CachedConfigurationClient(
+      delegate = ConfigurationClientFactory.create(
+        recorderId = RECORDER,
+        productCode = PRODUCT_CODE,
+        productVersion = PRODUCT_VERSION,
+        isTestConfiguration = true,
+        httpClient = httpClient,
+        regionCode = RegionCode.ALL,
+        serializer = FusComponentProvider.FusJacksonSerializer()
+      ),
       cacheTimeoutMs = 1,
-      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(TEST_CONFIG_URL)
   }

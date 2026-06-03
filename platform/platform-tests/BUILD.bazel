@@ -347,6 +347,7 @@ jvm_library(
         "//platform/platform-impl/update-checker",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
         "//platform/platform-impl/eel:ide-impl-wsl",
         "//platform/progress/shared:ide-progress",
         "//platform/syntax/syntax-psi-tests:psi-tests",

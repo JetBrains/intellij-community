@@ -2,9 +2,12 @@
   projectLibraries:
   - name: com.jetbrains.fus.reporting.ap.validation.all
     files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1/ap-validation-all-1.jar
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar
   - name: com.jetbrains.fus.reporting.fus-api
     files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/1/fus-api-1.jar
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2/fus-api-2.jar
+  - name: jetbrains.fus.reporting.api.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api-jvm/2/fus-api-jvm-2.jar
   modules:
   - name: intellij.platform.statistics
