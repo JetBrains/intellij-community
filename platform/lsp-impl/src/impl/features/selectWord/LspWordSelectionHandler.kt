@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspSelectionRangeSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -33,25 +33,25 @@ internal class LspWordSelectionHandler : ExtendWordSelectionHandler {
     val file = psiFile.virtualFile ?: return null
     if (file is VirtualFileWindow || !file.isInLocalFileSystem) return null
 
-    val lspServers = LspServerManagerImpl.getInstanceImpl(psiFile.project)
-      .getServersWithThisFileOpen(file)
+    val lspClients = LspClientManagerImpl.getInstanceImpl(psiFile.project)
+      .getClientsWithThisFileOpen(file)
       .filter { shouldProceedWithServer(it, file) }
-    if (lspServers.isEmpty()) return null
+    if (lspClients.isEmpty()) return null
 
     val document = editor.document
 
-    return lspServers.flatMap { lspServer ->
-      lspServer.requestExecutor.getSelectionRangeCaching(file, cursorOffset)?.let {
+    return lspClients.flatMap { lspClient ->
+      lspClient.requestExecutor.getSelectionRangeCaching(file, cursorOffset)?.let {
         extractTextRanges(document, it)
       }
       ?: emptyList()
     }
   }
 
-  private fun shouldProceedWithServer(lspServer: LspServerImpl, file: VirtualFile): Boolean {
-    val customizer = lspServer.descriptor.lspCustomization.selectionRangeCustomizer
+  private fun shouldProceedWithServer(lspClient: LspClientImpl, file: VirtualFile): Boolean {
+    val customizer = lspClient.descriptor.lspCustomization.selectionRangeCustomizer
     return customizer is LspSelectionRangeSupport &&
-           lspServer.supportsSelectionRange(file) &&
+           lspClient.supportsSelectionRange(file) &&
            customizer.shouldAskServerForSelectionRange(file)
   }
 

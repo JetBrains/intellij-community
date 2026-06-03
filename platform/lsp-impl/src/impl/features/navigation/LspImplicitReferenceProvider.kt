@@ -21,8 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
 import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.psi.PsiElement
@@ -64,24 +64,24 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     }
   }
 
-  private fun requestElementDefinitions(lspServer: LspServerImpl, file: VirtualFile, offset: Int): List<LocationLink> {
-    if (!lspServer.supportsGotoDefinition()) return emptyList()
-    val goToDefCustomizer = lspServer.descriptor.lspCustomization.goToDefinitionCustomizer
+  private fun requestElementDefinitions(lspClient: LspClientImpl, file: VirtualFile, offset: Int): List<LocationLink> {
+    if (!lspClient.supportsGotoDefinition()) return emptyList()
+    val goToDefCustomizer = lspClient.descriptor.lspCustomization.goToDefinitionCustomizer
     if (goToDefCustomizer !is LspGoToDefinitionSupport) return emptyList()
-    val definitions = lspServer.requestExecutor.getElementDefinitions(file, offset)
+    val definitions = lspClient.requestExecutor.getElementDefinitions(file, offset)
 
     if (definitions.size == 1
         && definitions[0].targetSelectionRange == definitions[0].originSelectionRange
-        && definitions[0].targetUri == lspServer.descriptor.getFileUri(file))
+        && definitions[0].targetUri == lspClient.descriptor.getFileUri(file))
       return emptyList()
 
     return definitions
   }
 
-  private fun requestTypeDefinitions(lspServer: LspServerImpl, file: VirtualFile, offset: Int): List<LocationLink> {
-    if (!lspServer.supportsGotoTypeDefinition()) return emptyList()
-    if (lspServer.descriptor.lspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionDisabled) return emptyList()
-    return lspServer.requestExecutor.getTypeDefinitions(file, offset)
+  private fun requestTypeDefinitions(lspClient: LspClientImpl, file: VirtualFile, offset: Int): List<LocationLink> {
+    if (!lspClient.supportsGotoTypeDefinition()) return emptyList()
+    if (lspClient.descriptor.lspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionDisabled) return emptyList()
+    return lspClient.requestExecutor.getTypeDefinitions(file, offset)
   }
 
   /**
@@ -90,21 +90,21 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
   private fun createResolvedReference(
     psiFile: PsiFile,
     offset: Int,
-    sendRequest: (lspServer: LspServerImpl, file: VirtualFile, offset: Int) -> List<LocationLink>,
+    sendRequest: (lspClient: LspClientImpl, file: VirtualFile, offset: Int) -> List<LocationLink>,
   ): LspResolvedSymbolReference? {
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
 
-    val serversAndLocationLinks = LspServerManagerImpl.getInstanceImpl(psiFile.project).getServersWithThisFileOpen(file)
+    val clientsAndLocationLinks = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(file)
       .mapNotNull {
         val locationLinks = sendRequest(it, file, offset)
-        if (locationLinks.isNotEmpty()) LspServerAndLocationLinks(it, locationLinks) else null
+        if (locationLinks.isNotEmpty()) LspClientAndLocationLinks(it, locationLinks) else null
       }
       .ifEmpty { return null }
 
     // In the case of `foo<caret>++`, a server may return references both for `foo` and for `++`.
     // IntelliJ's standard behavior is to respect only the right reference.
-    val hasRangeToTheRight: Boolean = serversAndLocationLinks.flatMap { it.locationLinks }.any { locationLink ->
+    val hasRangeToTheRight: Boolean = clientsAndLocationLinks.flatMap { it.locationLinks }.any { locationLink ->
       val originSelectionRange = locationLink.originSelectionRange ?: return@any false
       val endOffsetInOrigin = getOffsetInDocument(document, originSelectionRange.end) ?: return@any false
       endOffsetInOrigin > offset
@@ -112,8 +112,8 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 
     var rangeInFile: TextRange? = null
 
-    val resolveResults: List<LspNavigatableSymbol> = serversAndLocationLinks.flatMap { serverAndLocationLinks ->
-      serverAndLocationLinks.locationLinks.mapNotNull { locationLink ->
+    val resolveResults: List<LspNavigatableSymbol> = clientsAndLocationLinks.flatMap { clientAndLocationLinks ->
+      clientAndLocationLinks.locationLinks.mapNotNull { locationLink ->
         val originSelectionRange = locationLink.originSelectionRange
         val textRange = if (originSelectionRange != null) {
           getRangeInDocument(document, originSelectionRange) ?: return@mapNotNull null
@@ -126,7 +126,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
           return@mapNotNull null
         }
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
-        val targetFile = serverAndLocationLinks.lspClient.descriptor.findFileByUri(locationLink.targetUri)
+        val targetFile = clientAndLocationLinks.lspClient.descriptor.findFileByUri(locationLink.targetUri)
                          ?: return@mapNotNull null
         LspNavigatableSymbol(targetFile, locationLink.targetSelectionRange)
       }
@@ -139,7 +139,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 }
 
 
-private data class LspServerAndLocationLinks(val lspClient: LspClient, val locationLinks: List<LocationLink>)
+private data class LspClientAndLocationLinks(val lspClient: LspClient, val locationLinks: List<LocationLink>)
 
 
 private class LspResolvedSymbolReference(

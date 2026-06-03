@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.hierarchy.LspFakePsiElement
 import com.intellij.platform.lsp.impl.features.hierarchy.LspHierarchyNodeDescriptor
 import com.intellij.psi.PsiElement
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 import javax.swing.JTree
 
-internal class LspTypeHierarchyBrowser(project: Project, element: PsiElement, private val server: LspServerImpl) :
+internal class LspTypeHierarchyBrowser(project: Project, element: PsiElement, private val client: LspClientImpl) :
   TypeHierarchyBrowserBase(project, element) {
 
   override fun getElementFromDescriptor(descriptor: HierarchyNodeDescriptor): PsiElement? {
@@ -80,6 +80,6 @@ internal class LspTypeHierarchyBrowser(project: Project, element: PsiElement, pr
   override fun createLegendPanel(): JPanel? = null
 
   private fun getBaseDescriptor(psiElement: PsiElement): LspHierarchyNodeDescriptor {
-    return LspHierarchyNodeDescriptor(server, null, psiElement, null, true)
+    return LspHierarchyNodeDescriptor(client, null, psiElement, null, true)
   }
 }

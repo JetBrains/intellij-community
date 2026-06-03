@@ -40,17 +40,17 @@ import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class LspRequestExecutor(
-  private val lspServer: LspServerImpl,
+  private val lspClient: LspClientImpl,
   private val documentMapping: LspDocumentMapping,
-) : LspRequestExecutorBase(lspServer) {
+) : LspRequestExecutorBase(lspClient) {
 
   private val allCaches = mutableListOf<LspCache>()
 
-  private val hoverResultCache = register(HoverResultCache(lspServer.project))
-  private val workspaceSymbolCache = register(LspSingleSlotCache<String, List<WorkspaceSymbol>>(lspServer.project))
-  private val documentSymbolCache = register(LspPerFileCache<Unit, List<DocumentSymbol>>(lspServer.project))
-  private val documentHighlightCache = register(LspDocumentHighlightCache(lspServer.project))
-  private val selectionRangeCache = register(LspPerFileCache<Int, SelectionRange>(lspServer.project))
+  private val hoverResultCache = register(HoverResultCache(lspClient.project))
+  private val workspaceSymbolCache = register(LspSingleSlotCache<String, List<WorkspaceSymbol>>(lspClient.project))
+  private val documentSymbolCache = register(LspPerFileCache<Unit, List<DocumentSymbol>>(lspClient.project))
+  private val documentHighlightCache = register(LspDocumentHighlightCache(lspClient.project))
+  private val selectionRangeCache = register(LspPerFileCache<Int, SelectionRange>(lspClient.project))
 
   private fun <T : LspCache> register(cache: T): T {
     allCaches.add(cache)
@@ -71,7 +71,7 @@ class LspRequestExecutor(
   @RequiresBackgroundThread
   fun getCompletionListAsync(file: VirtualFile, offset: Int, isAutoPopup: Boolean): CompletableFuture<CompletionList?> {
     val host = documentMapping.unwrapInjection(file, offset) ?: return CompletableFuture.completedFuture(null)
-    val completionContext = createCompletionContext(lspServer, host.hostDocument, host.hostOffset, isAutoPopup)
+    val completionContext = createCompletionContext(lspClient, host.hostDocument, host.hostOffset, isAutoPopup)
     return documentMapping.withDocumentAtOffset(host.hostFile, host.hostDocument, host.hostOffset) { lspDocument, position ->
       val params = CompletionParams(lspDocument.id, position, completionContext)
       val future = doSendRequestAsync { it.textDocumentService.completion(params) } ?: CompletableFuture.completedFuture(null)

@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.lsp.impl.LspDynamicCapabilities
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.fileEvents.FileChangeInfo
 import com.intellij.util.containers.MultiMap
 import org.eclipse.lsp4j.FileChangeType
@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.FileChangeType
  */
 internal class LspFileListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (!LspServerManagerImpl.isAnyServerRunning()) return null
+    if (!LspClientManagerImpl.isAnyServerRunning()) return null
 
     val renamedFilesAndDirs: MutableSet<VirtualFile> = LinkedHashSet()
     val deleteCreateCopyChangeEvents: MutableList<VFileEvent> = ArrayList()
@@ -58,79 +58,79 @@ internal class LspFileListener : AsyncFileListener {
     private val renamedFilesAndDirs: Set<VirtualFile>,
     private val deleteCreateCopyChangeEvents: List<VFileEvent>,
   ) : AsyncFileListener.ChangeApplier {
-    private val serversToUpdateOpenedFiles: MutableSet<LspServerImpl> = HashSet()
-    private val serverToFileChangeInfos = MultiMap.create<LspServerImpl, FileChangeInfo>()
+    private val clientsToUpdateOpenedFiles: MutableSet<LspClientImpl> = HashSet()
+    private val clientToFileChangeInfos = MultiMap.create<LspClientImpl, FileChangeInfo>()
 
     override fun beforeVfsChange() {
-      LspServerManagerImpl.forEachRunningServerInEachProject { server ->
-        val handleFileEvents = server.dynamicCapabilities.hasCapability(LspDynamicCapabilities.didChangeWatchedFiles)
+      LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+        val handleFileEvents = client.dynamicCapabilities.hasCapability(LspDynamicCapabilities.didChangeWatchedFiles)
 
         if (handleFileEvents) {
           for (event in deleteCreateCopyChangeEvents) {
             if (event is VFileDeleteEvent) {
               val file: VirtualFile = event.file
-              val uri = server.descriptor.getFileUri(file)
-              serverToFileChangeInfos.putValue(server, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Deleted))
+              val uri = client.descriptor.getFileUri(file)
+              clientToFileChangeInfos.putValue(client, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Deleted))
             }
           }
         }
 
         for (fileOrDir in renamedFilesAndDirs) {
           if (handleFileEvents) {
-            val uri = server.descriptor.getFileUri(fileOrDir)
-            serverToFileChangeInfos.putValue(server, FileChangeInfo(fileOrDir.path, uri, fileOrDir.isDirectory, FileChangeType.Deleted))
+            val uri = client.descriptor.getFileUri(fileOrDir)
+            clientToFileChangeInfos.putValue(client, FileChangeInfo(fileOrDir.path, uri, fileOrDir.isDirectory, FileChangeType.Deleted))
           }
 
           val filesToClose = mutableListOf<VirtualFile>()
-          server.forEachOpenedFile { openedFile: VirtualFile ->
+          client.forEachOpenedFile { openedFile: VirtualFile ->
             if (VfsUtilCore.isAncestor(fileOrDir, openedFile, false)) {
-              serversToUpdateOpenedFiles.add(server)
+              clientsToUpdateOpenedFiles.add(client)
               filesToClose.add(openedFile)
             }
           }
-          filesToClose.forEach { server.documentSyncManager.close(it) }
+          filesToClose.forEach { client.documentSyncManager.close(it) }
         }
       }
     }
 
     override fun afterVfsChange() {
-      LspServerManagerImpl.forEachRunningServerInEachProject { server ->
-        if (!server.dynamicCapabilities.hasCapability(LspDynamicCapabilities.didChangeWatchedFiles)) {
-          return@forEachRunningServerInEachProject
+      LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+        if (!client.dynamicCapabilities.hasCapability(LspDynamicCapabilities.didChangeWatchedFiles)) {
+          return@forEachRunningClientInEachProject
         }
 
         for (fileOrDir in renamedFilesAndDirs) {
-          val uri = server.descriptor.getFileUri(fileOrDir)
-          serverToFileChangeInfos.putValue(server, FileChangeInfo(fileOrDir.path, uri, fileOrDir.isDirectory, FileChangeType.Created))
+          val uri = client.descriptor.getFileUri(fileOrDir)
+          clientToFileChangeInfos.putValue(client, FileChangeInfo(fileOrDir.path, uri, fileOrDir.isDirectory, FileChangeType.Created))
         }
 
         for (event in deleteCreateCopyChangeEvents) {
           if (event is VFileContentChangeEvent) {
             val file: VirtualFile = event.file
-            val uri = server.descriptor.getFileUri(file)
-            serverToFileChangeInfos.putValue(server, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Changed))
+            val uri = client.descriptor.getFileUri(file)
+            clientToFileChangeInfos.putValue(client, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Changed))
           }
           if (event is VFileCreateEvent) {
             val file = event.getFile()
             if (file != null) {
-              val uri = server.descriptor.getFileUri(file)
-              serverToFileChangeInfos.putValue(server, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Created))
+              val uri = client.descriptor.getFileUri(file)
+              clientToFileChangeInfos.putValue(client, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Created))
             }
           }
           if (event is VFileCopyEvent) {
             val file = event.findCreatedFile()
             if (file != null) {
-              val uri = server.descriptor.getFileUri(file)
-              serverToFileChangeInfos.putValue(server, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Created))
+              val uri = client.descriptor.getFileUri(file)
+              clientToFileChangeInfos.putValue(client, FileChangeInfo(file.path, uri, file.isDirectory, FileChangeType.Created))
             }
           }
         }
       }
 
-      if (!serverToFileChangeInfos.isEmpty) {
+      if (!clientToFileChangeInfos.isEmpty) {
         ApplicationManager.getApplication().executeOnPooledThread {
-          for ((server, fileChangeInfos) in serverToFileChangeInfos.entrySet()) {
-            server.watchedFiles.processFileEvents(fileChangeInfos)
+          for ((client, fileChangeInfos) in clientToFileChangeInfos.entrySet()) {
+            client.watchedFiles.processFileEvents(fileChangeInfos)
           }
         }
       }
@@ -138,7 +138,7 @@ internal class LspFileListener : AsyncFileListener {
       // A file extension might have been changed.
       // A folder might have been moved out of the content root or vice versa.
       // So we need to check all opened and unsaved files and send `textDocument/didOpen` request to the server if needed.
-      serversToUpdateOpenedFiles.forEach { it.documentSyncManager.openForOpenedOrUnsavedFiles() }
+      clientsToUpdateOpenedFiles.forEach { it.documentSyncManager.openForOpenedOrUnsavedFiles() }
     }
   }
 }

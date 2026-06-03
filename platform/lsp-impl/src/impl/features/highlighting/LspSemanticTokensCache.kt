@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.lsp.util.getLsp4jPosition
@@ -24,24 +24,24 @@ import org.eclipse.lsp4j.SemanticTokensParams
 /**
  * [Semantic Tokens](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens)
  */
-internal class LspSemanticTokensCache(private val lspServer: LspServerImpl) : LspHighlightingCache<LspSemanticToken>(lspServer.project) {
+internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : LspHighlightingCache<LspSemanticToken>(lspClient.project) {
   @RequiresReadLock
   override fun isSupportedForFile(file: VirtualFile): Boolean {
-    val semanticTokensSupport = lspServer.descriptor.lspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport ?: return false
-    val psiFile = PsiManager.getInstance(lspServer.project).findFile(file) ?: return false
+    val semanticTokensSupport = lspClient.descriptor.lspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport ?: return false
+    val psiFile = PsiManager.getInstance(lspClient.project).findFile(file) ?: return false
     if (!semanticTokensSupport.shouldAskServerForSemanticTokens(psiFile)) return false
 
-    val supportsFull = lspServer.serverCapabilities?.semanticTokensProvider?.full?.let { it.left ?: true }
+    val supportsFull = lspClient.serverCapabilities?.semanticTokensProvider?.full?.let { it.left ?: true }
     return supportsFull == true
   }
 
   override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspSemanticToken>>? {
-    val psiModTracker = PsiModificationTracker.getInstance(lspServer.project)
+    val psiModTracker = PsiModificationTracker.getInstance(lspClient.project)
     val modCount = psiModTracker.modificationCount
-    val legend = lspServer.serverCapabilities?.semanticTokensProvider?.legend ?: return null
+    val legend = lspClient.serverCapabilities?.semanticTokensProvider?.legend ?: return null
 
-    val perDocument = lspServer.documentMapping.forEachDocumentInFile(file) { lspDocument, cellRange ->
-      val response = lspServer.sendRequest {
+    val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument, cellRange ->
+      val response = lspClient.sendRequest {
         it.textDocumentService.semanticTokensFull(SemanticTokensParams(lspDocument.id))
       } ?: return@forEachDocumentInFile null
 
@@ -128,6 +128,6 @@ internal class LspSemanticTokensCache(private val lspServer: LspServerImpl) : Ls
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    LspHighlightingApplier.getInstance(lspServer.project).scheduleHighlightingRefresh(file)
+    LspHighlightingApplier.getInstance(lspClient.project).scheduleHighlightingRefresh(file)
   }
 }

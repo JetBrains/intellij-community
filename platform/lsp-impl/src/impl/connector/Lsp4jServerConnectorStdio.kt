@@ -6,7 +6,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.IOUtil
 import java.io.IOException
@@ -17,11 +17,11 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.nio.charset.StandardCharsets
 
-internal class Lsp4jServerConnectorStdio(private val lspServer: LspServerImpl) : Lsp4jServerConnector(lspServer) {
-  private val processHandler: BaseProcessHandler<*> = (lspServer.descriptor as? LspProcessHandlerCreatingDescriptor)?.createProcessHandler()
-                                                      ?: lspServer.descriptor.startServerProcess()
+internal class Lsp4jServerConnectorStdio(private val lspClient: LspClientImpl) : Lsp4jServerConnector(lspClient) {
+  private val processHandler: BaseProcessHandler<*> = (lspClient.descriptor as? LspProcessHandlerCreatingDescriptor)?.createProcessHandler()
+                                                      ?: lspClient.descriptor.startServerProcess()
 
-  private val processListener: LspServerProcessListener = LspServerProcessListener(lspServer, ::logStdErr).also {
+  private val processListener: LspServerProcessListener = LspServerProcessListener(lspClient, ::logStdErr).also {
     processHandler.addProcessListener(it)
     processHandler.startNotify()
   }
@@ -34,14 +34,14 @@ internal class Lsp4jServerConnectorStdio(private val lspServer: LspServerImpl) :
 
   override fun disconnect() {
     if (!processHandler.isProcessTerminated) {
-      lspServer.logInfo("Stopping LSP server process: ${processHandler.commandLineForLog}")
+      lspClient.logInfo("Stopping LSP server process: ${processHandler.commandLineForLog}")
       ExecutionManagerImpl.stopProcess(processHandler)
     }
   }
 }
 
-private class LspServerProcessListener(private val lspServer: LspServerImpl, private val logStdErr: (String) -> Unit) :
-  LspServerProcessListenerBase(lspServer) {
+private class LspServerProcessListener(private val lspClient: LspClientImpl, private val logStdErr: (String) -> Unit) :
+  LspServerProcessListenerBase(lspClient) {
   private val pipedOutputStream: PipedOutputStream = PipedOutputStream()
   private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(pipedOutputStream, StandardCharsets.UTF_8)
   val pipedInputStream: PipedInputStream = PipedInputStream(pipedOutputStream)
@@ -55,7 +55,7 @@ private class LspServerProcessListener(private val lspServer: LspServerImpl, pri
       catch (e: IOException) {
         val debugInfo = ReflectionUtil.dumpFields(PipedInputStream::class.java, pipedInputStream,
                                                   "readSide", "writeSide", "closedByReader", "closedByWriter")
-        lspServer.logError("Problem proxying data to the listener: ${e.message}\n" +
+        lspClient.logError("Problem proxying data to the listener: ${e.message}\n" +
                            "Stopping LSP server process: ${event.processHandler}\n" +
                            debugInfo)
 
@@ -64,8 +64,8 @@ private class LspServerProcessListener(private val lspServer: LspServerImpl, pri
     }
     else if (ProcessOutputType.isStderr(outputType)) {
       val text = event.text.trimEnd().takeIf { it.isNotEmpty() } ?: return
-      lspServer.logInfo("STDERR: ${text}")
-      lspServer.appendServerErrorOutput(text)
+      lspClient.logInfo("STDERR: ${text}")
+      lspClient.appendServerErrorOutput(text)
       logStdErr(text)
     }
   }

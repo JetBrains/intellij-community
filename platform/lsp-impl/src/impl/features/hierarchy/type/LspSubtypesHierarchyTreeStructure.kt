@@ -14,7 +14,7 @@ internal class LspSubtypesHierarchyTreeStructure(
     val typeHierarchyItem = nodeDescriptor.item?.toTypeHierarchyItem()
     if (typeHierarchyItem == null) return emptyList()
     val params = TypeHierarchySubtypesParams(typeHierarchyItem)
-    return nodeDescriptor.server.sendRequestSync {
+    return nodeDescriptor.client.sendRequestSync {
       it.textDocumentService.typeHierarchySubtypes(params)
     }?.map { Lsp4jHierarchyItem.from(it) } ?: emptyList()
   }

@@ -1,7 +1,7 @@
 package com.intellij.platform.lsp.impl.features.hierarchy.type
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.hierarchy.Lsp4jHierarchyItem
 import com.intellij.platform.lsp.impl.features.hierarchy.LspAbstractHierarchyTreeStructure
 import com.intellij.platform.lsp.impl.features.hierarchy.LspHierarchyNodeDescriptor
@@ -14,8 +14,8 @@ internal abstract class LspTypeHierarchyTreeStructure(
   baseDescriptor: LspHierarchyNodeDescriptor,
 ) : LspAbstractHierarchyTreeStructure(project, baseDescriptor) {
 
-  override fun fetchRootItem(server: LspServerImpl, textDocument: TextDocumentIdentifier, position: Position): Lsp4jHierarchyItem? {
-    val typeHierarchyItem = server.sendRequestSync {
+  override fun fetchRootItem(client: LspClientImpl, textDocument: TextDocumentIdentifier, position: Position): Lsp4jHierarchyItem? {
+    val typeHierarchyItem = client.sendRequestSync {
       it.textDocumentService.prepareTypeHierarchy(
         TypeHierarchyPrepareParams(textDocument, position)
       )

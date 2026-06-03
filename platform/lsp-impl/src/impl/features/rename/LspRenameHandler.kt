@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.customization.LspRenameSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.psi.PsiElement
@@ -51,21 +51,21 @@ internal class LspRenameHandler : RenameHandler, TitledHandler, DumbAware {
     val project = editor.project ?: return false
     val file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return false
 
-    return findLspServerForRename(project, file) != null
+    return findLspClientForRename(project, file) != null
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
     if (editor == null || file == null || dataContext == null) return
 
     val virtualFile = file.virtualFile ?: return
-    val lspServer = findLspServerForRename(project, virtualFile) ?: return
+    val lspClient = findLspClientForRename(project, virtualFile) ?: return
 
-    val docPosition = lspServer.documentMapping.getDocumentPosition(virtualFile, editor.document, editor.caretModel.offset) ?: return
+    val docPosition = lspClient.documentMapping.getDocumentPosition(virtualFile, editor.document, editor.caretModel.offset) ?: return
     val textDocumentIdentifier = docPosition.document.id
     val position = docPosition.position
     val params = PrepareRenameParams(textDocumentIdentifier, position)
 
-    val prepareRenameResult = prepareRename(lspServer, editor, params, virtualFile)
+    val prepareRenameResult = prepareRename(lspClient, editor, params, virtualFile)
 
     if (prepareRenameResult == null) return
 
@@ -75,7 +75,7 @@ internal class LspRenameHandler : RenameHandler, TitledHandler, DumbAware {
 
     startInlineRename(project, editor, range, initialName) { newName ->
       val params = RenameParams(textDocumentIdentifier, position, newName)
-      performRename(editor, lspServer, params)
+      performRename(editor, lspClient, params)
     }
   }
 
@@ -83,11 +83,11 @@ internal class LspRenameHandler : RenameHandler, TitledHandler, DumbAware {
     // Not used for LSP-based rename
   }
 
-  private fun findLspServerForRename(project: Project, file: VirtualFile): LspServerImpl? {
+  private fun findLspClientForRename(project: Project, file: VirtualFile): LspClientImpl? {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
 
-    return LspServerManagerImpl.getInstanceImpl(project)
-      .getServersWithThisFileOpen(file)
+    return LspClientManagerImpl.getInstanceImpl(project)
+      .getClientsWithThisFileOpen(file)
       .find {
         val customizer = it.descriptor.lspCustomization.renameCustomizer
         customizer is LspRenameSupport && it.supportsRename(file) && customizer.shouldRunRename(psiFile)
@@ -95,27 +95,27 @@ internal class LspRenameHandler : RenameHandler, TitledHandler, DumbAware {
   }
 
   private fun prepareRename(
-    lspServer: LspServerImpl,
+    lspClient: LspClientImpl,
     editor: Editor,
     params: PrepareRenameParams,
     virtualFile: VirtualFile,
   ): Pair<TextRange, String?>? {
-    val renameCustomizer = lspServer.descriptor.lspCustomization.renameCustomizer as LspRenameSupport
+    val renameCustomizer = lspClient.descriptor.lspCustomization.renameCustomizer as LspRenameSupport
     val document = editor.document
     val offset = editor.caretModel.offset
 
     // If server doesn't support prepareRename, fall back to word-at-range
-    if (!lspServer.supportsPrepareRename(virtualFile)) {
+    if (!lspClient.supportsPrepareRename(virtualFile)) {
       val wordRange = renameCustomizer.getRenameableRangeAtOffset(document, offset)
       return wordRange?.let { it to null }
     }
 
     val result = try {
       runWithModalProgressBlocking(
-        lspServer.project,
+        lspClient.project,
         LspBundle.message("lsp.rename.prepare.progress.title")
       ) {
-        lspServer.sendRequest { it.textDocumentService.prepareRename(params) }
+        lspClient.sendRequest { it.textDocumentService.prepareRename(params) }
       }
     }
     catch (e: ResponseErrorException) {
@@ -137,13 +137,13 @@ internal class LspRenameHandler : RenameHandler, TitledHandler, DumbAware {
     )
   }
 
-  private fun performRename(editor: Editor, lspServer: LspServerImpl, params: RenameParams) {
+  private fun performRename(editor: Editor, lspClient: LspClientImpl, params: RenameParams) {
     try {
-      runWithModalProgressBlocking(lspServer.project, LspBundle.message("lsp.rename.progress.title")) {
-        val workspaceEdit = lspServer.sendRequest { it.textDocumentService.rename(params) } ?: return@runWithModalProgressBlocking
+      runWithModalProgressBlocking(lspClient.project, LspBundle.message("lsp.rename.progress.title")) {
+        val workspaceEdit = lspClient.sendRequest { it.textDocumentService.rename(params) } ?: return@runWithModalProgressBlocking
 
         readAndEdtWriteAction {
-          val applier = LspWorkspaceEditApplier.create(lspServer, workspaceEdit) ?: return@readAndEdtWriteAction value(Unit)
+          val applier = LspWorkspaceEditApplier.create(lspClient, workspaceEdit) ?: return@readAndEdtWriteAction value(Unit)
           writeAction { applier.applyWorkspaceEdit() }
         }
       }

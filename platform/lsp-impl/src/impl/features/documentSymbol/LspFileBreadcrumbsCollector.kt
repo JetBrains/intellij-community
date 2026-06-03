@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.ui.components.breadcrumbs.Crumb
 import com.intellij.ui.components.breadcrumbs.StickyLineInfo
@@ -20,9 +20,9 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
   override fun requiresProvider(): Boolean = false
 
   override fun handlesFile(file: VirtualFile): Boolean {
-    val lspServer = getLspServer(file)
+    val lspClient = getLspClient(file)
 
-    return lspServer != null
+    return lspClient != null
   }
 
   override fun watchForChanges(file: VirtualFile, editor: Editor, disposable: Disposable, changesHandler: Runnable) {
@@ -30,21 +30,21 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
   }
 
   override fun computeCrumbs(file: VirtualFile, document: Document, offset: Int, forcedShown: Boolean?): Iterable<Crumb> {
-    val lspServer = getLspServer(file) ?: return emptyList()
-    val documentSymbols = lspServer.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
+    val lspClient = getLspClient(file) ?: return emptyList()
+    val documentSymbols = lspClient.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
 
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
     val relevantSymbols = findSymbolsAroundOffset(document, documentSymbols, offset)
 
-    val symbolKindCustomizer = lspServer.descriptor.lspCustomization.symbolKindCustomizer
+    val symbolKindCustomizer = lspClient.descriptor.lspCustomization.symbolKindCustomizer
     return relevantSymbols.map { symbol ->
       LspCrumb(project, symbolKindCustomizer, document, symbol)
     }
   }
 
   override fun computeStickyLineInfos(file: VirtualFile, document: Document, offset: Int): List<StickyLineInfo> {
-    val lspServer = getLspServer(file) ?: return emptyList()
-    val documentSymbols = lspServer.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
+    val lspClient = getLspClient(file) ?: return emptyList()
+    val documentSymbols = lspClient.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
 
 
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
@@ -63,8 +63,8 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
     }
   }
 
-  private fun getLspServer(file: VirtualFile): LspServerImpl? {
-    return LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file).firstOrNull {
+  private fun getLspClient(file: VirtualFile): LspClientImpl? {
+    return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).firstOrNull {
       it.descriptor.lspCustomization.documentSymbolCustomizer.breadcrumbsSupport &&
       it.supportsDocumentSymbol(file)
     }

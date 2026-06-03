@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 
 internal class LspFileDocumentManagerListener : FileDocumentManagerListener {
 
@@ -17,8 +17,8 @@ internal class LspFileDocumentManagerListener : FileDocumentManagerListener {
     if (!file.isInLocalFileSystem) return
 
     for (project in ProjectManager.getInstance().openProjects) {
-      for (lspServer in LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)) {
-        lspServer.documentSyncManager.scheduleSave(file, document)
+      for (lspClient in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
+        lspClient.documentSyncManager.scheduleSave(file, document)
       }
 
       if (!FileEditorManager.getInstance(project).isFileOpen(file)) {

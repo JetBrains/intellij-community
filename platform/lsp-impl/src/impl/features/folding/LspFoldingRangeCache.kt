@@ -5,7 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.lsp.impl.mapFoldingRange
@@ -17,15 +17,15 @@ import org.eclipse.lsp4j.Range
 /**
  * [textDocument/foldingRange](https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange)
  */
-internal class LspFoldingRangeCache(private val lspServer: LspServerImpl) : LspHighlightingCache<FoldingRange>(lspServer.project) {
+internal class LspFoldingRangeCache(private val lspClient: LspClientImpl) : LspHighlightingCache<FoldingRange>(lspClient.project) {
   override fun isSupportedForFile(file: VirtualFile): Boolean =
-    lspServer.descriptor.lspCustomization.foldingRangeCustomizer is LspFoldingRangeSupport
-    && lspServer.supportsFoldingRange(file)
+    lspClient.descriptor.lspCustomization.foldingRangeCustomizer is LspFoldingRangeSupport
+    && lspClient.supportsFoldingRange(file)
 
   override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, FoldingRange>>? {
-    val perDocument = lspServer.documentMapping.forEachDocumentInFile(file) { lspDocument ->
+    val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = FoldingRangeRequestParams(lspDocument.id)
-      lspServer.sendRequest { it.textDocumentService.foldingRange(params) }?.map { foldingRange ->
+      lspClient.sendRequest { it.textDocumentService.foldingRange(params) }?.map { foldingRange ->
         val mapped = lspDocument.mapFoldingRange(foldingRange)
         foldingRangeToLsp4jRange(mapped) to mapped
       }
@@ -34,7 +34,7 @@ internal class LspFoldingRangeCache(private val lspServer: LspServerImpl) : LspH
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    val project = lspServer.project
+    val project = lspClient.project
     val foldingManager = CodeFoldingManager.getInstance(project)
     readAction {
       // scheduleAsyncFoldingUpdate restarts daemon highlighting synchronously; daemon cancellation listeners

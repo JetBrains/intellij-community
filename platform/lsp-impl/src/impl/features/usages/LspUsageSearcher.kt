@@ -32,30 +32,30 @@ internal class LspUsageSearcher : UsageSearcher {
 
 private class LspReferencesQuery(private val searchTarget: LspSearchTarget) : AbstractQuery<Usage>() {
   override fun processResults(consumer: Processor<in Usage>): Boolean {
-    for (lspServer in searchTarget.lspClients) {
+    for (lspClient in searchTarget.lspClients) {
       val docPosition = runReadActionBlocking {
         val document = FileDocumentManager.getInstance().getDocument(searchTarget.file) ?: return@runReadActionBlocking null
         val offset = getOffsetInDocument(document, searchTarget.position) ?: return@runReadActionBlocking null
-        lspServer.documentMapping.getDocumentPosition(searchTarget.file, document, offset)
+        lspClient.documentMapping.getDocumentPosition(searchTarget.file, document, offset)
       } ?: continue
       val documentIdentifier = docPosition.document.id
       val position = docPosition.position
       val referenceContext = ReferenceContext(/* includeDeclaration = */ true)
       val params = ReferenceParams(documentIdentifier, position, referenceContext)
 
-      val resultLocations = lspServer.sendRequestSync(FIND_REFERENCES_TIMEOUT_MS) {
+      val resultLocations = lspClient.sendRequestSync(FIND_REFERENCES_TIMEOUT_MS) {
         it.textDocumentService.references(params)
       }
 
       if (resultLocations.isNullOrEmpty()) continue
 
       runReadActionBlocking {
-        val psiManager = PsiManager.getInstance(lspServer.project)
+        val psiManager = PsiManager.getInstance(lspClient.project)
 
         for (resultLocation in resultLocations) {
-          val mappedLocation = lspServer.documentMapping.findDocumentByUrl(resultLocation.uri)
+          val mappedLocation = lspClient.documentMapping.findDocumentByUrl(resultLocation.uri)
                                  ?.mapLocation(resultLocation) ?: resultLocation
-          val resultFile = lspServer.descriptor.findFileByUri(mappedLocation.uri) ?: continue
+          val resultFile = lspClient.descriptor.findFileByUri(mappedLocation.uri) ?: continue
           val resultPsiFile = psiManager.findFile(resultFile) ?: continue
           val resultRange = getRangeInDocument(resultPsiFile.fileDocument, mappedLocation.range) ?: continue
 

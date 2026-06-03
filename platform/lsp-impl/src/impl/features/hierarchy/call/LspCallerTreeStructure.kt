@@ -14,7 +14,7 @@ internal class LspCallerTreeStructure(
     val callHierarchyItem = nodeDescriptor.item?.toCallHierarchyItem()
     if (callHierarchyItem == null) return emptyList()
     val params = CallHierarchyIncomingCallsParams(callHierarchyItem)
-    return nodeDescriptor.server.sendRequestSync {
+    return nodeDescriptor.client.sendRequestSync {
       it.textDocumentService.callHierarchyIncomingCalls(params)
     }?.map { Lsp4jHierarchyItem.from(it.from) } ?: emptyList()
   }

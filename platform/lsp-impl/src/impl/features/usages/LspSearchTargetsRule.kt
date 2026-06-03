@@ -18,7 +18,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.util.IconUtil
 import org.eclipse.lsp4j.Position
@@ -61,14 +61,14 @@ internal class LspSearchTargetsRule : UiDataRule {
     val offset = editor.caretModel.offset
     val position = getLsp4jPosition(document, offset)
 
-    val lspServers = LspServerManagerImpl.getInstanceImpl(project)
-                       .getServersWithThisFileOpen(file)
+    val lspClients = LspClientManagerImpl.getInstanceImpl(project)
+                       .getClientsWithThisFileOpen(file)
                        .filter { it.descriptor.lspCustomization.findReferencesCustomizer is LspFindReferencesSupport }
                        .filter { it.supportsFindReferences(file) }
                        .takeIf { it.isNotEmpty() }
                      ?: return null
 
-    return listOf(LspSearchTarget(lspServers, file, position))
+    return listOf(LspSearchTarget(lspClients, file, position))
   }
 }
 

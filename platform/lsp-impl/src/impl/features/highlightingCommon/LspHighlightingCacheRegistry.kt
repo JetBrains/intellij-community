@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.codeLens.LspCodeLensCache
 import com.intellij.platform.lsp.impl.features.folding.LspFoldingRangeCache
 import com.intellij.platform.lsp.impl.features.highlighting.DiagnosticAndQuickFixes
@@ -19,18 +19,18 @@ import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.eclipse.lsp4j.Diagnostic
 
-internal class LspHighlightingCacheRegistry(private val lspServer: LspServerImpl) {
+internal class LspHighlightingCacheRegistry(private val lspClient: LspClientImpl) {
   private val allCaches = mutableListOf<LspHighlightingCache<*>>()
 
-  internal val publishDiagnosticsCache = register(LspPublishDiagnosticsCache(lspServer))
-  internal val pullDiagnosticsCache = register(LspPullDiagnosticsCache(lspServer))
-  internal val semanticTokensCache = register(LspSemanticTokensCache(lspServer))
-  internal val documentLinkCache = register(LspDocumentLinkCache(lspServer))
+  internal val publishDiagnosticsCache = register(LspPublishDiagnosticsCache(lspClient))
+  internal val pullDiagnosticsCache = register(LspPullDiagnosticsCache(lspClient))
+  internal val semanticTokensCache = register(LspSemanticTokensCache(lspClient))
+  internal val documentLinkCache = register(LspDocumentLinkCache(lspClient))
 
-  internal val inlayHintsCache = register(LspInlayHintsCache(lspServer))
-  internal val documentColorCache = register(LspDocumentColorCache(lspServer))
-  internal val foldingRangeCache = register(LspFoldingRangeCache(lspServer))
-  internal val codeLensCache = register(LspCodeLensCache(lspServer))
+  internal val inlayHintsCache = register(LspInlayHintsCache(lspClient))
+  internal val documentColorCache = register(LspDocumentColorCache(lspClient))
+  internal val foldingRangeCache = register(LspFoldingRangeCache(lspClient))
+  internal val codeLensCache = register(LspCodeLensCache(lspClient))
 
   private fun <T : LspHighlightingCache<*>> register(cache: T): T {
     allCaches.add(cache)
@@ -61,7 +61,7 @@ internal class LspHighlightingCacheRegistry(private val lspServer: LspServerImpl
     val pushedDiagnosticsAndQuickFixes = pushedCachedHighlightings.map {
       val updatedDiagnostic = copyDiagnosticWithRange(it.highlightingInfo.diagnostic,
                                                       getLsp4jRange(document, it.textRange.startOffset, it.textRange.length))
-      DiagnosticAndQuickFixes(updatedDiagnostic, it.highlightingInfo.getQuickFixes(lspServer, file))
+      DiagnosticAndQuickFixes(updatedDiagnostic, it.highlightingInfo.getQuickFixes(lspClient, file))
     }
 
     val pulledDiagnosticsAndQuickFixes = getPulledDiagnosticsAndQuickFixes(file, document, pushedDiagnostics)
@@ -83,7 +83,7 @@ internal class LspHighlightingCacheRegistry(private val lspServer: LspServerImpl
 
       val updatedDiagnostic = copyDiagnosticWithRange(diagnostic,
                                                       getLsp4jRange(document, it.textRange.startOffset, it.textRange.length))
-      DiagnosticAndQuickFixes(updatedDiagnostic, it.highlightingInfo.getQuickFixes(lspServer, file))
+      DiagnosticAndQuickFixes(updatedDiagnostic, it.highlightingInfo.getQuickFixes(lspClient, file))
     }
   }
 }

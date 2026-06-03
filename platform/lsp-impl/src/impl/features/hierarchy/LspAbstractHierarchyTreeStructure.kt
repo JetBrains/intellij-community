@@ -5,7 +5,7 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -30,7 +30,7 @@ internal abstract class LspAbstractHierarchyTreeStructure(
   }
 
   protected abstract fun fetchItems(nodeDescriptor: LspHierarchyNodeDescriptor): List<Lsp4jHierarchyItem>
-  protected abstract fun fetchRootItem(server: LspServerImpl, textDocument: TextDocumentIdentifier, position: Position): Lsp4jHierarchyItem?
+  protected abstract fun fetchRootItem(client: LspClientImpl, textDocument: TextDocumentIdentifier, position: Position): Lsp4jHierarchyItem?
 
   private fun prepareRootItem(rootDescriptor: LspHierarchyNodeDescriptor): Lsp4jHierarchyItem? {
     val psiFile = rootDescriptor.containingFile ?: return null
@@ -39,9 +39,9 @@ internal abstract class LspAbstractHierarchyTreeStructure(
     val hostPosition = (rootDescriptor.psiElement as? LspFakePsiElement)?.lsp4jPosition ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
     val offset = getOffsetInDocument(document, hostPosition) ?: return null
-    val docPosition = rootDescriptor.server.documentMapping.getDocumentPosition(file, document, offset) ?: return null
+    val docPosition = rootDescriptor.client.documentMapping.getDocumentPosition(file, document, offset) ?: return null
 
-    return fetchRootItem(rootDescriptor.server, docPosition.document.id, docPosition.position)
+    return fetchRootItem(rootDescriptor.client, docPosition.document.id, docPosition.position)
   }
 
   private fun createNodeDescriptorForItem(
@@ -55,7 +55,7 @@ internal abstract class LspAbstractHierarchyTreeStructure(
 
   private fun createDescriptor(item: Lsp4jHierarchyItem, parent: LspHierarchyNodeDescriptor, psiFile: PsiFile): LspHierarchyNodeDescriptor {
     return LspHierarchyNodeDescriptor(
-      server = parent.server,
+      client = parent.client,
       item = item,
       element = LspFakePsiElement(psiFile = psiFile, name = item.name, lsp4jPosition = item.selectionRange.start),
       parent = parent,
@@ -72,6 +72,6 @@ internal abstract class LspAbstractHierarchyTreeStructure(
 
   private fun getVirtualFileForItem(item: Lsp4jHierarchyItem, descriptor: LspHierarchyNodeDescriptor): VirtualFile? {
     val uri = item.uri
-    return descriptor.server.descriptor.findFileByUri(uri)
+    return descriptor.client.descriptor.findFileByUri(uri)
   }
 }

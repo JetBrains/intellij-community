@@ -15,27 +15,27 @@ import com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesC
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.testFramework.LightVirtualFile
 
 /**
  * Unlike [LspWidgetInternalService], this class is located in the `intellij.platform.lsp.impl` module,
  * so it has access to FUS-related classes, including [LanguageServiceWidgetUsagesCollector],
- * as well as to [LspServerImpl] and other classes that are not available in the public LSP API.
+ * as well as to [LspClientImpl] and other classes that are not available in the public LSP API.
  */
 internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
   override fun createShowErrorOutputAction(lspClient: LspClient): AnAction? {
-    val lspServer = lspClient as LspServerImpl
-    lspServer.errorOutput ?: return null
-    return OpenLspErrorOutputAction(lspServer)
+    val lspClient = lspClient as LspClientImpl
+    lspClient.errorOutput ?: return null
+    return OpenLspErrorOutputAction(lspClient)
   }
 
   override fun restartLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
       .actionInvoked(lspClient.project, LanguageServiceWidgetActionKind.RestartService, lspClient.descriptor.javaClass)
-    val manager = LspServerManagerImpl.getInstanceImpl(lspClient.project)
-    manager.stopRunningServer(lspClient as LspServerImpl)
+    val manager = LspClientManagerImpl.getInstanceImpl(lspClient.project)
+    manager.stopRunningServer(lspClient as LspClientImpl)
     manager.startClientsIfNeeded(lspClient.providerClass)
 
     val title = LangBundle.message("language.services.0.server.restarted.notification.title", lspClient.descriptor.presentableName)
@@ -48,7 +48,7 @@ internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
   override fun stopLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
       .actionInvoked(lspClient.project, LanguageServiceWidgetActionKind.StopService, lspClient.descriptor.javaClass)
-    LspServerManagerImpl.getInstanceImpl(lspClient.project).stopRunningServer(lspClient as LspServerImpl)
+    LspClientManagerImpl.getInstanceImpl(lspClient.project).stopRunningServer(lspClient as LspClientImpl)
 
     val title = LangBundle.message("language.services.0.server.stopped.notification.title", lspClient.descriptor.presentableName)
     val content = LangBundle.message("language.services.server.stopped.notification.content")
@@ -60,11 +60,11 @@ internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
 }
 
 private class OpenLspErrorOutputAction(
-  private val lspServer: LspServerImpl,
+  private val lspClient: LspClientImpl,
 ) : AnAction(LspBundle.message("action.OpenLspErrorOutputAction.text"), null, AllIcons.General.Error), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val fileName = LspBundle.message("server.error.output.editor.tab.name", lspServer.descriptor.presentableName)
-    val file = LightVirtualFile(fileName, PlainTextFileType.INSTANCE, lspServer.errorOutput ?: "")
-    FileEditorManager.getInstance(lspServer.project).openTextEditor(OpenFileDescriptor(lspServer.project, file), true)
+    val fileName = LspBundle.message("server.error.output.editor.tab.name", lspClient.descriptor.presentableName)
+    val file = LightVirtualFile(fileName, PlainTextFileType.INSTANCE, lspClient.errorOutput ?: "")
+    FileEditorManager.getInstance(lspClient.project).openTextEditor(OpenFileDescriptor(lspClient.project, file), true)
   }
 }

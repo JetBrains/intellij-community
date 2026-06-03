@@ -3,9 +3,9 @@ package com.intellij.platform.lsp.impl.features.highlighting
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspDocument
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspDocument
 import com.intellij.platform.lsp.impl.documentMapping
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.psi.util.PsiModificationTracker
@@ -20,8 +20,8 @@ import org.eclipse.lsp4j.Range
  * The pull hooks are overridden to no-ops, and data arrives via [diagnosticsReceived] → [applyServerHighlightings].
  */
 internal class LspPublishDiagnosticsCache(
-  private val lspServer: LspServerImpl,
-) : LspHighlightingCache<LspDiagnosticAndLazyQuickFixes>(lspServer.project) {
+  private val lspClient: LspClientImpl,
+) : LspHighlightingCache<LspDiagnosticAndLazyQuickFixes>(lspClient.project) {
 
   private val fileToDiagnosticsByDocumentUri =
     mutableMapOf<VirtualFile, MutableMap<String, List<Pair<Range, LspDiagnosticAndLazyQuickFixes>>>>()
@@ -32,8 +32,8 @@ internal class LspPublishDiagnosticsCache(
 
   internal fun diagnosticsReceived(params: PublishDiagnosticsParams) {
     // the file is expected to be null if the server is dropping diagnostics for a deleted/renamed/moved file
-    val lspDocument = lspServer.documentMapping.findDocumentByUrl(params.uri)
-    val file: VirtualFile? = lspDocument?.fileUri?.let { lspServer.descriptor.findFileByUri(it) }
+    val lspDocument = lspClient.documentMapping.findDocumentByUrl(params.uri)
+    val file: VirtualFile? = lspDocument?.fileUri?.let { lspClient.descriptor.findFileByUri(it) }
 
     if (file == null) {
       if (params.diagnostics.isNotEmpty()) {
@@ -52,19 +52,19 @@ internal class LspPublishDiagnosticsCache(
     val document = FileDocumentManager.getInstance().getCachedDocument(file)
 
     val declaredVersion = params.version
-    if (declaredVersion != null && lspServer.isFileOpened(file)) {
+    if (declaredVersion != null && lspClient.isFileOpened(file)) {
       // We compare versions only for opened files.
       // Assuming that some server even publishes diagnostics for unopened files,
       // those files don't have edits, so mismatched diagnostics won't be perceived as a visual mess.
-      if (document != null && lspServer.getDocumentVersion(document) != declaredVersion) {
+      if (document != null && lspClient.getDocumentVersion(document) != declaredVersion) {
         // These diagnostics are for some previous document version. Ignore. The server will send up-to-date diagnostics later.
-        lspServer.logDebug("Ignoring diagnostics (version $declaredVersion) for ${file.name}; " +
-                           "current document version: ${lspServer.getDocumentVersion(document)}")
+        lspClient.logDebug("Ignoring diagnostics (version $declaredVersion) for ${file.name}; " +
+                           "current document version: ${lspClient.getDocumentVersion(document)}")
         return
       }
     }
 
-    val psiModCount = PsiModificationTracker.getInstance(lspServer.project).modificationCount
+    val psiModCount = PsiModificationTracker.getInstance(lspClient.project).modificationCount
     val cachedHighlightings = if (document != null) {
       val infosFromServer = params.diagnostics.map { diagnostic ->
         val hostRange = lspDocument?.toHostRange(diagnostic.range) ?: diagnostic.range
@@ -90,7 +90,7 @@ internal class LspPublishDiagnosticsCache(
 
   override suspend fun onResponseReceived(file: VirtualFile) {
     LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
-    lspServer.notifyDiagnosticsReceived(file)
+    lspClient.notifyDiagnosticsReceived(file)
   }
 
   override fun clearAdditionalCache() {

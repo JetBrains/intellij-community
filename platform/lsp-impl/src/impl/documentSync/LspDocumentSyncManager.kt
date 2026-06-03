@@ -11,8 +11,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -26,11 +26,11 @@ import org.eclipse.lsp4j.TextDocumentSyncKind
 import java.util.Collections
 
 /**
- * Sends document lifecycle notifications (didOpen, didChange, didSave, didClose) and tracks which files are open on [server].
+ * Sends document lifecycle notifications (didOpen, didChange, didSave, didClose) and tracks which files are open on the server.
  *
  * The platform listeners fan out across running servers and dispatch into this class.
  */
-internal class LspDocumentSyncManager(private val server: LspServerImpl) {
+internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
 
@@ -49,32 +49,32 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
 
   @RequiresWriteLock
   fun open(file: VirtualFile) {
-    if (server.state != LspServerState.Running) {
-      server.logError("Server is not in the Running state. Ignoring open($file)")
+    if (client.state != LspServerState.Running) {
+      client.logError("Server is not in the Running state. Ignoring open($file)")
       return
     }
 
     val document = FileDocumentManager.getInstance().getDocument(file)
     if (document == null) {
-      server.logInfo("Skipping didOpen request because there's no document for file $file")
+      client.logInfo("Skipping didOpen request because there's no document for file $file")
       return
     }
 
     if (openedFiles.add(file)) {
-      server.documentMapping.getAdapterForFile(file).sendDidOpen(server, file, document)
+      client.documentMapping.getAdapterForFile(file).sendDidOpen(client, file, document)
 
-      server.notifyFileOpened(file)
+      client.notifyFileOpened(file)
       application.messageBus.syncPublisher(BreadcrumbsXmlWrapper.FORCE_RELOAD_BREADCRUMBS).run()
     }
     else {
-      server.logError("open() cannot be called for already opened files. Ignoring: $file")
+      client.logError("open() cannot be called for already opened files. Ignoring: $file")
     }
   }
 
   @RequiresWriteLock
   fun close(file: VirtualFile) {
     if (!openedFiles.remove(file)) {
-      server.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
+      client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
       return
     }
 
@@ -83,12 +83,12 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
       // Document already gone — can only send a plain textDocument/didClose.
       // For notebook files this is incorrect (server expects notebookDocument/didClose),
       // but without the document we can't reconstruct cell structure.
-      server.logWarn("No document for file $file in close(), sending plain textDocument/didClose as fallback")
-      val params = DidCloseTextDocumentParams(server.getDocumentIdentifier(file))
-      server.requestExecutor.sendNotification { it.textDocumentService.didClose(params) }
+      client.logWarn("No document for file $file in close(), sending plain textDocument/didClose as fallback")
+      val params = DidCloseTextDocumentParams(client.getDocumentIdentifier(file))
+      client.requestExecutor.sendNotification { it.textDocumentService.didClose(params) }
       return
     }
-    server.documentMapping.getAdapterForFile(file).sendDidClose(server, file, document)
+    client.documentMapping.getAdapterForFile(file).sendDidClose(client, file, document)
   }
 
   /**
@@ -98,24 +98,24 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
     ReadAction
       .nonBlocking<Set<VirtualFile>> {
         val openedAndUnsavedFiles: MutableSet<VirtualFile> = HashSet()
-        for (file in FileEditorManager.getInstance(server.project).openFiles) {
-          if (!openedFiles.contains(file) && server.isSupportedFile(file)) {
+        for (file in FileEditorManager.getInstance(client.project).openFiles) {
+          if (!openedFiles.contains(file) && client.isSupportedFile(file)) {
             openedAndUnsavedFiles.add(file)
           }
         }
         for (document in FileDocumentManager.getInstance().unsavedDocuments) {
           val file = FileDocumentManager.getInstance().getFile(document)
-          if (file != null && !openedFiles.contains(file) && server.isSupportedFile(file)) {
+          if (file != null && !openedFiles.contains(file) && client.isSupportedFile(file)) {
             openedAndUnsavedFiles.add(file)
           }
         }
         openedAndUnsavedFiles
       }
-      .expireWhen { server.state != LspServerState.Running }
+      .expireWhen { client.state != LspServerState.Running }
       .finishOnUiThread(ModalityState.nonModal()) { files: Set<VirtualFile> ->
         if (files.isEmpty()) return@finishOnUiThread
         WriteAction.run<RuntimeException> {
-          server.logDebug("Opening files after server initialization or after move/rename: $files")
+          client.logDebug("Opening files after server initialization or after move/rename: $files")
           files.forEach { file: VirtualFile -> open(file) }
         }
       }
@@ -128,7 +128,7 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
   @RequiresBackgroundThread
   @RequiresReadLock
   fun getFilesToClose(): Collection<VirtualFile> {
-    val fileEditorManager = FileEditorManager.getInstance(server.project)
+    val fileEditorManager = FileEditorManager.getInstance(client.project)
     val fileDocumentManager = FileDocumentManager.getInstance()
 
     return openedFiles.filter { file ->
@@ -145,13 +145,13 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
    * Schedules a `textDocument/didSave` notification once the in-progress write action that triggered the save completes.
    */
   fun scheduleSave(file: VirtualFile, document: Document) {
-    val didSaveOptions = server.getDidSaveOptions(file) ?: return
-    val manager = LspServerManagerImpl.getInstanceImpl(server.project)
+    val didSaveOptions = client.getDidSaveOptions(file) ?: return
+    val manager = LspClientManagerImpl.getInstanceImpl(client.project)
     manager.cs.launch {
       // Using `readAction` guarantees that the write action in which `beforeDocumentSaving()` was called has finished,
       // so the file has been physically saved, therefore it's now good time to send `textDocument/didSave`
       readAction {
-        server.documentMapping.getAdapterForFile(file).sendDidSave(server, file, document, didSaveOptions.includeText == true)
+        client.documentMapping.getAdapterForFile(file).sendDidSave(client, file, document, didSaveOptions.includeText == true)
       }
     }
   }
@@ -164,10 +164,10 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
    */
   @RequiresEdt
   fun onBeforeDocumentChange(event: DocumentEvent, file: VirtualFile) {
-    server.fileEdited(file, event)
+    client.fileEdited(file, event)
 
-    if (server.textDocumentSyncKind == TextDocumentSyncKind.Incremental && isFileOpened(file)) {
-      server.documentMapping.getAdapterForFile(file).sendDidChangeIncremental(server, file, event)
+    if (client.textDocumentSyncKind == TextDocumentSyncKind.Incremental && isFileOpened(file)) {
+      client.documentMapping.getAdapterForFile(file).sendDidChangeIncremental(client, file, event)
     }
   }
 
@@ -178,8 +178,8 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
    */
   @RequiresEdt
   fun onDocumentChanged(event: DocumentEvent, file: VirtualFile) {
-    if (server.textDocumentSyncKind == TextDocumentSyncKind.Full && isFileOpened(file)) {
-      server.documentMapping.getAdapterForFile(file).sendDidChangeFull(server, file, event.document)
+    if (client.textDocumentSyncKind == TextDocumentSyncKind.Full && isFileOpened(file)) {
+      client.documentMapping.getAdapterForFile(file).sendDidChangeFull(client, file, event.document)
     }
   }
 }

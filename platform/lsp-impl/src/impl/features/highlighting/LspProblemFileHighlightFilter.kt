@@ -4,7 +4,7 @@ package com.intellij.platform.lsp.impl.features.highlighting
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 
 /**
  * Allows [com.intellij.problems.WolfTheProblemSolver] to accept error reports for files
@@ -13,6 +13,6 @@ import com.intellij.platform.lsp.impl.LspServerManagerImpl
  */
 internal class LspProblemFileHighlightFilter(private val project: Project) : Condition<VirtualFile> {
   override fun value(file: VirtualFile): Boolean {
-    return LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file).isNotEmpty()
+    return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).isNotEmpty()
   }
 }

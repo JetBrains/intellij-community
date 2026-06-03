@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,10 +23,9 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
 
   override fun processNames(processor: Processor<in String>, parameters: FindSymbolParameters) {
     val project = parameters.project
-    val serverManager = LspServerManagerImpl.getInstanceImpl(project)
     val query = parameters.completePattern
     // skipping the processor.process early helps to reduce complexity from the platform side
-    if (query.isBlank() || serverManager.getAllRunningServers().isEmpty()) return
+    if (query.isBlank() || LspClientManagerImpl.getInstanceImpl(project).getAllRunningClients().isEmpty()) return
 
     processor.process(query)
   }
@@ -47,17 +46,16 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
   ) {
     val project = parameters.project
     val scope = parameters.searchScope
-    val serverManager = LspServerManagerImpl.getInstanceImpl(project)
-    val servers = serverManager.getAllRunningServers().filter {
+    val clients = LspClientManagerImpl.getInstanceImpl(project).getAllRunningClients().filter {
       it.descriptor.lspCustomization.workspaceSymbolCustomizer is LspWorkspaceSymbolSupport && it.supportsGoToSymbol()
     }
 
-    if (servers.isEmpty()) return
+    if (clients.isEmpty()) return
 
     runBlockingCancellable {
-      servers.map { server ->
+      clients.map { client ->
         async {
-          getWorkspaceSymbols(server, scope, name)
+          getWorkspaceSymbols(client, scope, name)
             .forEach { processor.process(it) }
         }
       }.awaitAll()
@@ -67,11 +65,11 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
   protected abstract fun shouldAcceptSymbolKind(symbolKind: SymbolKind): Boolean
 
   @RequiresBackgroundThread
-  private fun getWorkspaceSymbols(server: LspServerImpl, scope: GlobalSearchScope, query: String = ""): List<NavigationItem> {
-    val result = server.requestExecutor.getWorkspaceSymbolsCaching(query)
+  private fun getWorkspaceSymbols(client: LspClientImpl, scope: GlobalSearchScope, query: String = ""): List<NavigationItem> {
+    val result = client.requestExecutor.getWorkspaceSymbolsCaching(query)
                  ?: return emptyList()
 
-    return result.mapNotNull { createNavigationItemFromWorkspaceSymbol(server, scope, it) }
+    return result.mapNotNull { createNavigationItemFromWorkspaceSymbol(client, scope, it) }
   }
 
   private fun createNavigationItemFromWorkspaceSymbol(

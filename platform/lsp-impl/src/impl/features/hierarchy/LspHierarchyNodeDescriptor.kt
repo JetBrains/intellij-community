@@ -2,19 +2,19 @@ package com.intellij.platform.lsp.impl.features.hierarchy
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.openapi.roots.ui.util.CompositeAppearance
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.navigation.navigateToLspPosition
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
 internal class LspHierarchyNodeDescriptor(
-  internal val server: LspServerImpl,
+  internal val client: LspClientImpl,
   internal val item: Lsp4jHierarchyItem?,
   element: PsiElement,
   parent: HierarchyNodeDescriptor?,
   internal val isBase: Boolean,
-) : HierarchyNodeDescriptor(server.project, parent, element, isBase), Navigatable {
+) : HierarchyNodeDescriptor(client.project, parent, element, isBase), Navigatable {
 
   override fun update(): Boolean {
     super.update()
@@ -38,13 +38,13 @@ internal class LspHierarchyNodeDescriptor(
 
   override fun navigate(requestFocus: Boolean) {
     if (item == null) return
-    val targetFile = server.descriptor.findFileByUri(item.uri) ?: return
+    val targetFile = client.descriptor.findFileByUri(item.uri) ?: return
     navigateToLspPosition(targetFile, project, item.selectionRange.start, requestFocus)
   }
 
   override fun getIcon(element: PsiElement): Icon? {
     if (item == null) return null
     val kind = item.kind
-    return server.descriptor.lspCustomization.symbolKindCustomizer.getIcon(kind)
+    return client.descriptor.lspCustomization.symbolKindCustomizer.getIcon(kind)
   }
 }

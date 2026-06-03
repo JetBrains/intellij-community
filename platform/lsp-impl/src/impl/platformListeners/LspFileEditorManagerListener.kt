@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 
 internal class LspFileEditorManagerListener : FileEditorManagerListener {
   override fun fileOpened(fileEditorManager: FileEditorManager, file: VirtualFile) {
@@ -28,7 +28,7 @@ internal class LspFileEditorManagerListener : FileEditorManagerListener {
     if (fileEditorManager.isFileOpen(file)) return // the file might be still open in some other editor
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
     if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) return
-    val serversToSendDidClose = LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)
+    val serversToSendDidClose = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)
     if (serversToSendDidClose.isNotEmpty()) {
       WriteAction.run<RuntimeException> { serversToSendDidClose.forEach { it.documentSyncManager.close(file) } }
     }

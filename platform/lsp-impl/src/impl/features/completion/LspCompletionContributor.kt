@@ -13,8 +13,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import kotlinx.coroutines.sync.Semaphore
 import org.eclipse.lsp4j.CompletionItem
@@ -32,17 +32,17 @@ internal class LspCompletionContributor : CompletionContributor(), DumbAware {
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return
     val offset = InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, parameters.offset)
 
-    for (server in LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)) {
+    for (client in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
       ProgressManager.checkCanceled()
 
-      server.serverCapabilities?.completionProvider ?: continue
-      val completionSupport = server.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
+      client.serverCapabilities?.completionProvider ?: continue
+      val completionSupport = client.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
       if (!completionSupport.shouldRunCodeCompletion(parameters)) continue
 
       // LSP server wants to handle code completion, so disable less smart WordCompletionContributor for the current completion session
       (parameters.process as CompletionProcessEx).putUserData(BaseCompletionService.FORBID_WORD_COMPLETION, true)
 
-      val completionList = server.requestExecutor.getCompletionList(file, offset, parameters.isAutoPopup) ?: continue
+      val completionList = client.requestExecutor.getCompletionList(file, offset, parameters.isAutoPopup) ?: continue
 
       if (completionList.isIncomplete) {
         result.restartCompletionOnAnyPrefixChange()
@@ -54,7 +54,7 @@ internal class LspCompletionContributor : CompletionContributor(), DumbAware {
       val prefix = completionSupport.getCompletionPrefix(parameters, defaultPrefix)
       val originalResultSet = if (prefix != defaultPrefix) result.withPrefixMatcher(prefix) else result
 
-      processCompletionItemsImpl(server, document, offset, originalResultSet, completionList.items) {
+      processCompletionItemsImpl(client, document, offset, originalResultSet, completionList.items) {
         completionSupport.createLookupElement(parameters, it)
       }
     }
@@ -67,7 +67,7 @@ internal class LspCompletionContributor : CompletionContributor(), DumbAware {
  */
 @ApiStatus.Internal
 fun <T> processCompletionItemsImpl(
-  lspServer: LspServerImpl,
+  lspClient: LspClientImpl,
   document: Document,
   offset: Int,
   originalResultSet: CompletionResultSet,
@@ -96,7 +96,7 @@ fun <T> processCompletionItemsImpl(
       }
     }
 
-    currentResultSet.addElement(LspLookupElementDecorator(lspServer, requestSemaphore, lookupElement, completionItem))
+    currentResultSet.addElement(LspLookupElementDecorator(lspClient, requestSemaphore, lookupElement, completionItem))
   }
 }
 

@@ -56,27 +56,27 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     addWorkspaceModelListener()
   }
 
-  private val lspServers: MutableCollection<LspServerImpl> = ContainerUtil.createLockFreeCopyOnWriteList()
+  private val lspClients: MutableCollection<LspClientImpl> = ContainerUtil.createLockFreeCopyOnWriteList()
   @TestOnly
   private val lsp4jServerWrappers = ContainerUtil.createLockFreeCopyOnWriteList<Lsp4jServerWrapper>()
 
   private val eventDispatcher = EventDispatcher.create(LspServerManagerListener::class.java)
 
-  override fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspServerImpl> =
-    lspServers.filter { it.providerClass == providerClass }
+  override fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspClientImpl> =
+    lspClients.filter { it.providerClass == providerClass }
 
   @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-  override fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspServerImpl> =
-    lspServers.filter { it.providerClass == providerClass }
+  override fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspClientImpl> =
+    lspClients.filter { it.providerClass == providerClass }
 
-  internal fun getServersWithThisFileOpen(file: VirtualFile): Collection<LspServerImpl> =
-    lspServers.filter { it.isFileOpened(file) }
+  internal fun getClientsWithThisFileOpen(file: VirtualFile): Collection<LspClientImpl> =
+    lspClients.filter { it.isFileOpened(file) }
 
-  internal fun getAllRunningServers(): Collection<LspServerImpl> = lspServers.filter { it.state == LspServerState.Running }
+  internal fun getAllRunningClients(): Collection<LspClientImpl> = lspClients.filter { it.state == LspServerState.Running }
 
-  internal fun findRunningServer(condition: (LspServerImpl) -> Boolean): LspServerImpl? =
-    lspServers.find { it.state == LspServerState.Running && condition(it) }
+  internal fun findRunningClient(condition: (LspClientImpl) -> Boolean): LspClientImpl? =
+    lspClients.find { it.state == LspServerState.Running && condition(it) }
 
   override fun startClientsIfNeeded(providerClass: Class<out LspClientProvider>): Unit = startIfNeeded(providerClass)
 
@@ -96,7 +96,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     cs.launch {
       val descriptorsToStart = readAction {
-        val runningServers = getClientsForProvider(providerClass)
+        val runningClients = getClientsForProvider(providerClass)
         val descriptorsToStart = mutableListOf<LspClientDescriptor>()
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
@@ -104,8 +104,8 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
           if (!file.isInLocalFileSystem) continue
           if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
 
-          if (runningServers.any { server ->
-              server.descriptor.roots.any { root -> VfsUtilCore.isAncestor(root, file, true) }
+          if (runningClients.any { client ->
+              client.descriptor.roots.any { root -> VfsUtilCore.isAncestor(root, file, true) }
             }) {
             // the file is already within the roots of a running server
             continue
@@ -151,20 +151,20 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     cs.launch {
       readAndEdtWriteAction {
-        if (lspServers.any { server -> server.providerClass == providerClass && server.descriptor.getServerId() == descriptor.getServerId() }) {
+        if (lspClients.any { client -> client.providerClass == providerClass && client.descriptor.getServerId() == descriptor.getServerId() }) {
           return@readAndEdtWriteAction value(Unit)
         }
 
-        if (lspServers.size >= MAX_LSP_SERVERS) {
-          logger.error("${lspServers.size} LSP servers are already running and one more wants to start." +
+        if (lspClients.size >= MAX_LSP_SERVERS) {
+          logger.error("${lspClients.size} LSP servers are already running and one more wants to start." +
                        "To save system resources, this request will be ignored: $descriptor")
           return@readAndEdtWriteAction value(Unit)
         }
 
         writeAction {
-          val server = LspClientImpl(providerClass, descriptor, eventDispatcher.multicaster)
-          server.start()
-          lspServers.add(server)
+          val client = LspClientImpl(providerClass, descriptor, eventDispatcher.multicaster)
+          client.start()
+          lspClients.add(client)
           Unit
         }
       }
@@ -183,9 +183,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    * Called when the server works fine but needs to be stopped for some reason.
    * For example, an action like `Stop server` or `Restart server` is invoked, or the project is closed.
    */
-  internal fun stopRunningServer(lspServer: LspServerImpl) =
-    lspServer.ensureServerStopped(explicitStop = true) {
-      handleServerStop(lspServer, explicitStop = true)
+  internal fun stopRunningServer(lspClient: LspClientImpl) =
+    lspClient.ensureServerStopped(explicitStop = true) {
+      handleServerStop(lspClient, explicitStop = true)
     }
 
   /**
@@ -195,10 +195,10 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    * In this case, this function doesn't do anything.
    * 2. Otherwise, the server termination is treated as an unexpected one.
    */
-  internal fun handleMaybeUnexpectedServerStop(lspServer: LspServerImpl, serverOutput: String) =
-    lspServer.ensureServerStopped(explicitStop = false) {
-      if (lspServer.state != LspServerState.ShutdownNormally) lspServer.appendServerErrorOutput(serverOutput)
-      handleServerStop(lspServer, explicitStop = false)
+  internal fun handleMaybeUnexpectedServerStop(lspClient: LspClientImpl, serverOutput: String) =
+    lspClient.ensureServerStopped(explicitStop = false) {
+      if (lspClient.state != LspServerState.ShutdownNormally) lspClient.appendServerErrorOutput(serverOutput)
+      handleServerStop(lspClient, explicitStop = false)
     }
 
   /**
@@ -208,27 +208,27 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    * - `false` is passed by [handleMaybeUnexpectedServerStop].
    * It is called when the IDE detects that the server stopped working, which may be both expected and unexpected
    */
-  private fun handleServerStop(lspServer: LspServerImpl, explicitStop: Boolean) {
-    if (lspServer.state in arrayOf(LspServerState.Initializing, LspServerState.Running) && !lspServers.contains(lspServer)) {
-      logger.error("LspServerManager doesn't know the server that it is asked to stop: $lspServer")
+  private fun handleServerStop(lspClient: LspClientImpl, explicitStop: Boolean) {
+    if (lspClient.state in arrayOf(LspServerState.Initializing, LspServerState.Running) && !lspClients.contains(lspClient)) {
+      logger.error("LspServerManager doesn't know the server that it is asked to stop: $lspClient")
     }
 
     if (explicitStop) {
-      // The server might be already ShutdownUnexpectedly at this point.
+      // The serverState might be already ShutdownUnexpectedly at this point.
       // `explicitStop == true` for a server that is already ShutdownUnexpectedly means one of the following:
       // - project closed,
       // - plugin unloaded,
       // - plugin-specific technology disabled in Settings (stopServers(providerClass) called),
       // - manual server restart (RestartLspServerAction).
-      // In any case, we need to remove it from the lspServers list
-      lspServers.remove(lspServer)
+      // In any case, we need to remove it from the `lspClients` collection
+      lspClients.remove(lspClient)
     }
     else {
-      // ShutdownUnexpectedly servers stay in the `lspServers` list so that they show up as 'Terminated' in the status bar widget.
+      // ShutdownUnexpectedly servers stay in the `lspClients` collection so that they show up as 'Terminated' in the status bar widget.
       // By the way, maybe try to auto-restart the server a couple of times if it has shutdown unexpectedly?
     }
 
-    if (lspServer.state == LspServerState.Running) {
+    if (lspClient.state == LspServerState.Running) {
       DaemonCodeAnalyzer.getInstance(project).restart("LspClientManagerImpl.stop")
     }
   }
@@ -267,9 +267,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     if (sendEventsForExistingServers) {
       // Listeners in LspTestUtilKt need to know about events that happened before a test managed to register a listener
-      for (lspServer in lspServers) {
-        if (lspServer.state == LspServerState.ShutdownUnexpectedly) eventDispatcher.multicaster.serverStateChanged(lspServer)
-        lspServer.forEachOpenedFile { eventDispatcher.multicaster.fileOpened(lspServer, it) }
+      for (lspClient in lspClients) {
+        if (lspClient.state == LspServerState.ShutdownUnexpectedly) eventDispatcher.multicaster.serverStateChanged(lspClient)
+        lspClient.forEachOpenedFile { eventDispatcher.multicaster.fileOpened(lspClient, it) }
       }
     }
   }
@@ -327,7 +327,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     }
   }
 
-  override fun dispose(): Unit = lspServers.forEach { stopRunningServer(it) }
+  override fun dispose(): Unit = lspClients.forEach { stopRunningServer(it) }
 
 
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -347,16 +347,16 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   companion object {
     fun getInstanceImpl(project: Project): LspClientManagerImpl = LspClientManager.getInstance(project) as LspClientManagerImpl
 
-    internal inline fun forEachRunningServerInEachProject(action: (LspServerImpl) -> Unit) =
+    internal inline fun forEachRunningClientInEachProject(action: (LspClientImpl) -> Unit) =
       ProjectManager.getInstance().openProjects.forEach { project ->
-        getInstanceImpl(project).lspServers.forEach { server ->
-          if (server.state == LspServerState.Running) action(server)
+        getInstanceImpl(project).lspClients.forEach { client ->
+          if (client.state == LspServerState.Running) action(client)
         }
       }
 
     internal fun isAnyServerRunning(): Boolean =
       ProjectManager.getInstance().openProjects.any { project ->
-        getInstanceImpl(project).lspServers.any { it.state == LspServerState.Running }
+        getInstanceImpl(project).lspClients.any { it.state == LspServerState.Running }
       }
   }
 }

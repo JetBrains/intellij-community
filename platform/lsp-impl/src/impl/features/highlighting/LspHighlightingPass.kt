@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 
@@ -47,25 +47,25 @@ internal class LspHighlightingPass(
     val groupId = LspHighlightingApplier.GROUP_ID
     if (groupId == LspHighlightingApplier.UNREGISTERED_PASS_ID) return
 
-    val servers = LspServerManagerImpl.getInstanceImpl(myProject).getServersWithThisFileOpen(file) // servers may be empty
+    val clients = LspClientManagerImpl.getInstanceImpl(myProject).getClientsWithThisFileOpen(file) // clients may be empty
 
     // Always trigger pull-based caches (semantic tokens, pull diagnostics, document links).
     // This is critical: getHighlightings()/getSemanticTokens()/getDocumentLinkInfos() check psiModCount
     // and schedule server requests when stale.
-    for (server in servers) {
-      val diagnosticsCustomizer = server.descriptor.lspCustomization.diagnosticsCustomizer
+    for (client in clients) {
+      val diagnosticsCustomizer = client.descriptor.lspCustomization.diagnosticsCustomizer
       if (diagnosticsCustomizer is LspDiagnosticsSupport) {
-        server.getDiagnosticsAndQuickFixes(file) // triggers pull diagnostics cache
+        client.getDiagnosticsAndQuickFixes(file) // triggers pull diagnostics cache
       }
 
-      val semanticTokensCustomizer = server.descriptor.lspCustomization.semanticTokensCustomizer
+      val semanticTokensCustomizer = client.descriptor.lspCustomization.semanticTokensCustomizer
       if (semanticTokensCustomizer is LspSemanticTokensSupport) {
-        server.getSemanticTokens(file) // triggers semantic tokens cache
+        client.getSemanticTokens(file) // triggers semantic tokens cache
       }
 
-      val documentLinkCustomizer = server.descriptor.lspCustomization.documentLinkCustomizer
+      val documentLinkCustomizer = client.descriptor.lspCustomization.documentLinkCustomizer
       if (documentLinkCustomizer !is LspDocumentLinkDisabled) {
-        server.getDocumentLinkInfos(file) // triggers document link cache
+        client.getDocumentLinkInfos(file) // triggers document link cache
       }
     }
 

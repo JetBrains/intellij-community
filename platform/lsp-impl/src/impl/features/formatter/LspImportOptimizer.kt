@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentMapping
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.CodeAction
@@ -91,7 +91,7 @@ internal fun findClientToOptimizeImports(psiFile: PsiFile): LspClient? {
   if (psiFile.project.isDefault) return null
   val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return null
 
-  return LspServerManagerImpl.getInstanceImpl(psiFile.project).findRunningServer { lspClient ->
+  return LspClientManagerImpl.getInstanceImpl(psiFile.project).findRunningClient { lspClient ->
     lspClient.descriptor.isSupportedFile(virtualFile) && canClientOptimizeImports(lspClient, psiFile, virtualFile)
   }
 }
