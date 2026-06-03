@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -34,6 +35,12 @@ object TerminalAgentsSelectorPresentationUtil {
     mode: TerminalAgentMode,
     showNewBadge: Boolean,
   ) {
+    if (PlatformUtils.isAndroidStudio() &&
+        terminalAgent.agentKey.key == "junie" &&
+        mode == TerminalAgentMode.INSTALL_AND_RUN) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
     presentation.text = buildText(terminalAgent, mode)
     presentation.icon = terminalAgent.icon
     presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, null)
