@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
-import org.jetbrains.intellij.build.impl.moduleRepository.RuntimeModuleRepositoryGenerator
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -49,7 +48,6 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 
 private val nettyMax = Runtime.getRuntime().availableProcessors() * 2
 internal val uploadParallelism = nettyMax.coerceIn(4, 32)
@@ -100,10 +98,6 @@ private fun getAndNormalizeServerUrlBySystemProperty(): String {
 }
 
 private const val COMPILATION_CACHE_METADATA_JSON = "metadata.json"
-internal val COMPILATION_PARTS_SPECIAL_FILES: Collection<String> = setOf(
-  RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME,
-  RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME,
-)
 
 suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
   val items = if (config.uploadOnly && config.saveMetadata) {  // no metadata.json
@@ -185,13 +179,6 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
             items.add(PackAndUploadItem(output = module, name = name, archive = zipDir.resolve("$name.jar")))
           }
         }
-      }
-    }
-    // module-descriptors.jar
-    for (name in COMPILATION_PARTS_SPECIAL_FILES) {
-      val path = context.classesOutputDirectory.resolve(name)
-      if (path.isRegularFile()) {
-        items.add(PackAndUploadItem(output = path, name = name, archive = zipDir.resolve(name))) // don't archive, upload as is
       }
     }
   }
@@ -470,9 +457,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
         return@forEachConcurrent
       }
 
-      val hashFile =
-        if (item.name in COMPILATION_PARTS_SPECIAL_FILES) out.resolveSibling(out.name + ".hash")
-        else out.resolve(".hash")
+      val hashFile = out.resolve(".hash")
       if (!Files.isRegularFile(hashFile)) {
         span.addEvent("no .hash file in output directory", Attributes.of(AttributeKey.stringKey("name"), item.name))
         out.deleteRecursively()
