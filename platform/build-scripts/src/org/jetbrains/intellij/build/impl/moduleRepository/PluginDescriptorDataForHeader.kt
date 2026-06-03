@@ -20,10 +20,15 @@ import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 internal class PluginDescriptorDataForHeader(
   val pluginId: String,
   val pluginDescriptorJpsModuleName: String,
+  val additionalFrontendOnlyPlugin: Boolean,
   val contentModules: Map<String, ContentModuleRegistrationDataForHeader>,
-)
+) {
+  override fun toString(): String {
+    return "PluginDescriptorDataForHeader{pluginId=$pluginId, pluginDescriptorJpsModuleName=$pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin=$additionalFrontendOnlyPlugin}"
+  }
+}
 
-data class ContentModuleRegistrationDataForHeader(
+internal data class ContentModuleRegistrationDataForHeader(
   val name: String,
   val namespace: String,
   val loadingRule: RuntimeModuleLoadingRule,
@@ -40,6 +45,7 @@ internal fun fetchPluginDescriptorsData(
   corePluginDescriptorModuleName: String,
   embeddedFrontendDescriptorModuleName: String?,
   bundledPlugins: List<PluginBuildDescriptor>,
+  additionalFrontendOnlyPlugins: List<PluginBuildDescriptor>
 ): List<PluginDescriptorDataForHeader> {
   val platformContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
   val corePluginContent = platformContainer.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH) ?: error("Cannot find core plugin descriptor")
@@ -48,7 +54,8 @@ internal fun fetchPluginDescriptorsData(
     corePluginContent,
     pluginDescriptorJpsModuleName = corePluginDescriptorModuleName,
     platformContainer,
-    additionalContainersForEmbeddedFrontend = emptyList()
+    additionalContainersForEmbeddedFrontend = emptyList(),
+    additionalFrontendOnlyPlugin = false,
   )
 
   val additionalContainersForEmbeddedFrontend =
@@ -61,18 +68,21 @@ internal fun fetchPluginDescriptorsData(
     }
     else emptyList()
 
-  val pluginDescriptorsData = bundledPlugins.map { plugin ->
+  fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildDescriptor, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
     val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.dir)
-    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)
-                      ?: error("Cannot find plugin.xml for ${plugin.dir} in the cache")
-    fetchPluginDescriptorDataForHeader(
+    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error("Cannot find plugin.xml for ${plugin.dir} in the cache")
+    return fetchPluginDescriptorDataForHeader(
       fileContent,
       pluginDescriptorJpsModuleName = plugin.layout.mainModule,
       descriptorContainer,
-      additionalContainersForEmbeddedFrontend
+      additionalContainersForEmbeddedFrontend,
+      additionalFrontendOnlyPlugin,
     )
   }
-  return listOf(corePluginDescriptorData) + pluginDescriptorsData
+
+  val bundledPluginDescriptorsData = bundledPlugins.map { plugin -> fetchPluginDescriptorDataForHeader(plugin, additionalFrontendOnlyPlugin = false) }
+  val additionalFrontendPluginDescriptorsData = additionalFrontendOnlyPlugins.map { plugin -> fetchPluginDescriptorDataForHeader(plugin, additionalFrontendOnlyPlugin = true) }
+  return listOf(corePluginDescriptorData) + bundledPluginDescriptorsData + additionalFrontendPluginDescriptorsData
 }
 
 private fun fetchPluginDescriptorDataForHeader(
@@ -80,6 +90,7 @@ private fun fetchPluginDescriptorDataForHeader(
   pluginDescriptorJpsModuleName: String,
   descriptorContainer: ScopedCachedDescriptorContainer,
   additionalContainersForEmbeddedFrontend: List<ScopedCachedDescriptorContainer>,
+  additionalFrontendOnlyPlugin: Boolean,
 ): PluginDescriptorDataForHeader {
   val parsedContent = parseContentAndXIncludes(input = pluginDescriptorContent, locationSource = pluginDescriptorJpsModuleName)
   val pluginId = parsedContent.pluginId ?: error("<id> tag is not set in plugin.xml in $pluginDescriptorJpsModuleName")
@@ -99,7 +110,7 @@ private fun fetchPluginDescriptorDataForHeader(
     val requiredIfAvailable = contentModuleElement.requiredIfAvailable?.let { RuntimeModuleId.contentModule(it, RuntimeModuleId.DEFAULT_NAMESPACE) }
     ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility)
   }
-  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, contentModules.associateBy { it.name })
+  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin, contentModules.associateBy { it.name })
 }
 
 private fun parseVisibility(moduleXmlRoot: Element): RuntimeModuleVisibility {

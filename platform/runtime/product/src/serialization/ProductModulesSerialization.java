@@ -83,7 +83,7 @@ public final class ProductModulesSerialization {
       var withoutIncluding = new HashSet<>(withoutModules);
       withoutIncluding.addAll(includedFromData.getWithoutModules());
       for (RuntimeModuleId module : includedFromData.getWithoutModules()) {
-        if (module.getNamespace().equals(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE)) {
+        if (module.getNamespace().endsWith(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX)) {
           withoutIncluding.add(RuntimeModuleId.contentModule(module.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));
         }
       }

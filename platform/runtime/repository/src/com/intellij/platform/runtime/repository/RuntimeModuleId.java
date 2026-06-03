@@ -16,11 +16,11 @@ public final class RuntimeModuleId {
   @ApiStatus.Internal
   public static final String TESTS_NAME_SUFFIX = ".tests";
   @ApiStatus.Internal
-  public static final String LEGACY_JPS_MODULE_NAMESPACE = "$legacy_jps_module";
+  public static final String LEGACY_JPS_MODULE_NAMESPACE_SUFFIX = "$legacy_jps_module";
   @ApiStatus.Internal
-  public static final String LEGACY_JPS_MODULE_TESTS_NAMESPACE = "$legacy_jps_module_tests";
+  public static final String LEGACY_JPS_MODULE_TESTS_NAMESPACE_SUFFIX = "$legacy_jps_module_tests";
   @ApiStatus.Internal
-  public static final String LEGACY_JPS_LIBRARY_NAMESPACE = "$legacy_jps_library";
+  public static final String LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX = "$legacy_jps_library";
   private final String myName;
   private final String myNamespace;
 
@@ -62,7 +62,7 @@ public final class RuntimeModuleId {
 
   @ApiStatus.Internal
   public static @NotNull RuntimeModuleId legacyJpsModule(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName, LEGACY_JPS_MODULE_NAMESPACE);
+    return new RuntimeModuleId(moduleName, LEGACY_JPS_MODULE_NAMESPACE_SUFFIX);
   }
 
   /**
@@ -71,14 +71,14 @@ public final class RuntimeModuleId {
    */
   @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId moduleTests(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName, LEGACY_JPS_MODULE_TESTS_NAMESPACE);
+    return new RuntimeModuleId(moduleName, LEGACY_JPS_MODULE_TESTS_NAMESPACE_SUFFIX);
   }
 
   /**
    * Creates ID of a runtime module corresponding to the project-level library {@code libraryName} in intellij project configuration.
    */
   public static @NotNull RuntimeModuleId projectLibrary(@NotNull String libraryName) {
-    return new RuntimeModuleId(libraryName, LEGACY_JPS_LIBRARY_NAMESPACE);
+    return new RuntimeModuleId(libraryName, LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX);
   }
 
   @Override

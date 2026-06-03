@@ -1,26 +1,34 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleRepository
 
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
+import com.intellij.platform.runtime.repository.RuntimeModuleId.legacyJpsModule
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
+import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.testFramework.rules.TempDirectoryExtension
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import kotlin.io.path.Path
+import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 class RuntimeModuleRepositoryGeneratorTest {
@@ -37,255 +45,199 @@ class RuntimeModuleRepositoryGeneratorTest {
   }
 
   @Test
-  fun `test module with tests`() {
-    addModule("a", withTests = true)
-    buildAndCheck { 
-      descriptor("a")
-      testDescriptor("a", "a")
+  fun `plugin with multiple modules`() {
+    addModule("foo.plugin")
+    val fooJps = addModule("foo.jps")
+    addModule("foo.core", fooJps)
+    addModule("foo.rt")
+    val plugin = createHeader("foo.plugin", "foo.core")
+    val distributionEntries = listOf(
+      moduleOutput("foo.plugin"),
+      moduleOutput("foo.core"),
+      moduleOutput("foo.jps"),
+      moduleOutput("foo.rt", "rt/foo.rt.jar"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo.plugin"), listOf("../lib/foo.plugin.jar"))
+      descriptor(contentModule("foo.core"), listOf("../lib/foo.core.jar"), dependencies = listOf(legacyJpsModule("foo.jps")))
+      descriptor(legacyJpsModule("foo.jps"), listOf("../lib/foo.jps.jar"))
+      descriptor(legacyJpsModule("foo.rt"), listOf("../lib/rt/foo.rt.jar"))
+      pluginHeader("com.foo.plugin", legacyJpsModule("foo.plugin"),
+                   includedJpsModule("foo.plugin"), includedContentModule("foo.core"), includedJpsModule("foo.jps"),
+      )
     }
   }
 
   @Test
-  fun `test module without sources`() {
-    addModule("a", withTests = false, withSources = false)
-    buildAndCheck { 
-      descriptor("a", resourceDirName = null)
-    }
-  }
-
-  @Test
-  fun `test module with resources only`() {
-    val module = addModule("a", withTests = false, withSources = false)
-    module.addSourceRoot(getUrl("a/res"), JavaResourceRootType.RESOURCE)
-    buildAndCheck { 
-      descriptor("a")
-    }
-  }
-
-  @Test
-  fun `test dependency`() {
-    val a = addModule("a", withTests = false)
-    addModule("b", a, withTests = false)
-    buildAndCheck { 
-      descriptor("a")
-      descriptor("b", "a")
-    }
-  }
-
-  @Test
-  fun `test transitive dependency`() {
-    val a = addModule("a", withTests = false)
-    val b = addModule("b", a, withTests = false)
-    addModule("c", b, withTests = false)
-    buildAndCheck { 
-      descriptor("a")
-      descriptor("b", "a")
-      descriptor("c", "b")
-    }
-  }
-
-  @Test
-  fun `test dependency with tests`() {
-    val a = addModule("a", withTests = true)
-    addModule("b", a, withTests = true)
-    buildAndCheck { 
-      descriptor("a")
-      testDescriptor("a", "a")
-      descriptor("b", "a")
-      testDescriptor("b", module("b"), moduleTests("a"))
-    }
-  }
-
-  @Test
-  fun `test dependency on test only module with non-standard name`() {
-    val aTests = addModule("a.test", withSources = false, withTests = true)
-    val b = addModule("b", withTests = true)
-    val dependency = b.dependenciesList.addModuleDependency(aTests)
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
-    buildAndCheck {
-      descriptor("a.test", resourceDirName = null)
-      testDescriptor("a.test", "a.test", resourceDirName = "a.test")
-      descriptor("b")
-      testDescriptor("b", module("b"), moduleTests("a.test"))
-    }
-  }
-
-  @Test
-  fun `test transitive dependency via module without tests`() {
-    val a = addModule("a", withTests = true)
-    val b = addModule("b", a, withTests = false)
-    addModule("c", b, withTests = true)
-    buildAndCheck {
-      descriptor("a")
-      descriptor("b", "a")
-      descriptor("c", "b")
-      testDescriptor("a", "a")
-      testDescriptor("c", module("c"), moduleTests("a"))
-    }
-  }
-
-  @Test
-  fun `test transitive dependency via module without tests but with test module-level library`() {
-    val a = addModule("a", withTests = true)
-    val b = addModule("b", a, withTests = false)
-    val lib = b.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
-    val dependency = b.dependenciesList.addLibraryDependency(lib)
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+  fun `plugin with module-level library`() {
+    val foo = addModule("foo")
+    val lib = foo.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    foo.dependenciesList.addLibraryDependency(lib)
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
-    addModule("c", b, withTests = true)
-    buildAndCheck {
-      descriptor("a")
-      descriptor("b", "a")
-      descriptor("c", "b")
-      testDescriptor("a", "a")
-      descriptor(moduleTests("c"), listOf("test/c", $$"$PROJECT_DIR$/lib"),  listOf(module("c"), moduleTests("a")))
+    val plugin = createHeader("foo")
+    val distributionEntries = listOf(
+      moduleOutput("foo"),
+      moduleLibraryFileEntry("foo", "lib", tempDirectory.rootPath.resolve("lib/lib.jar"), "lib.jar"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo"),listOf("../lib/foo.jar", "../lib/lib.jar"), emptyList())
+      pluginHeader("com.foo", legacyJpsModule("foo"), includedJpsModule("foo"))
     }
   }
 
   @Test
-  fun `test do not add unnecessary transitive dependencies via module without tests`() {
-    val a = addModule("a", withTests = true)
-    val b = addModule("b", withTests = false)
-    val c = addModule("c", a, b, withTests = false)
-    addModule("d", c, withTests = true)
-    buildAndCheck {
-      descriptor("a")
-      descriptor("b")
-      descriptor("c", "a", "b")
-      descriptor("d", "c")
-      testDescriptor("a", "a")
-      testDescriptor("d", module("d"), moduleTests("a"))
-    }
-  }
-
-  @Test
-  fun `test circular dependency with tests`() {
-    val a = addModule("a", withTests = true)
-    val b = addModule("b", a, withTests = true)
-    val dependency = a.dependenciesList.addModuleDependency(b)
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.RUNTIME
-    buildAndCheck {
-      descriptor("a", "b")
-      testDescriptor("a", module("a"), moduleTests("b"))
-      descriptor("b", "a")
-      testDescriptor("b", module("b"), moduleTests("a"))
-    }
-  }
-
-  @Test
-  fun `test circular dependency without tests`() {
-    val a = addModule("a", withTests = false)
-    val b = addModule("b", a, withTests = false)
-    val dependency = a.dependenciesList.addModuleDependency(b)
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.RUNTIME
-    addModule("c", b, withTests = true)
-    buildAndCheck {
-      descriptor("a", "b")
-      descriptor("b", "a")
-      descriptor("c", "b")
-      testDescriptor("c", "c")
-    }
-  }
-
-  @Test
-  fun `test separate module for tests`() {
-    val a = addModule("a", withTests = false)
-    addModule("a.tests", a, withTests = true, withSources = false)
-    buildAndCheck {
-      descriptor("a")
-      testDescriptor("a.tests", "a", resourceDirName = "a.tests")
-    }
-  }
-
-  @Test
-  fun `test module with production roots named like a test module`() {
-    val name = "a.tests.actually.not"
-    addModule(name, withTests = false)
-    buildAndCheck {
-      descriptor(name)
-      descriptor(name)
-    }
-  }
-
-  @Test
-  fun `test module library`() {
-    val a = addModule("a", withTests = false)
-    val lib = a.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
-    a.dependenciesList.addLibraryDependency(lib)
-    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
-    buildAndCheck { 
-      descriptor("a",listOf("production/a", $$"$PROJECT_DIR$/lib"), emptyList())
-    }
-  }
-
-  @Test
-  fun `test project library`() {
-    val a = addModule("a", withTests = false)
+  fun `plugin with project-level library`() {
+    val foo = addModule("foo")
     val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
-    a.dependenciesList.addLibraryDependency(lib)
+    foo.dependenciesList.addLibraryDependency(lib)
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
     val libId = RuntimeModuleId.projectLibrary("lib")
-    buildAndCheck {
-      descriptor(module("a"), listOf("production/a"), listOf(libId))
-      descriptor(libId, listOf($$"$PROJECT_DIR$/lib"), emptyList())
+    val plugin = createHeader("foo")
+    val distributionEntries = listOf(
+      moduleOutput("foo"),
+      projectLibraryEntry("lib", tempDirectory.rootPath.resolve("lib/lib.jar"), "lib.jar"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo"),listOf("../lib/foo.jar"), listOf(libId))
+      descriptor(libId,listOf("../lib/lib.jar"), emptyList())
+      pluginHeader("com.foo", legacyJpsModule("foo"),
+                   includedJpsModule("foo"), includedEmbeddedModule(libId))
     }
   }
 
   @Test
-  fun `test library with roots from Maven repository`() {
-    val a = addModule("a", withTests = false)
+  fun `two plugins include same project-level library`() {
+    val foo = addModule("foo")
+    val bar = addModule("bar")
     val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
-    a.dependenciesList.addLibraryDependency(lib)
-    val mavenRepoRoot = Path(JpsMavenSettings.getMavenRepositoryPath())
-    val relativeLibPath = "org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
-    lib.addRoot(JpsPathUtil.getLibraryRootUrl(mavenRepoRoot.resolve(relativeLibPath)), JpsOrderRootType.COMPILED)
-    val libId = RuntimeModuleId.projectLibrary("lib")
-    buildAndCheck {
-      descriptor(module("a"), listOf("production/a"),
-                 listOf(libId))
-      descriptor(libId, listOf($$"$MAVEN_REPOSITORY$/$$relativeLibPath"), emptyList())
-    }
-  }
-
-  @Test
-  fun `test library with test scope`() {
-    val a = addModule("a", withTests = true)
-    val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
-    val dependency = a.dependenciesList.addLibraryDependency(lib)
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+    foo.dependenciesList.addLibraryDependency(lib)
+    bar.dependenciesList.addLibraryDependency(lib)
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
-    val libId = RuntimeModuleId.projectLibrary("lib")
-    buildAndCheck { 
-      descriptor("a")
-      descriptor(moduleTests("a"), listOf("test/a"),
-                 listOf(module("a"), libId))
-      descriptor(libId, listOf($$"$PROJECT_DIR$/lib"), emptyList())
+    val fooPlugin = createHeader("foo")
+    val barPlugin = createHeader("bar")
+    val pluginConfigurationModuleToDistributionEntries = mapOf(
+      fooPlugin.pluginDescriptorJpsModuleName to listOf(
+        moduleOutput("foo", pathPrefix = "plugins/foo/lib/"),
+        projectLibraryEntry("lib", tempDirectory.rootPath.resolve("plugins/foo/lib/lib.jar"), "lib.jar"),
+      ),
+      barPlugin.pluginDescriptorJpsModuleName to listOf(
+        moduleOutput("bar", pathPrefix = "plugins/bar/lib/"),
+        projectLibraryEntry("lib", tempDirectory.rootPath.resolve("plugins/bar/lib/lib.jar"), "lib.jar"),
+      ),
+    )
+    val libIdInFoo = RuntimeModuleId.raw("lib", "com.foo_${RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX}")
+    val libIdInBar = RuntimeModuleId.raw("lib", "com.bar_${RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX}")
+    generateAndCheck(listOf(fooPlugin, barPlugin), pluginConfigurationModuleToDistributionEntries) {
+      descriptor(legacyJpsModule("foo"),listOf("../plugins/foo/lib/foo.jar"), listOf(libIdInFoo))
+      descriptor(libIdInFoo,listOf("../plugins/foo/lib/lib.jar"), emptyList())
+      pluginHeader("com.foo", legacyJpsModule("foo"), includedJpsModule("foo"), includedEmbeddedModule(libIdInFoo))
+
+      descriptor(legacyJpsModule("bar"),listOf("../plugins/bar/lib/bar.jar"), listOf(libIdInBar))
+      descriptor(libIdInBar,listOf("../plugins/bar/lib/lib.jar"), emptyList())
+      pluginHeader("com.bar", legacyJpsModule("bar"), includedJpsModule("bar"), includedEmbeddedModule(libIdInBar))
     }
   }
 
-  private fun addModule(name: String, vararg dependencies: JpsModule, withTests: Boolean, withSources: Boolean = true): JpsModule {
+  private fun generateAndCheck(
+    plugin: PluginDescriptorDataForHeader,
+    distributionEntries: List<DistributionFileEntry>,
+    expected: ExpectedRuntimeRepositoryBuilder.() -> Unit,
+  ) {
+    generateAndCheck(listOf(plugin), mapOf(plugin.pluginDescriptorJpsModuleName to distributionEntries), expected)
+  }
+
+  private fun generateAndCheck(
+    plugins: List<PluginDescriptorDataForHeader>,
+    pluginConfigurationModuleToDistributionEntries: Map<String, List<DistributionFileEntry>>,
+    expected: ExpectedRuntimeRepositoryBuilder.() -> Unit,
+  ) {
+    val pluginHeadersData = generateRuntimePluginHeaders(
+      plugins,
+      pluginConfigurationModuleToDistributionEntries,
+      { it: Path -> tempDirectory.rootPath.relativize(it) },
+      project
+    )
+    val descriptors = generateRuntimeModuleDescriptors(pluginHeadersData)
+    val pluginHeaders = pluginHeadersData.map { it.header }
+    val runtimeModuleRepositoryData = RawRuntimeModuleRepositoryData.create(descriptors.associateBy { it.moduleId }, pluginHeaders, tempDirectory.rootPath)
+    ExpectedRuntimeRepositoryBuilder().apply(expected).checkRuntimeModuleRepository(runtimeModuleRepositoryData)
+  }
+
+  private fun createHeader(pluginDescriptorModuleName: String, vararg contentModules: String): PluginDescriptorDataForHeader {
+    return PluginDescriptorDataForHeader(
+      pluginId = "com.$pluginDescriptorModuleName",
+      pluginDescriptorJpsModuleName = pluginDescriptorModuleName,
+      additionalFrontendOnlyPlugin = false,
+      contentModules = contentModules.associateWith {
+        ContentModuleRegistrationDataForHeader(
+          it,
+          namespace = DEFAULT_NAMESPACE,
+          RuntimeModuleLoadingRule.OPTIONAL,
+          requiredIfAvailable = null,
+          visibility = RuntimeModuleVisibility.PUBLIC
+        )
+      }
+    )
+  }
+
+  private fun moduleOutput(moduleName: String, relativeOutput: String = "$moduleName.jar", pathPrefix: String = "lib/"): ModuleOutputEntry = ModuleOutputEntry(
+    tempDirectory.rootPath.resolve("$pathPrefix$relativeOutput"),
+    ModuleItem(moduleName, relativeOutputFile = relativeOutput, reason = null),
+    size = 0,
+    hash = 0,
+    relativeOutputFile = relativeOutput
+  )
+
+  private fun moduleLibraryFileEntry(moduleName: String, libraryName: String, path: Path, relativeOutputFile: String?) : DistributionFileEntry {
+    return ModuleLibraryFileEntry(
+      path = path,
+      moduleName = moduleName,
+      libraryName = libraryName,
+      relativeOutputFile = relativeOutputFile,
+      libraryFile = path,
+      canonicalLibraryPath = null,
+      size = 0,
+      hash = 0,
+      owner = null,
+    )
+  }
+
+  private fun projectLibraryEntry(libraryName: String, path: Path, relativeOutputFile: String?) : DistributionFileEntry {
+    return ProjectLibraryEntry(
+      path = path,
+      data = ProjectLibraryData(libraryName, reason = null, owner = null),
+      libraryFile = path,
+      canonicalLibraryPath = null,
+      size = 0,
+      hash = 0,
+      relativeOutputFile = relativeOutputFile,
+    )
+  }
+  private fun includedContentModule(moduleName: String): IncludedRuntimeModule {
+    return IncludedRuntimeModuleImpl(contentModule(moduleName), RuntimeModuleLoadingRule.OPTIONAL, null)
+  }
+
+  private fun includedJpsModule(moduleName: String): IncludedRuntimeModule {
+    return IncludedRuntimeModuleImpl(legacyJpsModule(moduleName), RuntimeModuleLoadingRule.EMBEDDED, null)
+  }
+
+  private fun includedEmbeddedModule(moduleId: RuntimeModuleId): IncludedRuntimeModule {
+    return IncludedRuntimeModuleImpl(moduleId, RuntimeModuleLoadingRule.EMBEDDED, null)
+  }
+
+  private fun addModule(name: String, vararg dependencies: JpsModule): JpsModule {
     val module = project.addModule(name, JpsJavaModuleType.INSTANCE)
-    if (withSources) {
-      module.addSourceRoot(getUrl("$name/src"), JavaSourceRootType.SOURCE)
-    }
-    if (withTests) {
-      module.addSourceRoot(getUrl("$name/testSrc"), JavaSourceRootType.TEST_SOURCE)
-    }
+    module.addSourceRoot(getUrl("$name/src"), JavaSourceRootType.SOURCE)
     for (dependency in dependencies) {
       module.dependenciesList.addModuleDependency(dependency)
     }
     return module
   }
 
-  private fun buildAndCheck(expected: RawDescriptorListBuilder.() -> Unit) {
-    generateAndCheck(project, tempDirectory.rootPath, expected)
-  }
-
   private fun getUrl(relativePath: String): String {
     return JpsPathUtil.pathToUrl(tempDirectory.rootPath.resolve(relativePath).absolutePathString())
   }
 
-  private fun module(name: String): RuntimeModuleId = RuntimeModuleId.contentModule(name, DEFAULT_NAMESPACE)
-  private fun moduleTests(name: String): RuntimeModuleId = RuntimeModuleId.moduleTests(name)
+  private fun contentModule(name: String): RuntimeModuleId = RuntimeModuleId.contentModule(name, DEFAULT_NAMESPACE)
 }
 

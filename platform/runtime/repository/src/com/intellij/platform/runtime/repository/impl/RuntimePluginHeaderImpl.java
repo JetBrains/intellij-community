@@ -37,6 +37,24 @@ public final class RuntimePluginHeaderImpl implements RuntimePluginHeader {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RuntimePluginHeaderImpl header = (RuntimePluginHeaderImpl)o;
+    return myPluginId.equals(header.myPluginId) &&
+           myPluginDescriptorModuleId.equals(header.myPluginDescriptorModuleId) &&
+           myIncludedModules.equals(header.myIncludedModules);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPluginId.hashCode();
+    result = 31 * result + myPluginDescriptorModuleId.hashCode();
+    result = 31 * result + myIncludedModules.hashCode();
+    return result;
+  }
+
+  @Override
   public String toString() {
     return "RuntimePluginHeader{" +
            "pluginId=" + myPluginId +

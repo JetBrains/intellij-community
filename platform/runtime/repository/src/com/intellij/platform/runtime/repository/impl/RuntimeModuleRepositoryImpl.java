@@ -65,7 +65,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
 
     RawRuntimeModuleRepositoryData rawData = getRawData();
     RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId);
-    if (rawDescriptor == null && moduleId.getNamespace().equals(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE)) {
+    if (rawDescriptor == null && moduleId.getNamespace().endsWith(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX)) {
       /* we don't have syntax to specify namespace in product-modules.xml, so currently all elements are supposed to be from the
          LEGACY_JPS_MODULE_NAMESPACE, but they actually can be registered as content modules */
       rawDescriptor = rawData.findDescriptor(RuntimeModuleId.contentModule(moduleId.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));

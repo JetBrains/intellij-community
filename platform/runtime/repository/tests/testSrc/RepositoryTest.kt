@@ -172,10 +172,10 @@ class RepositoryTest {
     @CartesianTest.Values(strings = ["", "ij.foo", "ij.bar"]) storedBootstrapModule: String, 
     @CartesianTest.Values(booleans = [true, false]) loadFromCompact: Boolean
   ) {
-    val fooId = raw("ij.foo", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE)
+    val fooId = raw("ij.foo", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX)
     val descriptors = arrayOf(
       create(fooId, listOf("foo.jar"), emptyList()),
-      create(raw("ij.bar", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE), listOf("bar.jar"),
+      create(raw("ij.bar", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX), listOf("bar.jar"),
       listOf(fooId)),
     )
     val basePath = tempDirectory.rootPath

@@ -78,7 +78,7 @@ class RuntimeModuleRepositorySerializationTest {
   fun `bootstrap module classpath`() {
     check(listOf(
       createModuleDescriptor("foo", listOf("foo.jar"), emptyList()),
-      create(raw("bar", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE), listOf("bar.jar"),
+      create(raw("bar", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX), listOf("bar.jar"),
       listOf(raw("foo", DEFAULT_NAMESPACE))),
     ), emptyList(), "bar", "bar.jar foo.jar") {
       xml("foo.xml", """

@@ -17,9 +17,9 @@ import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.hasModuleOutputPath
-import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import java.io.IOException
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -108,7 +108,7 @@ class RuntimeModuleRepositoryChecker private constructor(
       val corePluginForFrontendHeader = findCorePluginHeaderForFrontend(softly) ?: return
       val corePluginResourceRoots = corePluginForFrontendHeader.includedModules
             .asSequence()
-            .filter { it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
+            .filterNot { it.moduleId.namespace.endsWith(RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX) }
             .flatMap { included ->
               repository.findModuleHeader(included.moduleId)?.let { module -> module.ownClasspath.map { it to included.moduleId } } ?: emptyList()
             }
@@ -207,7 +207,7 @@ class RuntimeModuleRepositoryChecker private constructor(
       }
       .toSet()
     for (moduleId in allModuleIds) {
-      if (moduleId.namespace == RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE) {
+      if (moduleId.namespace.endsWith(RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX)) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }
