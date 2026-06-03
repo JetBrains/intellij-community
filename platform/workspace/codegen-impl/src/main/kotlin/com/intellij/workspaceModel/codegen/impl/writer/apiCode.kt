@@ -101,12 +101,8 @@ fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
 }
 
 fun ObjClass<*>.generateTopLevelCode(reporter: ProblemReporter): String {
-  val implClassImport = if (openness.instantiatable) "\n\nimport ${module.name}.impl.$javaImplName" else ""
-  val header = """
-    @file:JvmName("${name}Modifications")
-    
-    package ${module.name}$implClassImport
-  """.trimIndent()
+  val implClassImport = if (openness.instantiatable) "import ${module.name}.impl.$javaImplName" else ""
+  val header = "@file:JvmName(\"${name}Modifications\")\npackage ${module.name}\n$implClassImport"
   val mutableCode = generateMutableCode(reporter)
   val entityTypeObject = if (openness.instantiatable) "\n${generateEntityTypeObject()}" else ""
   var result = "$header\n$mutableCode$entityTypeObject"
