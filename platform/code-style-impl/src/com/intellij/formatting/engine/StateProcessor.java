@@ -2,21 +2,21 @@
 package com.intellij.formatting.engine;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 @ApiStatus.Internal
 public final class StateProcessor {
-
-  private final List<State> myStates = new ArrayList<>();
+  private final Deque<@NotNull State> myStates = new ArrayDeque<>();
   private State myCurrentState;
 
-  public StateProcessor(State initial) {
+  public StateProcessor(@NotNull State initial) {
     myCurrentState = initial;
   }
 
-  public void setNextState(State state) {
+  public void setNextState(@NotNull State state) {
     myStates.add(state);
   }
 
@@ -33,8 +33,7 @@ public final class StateProcessor {
 
   private void shiftStateIfNecessary() {
     if (myCurrentState.isDone() && !myStates.isEmpty()) {
-      myCurrentState = myStates.get(0);
-      myStates.remove(0);
+      myCurrentState = myStates.removeFirst();
       myCurrentState.prepare();
     }
   }
