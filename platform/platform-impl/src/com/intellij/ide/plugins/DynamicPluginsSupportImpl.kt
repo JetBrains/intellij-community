@@ -49,6 +49,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -58,81 +60,88 @@ private val REPORT_ISSUES_COUNT_PROPERTY = "dynamic.plugins.report.issues.count"
 internal class DynamicPluginsSupportImpl(
   val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
 ) : DynamicPluginsSupport {
+  private val rwLock = Mutex() // TODO replace with a proper suspending RW lock?
 
   override suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid? {
-    return withContext(Dispatchers.Default) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("validating dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-        PluginInitializationDiagnosticUtils.logExclusionTree(
-          LOG,
-          targetState.resolvedPluginSet!!,
-          emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-        )
-      }
-      reportSequentialProgress { reporter ->
-        val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
-        val current = getCurrentlyLoadedPluginSet()
-        val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
-        validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
-          .also { issues -> if (LOG.isDebugEnabled) buildExplanationMessage(issues)?.let { LOG.debug(it) } }
-          .firstOrNull()?.let(DynamicPluginsTransitionResult::Invalid)
+    return rwLock.withLock {
+      withContext(Dispatchers.Default) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("validating dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
+          PluginInitializationDiagnosticUtils.logExclusionTree(
+            LOG,
+            targetState.resolvedPluginSet!!,
+            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
+          )
+        }
+        reportSequentialProgress { reporter ->
+          val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+          val current = getCurrentlyLoadedPluginSet()
+          val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
+          validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
+            .also { issues -> if (LOG.isDebugEnabled) buildExplanationMessage(issues)?.let { LOG.debug(it) } }
+            .firstOrNull()?.let(DynamicPluginsTransitionResult::Invalid)
+        }
       }
     }
   }
 
   override suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult {
-    return withContext(Dispatchers.Default) {
-      reportSequentialProgress { reporter ->
-        val current = getCurrentlyLoadedPluginSet()
-        val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
-        LOG.info("performing dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-        PluginInitializationDiagnosticUtils.logExclusionTree(
-          LOG,
-          target,
-          emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-        )
-        val sequence = buildTransitionSequence(current, target).also {
-          LOG.info(it.getExplanationLogMessage())
+    return rwLock.withLock {
+      withContext(Dispatchers.Default) {
+        reportSequentialProgress { reporter ->
+          val current = getCurrentlyLoadedPluginSet()
+          val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+          LOG.info("performing dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
+          PluginInitializationDiagnosticUtils.logExclusionTree(
+            LOG,
+            target,
+            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
+          )
+          val sequence = buildTransitionSequence(current, target).also {
+            LOG.info(it.getExplanationLogMessage())
+          }
+
+          val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
+            .also { issues -> buildExplanationMessage(issues)?.let { msg -> LOG.warn(msg) } }
+            .firstOrNull()
+          if (dynamicTransitionIsNotPossibleReason != null) {
+            return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
+          }
+
+          saveAllSettings() // TODO should be converted to pre-reconfiguration listener
+
+          val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
+          val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
+          check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
+
+          val pluginsToLoad =
+            loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
+              .associateBy { it.pluginId }
+          val (successfullyUnloaded, classloadersToUnload) = unloadGroups(
+            groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
+            pluginsToBeLoadedLater = pluginsToLoad,
+            reporter = reporter,
+          )
+          if (!successfullyUnloaded) {
+            // broken state, require restart
+            InstalledPluginsState.getInstance().isRestartRequired = true
+            return@withContext DynamicPluginsTransitionResult.Incomplete()
+          }
+
+          loadGroups(
+            targetPluginSet = targetState,
+            groups = loadSteps.map { it.runtimeModuleGroup },
+            reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
+            reporter = reporter,
+          )
+          val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
+          if (!trulyCollected) {
+            InstalledPluginsState.getInstance().isRestartRequired = true
+            return@withContext DynamicPluginsTransitionResult.Incomplete()
+          }
+
+          return@withContext DynamicPluginsTransitionResult.Success()
         }
-
-        val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
-          .also { issues -> buildExplanationMessage(issues)?.let { msg -> LOG.warn(msg) } }
-          .firstOrNull()
-        if (dynamicTransitionIsNotPossibleReason != null) {
-          return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
-        }
-
-        saveAllSettings() // TODO should be converted to pre-reconfiguration listener
-
-        val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
-        val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
-        check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
-
-        val pluginsToLoad = loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>().associateBy { it.pluginId }
-        val (successfullyUnloaded, classloadersToUnload) = unloadGroups(
-          groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
-          pluginsToBeLoadedLater = pluginsToLoad,
-          reporter = reporter,
-        )
-        if (!successfullyUnloaded) {
-          // broken state, require restart
-          InstalledPluginsState.getInstance().isRestartRequired = true
-          return@withContext DynamicPluginsTransitionResult.Incomplete()
-        }
-
-        loadGroups(
-          targetPluginSet = targetState,
-          groups = loadSteps.map { it.runtimeModuleGroup },
-          reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
-          reporter = reporter,
-        )
-        val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
-        if (!trulyCollected) {
-          InstalledPluginsState.getInstance().isRestartRequired = true
-          return@withContext DynamicPluginsTransitionResult.Incomplete()
-        }
-
-        return@withContext DynamicPluginsTransitionResult.Success()
       }
     }
   }
