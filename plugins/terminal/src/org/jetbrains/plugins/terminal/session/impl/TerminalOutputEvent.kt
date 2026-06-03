@@ -6,7 +6,6 @@ import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
-import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStartupOptionsDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
@@ -56,8 +55,6 @@ data class TerminalInitialStateEvent(
   val outputModelState: TerminalOutputModelStateDto,
   val alternateBufferState: TerminalOutputModelStateDto,
   val blocksModelState: TerminalBlocksModelStateDto,
-  val outputHyperlinksState: TerminalHyperlinksModelStateDto?,
-  val alternateBufferHyperlinksState: TerminalHyperlinksModelStateDto?,
 ) : TerminalOutputEvent
 
 // Shell Integration Events

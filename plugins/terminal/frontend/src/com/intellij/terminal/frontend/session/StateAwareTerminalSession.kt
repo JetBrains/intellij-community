@@ -175,7 +175,7 @@ internal class StateAwareTerminalSession(
       return update
     }
 
-    private fun handleEvent(event: TerminalOutputEvent): TerminalOutputEvent? {
+    private fun handleEvent(event: TerminalOutputEvent): TerminalOutputEvent {
       when (event) {
         is TerminalContentUpdatedEvent -> {
           val model = getCurrentOutputModel()
@@ -226,8 +226,6 @@ internal class StateAwareTerminalSession(
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),
         blocksModelState = blocksModel.dumpState().toDto(),
-        outputHyperlinksState = null,
-        alternateBufferHyperlinksState = null,
       )
       return listOf(listOf(event))
     }

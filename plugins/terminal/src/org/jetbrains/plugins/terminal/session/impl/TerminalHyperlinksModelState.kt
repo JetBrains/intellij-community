@@ -11,11 +11,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class TerminalHyperlinksModelState(
-  val hyperlinks: List<TerminalFilterResultInfo>
-)
-
-@ApiStatus.Internal
 sealed class TerminalFilterResultInfo {
   abstract val id: TerminalHyperlinkId
   abstract val absoluteStartOffset: Long

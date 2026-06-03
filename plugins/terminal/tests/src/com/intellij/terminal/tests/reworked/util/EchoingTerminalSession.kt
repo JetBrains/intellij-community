@@ -37,7 +37,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalCommandBlockDto
-import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
@@ -213,8 +212,6 @@ internal class EchoingTerminalSession(
       outputModelState = outputModelState,
       alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),
-      outputHyperlinksState = TerminalHyperlinksModelStateDto(emptyList()),
-      alternateBufferHyperlinksState = TerminalHyperlinksModelStateDto(emptyList()),
     )
   }
 

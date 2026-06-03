@@ -14,7 +14,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
 
 @ApiStatus.Internal
@@ -158,18 +157,3 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
       inlayProvider = inlayProvider,
     )
   }
-
-
-@ApiStatus.Internal
-@Serializable
-data class TerminalHyperlinksModelStateDto(
-  val hyperlinks: List<TerminalFilterResultInfoDto>,
-)
-
-@ApiStatus.Internal
-fun TerminalHyperlinksModelState.toDto(): TerminalHyperlinksModelStateDto =
-  TerminalHyperlinksModelStateDto(
-    hyperlinks.map {
-      it.toDto()
-    }
-  )
