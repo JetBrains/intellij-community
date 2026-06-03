@@ -178,16 +178,17 @@ public final class TemplateFormatUtil {
     int lastOffset = startOffset;
     TextRange currRange = new TextRange(lastOffset, endOffset);
     for (Block block : blocks) {
-      if (lastOffset == endOffset || block.getTextRange().getStartOffset() > endOffset) return lastOffset;
-      if (currRange.contains(block.getTextRange())) {
+      TextRange blockRange = block.getTextRange();
+      if (lastOffset == endOffset || blockRange.getStartOffset() > endOffset) return lastOffset;
+      if (currRange.contains(blockRange)) {
         result.add(block);
         if (parent != null && block instanceof IndentInheritingBlock) {
           ((IndentInheritingBlock)block).setIndent(parent.getIndent());
         }
-        lastOffset = block.getTextRange().getEndOffset();
+        lastOffset = blockRange.getEndOffset();
         currRange = new TextRange(lastOffset, endOffset);
       }
-      else if (currRange.intersects(block.getTextRange()) && TextRangeUtil.intersectsOneOf(block.getTextRange(), originalRanges)) {
+      else if (currRange.intersects(blockRange) && TextRangeUtil.intersectsOneOf(blockRange, originalRanges)) {
         List<Block> subBlocks = block.getSubBlocks();
         if (block instanceof TemplateLanguageBlock && ((TemplateLanguageBlock)block).containsErrorElements()) {
           throw new FragmentedTemplateException();
@@ -205,8 +206,9 @@ public final class TemplateFormatUtil {
 
   private static @Nullable Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range, int depth) {
     for (Block block : blockList) {
-      if (block.getTextRange().contains(range)) {
-        if (TextRangeUtil.intersectsOneOf(block.getTextRange(), originalRanges)) {
+      TextRange blockRange = block.getTextRange();
+      if (blockRange.contains(range)) {
+        if (TextRangeUtil.intersectsOneOf(blockRange, originalRanges)) {
           Block containingBlock = getBlockContaining(block.getSubBlocks(), originalRanges, range, depth + 1);
           if (containingBlock != null) return containingBlock;
         }
