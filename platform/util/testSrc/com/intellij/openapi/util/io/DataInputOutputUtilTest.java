@@ -39,6 +39,33 @@ public class DataInputOutputUtilTest {
   }
 
   @Test
+  public void sizeOfVarint_ReturnsExactSizeWrittenBy_writeINT() {
+    for (int valueToCheck : SPECIAL_CASES_TO_CHECK) {
+      assertEquals(
+        "sizeOfVarint must match actual writeINT byte count for special value " + valueToCheck,
+        bytesWrittenByWriteINT(valueToCheck),
+        DataInputOutputUtil.sizeOfVarint(valueToCheck)
+      );
+    }
+
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    for (int i = 0; i < 1_000_000; i++) {
+      int valueToCheck = rnd.nextInt();
+      assertEquals(
+        "sizeOfVarint must match actual writeINT byte count for random value " + valueToCheck,
+        bytesWrittenByWriteINT(valueToCheck),
+        DataInputOutputUtil.sizeOfVarint(valueToCheck)
+      );
+    }
+  }
+
+  private static int bytesWrittenByWriteINT(int value) {
+    ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES + 1);
+    DataInputOutputUtil.writeINT(buffer, value);
+    return buffer.position();
+  }
+
+  @Test
   public void valueWrittenBy_writeINT_CouldBeReadBackBy_readINT_excessive() throws Exception {
     ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES + 1);
     for (int valueToCheck = Integer.MIN_VALUE; valueToCheck < Integer.MAX_VALUE; valueToCheck++) {

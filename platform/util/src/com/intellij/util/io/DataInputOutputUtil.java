@@ -37,6 +37,24 @@ public final class DataInputOutputUtil {
     DataInputOutputUtilRt.writeINT(byteBuffer, val);
   }
 
+  /**
+   * Returns the exact byte count produced by {@link #writeINT(DataOutput, int)} for {@code val}.
+   */
+  @ApiStatus.Internal
+  public static int sizeOfVarint(int val) {
+    if (0 <= val && val < 192) {
+      return 1;
+    }
+
+    int size = 2; // first marker byte and the final continuation-free byte
+    val >>>= 6;
+    while (val >= 128) {
+      size++;
+      val >>>= 7;
+    }
+    return size;
+  }
+
   public static long readLONG(@NotNull DataInput record) throws IOException {
     final int val = record.readUnsignedByte();
     if (val < 192) {

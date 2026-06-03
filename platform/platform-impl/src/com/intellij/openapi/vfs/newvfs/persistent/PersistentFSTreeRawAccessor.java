@@ -64,7 +64,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     }
 
     Boolean stoppedEarly = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      return forEachChild(fileId, connection.records(), () -> DataInputOutputUtil.readINT(buffer), childConsumer);
+      return forEachChild(fileId, () -> DataInputOutputUtil.readINT(buffer), connection.records(), childConsumer);
     });
 
     if (stoppedEarly == null) {
@@ -84,7 +84,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     }
 
     Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      return Boolean.valueOf(childrenAttributeMayHaveChildren(() -> DataInputOutputUtil.readINT(buffer)));
+      return Boolean.valueOf(childrenAttributeMayHaveChildren(fileId, () -> DataInputOutputUtil.readINT(buffer)));
     });
     if (hasChildren == null) {
       return true; //we don't know about children => maybe have, maybe not...

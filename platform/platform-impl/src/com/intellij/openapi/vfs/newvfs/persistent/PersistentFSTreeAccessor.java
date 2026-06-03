@@ -2,12 +2,16 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.persistent.ranges.CompactRangesBuilder;
+import com.intellij.openapi.vfs.newvfs.persistent.ranges.FixedRangeCountRangesBuilder;
+import com.intellij.openapi.vfs.newvfs.persistent.ranges.RangesList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CorruptedException;
@@ -21,7 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.EOFException;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,15 +37,36 @@ import java.util.List;
 import java.util.function.IntPredicate;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.NULL_FILE_ID;
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApiStatus.Internal
 public class PersistentFSTreeAccessor {
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(FSRecords.LOG, SECONDS.toMillis(15));
+
   /**
-   * The attribute is a list of child fileId, diff-compressed -- see {@link #doSaveChildren} for details.
-   * The FS super-root ({@link #SUPER_ROOT_ID}) is an exceptional case: there is stored both child fileId
-   * AND child nameId, both diff-compressed -- see {@link #findOrCreateRootRecord(String)} for details.
+   * Children are stored under this attribute in one of three formats.
+   * <p>
+   * The FS super-root ({@link #SUPER_ROOT_ID}) is an exceptional case: both child fileId and child nameId are stored,
+   * both diff-compressed -- see {@link #findOrCreateRootRecord(String)} for details.
+   * <p>
+   * A regular exact-list directory stores {@code [header: varint32] [childId deltas...]}, where {@code header >= 0}
+   * is the children count and each child id is diff-compressed from the previous id, starting from {@code parentId}.
+   * <p>
+   * A regular range-list directory stores {@code header = -rangesCount} followed by diff-compressed half-open ranges
+   * {@code [minChildIdInclusive, maxChildIdExclusive)}. Range boundaries are diff-compressed from the previous boundary,
+   * starting from {@code parentId}. Range-list is candidate coverage over id space: readers keep only live records whose
+   * parent id matches the directory.
    */
-  protected static final FileAttribute CHILDREN_ATTR = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  public static final FileAttribute CHILDREN_ATTR = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+
+
+  private static final int MAX_VARINT_SIZE = 5;
+  private static final int MAX_RANGES_COUNT = Math.max(1, (VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE - MAX_VARINT_SIZE) /
+                                                          (2 * MAX_VARINT_SIZE));
+  private static final CompactRangesBuilder RANGE_LIST_BUILDER = new FixedRangeCountRangesBuilder(MAX_RANGES_COUNT);
+
   /**
    * fileId of super-root, 'root of all roots' record: superficial file record to which all FS roots are
    * attached as children -- see {@link #findOrCreateRootRecord(String)} for details.
@@ -50,6 +78,13 @@ public class PersistentFSTreeAccessor {
   protected final PersistentFSConnection connection;
 
   protected final @Nullable FsRootDataLoader fsRootDataLoader;
+
+  /**
+   * Forces range-list storage for non-empty regular directories with at least this many children; mainly for tests and debugging
+   *
+   * @see #setStoreChildrenAsRangesListIfMoreThan(int)
+   */
+  private int storeChildrenAsRangesListIfMoreThan = getIntProperty("vfs.children.store-as-range-list-threshold", Integer.MAX_VALUE);
 
   public PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                                   @NotNull PersistentFSRecordAccessor recordAccessor,
@@ -63,6 +98,14 @@ public class PersistentFSTreeAccessor {
   }
 
   @VisibleForTesting
+  @ApiStatus.Internal
+  public int setStoreChildrenAsRangesListIfMoreThan(int storeChildrenAsRangesListIfMoreThan) {
+    int old = this.storeChildrenAsRangesListIfMoreThan;
+    this.storeChildrenAsRangesListIfMoreThan = storeChildrenAsRangesListIfMoreThan;
+    return old;
+  }
+
+  @VisibleForTesting
   public void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -70,28 +113,30 @@ public class PersistentFSTreeAccessor {
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
-    try (DataOutputStream record = attributeAccessor.writeAttribute(parentId, CHILDREN_ATTR)) {
-      DataInputOutputUtil.writeINT(record, toSave.children.size());
+    List<? extends ChildInfo> children = toSave.children;
+    validateChildrenToSave(parentId, children, toSave);
 
-      int prevId = parentId;
-      for (ChildInfo childInfo : toSave.children) {
-        int childId = childInfo.getId();
-        if (childId <= 0) {
-          throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
-        }
-        if (childId == parentId) {
-          FSRecords.LOG.error("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
-        }
-        else {
-          int delta = childId - prevId;
-          if (prevId != parentId && delta <= 0) {
-            throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
-                                               parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
-                                               prevId + "; toSave: " + toSave);
-          }
-          DataInputOutputUtil.writeINT(record, delta);
-          prevId = childId;
-        }
+    boolean storeAsRangeList = shouldStoreAsRangeList(parentId, children);
+    RangesList ranges;
+    if (storeAsRangeList) {
+      ranges = buildAndCheckRangeList(parentId, children);
+      THROTTLED_LOG.info(
+        () -> "Directory[#" + parentId + "] is humongous (children.size: " + children.size() + ") " +
+              "=> children persisted as range-list: " +
+              "{ranges: " + ranges.rangesCount() + ", totalRangesWidth: " + ranges.totalRangeWidth() +
+              ", efficacy: " + (children.size() * 100.0 / ranges.totalRangeWidth()) + "%}"
+      );
+    }
+    else {
+      ranges = null;
+    }
+
+    try (DataOutputStream record = attributeAccessor.writeAttribute(parentId, CHILDREN_ATTR)) {
+      if (storeAsRangeList) {
+        writeChildrenAsRangeList(parentId, ranges, record);
+      }
+      else {
+        writeChildrenAsExactList(parentId, children, record);
       }
     }
   }
@@ -135,7 +180,7 @@ public class PersistentFSTreeAccessor {
 
     try (DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return false;
-      return forEachChild(fileId, connection.records(), () -> DataInputOutputUtil.readINT(input), childConsumer);
+      return forEachChild(fileId, () -> DataInputOutputUtil.readINT(input), connection.records(), childConsumer);
     }
   }
 
@@ -150,42 +195,59 @@ public class PersistentFSTreeAccessor {
 
     try (DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return true;
-      return childrenAttributeMayHaveChildren(() -> DataInputOutputUtil.readINT(input));
+      return childrenAttributeMayHaveChildren(fileId, () -> DataInputOutputUtil.readINT(input));
     }
   }
 
   /**
-   * Reconstructs children from the DIRECTORY_CHILDREN exact-list payload.
+   * Reconstructs children from the DIRECTORY_CHILDREN payload, accepting both the legacy exact-list and the range-list format.
    */
   protected final @NotNull List<? extends ChildInfo> loadChildren(int parentId,
                                                                   @NotNull PersistentFSRecordsStorage records,
                                                                   @NotNull IntReader input) throws IOException {
-    int childrenCount = input.readINT();
-    if (childrenCount == 0) {
+    int header = readINT(input, parentId, "children header");
+    if (header == 0) {
       return Collections.emptyList();
     }
-    return loadExactChildren(parentId, records, input, childrenCount);
+    if (header > 0) {
+      return loadExactChildren(parentId, /* childrenCount: */ header, input, records);
+    }
+    else {//header < 0
+      if (header == Integer.MIN_VALUE) {
+        throw childrenAttributeCorrupted(parentId, "range-list header must not be Integer.MIN_VALUE");
+      }
+      return loadRangeListChildren(parentId, /* rangesCount: */ -header, input, records);
+    }
   }
 
   /**
-   * Iterates children from a DIRECTORY_CHILDREN exact-list payload without materializing the full result list.
+   * Iterates children from a DIRECTORY_CHILDREN payload without materializing the full result list.
    */
   protected final boolean forEachChild(int parentId,
-                                       @NotNull PersistentFSRecordsStorage records,
                                        @NotNull IntReader input,
+                                       @NotNull PersistentFSRecordsStorage records,
                                        @NotNull IntPredicate childConsumer) throws IOException {
-    int childrenCount = input.readINT();
-    if (childrenCount == 0) {
+    int header = readINT(input, parentId, "children header");
+    if (header == 0) {
       return false;
     }
-    return forEachExactListChild(parentId, records, input, childrenCount, childConsumer);
+    if (header > 0) {
+      return forEachExactListChild(parentId, /* childrenCount: */header, input, records, childConsumer);
+    }
+    else {
+      if (header == Integer.MIN_VALUE) {
+        throw childrenAttributeCorrupted(parentId, "range-list header must not be Integer.MIN_VALUE");
+      }
+      return forEachRangeListChild(parentId, /* rangesCount: */ -header, input, records, childConsumer);
+    }
   }
 
   /**
    * Preserves the cheap may-have-children check: absent means unknown, zero exact-list means known empty.
    */
-  protected static boolean childrenAttributeMayHaveChildren(@NotNull IntReader input) throws IOException {
-    return input.readINT() != 0;
+  protected final boolean childrenAttributeMayHaveChildren(int parentId,
+                                                           @NotNull IntReader input) throws IOException {
+    return readINT(input, parentId, "children header") != 0;
   }
 
   /**
@@ -203,15 +265,111 @@ public class PersistentFSTreeAccessor {
     }
   }
 
+  private static void validateChildrenToSave(int parentId,
+                                             @NotNull List<? extends ChildInfo> children,
+                                             @NotNull ListResult toSave) {
+    int prevId = parentId;
+    for (ChildInfo childInfo : children) {
+      int childId = childInfo.getId();
+      if (childId <= 0) {
+        throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
+      }
+      if (childId == parentId) {
+        throw new IllegalArgumentException("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
+      }
+      int delta = childId - prevId;
+      if (prevId != parentId && delta <= 0) {
+        throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
+                                           parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
+                                           prevId + "; toSave: " + toSave);
+      }
+      prevId = childId;
+    }
+  }
+
+  private boolean shouldStoreAsRangeList(int parentId,
+                                         @NotNull List<? extends ChildInfo> children) {
+    if (children.isEmpty()) {
+      return false;
+    }
+    if (children.size() >= storeChildrenAsRangesListIfMoreThan) {
+      return true;
+    }
+
+    long exactListSizeUpperBound = (long)MAX_VARINT_SIZE * (children.size() + 1);
+    if (exactListSizeUpperBound <= VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE) {
+      return false;
+    }
+    return exactListSerializedSize(parentId, children) > VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE;
+  }
+
+  private static int exactListSerializedSize(int parentId,
+                                             @NotNull List<? extends ChildInfo> children) {
+    //keep the public size accounting as int but use long accumulator here: if the serialized size
+    // no longer fits into signed int -- fail instead of silently overflowing the accumulator
+    long size = DataInputOutputUtil.sizeOfVarint(children.size());
+    int prevId = parentId;
+    for (ChildInfo childInfo : children) {
+      int childId = childInfo.getId();
+      size += DataInputOutputUtil.sizeOfVarint(childId - prevId);
+      prevId = childId;
+    }
+    return Math.toIntExact(size);
+  }
+
+  private static void writeChildrenAsExactList(int parentId,
+                                               @NotNull List<? extends ChildInfo> children,
+                                               @NotNull DataOutput output) throws IOException {
+    DataInputOutputUtil.writeINT(output, children.size());
+
+    int prevId = parentId;
+    for (ChildInfo childInfo : children) {
+      int childId = childInfo.getId();
+      DataInputOutputUtil.writeINT(output, childId - prevId);
+      prevId = childId;
+    }
+  }
+
+  private static @NotNull RangesList buildAndCheckRangeList(int parentId,
+                                                            @NotNull List<? extends ChildInfo> children) throws FileTooBigException {
+    RangesList ranges = RANGE_LIST_BUILDER.build(children);
+    int rangesCount = ranges.rangesCount();
+    if (rangesCount == 0) {
+      throw new IllegalStateException("Range-list is empty: range format must not be used for an empty children list: " + children);
+    }
+
+    int header = -rangesCount;
+    // Header belongs to DIRECTORY_CHILDREN framing; RangesList serializes only diff-compressed range boundaries.
+    //TODO RC: use a checked int-size addition helper for header+payload and throw if the total does not fit into signed int.
+    int serializedSize = DataInputOutputUtil.sizeOfVarint(header) + ranges.serializedSize(parentId);
+    if (serializedSize > VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE) {
+      throw new FileTooBigException(
+        "Can't store children for parent #" + parentId + ": range-list is too large: " + serializedSize +
+        " b > max(" + VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + "), children=" + children.size() +
+        ", ranges=" + rangesCount
+      );
+    }
+    return ranges;
+  }
+
+  private static void writeChildrenAsRangeList(int parentId,
+                                               @NotNull RangesList ranges,
+                                               @NotNull DataOutput output) throws IOException {
+    int header = -ranges.rangesCount();
+
+    DataInputOutputUtil.writeINT(output, header);
+    ranges.serializeTo(parentId, output);
+  }
+
   private @NotNull List<ChildInfo> loadExactChildren(int parentId,
-                                                     @NotNull PersistentFSRecordsStorage records,
+                                                     int childrenCount,
                                                      @NotNull IntReader input,
-                                                     int childrenCount) throws IOException {
+                                                     @NotNull PersistentFSRecordsStorage records) throws IOException {
     List<ChildInfo> children = new ArrayList<>(childrenCount);
     int prevId = parentId;
     int maxAllocatedID = records.maxAllocatedID();
     for (int i = 0; i < childrenCount; i++) {
-      int childId = readDiffCompressedInt(input, prevId);
+      int childId = readDiffCompressedInt(input, prevId, parentId, "exact child[" + i + "]");
       checkChildIdValid(parentId, childId, i, maxAllocatedID);
       prevId = childId;
 
@@ -223,34 +381,167 @@ public class PersistentFSTreeAccessor {
   }
 
   private boolean forEachExactListChild(int parentId,
-                                        @NotNull PersistentFSRecordsStorage records,
-                                        @NotNull IntReader input,
                                         int childrenCount,
+                                        @NotNull IntReader input,
+                                        @NotNull PersistentFSRecordsStorage records,
                                         @NotNull IntPredicate childConsumer) throws IOException {
     int prevId = parentId;
     int maxAllocatedID = records.maxAllocatedID();
     for (int i = 0; i < childrenCount; i++) {
-      int childId = readDiffCompressedInt(input, prevId);
+      int childId = readDiffCompressedInt(input, prevId, parentId, "exact child[" + i + "]");
+      checkChildIdValid(parentId, childId, i, maxAllocatedID);
       if (childConsumer.test(childId)) {
         return true;
       }
       prevId = childId;
-      checkChildIdValid(parentId, prevId, i, maxAllocatedID);
     }
     return false;
   }
 
-  private static int readDiffCompressedInt(@NotNull IntReader input,
-                                           int previousValue) throws IOException {
-    return input.readINT() + previousValue;
+  private @NotNull List<ChildInfo> loadRangeListChildren(int parentId,
+                                                         int rangesCount,
+                                                         @NotNull IntReader input,
+                                                         @NotNull PersistentFSRecordsStorage records) throws IOException {
+    RangesList ranges = readRangesList(parentId, rangesCount, input, records);
+    List<ChildInfo> children = new ArrayList<>();
+    processRangeListChildren(parentId, ranges, records, (childId, nameId) -> {
+      children.add(new ChildInfoImpl(childId, nameId, null, null, null));
+      return false;
+    });
+    return children;
   }
 
-  /**
-   * Reads varint32 values from DIRECTORY_CHILDREN without binding shared parser code to stream or ByteBuffer storage.
-   */
+  private boolean forEachRangeListChild(int parentId,
+                                        int rangesCount,
+                                        @NotNull IntReader input,
+                                        @NotNull PersistentFSRecordsStorage records,
+                                        @NotNull IntPredicate childConsumer) throws IOException {
+    RangesList ranges = readRangesList(parentId, rangesCount, input, records);
+    return processRangeListChildren(parentId, ranges, records, (childId, nameId) -> {
+      assert nameId > 0 : nameId;
+      return childConsumer.test(childId);
+    });
+  }
+
+  private @NotNull RangesList readRangesList(int parentId,
+                                             int rangesCount,
+                                             @NotNull IntReader input,
+                                             @NotNull PersistentFSRecordsStorage records) throws IOException {
+    if (rangesCount <= 0) {
+      throw childrenAttributeCorrupted(parentId, "range-list ranges count must be >0 but got: " + rangesCount);
+    }
+
+    RangesList ranges = new RangesList(rangesCount);
+    int prevBoundary = parentId;
+    int maxAllocatedID = records.maxAllocatedID();
+    // Ranges are half-open, so maxExclusive may be maxAllocatedID + 1; compare in long to avoid int overflow.
+    long maxExclusiveUpperBound = (long)maxAllocatedID + 1;
+    int previousMaxExclusive = 0;
+    for (int i = 0; i < rangesCount; i++) {
+      int minChildId = readDiffCompressedInt(input, prevBoundary, parentId, "range[" + i + "].min");
+      int maxExclusiveChildId = readDiffCompressedInt(input, minChildId, parentId, "range[" + i + "].maxExclusive");
+
+      if (minChildId <= NULL_FILE_ID) {
+        throw childrenAttributeCorrupted(parentId, "range[" + i + "].min(=" + minChildId + ") is outside valid id range (" +
+                                                   NULL_FILE_ID + ".." + maxAllocatedID + "]");
+      }
+      if (maxExclusiveChildId <= minChildId) {
+        throw childrenAttributeCorrupted(parentId, "range[" + i + "] is empty: [" + minChildId + ", " +
+                                                   maxExclusiveChildId + ")");
+      }
+      if (maxExclusiveChildId > maxExclusiveUpperBound) {
+        throw childrenAttributeCorrupted(parentId, "range[" + i + "].maxExclusive(=" + maxExclusiveChildId +
+                                                   ") is outside valid upper bound " + maxExclusiveUpperBound);
+      }
+      if (i > 0 && minChildId <= previousMaxExclusive) {
+        // On-disk format is canonical: writer must merge adjacent ranges, reader rejects non-canonical payloads.
+        throw childrenAttributeCorrupted(parentId, "range[" + i + "] starts at " + minChildId +
+                                                   " but previous range ends at " + previousMaxExclusive +
+                                                   ": ranges must not intersect or be adjacent");
+      }
+
+      ranges.addCanonicalRange(minChildId, maxExclusiveChildId);
+      previousMaxExclusive = maxExclusiveChildId;
+      prevBoundary = maxExclusiveChildId;
+    }
+    return ranges;
+  }
+
+  private boolean processRangeListChildren(int parentId,
+                                           @NotNull RangesList ranges,
+                                           @NotNull PersistentFSRecordsStorage records,
+                                           @NotNull ChildIdProcessor childProcessor) throws IOException {
+    int rangesCount = ranges.rangesCount();
+    for (int rangeIndex = 0; rangeIndex < rangesCount; rangeIndex++) {
+      int minChildId = ranges.minChildIdInclusive(rangeIndex);
+      int maxExclusiveChildId = ranges.maxChildIdExclusive(rangeIndex);
+      for (int childId = minChildId; childId < maxExclusiveChildId; childId++) {
+        // Range-list stores candidate ids; deleted records and records under another parent are not directory children.
+        int flags = records.getFlags(childId);
+        if (PersistentFSRecordAccessor.hasDeletedFlag(flags)) {
+          continue;
+        }
+        if (records.getParent(childId) != parentId) {
+          continue;
+        }
+
+        int nameId = records.getNameId(childId);
+        checkNameIdValid(nameId, parentId, childId);
+        if (childProcessor.process(childId, nameId)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private int readDiffCompressedInt(@NotNull IntReader input,
+                                    int previousValue,
+                                    int parentId,
+                                    @NotNull String valueDescription) throws IOException {
+    int delta = readINT(input, parentId, valueDescription);
+    long value = (long)previousValue + delta;
+    if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+      throw childrenAttributeCorrupted(parentId, valueDescription + " overflows int32 after diff decoding: previous=" +
+                                                 previousValue + ", delta=" + delta);
+    }
+    return (int)value;
+  }
+
+  /** parentId & valueDescription are only for exception message */
+  private int readINT(@NotNull IntReader input,
+                      int parentId,
+                      @NotNull String valueDescription) throws IOException {
+    try {
+      return input.readINT();
+    }
+    catch (EOFException | BufferUnderflowException e) {
+      throw childrenAttributeCorrupted(parentId, "unexpected EOF while reading " + valueDescription, e);
+    }
+  }
+
+  private @NotNull CorruptedException childrenAttributeCorrupted(int parentId,
+                                                                 @NotNull String message) {
+    return childrenAttributeCorrupted(parentId, message, null);
+  }
+
+  private @NotNull CorruptedException childrenAttributeCorrupted(int parentId,
+                                                                 @NotNull String message,
+                                                                 @Nullable Throwable cause) {
+    String fullMessage = "file[" + parentId + "]." + CHILDREN_ATTR + " attribute is corrupted: " + message +
+                         ", VFS.status: {" + connection.describeConsistencyStatus() + "}";
+    return cause == null ? new CorruptedException(fullMessage) : new CorruptedException(fullMessage, cause);
+  }
+
+  /** Reads values from DIRECTORY_CHILDREN without binding shared parser code to stream or ByteBuffer storage. */
   @FunctionalInterface
   protected interface IntReader {
     int readINT() throws IOException;
+  }
+
+  @FunctionalInterface
+  private interface ChildIdProcessor {
+    boolean process(int childId, int nameId) throws IOException;
   }
 
   //Threading: all the root accessing/modifying methods are called under the record/hierarchy lock in FSRecordsImpl.
