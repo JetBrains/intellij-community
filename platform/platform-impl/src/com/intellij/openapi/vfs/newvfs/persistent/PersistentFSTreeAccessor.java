@@ -108,27 +108,9 @@ public class PersistentFSTreeAccessor {
     int parentModCount = records.getModCount(parentId);
     int flags = records.getFlags(parentId);
     try (DataInputStream input = attributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
-      int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
-      List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
-      int prevId = parentId;
-      int maxAllocatedID = records.maxAllocatedID();
-      for (int i = 0; i < count; i++) {
-        int childId = DataInputOutputUtil.readINT(input) + prevId;
-        checkChildIdValid(parentId, childId, i, maxAllocatedID);
-
-        prevId = childId;
-        int nameId = records.getNameId(childId);
-        checkNameIdValid(nameId, parentId, childId);
-        ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
-        children.add(child);
-      }
-
-      if (FSRecordsImpl.areAllChildrenCached(flags)) {
-        return ListResult.allCached(parentModCount, children, parentId);
-      }
-      else {
-        return ListResult.notAllCached(parentModCount, children, parentId);
-      }
+      List<? extends ChildInfo> children = input == null ? Collections.emptyList() :
+                                           loadChildren(parentId, records, () -> DataInputOutputUtil.readINT(input));
+      return asListResult(parentId, parentModCount, flags, children);
     }
   }
 
@@ -153,21 +135,7 @@ public class PersistentFSTreeAccessor {
 
     try (DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return false;
-
-      PersistentFSRecordsStorage records = connection.records();
-      int maxID = records.maxAllocatedID();
-
-      int count = DataInputOutputUtil.readINT(input);
-      int prevId = fileId;
-      for (int i = 0; i < count; i++) {
-        int childId = DataInputOutputUtil.readINT(input) + prevId;
-        if (childConsumer.test(childId)) {
-          return true;
-        }
-        prevId = childId;
-        checkChildIdValid(fileId, prevId, i, maxID);
-      }
-      return false;
+      return forEachChild(fileId, connection.records(), () -> DataInputOutputUtil.readINT(input), childConsumer);
     }
   }
 
@@ -182,9 +150,107 @@ public class PersistentFSTreeAccessor {
 
     try (DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return true;
-      int count = DataInputOutputUtil.readINT(input);
-      return count != 0;
+      return childrenAttributeMayHaveChildren(() -> DataInputOutputUtil.readINT(input));
     }
+  }
+
+  /**
+   * Reconstructs children from the DIRECTORY_CHILDREN exact-list payload.
+   */
+  protected final @NotNull List<? extends ChildInfo> loadChildren(int parentId,
+                                                                  @NotNull PersistentFSRecordsStorage records,
+                                                                  @NotNull IntReader input) throws IOException {
+    int childrenCount = input.readINT();
+    if (childrenCount == 0) {
+      return Collections.emptyList();
+    }
+    return loadExactChildren(parentId, records, input, childrenCount);
+  }
+
+  /**
+   * Iterates children from a DIRECTORY_CHILDREN exact-list payload without materializing the full result list.
+   */
+  protected final boolean forEachChild(int parentId,
+                                       @NotNull PersistentFSRecordsStorage records,
+                                       @NotNull IntReader input,
+                                       @NotNull IntPredicate childConsumer) throws IOException {
+    int childrenCount = input.readINT();
+    if (childrenCount == 0) {
+      return false;
+    }
+    return forEachExactListChild(parentId, records, input, childrenCount, childConsumer);
+  }
+
+  /**
+   * Preserves the cheap may-have-children check: absent means unknown, zero exact-list means known empty.
+   */
+  protected static boolean childrenAttributeMayHaveChildren(@NotNull IntReader input) throws IOException {
+    return input.readINT() != 0;
+  }
+
+  /**
+   * Applies the cached/not-cached bit to an already decoded children list.
+   */
+  protected static @NotNull ListResult asListResult(int parentId,
+                                                    int parentModCount,
+                                                    @PersistentFS.Attributes int flags,
+                                                    @NotNull List<? extends ChildInfo> children) {
+    if (FSRecordsImpl.areAllChildrenCached(flags)) {
+      return ListResult.allCached(parentModCount, children, parentId);
+    }
+    else {
+      return ListResult.notAllCached(parentModCount, children, parentId);
+    }
+  }
+
+  private @NotNull List<ChildInfo> loadExactChildren(int parentId,
+                                                     @NotNull PersistentFSRecordsStorage records,
+                                                     @NotNull IntReader input,
+                                                     int childrenCount) throws IOException {
+    List<ChildInfo> children = new ArrayList<>(childrenCount);
+    int prevId = parentId;
+    int maxAllocatedID = records.maxAllocatedID();
+    for (int i = 0; i < childrenCount; i++) {
+      int childId = readDiffCompressedInt(input, prevId);
+      checkChildIdValid(parentId, childId, i, maxAllocatedID);
+      prevId = childId;
+
+      int nameId = records.getNameId(childId);
+      checkNameIdValid(nameId, parentId, childId);
+      children.add(new ChildInfoImpl(childId, nameId, null, null, null));
+    }
+    return children;
+  }
+
+  private boolean forEachExactListChild(int parentId,
+                                        @NotNull PersistentFSRecordsStorage records,
+                                        @NotNull IntReader input,
+                                        int childrenCount,
+                                        @NotNull IntPredicate childConsumer) throws IOException {
+    int prevId = parentId;
+    int maxAllocatedID = records.maxAllocatedID();
+    for (int i = 0; i < childrenCount; i++) {
+      int childId = readDiffCompressedInt(input, prevId);
+      if (childConsumer.test(childId)) {
+        return true;
+      }
+      prevId = childId;
+      checkChildIdValid(parentId, prevId, i, maxAllocatedID);
+    }
+    return false;
+  }
+
+  private static int readDiffCompressedInt(@NotNull IntReader input,
+                                           int previousValue) throws IOException {
+    return input.readINT() + previousValue;
+  }
+
+  /**
+   * Reads varint32 values from DIRECTORY_CHILDREN without binding shared parser code to stream or ByteBuffer storage.
+   */
+  @FunctionalInterface
+  protected interface IntReader {
+    int readINT() throws IOException;
   }
 
   //Threading: all the root accessing/modifying methods are called under the record/hierarchy lock in FSRecordsImpl.

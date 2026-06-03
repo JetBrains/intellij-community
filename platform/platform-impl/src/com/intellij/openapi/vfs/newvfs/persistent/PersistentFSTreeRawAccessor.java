@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.IntPredicate;
@@ -44,53 +42,16 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
 
     PersistentFSRecordsStorage records = connection.records();
 
-    //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
-    //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
-    //         useful to check does it really matter -- otherwise code could be simplified, as below:
-    //int[] childrenIds = listIds(parentId);
-    //if(childrenIds.length == 0){
-    //  return new ListResult(Collections.emptyList(), parentId);
-    //}else{
-    //  List<ChildInfo> children =  new ArrayList<>(childrenIds.length);
-    //  for (int childId : childrenIds) {
-    //    int nameId = records.getNameId(childId);
-    //    ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
-    //    children.add(child);
-    //  }
-    //  return new ListResult(children, parentId);
-    //}
-
     int parentModCount = records.getModCount(parentId);
     int flags = records.getFlags(parentId);
     List<? extends ChildInfo> childrenList = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
-      int count = DataInputOutputUtil.readINT(buffer);
-      if (count == 0) {
-        return Collections.emptyList();
-      }
-      List<ChildInfo> children = new ArrayList<>(count);
-      int maxID = records.maxAllocatedID();
-      int prevId = parentId;
-      for (int i = 0; i < count; i++) {
-        int childId = DataInputOutputUtil.readINT(buffer) + prevId;
-        checkChildIdValid(parentId, childId, i, maxID);
-        prevId = childId;
-        int nameId = records.getNameId(childId);
-        checkNameIdValid(nameId, parentId, childId);
-        ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
-        children.add(child);
-      }
-      return children;
+      return loadChildren(parentId, records, () -> DataInputOutputUtil.readINT(buffer));
     });
     if (childrenList == null) {
       childrenList = Collections.emptyList();
     }
 
-    if (FSRecordsImpl.areAllChildrenCached(flags)) {
-      return ListResult.allCached(parentModCount, childrenList, parentId);
-    }
-    else {
-      return ListResult.notAllCached(parentModCount, childrenList, parentId);
-    }
+    return asListResult(parentId, parentModCount, flags, childrenList);
   }
 
   @Override
@@ -103,22 +64,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     }
 
     Boolean stoppedEarly = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      int count = DataInputOutputUtil.readINT(buffer);
-      if(count == 0){
-        return false;
-      }
-      int prevId = fileId;
-      int maxID = connection.records().maxAllocatedID();
-      for (int i = 0; i < count; i++) {
-        int childId = DataInputOutputUtil.readINT(buffer) + prevId;
-        if (childConsumer.test(childId)) {
-          return true;
-        }
-        prevId = childId;
-        checkChildIdValid(fileId, prevId, i, maxID);
-      }
-
-      return false;
+      return forEachChild(fileId, connection.records(), () -> DataInputOutputUtil.readINT(buffer), childConsumer);
     });
 
     if (stoppedEarly == null) {
@@ -138,8 +84,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     }
 
     Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      int count = DataInputOutputUtil.readINT(buffer);
-      return Boolean.valueOf(count != 0);
+      return Boolean.valueOf(childrenAttributeMayHaveChildren(() -> DataInputOutputUtil.readINT(buffer)));
     });
     if (hasChildren == null) {
       return true; //we don't know about children => maybe have, maybe not...
@@ -202,47 +147,4 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
       this.rootsUrlIds = ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
-
-  //@Override
-  //void doSaveChildren(int parentId,
-  //                    @NotNull ListResult toSave) throws IOException {
-  //  List<? extends ChildInfo> children = toSave.children;
-  //  {
-  //    int prevId = parentId;
-  //    for (ChildInfo childInfo : children) {
-  //      int childId = childInfo.getId();
-  //      if (childId <= 0) {
-  //        throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
-  //      }
-  //      if (childId == parentId) {
-  //        FSRecords.LOG.error("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
-  //      }
-  //      else {
-  //        int delta = childId - prevId;
-  //        if (prevId != parentId && delta <= 0) {
-  //          throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
-  //                                             parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
-  //                                             prevId + "; toSave: " + toSave);
-  //        }
-  //        prevId = childId;
-  //      }
-  //    }
-  //  }
-  //  myFSConnection.markDirty();
-  //  myAttributeAccessor.writeAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
-  //    DataInputOutputUtil.writeINT(buffer, children.size());
-  //
-  //    int prevId = parentId;
-  //    for (ChildInfo childInfo : children) {
-  //      int childId = childInfo.getId();
-  //      if (childId == parentId) {
-  //        continue;//skip, already logged above
-  //      }
-  //      int delta = childId - prevId;
-  //      DataInputOutputUtil.writeINT(buffer, delta);
-  //      prevId = childId;
-  //    }
-  //    return buffer;
-  //  });
-  //}
 }
