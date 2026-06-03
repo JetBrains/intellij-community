@@ -5,10 +5,14 @@
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.requirements"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.yaml"/>
     <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>
+    <!-- Claim environment.yml/environment.yaml as YAML files belonging to the Python plugin so that the
+         plugin advertiser doesn't promote unrelated third-party plugins for these conda env files (PY-89976). -->
+    <fileType name="YAML" fileNames="environment.yml;environment.yaml"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
