@@ -18,7 +18,7 @@ private var codeOwnerResolutionFailed = false
 // so all saved TC data about previous failures will not apply, including muted state and investigations.
 // Some exception messages include file names, system hash codes (Object.toString), etc.
 // To make the test name stable between different test runs, such data is stripped out before computing the test name.
-private fun logAsTeamcityTestFailure(error: LoggedError) {
+internal fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
   val owner = if (codeOwnerResolutionFailed) null
