@@ -384,6 +384,7 @@ private val externalNonBundledPluginCompatibilityDependencies = listOf(
   "intellij.platform.structureView.impl",
   "intellij.platform.todo",
   "intellij.platform.bookmarks",
+  "intellij.platform.smRunner",
 ).map { DependencyRef.of(PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE)) }
 
 /**
