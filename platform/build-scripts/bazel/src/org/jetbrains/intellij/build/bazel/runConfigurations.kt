@@ -205,7 +205,7 @@ internal class RunConfigurationsFile : BuildFile() {
       option("jvm_flags",
              (runConfigurationProperties + envsWithProjectDir)
                .map { (k, v) -> "-D$k=${v.projectDirToBazelWorkspace(generatedName)}" }
-               .plus(runConfiguration.vmOptions.jvmFlags)
+               .plus(runConfiguration.vmOptions.jvmFlags).sorted()
       )
       runConfiguration.env.filterNot { (_, v) -> v.contains(projectDirVar)}.also { env ->
         if (env.isNotEmpty()) {

@@ -164,12 +164,12 @@ internal fun BuildFile.generateMavenLib(
     load("@rules_java//java:defs.bzl", "java_library")
     target("java_library") {
       option("name", targetName)
-      option("exports", lib.jars.map {
-        ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates)}_import"
-      })
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", lib.jars.map {
+        ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates)}_import"
+      }.sorted())
     }
 
     for (jar in lib.jars) {
@@ -276,9 +276,9 @@ internal fun generateBazelModuleSectionsForLibs(
         val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
         target("http_file") {
           option("name", label)
-          option("url", entry.url)
-          option("sha256", entry.sha256)
           option("downloaded_file_path", jar.path.fileName.name)
+          option("sha256", entry.sha256)
+          option("url", entry.url)
         }
       }
 
@@ -373,9 +373,9 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
           loadSymbols["@rules_java//java:defs.bzl"] = setOf("java_library")
           target("java_library") {
             option("name", targetName + PROVIDED_SUFFIX)
-            option("exports", listOf(":$targetName"))
             option("neverlink", true)
             visibility(arrayOf("//visibility:public"))
+            option("exports", listOf(":$targetName"))
           }
         }
 
