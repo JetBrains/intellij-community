@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.execution.JavaParametersBuilder
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
@@ -23,16 +24,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIde
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutModeProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.downloadAtomically
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KOTLIN_SCRATCH_EXPLAIN_FILE
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchScript
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
@@ -42,7 +44,9 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 import kotlin.io.path.readLines
 
 private val log = Logger.getInstance(K2ScratchExecutor::class.java)
@@ -232,37 +236,82 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
     }
 
     private suspend fun resolveKotlincIdeScratchHomeInProduction(): ScratchCompilerResolution {
-        val distJar = downloadArtifactForIde(
-            artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID,
-            version = KotlinPluginLayout.ideCompilerVersion.rawVersion,
-            project = project,
-        ) ?: error("Can't download dist")
+        val distJar = withContext(Dispatchers.IO) { downloadArtifactForIde() } ?: error("Can't download dist")
+        val unpackedDistDir = KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(kotlincIdeScratchDirectoryName)
+        val compilerHome = withContext(Dispatchers.IO) {
+            extractKotlincIdeScratchHome(distJar = distJar, targetDir = unpackedDistDir)
+        }
 
-        val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(kotlincIdeScratchDirectoryName)
-
-        return ScratchCompilerResolution(
-            compilerHome = withContext(Dispatchers.IO) {
-                extractKotlincIdeScratchHome(distJar = distJar, targetDir = unpackedDistDir)
-            },
-            distJar = distJar,
-        )
+        return ScratchCompilerResolution(compilerHome, distJar)
     }
 
     private suspend fun resolveKotlincIdeScratchHomeFromSources(): ScratchCompilerResolution {
-        @Suppress("DEPRECATION") val distJar = withContext(Dispatchers.IO) {
-            downloadArtifactForIdeFromSources(
-                OLD_KOTLIN_DIST_ARTIFACT_ID, KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
-            )
+        val distJar = withContext(Dispatchers.IO) {
+            val version = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
+            downloadArtifactForIdeFromSources(OLD_KOTLIN_DIST_ARTIFACT_ID, version)
         } ?: error("Can't download dist")
-        val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(
+
+        val unpackedDistDir = KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(
             "$kotlincIdeScratchDirectoryName-from-sources"
         )
-        return ScratchCompilerResolution(
-            compilerHome = withContext(Dispatchers.IO) {
-                extractKotlincIdeScratchHome(distJar = distJar, targetDir = unpackedDistDir)
-            },
-            distJar = distJar,
-        )
+
+        val compilerHome = withContext(Dispatchers.IO) {
+            extractKotlincIdeScratchHome(distJar = distJar, targetDir = unpackedDistDir)
+        }
+
+        return ScratchCompilerResolution(compilerHome, distJar)
+    }
+
+    private suspend fun downloadArtifactForIde(): Path? {
+        val artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID
+        val version = KotlinPluginLayout.ideCompilerVersion.rawVersion
+        val suffix = ".jar"
+        return KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)
+            ?: findOpenedProjectLocalKotlinSnapshotArtifact(
+                artifactId = artifactId,
+                version = version,
+                suffix = suffix
+            )
+            ?: downloadMavenArtifactDirectly(
+                artifactId = artifactId,
+                version = version,
+                suffix = suffix,
+                targetDirectory = PathManager.getSystemDir().resolve(KOTLIN_DIST_LOCATION_PREFIX_PATH).resolve("downloads"),
+            )
+    }
+
+    private suspend fun downloadMavenArtifactDirectly(
+        artifactId: String,
+        version: String,
+        suffix: String,
+        targetDirectory: Path,
+    ): Path? {
+        val fileName = "$artifactId-$version$suffix"
+        val artifact = targetDirectory.resolve(fileName).also { Files.createDirectories(it.parent) }
+        val groupPath = KOTLIN_MAVEN_GROUP_ID.replace(".", "/")
+        if (!artifact.exists()) {
+            val artifactCoordinates = "$groupPath/$artifactId/$version/$fileName"
+            downloadAtomically(artifact, artifactCoordinates)
+
+            check(artifact.exists()) { "$artifact should be downloaded" }
+        }
+
+        return artifact
+    }
+
+    private fun findOpenedProjectLocalKotlinSnapshotArtifact(
+        artifactId: String,
+        version: String,
+        suffix: String,
+    ): Path? {
+        val artifactRelativePath = Paths.get(KOTLIN_MAVEN_GROUP_ID.replace(".", "/"), artifactId, version, "$artifactId-$version$suffix")
+        return (sequenceOf(project.basePath?.let(Paths::get)) + sequenceOf(Paths.get(PathManager.getHomePath())))
+            .filterNotNull()
+            .flatMap { generateSequence(it) { p -> p.parent } }
+            .distinct()
+            .flatMap { root -> sequenceOf(root.resolve("community/lib/kotlin-snapshot"), root.resolve("lib/kotlin-snapshot")) }
+            .map { it.resolve(artifactRelativePath) }
+            .firstOrNull(Files::exists)
     }
 
     private data class ScratchCompilerResolution(
