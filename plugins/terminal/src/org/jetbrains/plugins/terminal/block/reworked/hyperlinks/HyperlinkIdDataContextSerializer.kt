@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 
 internal class HyperlinkIdDataContextSerializer : CustomDataContextSerializer<TerminalHyperlinkId> {
   override val key: DataKey<TerminalHyperlinkId>
-    get() = TerminalHyperlinkId.Companion.KEY
+    get() = TerminalHyperlinkId.KEY
   override val serializer: KSerializer<TerminalHyperlinkId>
-    get() = TerminalHyperlinkId.Companion.serializer()
+    get() = TerminalHyperlinkId.serializer()
 }

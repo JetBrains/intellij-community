@@ -9,7 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -23,8 +22,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
-@ApiStatus.Internal
-class BackendTerminalHyperlinkFacade(
+internal class BackendTerminalHyperlinkFacade(
   private val debugName: String,
   private val project: Project,
   eelDescriptor: EelDescriptor,

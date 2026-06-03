@@ -19,12 +19,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,8 +39,6 @@ class CompositeFilterWrapper(
   private val filterContext: TerminalHyperlinkFilterContext? = null,
 ) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
-
-  private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
 
   private val computationInitialized = AtomicBoolean()
 
@@ -74,7 +70,7 @@ class CompositeFilterWrapper(
     val filters = readAction {
       ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project, filterContext))
     }
-    return CompositeFilter(project, customFilters + filters).also {
+    return CompositeFilter(project, filters).also {
       it.setForceUseAllFilters(true)
     }
   }
@@ -83,11 +79,6 @@ class CompositeFilterWrapper(
     for (listener in filtersUpdatedListeners) {
       listener()
     }
-  }
-
-  fun addFilter(filter: Filter) {
-    customFilters.add(filter)
-    rescheduleFilterComputation()
   }
 
   fun addFiltersUpdatedListener(listener: () -> Unit) {
@@ -128,11 +119,5 @@ class CompositeFilterWrapper(
 
   private fun scheduleFilterComputation() {
     check(filterComputationRequests.tryEmit(Unit))
-  }
-
-  @TestOnly
-  internal suspend fun awaitFiltersComputed() {
-    ensureComputationInitialized()
-    filterFlow.first { it != null && it.listenersFired }
   }
 }

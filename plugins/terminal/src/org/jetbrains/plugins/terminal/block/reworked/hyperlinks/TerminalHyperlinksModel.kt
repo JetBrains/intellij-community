@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 
 @ApiStatus.Internal
@@ -87,9 +86,6 @@ class TerminalHyperlinksModel(
     }
     toRemove.clear()
   }
-
-  fun dumpState(): TerminalHyperlinksModelState =
-    TerminalHyperlinksModelState(hyperlinks.toList())
 
   private fun logHyperlinksAdded(
     previousHyperlinks: List<TerminalFilterResultInfo>,

@@ -25,10 +25,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
@@ -285,12 +283,6 @@ internal class BackendTerminalHyperlinkHighlighter(
       false
     }
   }
-
-  @TestOnly
-  internal suspend fun awaitTaskCompletion() {
-    currentTaskState.first { !it.mayHaveWorkToDo() }
-  }
-
 }
 
 private data class TaskState(
