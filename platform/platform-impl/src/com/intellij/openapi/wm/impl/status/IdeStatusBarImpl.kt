@@ -247,13 +247,26 @@ open class IdeStatusBarImpl @Internal constructor(
     private val order: MutableMap<String, Int> = initialOrder.toMutableMap()
 
     fun reorder(sourceWidgetId: String, targetWidgetId: String, currentVisibleOrder: List<String>) {
+      if (sourceWidgetId == targetWidgetId) {
+        currentVisibleOrder.forEachIndexed { i, id ->
+          if (order.containsKey(id)) {
+            order[id] = i
+          }
+        }
+        persist(order.toMap())
+        return
+      }
+
       val finalVisible = currentVisibleOrder.toMutableList()
       val sourceIdx = finalVisible.indexOf(sourceWidgetId)
-      val targetIdx = finalVisible.indexOf(targetWidgetId)
-      if (sourceIdx == -1 || targetIdx == -1) return
+      if (sourceIdx == -1) return
 
       finalVisible.removeAt(sourceIdx)
+      val targetIdx = finalVisible.indexOf(targetWidgetId)
+      if (targetIdx == -1) return
+
       finalVisible.add(targetIdx, sourceWidgetId)
+
       finalVisible.forEachIndexed { i, id ->
         if (id == sourceWidgetId || order.containsKey(id)) {
           order[id] = i
