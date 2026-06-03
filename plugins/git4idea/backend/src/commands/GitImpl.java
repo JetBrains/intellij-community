@@ -29,6 +29,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitContentRevision;
+import git4idea.GitReference;
 import git4idea.GitUtil;
 import git4idea.GitWorkingTree;
 import git4idea.branch.GitRebaseParams;
@@ -886,7 +887,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult createWorkingTree(@NotNull GitRepository repository,
                                                      @NotNull FilePath workingTreePath,
-                                                     @NotNull GitBranch sourceBranch,
+                                                     @NotNull GitReference sourceRef,
                                                      @Nullable String newBranchName) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
     handler.setSilent(false);
@@ -897,7 +898,7 @@ public class GitImpl extends GitImplBase {
       handler.addParameters("-b", newBranchName);
     }
     handler.addAbsoluteFile(workingTreePath.getIOFile());
-    handler.addParameters(sourceBranch.getName());
+    handler.addParameters(sourceRef instanceof GitBranch ? sourceRef.getName() : sourceRef.getFullName());
     return Git.getInstance().runCommand(handler);
   }
 

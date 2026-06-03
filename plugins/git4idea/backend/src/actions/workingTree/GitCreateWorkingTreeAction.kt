@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.git.actions.GitSingleRefActions
-import fleet.util.safeAs
 import git4idea.GitBranch
 import git4idea.GitReference
+import git4idea.GitTag
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -33,7 +33,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
       return
     }
     val explicitRefFromCtx = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY)
-    if (explicitRefFromCtx != null && explicitRefFromCtx !is GitBranch) {
+    if (explicitRefFromCtx != null && explicitRefFromCtx !is GitBranch && explicitRefFromCtx !is GitTag) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -41,15 +41,23 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
     GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
     e.presentation.icon = computeIcon(e)
-    val localBranchFromContext = getBranchFromContext(e, singleRepository, explicitRefFromCtx)
+    val localBranchFromContext = getRefFromContext(e, singleRepository, explicitRefFromCtx)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.description")
     }
     else {
-      val branchName = localBranchFromContext.name
-      e.presentation.setText(GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", branchName), false)
-      e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.description", branchName)
+      val refName = localBranchFromContext.name
+      val text = GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", refName)
+      e.presentation.setText(text, false)
+
+      val description = if (localBranchFromContext is GitTag) {
+        GitBundle.message("action.Git.CreateNewWorkingTree.from.tag.description", refName)
+      }
+      else {
+        GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.description", refName)
+      }
+      e.presentation.description = description
     }
   }
 
@@ -69,20 +77,20 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
       is GitWorktreeSupportStatus.SingleRepository -> status.repository
       else -> return
     }
-    val branchFromContext = getBranchFromContext(e, repository)
-    GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository, branchFromContext, e.place)
+    val refFromContext = getRefFromContext(e, repository)
+    GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository, refFromContext, e.place)
   }
 
-  private fun getBranchFromContext(
+  private fun getRefFromContext(
     e: AnActionEvent,
     repository: GitRepository?,
     explicitRefFromCtx: GitReference? = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY),
-  ): GitBranch? {
+  ): GitReference? {
     val ref = when {
       explicitRefFromCtx != null -> explicitRefFromCtx
       e.getData(GitBranchActionsDataKeys.USE_CURRENT_BRANCH) == true -> repository?.currentBranch
       else -> null
     }
-    return ref.safeAs<GitBranch>()
+    return if (ref is GitBranch || ref is GitTag) ref else null
   }
 }

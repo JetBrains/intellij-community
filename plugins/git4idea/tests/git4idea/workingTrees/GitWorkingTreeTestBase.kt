@@ -27,7 +27,7 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
   protected fun doTestWorkingTreeCreation(
     data: GitWorkingTreeDialogData,
     expectedWorkingTree: GitWorkingTree,
-    expectedWorkingTreeBranchName: String,
+    expectedWorkingTreeBranchName: String?,
     expectedWorkingTreeLastCommit: String,
   ) {
     val holder = GitRepositoriesHolder.getAndInit(project)

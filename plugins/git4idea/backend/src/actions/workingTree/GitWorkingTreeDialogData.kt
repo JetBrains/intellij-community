@@ -2,19 +2,19 @@
 package git4idea.actions.workingTree
 
 import com.intellij.openapi.vcs.FilePath
-import git4idea.GitBranch
+import git4idea.GitReference
 
 internal class GitWorkingTreeDialogData private constructor(
   val workingTreePath: FilePath,
-  val sourceBranch: GitBranch,
+  val sourceRef: GitReference,
   val newBranchName: String?,
 ) {
 
   companion object {
-    fun createForNewBranch(workingTreePath: FilePath, sourceBranch: GitBranch, newBranchName: String) =
-      GitWorkingTreeDialogData(workingTreePath, sourceBranch, newBranchName)
+    fun createForNewBranch(workingTreePath: FilePath, sourceRef: GitReference, newBranchName: String) =
+      GitWorkingTreeDialogData(workingTreePath, sourceRef, newBranchName)
 
-    fun createForExistingBranch(workingTreePath: FilePath, sourceBranch: GitBranch) =
-      GitWorkingTreeDialogData(workingTreePath, sourceBranch, null)
+    fun createForExistingBranch(workingTreePath: FilePath, sourceRef: GitReference) =
+      GitWorkingTreeDialogData(workingTreePath, sourceRef, null)
   }
 }

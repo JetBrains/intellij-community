@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
-import git4idea.GitBranch;
+import git4idea.GitReference;
 import git4idea.GitWorkingTree;
 import git4idea.branch.GitRebaseParams;
 import git4idea.push.GitPushParams;
@@ -352,7 +352,7 @@ public interface Git {
   @NotNull
   GitCommandResult createWorkingTree(@NotNull GitRepository repository,
                                      @NotNull FilePath workingTreePath,
-                                     @NotNull GitBranch sourceBranch,
+                                     @NotNull GitReference sourceRef,
                                      @Nullable String newBranchName);
   @NotNull
   GitCommandResult pruneWorktrees(@NotNull GitRepository repository);

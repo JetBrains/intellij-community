@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
-import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder
+import git4idea.GitReference
 import git4idea.GitOperationsCollector
 import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
@@ -56,16 +56,16 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
 
   internal fun collectDataAndCreateWorkingTree(
     repository: GitRepository,
-    localBranchFromContext: GitBranch?,
+    refFromContext: GitReference?,
     place: String,
   ) {
     val project = repository.project
-    val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, localBranchFromContext)
+    val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, refFromContext)
     coroutineScope.launch(Dispatchers.Default) {
       val preDialogData = readAction {
         val lastParentPath = loadLastParentPath(project)
         val initialParentPath = computeInitialParentPath(project, repository)?.path
-        GitWorkingTreePreDialogData(project, repository, ideActivity, localBranchFromContext,
+        GitWorkingTreePreDialogData(project, repository, ideActivity, refFromContext,
                                     lastParentPath ?: initialParentPath)
       }
 

@@ -192,10 +192,10 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
       val newBranchName = when {
         data.newBranchName != null -> data.newBranchName
-        data.sourceBranch is GitRemoteBranch -> data.sourceBranch.nameForRemoteOperations
+        data.sourceRef is GitRemoteBranch -> data.sourceRef.nameForRemoteOperations
         else -> null
       }
-      val commandResult = Git.getInstance().createWorkingTree(repository, data.workingTreePath, data.sourceBranch, newBranchName)
+      val commandResult = Git.getInstance().createWorkingTree(repository, data.workingTreePath, data.sourceRef, newBranchName)
       if (commandResult.success()) {
         Result.SUCCESS
       }

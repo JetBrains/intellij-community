@@ -16,6 +16,7 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
   private var isDetached = false
   private var isLocked = false
   private var isPrunable = false
+  private var currentHeadHash: String? = null
   private var isFirst = true
   private val _trees: MutableList<GitWorkingTree> = mutableListOf()
 
@@ -26,7 +27,7 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
 
   private fun handleLine(line: String) {
     if (line.isBlank()) {
-      createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst, isLocked, isPrunable)
+      createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst, isLocked, isPrunable, currentHeadHash)
       return
     }
 
@@ -46,7 +47,8 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
           "worktree" -> {
             currentWorktreePath = value
           }
-          "HEAD" -> { //ignore for now
+          "HEAD" -> {
+            currentHeadHash = value
           }
           "branch" -> {
             branchFullName = value
@@ -72,6 +74,7 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
     main: Boolean,
     locked: Boolean,
     prunable: Boolean,
+    headHash: String?,
   ) {
     if (path == null) {
       LOG.warn("'worktree' wasn't reported for branch ${branch ?: "<detached>"}")
@@ -81,13 +84,16 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
     }
     else {
       val convertedPath = executable.convertFilePathBack(path, currentRoot)
-      _trees.add(GitWorkingTree(convertedPath.toString(), branch, main, convertedPath == currentRoot, locked, prunable))
+      val hash = if (detached) headHash else null
+      _trees.add(GitWorkingTree(convertedPath.toString(), branch, main,
+                                convertedPath == currentRoot, locked, prunable, hash))
     }
     currentWorktreePath = null
     branchFullName = null
     isDetached = false
     isLocked = false
     isPrunable = false
+    currentHeadHash = null
     isFirst = false
   }
 

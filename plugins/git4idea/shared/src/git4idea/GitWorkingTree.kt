@@ -9,6 +9,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -42,6 +43,7 @@ data class GitWorkingTree(
    * @see isLocked
    */
   val isPrunable: Boolean = false,
+  val headHash: @NlsSafe String? = null,
 ) {
 
   constructor(
@@ -51,6 +53,7 @@ data class GitWorkingTree(
     isCurrent: Boolean,
     isLocked: Boolean = false,
     isPrunable: Boolean = false,
+    headHash: @NlsSafe String? = null,
   ) :
     this(
       VcsContextFactory.getInstance().createFilePath(path, true),
@@ -59,6 +62,7 @@ data class GitWorkingTree(
       isCurrent,
       isLocked,
       isPrunable,
+      headHash
     )
 
 }
@@ -72,6 +76,7 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     element("current", PrimitiveSerialDescriptor("current", PrimitiveKind.BOOLEAN))
     element("locked", PrimitiveSerialDescriptor("locked", PrimitiveKind.BOOLEAN))
     element("prunable", PrimitiveSerialDescriptor("prunable", PrimitiveKind.BOOLEAN))
+    element("headHash", PrimitiveSerialDescriptor("headHash", PrimitiveKind.STRING))
   }
 
   override fun serialize(encoder: Encoder, value: GitWorkingTree) {
@@ -82,6 +87,7 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     composite.encodeBooleanElement(descriptor, 3, value.isCurrent)
     composite.encodeBooleanElement(descriptor, 4, value.isLocked)
     composite.encodeBooleanElement(descriptor, 5, value.isPrunable)
+    composite.encodeNullableSerializableElement(descriptor, 6, String.serializer(), value.headHash)
     composite.endStructure(descriptor)
   }
 
@@ -93,6 +99,7 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     var isCurrent: Boolean? = null
     var isLocked: Boolean? = null
     var isPrunable: Boolean? = null
+    var headHash: String? = null
     var loop = true
 
     while (loop) {
@@ -104,6 +111,7 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
         3 -> isCurrent = dec.decodeBooleanElement(descriptor, 3)
         4 -> isLocked = dec.decodeBooleanElement(descriptor, 4)
         5 -> isPrunable = dec.decodeBooleanElement(descriptor, 5)
+        6 -> headHash = dec.decodeNullableSerializableElement(descriptor, 6, String.serializer())
         else -> throw SerializationException("Unknown index $index")
       }
     }
@@ -119,6 +127,7 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
       isCurrent = isCurrent ?: throw SerializationException("Field 'isCurrent' is missing"),
       isLocked = isLocked ?: throw SerializationException("Field 'isLocked' is missing"),
       isPrunable = isPrunable ?: throw SerializationException("Field 'isPrunable' is missing"),
+      headHash = headHash,
     )
   }
 }

@@ -33,6 +33,8 @@ import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
+import git4idea.repo.getTagsForCommit
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
@@ -82,7 +84,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     }
 
     val wrappedComponent = UiDataProvider.wrapComponent(scrollPane) { sink ->
-      sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList
+      sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList.map { it.gitWorkingTree }
       sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] =
         (model.worktreeSupportStatus as? GitWorktreeSupportStatus.SingleRepository)?.repository
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
@@ -96,8 +98,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   private fun createWorktreeList(
     project: Project,
     model: WorkingTreesListModel = WorkingTreesListModel(project),
-  ): JBList<GitWorkingTree> {
-    val list: JBList<GitWorkingTree> = JBList(model)
+  ): JBList<GitWorkingTreeListItem> {
+    val list: JBList<GitWorkingTreeListItem> = JBList(model)
 
     list.cellRenderer = WorkingTreesListRenderer()
     list.accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
@@ -118,7 +120,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     return list
   }
 
-  private fun updateEmptyText(list: JBList<GitWorkingTree>, model: WorkingTreesListModel) {
+  private fun updateEmptyText(list: JBList<GitWorkingTreeListItem>, model: WorkingTreesListModel) {
     val emptyText = list.emptyText
     emptyText.clear()
 
@@ -149,7 +151,13 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     }
   }
 
-  private class WorkingTreesListModel(project: Project) : DefaultListModel<GitWorkingTree>() {
+  private data class GitWorkingTreeListItem(
+    val gitWorkingTree: GitWorkingTree,
+    @param:Nls val presentableBranchName: String,
+    @param:Nls val location: String,
+  )
+
+  private class WorkingTreesListModel(project: Project) : DefaultListModel<GitWorkingTreeListItem>() {
     var worktreeSupportStatus: GitWorktreeSupportStatus = GitWorktreeSupportStatus.Unsupported
       private set
 
@@ -167,42 +175,72 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
         val workingTrees = status.repository.workingTreeHolder.getWorkingTrees()
         workingTrees.forEach {
           if (it.isMain) {
-            add(0, it)
+            add(0, convertToGitWorkingTreeListItem(it, status.repository))
           }
           else {
-            addElement(it)
+            addElement(convertToGitWorkingTreeListItem(it, status.repository))
           }
         }
       }
     }
+
+    private fun convertToGitWorkingTreeListItem(wt: GitWorkingTree, repository: GitRepository?): GitWorkingTreeListItem {
+      val branchName = getPresentableBranchName(wt, repository)
+      val location = FileUtil.getLocationRelativeToUserHome(wt.path.path)
+
+      return GitWorkingTreeListItem(
+        gitWorkingTree = wt,
+        presentableBranchName = branchName,
+        location = location,
+      )
+    }
+
+    @Nls
+    private fun getPresentableBranchName(value: GitWorkingTree, repository: GitRepository?): String {
+      val branch = value.currentBranch
+      if (branch != null) {
+        return branch.name
+      }
+
+      val headHash = value.headHash
+      if (headHash != null && repository != null) {
+        val tags = repository.tagsHolder.getTagsForCommit(headHash)
+        val tag = tags.firstOrNull()
+        if (tag != null) {
+          return tag.name
+        }
+      }
+
+      return GitBundle.message("toolwindow.working.trees.tab.detached.working.tree.branch.text")
+    }
   }
 
-  private class WorkingTreesListRenderer : ColoredListCellRenderer<GitWorkingTree>() {
-    override fun customizeCellRenderer(list: JList<out GitWorkingTree?>, value: GitWorkingTree?, index: Int, selected: Boolean, hasFocus: Boolean) {
+  private class WorkingTreesListRenderer: ColoredListCellRenderer<GitWorkingTreeListItem>() {
+    override fun customizeCellRenderer(list: JList<out GitWorkingTreeListItem?>, value: GitWorkingTreeListItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
       if (value == null) return
 
       iconTextGap = JBUI.scale(4)
-      icon = if (value.isCurrent) AllIcons.Actions.Checked else AllIcons.Empty
+      icon = if (value.gitWorkingTree.isCurrent) AllIcons.Actions.Checked else AllIcons.Empty
 
-      append(value.path.name, if (value.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      append(value.gitWorkingTree.path.name, if (value.gitWorkingTree.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
       val columnGap = JBUI.scale(20)
       var padding = iconTextGap * 2 + icon.iconWidth + getWorktreeColumnWidth(list) + columnGap
       appendTextPadding(padding)
 
-      append(getPresentableBranchName(value), SimpleTextAttributes.GRAY_ATTRIBUTES)
+      append(value.presentableBranchName, SimpleTextAttributes.GRAY_ATTRIBUTES)
 
       padding += (getBranchColumnWidth(list) + columnGap)
       appendTextPadding(padding)
 
-      append(FileUtil.getLocationRelativeToUserHome(value.path.path), SimpleTextAttributes.GRAY_ATTRIBUTES)
+      append(value.location, SimpleTextAttributes.GRAY_ATTRIBUTES)
 
       padding += (getLocationColumnWidth(list) + columnGap)
       appendTextPadding(padding)
 
       val statusText = when {
-        value.isLocked -> GitBundle.message("toolwindow.working.trees.worktree.status.locked")
-        value.isPrunable -> GitBundle.message("toolwindow.working.trees.worktree.status.prunable")
+        value.gitWorkingTree.isLocked -> GitBundle.message("toolwindow.working.trees.worktree.status.locked")
+        value.gitWorkingTree.isPrunable -> GitBundle.message("toolwindow.working.trees.worktree.status.prunable")
         else -> null
       }
       if (statusText != null) {
@@ -210,17 +248,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       }
     }
 
-    @Nls
-    private fun getPresentableBranchName(value: GitWorkingTree): @Nls String = when (val branch = value.currentBranch) {
-      null -> GitBundle.message("toolwindow.working.trees.tab.detached.working.tree.branch.text")
-      else -> branch.name
-    }
+    private fun getWorktreeColumnWidth(list: JList<out GitWorkingTreeListItem?>): Int = getMaxWidth(list) { it.gitWorkingTree.path.name }
+    private fun getBranchColumnWidth(list: JList<out GitWorkingTreeListItem?>): Int = getMaxWidth(list) { it.presentableBranchName }
+    private fun getLocationColumnWidth(list: JList<out GitWorkingTreeListItem?>): Int = getMaxWidth(list) { it.location }
 
-    private fun getWorktreeColumnWidth(list: JList<out GitWorkingTree?>): Int = getMaxWidth(list) { it.path.name }
-    private fun getBranchColumnWidth(list: JList<out GitWorkingTree?>): Int = getMaxWidth(list) { getPresentableBranchName(it) }
-    private fun getLocationColumnWidth(list: JList<out GitWorkingTree?>): Int = getMaxWidth(list) { FileUtil.getLocationRelativeToUserHome(it.path.path) }
-
-    private fun getMaxWidth(list: JList<out GitWorkingTree?>, toString: (GitWorkingTree) -> String): Int {
+    private fun getMaxWidth(list: JList<out GitWorkingTreeListItem?>, toString: (GitWorkingTreeListItem) -> String): Int {
       val model = list.model
       var maxWidth = 0
 

@@ -1114,7 +1114,7 @@ git4idea.commands.Git
 - clone(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String,java.lang.String,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - a:config(git4idea.repo.GitRepository,java.lang.String[]):git4idea.commands.GitCommandResult
 - a:createNewTag(git4idea.repo.GitRepository,java.lang.String,git4idea.commands.GitLineHandlerListener,java.lang.String):git4idea.commands.GitCommandResult
-- a:createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitBranch,java.lang.String):git4idea.commands.GitCommandResult
+- a:createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String):git4idea.commands.GitCommandResult
 - a:deleteTag(git4idea.repo.GitRepository,java.lang.String,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - a:deleteWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - a:diff(git4idea.repo.GitRepository,java.util.List,java.lang.String):git4idea.commands.GitCommandResult
@@ -1349,7 +1349,7 @@ c:git4idea.commands.GitImpl
 - config(git4idea.repo.GitRepository,java.lang.String[]):git4idea.commands.GitCommandResult
 - createNewTag(git4idea.repo.GitRepository,java.lang.String,git4idea.commands.GitLineHandlerListener,java.lang.String):git4idea.commands.GitCommandResult
 - p:createRebaseEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.GitLineHandler,Z):git4idea.rebase.GitRebaseEditorHandler
-- createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitBranch,java.lang.String):git4idea.commands.GitCommandResult
+- createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String):git4idea.commands.GitCommandResult
 - deleteTag(git4idea.repo.GitRepository,java.lang.String,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - deleteWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - diff(git4idea.repo.GitRepository,java.util.List,java.lang.String):git4idea.commands.GitCommandResult
