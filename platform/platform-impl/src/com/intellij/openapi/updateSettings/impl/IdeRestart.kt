@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import java.awt.BorderLayout
@@ -67,7 +66,6 @@ internal class CountdownDialog(
 
   private val countdownLabel = JBLabel()
   private val progressBar = JProgressBar(0, 100)
-  private var countdownJob: Job? = null
 
   init {
     title = dialogTitle
@@ -107,14 +105,8 @@ internal class CountdownDialog(
 
   private inner class RestartNowAction : DialogWrapperAction(IdeBundle.message("action.UpdateIde.task.success.restart")) {
     override fun doAction(e: ActionEvent) {
-      countdownJob?.cancel()
       finishSuccessfully()
     }
-  }
-
-  override fun doCancelAction() {
-    countdownJob?.cancel()
-    super.doCancelAction()
   }
 
   private fun finishSuccessfully() {
