@@ -297,9 +297,9 @@ internal fun generateBazelModuleSectionsForLibs(
         val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
         target("http_file") {
           option("name", label)
-          option("url", entry.url)
-          option("sha256", entry.sha256)
           option("downloaded_file_path", jar.path.fileName.name)
+          option("sha256", entry.sha256)
+          option("url", entry.url)
         }
       }
     }

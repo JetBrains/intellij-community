@@ -119,8 +119,9 @@ private val authHeaderValue by lazy {
 private val httpFileRegex = Regex(
   "http_file\\(\\s+" +
   "name\\s+=\\s+\"[^\"]+\",\\s+" +
-  "url\\s+=\\s+\"([^\"]+)\",\\s+" +
-  "sha256\\s+=\\s+\"([0-9a-f]{64})\","
+  "downloaded_file_path\\s+=\\s+\"[^\"]+\",\\s+" +
+  "sha256\\s+=\\s+\"([0-9a-f]{64})\",\\s+" +
+  "url\\s+=\\s+\"([^\"]+)\","
 )
 
 internal fun readModules(modulesBazel: List<Path>, repositories: List<JarRepository>, warningsAsErrors: Boolean): Map<String, CacheEntry> {
@@ -143,7 +144,7 @@ internal fun readModules(modulesBazel: List<Path>, repositories: List<JarReposit
 
     val modulesText = modulesFile.readText()
     for (match in httpFileRegex.findAll(modulesText)) {
-      val (url, sha256) = match.destructured
+      val (sha256, url) = match.destructured
 
       val matchedRepositories = repositories.filter { url.startsWith(it.urlWithSlash) }
       if (matchedRepositories.isEmpty()) {
