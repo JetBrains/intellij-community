@@ -75,6 +75,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test blockquote with numbered list`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
+  fun `test non-breaking space before text`() = doTest(rightMargin = 20)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }

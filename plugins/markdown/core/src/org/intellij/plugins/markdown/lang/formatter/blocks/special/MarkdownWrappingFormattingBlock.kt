@@ -99,7 +99,7 @@ private fun splitTextForWrapping(text: String): Sequence<TextRange> {
     var start = -1
     var length = -1
     for ((index, char) in text.withIndex()) {
-      if (char.isWhitespace()) {
+      if (char.isFormatterWhitespace()) {
         if (length > 0) {
           yield(TextRange.from(start, length))
         }
@@ -118,4 +118,8 @@ private fun splitTextForWrapping(text: String): Sequence<TextRange> {
       yield(TextRange.from(start, length))
     }
   }
+}
+
+private fun Char.isFormatterWhitespace(): Boolean {
+  return this == ' ' || this == '\t' || this == '\n'
 }
