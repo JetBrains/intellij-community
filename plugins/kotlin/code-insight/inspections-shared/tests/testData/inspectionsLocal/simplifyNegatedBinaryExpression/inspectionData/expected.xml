@@ -1,5 +1,15 @@
 <problems>
 
+  <problem>
+    <file>notFalse.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <package>notFalse</package>
+    <entry_point TYPE="method" FQNAME="notFalse.NotFalseKt void test(int n)" />
+    <problem_class id="SimplifyNegatedBinaryExpression" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Negated boolean expression can be simplified</problem_class>
+    <description>Negated operation can be simplified</description>
+  </problem>
+
     <problem>
         <file>notIs.kt</file>
         <line>3</line>
@@ -90,4 +100,14 @@
         <description>Negated operation can be simplified</description>
     </problem>
 
+    <problem>
+      <file>simpleInvert.kt</file>
+      <line>3</line>
+      <module>light_idea_test_case</module>
+      <package>simpleInvert</package>
+      <package>simpleInvert</package>
+      <entry_point TYPE="method" FQNAME="simpleInvert.SimpleInvertKt void test(int n)" />
+      <problem_class id="SimplifyNegatedBinaryExpression" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Negated boolean expression can be simplified</problem_class>
+      <description>Negated operation can be simplified</description>
+    </problem>
 </problems>

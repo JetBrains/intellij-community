@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -11,8 +13,11 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -52,7 +57,11 @@ object NegatedBinaryExpressionSimplificationUtils {
     fun KtPrefixExpression.canBeSimplified(): Boolean {
         if (operationToken != KtTokens.EXCL) return false
 
-        val expression = KtPsiUtil.deparenthesize(baseExpression) as? KtOperationExpression ?: return false
+        val deparenthesized = KtPsiUtil.deparenthesize(baseExpression) ?: return false
+        val parentThroughParenthesis = parentThroughParenthesis
+        if ((parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL) return false
+        if (deparenthesized.isBooleanLiteral()) return true
+        val expression = deparenthesized as? KtOperationExpression ?: return false
         when (expression) {
             is KtIsExpression -> if (expression.typeReference == null) return false
             is KtBinaryExpression -> if (expression.left == null || expression.right == null) return false
@@ -64,10 +73,15 @@ object NegatedBinaryExpressionSimplificationUtils {
 
     fun KtPrefixExpression.simplify() {
         val expression = KtPsiUtil.deparenthesize(baseExpression) ?: return
+        val psiFactory = KtPsiFactory(project)
+        if (expression.isBooleanLiteral()) {
+            val inverted = if (expression.text == KtTokens.TRUE_KEYWORD.value) KtTokens.FALSE_KEYWORD.value else KtTokens.TRUE_KEYWORD.value
+            replace(psiFactory.createExpression(inverted))
+            return
+        }
         val operation =
             (expression as KtOperationExpression).operationReference.getReferencedNameElementType().negate()?.value ?: return
 
-        val psiFactory = KtPsiFactory(project)
         val newExpression = when (expression) {
             is KtIsExpression ->
                 psiFactory.createExpressionByPattern("$0 $1 $2", expression.leftHandSide, operation, expression.typeReference!!)
@@ -78,6 +92,9 @@ object NegatedBinaryExpressionSimplificationUtils {
         }
         replace(newExpression)
     }
+
+    fun KtExpression.isBooleanLiteral(): Boolean =
+        this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT
 
     fun IElementType.negate(): KtSingleValueToken? = when (this) {
         KtTokens.IN_KEYWORD -> KtTokens.NOT_IN
@@ -99,4 +116,13 @@ object NegatedBinaryExpressionSimplificationUtils {
 
         else -> null
     }
+
+    val PsiElement.parentThroughParenthesis: PsiElement
+        get() {
+            var result = parent
+            while (result is KtParenthesizedExpression) {
+                result = result.parent
+            }
+            return result
+        }
 }

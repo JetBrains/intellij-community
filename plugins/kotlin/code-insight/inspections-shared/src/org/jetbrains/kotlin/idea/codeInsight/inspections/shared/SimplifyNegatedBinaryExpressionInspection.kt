@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplified
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.isBooleanLiteral
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.simplify
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtOperationExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -52,13 +54,20 @@ internal class SimplifyNegatedBinaryExpressionInspection :
         override fun getFamilyName(): String = KotlinBundle.message("simplify.negated.operation")
 
         override fun getName(): String {
-            val expression =  KtPsiUtil.deparenthesize(element.baseExpression) as? KtOperationExpression ?: return familyName
-            val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return familyName
-            val negatedOperation = operation.negate() ?: return familyName
-            val message = if (element.canBeSimplifiedWithoutChangingSemantics())
-                "replace.negated.0.operation.with.1" else
-                "replace.negated.0.operation.with.1.may.change.semantics.with.floating.point.types"
-            return KotlinBundle.message(message, operation.value, negatedOperation.value)
+            val baseExpression = KtPsiUtil.deparenthesize(element.baseExpression) ?: return familyName
+
+            return if (baseExpression.isBooleanLiteral()) {
+                val inverted = if (baseExpression.text == KtTokens.TRUE_KEYWORD.value) KtTokens.FALSE_KEYWORD.value else KtTokens.TRUE_KEYWORD.value
+                KotlinBundle.message("replace.negated.0.with.1", baseExpression.text, inverted)
+            } else {
+                val expression = baseExpression as? KtOperationExpression ?: return familyName
+                val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return familyName
+                val negatedOperation = operation.negate() ?: return familyName
+                val message = if (element.canBeSimplifiedWithoutChangingSemantics())
+                    "replace.negated.0.operation.with.1" else
+                    "replace.negated.0.operation.with.1.may.change.semantics.with.floating.point.types"
+                KotlinBundle.message(message, operation.value, negatedOperation.value)
+            }
         }
 
         override fun applyFix(project: Project, element: KtPrefixExpression, updater: ModPsiUpdater) {

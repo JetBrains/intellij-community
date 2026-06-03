@@ -5,14 +5,13 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.parentThroughParenthesis
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -61,12 +60,3 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
 
     }
 }
-
-private val PsiElement.parentThroughParenthesis: PsiElement
-    get() {
-        var result = parent
-        while (result is KtParenthesizedExpression) {
-            result = result.parent
-        }
-        return result
-    }

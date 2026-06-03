@@ -6820,6 +6820,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("doubleNegation.kt")
+        public void testDoubleNegation() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/doubleNegation.kt");
+        }
+
         @TestMetadata("equals.kt")
         public void testEquals() throws Exception {
             runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/equals.kt");
@@ -6868,6 +6873,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("notEquals.kt")
         public void testNotEquals() throws Exception {
             runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/notEquals.kt");
+        }
+
+        @TestMetadata("notFalse.kt")
+        public void testNotFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/notFalse.kt");
         }
 
         @TestMetadata("notIn.kt")
