@@ -74,8 +74,19 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 @NullMarked
 public final class StartupErrorReporter {
   private static final String SUPPORT_URL_PROPERTY = "ij.startup.error.support.url";
+  private static final String HANDLER_CLASS_PROPERTY = "ij.startup.error.handler.class";
 
   private static boolean hasGraphics = !ApplicationManagerEx.isInIntegrationTest();
+
+  private static final StartupErrorHandler DEFAULT_HANDLER = (error, logs) -> {
+    var comment = "Startup error";
+    if (logs != null) {
+      var uploadId = LogUploader.uploadFile(logs);
+      comment += "\n\nLogs upload ID: " + uploadId;
+    }
+    var id = ITNProxy.sendError(new IdeaLoggingEvent(comment, error));
+    return String.valueOf(id);
+  };
 
   public static void pluginInstallationProblem(Throwable t) {
     showWarning(
@@ -228,22 +239,20 @@ public final class StartupErrorReporter {
     var worker = new javax.swing.SwingWorker<String, Void>() {
       @Override
       protected String doInBackground() throws Exception {
-        var comment = "Startup error";
+        var handler = DEFAULT_HANDLER;
 
-        if (error instanceof ExceptionWithAttachments ewa) {
-          var logs = collectLogs(ewa);
-          try {
-            var uploadId = LogUploader.uploadFile(logs);
-            comment += "\n\nLogs upload ID: " + uploadId;
-          }
-          finally {
-            NioFiles.deleteQuietly(logs);
-          }
+        var customHandlerName = System.getProperty(HANDLER_CLASS_PROPERTY);
+        if (customHandlerName != null) {
+          handler = (StartupErrorHandler)Class.forName(customHandlerName).getDeclaredConstructor().newInstance();
         }
 
-        var id = ITNProxy.sendError(new IdeaLoggingEvent(comment, error));
-
-        return String.valueOf(id);
+        var logs = error instanceof ExceptionWithAttachments ewa ? collectLogs(ewa) : null;
+        try {
+          return handler.uploadLogs(error, logs);
+        }
+        finally {
+          NioFiles.deleteQuietly(logs);
+        }
       }
 
       @Override
