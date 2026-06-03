@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -34,13 +36,13 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
 
   protected static final @NonNls String DESCRIPTION_FILE_NAME = "description.html";
   static final @NonNls String EXAMPLE_USAGE_URL_SUFFIX = ".template";
-  private static final @NonNls String BEFORE_TEMPLATE_PREFIX = "before";
-  private static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
+  static final @NonNls String BEFORE_TEMPLATE_PREFIX = "before";
+  static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
   private boolean mySkipBeforeAfter;
-  private TextDescriptor[] myExampleUsagesBefore;
-  private TextDescriptor[] myExampleUsagesAfter;
+  protected TextDescriptor[] myExampleUsagesBefore;
+  protected TextDescriptor[] myExampleUsagesAfter;
   protected TextDescriptor myDescription;
 
   public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName, boolean skipBeforeAfter) {
@@ -64,29 +66,35 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     return myLoader;
   }
 
-  private TextDescriptor @NotNull [] retrieveURLs(@NotNull String prefix, @NotNull String suffix) {
+  protected TextDescriptor @NotNull [] retrieveURLs(@NotNull String prefix, @NotNull String suffix, Language language) {
     Set<TextDescriptor> urls = new LinkedHashSet<>();
+    Set<TextDescriptor> otherUrls = new LinkedHashSet<>();
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
+      boolean matchesLanguage =
+        language == null || fileType instanceof LanguageFileType langFileType && langFileType.getLanguage().isKindOf(language);
+      Set<TextDescriptor> set = matchesLanguage ? urls : otherUrls;
       List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
       for (FileNameMatcher matcher : matchers) {
         if (matcher instanceof ExactFileNameMatcher exactFileNameMatcher) {
           String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
           String resourcePath = getResourceLocation(prefix + "." + fileName + suffix);
           URL resource = myLoader.getResource(resourcePath);
-          if (resource != null) urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
+          if (resource != null) set.add(new ResourceTextDescriptor(myLoader, resourcePath));
         }
         else if (matcher instanceof ExtensionFileNameMatcher extensionFileNameMatcher) {
           String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
-            String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                                                      + suffix);
+            String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) + suffix);
             URL resource = myLoader.getResource(resourcePath);
             if (resource == null) break;
-            urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
+            set.add(new ResourceTextDescriptor(myLoader, resourcePath));
           }
         }
       }
+    }
+    if (urls.isEmpty() && !otherUrls.isEmpty()) {
+      urls = otherUrls;
     }
     if (urls.isEmpty() && !mySkipBeforeAfter) {
       URL descriptionUrl = myLoader.getResource(getResourceLocation(DESCRIPTION_FILE_NAME));
@@ -115,7 +123,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   @Override
   public TextDescriptor @NotNull [] getExampleUsagesBefore() {
     if (myExampleUsagesBefore == null) {
-      myExampleUsagesBefore = retrieveURLs(BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      myExampleUsagesBefore = retrieveURLs(BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, null);
     }
     return myExampleUsagesBefore;
   }
@@ -123,7 +131,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   @Override
   public TextDescriptor @NotNull [] getExampleUsagesAfter() {
     if (myExampleUsagesAfter == null) {
-      myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, null);
     }
     return myExampleUsagesAfter;
   }

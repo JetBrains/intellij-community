@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -52,6 +52,17 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   public @NotNull String getFamilyName() {
     return getDelegate().getFamilyName();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getLanguage() {
+    String language = extension.language;
+    if (language == null
+        || "any".equals(language)
+        || language.isBlank()) {
+      return null;
+    }
+    return language;
   }
 
   public boolean isApplicable(@NotNull Collection<String> fileLanguageIds) {

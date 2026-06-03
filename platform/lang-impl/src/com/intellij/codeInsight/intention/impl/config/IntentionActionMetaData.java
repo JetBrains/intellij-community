@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,5 +80,25 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
 
   public String getDescriptionDirectoryName() {
     return myDescriptionDirectoryName;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public TextDescriptor @NotNull [] getExampleUsagesBefore() {
+    if (myExampleUsagesBefore == null) {
+      String language = myAction instanceof IntentionActionWrapper wrapper ? wrapper.getLanguage() : null;
+      myExampleUsagesBefore = retrieveURLs(BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, Language.findLanguageByID(language));
+    }
+    return myExampleUsagesBefore;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public TextDescriptor @NotNull [] getExampleUsagesAfter() {
+    if (myExampleUsagesAfter == null) {
+      String language = myAction instanceof IntentionActionWrapper wrapper ? wrapper.getLanguage() : null;
+      myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, Language.findLanguageByID(language));
+    }
+    return myExampleUsagesAfter;
   }
 }
