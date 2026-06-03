@@ -186,7 +186,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                                           workingDir: TargetEnvironmentFunction<String>?,
                                           pathMapper: PyRemotePathMapper?,
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
-      val customStartScript = makeStartWithEmptyLine(settingsProvider.customStartScript)
+      val customStartScript = makeStartWithEmptyLine(settingsProvider.myCustomStartScript)
       val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
       ).toMutableSet()
@@ -214,7 +214,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       val projectRootStr = getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)).toStringLiteral()
       val replaces = listOf(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS to pathStr,
                             PydevConsoleRunnerImpl.PROJECT_ROOT to projectRootStr)
-      return ReplaceSubstringsFunction(makeStartWithEmptyLine(settingsProvider.customStartScript), replaces)
+      return ReplaceSubstringsFunction(makeStartWithEmptyLine(settingsProvider.myCustomStartScript), replaces)
     }
   }
 }

@@ -90,7 +90,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration.V8")) {
       propertyManager.setValue("PyCharm.InitialConfiguration.V8", true)
-      PyConsoleOptions.getInstance(serviceAsync<ProjectManager>().getDefaultProject()).setCommandQueueEnabled(PlatformUtils.isDataSpell())
+      PyConsoleOptions.getInstance(serviceAsync<ProjectManager>().getDefaultProject()).isCommandQueueEnabled = PlatformUtils.isDataSpell()
     }
 
     serviceAsync<Experiments>().setFeatureEnabled("terminal.shell.command.handling", false)

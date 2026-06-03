@@ -119,8 +119,9 @@ fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?,
   val sdkHome = settings.sdkHome
   if (sdkHome != null) {
     sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-    if (settings.moduleName != null) {
-      module = ModuleManager.getInstance(project).findModuleByName(settings.moduleName)
+    val moduleName = settings.moduleName
+    if (moduleName != null) {
+      module = ModuleManager.getInstance(project).findModuleByName(moduleName)
     }
     else {
       module = contextModule
@@ -133,8 +134,11 @@ fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?,
     if (contextModule != null) {
       module = contextModule
     }
-    else if (settings.moduleName != null) {
-      module = ModuleManager.getInstance(project).findModuleByName(settings.moduleName)
+    else {
+      val moduleName = settings.moduleName
+      if (moduleName != null) {
+        module = ModuleManager.getInstance(project).findModuleByName(moduleName)
+      }
     }
     if (module != null) {
       if (PythonSdkUtil.findPythonSdk(module) != null) {

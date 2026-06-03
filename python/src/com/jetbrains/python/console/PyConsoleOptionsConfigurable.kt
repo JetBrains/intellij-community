@@ -80,23 +80,23 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
         row {
           @Suppress("DialogTitleCapitalization") // 'Debug Console' in text is a name and properly capitalized.
           checkBox(PyBundle.message("form.console.options.always.show.debug.console"))
-            .bindSelected({ consoleOptions.isShowDebugConsoleByDefault }, { consoleOptions.isShowDebugConsoleByDefault = it })
+            .bindSelected(consoleOptions::isShowDebugConsoleByDefault)
         }
         row {
           checkBox(PyBundle.message("form.console.options.use.ipython.if.available"))
-            .bindSelected({ consoleOptions.isIpythonEnabled }, { consoleOptions.isIpythonEnabled = it })
+            .bindSelected(consoleOptions::isIpythonEnabled)
         }
         row {
           checkBox(PyBundle.message("form.console.options.show.console.variables.by.default"))
-            .bindSelected({ consoleOptions.isShowVariableByDefault }, { consoleOptions.setShowVariablesByDefault(it) })
+            .bindSelected(consoleOptions::isShowVariableByDefault)
         }
         row {
           checkBox(PyBundle.message("form.console.options.use.existing.console.for.run.with.python.console"))
-            .bindSelected({ consoleOptions.isUseExistingConsole }, { consoleOptions.isUseExistingConsole = it })
+            .bindSelected(consoleOptions::isUseExistingConsole)
         }
         row {
           checkBox(PyBundle.message("form.console.options.use.command.queue"))
-            .bindSelected({ consoleOptions.isCommandQueueEnabled }, { consoleOptions.isCommandQueueEnabled = it })
+            .bindSelected(consoleOptions::isCommandQueueEnabled)
         }
         row(PyBundle.message("form.console.options.code.completion")) {
           comboBox(CodeCompletionOption.entries)
