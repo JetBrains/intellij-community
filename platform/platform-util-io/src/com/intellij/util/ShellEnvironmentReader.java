@@ -80,8 +80,8 @@ public final class ShellEnvironmentReader {
       command.add("-i");
     }
 
-    // FTR, macOS now supports the `-0` option, too (supposedly, from 12.3)
-    var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
+    var useBinEnv = OS.CURRENT != OS.macOS || OS.CURRENT.isAtLeast(13, 0);
+    var reader = useBinEnv ? "/usr/bin/env -0" : "'" + PathManager.findBinFileWithException("printenv") + "'";
     if (shFile != null) {
       if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
         throw new UnsupportedOperationException("Sourcing external scripts is not supported for '" + name + "'");
