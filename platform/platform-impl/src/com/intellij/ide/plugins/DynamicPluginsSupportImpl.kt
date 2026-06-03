@@ -584,6 +584,14 @@ private object DynamicPluginsValidators {
 
   fun IssueReporter.validateProductRulesPermitUnloading(group: RuntimeModuleGroup) {
     validateProductRulesPermitDynamicLoadOrUnload(group)
+    if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
+      // TODO in previous impl, there was a check for (!allowLoadUnloadSynchronously(module)) which basically checks that the plugin
+      //  affected only UI, this is not the case anymore (bad public contract otherwise)
+      reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+        "Dynamic unloading of plugins is disabled by a registry option 'ide.plugins.allow.unload'",
+        null
+      ))
+    }
     for (descriptor in group.sortedDescriptors) {
       if (descriptor is PluginMainDescriptor) {
         validatePluginUnloadingIsNotVetoed(descriptor)
@@ -593,6 +601,12 @@ private object DynamicPluginsValidators {
 
   fun IssueReporter.validateProductRulesPermitLoading(group: RuntimeModuleGroup) {
     validateProductRulesPermitDynamicLoadOrUnload(group)
+    if (!RegistryManager.getInstance().`is`("ide.plugins.allow.load")) {
+      reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+        "Dynamic loading of plugins is disabled by a registry option 'ide.plugins.allow.load'",
+        null
+      ))
+    }
     for (descriptor in group.sortedDescriptors) {
       if (descriptor is PluginMainDescriptor) {
         validatePluginLoadingIsNotVetoed(descriptor)
@@ -600,15 +614,9 @@ private object DynamicPluginsValidators {
     }
   }
 
-  fun IssueReporter.validateProductRulesPermitDynamicLoadOrUnload(group: RuntimeModuleGroup) {
+  private fun IssueReporter.validateProductRulesPermitDynamicLoadOrUnload(group: RuntimeModuleGroup) {
     if (InstalledPluginsState.getInstance().isRestartRequired) { // TODO maybe drop this flag eventually, should not exist (or at least shouldn't be used by platform stuff)
       reportIssue(DynamicReconfigurationIsNotPossibleReason.of("There are pending changes that require restart", null))
-    }
-    if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
-      // TODO in previous impl, there was a check for (!allowLoadUnloadSynchronously(module)) which basically checks that the plugin
-      //  affected only UI, this is not the case anymore (bad public contract otherwise)
-      reportIssue(DynamicReconfigurationIsNotPossibleReason.of("Dynamic loading/unloading of plugins is disabled by a registry option 'ide.plugins.allow.unload'",
-                                                               null))
     }
     for (descriptor in group.sortedDescriptors) {
       if (descriptor.productCode != null && !descriptor.isBundled && !PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
