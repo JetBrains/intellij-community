@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.run.gradle
 
 import com.intellij.openapi.project.modules
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
-private const val PLUGIN_VERSION ="1.9.0"
+private val PLUGIN_VERSION = KotlinGradlePluginVersions.V_2_4_0.toString()
 
 class KotlinMppGradleInitScriptGeneratorTest : GradleTestRunConfigurationProducerTestCase() {
     override fun setUp() {
