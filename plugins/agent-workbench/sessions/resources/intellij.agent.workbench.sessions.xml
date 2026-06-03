@@ -62,6 +62,7 @@
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService"/>
+    <applicationSettings service="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaUsageHistoryService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">

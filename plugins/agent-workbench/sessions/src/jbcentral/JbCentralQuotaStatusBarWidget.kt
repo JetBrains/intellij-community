@@ -2,10 +2,12 @@
 package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.util.ProgressBarUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -22,11 +24,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.minutes
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -34,6 +40,7 @@ import javax.swing.JProgressBar
 
 internal const val JBCENTRAL_QUOTA_WIDGET_ID = "jbcentral.quota"
 private const val LOW_REMAINING_PERCENT = 20
+private val QUOTA_REFRESH_INTERVAL = 1.minutes
 
 internal class JbCentralQuotaStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = JBCENTRAL_QUOTA_WIDGET_ID
@@ -41,6 +48,9 @@ internal class JbCentralQuotaStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getDisplayName(): String = AgentSessionsBundle.message("status.bar.jbcentral.quota.display.name")
 
   override fun isEnabledByDefault(): Boolean = false
+
+  override fun isAvailable(project: Project): Boolean =
+    AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project)
 
   override fun createWidget(project: Project): StatusBarWidget = JbCentralQuotaStatusBarWidget()
 }
@@ -67,8 +77,11 @@ internal class JbCentralQuotaStatusBarWidget : CustomStatusBarWidget, Activatabl
 
     private val label = JLabel()
     private val bar = createBar()
-    private val normalBarColor = JBColor(0x4A8FE2, 0x5B9BD5)
-    private val warningBarColor = JBColor(0xE8874B, 0xD4783E)
+    // Green6 — money-green for the amount text (solid, vivid)
+    private val moneyTextColor: Color = JBColor(0x55A76A, 0x57965C)
+    // Pale neutral gray for the bar (TrialWidget "Progress" palette: Gray6 light / Gray8 dark) — not eye-catching
+    private val normalBarColor: Color = JBColor(0x6C707E, 0x868A91)
+    private val warningBarColor: Color = JBColor(0xE8874B, 0xD4783E) // low quota (< 20%)
     private var shouldDisplay = false
     private var initialRefreshRequested = false
 
@@ -76,6 +89,7 @@ internal class JbCentralQuotaStatusBarWidget : CustomStatusBarWidget, Activatabl
       isOpaque = false
       isFocusable = false
       border = JBUI.Borders.empty(0, 4)
+      label.foreground = moneyTextColor
       label.isVisible = false
       bar.isVisible = false
       add(label, BorderLayout.WEST)
@@ -83,7 +97,13 @@ internal class JbCentralQuotaStatusBarWidget : CustomStatusBarWidget, Activatabl
 
       object : ClickListener() {
         override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-          service<JbCentralQuotaService>().requestRefresh()
+          val info = service<JbCentralQuotaService>().state.value.quotaInfo
+          if (info != null) {
+            showJbCentralQuotaPopup(this@JbCentralQuotaPanel, info)
+          }
+          else {
+            service<JbCentralQuotaService>().requestRefresh()
+          }
           return true
         }
       }.installOn(this, true)
@@ -92,6 +112,13 @@ internal class JbCentralQuotaStatusBarWidget : CustomStatusBarWidget, Activatabl
       scope.launch {
         service<JbCentralQuotaService>().state.collect { state ->
           updateState(state)
+        }
+      }
+
+      scope.launch(Dispatchers.Default) {
+        while (isActive) {
+          delay(QUOTA_REFRESH_INTERVAL)
+          service<JbCentralQuotaService>().requestRefresh()
         }
       }
     }
@@ -134,7 +161,8 @@ internal class JbCentralQuotaStatusBarWidget : CustomStatusBarWidget, Activatabl
       val remaining = remainingPercent(info)
       label.text = formatJbCentralQuotaText(info)
       bar.value = remaining
-      bar.foreground = if (isLowRemainingQuota(remaining)) warningBarColor else normalBarColor
+      val barColor = if (isLowRemainingQuota(remaining)) warningBarColor else normalBarColor
+      bar.putClientProperty(ProgressBarUtil.PROGRESS_PAINT_KEY, barColor)
       setToolTipText(HtmlChunk.raw(formatJbCentralQuotaTooltip(info)))
       repaint()
     }

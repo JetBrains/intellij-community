@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,10 +34,16 @@ internal class JbCentralQuotaService(
     try {
       mutableState.value = previousState.copy(isLoading = true, error = null)
       val result = withContext(Dispatchers.IO) { JbCentralQuotaServiceTestHook.fetchQuota() }
-      mutableState.value = when {
-        result.quotaInfo != null -> JbCentralQuotaState(quotaInfo = result.quotaInfo)
+      val newState = when {
+        result.quotaInfo != null -> {
+          result.quotaInfo.usedUsd.toDoubleOrNull()?.let { used ->
+            service<JbCentralQuotaUsageHistoryService>().record(used)
+          }
+          JbCentralQuotaState(quotaInfo = result.quotaInfo)
+        }
         else -> previousState.copy(error = result.error, isLoading = false)
       }
+      mutableState.value = newState
     }
     catch (e: Throwable) {
       if (e is CancellationException) throw e
