@@ -14,10 +14,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:junit5Pioneer"],
+    exports = ["@lib//:libraries-junit5-pioneer-_j_unit5_pioneer"],
     runtime_deps = [
         # do not sort,
-        "@lib//:junit5Pioneer",
+        "@lib//:libraries-junit5-pioneer-_j_unit5_pioneer",
         "//libraries/junit5-launcher",
         "//libraries/junit5-params",
     ],
@@ -32,7 +32,7 @@ jvm_library(
     ),
     module_name = "intellij.libraries.junit5.pioneer",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:junit5Pioneer"],
+    exports = ["@lib//:libraries-junit5-pioneer-_j_unit5_pioneer"],
     runtime_deps = [
         # do not sort,
         ":junit5-pioneer",

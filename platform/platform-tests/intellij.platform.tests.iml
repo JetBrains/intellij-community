@@ -139,7 +139,7 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.rhino" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />

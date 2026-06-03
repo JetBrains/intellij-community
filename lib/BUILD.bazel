@@ -7923,21 +7923,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.junit-pioneer/junit-pioneer-2.3.0.jar_copy",
-    src = "@org_junit-pioneer-junit-pioneer-2_3_0_http//file",
-    out = "org.junit-pioneer/junit-pioneer-2.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "junit5Pioneer",
-    jar = "@org_junit-pioneer-junit-pioneer-2_3_0_http//file",
-    source_jar = "@org_junit-pioneer-junit-pioneer-2_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.junit.jupiter/junit-jupiter-api-6.0.0.jar_copy",
     src = "@org_junit_jupiter-junit-jupiter-api-6_0_0_http//file",
     out = "org.junit.jupiter/junit-jupiter-api-6.0.0.jar",
@@ -12596,6 +12581,21 @@ jvm_import(
     name = "libraries-junit5-params-_j_unit5_params",
     jar = "@org_junit_jupiter-junit-jupiter-params-5_13_4_http//file",
     source_jar = "@org_junit_jupiter-junit-jupiter-params-5_13_4-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.junit-pioneer/junit-pioneer-2.3.0.jar_copy",
+    src = "@org_junit-pioneer-junit-pioneer-2_3_0_http//file",
+    out = "org.junit-pioneer/junit-pioneer-2.3.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-junit5-pioneer-_j_unit5_pioneer",
+    jar = "@org_junit-pioneer-junit-pioneer-2_3_0_http//file",
+    source_jar = "@org_junit-pioneer-junit-pioneer-2_3_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
