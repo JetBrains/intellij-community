@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.toTerminalId
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.hyperlinks.toTerminalId
 
 @ApiStatus.Internal
 class FrontendTerminalHyperlinkFacade(

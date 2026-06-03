@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.hyperlinks
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.hyperlinks.menu
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import java.awt.event.MouseEvent
 
 /**

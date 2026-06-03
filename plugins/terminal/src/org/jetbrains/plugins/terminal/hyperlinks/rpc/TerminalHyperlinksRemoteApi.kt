@@ -10,6 +10,7 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 
 @ApiStatus.Internal
 @Rpc

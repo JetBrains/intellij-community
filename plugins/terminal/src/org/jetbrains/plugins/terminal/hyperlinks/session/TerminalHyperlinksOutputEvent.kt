@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.hyperlinks
+package org.jetbrains.plugins.terminal.hyperlinks.session
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.dto.TerminalFilterResultInfoDto
 
 @ApiStatus.Internal
 @Serializable
@@ -51,7 +50,7 @@ sealed interface TerminalHyperlinksOutputEvent {
    * Signals that [com.intellij.execution.filters.Filter]'s list used for hyperlink processing was updated.
    * So, the whole terminal output needs to be re-processed to add new hyperlinks and remove stale ones.
    * It is expected that the frontend should send the whole existing terminal output as
-   * [org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent.ContentUpdated] again to re-process it.
+   * [TerminalHyperlinksInputEvent.ContentUpdated] again to re-process it.
    */
   @Serializable
   data object FiltersUpdated : TerminalHyperlinksOutputEvent

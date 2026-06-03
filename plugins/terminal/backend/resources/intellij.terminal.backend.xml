@@ -8,7 +8,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
     <applicationService
-      serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfoService"
+      serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfoService"
       serviceImplementation="com.intellij.terminal.backend.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
   </extensions>
 

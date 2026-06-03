@@ -1,10 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.hyperlinks
 
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 
 @ApiStatus.Internal

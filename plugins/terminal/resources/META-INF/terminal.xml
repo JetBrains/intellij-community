@@ -72,7 +72,7 @@
                  description="Show generic file hyperlinks for relative paths in the reworked terminal. Requires enabled `terminal.generic.hyperlinks`."/>
     <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
                  description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
-    <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilterProvider"/>
+    <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilterProvider"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
@@ -124,8 +124,8 @@
     <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
                      bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
 
-    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalHyperlinksSessionIdDataContextSerializer"/>
-    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.HyperlinkIdDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.hyperlinks.menu.TerminalHyperlinksSessionIdDataContextSerializer"/>
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.hyperlinks.menu.HyperlinkIdDataContextSerializer"/>
 
     <notificationGroup displayType="BALLOON" id="terminal" bundle="messages.TerminalBundle" key="notification.group.terminal"/>
 
@@ -198,6 +198,6 @@
   </projectListeners>
 
   <actions resource-bundle="messages.TerminalBundle">
-    <group id="Terminal.HyperlinkContextMenu" class="org.jetbrains.plugins.terminal.hyperlinks.HyperlinkContextMenuActionGroup" />
+    <group id="Terminal.HyperlinkContextMenu" class="org.jetbrains.plugins.terminal.hyperlinks.menu.HyperlinkContextMenuActionGroup"/>
   </actions>
 </idea-plugin>

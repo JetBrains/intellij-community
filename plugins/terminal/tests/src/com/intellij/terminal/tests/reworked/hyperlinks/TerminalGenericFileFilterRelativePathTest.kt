@@ -10,10 +10,10 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.assertj.core.api.Assertions
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.FILENAME_MAX
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalOpenFileHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.filter.FILENAME_MAX
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilter
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalHyperlinkFilterContext
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalOpenFileHyperlinkInfo
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test

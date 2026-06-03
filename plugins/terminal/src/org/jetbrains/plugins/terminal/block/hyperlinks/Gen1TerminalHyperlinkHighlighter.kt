@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.output.CommandBlock
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.output.withOutput
+import org.jetbrains.plugins.terminal.hyperlinks.filter.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 
 internal class Gen1TerminalHyperlinkHighlighter(project: Project,

@@ -17,7 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalFilterScope
 
 /** A bunch of binaries that we target. Only common stuff between a jdk8 and jdk24 */
 private val EXPECTED_BINARIES: List<String> = listOf(

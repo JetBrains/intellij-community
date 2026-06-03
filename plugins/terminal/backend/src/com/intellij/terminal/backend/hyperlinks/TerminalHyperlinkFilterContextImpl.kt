@@ -8,7 +8,7 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalHyperlinkFilterContext
 
 internal class TerminalHyperlinkFilterContextImpl(override val eelDescriptor: EelDescriptor) : TerminalHyperlinkFilterContext {
   @Volatile

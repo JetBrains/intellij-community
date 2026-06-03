@@ -22,8 +22,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.lang3.RandomStringUtils
 import org.assertj.core.api.Assertions
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.FILENAME_MAX
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter
+import org.jetbrains.plugins.terminal.hyperlinks.filter.FILENAME_MAX
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilter
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito

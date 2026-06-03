@@ -85,11 +85,11 @@ import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent

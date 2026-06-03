@@ -10,14 +10,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service(Service.Level.APP)
-internal class TerminalHyperlinksSessionsManager(private val coroutineScope: CoroutineScope) {
+internal class BackendTerminalHyperlinksSessionsManager(private val coroutineScope: CoroutineScope) {
   private val sessions = ConcurrentHashMap<TerminalHyperlinksSessionId, BackendTerminalHyperlinksSession>()
   private val sessionIdCounter = AtomicInteger(0)
 
@@ -78,6 +78,6 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
 
   companion object {
     @JvmStatic
-    fun getInstance(): TerminalHyperlinksSessionsManager = service()
+    fun getInstance(): BackendTerminalHyperlinksSessionsManager = service()
   }
 }

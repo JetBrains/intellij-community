@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.session.impl.dto
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.hyperlinks.session
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.InlayProvider
@@ -10,11 +10,11 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterResultInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHighlightingInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalInlayInfo
 
 @ApiStatus.Internal
 @Serializable

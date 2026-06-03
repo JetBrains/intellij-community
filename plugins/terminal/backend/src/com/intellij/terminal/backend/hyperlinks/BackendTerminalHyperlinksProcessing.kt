@@ -8,9 +8,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksOutputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
-import org.jetbrains.plugins.terminal.hyperlinks.rpc.toUpdate
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.toUpdate
 
 internal fun scheduleHyperlinksSessionProcessing(session: BackendTerminalHyperlinksSession) {
   session.coroutineScope.launch(CoroutineName("BackendTerminalHyperlinksSession processing")) {
