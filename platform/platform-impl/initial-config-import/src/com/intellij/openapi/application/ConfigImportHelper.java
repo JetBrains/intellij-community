@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.ExpiredPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
+import com.intellij.ide.plugins.PluginInitContextFactory;
 import com.intellij.ide.plugins.PluginInitContextSelectPluginsToLoadKt;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginMainDescriptor;
@@ -22,7 +23,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginVersionIsSuperseded;
 import com.intellij.ide.plugins.PluginsDiscoveryResult;
-import com.intellij.ide.plugins.ProductPluginInitContext;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.startup.StartupActionScriptManager;
@@ -1056,7 +1056,7 @@ public final class ConfigImportHelper {
     }
 
     if (oldIdePlugins != null) {
-      var initContext = new ProductPluginInitContext(
+      var initContext = PluginInitContextFactory.Companion.getInstance().createMockContextWithOverrides(
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();

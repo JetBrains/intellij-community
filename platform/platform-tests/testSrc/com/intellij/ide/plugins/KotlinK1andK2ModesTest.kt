@@ -57,5 +57,5 @@ class KotlinK1andK2ModesTest {
 private fun getSinglePlugin(rootDir: Path): Pair<IdeaPluginDescriptorImpl, PluginNonLoadReason?> {
   val allPlugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
   val plugin = allPlugins.single()
-  return plugin to ProductPluginInitContext().validatePluginIsCompatible(plugin)
+  return plugin to PluginInitContextFactory.getInstance().createActualContext().validatePluginIsCompatible(plugin)
 }

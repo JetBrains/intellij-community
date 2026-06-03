@@ -473,9 +473,11 @@ object DynamicPlugins {
       if (pretendDisabled.isNotEmpty()) append(", pretendDisabled=${pretendDisabled.joinToString(prefix = "[", postfix = "]")}")
     })
     val newInitContext = if (pretendDisabled.isEmpty() && pretendEnabled.isEmpty()) {
-      ProductPluginInitContext()
+      PluginInitContextFactory.getInstance().createActualContext()
     } else {
-      ProductPluginInitContext(disabledPluginsOverride = DisabledPluginsState.getDisabledIds() - pretendEnabled.toSet() + pretendDisabled)
+      PluginInitContextFactory.getInstance().createMockContextWithOverrides(
+        disabledPluginsOverride = DisabledPluginsState.getDisabledIds() - pretendEnabled.toSet() + pretendDisabled
+      )
     }
     val currentSet = PluginManagerCore.getPluginSet()
 

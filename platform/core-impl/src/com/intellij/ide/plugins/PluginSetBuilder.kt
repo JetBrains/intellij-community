@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -234,7 +233,7 @@ class PluginSetBuilder(
     incompletePlugins: Collection<PluginMainDescriptor> = emptyList(),
     nonLoadReasonCollector: ArrayList<PluginNonLoadReason>? = null
   ): PluginSet {
-    val nonLoadReasons = computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+    val nonLoadReasons = computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = PluginInitContextFactory.getInstance().createActualContext())
     nonLoadReasonCollector?.addAll(nonLoadReasons)
     return createPluginSet(incompletePlugins = incompletePlugins)
   }

@@ -998,7 +998,7 @@ object PluginManagerCore {
   fun isRequiredForEssentialPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
     // FIXME id map building should be lifted out (likewise in other methods too)
     //  this method should actually be an extension on ActivePluginSet or something
-    val initContext = ProductPluginInitContext()
+    val initContext = PluginInitContextFactory.getInstance().createActualContext()
     val pluginIdMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
     for (essentialPluginId in initContext.essentialPlugins) {

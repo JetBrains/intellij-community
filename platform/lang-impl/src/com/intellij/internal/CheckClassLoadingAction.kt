@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
+import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginSetBuilder
-import com.intellij.ide.plugins.ProductPluginInitContext
 import com.intellij.ide.plugins.UnambiguousPluginSet
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -113,7 +113,7 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     val pluginSet = PluginManagerCore.getPluginSet()
     val loadingResults = mutableMapOf<PluginModuleDescriptor, Class<*>?>()
     val unambiguousPluginSet = UnambiguousPluginSet.tryBuild(pluginSet.enabledPlugins) ?: error("existing plugin set is not unambiguous")
-    val topologicalComparator = PluginSetBuilder(ProductPluginInitContext(), unambiguousPluginSet, pluginSet.input.discoveryResult).topologicalComparator
+    val topologicalComparator = PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), unambiguousPluginSet, pluginSet.input.discoveryResult).topologicalComparator
     for (plugin in pluginSet.enabledPlugins) {
       loadingResults[plugin] = plugin.tryLoadClass(className)
       for (module in plugin.contentModules) {

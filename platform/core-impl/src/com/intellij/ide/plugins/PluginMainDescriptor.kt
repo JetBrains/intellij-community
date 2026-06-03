@@ -232,7 +232,7 @@ class PluginMainDescriptor(
     raw = subBuilder.build(),
     moduleId = module.moduleId,
     moduleLoadingRule = module.determineLoadingRule( // FIXME this call should happen in init phase, not while parsing
-      initContextForLoadingRuleDetermination,
+      PluginInitContextFactory.getInstance().getContextForEffectiveModuleLoadingRuleDetermination(),
       id
     ),
     descriptorPath = descriptorPath
@@ -283,23 +283,6 @@ fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
 fun reportMainDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
   if (raw.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
     reporter(PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR)
-  }
-}
-
-// FIXME this should not exist
-@Volatile
-private var initContextForLoadingRuleDetermination: PluginInitializationContext = ProductPluginInitContext()
-
-// FIXME this should not exist
-@Internal
-@TestOnly
-fun <T> withInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext, body: () -> T): T {
-  val prev = initContextForLoadingRuleDetermination
-  initContextForLoadingRuleDetermination = initContext
-  try {
-    return body()
-  } finally {
-    initContextForLoadingRuleDetermination = prev
   }
 }
 

@@ -88,7 +88,7 @@ class PluginSet internal constructor(
     // FIXME this method loses information (takes only currently loaded plugins)
     val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(unsortedPlugins.toList())
                                   ?: return null
-    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet, newDiscoveryResult)
+    return PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), newUnambiguousPluginSet, newDiscoveryResult)
   }
 
   fun withoutPlugin(plugin: PluginMainDescriptor, disable: Boolean = true): PluginSetBuilder {
@@ -109,7 +109,7 @@ class PluginSet internal constructor(
       )
     }
     val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(newAllPlugins.toList())!!
-    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet, newDiscoveryResult)
+    return PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), newUnambiguousPluginSet, newDiscoveryResult)
   }
 
   /**

@@ -2,6 +2,8 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.PluginInitContextFactory
+import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -10,7 +12,6 @@ import com.intellij.ide.plugins.PluginSetBuilder
 import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
-import com.intellij.ide.plugins.ProductPluginInitContext
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
@@ -80,7 +81,7 @@ object PluginAutoUpdater {
     logDeferred.await().info("There are ${updates.size} prepared updates for plugins. Applying...")
     val autoupdatesDir = getAutoUpdateDirPath()
 
-    val initContext = ProductPluginInitContext()
+    val initContext = PluginInitContextFactory.getInstance().createActualContext()
     val discoveredPlugins = span("loading existing descriptors") {
       ZipFilePoolImpl().use { pool ->
         loadDescriptors(
@@ -140,7 +141,7 @@ object PluginAutoUpdater {
   private fun determineValidUpdates(
     discoveredPlugins: List<DiscoveredPluginsList>,
     updates: Map<PluginId, PluginMainDescriptor>,
-    initContext: ProductPluginInitContext,
+    initContext: PluginInitializationContext,
   ): UpdateCheckResult {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()

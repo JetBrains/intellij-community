@@ -477,7 +477,7 @@ internal fun CoroutineScope.scheduleLoading(
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
   logDeferred: Deferred<Logger>?,
 ): Deferred<PluginSet> {
-  val initContext = ProductPluginInitContext()
+  val initContext = PluginInitContextFactory.getInstance().createActualContext()
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
     loadDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
   }

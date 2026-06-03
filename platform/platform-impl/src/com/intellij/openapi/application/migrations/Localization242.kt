@@ -4,7 +4,7 @@ package com.intellij.openapi.application.migrations
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.ProductPluginInitContext
+import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.loadDescriptorsFromCustomPluginDir
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.diagnostic.Logger
@@ -26,7 +26,7 @@ internal object Localization242 {
     @Suppress("RAW_RUN_BLOCKING")
     val loadedDescriptors = runBlocking {
       val pluginList = loadDescriptorsFromCustomPluginDir(oldPluginsDir, true)
-      val initContext = ProductPluginInitContext()
+      val initContext = PluginInitContextFactory.getInstance().createActualContext()
       pluginList.plugins.filter { !initContext.isPluginDisabled(it.pluginId) }
     }
 
