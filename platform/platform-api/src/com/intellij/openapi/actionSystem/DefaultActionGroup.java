@@ -47,6 +47,7 @@ public class DefaultActionGroup extends ActionGroup {
   private final List<AnAction> mySortedChildren = new ArrayList<>();
   private final List<AnAction> myPendingActions = new ArrayList<>();
   private final HashMap<AnAction, Constraints> myConstraints = new HashMap<>();
+  private final HashMap<AnAction, String> myActionIds = new HashMap<>();
   private int myModificationStamp;
 
   public DefaultActionGroup() {
@@ -238,9 +239,10 @@ public class DefaultActionGroup extends ActionGroup {
       throw newThisGroupToItselfAddedException();
     }
 
+    String actionId = getActionId(action, actionToId);
     if (!(action instanceof Separator) && containsAction(action)) {
       LOG.error(newDuplicateActionAddedException(action));
-      remove(action, actionToId.apply(action));
+      remove(action, actionId);
     }
 
     constraint = (Constraints)constraint.clone();
@@ -255,6 +257,7 @@ public class DefaultActionGroup extends ActionGroup {
       myPendingActions.add(action);
     }
     myConstraints.put(action, constraint);
+    rememberActionId(action, actionId);
     addAllToSortedList(actionToId);
     incrementModificationStamp();
     return new ActionInGroup(this, action);
@@ -297,24 +300,41 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(@NotNull String actionId,
-                               @NotNull List<? extends AnAction> actions,
-                               @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
+  private int findIndex(@NotNull String actionId,
+                        @NotNull List<? extends AnAction> actions,
+                        @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
-      if (action instanceof ActionStub) {
-        if (((ActionStub)action).getId().equals(actionId)) {
-          return i;
-        }
-      }
-      else {
-        String id = actionToId.apply(action);
-        if (id != null && id.equals(actionId)) {
-          return i;
-        }
+      String id = getActionId(action, actionToId);
+      if (id != null && id.equals(actionId)) {
+        return i;
       }
     }
     return -1;
+  }
+
+  private @Nullable String getActionId(@NotNull AnAction action,
+                                       @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
+    if (action instanceof ActionStubBase stub) {
+      return stub.getId();
+    }
+    String id = actionToId.apply(action);
+    return id != null ? id : myActionIds.get(action);
+  }
+
+  private void rememberActionId(@NotNull AnAction action, @Nullable String actionId) {
+    if (actionId == null) {
+      myActionIds.remove(action);
+    }
+    else {
+      myActionIds.put(action, actionId);
+    }
+  }
+
+  private void replaceActionId(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
+    String actionId = oldAction instanceof ActionStubBase stub ? stub.getId() : myActionIds.get(oldAction);
+    myActionIds.remove(oldAction);
+    rememberActionId(newAction, actionId);
   }
 
   /**
@@ -330,12 +350,25 @@ public class DefaultActionGroup extends ActionGroup {
 
   public final synchronized void remove(@NotNull AnAction action, @Nullable String id) {
     Predicate<AnAction> matchesAction = o -> o.equals(action) || (o instanceof ActionStubBase stub && stub.getId().equals(id));
-    boolean removed = mySortedChildren.removeIf(matchesAction);
-    removed = removed || myPendingActions.removeIf(matchesAction);
+    boolean removed = removeMatchingActions(mySortedChildren, matchesAction);
+    removed = removed || removeMatchingActions(myPendingActions, matchesAction);
     myConstraints.keySet().removeIf(matchesAction);
     if (removed) {
       incrementModificationStamp();
     }
+  }
+
+  private boolean removeMatchingActions(@NotNull List<AnAction> actions, @NotNull Predicate<AnAction> matchesAction) {
+    boolean removed = false;
+    for (ListIterator<AnAction> it = actions.listIterator(); it.hasNext(); ) {
+      AnAction child = it.next();
+      if (matchesAction.test(child)) {
+        it.remove();
+        myActionIds.remove(child);
+        removed = true;
+      }
+    }
+    return removed;
   }
 
   /**
@@ -345,6 +378,7 @@ public class DefaultActionGroup extends ActionGroup {
     mySortedChildren.clear();
     myPendingActions.clear();
     myConstraints.clear();
+    myActionIds.clear();
     incrementModificationStamp();
   }
 
@@ -356,6 +390,7 @@ public class DefaultActionGroup extends ActionGroup {
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
       replaceConstraint(oldAction, newAction);
+      replaceActionId(oldAction, newAction);
       incrementModificationStamp();
       return true;
     }
@@ -364,6 +399,7 @@ public class DefaultActionGroup extends ActionGroup {
       if (indexOld >= 0) {
         myPendingActions.set(indexOld, newAction);
         replaceConstraint(oldAction, newAction);
+        replaceActionId(oldAction, newAction);
         incrementModificationStamp();
         return true;
       }
@@ -394,6 +430,9 @@ public class DefaultActionGroup extends ActionGroup {
 
     myConstraints.clear();
     myConstraints.putAll(other.myConstraints);
+
+    myActionIds.clear();
+    myActionIds.putAll(other.myActionIds);
     incrementModificationStamp();
   }
 
@@ -470,10 +509,12 @@ public class DefaultActionGroup extends ActionGroup {
         if (replacement != null) {
           it.set(replacement);
           replaceConstraint(action, replacement);
+          replaceActionId(action, replacement);
           replace(action, replacement);
         }
         else {
           myConstraints.remove(action);
+          myActionIds.remove(action);
           it.remove();
         }
       }
@@ -489,10 +530,12 @@ public class DefaultActionGroup extends ActionGroup {
         if (replacement != null) {
           it.set(replacement);
           replaceConstraint(action, replacement);
+          replaceActionId(action, replacement);
           replace(action, replacement);
         }
         else {
           myConstraints.remove(action);
+          myActionIds.remove(action);
           it.remove();
         }
       }

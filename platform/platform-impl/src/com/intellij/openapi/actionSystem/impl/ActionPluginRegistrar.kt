@@ -113,7 +113,7 @@ internal class ActionPluginRegistrar {
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
    */
-  private fun processActionElement(
+  internal fun processActionElement(
     className: String,
     isInternal: Boolean,
     element: XmlElement,
@@ -164,29 +164,24 @@ internal class ActionPluginRegistrar {
       presentation
     }
 
-    // process all links and key bindings if any
-    var addToGroupNodes: MutableList<XmlElement>? = null
+    // Stage links and key bindings until the action is registered successfully.
+    val pendingEffects = PendingActionRegistrationEffects()
     for (child in element.children) {
       when (child.name) {
-        ADD_TO_GROUP_ELEMENT_NAME -> {
-          if (addToGroupNodes == null) {
-            addToGroupNodes = ArrayList()
-          }
-          addToGroupNodes.add(child)
-        }
+        ADD_TO_GROUP_ELEMENT_NAME -> pendingEffects.addToGroup(child)
         "keyboard-shortcut" -> processKeyboardShortcutNode(element = child,
                                                            actionId = id,
                                                            module = module,
-                                                           keymapToOperations = keymapToOperations)
+                                                           keymapToOperations = pendingEffects.keymapToOperations)
         "keyboard-gesture-shortcut" -> processKeyboardGestureShortcutNode(element = child,
                                                                           actionId = id,
                                                                           module = module,
-                                                                          keymapToOperations = keymapToOperations)
+                                                                          keymapToOperations = pendingEffects.keymapToOperations)
         "mouse-shortcut" -> processMouseShortcutNode(element = child,
                                                      actionId = id,
                                                      module = module,
-                                                     keymapToOperations = keymapToOperations)
-        "abbreviation" -> processAbbreviationNode(e = child, id = id)
+                                                     keymapToOperations = pendingEffects.keymapToOperations)
+        "abbreviation" -> pendingEffects.addAbbreviation(child)
         OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub,
                                                               id = stub.id,
                                                               element = child,
@@ -200,13 +195,19 @@ internal class ActionPluginRegistrar {
       }
     }
 
-    element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let {
-      actionRegistrar.bindShortcuts(sourceActionId = it, targetActionId = id)
-    }
+    pendingEffects.shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)
     if (!registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)) {
       return null
     }
-    addToGroupNodes?.forEach { child ->
+
+    pendingEffects.publishKeymapOperations(keymapToOperations)
+    pendingEffects.shortcutOfActionId?.let {
+      actionRegistrar.bindShortcuts(sourceActionId = it, targetActionId = id)
+    }
+    pendingEffects.abbreviationNodes?.forEach {
+      processAbbreviationNode(e = it, id = id)
+    }
+    pendingEffects.addToGroupNodes?.forEach { child ->
       processAddToGroupNode(action = stub,
                             element = child,
                             module = module,
@@ -214,6 +215,39 @@ internal class ActionPluginRegistrar {
                             actionRegistrar = actionRegistrar)
     }
     return stub
+  }
+
+  private class PendingActionRegistrationEffects {
+    val keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>> = HashMap()
+    var shortcutOfActionId: String? = null
+    var addToGroupNodes: MutableList<XmlElement>? = null
+      private set
+    var abbreviationNodes: MutableList<XmlElement>? = null
+      private set
+
+    fun addToGroup(element: XmlElement) {
+      var nodes = addToGroupNodes
+      if (nodes == null) {
+        nodes = ArrayList()
+        addToGroupNodes = nodes
+      }
+      nodes.add(element)
+    }
+
+    fun addAbbreviation(element: XmlElement) {
+      var nodes = abbreviationNodes
+      if (nodes == null) {
+        nodes = ArrayList()
+        abbreviationNodes = nodes
+      }
+      nodes.add(element)
+    }
+
+    fun publishKeymapOperations(target: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
+      for ((keymap, operations) in keymapToOperations) {
+        target.computeIfAbsent(keymap) { ArrayList() }.addAll(operations)
+      }
+    }
   }
 
   private fun processGroupElement(

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -18,6 +21,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.xml.dom.XmlElement
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -26,6 +30,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.awt.Component
 import java.awt.event.InputEvent
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @TestApplication
 @Suppress("UnstableApiUsage")
@@ -171,6 +178,99 @@ internal class ActionManagerImplActionRegistrationTest {
   }
 
   @Test
+  fun failedXmlActionRegistrationDoesNotPublishPendingSideEffects() {
+    val module = corePlugin()
+    val state = ActionManagerState()
+    val idToAction = HashMap<String, AnAction>()
+    val boundShortcuts = HashMap<String, String>()
+    val registrar = ActionPreInitRegistrar(idToAction, boundShortcuts, state)
+    val groupId = "ActionManagerImplActionRegistrationTest.xml.failed.group"
+    val actionId = "ActionManagerImplActionRegistrationTest.xml.failed.action"
+    val sourceActionId = "ActionManagerImplActionRegistrationTest.xml.failed.source"
+    val abbreviation = "ActionManagerImplActionRegistrationTestXmlFailed"
+    val group = DefaultActionGroup()
+    val existingAction = createAction()
+    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
+    registerAction(actionId = groupId,
+                   action = group,
+                   pluginId = null,
+                   projectType = null,
+                   actionRegistrar = registrar)
+    registerAction(actionId = actionId,
+                   action = existingAction,
+                   pluginId = null,
+                   projectType = null,
+                   actionRegistrar = registrar)
+
+    val result = ignoreLoggedErrors {
+      ActionPluginRegistrar().processActionElement(className = TestAction::class.java.name,
+                                                   isInternal = false,
+                                                   element = createXmlActionElement(actionId = actionId,
+                                                                                    groupId = groupId,
+                                                                                    sourceActionId = sourceActionId,
+                                                                                    abbreviation = abbreviation),
+                                                   actionRegistrar = registrar,
+                                                   module = module,
+                                                   bundleSupplier = { null },
+                                                   keymapToOperations = keymapToOperations,
+                                                   classLoader = javaClass.classLoader)
+    }
+
+    assertNull(result)
+    assertTrue(keymapToOperations.isEmpty())
+    assertNull(registrar.getActionBinding(actionId))
+    assertTrue(AbbreviationManager.getInstance().getAbbreviations(actionId).isEmpty())
+    assertTrue(state.getParentGroupIds(actionId).isEmpty())
+    assertTrue(group.childActionsOrStubs.isEmpty())
+    assertSame(existingAction, idToAction[actionId])
+  }
+
+  @Test
+  fun successfulXmlActionRegistrationPublishesPendingSideEffects() {
+    val module = corePlugin()
+    val state = ActionManagerState()
+    val idToAction = HashMap<String, AnAction>()
+    val boundShortcuts = HashMap<String, String>()
+    val registrar = ActionPreInitRegistrar(idToAction, boundShortcuts, state)
+    val groupId = "ActionManagerImplActionRegistrationTest.xml.success.group"
+    val actionId = "ActionManagerImplActionRegistrationTest.xml.success.action"
+    val sourceActionId = "ActionManagerImplActionRegistrationTest.xml.success.source"
+    val abbreviation = "ActionManagerImplActionRegistrationTestXmlSuccess"
+    val group = DefaultActionGroup()
+    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
+    registerAction(actionId = groupId,
+                   action = group,
+                   pluginId = null,
+                   projectType = null,
+                   actionRegistrar = registrar)
+    try {
+      val result = ActionPluginRegistrar().processActionElement(className = TestAction::class.java.name,
+                                                                isInternal = false,
+                                                                element = createXmlActionElement(actionId = actionId,
+                                                                                                 groupId = groupId,
+                                                                                                 sourceActionId = sourceActionId,
+                                                                                                 abbreviation = abbreviation),
+                                                                actionRegistrar = registrar,
+                                                                module = module,
+                                                                bundleSupplier = { null },
+                                                                keymapToOperations = keymapToOperations,
+                                                                classLoader = javaClass.classLoader)
+
+      assertSame(result, idToAction[actionId])
+      assertEquals(sourceActionId, registrar.getActionBinding(actionId))
+      assertEquals(setOf(abbreviation), AbbreviationManager.getInstance().getAbbreviations(actionId))
+      assertEquals(listOf(groupId), state.getParentGroupIds(actionId))
+      assertSame(result, group.childActionsOrStubs.single())
+      val operation = keymapToOperations[defaultKeymapName()]?.single()
+      assertTrue(operation is AddShortcutOperation)
+      assertEquals(actionId, (operation as AddShortcutOperation).actionId)
+    }
+    finally {
+      AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
+    }
+  }
+
+  @Test
   fun unregisterGroupRemovesGroupMappingFromChildren() {
     val actionManager = ActionManager.getInstance() as ActionManagerImpl
     val registrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar()
@@ -208,6 +308,58 @@ internal class ActionManagerImplActionRegistrationTest {
     assertEquals(listOf(firstAction, secondAction), group.childActionsOrStubs.toList())
   }
 
+  @Test
+  fun defaultActionGroupResolvesRelativeConstraintsForActionAddedAfterSnapshot() {
+    val group = DefaultActionGroup()
+    val firstAction = createAction()
+    val secondAction = createAction()
+    val firstId = "ActionManagerImplActionRegistrationTest.snapshot.first"
+    val secondId = "ActionManagerImplActionRegistrationTest.snapshot.second"
+    val ids = mapOf(firstAction to firstId, secondAction to secondId)
+    val secondIdResolved = CountDownLatch(1)
+    val releaseSecondAdd = CountDownLatch(1)
+    val failure = AtomicReference<Throwable>()
+    val blockingActionManager = createLockCheckingActionManager(group, ids) { action ->
+      if (action === secondAction) {
+        secondIdResolved.countDown()
+        assertTrue(releaseSecondAdd.await(5, TimeUnit.SECONDS))
+      }
+    }
+    val secondAddThread = Thread({
+                                   try {
+                                     group.addAction(secondAction, Constraints(Anchor.BEFORE, firstId), blockingActionManager)
+                                   }
+                                   catch (e: Throwable) {
+                                     failure.set(e)
+                                   }
+                                 }, "DefaultActionGroup stale snapshot add")
+
+    secondAddThread.start()
+    assertTrue(secondIdResolved.await(5, TimeUnit.SECONDS))
+    group.addAction(firstAction, Constraints.LAST, createLockCheckingActionManager(group, ids))
+    releaseSecondAdd.countDown()
+    secondAddThread.join(5_000)
+
+    assertFalse(secondAddThread.isAlive)
+    failure.get()?.let { throw it }
+    assertEquals(listOf(secondAction, firstAction), group.childActionsOrStubs.toList())
+  }
+
+  private fun corePlugin(): IdeaPluginDescriptorImpl {
+    return PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!! as IdeaPluginDescriptorImpl
+  }
+
+  private fun createXmlActionElement(actionId: String, groupId: String, sourceActionId: String, abbreviation: String): XmlElement {
+    return XmlElement(name = ACTION_ELEMENT_NAME,
+                      attributes = mapOf(ID_ATTR_NAME to actionId,
+                                         CLASS_ATTR_NAME to TestAction::class.java.name,
+                                         USE_SHORTCUT_OF_ATTR_NAME to sourceActionId),
+                      children = listOf(XmlElement(name = "keyboard-shortcut",
+                                                   attributes = mapOf("keymap" to defaultKeymapName(), "first-keystroke" to "alt shift T")),
+                                        XmlElement(name = "abbreviation", attributes = mapOf("value" to abbreviation)),
+                                        XmlElement(name = ADD_TO_GROUP_ELEMENT_NAME, attributes = mapOf(GROUP_ID_ATTR_NAME to groupId))))
+  }
+
   private fun createAction(): AnAction {
     return object : AnAction() {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -217,14 +369,33 @@ internal class ActionManagerImplActionRegistrationTest {
     }
   }
 
-  private fun ignoreLoggedErrors(action: () -> Unit) {
+  private fun defaultKeymapName(): String = "$" + "default"
+
+  private class TestAction : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  private fun <T> ignoreLoggedErrors(action: () -> T): T {
     val processor = object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> = emptySet()
     }
-    LoggedErrorProcessor.executeWith<Throwable>(processor) { action() }
+    val token = LoggedErrorProcessor.executeWith(processor)
+    try {
+      return action()
+    }
+    finally {
+      token.finish()
+    }
   }
 
-  private fun createLockCheckingActionManager(group: DefaultActionGroup, ids: Map<AnAction, String>): ActionManager {
+  private fun createLockCheckingActionManager(
+    group: DefaultActionGroup,
+    ids: Map<AnAction, String>,
+    beforeReturnId: (AnAction) -> Unit = {},
+  ): ActionManager {
     return object : ActionManager() {
       override fun createActionPopupMenu(place: String, group: ActionGroup): ActionPopupMenu = unsupported()
 
@@ -234,6 +405,7 @@ internal class ActionManagerImplActionRegistrationTest {
 
       override fun getId(action: AnAction): String? {
         assertFalse(Thread.holdsLock(group))
+        beforeReturnId(action)
         return ids[action]
       }
 
