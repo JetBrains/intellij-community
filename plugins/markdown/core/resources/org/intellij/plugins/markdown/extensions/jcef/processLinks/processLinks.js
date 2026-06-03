@@ -39,6 +39,9 @@ if (window.__IntelliJTools === undefined) {
       return true;
     }
     if (target.tagName.toLowerCase() === 'a' && hasHrefAttribute(target)) {
+      if (target.hasAttribute('data-command') || target.hasAttribute('data-commandtype')) {
+        return false;
+      }
       e.stopPropagation();
       return window.__IntelliJTools.processClick(target);
     }
