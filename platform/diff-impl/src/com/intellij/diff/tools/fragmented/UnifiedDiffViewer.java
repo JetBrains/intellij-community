@@ -39,6 +39,7 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -198,7 +199,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
-    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
@@ -293,12 +293,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @Override
   @RequiresEdt
   public @NotNull List<AnAction> createToolbarActions() {
-    List<AnAction> gutterActions = new ArrayList<>();
-    gutterActions.add(new MyToggleExpandByDefaultAction());
-
     List<AnAction> diffActions = new ArrayList<>();
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
+    myEditorSettingsAction.setDiffActions(diffActions);
 
     List<AnAction> group = new ArrayList<>();
     group.add(new MyToggleExpandByDefaultAction());
@@ -324,6 +321,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     return group;
   }
 
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new MyToggleExpandByDefaultAction());
+    return actions;
+  }
+
+
   protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
@@ -341,6 +345,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
   }
 
   @ApiStatus.Internal

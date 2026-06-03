@@ -25,6 +25,7 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -45,6 +46,7 @@ import javax.swing.JComponent;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -114,6 +116,14 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
   // Diff
   //
+
+  @Override
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new MyToggleExpandByDefaultAction());
+    actions.add(new MyToggleAutoScrollAction());
+    return actions;
+  }
 
   public @NotNull FoldingModelSupport.Settings getFoldingModelSettings() {
     return TextDiffViewerUtil.getFoldingModelSettings(myContext);

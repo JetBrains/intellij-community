@@ -25,6 +25,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
@@ -63,7 +65,6 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
-    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
@@ -126,6 +127,9 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 
@@ -166,6 +170,12 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   //
   public @NotNull TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
+  }
+
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new MyToggleAutoScrollAction());
+    return actions;
   }
 
   protected @NotNull List<AnAction> createEditorPopupActions() {

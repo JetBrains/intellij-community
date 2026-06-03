@@ -18,6 +18,7 @@ import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,6 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
-    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
@@ -94,6 +94,10 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    return Collections.emptyList();
+  }
+
   protected @NotNull List<AnAction> createEditorPopupActions() {
     return TextDiffViewerUtil.createEditorPopupActions();
   }
@@ -105,6 +109,9 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
   }
 
   @RequiresEdt

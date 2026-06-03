@@ -236,15 +236,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new RevertConflictResolutionAction(this));
 
     group.add(Separator.getInstance());
-    List<AnAction> gutterActions = new ArrayList<>();
-    gutterActions.add(new MyToggleExpandByDefaultAction());
-    gutterActions.add(new MyToggleAutoScrollAction());
 
     List<AnAction> diffActions = new ArrayList<>();
     diffActions.add(new MyToggleAutoScrollAction());
     diffActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ResolveConflictsInImports"));
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
+    myEditorSettingsAction.setDiffActions(diffActions);
 
     group.add(new MyToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);

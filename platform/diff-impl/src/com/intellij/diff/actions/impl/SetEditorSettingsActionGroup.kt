@@ -39,13 +39,13 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   private var syncScrollSupport: SyncScrollSupport.Support? = null
   private val editors get() = editorsSupplier()
   private val _appearanceGroup = AppearanceGroup()
-  protected val appearanceGroup: ActionGroup = _appearanceGroup
+
+  @ApiStatus.Internal
+  val appearanceGroup: ActionGroup = _appearanceGroup
 
   private var toolbarActions = emptyList<AnAction>()
-  private var gutterActions = emptyList<AnAction>()
 
-  fun setDiffActions(gutterActions: List<AnAction>, toolbarActions: List<AnAction>) {
-    this.gutterActions = gutterActions
+  fun setDiffActions(toolbarActions: List<AnAction>) {
     this.toolbarActions = toolbarActions
   }
 
@@ -69,18 +69,11 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
-    if (e.isFromToolbar()) {
-      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
-      addAll(toolbarActions)
-      add(Separator.getInstance())
-      add(appearanceGroup)
-      add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
-    }
-    else {
-      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP))
-      addAll(gutterActions)
-      add(appearanceGroup)
-    }
+    add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
+    addAll(toolbarActions)
+    add(Separator.getInstance())
+    add(appearanceGroup)
+    add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
   }.toArray(EMPTY_ARRAY)
 
   private inner class AppearanceGroup : ActionGroup(), DumbAware, EditorSettingAction {

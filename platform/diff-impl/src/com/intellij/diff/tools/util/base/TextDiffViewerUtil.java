@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
@@ -83,6 +84,19 @@ public final class TextDiffViewerUtil {
         gutterEx.setGutterPopupGroup(actionGroup);
       }
     }
+  }
+
+  public static @NotNull ActionGroup createEditorGutterActionGroup(@NotNull SetEditorSettingsActionGroup settingsGroup,
+                                                                   @NotNull List<@NotNull AnAction> additionalActions) {
+    List<AnAction> gutterActions = new ArrayList<>();
+    gutterActions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
+    gutterActions.addAll(additionalActions);
+    gutterActions.add(settingsGroup.getAppearanceGroup());
+    return new DefaultActionGroup(gutterActions);
+  }
+
+  public static @NotNull ActionGroup createEditorGutterActionGroup(@NotNull SetEditorSettingsActionGroup settingsGroup) {
+    return createEditorGutterActionGroup(settingsGroup, Collections.emptyList());
   }
 
   public static @NotNull FoldingModelSupport.Settings getFoldingModelSettings(@NotNull DiffContext context) {

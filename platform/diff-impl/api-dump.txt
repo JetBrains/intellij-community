@@ -151,9 +151,8 @@ c:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - <init>(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,java.util.List):V
 - f:applyDefaults():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pf:getAppearanceGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:setDiffActions(java.util.List,java.util.List):V
+- f:setDiffActions(java.util.List):V
 - f:setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.diff.chains.AsyncDiffRequestChain
@@ -802,6 +801,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - p:clearDiffPresentation():V
 - p:computeDifferences(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorPopupActions():java.util.List
 - createPopupActions():java.util.List
 - p:createTitles():javax.swing.JComponent
@@ -948,6 +948,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - p:clearDiffPresentation():V
 - p:computeDifferences(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorPopupActions():java.util.List
 - p:createPopupActions():java.util.List
 - p:createToolbarActions():java.util.List
@@ -1007,6 +1008,7 @@ c:com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 - com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):V
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createPopupActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
@@ -1072,6 +1074,7 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - p:applyNotification(javax.swing.JComponent):java.lang.Runnable
 - p:clearDiffPresentation():V
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createStatusPanel():com.intellij.diff.tools.util.StatusPanel
 - p:destroyChangedBlocks():V
 - p:doScrollToChange(com.intellij.diff.tools.simple.ThreesideDiffChangeBase,Z):V
@@ -1568,6 +1571,7 @@ a:com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 - pf:myEditorSettingsAction:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorPopupActions():java.util.List
 - p:createTitle():javax.swing.JComponent
 - p:destroyEditorListeners():V
@@ -1606,6 +1610,7 @@ a:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - p:mySyncScrollSupport:com.intellij.diff.tools.util.SyncScrollSupport$ThreesideSyncScrollSupport
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorHolders(com.intellij.diff.tools.holders.EditorHolderFactory):java.util.List
 - p:createEditorPopupActions():java.util.List
 - p:createTitles():java.util.List
@@ -1668,6 +1673,7 @@ a:com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 - pf:myEditorSettingsAction:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorHolders(com.intellij.diff.tools.holders.EditorHolderFactory):java.util.List
 - p:createEditorPopupActions():java.util.List
 - p:createTitles():java.util.List

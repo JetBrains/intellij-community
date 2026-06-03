@@ -22,6 +22,8 @@ import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
@@ -58,7 +61,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
-    TextDiffViewerUtil.installGutterPopup(getEditors(), myEditorSettingsAction);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
@@ -127,6 +129,12 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
+    return actions;
+  }
+
   protected @NotNull List<AnAction> createEditorPopupActions() {
     return TextDiffViewerUtil.createEditorPopupActions();
   }
@@ -144,6 +152,9 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 

@@ -170,32 +170,22 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val isRightToolbarPlace = e != null && e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)
-    val isGutterPlace = e != null && !isRightToolbarPlace
-
     return buildList<AnAction> {
-      if (isGutterPlace) {
-        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP))
-        add(appearanceGroup)
-        add(Separator.getInstance())
-        add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
+      if (isRightToolbarPlace) {
+        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
+        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
       }
-      else {
-        if (isRightToolbarPlace) {
-          add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
-          add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
-        }
-        add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
-        add(CombinedIgnorePolicySettingAction(settings).actions.apply {
-          add(Separator.create(message("option.ignore.policy.group.name")), Constraints.FIRST)
-        })
-        add(Separator.getInstance())
-        add(CombinedHighlightPolicySettingAction(settings).actions.apply {
-          add(Separator.create(message("option.highlighting.policy.group.name")), Constraints.FIRST)
-        })
-        add(Separator.getInstance())
-        add(appearanceGroup)
-        add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
-      }
+      add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
+      add(CombinedIgnorePolicySettingAction(settings).actions.apply {
+        add(Separator.create(message("option.ignore.policy.group.name")), Constraints.FIRST)
+      })
+      add(Separator.getInstance())
+      add(CombinedHighlightPolicySettingAction(settings).actions.apply {
+        add(Separator.create(message("option.highlighting.policy.group.name")), Constraints.FIRST)
+      })
+      add(Separator.getInstance())
+      add(appearanceGroup)
+      add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
     }.toTypedArray()
   }
 }

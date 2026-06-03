@@ -148,16 +148,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @Override
   protected @NotNull List<AnAction> createToolbarActions() {
-    List<AnAction> gutterActions = new ArrayList<>();
-    gutterActions.add(new MyToggleExpandByDefaultAction());
-    ContainerUtil.addIfNotNull(gutterActions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
-    gutterActions.add(new MyToggleAutoScrollAction());
-
     List<AnAction> diffActions = new ArrayList<>();
     ContainerUtil.addIfNotNull(diffActions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
     diffActions.add(new MyToggleAutoScrollAction());
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(gutterActions, diffActions);
+    myEditorSettingsAction.setDiffActions(diffActions);
 
     List<AnAction> group = new ArrayList<>();
     group.add(new MyToggleExpandByDefaultAction());
@@ -181,6 +176,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new MyToggleAutoScrollAction());
 
     return group;
+  }
+
+  @Override
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new MyToggleExpandByDefaultAction());
+    ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
+    actions.add(new MyToggleAutoScrollAction());
+    return actions;
   }
 
   @Override

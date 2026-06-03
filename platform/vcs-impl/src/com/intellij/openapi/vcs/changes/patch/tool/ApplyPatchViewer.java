@@ -34,6 +34,7 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -177,7 +178,8 @@ class ApplyPatchViewer implements Disposable {
 
     myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), editors);
     myEditorSettingsAction.applyDefaults();
-    TextDiffViewerUtil.installGutterPopup(editors, myEditorSettingsAction);
+    ActionGroup gutterActionGroup = TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction);
+    TextDiffViewerUtil.installGutterPopup(editors, gutterActionGroup);
 
     ProxyUndoRedoAction.register(myProject, myResultEditor, myContentPanel);
   }
