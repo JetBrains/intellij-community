@@ -56,7 +56,6 @@ import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.WatchKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import kotlin.time.DurationUnit
@@ -91,6 +90,7 @@ class LspServerImpl internal constructor(
 
   val documentMapping: LspDocumentMapping = LspDocumentMapping(this)
   val requestExecutor: LspRequestExecutor = LspRequestExecutor(this, documentMapping)
+  internal val globMatcher: LspGlobMatcher = LspGlobMatcher()
   internal val dynamicCapabilities: LspDynamicCapabilities = LspDynamicCapabilities()
   internal val serverNotificationsHandler: LspServerNotificationsHandler = LspServerNotificationsHandlerImpl(this)
 
@@ -171,7 +171,7 @@ class LspServerImpl internal constructor(
 
         if (watcher.globPattern.isLeft) {
           val globPattern = watcher.globPattern.left!!
-          if (pathMatches(fileChangeInfo, globPattern, null)) {
+          if (globMatcher.pathMatches(fileChangeInfo.path, fileChangeInfo.isDirectory, globPattern, null)) {
             return FileEvent(fileChangeInfo.uri, fileChangeInfo.changeType)
           }
         }
@@ -181,7 +181,7 @@ class LspServerImpl internal constructor(
           val baseDir = descriptor.findFileByUri(baseUri)
           if (baseDir != null && baseDir.isDirectory) {
             val globPattern = relativePattern.pattern
-            if (pathMatches(fileChangeInfo, globPattern, baseDir.path)) {
+            if (globMatcher.pathMatches(fileChangeInfo.path, fileChangeInfo.isDirectory, globPattern, baseDir.path)) {
               return FileEvent(fileChangeInfo.uri, fileChangeInfo.changeType)
             }
           }
@@ -189,24 +189,6 @@ class LspServerImpl internal constructor(
       }
     }
     return null
-  }
-
-  private fun pathMatches(fileInfo: FileInfo, globPattern: String, basePath: String?): Boolean {
-    val pathToMatch = when {
-      basePath == null -> fileInfo.path
-      fileInfo.path == basePath -> ""
-      fileInfo.path.startsWith("$basePath/") -> fileInfo.path.substring(basePath.length + 1)
-      else -> return false // base URI doesn't match this fileInfo
-    }
-
-    if (fileInfo.isDirectory) {
-      // Any directory may contain files that match the glob pattern.
-      // Per-file events are not generated, so we need to inform the server about all directory events.
-      return true
-    }
-
-    val pathMatcher = dynamicCapabilities.getPathMatcherCaching(globPattern)
-    return pathMatcher.matches(Path.of(pathToMatch))
   }
 
   internal fun diagnosticsReceived(params: PublishDiagnosticsParams) {
@@ -542,7 +524,7 @@ class LspServerImpl internal constructor(
         if (language != null && language != descriptor.getLanguageId(file)) continue
 
         if (pattern != null) {
-          if (!pathMatches(FileInfo(file.path, false), pattern, null)) {
+          if (!globMatcher.pathMatches(file.path, false, pattern, null)) {
             continue
           }
         }

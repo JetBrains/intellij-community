@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.getPathMatcher
 import com.intellij.util.containers.MultiMap
 import org.eclipse.lsp4j.CallHierarchyRegistrationOptions
 import org.eclipse.lsp4j.CodeActionRegistrationOptions
@@ -43,7 +42,6 @@ import org.eclipse.lsp4j.TypeHierarchyRegistrationOptions
 import org.eclipse.lsp4j.Unregistration
 import org.eclipse.lsp4j.WorkspaceSymbolRegistrationOptions
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
-import java.nio.file.PathMatcher
 
 /**
  * Tracks dynamically registered IDE capabilities, which means handling the
@@ -111,7 +109,6 @@ internal class LspDynamicCapabilities {
 
   private val capabilityToInfo: MultiMap<String, CapabilityInfo> = MultiMap.createConcurrent()
   private val gson: Gson = MessageJsonHandler(emptyMap()).gson
-  private val patternToPathMatcherCache: MutableMap<String, PathMatcher> = hashMapOf()
 
   /**
    * Handles the [client/registerCapability](https://microsoft.github.io/language-server-protocol/specification/#client_registerCapability)
@@ -133,9 +130,6 @@ internal class LspDynamicCapabilities {
       capabilityToInfo.remove(unregistration.method)
     }
   }
-
-  fun getPathMatcherCaching(globPattern: String): PathMatcher =
-    patternToPathMatcherCache.getOrPut(globPattern) { getPathMatcher(globPattern) }
 
   private fun getLsp4jRegistrationOptionsObject(registration: Registration): Any? {
     val jsonObject = registration.registerOptions as? JsonObject ?: return null
