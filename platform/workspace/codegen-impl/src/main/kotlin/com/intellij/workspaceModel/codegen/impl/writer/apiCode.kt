@@ -21,6 +21,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isStandardInterface
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.requiresCompatibility
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaBuilderTypeWithGeneric
@@ -53,6 +55,7 @@ fun ObjClass<*>.generateEntityTypeObject(): String = lines {
   val mandatoryFields = allFields.mandatoryFields()
   section("internal object ${javaFullName}Type : ${EntityType}<$javaFullName, $defaultJavaBuilderName$builderGeneric>()") {
     line("override val entityClass: Class<$javaFullName> get() = $javaFullName::class.java")
+    line("override val entityImplBuilderClass: Class<*> get() = $javaImplBuilderName::class.java")
     if (mandatoryFields.isNotEmpty()) {
       line("operator fun invoke(")
       mandatoryFields.forEach { field ->
@@ -98,14 +101,15 @@ fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
 }
 
 fun ObjClass<*>.generateTopLevelCode(reporter: ProblemReporter): String {
-  val mutableCode = generateMutableCode(reporter)
-  val entityTypeObject = generateEntityTypeObject()
+  val implClassImport = if (openness.instantiatable) "\n\nimport ${module.name}.impl.$javaImplName" else ""
   val header = """
     @file:JvmName("${name}Modifications")
     
-    package ${module.name}
+    package ${module.name}$implClassImport
   """.trimIndent()
-  var result = "$header\n$mutableCode\n$entityTypeObject"
+  val mutableCode = generateMutableCode(reporter)
+  val entityTypeObject = if (openness.instantiatable) "\n${generateEntityTypeObject()}" else ""
+  var result = "$header\n$mutableCode$entityTypeObject"
   val extensions = generateExtensionCode()
   if (extensions != null) {
     result = "$result\n$extensions"
