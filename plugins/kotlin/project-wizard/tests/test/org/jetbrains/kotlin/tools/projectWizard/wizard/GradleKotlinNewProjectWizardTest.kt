@@ -408,6 +408,6 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
 
     @Test
     fun testSdkFilterForUnsupportedVersion() {
-        assertFalse(JavaSdkVersion.JDK_26.isLessOrEqualToMaxJvmTarget())
+        assertFalse(JavaSdkVersion.JDK_27.isLessOrEqualToMaxJvmTarget())
     }
 }

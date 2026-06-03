@@ -81,15 +81,17 @@ abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTest
     fun GradleProjectInfoBuilder.simpleKotlinRootModuleInfo(): Unit =
         rootModuleInfo { configureSimpleKotlinModuleInfo() }
 
+    private val defaultKotlinVersion = "2.4.0"
+
     fun GradleProjectInfoBuilder.simpleKotlinModuleInfo(
         ideName: String,
         relativePath: String,
         gradleDsl: GradleDsl? = null,
-        kotlinJvmPluginVersion: String? = "2.3.21"
+        kotlinJvmPluginVersion: String? = defaultKotlinVersion
     ): Unit =
         moduleInfo(ideName, relativePath, gradleDsl) { configureSimpleKotlinModuleInfo(kotlinJvmPluginVersion) }
 
-    private fun GradleModuleInfoBuilder.configureSimpleKotlinModuleInfo(kotlinJvmPluginVersion: String? = "2.3.21") {
+    private fun GradleModuleInfoBuilder.configureSimpleKotlinModuleInfo(kotlinJvmPluginVersion: String? = defaultKotlinVersion) {
         sourceSetInfo("main")
         sourceSetInfo("test")
         buildFile {
