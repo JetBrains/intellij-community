@@ -44,6 +44,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.io.delete
 import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -67,6 +69,7 @@ import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.util.stream.Collectors
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -245,8 +248,11 @@ class ProjectSynchronizerUtilTest {
   @Test
   fun `test project sdk is not found after sdk removed from jdk table`() {
     val jdkTableFile = PathManager.getOptionsDir().resolve("jdk.table.xml")
-    val oldText = jdkTableFile.readText()
+    val oldText = if (jdkTableFile.exists()) jdkTableFile.readText() else null
     try {
+      if (!jdkTableFile.exists()) {
+        jdkTableFile.createFile()
+      }
       jdkTableFile.writeText(simpleJdkTable)
       PlatformTestUtil.withSystemProperty<Exception>("ide.tests.permit.global.workspace.model.serialization", "true") {
         JpsGlobalModelSynchronizerImpl.runWithGlobalEntitiesLoadingEnabled {
@@ -271,7 +277,12 @@ class ProjectSynchronizerUtilTest {
       }
     }
     finally {
-      jdkTableFile.writeText(oldText)
+      if (oldText != null) {
+        jdkTableFile.writeText(oldText)
+      }
+      else {
+        jdkTableFile.delete()
+      }
     }
   }
 
