@@ -72,9 +72,8 @@ public final class TextDiffViewerUtil {
 
   public static @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> result = new ArrayList<>();
-    result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
-    ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
-
+    result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
+    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
     return result;
   }
 
