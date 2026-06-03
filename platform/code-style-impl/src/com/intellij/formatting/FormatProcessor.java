@@ -136,7 +136,7 @@ public final class FormatProcessor {
     doIterationsSynchronously();
   }
 
-  private void doIterationsSynchronously() {
+  void doIterationsSynchronously() {
     while (!myStateProcessor.isDone()) {
       myStateProcessor.iteration();
     }

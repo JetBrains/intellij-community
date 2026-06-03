@@ -398,8 +398,7 @@ public final class FormatterImpl extends FormatterEx
     FormatProcessor processor = new FormatProcessor(
       docModel, rootBlock, options, FormattingProgressCallback.EMPTY
     );
-    //noinspection StatementWithEmptyBody
-    while (!processor.iteration()) ;
+    processor.doIterationsSynchronously();
     return processor;
   }
 
