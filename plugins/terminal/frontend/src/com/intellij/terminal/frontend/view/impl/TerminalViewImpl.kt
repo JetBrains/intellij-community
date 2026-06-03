@@ -88,6 +88,8 @@ import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.progress.TerminalProgressState
+import org.jetbrains.plugins.terminal.progress.TerminalProgressStripe
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -150,6 +152,7 @@ class TerminalViewImpl(
   private var isAlternateScreenBuffer = false
 
   private val terminalPanel: TerminalPanel
+  private val progressStripe: TerminalProgressStripe
 
   @VisibleForTesting
   val outputEditorKeyEventsHandler: TerminalKeyEventsHandler
@@ -158,7 +161,7 @@ class TerminalViewImpl(
   val shellIntegrationFeaturesInitJob: Job
 
   override val component: JComponent
-    get() = terminalPanel
+    get() = progressStripe
   override val preferredFocusableComponent: JComponent
     get() = terminalPanel.preferredFocusableComponent
   override val gridSize: TerminalGridSize?
@@ -334,15 +337,17 @@ class TerminalViewImpl(
       mutableSessionState.value = TerminalViewSessionState.Terminated
       // Hide the cursor on process termination
       val currentState = sessionModel.terminalState.value
-      sessionModel.updateTerminalState(currentState.copy(isCursorVisible = false))
+      sessionModel.updateTerminalState(currentState.copy(isCursorVisible = false, terminalProgressState = TerminalProgressState.NONE))
     }
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
+    progressStripe = TerminalProgressStripe(terminalPanel, coroutineScope.asDisposable())
 
     listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
     listenApplicationTitleChanges()
+    listenTerminalProgressChanges()
     listenKeyEvents()
 
     refreshVfsOnFocusChange(
@@ -521,6 +526,14 @@ class TerminalViewImpl(
           @Suppress("HardCodedStringLiteral")
           applicationTitle = state.windowTitle
         }
+      }
+    }
+  }
+
+  private fun listenTerminalProgressChanges() {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Terminal progress listener")) {
+      sessionModel.terminalState.collect { state ->
+        progressStripe.progressChanged(state.terminalProgressState)
       }
     }
   }
