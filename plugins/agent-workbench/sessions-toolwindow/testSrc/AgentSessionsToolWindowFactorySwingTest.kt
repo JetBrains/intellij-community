@@ -2,23 +2,35 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
+import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
+import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
+import com.intellij.agent.workbench.sessions.openTestProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
+import com.intellij.agent.workbench.sessions.thread
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.toolwindow.ui.extractSessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedContextHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedRangeHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsShowActiveThreadsHeaderAction
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsNorthComponents
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsTitleActions
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createArchivedRangeHeaderPopupGroup
 import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverlayQuickCreate
+import com.intellij.agent.workbench.sessions.waitForCondition
+import com.intellij.agent.workbench.sessions.withRegisteredTestService
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -26,20 +38,38 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Component
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
+import java.math.BigDecimal
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -128,6 +158,82 @@ class AgentSessionsToolWindowFactorySwingTest {
     }
 
     assertThat(hintStateService.eligibleFlow.value).isTrue()
+  }
+
+  @Test
+  fun coldToolWindowContentLoadsSessionsWhenInitialVisibilityIsFalse(@TestDisposable disposable: Disposable) = runBlocking {
+    val refreshCount = AtomicInteger()
+    val costLoadCount = AtomicInteger()
+    val visibilityService = service<AgentSessionsToolWindowVisibilityService>()
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromOpenProject = { path, _ ->
+        refreshCount.incrementAndGet()
+        if (path == PROJECT_PATH) {
+          listOf(thread(id = "claude-1", updatedAt = 100, title = "Migrated Claude thread", provider = AgentSessionProvider.CLAUDE))
+        }
+        else {
+          emptyList()
+        }
+      },
+      loadThreadCostsProvider = { _, requestedThreads ->
+        costLoadCount.incrementAndGet()
+        requestedThreads.associate { thread ->
+          thread.id to AgentSessionCost(amountUsd = BigDecimal.ONE, kind = AgentSessionCostKind.ESTIMATED)
+        }
+      },
+    )
+
+    withSessionCostPresentationEnabled {
+      withRegisteredTestService(
+        parentDisposable = disposable,
+        sessionSourcesProvider = { listOf(source) },
+        projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+        toolWindowVisibleFlow = visibilityService.visibleFlow,
+      ) { service ->
+        val project = ProjectManager.getInstance().defaultProject
+        val manager = ColdStartToolWindowManager(project)
+        project.replaceService(ToolWindowManager::class.java, manager, disposable)
+
+        try {
+          runInEdtAndWait {
+            val factory = AgentSessionsToolWindowFactory()
+            factory.init(manager.toolWindow)
+            factory.createToolWindowContent(project, manager.toolWindow)
+          }
+
+          val threadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")
+          waitForCondition {
+            val stateHasThread = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+              ?.threads
+              ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
+            stateHasThread && manager.toolWindow.containsSessionTreeId(threadId)
+          }
+          assertThat(refreshCount.get()).isEqualTo(1)
+          assertThat(visibilityService.visibleFlow.value).isFalse()
+          delay(300.milliseconds)
+          assertThat(costLoadCount.get()).isZero()
+
+          runInEdtAndWait { manager.setVisible(true) }
+
+          waitForCondition {
+            service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+              ?.threads
+              ?.singleOrNull { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" }
+              ?.cost
+              ?.amountUsd == BigDecimal.ONE
+          }
+          assertThat(refreshCount.get()).isEqualTo(1)
+          assertThat(costLoadCount.get()).isEqualTo(1)
+          assertThat(visibilityService.visibleFlow.value).isTrue()
+        }
+        finally {
+          runInEdtAndWait {
+            manager.toolWindow.contentManager.contents.forEach(Disposer::dispose)
+          }
+        }
+      }
+    }
   }
 
   @Test
@@ -342,11 +448,104 @@ class AgentSessionsToolWindowFactorySwingTest {
   }
 }
 
+private class ColdStartToolWindowManager(project: Project) :
+  ToolWindowManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope()) {
+  private val toolWindowDisposable = Disposer.newDisposable("Agent sessions cold-start toolwindow")
+  private val windowInfo = WindowInfoImpl().apply {
+    id = AGENT_SESSIONS_TOOL_WINDOW_ID
+    anchor = ToolWindowAnchor.RIGHT
+    isVisible = false
+  }
+
+  val toolWindow: ToolWindow = ToolWindowImpl(
+    toolWindowManager = this,
+    id = AGENT_SESSIONS_TOOL_WINDOW_ID,
+    canCloseContent = false,
+    dumbAware = true,
+    component = null,
+    parentDisposable = toolWindowDisposable,
+    windowInfo = windowInfo,
+    contentFactory = null,
+    isAvailable = true,
+    stripeTitleProvider = { "Agent Threads" },
+  )
+
+  fun setVisible(visible: Boolean) {
+    windowInfo.isVisible = visible
+    val publisher = project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC)
+    if (visible) {
+      publisher.toolWindowShown(toolWindow)
+    }
+    publisher.stateChanged(
+      this,
+      toolWindow,
+      if (visible) ToolWindowManagerListener.ToolWindowManagerEventType.ShowToolWindow
+      else ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow,
+    )
+  }
+
+  override fun getToolWindow(id: String?): ToolWindow? {
+    return if (id == AGENT_SESSIONS_TOOL_WINDOW_ID) toolWindow else super.getToolWindow(id)
+  }
+
+  override fun dispose() {
+    Disposer.dispose(toolWindowDisposable)
+    super.dispose()
+  }
+}
+
+private fun ToolWindow.containsSessionTreeId(id: SessionTreeId): Boolean {
+  var contains = false
+  runInEdtAndWait {
+    contains = contentManager.contents.singleOrNull()
+      ?.component
+      ?.findSessionTree()
+      ?.containsSessionTreeId(id) == true
+  }
+  return contains
+}
+
+private fun Component.findSessionTree(): Tree? {
+  if (this is Tree) return this
+  if (this !is java.awt.Container) return null
+  for (child in components) {
+    child.findSessionTree()?.let { return it }
+  }
+  return null
+}
+
+private fun Tree.containsSessionTreeId(id: SessionTreeId): Boolean {
+  return model.containsSessionTreeId(model.root, id)
+}
+
+private fun javax.swing.tree.TreeModel.containsSessionTreeId(node: Any?, id: SessionTreeId): Boolean {
+  if (extractSessionTreeId(node) == id) return true
+  val childCount = getChildCount(node)
+  for (index in 0 until childCount) {
+    if (containsSessionTreeId(getChild(node, index), id)) return true
+  }
+  return false
+}
+
+private const val PROJECT_PATH = "/work/project-a"
+private const val AGENT_SESSIONS_TOOL_WINDOW_ID = "agent.workbench.sessions"
+
 private fun jbCentralExecutableName(): String {
   return if (SystemInfoRt.isWindows) "jbcentral.exe" else "jbcentral"
 }
 
-private fun withJbCentralPath(path: java.nio.file.Path, action: () -> Unit) {
+private suspend fun withSessionCostPresentationEnabled(action: suspend () -> Unit) {
+  val previous = AgentSessionCostPresentationSettings.isEnabled()
+  AgentSessionCostPresentationSettings.setEnabled(true)
+  try {
+    action()
+  }
+  finally {
+    AgentSessionCostPresentationSettings.setEnabled(previous)
+  }
+}
+
+private fun withJbCentralPath(path: Path, action: () -> Unit) {
   val propertyName = "agent.workbench.sessions.jbcentral.path"
   val previous = System.getProperty(propertyName)
   System.setProperty(propertyName, path.toAbsolutePath().toString())

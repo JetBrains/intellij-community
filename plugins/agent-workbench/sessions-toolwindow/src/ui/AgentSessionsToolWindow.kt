@@ -276,15 +276,9 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     installToolWindowVisibilityTracker()
-    val initiallyVisible = isModelUpdateVisible()
-    publishAgentSessionsToolWindowVisibility(
-      visible = initiallyVisible,
-      token = costHydrationVisibilityToken,
-      setModelUpdatesVisible = stateController::setModelUpdatesVisible,
-      visibilityService = service(),
-    )
+    publishInitialToolWindowVisibility()
     stateController.start()
-    requestInitialRefreshIfVisible()
+    requestInitialRefresh()
   }
 
   private fun installProviderAvailabilityRefresh() {
@@ -312,20 +306,23 @@ internal class AgentSessionsToolWindowPanel(
         changeType: ToolWindowManagerListener.ToolWindowManagerEventType,
       ) {
         if (changedToolWindow == toolWindow) {
-          scheduleToolWindowVisibilityUpdate()
+          applyToolWindowVisibility()
         }
       }
 
       override fun toolWindowShown(shownToolWindow: ToolWindow) {
         if (shownToolWindow == toolWindow) {
-          scheduleToolWindowVisibilityUpdate()
+          applyToolWindowVisibility()
         }
       }
     })
   }
 
-  private fun scheduleToolWindowVisibilityUpdate() {
-    EdtInvocationManager.invokeLaterIfNeeded { applyToolWindowVisibility() }
+  private fun publishInitialToolWindowVisibility() {
+    // Content creation is the first-paint signal for the tree rows. Cost hydration still uses
+    // the actual tool window visibility published below, so hidden cold content does not load costs.
+    stateController.setModelUpdatesVisible(true)
+    service<AgentSessionsToolWindowVisibilityService>().setVisible(costHydrationVisibilityToken, isModelUpdateVisible())
   }
 
   private fun applyToolWindowVisibility() {
@@ -336,15 +333,15 @@ internal class AgentSessionsToolWindowPanel(
       setModelUpdatesVisible = stateController::setModelUpdatesVisible,
       visibilityService = service(),
     )
-    requestInitialRefreshIfVisible()
+    requestInitialRefresh()
   }
 
   private fun isModelUpdateVisible(): Boolean {
     return toolWindow.isVisible
   }
 
-  private fun requestInitialRefreshIfVisible() {
-    if (initialRefreshRequested || !isModelUpdateVisible()) return
+  private fun requestInitialRefresh() {
+    if (initialRefreshRequested) return
     initialRefreshRequested = true
     service<AgentSessionRefreshService>().refresh()
   }

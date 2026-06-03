@@ -40,8 +40,10 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -316,6 +318,47 @@ fun thread(
     subAgents = subAgents,
     cost = cost,
   )
+}
+
+suspend fun withRegisteredTestService(
+  parentDisposable: com.intellij.openapi.Disposable,
+  sessionSourcesProvider: () -> List<AgentSessionSource>,
+  projectEntriesProvider: suspend () -> List<TestProjectCatalogEntry>,
+  toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
+  action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
+) {
+  val job = SupervisorJob()
+
+  @Suppress("RAW_SCOPE_CREATION")
+  val scope = CoroutineScope(job + Dispatchers.Default)
+  val stateStore = AgentSessionsStateStore()
+  val warmState = InMemorySessionWarmState()
+  val syncService = AgentSessionRefreshService(
+    serviceScope = scope,
+    sessionSourcesProvider = sessionSourcesProvider,
+    projectEntriesProvider = { projectEntriesProvider().map { it.toProjectEntry() } },
+    stateStore = stateStore,
+    warmState = warmState,
+    scheduleVfsRefresh = { _ -> },
+    openAgentChatSnapshotProvider = { buildOpenChatRefreshSnapshot() },
+    providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
+    toolWindowVisibleFlow = toolWindowVisibleFlow,
+    subscribeToProjectLifecycle = false,
+  )
+  val app = ApplicationManager.getApplication()
+  app.replaceService(AgentSessionsStateStore::class.java, stateStore, parentDisposable)
+  app.replaceService(AgentSessionRefreshService::class.java, syncService, parentDisposable)
+  try {
+    action(
+      AgentSessionStateSyncTestFacade(
+        stateStore = stateStore,
+        syncService = syncService,
+      )
+    )
+  }
+  finally {
+    job.cancelAndJoin()
+  }
 }
 
 suspend fun withTestService(
