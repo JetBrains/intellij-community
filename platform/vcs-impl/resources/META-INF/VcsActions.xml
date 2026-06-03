@@ -472,7 +472,7 @@
         <action id="Vcs.CombinedDiff.ToggleCollapseAllBlock"
                 class="com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction"/>
         <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
-        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+        <add-to-group group-id="Diff.ViewerSettings" anchor="last"/>
       </group>
 
       <add-to-group group-id="Diff.KeymapGroup"/>

@@ -77,7 +77,7 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
     addAll(viewerSettingsActions)
     add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
-    add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
+    add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_VIEWER_SETTINGS))
     addAll(diffSettingsActions)
     add(Separator.getInstance())
     add(appearanceGroup)

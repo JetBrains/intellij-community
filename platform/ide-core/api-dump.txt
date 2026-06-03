@@ -398,7 +398,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:GROUP_DIFF_EDITOR_GUTTER_POPUP:java.lang.String
 - sf:GROUP_DIFF_EDITOR_MODES:java.lang.String
 - sf:GROUP_DIFF_EDITOR_POPUP:java.lang.String
-- sf:GROUP_DIFF_EDITOR_SETTINGS:java.lang.String
+- sf:GROUP_DIFF_VIEWER_SETTINGS:java.lang.String
 - sf:GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU:java.lang.String
 - sf:GROUP_EDITOR:java.lang.String
 - sf:GROUP_EDITOR_BIDI_TEXT_DIRECTION:java.lang.String

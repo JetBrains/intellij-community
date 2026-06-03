@@ -173,7 +173,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     return buildList<AnAction> {
       if (isRightToolbarPlace) {
         add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
-        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
+        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_VIEWER_SETTINGS))
       }
       add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
       add(CombinedIgnorePolicySettingAction(settings).actions.apply {
