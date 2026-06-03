@@ -21,6 +21,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
@@ -66,7 +67,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
             val seen = mutableSetOf<String>()
             service<DependencyCompletionService>()
               .suggestCompletions(DependencyCompletionRequest(groupId, completionContext))
-              .collect { depResult ->
+              .collect { event ->
+                if (event !is DependencyCompletionEvent.Item) return@collect
+                val depResult = event.result
                 if (seen.add(depResult.groupId)) {
                   result.addElement(
                     MavenDependencyCompletionUtil.lookupElement(
@@ -84,7 +87,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
             if (groupId.isBlank()) {
               service<DependencyCompletionService>()
                 .suggestCompletions(DependencyCompletionRequest(artifactId, completionContext))
-                .collect { depResult ->
+                .collect { event ->
+                  if (event !is DependencyCompletionEvent.Item) return@collect
+                  val depResult = event.result
                   result.addElement(
                     MavenDependencyCompletionUtil.lookupElement(
                       MavenRepoArtifactInfo(depResult.groupId, depResult.artifactId, emptyList())
@@ -95,7 +100,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
             else {
               service<DependencyCompletionService>()
                 .suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, completionContext))
-                .collect { depResult ->
+                .collect { event ->
+                  if (event !is DependencyCompletionEvent.Item) return@collect
+                  val depResult = event.result
                   result.addElement(
                     MavenDependencyCompletionUtil.lookupElement(
                       MavenRepoArtifactInfo(groupId, depResult.result, emptyList())
@@ -112,8 +119,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
           runBlockingCancellable {
             service<DependencyCompletionService>()
               .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", completionContext))
-              .collect { depResult ->
-                newResult.addElement(LookupElementBuilder.create(depResult.result))
+              .collect { event ->
+                if (event !is DependencyCompletionEvent.Item) return@collect
+                newResult.addElement(LookupElementBuilder.create(event.result.result))
               }
           }
         }
@@ -155,7 +163,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
           runBlockingCancellable {
             service<DependencyCompletionService>()
               .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId ?: "", version, completionContext))
-              .collect { depResult ->
+              .collect { event ->
+                if (event !is DependencyCompletionEvent.Item) return@collect
+                val depResult = event.result
                 val item = MavenDependencyCompletionItem(groupId, artifactId, depResult.result)
                 newResult.addElement(
                   MavenDependencyCompletionUtil.lookupElement(item, MavenDependencyCompletionUtil.getLookupString(item))
@@ -170,7 +180,9 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
           runBlockingCancellable {
             service<DependencyCompletionService>()
               .suggestCompletions(DependencyCompletionRequest(completionPrefix, completionContext))
-              .collect { depResult ->
+              .collect { event ->
+                if (event !is DependencyCompletionEvent.Item) return@collect
+                val depResult = event.result
                 val info = MavenRepoArtifactInfo(depResult.groupId, depResult.artifactId, emptyList())
                 result.addElement(
                   MavenDependencyCompletionUtil.lookupElement(info)

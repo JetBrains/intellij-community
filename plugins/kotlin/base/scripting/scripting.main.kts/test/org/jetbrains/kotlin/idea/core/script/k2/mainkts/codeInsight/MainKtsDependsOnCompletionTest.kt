@@ -6,12 +6,13 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.testFramework.registerExtension
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ThreeState
 import com.intellij.util.application
@@ -27,10 +28,11 @@ class MainKtsDependsOnCompletionTest : KotlinLightCodeInsightFixtureTestCase(), 
     override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private val fakeCompletionService = object : DependencyCompletionService {
-        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> = flowOf(
-            DependencyCompletionResult("org.example", "lib-alpha", "1.0", source = DependencyCompletionContributionSource.SERVER),
-            DependencyCompletionResult("org.example", "lib-beta", "2.0", source = DependencyCompletionContributionSource.SERVER),
-            DependencyCompletionResult("com.other", "util", "3.0", source = DependencyCompletionContributionSource.SERVER),
+        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
+            flowOf(
+                DependencyCompletionEvent.Item(DependencyCompletionResult("org.example", "lib-alpha", "1.0", source = SERVER)),
+                DependencyCompletionEvent.Item(DependencyCompletionResult("org.example", "lib-beta", "2.0", source = SERVER)),
+                DependencyCompletionEvent.Item(DependencyCompletionResult("com.other", "util", "3.0", source = SERVER)),
         )
     }
 

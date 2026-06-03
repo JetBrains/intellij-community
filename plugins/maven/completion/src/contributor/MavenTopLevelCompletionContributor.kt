@@ -3,11 +3,11 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
-import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
@@ -16,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
@@ -54,7 +55,9 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
     runBlockingCancellable {
       service<DependencyCompletionService>()
         .suggestCompletions(request)
-        .collect { item ->
+        .collect { event ->
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
           val lookupElement = MavenDependencyCompletionUtil.lookupElement(MavenRepoArtifactInfo(item.groupId, item.artifactId, listOf(item.version)))
               .withIcon(item.icon)
               .withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE)

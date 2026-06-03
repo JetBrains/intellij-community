@@ -2,13 +2,14 @@
 package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.maven.completion.icon
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
@@ -34,7 +35,9 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
       return
     }
     var index = 0
-    service.suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, context)).collect { item ->
+    service.suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, context)).collect { event ->
+      if (event !is DependencyCompletionEvent.Item) return@collect
+      val item = event.result
       val info = MavenRepoArtifactInfo(groupId, item.result, emptyList())
       result.addElement(buildLookup(info, completionPrefix, item.source, index++))
     }

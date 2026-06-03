@@ -5,16 +5,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.idea.maven.completion.MavenDependencySearchContributor
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Consumer
-import kotlinx.coroutines.flow.toList
-import kotlin.collections.iterator
 
 internal class MavenDependencySearchContributorImpl : MavenDependencySearchContributor {
 
@@ -34,17 +34,26 @@ internal class MavenDependencySearchContributorImpl : MavenDependencySearchContr
 
   override suspend fun getGroupIds(project: Project, pattern: String?): Set<String> {
     val request = DependencyGroupCompletionRequest(pattern ?: "", "", createContext(project))
-    return service<DependencyCompletionService>().suggestGroupCompletions(request).toList().map { it.result }.toSet()
+    return service<DependencyCompletionService>().suggestGroupCompletions(request).toList().mapNotNull { event ->
+      if (event !is DependencyCompletionEvent.Item) return@mapNotNull null
+      event.result.result
+    }.toSet()
   }
 
   override suspend fun getArtifactIds(project: Project, groupId: String): Set<String> {
     val request = DependencyArtifactCompletionRequest(groupId, "", createContext(project))
-    return service<DependencyCompletionService>().suggestArtifactCompletions(request).toList().map { it.result }.toSet()
+    return service<DependencyCompletionService>().suggestArtifactCompletions(request).toList().mapNotNull { event ->
+      if (event !is DependencyCompletionEvent.Item) return@mapNotNull null
+      event.result.result
+    }.toSet()
   }
 
   override suspend fun getVersions(project: Project, groupId: String, artifactId: String): Set<String> {
     val request = DependencyVersionCompletionRequest(groupId, artifactId, "", createContext(project))
-    return service<DependencyCompletionService>().suggestVersionCompletions(request).toList().map { it.result }.toSet()
+    return service<DependencyCompletionService>().suggestVersionCompletions(request).toList().mapNotNull { event ->
+      if (event !is DependencyCompletionEvent.Item) return@mapNotNull null
+      event.result.result
+    }.toSet()
   }
 
   private suspend fun collectGrouped(
@@ -53,7 +62,9 @@ internal class MavenDependencySearchContributorImpl : MavenDependencySearchContr
   ) {
     val grouped = mutableMapOf<Pair<String, String>, MutableList<String>>()
 
-    service<DependencyCompletionService>().suggestCompletions(request).collect { r ->
+    service<DependencyCompletionService>().suggestCompletions(request).collect { event ->
+      if (event !is DependencyCompletionEvent.Item) return@collect
+      val r = event.result
       val key = r.groupId to r.artifactId
       grouped.getOrPut(key) { mutableListOf() }.add(r.version)
     }

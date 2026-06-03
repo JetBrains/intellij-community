@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
@@ -120,7 +121,9 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
         val seen = mutableSetOf<String>()
         service<DependencyCompletionService>()
           .suggestCompletions(DependencyCompletionRequest("", context))
-          .collect { depResult ->
+          .collect { event ->
+            if (event !is DependencyCompletionEvent.Item) return@collect
+            val depResult = event.result
             val key = "${depResult.groupId}:${depResult.artifactId}"
             if (seen.add(key)) {
               result.addElement(
@@ -227,7 +230,9 @@ private fun completeVersions(
     runBlockingCancellable {
       service<DependencyCompletionService>()
         .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context))
-        .collect { result ->
+        .collect { event ->
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val result = event.result
           newResultSet.addElement(LookupElementBuilder.create(prefix + result.result))
         }
     }

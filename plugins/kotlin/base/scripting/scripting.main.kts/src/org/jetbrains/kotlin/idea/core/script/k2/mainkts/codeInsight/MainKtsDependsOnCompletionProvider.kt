@@ -11,16 +11,16 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
 import com.intellij.util.ProcessingContext
 
 internal class MainKtsDependsOnCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -41,7 +41,9 @@ internal class MainKtsDependsOnCompletionProvider : CompletionProvider<Completio
         val resultSet = result.withPrefixMatcher(MavenCoordinatePrefixMatcher(text))
 
         runBlockingCancellable {
-            completionService.suggestCompletions(request).collect { item ->
+            completionService.suggestCompletions(request).collect { event ->
+                if (event !is DependencyCompletionEvent.Item) return@collect
+                val item = event.result
                 val lookupString = "${item.groupId}:${item.artifactId}:${item.version}"
                 val lookupElement = LookupElementBuilder.create(lookupString, lookupString)
                     .withPresentableText(lookupString)

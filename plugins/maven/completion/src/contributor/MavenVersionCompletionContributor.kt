@@ -8,8 +8,9 @@ import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUM
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.maven.completion.icon
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
@@ -27,13 +28,17 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
       for (pluginGroupId in MavenAbstractPluginExtensionCompletionContributor.PLUGIN_GROUPS) {
-        service.suggestVersionCompletions(DependencyVersionCompletionRequest(pluginGroupId, artifactId, "", context)).collect { item ->
+        service.suggestVersionCompletions(DependencyVersionCompletionRequest(pluginGroupId, artifactId, "", context)).collect { event ->
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
           result.addElement(buildLookup(item.result, item.source, completionPrefix))
         }
       }
       return
     }
-    service.suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context)).collect { item ->
+    service.suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context)).collect { event ->
+      if (event !is DependencyCompletionEvent.Item) return@collect
+      val item = event.result
       result.addElement(buildLookup(item.result, item.source, completionPrefix))
     }
   }
