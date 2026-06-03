@@ -7,8 +7,8 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.api.customization.LspSignatureHelpDisabled
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.SignatureHelp
@@ -19,12 +19,12 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     if (context.file.project.isDefault) return null
 
     val virtualFile = context.file.virtualFile?.let { (it as? VirtualFileWindow)?.delegate ?: it } ?: return null
-    for (server in LspServerManagerImpl.getInstanceImpl(context.file.project).getServersWithThisFileOpen(virtualFile)) {
-      if (server.descriptor.lspCustomization.signatureHelpCustomizer is LspSignatureHelpDisabled) continue
-      if (!server.supportsSignatureHelp(virtualFile)) continue
-      val signatureHelp = server.requestExecutor.getSignatureHelp(virtualFile, context.offset) ?: continue
+    for (client in LspClientManagerImpl.getInstanceImpl(context.file.project).getClientsWithThisFileOpen(virtualFile)) {
+      if (client.descriptor.lspCustomization.signatureHelpCustomizer is LspSignatureHelpDisabled) continue
+      if (!client.supportsSignatureHelp(virtualFile)) continue
+      val signatureHelp = client.requestExecutor.getSignatureHelp(virtualFile, context.offset) ?: continue
       if (signatureHelp.signatures.isNotEmpty()) {
-        context.setItemsToShow(arrayOf<Any>(LspParameterInfoContext(signatureHelp, server)))
+        context.setItemsToShow(arrayOf<Any>(LspParameterInfoContext(signatureHelp, client)))
         return context.file
       }
     }
@@ -46,7 +46,7 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     }
     val storedContext = context.objectsToView?.firstOrNull() as? LspParameterInfoContext ?: return
     val virtualFile = context.file.virtualFile?.let { (it as? VirtualFileWindow)?.delegate ?: it } ?: return
-    val signatureHelp = storedContext.server.requestExecutor.getSignatureHelp(virtualFile, context.offset)
+    val signatureHelp = storedContext.client.requestExecutor.getSignatureHelp(virtualFile, context.offset)
     if (signatureHelp == null || signatureHelp.signatures.isEmpty()) {
       context.removeHint()
       return
@@ -134,5 +134,5 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
 
 internal data class LspParameterInfoContext(
   val signatureHelp: SignatureHelp,
-  val server: LspServerImpl,
+  val client: LspClientImpl,
 )

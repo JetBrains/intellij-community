@@ -27,8 +27,8 @@ import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiFile
@@ -110,27 +110,27 @@ internal class LspHighlightingApplier(private val project: Project) {
   )
 
   fun collectHighlightInfos(psiFile: PsiFile, file: VirtualFile, document: Document): List<HighlightInfo> {
-    val servers = LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)
-    if (servers.isEmpty()) return emptyList()
+    val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)
+    if (clients.isEmpty()) return emptyList()
 
     val result = mutableListOf<HighlightInfo>()
-    for (server in servers) {
-      collectDiagnosticHighlightInfos(server, psiFile, file, document, result)
-      collectSemanticTokenHighlightInfos(server, file, result)
-      collectDocumentLinkHighlightInfos(server, file, result)
+    for (client in clients) {
+      collectDiagnosticHighlightInfos(client, psiFile, file, document, result)
+      collectSemanticTokenHighlightInfos(client, file, result)
+      collectDocumentLinkHighlightInfos(client, file, result)
     }
     return result
   }
 
   private fun collectDiagnosticHighlightInfos(
-    server: LspServerImpl,
+    client: LspClientImpl,
     psiFile: PsiFile,
     file: VirtualFile,
     document: Document,
     result: MutableList<HighlightInfo>,
   ) {
-    val diagnosticsSupport = server.descriptor.lspCustomization.diagnosticsCustomizer as? LspDiagnosticsSupport ?: return
-    val diagnosticsAndQuickFixes = server.getDiagnosticsAndQuickFixes(file)
+    val diagnosticsSupport = client.descriptor.lspCustomization.diagnosticsCustomizer as? LspDiagnosticsSupport ?: return
+    val diagnosticsAndQuickFixes = client.getDiagnosticsAndQuickFixes(file)
     if (diagnosticsAndQuickFixes.isEmpty()) return
 
     val session = AnnotationSessionImpl.create(psiFile)
@@ -152,13 +152,13 @@ internal class LspHighlightingApplier(private val project: Project) {
   }
 
   private fun collectSemanticTokenHighlightInfos(
-    server: LspServerImpl,
+    client: LspClientImpl,
     file: VirtualFile,
     result: MutableList<HighlightInfo>,
   ) {
-    val semanticTokensSupport = server.descriptor.lspCustomization.semanticTokensCustomizer
+    val semanticTokensSupport = client.descriptor.lspCustomization.semanticTokensCustomizer
                                   as? LspSemanticTokensSupport ?: return
-    val tokens = server.getSemanticTokens(file)
+    val tokens = client.getSemanticTokens(file)
     for (token in tokens) {
       val textAttributesKey = semanticTokensSupport.getTextAttributesKey(
         token.highlightingInfo.tokenType, token.highlightingInfo.tokenModifiers
@@ -173,13 +173,13 @@ internal class LspHighlightingApplier(private val project: Project) {
   }
 
   private fun collectDocumentLinkHighlightInfos(
-    server: LspServerImpl,
+    client: LspClientImpl,
     file: VirtualFile,
     result: MutableList<HighlightInfo>,
   ) {
-    val customizer = server.descriptor.lspCustomization.documentLinkCustomizer
+    val customizer = client.descriptor.lspCustomization.documentLinkCustomizer
     if (customizer is LspDocumentLinkDisabled) return
-    val documentLinks = server.getDocumentLinkInfos(file)
+    val documentLinks = client.getDocumentLinkInfos(file)
     for (link in documentLinks) {
       val tooltip = getDocumentLinkTooltip(link.highlightingInfo)
       val shortcutsText = HyperlinkAnnotator.getGoToDeclarationShortcutsText()

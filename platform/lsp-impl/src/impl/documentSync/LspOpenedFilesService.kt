@@ -15,7 +15,7 @@ import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
@@ -53,8 +53,8 @@ internal class LspOpenedFilesService(private val project: Project) {
   private fun scheduleOpenedFilesProcessing() {
     class OpenedFilesData {
       val handledFiles: MutableSet<VirtualFile> = HashSet()
-      val serversToSendDidOpen: MultiMap<LspServerImpl, VirtualFile> = MultiMap()
-      val newServersToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
+      val clientsToSendDidOpen: MultiMap<LspClientImpl, VirtualFile> = MultiMap()
+      val newClientsToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
     }
 
     val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
@@ -67,27 +67,27 @@ internal class LspOpenedFilesService(private val project: Project) {
 
       for (provider in LspClientProvider.getAllExtensions()) {
         val providerClass: Class<out LspClientProvider> = provider.javaClass
-        val serversForProvider = lspServerManager.getClientsForProvider(providerClass)
+        val clientsForProvider = lspServerManager.getClientsForProvider(providerClass)
         var fileWithinServerRootsAndSupported = false
 
         for (openedFile in data.handledFiles) {
-          for (lspServer in serversForProvider) {
+          for (lspClient in clientsForProvider) {
             ProgressManager.checkCanceled()
-            if (lspServer.descriptor.roots.any { VfsUtilCore.isAncestor(it, openedFile, true) } && lspServer.isSupportedFile(openedFile)) {
+            if (lspClient.descriptor.roots.any { VfsUtilCore.isAncestor(it, openedFile, true) } && lspClient.isSupportedFile(openedFile)) {
               fileWithinServerRootsAndSupported = true
             }
 
-            if (lspServer.state == LspServerState.Running &&
-                !lspServer.isFileOpened(openedFile) &&
-                lspServer.isSupportedFile(openedFile)) {
-              data.serversToSendDidOpen.putValue(lspServer, openedFile)
+            if (lspClient.state == LspServerState.Running &&
+                !lspClient.isFileOpened(openedFile) &&
+                lspClient.isSupportedFile(openedFile)) {
+              data.clientsToSendDidOpen.putValue(lspClient, openedFile)
             }
           }
 
           if (!fileWithinServerRootsAndSupported && ProjectFileIndex.getInstance(project).isInContent(openedFile)) {
             val starter = LspClientManagerImpl.LspStarterImpl()
             provider.fileOpened(project, openedFile, starter)
-            starter.descriptor?.let { descriptor -> data.newServersToStart.add(providerClass to descriptor) }
+            starter.descriptor?.let { descriptor -> data.newClientsToStart.add(providerClass to descriptor) }
           }
         }
       }
@@ -98,16 +98,16 @@ internal class LspOpenedFilesService(private val project: Project) {
       .expireWith(lspServerManager)
       .finishOnUiThread(ModalityState.nonModal()) { data: OpenedFilesData ->
         openedFilesToHandle.removeAll(data.handledFiles)
-        if (!data.serversToSendDidOpen.isEmpty) {
+        if (!data.clientsToSendDidOpen.isEmpty) {
           WriteAction.run<RuntimeException> {
-            for ((server, filesToOpen) in data.serversToSendDidOpen.entrySet()) {
+            for ((client, filesToOpen) in data.clientsToSendDidOpen.entrySet()) {
               for (fileToOpen in filesToOpen) {
-                server.documentSyncManager.open(fileToOpen)
+                client.documentSyncManager.open(fileToOpen)
               }
             }
           }
         }
-        data.newServersToStart.forEach { (providerClass, descriptor) ->
+        data.newClientsToStart.forEach { (providerClass, descriptor) ->
           lspServerManager.ensureClientStarted(providerClass, descriptor)
         }
       }
@@ -120,27 +120,27 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun scheduleClosingFilesThatAreNotOfInterest() {
     val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
-    val runningServers = lspServerManager.getAllRunningServers()
-    if (runningServers.isEmpty()) return
+    val runningClients = lspServerManager.getAllRunningClients()
+    if (runningClients.isEmpty()) return
 
     ReadAction
-      .nonBlocking<MultiMap<LspServerImpl, VirtualFile>> {
-        val serverToFilesToClose = MultiMap<LspServerImpl, VirtualFile>()
-        for (server in runningServers) {
-          val filesToClose = server.documentSyncManager.getFilesToClose()
+      .nonBlocking<MultiMap<LspClientImpl, VirtualFile>> {
+        val clientToFilesToClose = MultiMap<LspClientImpl, VirtualFile>()
+        for (client in runningClients) {
+          val filesToClose = client.documentSyncManager.getFilesToClose()
           if (!filesToClose.isEmpty()) {
-            serverToFilesToClose.put(server, filesToClose)
+            clientToFilesToClose.put(client, filesToClose)
           }
         }
-        serverToFilesToClose
+        clientToFilesToClose
       }
       .expireWith(lspServerManager)
       .coalesceBy(closeFilesCoalesceObject)
-      .finishOnUiThread(ModalityState.nonModal()) { serverToFilesToClose: MultiMap<LspServerImpl, VirtualFile> ->
+      .finishOnUiThread(ModalityState.nonModal()) { serverToFilesToClose: MultiMap<LspClientImpl, VirtualFile> ->
         if (!serverToFilesToClose.isEmpty) {
           WriteAction.run<RuntimeException> {
-            serverToFilesToClose.entrySet().forEach { (server, files) ->
-              files.forEach { server.documentSyncManager.close(it) }
+            serverToFilesToClose.entrySet().forEach { (client, files) ->
+              files.forEach { client.documentSyncManager.close(it) }
             }
           }
         }

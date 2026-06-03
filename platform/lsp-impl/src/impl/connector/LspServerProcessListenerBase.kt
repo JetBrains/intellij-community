@@ -3,20 +3,20 @@ package com.intellij.platform.lsp.impl.connector
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.application.ReadAction
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 
-internal open class LspServerProcessListenerBase(private val lspServer: LspServerImpl) : ProcessListener {
+internal open class LspServerProcessListenerBase(private val lspClient: LspClientImpl) : ProcessListener {
 
-  override fun startNotified(event: ProcessEvent) = lspServer.logInfo("LSP server process started: ${event.processHandler}")
+  override fun startNotified(event: ProcessEvent) = lspClient.logInfo("LSP server process started: ${event.processHandler}")
 
   override fun processTerminated(event: ProcessEvent) {
     val text = "Exit code: ${event.exitCode}\nCommand line: ${event.processHandler}"
-    lspServer.logInfo("LSP server process terminated. $text")
+    lspClient.logInfo("LSP server process terminated. $text")
 
-    val lspServerManager = ReadAction.compute<LspServerManagerImpl?, Throwable> {
-      if (!lspServer.project.isDisposed) LspServerManagerImpl.getInstanceImpl(lspServer.project) else null
+    val lspServerManager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
+      if (!lspClient.project.isDisposed) LspClientManagerImpl.getInstanceImpl(lspClient.project) else null
     }
-    lspServerManager?.handleMaybeUnexpectedServerStop(lspServer, text)
+    lspServerManager?.handleMaybeUnexpectedServerStop(lspClient, text)
   }
 }

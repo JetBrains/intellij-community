@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.navigation.navigateToLspPosition
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiFile
@@ -29,7 +29,7 @@ internal class LspStructureViewFactory : PsiStructureViewFactory {
     val file = psiFile.virtualFile
     if (file == null || file is VirtualFileWindow) return null
 
-    val lspServer = LspServerManagerImpl.getInstanceImpl(psiFile.project).getServersWithThisFileOpen(file).firstOrNull {
+    val lspServer = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(file).firstOrNull {
       it.descriptor.lspCustomization.documentSymbolCustomizer.structureViewSupport &&
       it.supportsDocumentSymbol(file)
     } ?: return null
@@ -44,7 +44,7 @@ internal class LspStructureViewFactory : PsiStructureViewFactory {
   }
 }
 
-internal class LspStructureViewModel(val lspServer: LspServerImpl, psiFile: PsiFile, editor: Editor?) :
+internal class LspStructureViewModel(val lspServer: LspClientImpl, psiFile: PsiFile, editor: Editor?) :
   TextEditorBasedStructureViewModel(editor, psiFile), StructureViewModel.ElementInfoProvider {
   private lateinit var root: LspStructureViewRoot
   private var lastPsiModificationCount: Long = -1
@@ -119,7 +119,7 @@ internal class LspStructureViewModel(val lspServer: LspServerImpl, psiFile: PsiF
 }
 
 private class LspStructureViewRoot(
-  private val lspServer: LspServerImpl,
+  private val lspServer: LspClientImpl,
   private val psiFile: PsiFile,
   private val documentSymbols: List<DocumentSymbol>,
 ) : StructureViewTreeElement {
@@ -145,7 +145,7 @@ private class LspStructureViewRoot(
 }
 
 internal class LspDocumentSymbolTreeElement(
-  private val lspServer: LspServerImpl,
+  private val lspServer: LspClientImpl,
   private val psiFile: PsiFile,
   private val symbol: DocumentSymbol,
 ) : StructureViewTreeElement {

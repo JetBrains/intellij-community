@@ -16,8 +16,8 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.highlighting.LspDocumentLink
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -35,10 +35,10 @@ internal class LspDocumentLinkReferenceProvider : ImplicitReferenceProvider {
     val file = psiFile.virtualFile ?: return null
     if (file is VirtualFileWindow) return null
 
-    LspServerManagerImpl.getInstanceImpl(psiFile.project).getServersWithThisFileOpen(file).forEach { lspServer ->
-      val documentLinkInfo = lspServer.getDocumentLinkInfos(file).find { it.textRange.contains(offsetInElement) }
+    LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(file).forEach { lspClient ->
+      val documentLinkInfo = lspClient.getDocumentLinkInfos(file).find { it.textRange.contains(offsetInElement) }
       if (documentLinkInfo != null) {
-        return LspDocumentLinkSymbolReference(lspServer, psiFile, documentLinkInfo.textRange, documentLinkInfo.highlightingInfo)
+        return LspDocumentLinkSymbolReference(lspClient, psiFile, documentLinkInfo.textRange, documentLinkInfo.highlightingInfo)
       }
     }
 
@@ -47,7 +47,7 @@ internal class LspDocumentLinkReferenceProvider : ImplicitReferenceProvider {
 }
 
 private class LspDocumentLinkSymbolReference(
-  private val lspServer: LspServerImpl,
+  private val lspClient: LspClientImpl,
   private val psiFile: PsiFile,
   private val textRange: TextRange,
   private val documentLink: LspDocumentLink,
@@ -59,7 +59,7 @@ private class LspDocumentLinkSymbolReference(
   override fun resolvesTo(target: Symbol): Boolean = false
 
   override fun resolveReference(): List<Symbol> {
-    documentLink.resolveDocumentLink(lspServer)
+    documentLink.resolveDocumentLink(lspClient)
 
     val uri = documentLink.targetUri ?: return emptyList()
     @Suppress("HttpUrlsUsage")
@@ -67,7 +67,7 @@ private class LspDocumentLinkSymbolReference(
       return listOf(LspOpenBrowserNavigatableSymbol(uri))
     }
 
-    val targetFileOrDir = lspServer.descriptor.findFileByUri(uri) ?: return emptyList()
+    val targetFileOrDir = lspClient.descriptor.findFileByUri(uri) ?: return emptyList()
     return listOf(LspNavigatableSymbol(targetFileOrDir, null))
   }
 }

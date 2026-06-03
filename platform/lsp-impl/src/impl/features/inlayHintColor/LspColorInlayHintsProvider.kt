@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.scale.JBUIScale
@@ -51,8 +51,8 @@ internal class LspColorInlayHintsProvider : InlayHintsProvider<NoSettings>, Dumb
     val virtualFile = file.virtualFile ?: return null
     if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return null
 
-    val colorInfos = LspServerManagerImpl.getInstanceImpl(file.project)
-      .getServersWithThisFileOpen(virtualFile)
+    val colorInfos = LspClientManagerImpl.getInstanceImpl(file.project)
+      .getClientsWithThisFileOpen(virtualFile)
       .flatMap { it.getColorInfos(virtualFile) }
 
     if (colorInfos.isEmpty()) return null

@@ -14,7 +14,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeLensSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import java.awt.event.MouseEvent
 
 internal const val LSP_CODE_VISION_PROVIDER_ID: String = "LspCodeVisionProvider"
@@ -31,27 +31,26 @@ internal class LspCodeVisionProvider : CodeVisionProvider<Unit>, DumbAware {
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return CodeVisionState.Ready(emptyList())
     if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return CodeVisionState.Ready(emptyList())
 
-    val supportedServers = LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(virtualFile)
+    val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
 
-    val lenses = supportedServers
-      .flatMap { server ->
-        server.getCodeLens(virtualFile).map { it to server }
+    val lenses = clients.flatMap { client ->
+        client.getCodeLens(virtualFile).map { it to client }
       }
 
     if (lenses.isEmpty()) return CodeVisionState.Ready(emptyList())
 
     val entries = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
-    for ((cachedLens, server) in lenses) {
+    for ((cachedLens, client) in lenses) {
       val lens = cachedLens.highlightingInfo
-      val customizer = server.descriptor.lspCustomization.codeLensCustomizer as LspCodeLensSupport
+      val customizer = client.descriptor.lspCustomization.codeLensCustomizer as LspCodeLensSupport
       if (!customizer.shouldDisplayCodeLens(virtualFile, lens)) continue
       val command = lens.command ?: continue
       val title = command.title ?: continue
 
 
       val handler = { mouseEvent: MouseEvent?, _: Editor ->
-        customizer.codeLensClicked(server as LspClient, virtualFile, command, mouseEvent)
+        customizer.codeLensClicked(client as LspClient, virtualFile, command, mouseEvent)
       }
       val entry = ClickableTextCodeVisionEntry(title, id, handler)
 

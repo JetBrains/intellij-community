@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.AlphaComparator
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.hierarchy.LspFakePsiElement
 import com.intellij.platform.lsp.impl.features.hierarchy.LspHierarchyNodeDescriptor
 import com.intellij.psi.PsiElement
@@ -18,7 +18,7 @@ import java.util.function.Function
 import javax.swing.JTree
 import javax.swing.tree.TreeNode
 
-internal class LspCallHierarchyBrowser(project: Project, element: PsiElement, private val server: LspServerImpl) :
+internal class LspCallHierarchyBrowser(project: Project, element: PsiElement, private val client: LspClientImpl) :
   CallHierarchyBrowserBase(project, element) {
   override fun getElementFromDescriptor(descriptor: HierarchyNodeDescriptor): PsiElement? {
     if (descriptor is LspHierarchyNodeDescriptor) {
@@ -71,6 +71,6 @@ internal class LspCallHierarchyBrowser(project: Project, element: PsiElement, pr
   }
 
   private fun getBaseDescriptor(psiElement: PsiElement): LspHierarchyNodeDescriptor {
-    return LspHierarchyNodeDescriptor(server, null, psiElement, null, true)
+    return LspHierarchyNodeDescriptor(client, null, psiElement, null, true)
   }
 }

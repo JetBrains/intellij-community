@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspSignatureHelpSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiFile
 
 internal class LspParameterInfoTypedHandler : TypedHandlerDelegate(), DumbAware {
@@ -17,9 +17,9 @@ internal class LspParameterInfoTypedHandler : TypedHandlerDelegate(), DumbAware 
 
     val virtualFile = file.virtualFile?.let { (it as? VirtualFileWindow)?.delegate ?: it } ?: return Result.CONTINUE
 
-    for (server in LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(virtualFile)) {
-      val signatureHelpSupport = server.descriptor.lspCustomization.signatureHelpCustomizer as? LspSignatureHelpSupport ?: continue
-      if (server.getSignatureHelpTriggerCharacters(file.virtualFile)?.contains(charTyped.toString()) != true) continue
+    for (client in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)) {
+      val signatureHelpSupport = client.descriptor.lspCustomization.signatureHelpCustomizer as? LspSignatureHelpSupport ?: continue
+      if (client.getSignatureHelpTriggerCharacters(file.virtualFile)?.contains(charTyped.toString()) != true) continue
       if (!signatureHelpSupport.isTriggerCharacterRespected(charTyped)) continue
 
       AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)

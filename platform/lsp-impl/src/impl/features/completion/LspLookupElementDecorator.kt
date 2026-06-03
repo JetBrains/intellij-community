@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import kotlinx.coroutines.sync.Semaphore
 import org.eclipse.lsp4j.CompletionItem
 
@@ -18,13 +18,13 @@ import org.eclipse.lsp4j.CompletionItem
  * - [LspCompletionSupport.renderLookupElement] tunes element presentation
  */
 internal class LspLookupElementDecorator(
-  lspServer: LspServerImpl,
+  lspClient: LspClientImpl,
   requestSemaphore: Semaphore,
   lookupElement: LookupElement,
   completionItem: CompletionItem,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
 
-  private val lspCompletionObject: LspCompletionObject = LspCompletionObject(lspServer, requestSemaphore, completionItem)
+  private val lspCompletionObject: LspCompletionObject = LspCompletionObject(lspClient, requestSemaphore, completionItem)
 
   override fun getObject(): LspCompletionObject = lspCompletionObject
 
@@ -37,7 +37,7 @@ internal class LspLookupElementDecorator(
 
   private object LspInstantRenderer {
     fun renderLookupElement(completionObject: LspCompletionObject, presentation: LookupElementPresentation) {
-      val completionSupport = completionObject.lspServer.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: return
+      val completionSupport = completionObject.lspClient.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: return
       val completionItem = completionObject.completionItem
       completionSupport.renderLookupElement(completionItem, presentation)
     }

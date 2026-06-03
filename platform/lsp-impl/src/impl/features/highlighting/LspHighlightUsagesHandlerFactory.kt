@@ -6,8 +6,8 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.api.customization.LspDocumentHighlightsSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
@@ -18,10 +18,10 @@ internal class LspHighlightUsagesHandlerFactory : HighlightUsagesHandlerFactory,
   override fun createHighlightUsagesHandler(editor: Editor, psiFile: PsiFile): HighlightUsagesHandlerBase<PsiElement>? {
     val virtualFile = psiFile.virtualFile ?: return null
     if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return null
-    val servers = LspServerManagerImpl.getInstanceImpl(psiFile.project).getServersWithThisFileOpen(virtualFile)
-      .filter { shouldProceedWithServer(it, psiFile) }
+    val clients = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(virtualFile)
+      .filter { shouldProceedWithClient(it, psiFile) }
 
-    if (servers.isEmpty()) return null
+    if (clients.isEmpty()) return null
 
     return object : HighlightUsagesHandlerBase<PsiElement>(editor, psiFile), DumbAware {
       override fun getTargets(): @Unmodifiable List<PsiElement?> {
@@ -35,7 +35,7 @@ internal class LspHighlightUsagesHandlerFactory : HighlightUsagesHandlerFactory,
       override fun computeUsages(targets: List<PsiElement?>) {
         val offset = editor.caretModel.offset
 
-        servers
+        clients
           .flatMap { it.requestExecutor.getDocumentHighlightsCaching(virtualFile, offset) ?: emptyList() }
           .forEach {
             when (it.kind) {
@@ -47,10 +47,10 @@ internal class LspHighlightUsagesHandlerFactory : HighlightUsagesHandlerFactory,
     }
   }
 
-  private fun shouldProceedWithServer(server: LspServerImpl, file: PsiFile): Boolean {
-    val customizer = server.descriptor.lspCustomization.documentHighlightsCustomizer
+  private fun shouldProceedWithClient(client: LspClientImpl, file: PsiFile): Boolean {
+    val customizer = client.descriptor.lspCustomization.documentHighlightsCustomizer
     return customizer is LspDocumentHighlightsSupport &&
-           server.supportsDocumentHighlights(file.virtualFile) &&
+           client.supportsDocumentHighlights(file.virtualFile) &&
            customizer.shouldAskServerForDocumentHighlights(file)
   }
 }

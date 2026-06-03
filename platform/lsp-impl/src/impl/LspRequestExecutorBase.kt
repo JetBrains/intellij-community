@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @ApiStatus.Internal
-abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
-  private val executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("LSP Executor: " + lspServer.descriptor, 1)
+abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
+  private val executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("LSP Executor: " + lspClient.descriptor, 1)
 
   internal fun sendNotification(lsp4jSender: (Lsp4jServer) -> Unit) = synchronized(executorService) {
     if (!executorService.isShutdown) {
-      executorService.execute { lsp4jSender(lspServer.lsp4jServer) }
+      executorService.execute { lsp4jSender(lspClient.lsp4jServer) }
     }
   }
 
@@ -96,8 +96,8 @@ abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
   protected fun <Lsp4jResponse> doSendRequestAsync(
     lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>,
   ): CompletableFuture<Lsp4jResponse?>? {
-    if (lspServer.state != LspServerState.Running) {
-      lspServer.logDebug("Server not initialized yet, skipping request ${lsp4jSender.javaClass.name}")
+    if (lspClient.state != LspServerState.Running) {
+      lspClient.logDebug("Server not initialized yet, skipping request ${lsp4jSender.javaClass.name}")
       return null
     }
 
@@ -107,7 +107,7 @@ abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
       val resultFuture = CompletableFuture<Lsp4jResponse?>()
 
       executorService.execute {
-        val lsp4jResponseFuture = lsp4jSender(lspServer.lsp4jServer)
+        val lsp4jResponseFuture = lsp4jSender(lspClient.lsp4jServer)
 
         lsp4jResponseFuture.whenComplete { lsp4jResponse: Lsp4jResponse?, th: Throwable? ->
           if (th == null) {
@@ -174,7 +174,7 @@ abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
       catch (_: TimeoutException) { /* ok */
       }
       catch (e: ExecutionException) {
-        lspServer.logWarn("Error response from server: ${e.cause}")
+        lspClient.logWarn("Error response from server: ${e.cause}")
         return null
       }
       catch (e: InterruptedException) {
@@ -182,7 +182,7 @@ abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
       }
     }
 
-    lspServer.logInfo("No response from the server in ${timeoutMs}ms for: $debugName")
+    lspClient.logInfo("No response from the server in ${timeoutMs}ms for: $debugName")
     future.cancel(true)
     return null
   }

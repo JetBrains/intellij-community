@@ -8,7 +8,7 @@ import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.FoldingRangeKind
@@ -23,8 +23,8 @@ internal class LspFoldingBuilder : FoldingBuilderEx(), DumbAware {
     val file = psiFile.virtualFile ?: return emptyArray()
     if (file is VirtualFileWindow || !file.isInLocalFileSystem) return emptyArray()
 
-    val foldingRangeInfos = LspServerManagerImpl.getInstanceImpl(psiFile.project)
-      .getServersWithThisFileOpen(file)
+    val foldingRangeInfos = LspClientManagerImpl.getInstanceImpl(psiFile.project)
+      .getClientsWithThisFileOpen(file)
       .flatMap { it.getFoldingRangeInfos(file) }
 
     if (foldingRangeInfos.isEmpty()) {

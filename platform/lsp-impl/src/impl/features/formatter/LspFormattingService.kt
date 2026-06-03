@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.LspServerNotificationsHandlerImpl
 import com.intellij.platform.lsp.impl.mapTextEdit
 import com.intellij.platform.lsp.util.applyTextEdits
@@ -38,30 +38,30 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
 
   override fun canFormat(psiFile: PsiFile, vararg features: Feature): Boolean {
     val goal = LspFormattingGoal.getFormattingGoal(features) ?: return false
-    val lspServer = when (goal) {
-      LspFormattingGoal.FullFileFormatting -> findServerToFormatThisFile(psiFile, true)
-      LspFormattingGoal.RangeFormatting -> findServerToFormatThisFile(psiFile, false)
+    val lspClient = when (goal) {
+      LspFormattingGoal.FullFileFormatting -> findClientToFormatThisFile(psiFile, true)
+      LspFormattingGoal.RangeFormatting -> findClientToFormatThisFile(psiFile, false)
       LspFormattingGoal.OptimizeImports -> findClientToOptimizeImports(psiFile)
     }
-    return lspServer != null
+    return lspClient != null
   }
 
-  private fun findServerToFormatThisFile(psiFile: PsiFile, isFullFileFormatting: Boolean): LspServerImpl? {
+  private fun findClientToFormatThisFile(psiFile: PsiFile, isFullFileFormatting: Boolean): LspClientImpl? {
     if (psiFile.project.isDefault) return null
     val file = extractValidFile(psiFile) ?: return null
 
-    return LspServerManagerImpl.getInstanceImpl(psiFile.project).findRunningServer { lspServer ->
-      lspServer.descriptor.isSupportedFile(file) && canServerFormatFile(lspServer, psiFile, file, isFullFileFormatting)
+    return LspClientManagerImpl.getInstanceImpl(psiFile.project).findRunningClient { lspClient ->
+      lspClient.descriptor.isSupportedFile(file) && canClientFormatFile(lspClient, psiFile, file, isFullFileFormatting)
     }
   }
 
-  private fun canServerFormatFile(lspServer: LspServerImpl, psiFile: PsiFile, file: VirtualFile, isFullFileFormatting: Boolean): Boolean {
-    if (isFullFileFormatting && !lspServer.hasFullFileFormattingCapability()) return false
-    if (!isFullFileFormatting && !lspServer.hasRangeFormattingCapability()) return false
-    val formattingSupport = lspServer.descriptor.lspCustomization.formattingCustomizer as? LspFormattingSupport ?: return false
+  private fun canClientFormatFile(lspClient: LspClientImpl, psiFile: PsiFile, file: VirtualFile, isFullFileFormatting: Boolean): Boolean {
+    if (isFullFileFormatting && !lspClient.hasFullFileFormattingCapability()) return false
+    if (!isFullFileFormatting && !lspClient.hasRangeFormattingCapability()) return false
+    val formattingSupport = lspClient.descriptor.lspCustomization.formattingCustomizer as? LspFormattingSupport ?: return false
     val fmb: FormattingModelBuilder? = LanguageFormatting.INSTANCE.forContext(psiFile)
     val ideCanFormatThisFileItself: Boolean = fmb != null
-    val serverExplicitlyWantsToFormatThisFile: Boolean = lspServer.doesServerExplicitlyWantToFormatThisFile(file, isFullFileFormatting)
+    val serverExplicitlyWantsToFormatThisFile: Boolean = lspClient.doesServerExplicitlyWantToFormatThisFile(file, isFullFileFormatting)
 
     return formattingSupport.shouldFormatThisFileExclusivelyByServer(file,
                                                                      ideCanFormatThisFileItself,
@@ -78,9 +78,9 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   override fun createFormattingTask(formattingRequest: AsyncFormattingRequest): FormattingTask? {
     val file: VirtualFile = formattingRequest.context.virtualFile ?: return null
     val isFullFileFormatting = isFullFileFormatting(formattingRequest)
-    val lspServer = findServerToFormatThisFile(formattingRequest.context.containingFile, isFullFileFormatting) ?: return null
-    return if (isFullFileFormatting) LspFullFileFormattingTask(lspServer, file, formattingRequest)
-    else LspRangeFormattingTask(lspServer, file, formattingRequest)
+    val lspClient = findClientToFormatThisFile(formattingRequest.context.containingFile, isFullFileFormatting) ?: return null
+    return if (isFullFileFormatting) LspFullFileFormattingTask(lspClient, file, formattingRequest)
+    else LspRangeFormattingTask(lspClient, file, formattingRequest)
   }
 
   private fun isFullFileFormatting(formattingRequest: AsyncFormattingRequest): Boolean {
@@ -108,7 +108,7 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   }
 
   private abstract class LspFormattingTask(
-    protected val lspServer: LspServerImpl,
+    protected val lspClient: LspClientImpl,
     protected val file: VirtualFile,
     protected val formattingRequest: AsyncFormattingRequest,
   ) : FormattingTask {
@@ -139,16 +139,16 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   }
 
   private class LspFullFileFormattingTask(
-    lspServer: LspServerImpl,
+    lspClient: LspClientImpl,
     file: VirtualFile,
     formattingRequest: AsyncFormattingRequest,
-  ) : LspFormattingTask(lspServer, file, formattingRequest) {
+  ) : LspFormattingTask(lspClient, file, formattingRequest) {
     override fun fetchTextEdits(): List<TextEdit>? {
       val formattingOptions = createFormattingOptions()
-      val lspDocuments = lspServer.documentMapping.getDocumentsInFileSync(file)
+      val lspDocuments = lspClient.documentMapping.getDocumentsInFileSync(file)
       val results = lspDocuments.flatMap { lspDocument ->
         val params = DocumentFormattingParams(lspDocument.id, formattingOptions)
-        lspServer.sendRequestSync { it.textDocumentService.formatting(params) }
+        lspClient.sendRequestSync { it.textDocumentService.formatting(params) }
           ?.map(lspDocument::mapTextEdit)
           ?: emptyList()
       }
@@ -157,10 +157,10 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   }
 
   private class LspRangeFormattingTask(
-    lspServer: LspServerImpl,
+    lspClient: LspClientImpl,
     file: VirtualFile,
     formattingRequest: AsyncFormattingRequest,
-  ) : LspFormattingTask(lspServer, file, formattingRequest) {
+  ) : LspFormattingTask(lspClient, file, formattingRequest) {
     override fun fetchTextEdits(): List<TextEdit> {
       val formattingOptions = createFormattingOptions()
       val document = runReadActionBlocking { formattingRequest.context.containingFile.fileDocument }
@@ -168,11 +168,11 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
       return formattingRequest.formattingRanges.flatMap { textRange ->
         val lspDocuments = runReadActionBlocking {
           val range = getLsp4jRange(document, textRange.startOffset, textRange.length)
-          lspServer.documentMapping.getDocumentRangesSync(file, document, range)
+          lspClient.documentMapping.getDocumentRangesSync(file, document, range)
         }
         lspDocuments.flatMap { (lspDocument, cellRange) ->
           val params = DocumentRangeFormattingParams(lspDocument.id, formattingOptions, cellRange)
-          lspServer.sendRequestSync { it.textDocumentService.rangeFormatting(params) }
+          lspClient.sendRequestSync { it.textDocumentService.rangeFormatting(params) }
             ?.map(lspDocument::mapTextEdit)
             ?: emptyList()
         }

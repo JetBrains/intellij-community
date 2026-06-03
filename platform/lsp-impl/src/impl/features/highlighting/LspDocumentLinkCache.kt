@@ -3,7 +3,7 @@ package com.intellij.platform.lsp.impl.features.highlighting
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import org.eclipse.lsp4j.DocumentLink
@@ -13,15 +13,15 @@ import org.eclipse.lsp4j.Range
 /**
  * [textDocument/documentLink](https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentLink)
  */
-internal class LspDocumentLinkCache(private val lspServer: LspServerImpl) : LspHighlightingCache<LspDocumentLink>(lspServer.project) {
+internal class LspDocumentLinkCache(private val lspClient: LspClientImpl) : LspHighlightingCache<LspDocumentLink>(lspClient.project) {
   override fun isSupportedForFile(file: VirtualFile): Boolean =
-    lspServer.descriptor.lspCustomization.documentLinkCustomizer is LspDocumentLinkSupport &&
-    lspServer.supportsDocumentLink(file)
+    lspClient.descriptor.lspCustomization.documentLinkCustomizer is LspDocumentLinkSupport &&
+    lspClient.supportsDocumentLink(file)
 
   override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspDocumentLink>>? {
-    val perDocument = lspServer.documentMapping.forEachDocumentInFile(file) { lspDocument ->
+    val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = DocumentLinkParams(lspDocument.id)
-      lspServer.sendRequest { it.textDocumentService.documentLink(params) }?.map {
+      lspClient.sendRequest { it.textDocumentService.documentLink(params) }?.map {
         lspDocument.toHostRange(it.range) to LspDocumentLink(it)
       }
     }
@@ -29,8 +29,8 @@ internal class LspDocumentLinkCache(private val lspServer: LspServerImpl) : LspH
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    LspHighlightingApplier.getInstance(lspServer.project).scheduleHighlightingRefresh(file)
-    lspServer.notifyDocumentLinksReceived(file)
+    LspHighlightingApplier.getInstance(lspClient.project).scheduleHighlightingRefresh(file)
+    lspClient.notifyDocumentLinksReceived(file)
   }
 }
 

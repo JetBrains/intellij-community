@@ -7,7 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.documentation.createLspDocumentationData
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.sync.Semaphore
@@ -30,7 +30,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
  * could select this object to be a [DocumentationTarget] for the corresponding [LookupElement].
  */
 internal class LspCompletionObject(
-  val lspServer: LspServerImpl,
+  val lspClient: LspClientImpl,
   private val requestSemaphore: Semaphore,
   private val initialCompletionItem: CompletionItem,
 ) : Pointer<LspCompletionObject>, Symbol, DocumentationTarget {
@@ -48,12 +48,12 @@ internal class LspCompletionObject(
   internal suspend fun resolveCompletionItem() {
     if (resolvedCompletionItem != null) return
 
-    if (lspServer.serverCapabilities?.completionProvider?.resolveProvider != true) {
+    if (lspClient.serverCapabilities?.completionProvider?.resolveProvider != true) {
       resolvedCompletionItem = initialCompletionItem
       return
     }
     requestSemaphore.withPermit {
-      val rawResolvedCompletionItem = lspServer.sendRequest {
+      val rawResolvedCompletionItem = lspClient.sendRequest {
         it.textDocumentService.resolveCompletionItem(initialCompletionItem)
       }
       if (rawResolvedCompletionItem != null) {
@@ -73,10 +73,10 @@ internal class LspCompletionObject(
     initialCompletionItem.documentation?.let { return lsp4jDocsToDocumentation(it) }
 
     if (resolvedCompletionItem != null) return null
-    if (lspServer.serverCapabilities?.completionProvider?.resolveProvider != true) return null
+    if (lspClient.serverCapabilities?.completionProvider?.resolveProvider != true) return null
 
     return DocumentationResult.asyncDocumentation {
-      resolvedCompletionItem = lspServer.sendRequest { it.textDocumentService.resolveCompletionItem(initialCompletionItem) }
+      resolvedCompletionItem = lspClient.sendRequest { it.textDocumentService.resolveCompletionItem(initialCompletionItem) }
                                ?: initialCompletionItem
       resolvedCompletionItem?.documentation?.let { readAction { lsp4jDocsToDocumentation(it) } }
     }
@@ -90,7 +90,7 @@ internal class LspCompletionObject(
       else -> return null
     }
 
-    return createLspDocumentationData(markupContent).toQuickDocHtml(lspServer.project)
+    return createLspDocumentationData(markupContent).toQuickDocHtml(lspClient.project)
   }
 
   override fun createPointer(): Pointer<LspCompletionObject> = Pointer.hardPointer(this)

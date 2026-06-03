@@ -13,7 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCommandsSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import org.eclipse.lsp4j.CompletionItem
@@ -25,9 +25,9 @@ internal object LspCompletionItemInsertHandler : InsertHandler<LookupElement> {
     (lookupElement as? LookupElementDecorator<*>)?.delegate?.handleInsert(context)
     handleSnippetFormat(context, lookupElement)
     lookupElement.lsp4jCompletionItem?.command?.let { command ->
-      val lspServer = lookupElement.lspServer
-      val lspCommandsSupport = lspServer?.descriptor?.lspCustomization?.commandsCustomizer as? LspCommandsSupport
-      lspCommandsSupport?.executeCommand(lspServer, context.file.virtualFile, command)
+      val lspClient = lookupElement.lspClient
+      val lspCommandsSupport = lspClient?.descriptor?.lspCustomization?.commandsCustomizer as? LspCommandsSupport
+      lspCommandsSupport?.executeCommand(lspClient, context.file.virtualFile, command)
     }
   }
 
@@ -212,5 +212,5 @@ private val LookupElement.lsp4jCompletionItem: CompletionItem?
   get() = (this.`object` as? LspCompletionObject)?.completionItem
           ?: this.`object` as? CompletionItem // for SnippetParsingTest
 
-private val LookupElement.lspServer: LspServerImpl?
-  get() = (this.`object` as? LspCompletionObject)?.lspServer
+private val LookupElement.lspClient: LspClientImpl?
+  get() = (this.`object` as? LspCompletionObject)?.lspClient

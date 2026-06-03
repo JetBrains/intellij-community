@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
  * to iterate over LSP documents within a file.
  */
 @ApiStatus.Internal
-class LspDocumentMapping(private val lspServer: LspServerImpl) {
+class LspDocumentMapping(private val lspClient: LspClientImpl) {
 
   private val defaultAdapter: LspDocumentAdapter by lazy {
     DefaultLspDocumentAdapter()
@@ -48,20 +48,20 @@ class LspDocumentMapping(private val lspServer: LspServerImpl) {
   }
 
   fun findDocumentByUrl(targetUri: String): LspDocument? {
-    return getAdapterForUrl(targetUri).getLspDocumentByUrl(lspServer, targetUri)
+    return getAdapterForUrl(targetUri).getLspDocumentByUrl(lspClient, targetUri)
   }
 
   fun getDocumentPosition(file: VirtualFile, document: Document, offset: Int): LspDocumentPosition? {
-    return getAdapterForFile(file).toLspDocumentPosition(lspServer, file, document, offset)
+    return getAdapterForFile(file).toLspDocumentPosition(lspClient, file, document, offset)
   }
 
   @RequiresReadLock
   fun getDocumentRangesSync(file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> {
-    return getAdapterForFile(file).toLspDocumentRangeSync(lspServer, file, document, range)
+    return getAdapterForFile(file).toLspDocumentRangeSync(lspClient, file, document, range)
   }
 
   fun getDocumentsInFileSync(file: VirtualFile): List<LspDocument> {
-    return getAdapterForFile(file).toLspDocumentsInFileSync(lspServer, file)
+    return getAdapterForFile(file).toLspDocumentsInFileSync(lspClient, file)
   }
 
   /**
@@ -92,7 +92,7 @@ class LspDocumentMapping(private val lspServer: LspServerImpl) {
   }
 
   suspend fun <T> forEachDocumentInFile(file: VirtualFile, block: suspend (LspDocument) -> T): List<T> {
-    return getAdapterForFile(file).toLspDocumentsInFile(lspServer, file).map { block(it) }
+    return getAdapterForFile(file).toLspDocumentsInFile(lspClient, file).map { block(it) }
   }
 
   suspend fun <T> forEachDocumentInFile(file: VirtualFile, block: suspend (LspDocument, Range) -> T): List<T> {
@@ -100,7 +100,7 @@ class LspDocumentMapping(private val lspServer: LspServerImpl) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction null
       getLsp4jRange(document, 0, document.textLength)
     } ?: return emptyList()
-    return getAdapterForFile(file).toLspDocumentRange(lspServer, file, range).map { block(it.document, it.range) }
+    return getAdapterForFile(file).toLspDocumentRange(lspClient, file, range).map { block(it.document, it.range) }
   }
 
 
@@ -113,7 +113,7 @@ class LspDocumentMapping(private val lspServer: LspServerImpl) {
   fun unwrapInjection(file: VirtualFile, offset: Int): HostCoordinates? {
     ProgressManager.checkCanceled()
     val document = FileDocumentManager.getInstance().getDocument(file)
-                   ?: return null.also { lspServer.logError("No document for file $file") }
+                   ?: return null.also { lspClient.logError("No document for file $file") }
     val hostFile = (file as? VirtualFileWindow)?.delegate ?: file
     val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
     val hostOffset = (document as? DocumentWindow)?.injectedToHost(offset) ?: offset
@@ -123,7 +123,7 @@ class LspDocumentMapping(private val lspServer: LspServerImpl) {
   class HostCoordinates(val hostFile: VirtualFile, val hostDocument: Document, val hostOffset: Int)
 
   private fun isNotebookSupportedByServer(): Boolean {
-    return lspServer.serverCapabilities?.notebookDocumentSync != null
+    return lspClient.serverCapabilities?.notebookDocumentSync != null
   }
 }
 
@@ -142,4 +142,4 @@ internal fun <T> List<List<T>?>.aggregatePerDocumentResults(): List<T>? {
  * Internal accessor for [LspDocumentMapping] from [LspClient] references in internal code.
  */
 internal val LspClient.documentMapping: LspDocumentMapping
-  get() = (this as LspServerImpl).documentMapping
+  get() = (this as LspClientImpl).documentMapping

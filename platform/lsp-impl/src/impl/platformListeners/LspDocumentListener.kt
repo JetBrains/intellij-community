@@ -9,8 +9,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSetFactory
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentSync.LspDidChangeUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.Collections
@@ -18,7 +18,7 @@ import java.util.Collections
 internal class LspDocumentListener : DocumentListener {
   private class ChangedFilesData {
     val handledFiles: MutableSet<VirtualFile> = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet()
-    val serversToSendDidOpen: MutableCollection<Pair<LspServerImpl, VirtualFile>> = mutableListOf()
+    val clientsToSendDidOpen: MutableCollection<Pair<LspClientImpl, VirtualFile>> = mutableListOf()
   }
 
   private val filesToHandle: MutableSet<VirtualFile> =
@@ -26,15 +26,15 @@ internal class LspDocumentListener : DocumentListener {
 
   override fun beforeDocumentChange(event: DocumentEvent) {
     val file = LspDidChangeUtil.getFileToHandle(event) ?: return
-    LspServerManagerImpl.forEachRunningServerInEachProject { server ->
-      server.documentSyncManager.onBeforeDocumentChange(event, file)
+    LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+      client.documentSyncManager.onBeforeDocumentChange(event, file)
     }
   }
 
   override fun documentChanged(event: DocumentEvent) {
     val file = LspDidChangeUtil.getFileToHandle(event) ?: return
-    LspServerManagerImpl.forEachRunningServerInEachProject { server ->
-      server.documentSyncManager.onDocumentChanged(event, file)
+    LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+      client.documentSyncManager.onDocumentChanged(event, file)
     }
 
     FileDocumentManager.getInstance().getFile(event.document)?.let { filesToHandle.add(it) }
@@ -51,7 +51,7 @@ internal class LspDocumentListener : DocumentListener {
         }
 
         val fileDocumentManager = FileDocumentManager.getInstance()
-        LspServerManagerImpl.forEachRunningServerInEachProject { server ->
+        LspClientManagerImpl.forEachRunningClientInEachProject { client ->
           for (file in data.handledFiles) {
             ProgressManager.checkCanceled()
             if (!fileDocumentManager.isFileModified(file)) {
@@ -60,8 +60,8 @@ internal class LspDocumentListener : DocumentListener {
 
             if (!file.isInLocalFileSystem) continue
 
-            if (!server.isFileOpened(file) && server.isSupportedFile(file)) {
-              data.serversToSendDidOpen.add(server to file)
+            if (!client.isFileOpened(file) && client.isSupportedFile(file)) {
+              data.clientsToSendDidOpen.add(client to file)
             }
           }
         }
@@ -71,10 +71,10 @@ internal class LspDocumentListener : DocumentListener {
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.nonModal()) { data: ChangedFilesData ->
         filesToHandle.removeAll(data.handledFiles)
-        if (data.serversToSendDidOpen.isEmpty()) return@finishOnUiThread
+        if (data.clientsToSendDidOpen.isEmpty()) return@finishOnUiThread
 
         WriteAction.run<RuntimeException> {
-          data.serversToSendDidOpen.forEach { serverAndFile: Pair<LspServerImpl, VirtualFile> ->
+          data.clientsToSendDidOpen.forEach { serverAndFile: Pair<LspClientImpl, VirtualFile> ->
             serverAndFile.first.documentSyncManager.open(serverAndFile.second)
           }
         }
@@ -82,5 +82,4 @@ internal class LspDocumentListener : DocumentListener {
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 }
-
 

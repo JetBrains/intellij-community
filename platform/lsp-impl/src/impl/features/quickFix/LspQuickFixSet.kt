@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.intention.toCodeAction
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
@@ -30,7 +30,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
  * [IntentionAction.invoke] calls to the [LspIntentionAction].
  */
 internal class LspQuickFixSet(
-  private val lspServer: LspServerImpl,
+  private val lspClient: LspClientImpl,
   private val file: VirtualFile,
   private val diagnostic: Diagnostic,
   private val diagnosticDocumentId: TextDocumentIdentifier? = null,
@@ -55,7 +55,7 @@ internal class LspQuickFixSet(
     synchronized(this) {
       ProgressManager.checkCanceled()
 
-      val psiModCount = PsiManager.getInstance(lspServer.project).modificationTracker.modificationCount
+      val psiModCount = PsiManager.getInstance(lspClient.project).modificationTracker.modificationCount
       val vfsModCount = VirtualFileManager.getInstance().modificationCount
       if (psiModCountWhenRequestSent == psiModCount && vfsModCountWhenRequestSent == vfsModCount) {
         return // already up-to-date
@@ -77,14 +77,14 @@ internal class LspQuickFixSet(
         // No cell URI — regular text document. diagnostic.range is file-absolute,
         // so getDocumentRanges resolves it to the correct (single) document.
         val document = FileDocumentManager.getInstance().getDocument(file) ?: return
-        val (lspDocument, cellRange) = lspServer.documentMapping
+        val (lspDocument, cellRange) = lspClient.documentMapping
                                          .getDocumentRangesSync(file, document, diagnostic.range)
                                          .firstOrNull() ?: return
         CodeActionParams(lspDocument.id, cellRange, codeActionContext)
       }
-      lspServer.requestExecutor
+      lspClient.requestExecutor
         .sendRequestAsyncButWaitForResponseWithCheckCanceled({ it.textDocumentService.codeAction(params) }) { lsp4jResults ->
-          if (psiModCount == PsiManager.getInstance(lspServer.project).modificationTracker.modificationCount &&
+          if (psiModCount == PsiManager.getInstance(lspClient.project).modificationTracker.modificationCount &&
               vfsModCount == VirtualFileManager.getInstance().modificationCount) {
             psiModCountWhenRequestSent = psiModCount
             vfsModCountWhenRequestSent = vfsModCount
@@ -100,7 +100,7 @@ internal class LspQuickFixSet(
    * [IntentionAction.isAvailable], and [IntentionAction.invoke]
    */
   private fun codeActionsReceived(codeActions: List<CodeAction>) {
-    val codeActionsSupport = lspServer.descriptor.lspCustomization.codeActionsCustomizer as? LspCodeActionsSupport ?: return
+    val codeActionsSupport = lspClient.descriptor.lspCustomization.codeActionsCustomizer as? LspCodeActionsSupport ?: return
     var i = 0
     for (codeAction in codeActions) {
       if (i == quickFixes.size) {
@@ -108,7 +108,7 @@ internal class LspQuickFixSet(
         break
       }
 
-      codeActionsSupport.createQuickFix(lspServer as LspClient, codeAction)?.let {
+      codeActionsSupport.createQuickFix(lspClient as LspClient, codeAction)?.let {
         (quickFixes[i++] as LspQuickFixWrapper).lspIntentionAction = it
       }
     }

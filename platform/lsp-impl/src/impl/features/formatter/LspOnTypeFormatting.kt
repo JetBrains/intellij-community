@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -77,15 +77,15 @@ private fun performOnTypeFormatting(editor: Editor, virtualFile: VirtualFile, ch
     // Complete the LSP on-type formatting request in a read action and apply the received text edits in a write action.
     // The read action is restarted if the document changes between the read and write parts of the coroutine.
     // If the modification stamp changes, or completion/live template becomes active, formatting is skipped.
-    val (lspServer, params) = readAction {
+    val (lspClient, params) = readAction {
       if (document.modificationStamp != modificationStamp || !isOnTypeFormattingAllowed(editor)) return@readAction null to null
-      val server = LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(virtualFile)
-                     .firstOrNull { isServerApplicable(it, virtualFile, charTyped) } ?: return@readAction null to null
-      val params = createParams(server, virtualFile, editor, charTyped) ?: return@readAction null to null
-      return@readAction server to params
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
+                     .firstOrNull { isClientApplicable(it, virtualFile, charTyped) } ?: return@readAction null to null
+      val params = createParams(client, virtualFile, editor, charTyped) ?: return@readAction null to null
+      return@readAction client to params
     }
 
-    val textEdits = lspServer?.sendRequestSync { it.textDocumentService.onTypeFormatting(params) } ?: return@launch
+    val textEdits = lspClient?.sendRequestSync { it.textDocumentService.onTypeFormatting(params) } ?: return@launch
 
     readAndEdtWriteAction {
       if (document.modificationStamp != modificationStamp || !isOnTypeFormattingAllowed(editor)) return@readAndEdtWriteAction value(Unit)
@@ -105,18 +105,18 @@ private fun isOnTypeFormattingAllowed(editor: Editor): Boolean {
   return TemplateManager.getInstance(project).getActiveTemplate(editor) == null
 }
 
-private fun isServerApplicable(server: LspServerImpl, virtualFile: VirtualFile, char: Char): Boolean {
-  if (server.descriptor.lspCustomization.onTypeFormattingCustomizer !is LspOnTypeFormattingSupport) return false
-  val triggerCharacters = server.getOnTypeFormattingTriggerCharacters(virtualFile) ?: return false
+private fun isClientApplicable(client: LspClientImpl, virtualFile: VirtualFile, char: Char): Boolean {
+  if (client.descriptor.lspCustomization.onTypeFormattingCustomizer !is LspOnTypeFormattingSupport) return false
+  val triggerCharacters = client.getOnTypeFormattingTriggerCharacters(virtualFile) ?: return false
   return char.toString() in triggerCharacters
 }
 
 @RequiresReadLock
-private fun createParams(server: LspServerImpl, virtualFile: VirtualFile, editor: Editor, char: Char): DocumentOnTypeFormattingParams? {
+private fun createParams(client: LspClientImpl, virtualFile: VirtualFile, editor: Editor, char: Char): DocumentOnTypeFormattingParams? {
   val project = editor.project ?: return null
   val offset = editor.caretModel.offset
 
-  val docPosition = server.documentMapping.getDocumentPosition(virtualFile, editor.document, offset) ?: return null
+  val docPosition = client.documentMapping.getDocumentPosition(virtualFile, editor.document, offset) ?: return null
 
   val indentOptions = CodeStyle.getIndentOptions(project, virtualFile)
   val formattingOptions = FormattingOptions().apply {

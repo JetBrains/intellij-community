@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.PsiManager
 import com.intellij.util.asSafely
@@ -70,14 +70,14 @@ internal class LspIntentionActionService : Disposable {
 
     val result = mutableListOf<LspIntentionAction>()
 
-    for (lspServer in LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)) {
+    for (lspClient in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
       ProgressManager.checkCanceled()
-      val codeActionsSupport = lspServer.descriptor.lspCustomization.codeActionsCustomizer
+      val codeActionsSupport = lspClient.descriptor.lspCustomization.codeActionsCustomizer
                                  .asSafely<LspCodeActionsSupport>()
                                  ?.takeIf { it.intentionActionsSupport }
                                ?: continue
       // When asking for Intentions, we are not interested in servers that support only quick fixes
-      val somethingButQuickFix = lspServer.supportsCodeActions { kinds -> kinds.any { kind -> !kind.startsWith(CodeActionKind.QuickFix) } }
+      val somethingButQuickFix = lspClient.supportsCodeActions { kinds -> kinds.any { kind -> !kind.startsWith(CodeActionKind.QuickFix) } }
       if (!somethingButQuickFix) continue
 
       val hostRange = getLsp4jRange(document, offset, length)
@@ -86,10 +86,10 @@ internal class LspIntentionActionService : Disposable {
         triggerKind = CodeActionTriggerKind.Automatic
       }
 
-      val lspDocuments = lspServer.documentMapping.getDocumentRangesSync(file, document, hostRange)
+      val lspDocuments = lspClient.documentMapping.getDocumentRangesSync(file, document, hostRange)
       val lsp4jResults = lspDocuments.flatMap { (lspDocument, cellRange) ->
         val params = CodeActionParams(lspDocument.id, cellRange, codeActionContext)
-        lspServer.sendRequestSync { it.textDocumentService.codeAction(params) } ?: emptyList()
+        lspClient.sendRequestSync { it.textDocumentService.codeAction(params) } ?: emptyList()
       }
 
       lsp4jResults.forEach {
@@ -97,7 +97,7 @@ internal class LspIntentionActionService : Disposable {
         // filter out quick fixes when asking for intentions, otherwise quick fixes are added twice
         val kind = codeAction.kind
         if (kind == null || !kind.startsWith(CodeActionKind.QuickFix)) {
-          codeActionsSupport.createIntentionAction(lspServer as LspClient, codeAction)?.let { result.add(it) }
+          codeActionsSupport.createIntentionAction(lspClient as LspClient, codeAction)?.let { result.add(it) }
         }
       }
     }

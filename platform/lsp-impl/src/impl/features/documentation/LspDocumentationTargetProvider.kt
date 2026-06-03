@@ -10,8 +10,8 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.lsp.api.customization.LspHoverSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.eclipse.lsp4j.MarkupContent
@@ -26,9 +26,9 @@ internal class LspDocumentationTargetProvider : DocumentationTargetProvider {
     val offsetInHost = injectedLanguageManager.injectedToHost(psiFile, offset)
     val file = hostPsiFile.virtualFile ?: return emptyList()
 
-    return LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file).mapNotNull { lspServer ->
-      if (lspServer.descriptor.lspCustomization.hoverCustomizer !is LspHoverSupport) return@mapNotNull null
-      if (!lspServer.supportsHover()) return@mapNotNull null
+    return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).mapNotNull { lspClient ->
+      if (lspClient.descriptor.lspCustomization.hoverCustomizer !is LspHoverSupport) return@mapNotNull null
+      if (!lspClient.supportsHover()) return@mapNotNull null
 
       // When `DocumentationTargetProvider.documentationTargets()` is called on hover, it is cancellable,
       // so using a bigger timeout wouldn't ever cause freezes.
@@ -40,9 +40,9 @@ internal class LspDocumentationTargetProvider : DocumentationTargetProvider {
       // Unfortunately, there's no reliable way to check whether the current `DocumentationTargetProvider.documentationTargets()`
       // call is cancellable or not. So, let's stay on the safe side and use small timeout.
       // According to the experiments, it is enough for LSP servers.
-      val timeoutMs = LspServerImpl.NOT_CANCELLABLE_REQUEST_TIMEOUT_MS
+      val timeoutMs = LspClientImpl.NOT_CANCELLABLE_REQUEST_TIMEOUT_MS
 
-      lspServer.requestExecutor.getHoverCaching(file, offsetInHost, timeoutMs)?.let { textRangeAndMarkupContent ->
+      lspClient.requestExecutor.getHoverCaching(file, offsetInHost, timeoutMs)?.let { textRangeAndMarkupContent ->
         val presentableText =
           textRangeAndMarkupContent.textRange.takeIf { it.length > 0 && it.endOffset <= hostPsiFile.textLength }
             ?.substring(hostPsiFile.text)

@@ -7,24 +7,24 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspTypeHierarchySupport
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.features.hierarchy.findSupportingServer
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.features.hierarchy.findSupportingClient
 import com.intellij.platform.lsp.impl.features.hierarchy.getTargetFromEditor
 import com.intellij.psi.PsiElement
 
-private val LSP_TYPE_HIERARCHY_SERVER_KEY = Key.create<LspServerImpl>("lsp.type.hierarchy.server")
+private val LSP_TYPE_HIERARCHY_CLIENT_KEY = Key.create<LspClientImpl>("lsp.type.hierarchy.client")
 
 internal class LspTypeHierarchyProvider : HierarchyProvider {
   override fun getTarget(dataContext: DataContext): PsiElement? =
-    getTargetFromEditor(dataContext, LSP_TYPE_HIERARCHY_SERVER_KEY, ::shouldProceedWithServer)
+    getTargetFromEditor(dataContext, LSP_TYPE_HIERARCHY_CLIENT_KEY, ::shouldProceedWithClient)
 
   override fun createHierarchyBrowser(target: PsiElement): HierarchyBrowser {
-    // Server is cached in user data by getTarget(), but BaseOnThis* actions bypass getTarget()
-    // and call createHierarchyBrowser() directly, so we need to find the supporting server
-    val server = target.getUserData(LSP_TYPE_HIERARCHY_SERVER_KEY)
-                 ?: findSupportingServer(target.project, target.containingFile.virtualFile, ::shouldProceedWithServer)
-                 ?: error("Missing cached LSP server on type-hierarchy target")
-    return LspTypeHierarchyBrowser(target.project, target, server)
+    // Client is cached in user data by getTarget(), but BaseOnThis* actions bypass getTarget()
+    // and call createHierarchyBrowser() directly, so we need to find the supporting client
+    val client = target.getUserData(LSP_TYPE_HIERARCHY_CLIENT_KEY)
+                 ?: findSupportingClient(target.project, target.containingFile.virtualFile, ::shouldProceedWithClient)
+                 ?: error("Missing cached LSP client on type-hierarchy target")
+    return LspTypeHierarchyBrowser(target.project, target, client)
   }
 
   override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
@@ -32,10 +32,10 @@ internal class LspTypeHierarchyProvider : HierarchyProvider {
     browser.changeView(TypeHierarchyBrowserBase.getSubtypesHierarchyType())
   }
 
-  private fun shouldProceedWithServer(server: LspServerImpl, file: VirtualFile): Boolean {
-    val customizer = server.descriptor.lspCustomization.typeHierarchyCustomizer
+  private fun shouldProceedWithClient(client: LspClientImpl, file: VirtualFile): Boolean {
+    val customizer = client.descriptor.lspCustomization.typeHierarchyCustomizer
     return customizer is LspTypeHierarchySupport &&
-           server.supportsTypeHierarchy(file) &&
+           client.supportsTypeHierarchy(file) &&
            customizer.shouldAskServerForTypeHierarchy(file)
   }
 }

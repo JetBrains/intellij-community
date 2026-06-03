@@ -9,8 +9,8 @@ import com.intellij.platform.lsp.api.Lsp4jClient
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
 import com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService
 import com.intellij.util.ConcurrencyUtil
@@ -34,9 +34,9 @@ import java.util.concurrent.TimeUnit
 
 private val logger = logger<Lsp4jServerConnector>()
 
-internal abstract class Lsp4jServerConnector protected constructor(private val lspServer: LspServerImpl) {
-  private val descriptor: LspClientDescriptor = lspServer.descriptor
-  private val lsp4jClient: Lsp4jClient = descriptor.createLsp4jClient(lspServer.serverNotificationsHandler)
+internal abstract class Lsp4jServerConnector protected constructor(private val lspClient: LspClientImpl) {
+  private val descriptor: LspClientDescriptor = lspClient.descriptor
+  private val lsp4jClient: Lsp4jClient = descriptor.createLsp4jClient(lspClient.serverNotificationsHandler)
   lateinit var lsp4jServer: Lsp4jServer
 
   protected abstract val ideToServerStream: OutputStream
@@ -61,7 +61,7 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
     messageJsonHandler.methodProvider = remoteEndpoint
     lsp4jServer = ServiceEndpoints.toServiceObject(remoteEndpoint, descriptor.lsp4jServerClass)
     lsp4jServer = if (descriptor is Lsp4jServerWrapperCreator) descriptor.wrapLsp4jServer(lsp4jServer) else lsp4jServer
-    lsp4jServer = LspServerManagerImpl.getInstanceImpl(lspServer.project).wrapLsp4jServer(lspServer, lsp4jServer)
+    lsp4jServer = LspClientManagerImpl.getInstanceImpl(lspClient.project).wrapLsp4jServer(lspClient, lsp4jServer)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ConcurrencyUtil.runUnderThreadName("LSP Listener: $descriptor") {
@@ -75,16 +75,16 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
           }
         }
         catch (e: Throwable) {
-          lspServer.appendServerErrorOutput(e.stackTraceToString())
+          lspClient.appendServerErrorOutput(e.stackTraceToString())
           logger.error(descriptor.toString(), e)
         }
         finally {
           logger.debug("$descriptor: LSP server listener thread finished")
-          val lspServerManager = ReadAction.compute<LspServerManagerImpl?, Throwable> {
-            if (!lspServer.project.isDisposed) LspServerManagerImpl.getInstanceImpl(lspServer.project) else null
+          val manager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
+            if (!lspClient.project.isDisposed) LspClientManagerImpl.getInstanceImpl(lspClient.project) else null
           }
           val text = "${descriptor.lspCommunicationChannel.javaClass.simpleName} connection closed"
-          lspServerManager?.handleMaybeUnexpectedServerStop(lspServer, text)
+          manager?.handleMaybeUnexpectedServerStop(lspClient, text)
         }
       }
     }
@@ -145,7 +145,7 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
           disconnect()
         }
         finally {
-          descriptor.lspServerListener?.serverStopped(lspServer.state == LspServerState.ShutdownNormally)
+          descriptor.lspServerListener?.serverStopped(lspClient.state == LspServerState.ShutdownNormally)
         }
       }
     }

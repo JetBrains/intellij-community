@@ -3,7 +3,7 @@ package com.intellij.platform.lsp.impl.features.highlighting
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
-import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.quickFix.LspQuickFixSet
 import org.eclipse.lsp4j.CodeActionKind
 import org.eclipse.lsp4j.Diagnostic
@@ -32,16 +32,16 @@ internal fun copyDiagnosticWithRange(diagnostic: Diagnostic, range: Range): Diag
 internal class LspDiagnosticAndLazyQuickFixes(val diagnostic: Diagnostic, val documentId: TextDocumentIdentifier? = null) {
   private var quickFixes: List<IntentionAction>? = null
 
-  fun getQuickFixes(lspServer: LspServerImpl, file: VirtualFile): List<IntentionAction> {
+  fun getQuickFixes(lspClient: LspClientImpl, file: VirtualFile): List<IntentionAction> {
     quickFixes?.let { return it }
 
-    val codeActionsCustomizer = lspServer.descriptor.lspCustomization.codeActionsCustomizer
+    val codeActionsCustomizer = lspClient.descriptor.lspCustomization.codeActionsCustomizer
     val clientSupportsQuickFixes = codeActionsCustomizer is LspCodeActionsSupport && codeActionsCustomizer.quickFixesSupport
     if (!clientSupportsQuickFixes) return emptyList()
-    val serverSupportsQuickFixes = lspServer.supportsCodeActions { kinds -> kinds.any { kind -> kind.startsWith(CodeActionKind.QuickFix) } }
+    val serverSupportsQuickFixes = lspClient.supportsCodeActions { kinds -> kinds.any { kind -> kind.startsWith(CodeActionKind.QuickFix) } }
     if (!serverSupportsQuickFixes) return emptyList()
 
-    val quickFixSet = LspQuickFixSet(lspServer, file, diagnostic, documentId)
+    val quickFixSet = LspQuickFixSet(lspClient, file, diagnostic, documentId)
     val result = quickFixSet.quickFixes
     quickFixes = result
     return result

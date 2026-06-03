@@ -6,7 +6,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiFile
 
 /**
@@ -21,9 +21,9 @@ internal class LspAutoPopupTypedHandler : TypedHandlerDelegate() {
     val file = psiFile.getOriginalFile().getVirtualFile()?.let { (it as? VirtualFileWindow)?.delegate ?: it }
                ?: return Result.CONTINUE
 
-    for (server in LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)) {
-      if (server.serverCapabilities?.completionProvider?.triggerCharacters?.contains(charTyped.toString()) != true) continue
-      val completionSupport = server.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
+    for (client in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
+      if (client.serverCapabilities?.completionProvider?.triggerCharacters?.contains(charTyped.toString()) != true) continue
+      val completionSupport = client.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
       if (!completionSupport.isTriggerCharacterRespected(charTyped)) continue
 
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
