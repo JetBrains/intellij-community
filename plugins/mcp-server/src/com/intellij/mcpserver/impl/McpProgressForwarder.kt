@@ -25,7 +25,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
@@ -37,6 +36,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -77,17 +77,18 @@ internal suspend fun <T> ServerSession.callToolWithProgressNotifications(
 
   val interval = progressNotificationInterval
   val progressPipe = createProgressPipe()
-  val latestEvent = MutableStateFlow<McpProgressEvent?>(null)
-  val lastSentEvent = MutableStateFlow<McpProgressEvent?>(null)
+  val latestEvent = AtomicReference<McpProgressEvent?>(null)
+  val lastSentEvent = AtomicReference<McpProgressEvent?>(null)
   val observeBackgroundTasks = AtomicBoolean(false)
   val sendingDisabled = AtomicBoolean(false)
+
   @Suppress("RAW_SCOPE_CREATION")
   val observerScope = CoroutineScope(currentCoroutineContext() + SupervisorJob())
 
   val progressFlow = merge(
     inlineProgressFlow(progressPipe),
     backgroundProgressFlow(project, observeBackgroundTasks),
-  ).onEach { latestEvent.value = it }
+  ).onEach { latestEvent.set(it) }
 
   observerScope.launch(start = CoroutineStart.UNDISPATCHED) {
     merge(
@@ -99,7 +100,7 @@ internal suspend fun <T> ServerSession.callToolWithProgressNotifications(
         if (!sendProgressNotification(this@callToolWithProgressNotifications, progressToken, event, sendingDisabled)) {
           return@collect
         }
-        lastSentEvent.value = event
+        lastSentEvent.set(event)
       }
   }
 
@@ -114,8 +115,8 @@ internal suspend fun <T> ServerSession.callToolWithProgressNotifications(
     flushLatestProgressNotification(
       session = this@callToolWithProgressNotifications,
       progressToken = progressToken,
-      latestEvent = latestEvent.value,
-      lastSentEvent = lastSentEvent.value,
+      latestEvent = latestEvent.get(),
+      lastSentEvent = lastSentEvent.get(),
       sendingDisabled = sendingDisabled,
     )
   }
@@ -156,12 +157,12 @@ private fun backgroundProgressFlow(project: Project?, observeBackgroundTasks: At
 }
 
 private fun heartbeatFlow(
-  latestEvent: MutableStateFlow<McpProgressEvent?>,
+  latestEvent: AtomicReference<McpProgressEvent?>,
   interval: Duration,
 ): Flow<McpProgressEvent> = flow {
   while (currentCoroutineContext().isActive) {
     delay(interval)
-    latestEvent.value?.let { emit(it) }
+    latestEvent.get()?.let { emit(it) }
   }
 }
 
