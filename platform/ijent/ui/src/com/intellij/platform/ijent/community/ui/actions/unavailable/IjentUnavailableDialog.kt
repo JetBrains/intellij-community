@@ -20,8 +20,9 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentMachine
-import com.intellij.platform.ijent.community.impl.nio.CloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.*
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
@@ -35,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 
-private class EdtOnceTask : OnceTask<CloseDecision>() {
+private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
     return if (IjentCallerContext.getSaved()?.isDispatchThread == true) {
       check(ApplicationManager.getApplication().isDispatchThread)
@@ -51,8 +52,8 @@ private class EdtOnceTask : OnceTask<CloseDecision>() {
 
 @Service
 internal class NotRespondingFilesystemDialogService {
-  private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, OnceTask<CloseDecision>>>()
-  suspend fun doOnceOrWait(ijentId: EelDescriptor, projects: List<Project>, f: suspend () -> CloseDecision): CloseDecision {
+  private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, OnceTask<ProjectCloseDecision>>>()
+  suspend fun doOnceOrWait(ijentId: EelDescriptor, projects: List<Project>, f: suspend () -> ProjectCloseDecision): ProjectCloseDecision {
     val onceTask = pendingRequests.compute(ijentId) { _, v ->
       when {
         v == null -> projects to EdtOnceTask()
@@ -72,9 +73,13 @@ internal class NotRespondingFilesystemDialogService {
 }
 
 internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
-  override suspend fun showModalDialog(eelDescriptor: EelDescriptor): CloseDecision {
+  override suspend fun showModalDialog(eelDescriptor: EelDescriptor): IjentUnavailableHandlerResult {
     val projectsToClose = ProjectManager.getInstance().openProjects.filter {
       it.getEelDescriptor() == eelDescriptor
+    }
+    if (projectsToClose.isEmpty()) {
+      eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
+      return UnrelatedIjent(eelDescriptor)
     }
     return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
       showCloseProjectDialog(eelDescriptor, projectsToClose).also {
@@ -83,7 +88,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, projects: List<Project>): CloseDecision {
+  private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, projects: List<Project>): ProjectCloseDecision {
     val closeDecision = suspendCancellableCoroutine { cont ->
       val builder = DialogBuilder().apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
@@ -108,7 +113,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
           }
           WelcomeFrame.showIfNoProjectOpened()
         }
-        cont.resume(CloseDecision(eelDescriptor))
+        cont.resume(ProjectCloseDecision(eelDescriptor))
       }
       else {
         cont.resume(null)

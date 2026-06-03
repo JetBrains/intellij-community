@@ -11,14 +11,22 @@ import kotlin.time.Duration
 
 class IjentTimeoutException(message: String) : IOException(message)
 
-class CloseDecision(val eelDescriptor: EelDescriptor) {
-  fun throwException(): Nothing {
-    throw IjentTimeoutException("User decided to close the project without waiting for not responding ijent $eelDescriptor.")
+sealed class IjentUnavailableHandlerResult {
+  abstract fun throwException(): Nothing
+  class ProjectCloseDecision(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
+    override fun throwException(): Nothing {
+      throw IjentTimeoutException("User decided to close the project without waiting for not responding ijent $eelDescriptor.")
+    }
+  }
+  class UnrelatedIjent(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
+    override fun throwException(): Nothing {
+      throw IjentTimeoutException("Target $eelDescriptor is not related to any of open projects. Not waiting for it.")
+    }
   }
 }
 
 interface IjentUnavailableHandler {
-  suspend fun showModalDialog(eelDescriptor: EelDescriptor): CloseDecision
+  suspend fun showModalDialog(eelDescriptor: EelDescriptor): IjentUnavailableHandlerResult
   companion object {
     val EP_NAME: ExtensionPointName<IjentUnavailableHandler> = ExtensionPointName("com.intellij.project.root.unavailable")
   }
@@ -26,7 +34,8 @@ interface IjentUnavailableHandler {
 
 internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, timeout: Duration, body: suspend () -> T): T {
   // TODO behavior should depend on caller context:
-  //  for EDT - basic events could be dispatched even before showing dialog
+  //  for EDT - basic events could be dispatched even before showing dialog.
+  // TODO Now showing the dialog works only when EDT is free. In fact it's not free e.g. for DiskQueryRelay.
   if (timeout.isInfinite()) {
     return body()
   }

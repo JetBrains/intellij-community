@@ -117,7 +117,7 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
   )
 }
 
-@Suppress("SSBasedInspection")
+@Suppress("RAW_RUN_BLOCKING")
 @VisibleForTesting
 @ApiStatus.Internal
 fun <T> fsBlockingWithoutParallelismCompensation(body: suspend (IjentCallerContext) -> T): T {
