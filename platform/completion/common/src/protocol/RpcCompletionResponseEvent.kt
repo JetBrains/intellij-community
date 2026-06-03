@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface RpcCompletionResponseEvent {
+  val requestId: RpcCompletionRequestId
   fun debugToString(): String
 
   /**
@@ -20,6 +21,7 @@ sealed interface RpcCompletionResponseEvent {
    */
   @Serializable
   data class NewItems(
+    override val requestId: RpcCompletionRequestId,
     val newItems: List<RpcCompletionItem> = emptyList(),
     val completionArrangement: RpcCompletionArrangement,
   ) : RpcCompletionResponseEvent {
@@ -37,6 +39,7 @@ sealed interface RpcCompletionResponseEvent {
    */
   @Serializable
   data class NewArrangement(
+    override val requestId: RpcCompletionRequestId,
     val completionArrangement: RpcCompletionArrangement,
   ) : RpcCompletionResponseEvent {
     override fun toString(): String = buildToString("NewArrangement") {
@@ -48,6 +51,7 @@ sealed interface RpcCompletionResponseEvent {
 
   @Serializable
   data class ExpensivePresentations(
+    override val requestId: RpcCompletionRequestId,
     val presentations: List<RpcCompletionExpensivePresentation>,
   ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "ExpensivePresentations {size=${presentations.size}}"
@@ -59,6 +63,7 @@ sealed interface RpcCompletionResponseEvent {
    */
   @Serializable
   data class ModCommandResults(
+    override val requestId: RpcCompletionRequestId,
     val results: List<RpcModCommandResult>,
   ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "ModCommandResults {size=${results.size}}"
@@ -70,7 +75,9 @@ sealed interface RpcCompletionResponseEvent {
    *
    */
   @Serializable
-  object CompletionItemsFinished : RpcCompletionResponseEvent {
+  class CompletionItemsFinished(
+    override val requestId: RpcCompletionRequestId,
+  ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "CompletionItemsFinished"
   }
 
@@ -79,7 +86,9 @@ sealed interface RpcCompletionResponseEvent {
    * Can be sent only before [NewItems] event.
    */
   @Serializable
-  object SkipCompletion : RpcCompletionResponseEvent {
+  class SkipCompletion(
+    override val requestId: RpcCompletionRequestId,
+  ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "SkipCompletion"
   }
 
@@ -88,6 +97,7 @@ sealed interface RpcCompletionResponseEvent {
    */
   @Serializable
   class Advertisement(
+    override val requestId: RpcCompletionRequestId,
     val message: @NlsContexts.PopupAdvertisement String,
     val icon: IconId? = null,
   ) : RpcCompletionResponseEvent {
@@ -101,6 +111,7 @@ sealed interface RpcCompletionResponseEvent {
 
   @Serializable
   data class AddWatchedPrefix(
+    override val requestId: RpcCompletionRequestId,
     val condition: RpcRestartPrefixCondition,
   ) : RpcCompletionResponseEvent {
     override fun toString(): String = buildToString("AddWatchedPrefix") {
@@ -114,12 +125,15 @@ sealed interface RpcCompletionResponseEvent {
    * The last event of the completion session.
    */
   @Serializable
-  object CompletionFinished : RpcCompletionResponseEvent {
+  class CompletionFinished(
+    override val requestId: RpcCompletionRequestId,
+  ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "CompletionFinished"
   }
 
   @Serializable
   data class BackendSettings(
+    override val requestId: RpcCompletionRequestId,
     val mayHaveCustomPreview: Boolean,
   ) : RpcCompletionResponseEvent {
     override fun debugToString(): String = "BackendSettings(mayHaveCustomPreview=$mayHaveCustomPreview)"
