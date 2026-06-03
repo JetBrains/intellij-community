@@ -101,7 +101,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -139,6 +138,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * @author Konstantin Bulenkov
@@ -317,10 +317,9 @@ class FileStructurePopup(
         while (true) {
           val currentPrefix = mySpeedSearch.enteredPrefix ?: ""
           emit(currentPrefix)
-          delay(delayMillis.toLong())
+          delay(delayMillis.milliseconds)
         }
       }
-        .distinctUntilChanged()
         .collectLatest { prefix ->
           withContext(Dispatchers.UI) {
             tree.emptyText.text = if (StringUtil.isEmpty(prefix)) {
