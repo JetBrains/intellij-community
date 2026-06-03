@@ -115,6 +115,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -848,6 +849,7 @@ open class ConsoleViewImpl protected constructor(
     editor.document.putUserData(IS_CONSOLE_DOCUMENT, true)
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this)
     editor.settings.isAllowSingleLogicalLineFolding = true // We want to fold long soft-wrapped command lines
+    editor.scrollPane.border = JBUI.Borders.empty()
     return editor
   }
 
