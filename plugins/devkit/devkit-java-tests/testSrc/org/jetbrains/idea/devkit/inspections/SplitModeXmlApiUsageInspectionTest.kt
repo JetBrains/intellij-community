@@ -45,9 +45,7 @@ internal class SplitModeXmlApiUsageInspectionTest : JavaCodeInsightFixtureTestCa
             <module name="intellij.platform.backend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -180,7 +178,11 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
       """
         <idea-plugin>
           <extensions defaultExtensionNs="com.intellij">
-            <typedHandler/>
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Predefined module kind for module 'intellij.platform.frontend'">typedHandler</warning>/>
             <<warning descr="'com.intellij.localInspection' can only be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
@@ -277,9 +279,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'unique.module.
       """
         <idea-plugin>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -369,7 +369,12 @@ Module 'unique.module.name.8'  -> backend">localInspection</warning>/>
             <module name="unique.module.name.11"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <typedHandler/>
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'unique.module.name.12'
+via dependency 'unique.module.name.11' -> descriptor 'unique.module.name.11.xml' in module 'unique.module.name.11'.">typedHandler</warning>/>
           </extensions>
         </idea-plugin>
       """.trimIndent()
@@ -566,9 +571,7 @@ Module 'unique.module.name.15'  -> frontend">localInspection</warning>/>
       """
         <idea-plugin>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -630,9 +633,7 @@ Module 'unique.module.name.42'  -> shared">localInspection</warning>/>
             <module name="unique.module.name.20"/>
           </content>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -720,9 +721,7 @@ via dependency 'unique.module.name.26' -> descriptor 'unique.module.name.26.xml'
       """
         <idea-plugin>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -756,9 +755,7 @@ Module 'unique.module.name.27'  -> backend">typedHandler</warning>/>
       """
         <idea-plugin>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -840,9 +837,7 @@ Module 'intellij.platform.resources'  -> shared">localInspection</warning>/>
             <module name="unique.module.name.28" loading="required"/>
           </content>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -888,9 +883,7 @@ Backend dependency 'intellij.platform.backend' from required content module desc
             <module name="intellij.platform.backend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -946,9 +939,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'backend-fragment
             <module name="unique.module.name.41"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 

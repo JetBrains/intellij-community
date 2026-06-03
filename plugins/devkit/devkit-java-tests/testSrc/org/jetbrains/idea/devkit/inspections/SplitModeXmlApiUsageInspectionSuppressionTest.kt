@@ -214,9 +214,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
             <module name="intellij.platform.backend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'frontend or shared' module type. Actual module type is 'backend'.
-
-Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend.
+            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 

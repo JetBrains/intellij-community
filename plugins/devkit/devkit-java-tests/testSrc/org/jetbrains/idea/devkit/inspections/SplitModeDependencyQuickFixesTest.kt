@@ -257,7 +257,7 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
             <module name="unique.module.name.quick.fix.6" loading="embedded"/>
           </content>
           <extensions defaultExtensionNs="com.intellij">
-            <typedHandler<caret>/>
+            <toolWindow<caret>/>
           </extensions>
         </idea-plugin>
       """.trimIndent()
