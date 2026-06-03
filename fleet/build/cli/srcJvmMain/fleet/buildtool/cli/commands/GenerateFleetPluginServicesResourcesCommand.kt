@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.ServiceLoader
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
@@ -38,6 +39,9 @@ private val GENERATED_RESOURCE_PATHS = listOf(
   Path.of("entityTypes.txt"),
   PLUGIN_SERVICE_RESOURCE,
 )
+
+private val REPRODUCIBLE_JAR_ENTRY_TIME: LocalDateTime = LocalDateTime.of(1980, 1, 1, 0, 0) // MS-DOS and FAT32 compatible timestamp
+
 
 class GenerateFleetPluginServicesResourcesCommand : CliktCommand(
   name = "generate-fleet-plugin-services-resources",
@@ -174,10 +178,17 @@ class GenerateFleetPluginServicesResourcesCommand : CliktCommand(
     outputJar.parent?.createDirectories()
     outputJar.createFile()
     JarOutputStream(outputJar.outputStream()).use { jarOut ->
-      outputDir.walk().filter { it.isRegularFile() }
-        .forEach { sourceFile ->
+      outputDir.walk()
+        .filter { it.isRegularFile() }
+        .map { sourceFile ->
           val relativePath = outputDir.relativize(sourceFile).invariantSeparatorsPathString
-          val jarEntry = JarEntry(relativePath)
+          relativePath to sourceFile
+        }
+        .sortedBy { (relativePath, _) -> relativePath }
+        .forEach { (relativePath, sourceFile) ->
+          val jarEntry = JarEntry(relativePath).apply {
+            timeLocal = REPRODUCIBLE_JAR_ENTRY_TIME
+          }
           jarOut.putNextEntry(jarEntry)
           sourceFile.inputStream().use { it.copyTo(jarOut) }
           jarOut.closeEntry()
