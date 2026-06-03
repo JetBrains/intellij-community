@@ -150,7 +150,7 @@ abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     TreeUtil.expandAll(myTree);
-    myTree.setSelectionRow(0);
+    TreeUtil.selectRow(myTree, 0);
   }
 
   public void selectIntention(String familyName) {
@@ -355,7 +355,7 @@ abstract class IntentionSettingsTree {
         myExpansionMonitor.restore();
       }
       if (myTree.getSelectionRows() == null) {
-        myTree.setSelectionRow(0);
+        TreeUtil.selectRow(myTree, 0);
       }
     }
   }
