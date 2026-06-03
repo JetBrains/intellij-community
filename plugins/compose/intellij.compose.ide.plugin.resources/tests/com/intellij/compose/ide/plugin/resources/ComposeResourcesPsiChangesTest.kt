@@ -16,14 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 
-@TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
-@TestMetadata("")
 class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
 
   @TargetVersions(TARGET_GRADLE_VERSION)
