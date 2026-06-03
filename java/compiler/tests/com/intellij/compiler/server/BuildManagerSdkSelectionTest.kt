@@ -20,6 +20,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.OS
@@ -43,6 +44,7 @@ import org.junit.jupiter.params.ParameterizedClass
  * The Docker scenario pins an Eclipse Temurin 8 image so the "JDK is too old" branch fires deterministically;
  * the local scenario exercises the same logic with the IDE's internal JDK, where the throw should never happen.
  */
+@Disabled("IJPL-246357 — the JUnit 5 close handler in this class surfaces a pre-existing Light-project leak from JUnit 3 tests in the same JVM. Re-enable when the underlying plugin-side Disposer registration is fixed.")
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 @DockerTest(image = TEMURIN_8_IMAGE, mandatory = false)
 @ParameterizedClass
