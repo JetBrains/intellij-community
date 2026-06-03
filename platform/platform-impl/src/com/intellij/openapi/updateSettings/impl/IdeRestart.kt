@@ -6,14 +6,20 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.Action
@@ -111,7 +117,9 @@ internal class CountdownDialog(
 
   private fun finishSuccessfully() {
     close(OK_EXIT_CODE)
-    action()
+    service<ActionService>().scope.launch(Dispatchers.EDT) {
+      action()
+    }
   }
 
   private fun startCountdown() {
@@ -134,4 +142,7 @@ internal class CountdownDialog(
       finishSuccessfully()
     }
   }
+
+  @Service(Service.Level.APP)
+  private class ActionService(val scope: CoroutineScope)
 }
