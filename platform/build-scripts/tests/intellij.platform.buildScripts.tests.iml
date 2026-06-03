@@ -49,4 +49,5 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" scope="TEST" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.buildScripts" />
 </module>

@@ -24,7 +24,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.buildScripts.tests",
+    associates = [
+        "//platform/build-scripts",
+        "//platform/build-scripts:build-scripts_test_lib",
+    ],
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -33,8 +36,6 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
-        "//platform/build-scripts",
-        "//platform/build-scripts:build-scripts_test_lib",
         "//platform/runtime/product",
         "//platform/runtime/product:product_test_lib",
         "@lib//:junit4",
