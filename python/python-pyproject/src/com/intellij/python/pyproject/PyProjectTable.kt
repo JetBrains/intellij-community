@@ -40,15 +40,19 @@ data class PyProjectDependencies(
   val project: List<String> = listOf(),
 
   /**
-   * Dependencies provided in `dependency-groups.dev`.
-   */
-  val dev: List<String> = listOf(),
-
-  /**
    * Dependencies provided in `project.optional-dependencies`.
    */
   val optional: Map<String, List<String>> = mapOf(),
-)
+  /**
+   * Groups (`dependency-groups.`)
+   */
+  val depGroupsToDeps: Map<String, List<String>> = mapOf(),
+) {
+  /**
+   * Values of [depGroupsToDeps]
+   */
+  val allDepsFromGroups: Set<String> = depGroupsToDeps.values.flatten().toSet()
+}
 
 /**
  * Represents a file object.

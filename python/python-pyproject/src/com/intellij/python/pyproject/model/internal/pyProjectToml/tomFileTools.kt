@@ -150,7 +150,7 @@ private fun collectAllDependencies(
   entry: PyProjectTomlProject, tomlDependencySpecifications: List<TomlDependencySpecification>,
 ): Sequence<Directory> = sequence {
   yieldAll(getDependenciesFromProject(entry.pyProjectToml))
-  yieldAll(getDependenciesFromPep735Groups(entry.pyProjectToml.toml))
+  yieldAll(getDependenciesFromPep735Groups(entry.pyProjectToml))
   yieldAll(getToolSpecificDependencies(entry.root, entry.pyProjectToml.toml, tomlDependencySpecifications))
 }
 
@@ -187,13 +187,9 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
 }
 
 @RequiresBackgroundThread
-private fun getDependenciesFromPep735Groups(tomlTable: TomlTable): Sequence<Directory> {
-  val groups = tomlTable.getTable("dependency-groups") ?: return emptySequence()
-  return groups.keySet().asSequence().flatMap { group ->
-    val deps = groups.safeGetArr<String>(group).successOrNull ?: emptyList()
-    deps.asSequence().mapNotNull(::parsePep621Dependency)
-  }
-}
+private fun getDependenciesFromPep735Groups(tomlTable: PyProjectToml): Sequence<Directory> =
+  tomlTable.project?.dependencies?.allDepsFromGroups?.asSequence()?.mapNotNull(::parsePep621Dependency)
+  ?: emptySequence()
 
 @RequiresBackgroundThread
 private fun getDependenciesFromProject(projectToml: PyProjectToml): Sequence<Directory> {

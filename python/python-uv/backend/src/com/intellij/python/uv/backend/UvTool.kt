@@ -132,7 +132,7 @@ internal class UvTool : Tool {
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
 private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String>? =
-  toml.project?.dependencies?.project?.mapNotNull {
+  toml.project?.dependencies?.let { it.project + it.allDepsFromGroups }?.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
   }?.toSet()

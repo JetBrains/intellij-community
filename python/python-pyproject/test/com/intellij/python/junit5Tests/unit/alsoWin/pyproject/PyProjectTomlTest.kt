@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.reflect.KClass
 
-class PyProjectTomlTest {
+internal class PyProjectTomlTest {
   @Test
   fun parseProvidesErrorsOnFailure() {
     // GIVEN
@@ -434,7 +434,7 @@ class PyProjectTomlTest {
           name = "name",
           version = "123",
           dependencies = PyProjectDependencies(
-            dev = listOf("a", "b")
+            depGroupsToDeps = mapOf("dev" to listOf("a", "b"))
           )
         ),
         listOf()
@@ -683,7 +683,7 @@ class PyProjectTomlTest {
               "django>2.1; os_name != 'nt'",
               "django>2.0; os_name == 'nt'",
             ),
-            dev = listOf("foo", "bar"),
+            depGroupsToDeps = mapOf("dev" to listOf("foo", "bar")),
             optional = mapOf(
               "gui" to listOf("PyQt5"),
               "cli" to listOf("rich", "click"),
@@ -704,6 +704,30 @@ class PyProjectTomlTest {
           ),
         ),
         listOf(),
+      ),
+      ParseTestCase(
+        "dependency_groups",
+        """
+          [project]
+          name = "name"
+          version = "123"
+          [dependency-groups]
+          dev = [
+              "sub-project-a",
+              "sub-project-b",
+          ]
+          abc = [
+            "spam"
+          ]
+        """.trimIndent(),
+        PyProjectTable(
+          name = "name",
+          version = "123",
+          dependencies = PyProjectDependencies(
+            depGroupsToDeps = mapOf("dev" to listOf("sub-project-a", "sub-project-b"), "abc" to listOf("spam")),
+          )
+        ),
+        expectedIssues = emptyList()
       ),
     ).map {
       Arguments.of(it.name, it.pyprojectToml, it.expectedProjectTable, it.expectedIssues)

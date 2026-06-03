@@ -200,14 +200,14 @@ data class PyProjectToml(
       }
 
       val projectDependencies = projectTable.safeGetArr<String>("dependencies").getOrIssue(issues) ?: listOf()
-      val devDependencies =
-        toml
-          .safeGet<TomlTable>("dependency-groups")
-          .getOrIssue(issues)
-          ?.safeGetArr<String>("dev")
-          ?.getOrIssue(issues)
-          ?.toList()
-        ?: listOf()
+      val depGroups = toml
+        .safeGet<TomlTable>("dependency-groups")
+        .getOrIssue(issues)
+
+      val depsFromGroups = depGroups?.keySet()?.associate { depGroupName ->
+        // Can't filter by string because there might be (still unsuppored) { include-group = "" } tables
+        depGroupName to (depGroups.safeGetArr<Any>(depGroupName).getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
+      }?.filter { it.value.isNotEmpty() } // No need to have empty groups
       val optionalDependencies =
         projectTable
           .safeGet<TomlTable>("optional-dependencies")
@@ -243,8 +243,8 @@ data class PyProjectToml(
           dynamic,
           PyProjectDependencies(
             projectDependencies,
-            devDependencies,
-            optionalDependencies
+            optionalDependencies,
+            depGroupsToDeps = depsFromGroups ?: emptyMap()
           ),
           scripts,
           guiScripts,
