@@ -5,6 +5,7 @@ import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.PackageNameFilter;
 import org.junit.platform.engine.discovery.PackageSelector;
+import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.MethodFilter;
 import org.junit.platform.launcher.TagFilter;
 
@@ -25,7 +26,9 @@ enum JUnit5FilterOption {
   includeMethodName("include-methodname"),
   excludeMethodName("exclude-methodname"),
   includeTag("include-tag"),
-  excludeTag("exclude-tag");
+  excludeTag("exclude-tag"),
+  includeEngine("include-engine"),
+  excludeEngine("exclude-engine");
 
   private final String value;
 
@@ -43,6 +46,8 @@ enum JUnit5FilterOption {
       case excludeMethodName -> MethodFilter.excludeMethodNamePatterns(filterString);
       case includeTag -> TagFilter.includeTags(filterString);
       case excludeTag -> TagFilter.excludeTags(filterString);
+      case includeEngine -> EngineFilter.includeEngines(filterString);
+      case excludeEngine -> EngineFilter.excludeEngines(filterString);
     };
   }
 
