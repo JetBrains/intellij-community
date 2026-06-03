@@ -35,10 +35,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   }
 
   public @Nullable PluginId getPluginId() {
-    if (myLoader instanceof PluginAwareClassLoader) {
-      return ((PluginAwareClassLoader)myLoader).getPluginId();
-    }
-    return null;
+    return myLoader instanceof PluginAwareClassLoader loader ? loader.getPluginId() : null;
   }
 
   public @NotNull @IntentionFamilyName String getFamily() {
