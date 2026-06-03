@@ -153,9 +153,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       "The test file should have a document before hard registration",
       document
     );
-    assertTrue(
+    assertNotNull(
       "Non-LightVirtualFile documents start in myDocumentCache",
-      isDocumentInCache(document)
+      myDocumentManager.getFileCachedDocument(file)
     );
 
     FileDocumentManagerBase.registerDocument(document, file);
@@ -165,9 +165,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       document,
       myDocumentManager.getCachedDocument(file)
     );
-    assertFalse(
+    assertNull(
       "Hard-bound documents must not leave a strong file key in myDocumentCache",
-      isDocumentInCache(document)
+      myDocumentManager.getFileCachedDocument(file)
     );
   }
 
@@ -823,16 +823,6 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       ThreadUtil.printThreadDump();
       throw e;
     }
-  }
-
-  private boolean isDocumentInCache(@NotNull Document document) {
-    AtomicBoolean result = new AtomicBoolean();
-    myDocumentManager.forEachCachedDocument(cachedDocument -> {
-      if (cachedDocument == document) {
-        result.set(true);
-      }
-    });
-    return result.get();
   }
 
   @NotNull
