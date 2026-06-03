@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.JButtonAction
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -59,10 +60,10 @@ class GHPRReviewSubmitAction
     }
 
     return if (pendingComments == null) {
-      CollaborationToolsBundle.message("review.start.submit.action.short")
+      CollaborationToolsBundle.message("review.start.submit.action")
     }
     else {
-      CollaborationToolsBundle.message("review.start.submit.action.short.with.comments", pendingComments)
+      CollaborationToolsBundle.message("review.start.submit.action.with.comments", pendingComments)
     }
   }
 
@@ -87,6 +88,10 @@ class GHPRReviewSubmitAction
    */
   private fun findVm(e: AnActionEvent): GHPRReviewViewModel? =
     e.getData(GHPRReviewViewModel.DATA_KEY) ?: e.project?.serviceIfCreated<GHPROnCurrentBranchService>()?.vmState?.value
+
+  override fun createButton(): JButton = super.createButton().apply {
+    putClientProperty("JButton.backgroundColor", UIUtil.getTextFieldBackground())
+  }
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)

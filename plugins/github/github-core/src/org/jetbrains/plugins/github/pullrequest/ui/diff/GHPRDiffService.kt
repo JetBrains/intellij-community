@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
-import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.collaboration.util.filePath
@@ -88,7 +86,6 @@ class GHPRDiffService(private val project: Project, parentCs: CoroutineScope) {
           putData(GHPRReviewViewModel.DATA_KEY, vm.reviewVm)
         }))
         add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS, listOf(
-          ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
           GHPRDiffReviewThreadsReloadAction(),
           actionManager.getAction("Github.PullRequest.Review.Submit"),
           actionManager.getAction("CodeReview.PreviousComment"),
