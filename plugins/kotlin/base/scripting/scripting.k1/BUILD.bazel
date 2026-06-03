@@ -33,6 +33,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "@lib//:kotlinc-kotlin-compiler-fe10",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
         "@lib//:kotlin-stdlib",

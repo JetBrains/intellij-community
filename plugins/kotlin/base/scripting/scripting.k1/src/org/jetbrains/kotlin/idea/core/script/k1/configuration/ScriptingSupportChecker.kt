@@ -12,15 +12,12 @@ import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.script.v1.hasUnknownScriptExt
-import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
 import org.jetbrains.kotlin.idea.core.script.v1.isStandaloneKotlinScript
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -35,18 +32,13 @@ class ScriptingSupportChecker: EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.isNonScript()) return null
 
-        val ktFile = file.toKtFile(project) ?: return null
-        val featureEnabled = LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(ktFile.module, project)
-        val panelIsOn = featureEnabled || !decideLaterIsOn(project)
-
-        if (panelIsOn && !compilerAllowsAnyScriptsInSourceRoots(project)
+        if (!compilerAllowsAnyScriptsInSourceRoots(project)
             && file.isUnderSourceRoot(project)
             && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
         ) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
-                    val textKey = if (featureEnabled) "kotlin.script.in.project.sources.1.9" else "kotlin.script.in.project.sources"
-                    text = KotlinBaseScriptingBundle.message(textKey)
+                    text = KotlinBaseScriptingBundle.message("kotlin.script.in.project.sources.1.9")
 
                     createActionLabel(
                         KotlinBaseScriptingBundle.message("kotlin.script.warning.more.info"),
@@ -56,10 +48,6 @@ class ScriptingSupportChecker: EditorNotificationProvider {
                         false
                     )
                     addMoveOutOfSourceRootAction(file, project)
-
-                    if (!featureEnabled) {
-                        addDecideLaterAction(file, project)
-                    }
                 }
             }
         }
@@ -141,9 +129,6 @@ private fun EditorNotificationPanel.close(
         manager.removeTopComponent(editor, this)
     }
 }
-
-private fun decideLaterIsOn(project: Project): Boolean =
-    KotlinScriptingSettingsImpl.getInstance(project).decideOnRemainingInSourceRootLater
 
 private fun VirtualFile.isUnderSourceRoot(project: Project): Boolean =
     ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(this, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
