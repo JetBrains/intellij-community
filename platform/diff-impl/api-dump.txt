@@ -148,12 +148,8 @@ f:com.intellij.diff.actions.impl.SetEditorSettingsAction
 c:com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,java.util.List):V
-- f:applyDefaults():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:setDiffActions(java.util.List):V
-- f:setSyncScrollSupport(com.intellij.diff.tools.util.SyncScrollSupport$Support):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.diff.chains.AsyncDiffRequestChain
 - com.intellij.openapi.util.UserDataHolderBase

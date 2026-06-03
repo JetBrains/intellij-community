@@ -31,6 +31,7 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   private val textSettings: TextDiffSettingsHolder.TextDiffSettings,
   private val editorsSupplier: () -> List<Editor>,
 ) : ActionGroup(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain), DumbAware {
+  @ApiStatus.Internal
   constructor(
     textSettings: TextDiffSettingsHolder.TextDiffSettings,
     editors: List<Editor>,
@@ -43,16 +44,21 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   val appearanceGroup: ActionGroup = _appearanceGroup
 
-  private var toolbarActions = emptyList<AnAction>()
+  private var viewerSettingsActions = emptyList<AnAction>()
+  private var diffSettingsActions = emptyList<AnAction>()
 
-  fun setDiffActions(toolbarActions: List<AnAction>) {
-    this.toolbarActions = toolbarActions
+  @ApiStatus.Internal
+  fun setSettingsActions(viewerSettingsActions: List<AnAction>, diffSettingsActions: List<AnAction>) {
+    this.viewerSettingsActions = viewerSettingsActions
+    this.diffSettingsActions = diffSettingsActions
   }
 
+  @ApiStatus.Internal
   fun setSyncScrollSupport(syncScrollSupport: SyncScrollSupport.Support?) {
     this.syncScrollSupport = syncScrollSupport
   }
 
+  @ApiStatus.Internal
   fun applyDefaults() {
     if (!Registry.`is`("diff.highlighting.level.visible")) {
       textSettings.highlightingLevel = HighlightingLevel.INSPECTIONS
@@ -69,9 +75,10 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
+    addAll(viewerSettingsActions)
     add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
     add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
-    addAll(toolbarActions)
+    addAll(diffSettingsActions)
     add(Separator.getInstance())
     add(appearanceGroup)
     add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))

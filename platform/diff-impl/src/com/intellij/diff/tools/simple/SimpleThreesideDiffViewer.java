@@ -87,8 +87,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     List<AnAction> diffActions = new ArrayList<>();
     diffActions.add(new MyToggleAutoScrollAction());
-    diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(diffActions);
+    myEditorSettingsAction.setSettingsActions(diffActions, myTextDiffProvider.getDiffSettingsActions());
 
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyEditorReadOnlyLockAction());

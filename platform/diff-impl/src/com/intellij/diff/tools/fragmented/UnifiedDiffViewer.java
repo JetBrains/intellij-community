@@ -294,8 +294,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @RequiresEdt
   public @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> diffActions = new ArrayList<>();
-    diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
-    myEditorSettingsAction.setDiffActions(diffActions);
+    myEditorSettingsAction.setSettingsActions(diffActions, myTextDiffProvider.getDiffSettingsActions());
 
     List<AnAction> group = new ArrayList<>();
     group.add(new MyToggleExpandByDefaultAction());
