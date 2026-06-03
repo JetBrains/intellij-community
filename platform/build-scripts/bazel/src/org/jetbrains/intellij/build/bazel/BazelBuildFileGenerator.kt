@@ -684,6 +684,12 @@ internal class BazelBuildFileGenerator(
         option("exported_compiler_plugins", listOf("@lib//:compose-plugin"))
       }
 
+      if (deps != null) {
+        if (deps.associates.isNotEmpty()) {
+          option("associates", deps.associates.sorted())
+        }
+      }
+
       if (javacOptionsLabel != null && sources.isNotEmpty()) {
         option("javac_opts", javacOptionsLabel)
       }
@@ -710,11 +716,7 @@ internal class BazelBuildFileGenerator(
       else if (customModule.resources.isNotEmpty()) {
         option("resource_jars", customModule.resources)
       }
-      if (deps != null) {
-        if (deps.associates.isNotEmpty()) {
-          option("associates", deps.associates.sorted())
-        }
-      }
+
       visibility(arrayOf("//visibility:public"))
 
       renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
@@ -728,15 +730,21 @@ internal class BazelBuildFileGenerator(
 
       option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
 
+      var testDeps = moduleList.testDeps.get(moduleDescriptor)
+
+      if (testDeps != null) {
+        if (testDeps.associates.isNotEmpty()) {
+          option("associates", testDeps.associates.sorted())
+        }
+      }
+
       javacOptionsLabel?.let { option("javac_opts", it) }
 
       kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-      var testDeps = moduleList.testDeps.get(moduleDescriptor)
       if (testDeps == null || testDeps.associates.isEmpty()) { // => in this case no 'associates' attribute will be generated
         option("module_name", module.name)
       }
-
 
       if (testDeps != null && testDeps.provided.isNotEmpty()) {
         val extraDeps = generateProvidedLibs(testDeps.provided - moduleList.deps.get(moduleDescriptor)?.provided.orEmpty().toSet())
@@ -745,12 +753,6 @@ internal class BazelBuildFileGenerator(
 
       if (testDeps != null && testDeps.plugins.isNotEmpty()) {
         option("plugins", testDeps.plugins.sorted())
-      }
-
-      if (testDeps != null) {
-        if (testDeps.associates.isNotEmpty()) {
-          option("associates", testDeps.associates.sorted())
-        }
       }
 
       if (testResourceJarTargets.isNotEmpty()) {

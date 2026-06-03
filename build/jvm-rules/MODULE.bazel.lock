@@ -216,7 +216,7 @@
   "moduleExtensions": {
     "//:test_bazel_tool.bzl%extension": {
       "general": {
-        "bzlTransitiveDigest": "est11jllaBqemO2wRWbP/MU5Yui83EQTsycXpbgCSMY=",
+        "bzlTransitiveDigest": "Gai1QviUnj+xK4Z6bU+BOmJdtsslbtSHsSD4759JUYo=",
         "usagesDigest": "0DI5Z35MVrDs8wXfP1Ook4eti7av+J3T5J1d37Agkl0=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
