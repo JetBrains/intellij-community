@@ -2,7 +2,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.TimerListener
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionDescriptorAction
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.xml.dom.XmlElement
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.awt.Component
 import java.awt.event.InputEvent
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -179,7 +182,6 @@ internal class ActionManagerImplActionRegistrationTest {
 
   @Test
   fun failedXmlActionRegistrationDoesNotPublishPendingSideEffects() {
-    val module = corePlugin()
     val state = ActionManagerState()
     val idToAction = HashMap<String, AnAction>()
     val boundShortcuts = HashMap<String, String>()
@@ -198,25 +200,20 @@ internal class ActionManagerImplActionRegistrationTest {
                    actionRegistrar = registrar)
     registerAction(actionId = actionId,
                    action = existingAction,
-                   pluginId = null,
-                   projectType = null,
-                   actionRegistrar = registrar)
+                    pluginId = null,
+                    projectType = null,
+                    actionRegistrar = registrar)
 
-    val result = ignoreLoggedErrors {
-      ActionPluginRegistrar().processActionElement(className = TestAction::class.java.name,
-                                                   isInternal = false,
-                                                   element = createXmlActionElement(actionId = actionId,
-                                                                                    groupId = groupId,
-                                                                                    sourceActionId = sourceActionId,
-                                                                                    abbreviation = abbreviation),
-                                                   actionRegistrar = registrar,
-                                                   module = module,
-                                                   bundleSupplier = { null },
-                                                   keymapToOperations = keymapToOperations,
-                                                   classLoader = javaClass.classLoader)
+    val module = createActionPluginDescriptor(createXmlActionElement(actionId = actionId,
+                                                                     groupId = groupId,
+                                                                     sourceActionId = sourceActionId,
+                                                                     abbreviation = abbreviation))
+    ignoreLoggedErrors {
+      ActionPluginRegistrar().registerActions(descriptors = sequenceOf(module),
+                                              keymapToOperations = keymapToOperations,
+                                              actionRegistrar = registrar)
     }
 
-    assertNull(result)
     assertTrue(keymapToOperations.isEmpty())
     assertNull(registrar.getActionBinding(actionId))
     assertTrue(AbbreviationManager.getInstance().getAbbreviations(actionId).isEmpty())
@@ -227,7 +224,6 @@ internal class ActionManagerImplActionRegistrationTest {
 
   @Test
   fun successfulXmlActionRegistrationPublishesPendingSideEffects() {
-    val module = corePlugin()
     val state = ActionManagerState()
     val idToAction = HashMap<String, AnAction>()
     val boundShortcuts = HashMap<String, String>()
@@ -241,26 +237,22 @@ internal class ActionManagerImplActionRegistrationTest {
     registerAction(actionId = groupId,
                    action = group,
                    pluginId = null,
-                   projectType = null,
-                   actionRegistrar = registrar)
+                    projectType = null,
+                    actionRegistrar = registrar)
     try {
-      val result = ActionPluginRegistrar().processActionElement(className = TestAction::class.java.name,
-                                                                isInternal = false,
-                                                                element = createXmlActionElement(actionId = actionId,
-                                                                                                 groupId = groupId,
-                                                                                                 sourceActionId = sourceActionId,
-                                                                                                 abbreviation = abbreviation),
-                                                                actionRegistrar = registrar,
-                                                                module = module,
-                                                                bundleSupplier = { null },
-                                                                keymapToOperations = keymapToOperations,
-                                                                classLoader = javaClass.classLoader)
+      val module = createActionPluginDescriptor(createXmlActionElement(actionId = actionId,
+                                                                       groupId = groupId,
+                                                                       sourceActionId = sourceActionId,
+                                                                       abbreviation = abbreviation))
+      ActionPluginRegistrar().registerActions(descriptors = sequenceOf(module),
+                                              keymapToOperations = keymapToOperations,
+                                              actionRegistrar = registrar)
 
-      assertSame(result, idToAction[actionId])
+      val action = idToAction[actionId]
       assertEquals(sourceActionId, registrar.getActionBinding(actionId))
       assertEquals(setOf(abbreviation), AbbreviationManager.getInstance().getAbbreviations(actionId))
       assertEquals(listOf(groupId), state.getParentGroupIds(actionId))
-      assertSame(result, group.childActionsOrStubs.single())
+      assertSame(action, group.childActionsOrStubs.single())
       val operation = keymapToOperations[defaultKeymapName()]?.single()
       assertTrue(operation is AddShortcutOperation)
       assertEquals(actionId, (operation as AddShortcutOperation).actionId)
@@ -345,8 +337,16 @@ internal class ActionManagerImplActionRegistrationTest {
     assertEquals(listOf(secondAction, firstAction), group.childActionsOrStubs.toList())
   }
 
-  private fun corePlugin(): IdeaPluginDescriptorImpl {
-    return PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!! as IdeaPluginDescriptorImpl
+  private fun createActionPluginDescriptor(actionElement: XmlElement): IdeaPluginDescriptorImpl {
+    val builder = PluginDescriptorBuilder.builder()
+    builder.id = "com.intellij.actionManagerImplActionRegistrationTest"
+    builder.addAction(ActionDescriptorAction(className = TestAction::class.java.name,
+                                            isInternal = false,
+                                            element = actionElement,
+                                            resourceBundle = null))
+    return PluginMainDescriptor(raw = builder.build(),
+                                pluginPath = Path.of("ActionManagerImplActionRegistrationTest"),
+                                isBundled = true)
   }
 
   private fun createXmlActionElement(actionId: String, groupId: String, sourceActionId: String, abbreviation: String): XmlElement {
