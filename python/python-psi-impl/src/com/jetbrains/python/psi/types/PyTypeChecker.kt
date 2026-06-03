@@ -1603,8 +1603,8 @@ object PyTypeChecker {
         var substitution = substitutionRef.derefOrUnknown()
         if (substitutionRef == null) {
           val invertedTypeVar: PyInstantiableType<*> = typeVarType.invert()
-          val invertedSubstitution = substitutions.typeVars[invertedTypeVar].derefOrUnknown() as? PyInstantiableType<*>
-          if (!invertedSubstitution.isUnknown) {
+          val invertedSubstitution = substitutions.typeVars[invertedTypeVar]?.get() as? PyInstantiableType<*>
+          if (invertedSubstitution != null && !invertedSubstitution.isUnknown) {
             substitution = invertedSubstitution.invert()
           }
         }
@@ -1640,7 +1640,7 @@ object PyTypeChecker {
           return clone(substitution)
         }
         // TODO For ParamSpecs, replace Any with (*args: Any, **kwargs: Any) as it's a logical "wildcard" for this kind of type parameter
-        return substitution
+        return substitution ?: PyAnyType.unknown
       }
 
       override fun visitPySelfType(selfType: PySelfType): PyType {
