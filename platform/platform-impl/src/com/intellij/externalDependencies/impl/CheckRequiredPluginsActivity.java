@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -7,11 +7,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginModuleDescriptor;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +33,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ import static java.util.Objects.requireNonNull;
 
 final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForSmartMode {
   private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
-  private static final @NonNls String NOTIFICATION_GROUP_ID = "Required Plugins";
+  private static final String NOTIFICATION_GROUP_ID = "Required Plugins";
 
   CheckRequiredPluginsActivity() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -58,21 +58,18 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     ExternalDependenciesManager.getInstance(project);
   }
 
-  private static List<DependencyOnPlugin> getRequiredPlugins(@NotNull ExternalDependenciesManager dependencyManager) {
-    List<DependencyOnPlugin> dependencies = new ArrayList<>(dependencyManager.getDependencies(DependencyOnPlugin.class));
+  private static List<DependencyOnPlugin> getRequiredPlugins(ExternalDependenciesManager dependencyManager) {
+    var dependencies = new ArrayList<>(dependencyManager.getDependencies(DependencyOnPlugin.class));
     if (!PlatformUtils.isPyCharm()) return dependencies;
     if (!PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) return dependencies;
 
     // Free mode
-    List<DependencyOnPlugin> result = new ArrayList<>();
-    for (DependencyOnPlugin plugin : dependencies) {
-      String pluginId = plugin.getPluginId();
-      IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
-      if (descriptor == null) {
-        continue;
-      }
-      var canBeEnabled =
-        !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
+    var result = new ArrayList<DependencyOnPlugin>();
+    for (var plugin : dependencies) {
+      var pluginId = plugin.getPluginId();
+      var descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
+      if (descriptor == null) continue;
+      var canBeEnabled = !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
       if (canBeEnabled) {
         result.add(plugin);
       }
@@ -81,37 +78,39 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
   }
 
   public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {
-    List<DependencyOnPlugin> dependencies = getRequiredPlugins(dependencyManager);
-
+    var dependencies = getRequiredPlugins(dependencyManager);
     if (dependencies.isEmpty()) {
       return;
     }
 
-    String projectName = project.getName();
+    var projectName = project.getName();
 
-    List<@Nls String> errorMessages = new ArrayList<>();
-    List<IdeaPluginDescriptor> disabled = new ArrayList<>();
-    Set<PluginId> notInstalled = new HashSet<>();
-    boolean hasVersionConflicts = false;
+    var errorMessages = new ArrayList<@Nls String>();
+    var disabled = new ArrayList<IdeaPluginDescriptor>();
+    var notInstalled = new HashSet<PluginId>();
+    var hasVersionConflicts = false;
 
-    List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
+    var pluginsToEnableWithoutRestart = new ArrayList<IdeaPluginDescriptor>();
 
-    ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
-    PluginEnabler pluginEnabler = PluginEnabler.getInstance();
+    var applicationInfo = ApplicationInfo.getInstance();
+    var pluginEnabler = PluginEnabler.getInstance();
 
-    for (DependencyOnPlugin dependency : dependencies) {
-      PluginId pluginId = PluginId.getId(dependency.getPluginId());
-      PluginMainDescriptor descriptor = (PluginMainDescriptor)PluginManagerCore.findPlugin(pluginId);
+    for (var dependency : dependencies) {
+      var pluginId = PluginId.getId(dependency.getPluginId());
+      var descriptor = (PluginModuleDescriptor)PluginManagerCore.findPlugin(pluginId);
       if (descriptor == null) {
         errorMessages.add(IdeBundle.message("error.plugin.required.for.project.not.installed", pluginId, projectName));
         notInstalled.add(pluginId);
         continue;
       }
 
-      String pluginName = descriptor.getName();
+      var pluginName = descriptor.getName();
       if (pluginEnabler.isDisabled(pluginId)) {
-        boolean canEnableWithoutRestart = Registry.is("ide.plugins.load.automatically") &&
-                                          DynamicPlugins.INSTANCE.checkCanLoadWithoutRestart(descriptor);
+        var canEnableWithoutRestart = (
+          Registry.is("ide.plugins.load.automatically") &&
+          descriptor instanceof PluginMainDescriptor mainDescriptor &&
+          DynamicPlugins.INSTANCE.checkCanLoadWithoutRestart(mainDescriptor)
+        );
         if (canEnableWithoutRestart) {
           pluginsToEnableWithoutRestart.add(descriptor);
         }
@@ -122,39 +121,37 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
         continue;
       }
 
-      String minVersion = dependency.getMinVersion();
-      String maxVersion = dependency.getMaxVersion();
-      String pluginVersion = descriptor.getVersion();
+      var minVersion = dependency.getMinVersion();
+      var maxVersion = dependency.getMaxVersion();
+      var pluginVersion = descriptor.getVersion();
 
-      BuildNumber currentIdeVersion = applicationInfo.getBuild();
+      var currentIdeVersion = applicationInfo.getBuild();
       if (descriptor.isBundled() &&
           !descriptor.allowBundledUpdate() &&
           currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
-        String pluginFromString = PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ? "" : "plugin '" + pluginName + "' from ";
-        if (minVersion != null && !minVersion.isEmpty()
-            && currentIdeVersion.compareTo(requireNonNull(BuildNumber.fromString(minVersion))) < 0) {
-          errorMessages.add(
-            IdeBundle.message("error.project.requires.newer.ide", projectName, pluginFromString, minVersion, pluginVersion));
-
+        var pluginFromString = PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ? "" : "plugin '" + pluginName + "' from ";
+        if (
+          minVersion != null && !minVersion.isEmpty() &&
+          currentIdeVersion.compareTo(requireNonNull(BuildNumber.fromString(minVersion))) < 0
+        ) {
+          errorMessages.add(IdeBundle.message("error.project.requires.newer.ide", projectName, pluginFromString, minVersion, pluginVersion));
           hasVersionConflicts = true;
         }
-        if (maxVersion != null && !maxVersion.isEmpty()
-            && currentIdeVersion.compareTo(requireNonNull(BuildNumber.fromString(maxVersion))) > 0) {
-          errorMessages.add(
-            IdeBundle.message("error.project.requires.older.ide", projectName, pluginFromString, maxVersion, pluginVersion));
-
+        if (
+          maxVersion != null && !maxVersion.isEmpty() &&
+          currentIdeVersion.compareTo(requireNonNull(BuildNumber.fromString(maxVersion))) > 0
+        ) {
+          errorMessages.add(IdeBundle.message("error.project.requires.older.ide", projectName, pluginFromString, maxVersion, pluginVersion));
           hasVersionConflicts = true;
         }
       }
       else {
         if (minVersion != null && VersionComparatorUtil.compare(pluginVersion, minVersion) < 0) {
           errorMessages.add(IdeBundle.message("error.project.requires.newer.plugin", projectName, pluginName, minVersion, pluginVersion));
-
           hasVersionConflicts = true;
         }
         if (maxVersion != null && VersionComparatorUtil.compare(pluginVersion, maxVersion) > 0) {
           errorMessages.add(IdeBundle.message("error.project.requires.older.plugin", projectName, pluginName, maxVersion, pluginVersion));
-
           hasVersionConflicts = true;
         }
       }
@@ -170,20 +167,18 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       return;
     }
 
-    LOG.warn(StringUtil.join(errorMessages, "\n"));
+    LOG.warn(String.join("\n", errorMessages));
 
-    var notificationMessage = hasVersionConflicts ?
-                              StringUtil.join(errorMessages, "<br>") : buildRequiredPluginsMessage(projectName, disabled, notInstalled);
+    @SuppressWarnings("HardCodedStringLiteral") var notificationMessage =
+      hasVersionConflicts ? String.join("<br>", errorMessages) : buildRequiredPluginsMessage(projectName, disabled, notInstalled);
 
     var notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-      .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), notificationMessage,
-                          NotificationType.ERROR)
+      .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), notificationMessage, NotificationType.ERROR)
       .setIcon(AllIcons.Ide.Notification.IdeUpdate);
 
     if (!disabled.isEmpty()) {
-      notification.addAction(NotificationAction.create(disabled.size() == 1 ?
-                                                       IdeBundle.message("link.enable.required.plugin", disabled.get(0).getName()) :
-                                                       IdeBundle.message("link.enable.required.plugins"), (event, n) -> {
+      var text = disabled.size() == 1 ? IdeBundle.message("link.enable.required.plugin", disabled.getFirst().getName()) : IdeBundle.message("link.enable.required.plugins");
+      notification.addAction(NotificationAction.create(text, (_, n) -> {
         n.expire();
         if (!enablePlugins(disabled, pluginEnabler)) {
           PluginManagerMain.notifyPluginsUpdated(project);
@@ -191,10 +186,10 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       }));
     }
     else if (!notInstalled.isEmpty()) {
-      notification.addAction(NotificationAction.create(IdeBundle.message("link.install.required.plugins"), (event, n) -> {
-        HashSet<PluginId> pluginIds = new HashSet<>(notInstalled);
+      notification.addAction(NotificationAction.create(IdeBundle.message("link.install.required.plugins"), (_, n) -> {
+        var pluginIds = new HashSet<>(notInstalled);
         pluginIds.addAll(notInstalled);
-        for (IdeaPluginDescriptor descriptor : disabled) {
+        for (var descriptor : disabled) {
           pluginIds.add(descriptor.getPluginId());
         }
 
@@ -211,21 +206,24 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     notification.setSuggestionType(true).notify(project);
   }
 
-  private static @Nls @NotNull String buildRequiredPluginsMessage(@NotNull String projectName,
-                                                                  List<IdeaPluginDescriptor> disabledPlugins,
-                                                                  Set<PluginId> notInstalledPlugins) {
+  private static @Nls String buildRequiredPluginsMessage(
+    String projectName,
+    List<IdeaPluginDescriptor> disabledPlugins,
+    Set<PluginId> notInstalledPlugins
+  ) {
     if (disabledPlugins.isEmpty()) {
       if (notInstalledPlugins.size() == 1) {
-        PluginId pluginId = notInstalledPlugins.iterator().next();
+        var pluginId = notInstalledPlugins.iterator().next();
         return IdeBundle.message("error.plugin.required.for.project.not.installed", pluginId, projectName);
       }
 
-      HtmlBuilder message = new HtmlBuilder();
+      var message = new HtmlBuilder();
       message.append(IdeBundle.message("error.project.requires.plugins.not.installed", projectName));
 
       message.appendRaw("<ul>");
-      for (PluginId p : notInstalledPlugins) {
-        message.appendRaw("<li>").append(p.getIdString()).appendRaw("</li>");
+      for (var p : notInstalledPlugins) {
+        @NlsSafe var idString = p.getIdString();
+        message.appendRaw("<li>").append(idString).appendRaw("</li>");
       }
       message.appendRaw("</ul>");
 
@@ -233,11 +231,11 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     }
 
     if (disabledPlugins.size() == 1 && notInstalledPlugins.isEmpty()) {
-      var plugin = disabledPlugins.get(0);
+      var plugin = disabledPlugins.getFirst();
       return IdeBundle.message("error.plugin.required.for.project.disabled", plugin.getName(), projectName);
     }
 
-    HtmlBuilder message = new HtmlBuilder();
+    var message = new HtmlBuilder();
     message.append(IdeBundle.message("error.project.requires.plugins.not.enabled", projectName));
 
     message.appendRaw("<ul>");
@@ -245,15 +243,15 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       message.appendRaw("<li>").append(p.getName()).appendRaw("</li>");
     }
     for (var p : notInstalledPlugins) {
-      message.appendRaw("<li>").append(p.getIdString()).appendRaw("</li>");
+      @NlsSafe var idString = p.getIdString();
+      message.appendRaw("<li>").append(idString).appendRaw("</li>");
     }
     message.appendRaw("</ul>");
 
     return message.toString();
   }
 
-  private static boolean enablePlugins(@NotNull List<? extends IdeaPluginDescriptor> descriptors,
-                                       @NotNull PluginEnabler pluginEnabler) {
+  private static boolean enablePlugins(List<IdeaPluginDescriptor> descriptors, PluginEnabler pluginEnabler) {
     LOG.info("Required plugins to enable: [" + StringUtil.join(descriptors, d -> d.getPluginId().getIdString(), ", ") + "]");
     return pluginEnabler.enable(descriptors);
   }
