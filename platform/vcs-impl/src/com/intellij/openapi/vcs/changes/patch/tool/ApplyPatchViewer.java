@@ -105,7 +105,7 @@ class ApplyPatchViewer implements Disposable {
   private final @NotNull StatusPanel myStatusPanel;
   private final @NotNull MyFoldingModel myFoldingModel;
 
-  private final @NotNull SetEditorSettingsActionGroup myEditorSettingsAction;
+  protected final @NotNull SetEditorSettingsActionGroup myEditorSettingsAction;
 
   // Changes with known AppliedTo. Ordered as in result-editor
   private final @NotNull List<ApplyPatchChange> myResultChanges = new ArrayList<>();
@@ -190,7 +190,6 @@ class ApplyPatchViewer implements Disposable {
 
     if (!isReadOnly()) {
       group.add(new MyToggleExpandByDefaultAction());
-      group.add(myEditorSettingsAction);
       group.add(Separator.getInstance());
       group.add(new ShowDiffWithLocalAction());
       group.add(new ApplyNonConflictsAction());

@@ -166,6 +166,7 @@ internal class SideBySidePatchDiffViewer(
 
     val toolbarComponents = FrameDiffTool.ToolbarComponents()
     toolbarComponents.toolbarActions = createToolbarActions()
+    toolbarComponents.rightToolbarActions = listOf(editorSettingsAction)
     return toolbarComponents
   }
 
@@ -260,12 +261,11 @@ internal class SideBySidePatchDiffViewer(
 
   @RequiresEdt
   private fun createToolbarActions(): List<AnAction> {
-    val group = mutableListOf<AnAction>()
-    group.add(ToggleAutoScrollAction(textSettings))
-    group.add(editorSettingsAction)
-    group.add(Separator.getInstance())
-    group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
-    return group
+    return buildList {
+      add(ToggleAutoScrollAction(textSettings))
+      add(Separator.getInstance())
+      add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
+    }
   }
 
   private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<PatchSideChange>() {

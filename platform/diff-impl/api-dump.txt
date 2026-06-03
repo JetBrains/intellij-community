@@ -399,9 +399,9 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - p:applyRequest(com.intellij.diff.requests.DiffRequest,Z,com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):V
 - p:applyRequest(com.intellij.diff.requests.DiffRequest,Z,com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy,Z):V
 - p:buildActionPopup(java.util.List):V
-- p:buildToolbar(java.util.List):V
+- p:buildToolbar(java.util.List,java.util.List):V
 - p:collectPopupActions(java.util.List):V
-- p:collectToolbarActions(java.util.List):V
+- p:collectToolbarActions(java.util.List,java.util.List):V
 - p:createAfterNavigateCallback():java.lang.Runnable
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
 - dispose():V
@@ -598,11 +598,13 @@ c:com.intellij.diff.tools.binary.BinaryDiffTool
 - <init>():V
 - canShow(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
+- getIcon():javax.swing.Icon
 - getName():java.lang.String
 c:com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer
 - com.intellij.diff.tools.util.base.DiffViewerBase
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):V
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- p:createRightToolbarActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:processContextHints():V
@@ -800,6 +802,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - p:createAdditionalEditorGutterActions():java.util.List
 - p:createEditorPopupChangesActions():java.util.List
 - createPopupActions():java.util.List
+- createRightToolbarActions():java.util.List
 - p:createTitles():javax.swing.JComponent
 - createToolbarActions():java.util.List
 - getComponent():javax.swing.JComponent
@@ -948,6 +951,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:createEditorPopupActions():java.util.List
 - p:createEditorPopupChangesActions():java.util.List
 - p:createPopupActions():java.util.List
+- p:createRightToolbarActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:createUi(com.intellij.diff.tools.simple.SimpleDiffChange):com.intellij.diff.tools.simple.SimpleDiffChangeUi
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
@@ -1007,6 +1011,7 @@ c:com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - p:createAdditionalEditorGutterActions():java.util.List
 - p:createPopupActions():java.util.List
+- p:createRightToolbarActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
@@ -1030,6 +1035,7 @@ c:com.intellij.diff.tools.simple.SimpleThreesideDiffViewer
 - s:canShowRequest(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - p:createEditorPopupActions():java.util.List
 - p:createPopupActions():java.util.List
+- p:createRightToolbarActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:destroyChangedBlocks():V
 - getChanges():java.util.List
@@ -1335,6 +1341,7 @@ a:com.intellij.diff.tools.util.base.DiffViewerBase
 - f:abortRediff():V
 - addListener(com.intellij.diff.tools.util.base.DiffViewerListener):V
 - p:createPopupActions():java.util.List
+- p:createRightToolbarActions():java.util.List
 - p:createToolbarActions():java.util.List
 - f:dispose():V
 - p:forceRediffSynchronously():Z

@@ -151,6 +151,7 @@ c:com.intellij.diff.FrameDiffTool$ToolbarComponents
 - diffInfo:com.intellij.diff.FrameDiffTool$DiffInfo
 - needTopToolbarBorder:Z
 - popupActions:java.util.List
+- rightToolbarActions:java.util.List
 - statusPanel:javax.swing.JComponent
 - toolbarActions:java.util.List
 - <init>():V
@@ -343,6 +344,7 @@ com.intellij.diff.merge.MergeTool$MergeViewer
 - a:init():com.intellij.diff.merge.MergeTool$ToolbarComponents
 f:com.intellij.diff.merge.MergeTool$ToolbarComponents
 - closeHandler:kotlin.jvm.functions.Function0
+- rightToolbarActions:java.util.List
 - statusPanel:javax.swing.JComponent
 - toolbarActions:java.util.List
 - <init>():V

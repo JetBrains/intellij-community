@@ -62,6 +62,7 @@ public interface FrameDiffTool extends DiffTool {
 
   class ToolbarComponents {
     public @Nullable List<AnAction> toolbarActions;
+    public @Nullable List<AnAction> rightToolbarActions;
     public @Nullable List<AnAction> popupActions;
     public @Nullable JComponent statusPanel;
     public @Nullable DiffInfo diffInfo;

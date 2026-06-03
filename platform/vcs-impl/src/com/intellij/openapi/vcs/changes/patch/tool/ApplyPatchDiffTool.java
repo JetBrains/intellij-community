@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
@@ -7,6 +7,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 @ApiStatus.Internal
 public class ApplyPatchDiffTool implements FrameDiffTool {
@@ -37,6 +38,7 @@ public class ApplyPatchDiffTool implements FrameDiffTool {
       ToolbarComponents components = new ToolbarComponents();
       components.statusPanel = getStatusPanel();
       components.toolbarActions = createToolbarActions();
+      components.rightToolbarActions = List.of(myEditorSettingsAction);
 
       return components;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
@@ -25,6 +25,7 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 final class ApplyPatchMergeTool implements MergeTool {
   @Override
@@ -60,7 +61,7 @@ final class ApplyPatchMergeTool implements MergeTool {
       ToolbarComponents components = new ToolbarComponents();
       components.statusPanel = getStatusPanel();
       components.toolbarActions = createToolbarActions();
-
+      components.rightToolbarActions = List.of(myEditorSettingsAction);
       components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, true);
       return components;
     }

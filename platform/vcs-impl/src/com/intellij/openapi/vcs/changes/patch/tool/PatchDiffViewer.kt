@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -100,6 +99,7 @@ internal class PatchDiffViewer(
 
     val toolbarComponents = FrameDiffTool.ToolbarComponents()
     toolbarComponents.toolbarActions = createToolbarActions()
+    toolbarComponents.rightToolbarActions = listOf(editorSettingsAction)
     return toolbarComponents
   }
 
@@ -133,11 +133,9 @@ internal class PatchDiffViewer(
 
   @RequiresEdt
   private fun createToolbarActions(): List<AnAction> {
-    val group = mutableListOf<AnAction>()
-    group.add(editorSettingsAction)
-    group.add(Separator.getInstance())
-    group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
-    return group
+    return buildList {
+      add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
+    }
   }
 
   private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<Hunk>() {

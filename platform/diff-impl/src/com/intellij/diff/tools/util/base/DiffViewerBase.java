@@ -67,6 +67,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = createToolbarActions();
+    components.rightToolbarActions = createRightToolbarActions();
     components.popupActions = createPopupActions();
     components.statusPanel = getStatusPanel();
 
@@ -211,6 +212,10 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     List<AnAction> group = new ArrayList<>();
     group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR));
     return group;
+  }
+
+  protected List<AnAction> createRightToolbarActions() {
+    return List.of();
   }
 
   protected List<AnAction> createPopupActions() {

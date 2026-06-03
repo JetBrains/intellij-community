@@ -236,14 +236,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new RevertConflictResolutionAction(this));
 
     group.add(Separator.getInstance());
-
-    List<AnAction> diffActions = new ArrayList<>();
-    diffActions.add(new MyToggleAutoScrollAction());
-    diffActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ResolveConflictsInImports"));
-    myEditorSettingsAction.setSettingsActions(diffActions, myTextDiffProvider.getDiffSettingsActions());
-
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(myEditorSettingsAction);
 
     AnAction additionalActions = ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions");
     if (additionalActions instanceof ActionGroup) {
@@ -251,6 +244,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     return group;
+  }
+
+  @Override
+  protected @NotNull List<AnAction> createRightToolbarActions() {
+    List<AnAction> diffActions = new ArrayList<>();
+    diffActions.add(new MyToggleAutoScrollAction());
+    diffActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ResolveConflictsInImports"));
+    myEditorSettingsAction.setSettingsActions(diffActions, myTextDiffProvider.getDiffSettingsActions());
+
+    return List.of(myEditorSettingsAction);
   }
 
   @Override
