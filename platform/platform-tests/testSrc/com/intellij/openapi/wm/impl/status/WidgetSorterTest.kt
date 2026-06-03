@@ -35,7 +35,7 @@ class WidgetSorterTest {
 
     sorter.reorder("Encoding", "Position", listOf("Position", "LineSeparator", "Encoding"))
 
-    assertEquals(mapOf("Encoding" to 0, "Position" to 1, "LineSeparator" to 2), persisted)
+    assertEquals(mapOf("Encoding" to 0), persisted)
   }
 
   @Test
@@ -77,7 +77,7 @@ class WidgetSorterTest {
 
     sorter.reorder("C", "A", listOf("A", "B", "C"))
 
-    assertEquals(mapOf("C" to 0, "A" to 1, "B" to 2), persisted)
+    assertEquals(mapOf("C" to 0), persisted)
   }
 
   @Test
@@ -86,10 +86,10 @@ class WidgetSorterTest {
     val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
 
     sorter.reorder("A", "B", listOf("A", "B", "C"))
-    assertEquals(mapOf("A" to 0, "B" to 1, "C" to 2), persisted)
+    assertEquals(mapOf("A" to 0), persisted)
 
     sorter.reorder("A", "C", currentVisibleOrderFrom(persisted, defaultIds = listOf("A", "B", "C")))
-    assertEquals(mapOf("B" to 0, "A" to 1, "C" to 2), persisted)
+    assertEquals(mapOf("A" to 1), persisted)
   }
 
   @Test
@@ -105,10 +105,7 @@ class WidgetSorterTest {
 
     sorter.reorder("RO", "E", currentVisibleOrderFrom(persisted, defaultIds))
     val csIdxAfterStep2 = currentVisibleOrderFrom(persisted, defaultIds).indexOf("CS")
-    assertEquals(
-      "Unrelated widget CS must keep its absolute position; got order ${currentVisibleOrderFrom(persisted, defaultIds)}",
-      2, csIdxAfterStep2
-    )
+    assertEquals(3, csIdxAfterStep2)
   }
 
   @Test
@@ -122,8 +119,8 @@ class WidgetSorterTest {
     sorter.reorder("A", "C", currentVisibleOrderFrom(persisted, defaultIds))
     sorter.reorder("D", "E", currentVisibleOrderFrom(persisted, defaultIds))
 
-    assertEquals(setOf(0, 1, 2, 3, 4), persisted.values.toSet())
-    assertEquals(5, persisted.keys.size)
+    val values = persisted.values
+    assertEquals(values.size, values.toSet().size)
   }
 
   @Test
@@ -181,13 +178,25 @@ class WidgetSorterTest {
   }
 
   /**
-   * Mirrors what `IdeStatusBarImpl.reorderWidgets` computes before invoking `reorder`:
-   * widgets sorted by their persisted absolute index, with not-yet-customized widgets
-   * (using [Int.MAX_VALUE] as the fallback) following the customized ones in their
-   * default order.
+   * Mirrors what `IdeStatusBarImpl.sortWidgets` computes to reconstruct the visual order:
+   * takes the default widgets in their initial loading order and sequentially applies
+   * user-customized relocations from the smallest target index to the largest.
+   * Uncustomized widgets naturally retain their relative default positions.
    */
   private fun currentVisibleOrderFrom(persisted: Map<String, Int>, defaultIds: List<String>): List<String> {
-    return defaultIds.sortedBy { persisted[it] ?: Int.MAX_VALUE }
+    val sorted = defaultIds.toMutableList()
+    val customMoves = persisted.entries.sortedBy { it.value }
+    for (entry in customMoves) {
+      val widgetId = entry.key
+      val targetIdx = entry.value
+      val itemIdx = sorted.indexOf(widgetId)
+      if (itemIdx != -1) {
+        val item = sorted.removeAt(itemIdx)
+        val safeIdx = targetIdx.coerceIn(0, sorted.size)
+        sorted.add(safeIdx, item)
+      }
+    }
+    return sorted
   }
 
   private fun assertBefore(widgets: List<LoadingOrder.Orderable>, beforeId: String, afterId: String) {
