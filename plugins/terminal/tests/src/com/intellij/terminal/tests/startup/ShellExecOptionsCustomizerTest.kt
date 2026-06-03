@@ -38,6 +38,7 @@ import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.ShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizerDisabler
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -305,6 +306,29 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
     }
   }
 
+  @Test
+  fun `ShellExecOptionsCustomizerDisabler disables PATH edits`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val dir = tempDir.asDirectory()
+    register(customizer {
+      it.appendEntryToPATH(dir.nioDir)
+    })
+
+    val disabler = object : ShellExecOptionsCustomizerDisabler {
+      override fun shouldDisable(project: Project): Boolean =
+        project == this@ShellExecOptionsCustomizerTest.project
+    }
+    ExtensionTestUtil.maskExtensions(
+      ShellExecOptionsCustomizerDisabler.EP_NAME,
+      listOf(disabler),
+      testDisposable,
+    )
+
+    val result = configureStartupOptions(dir, false) {
+      it[PATH] = ""
+    }
+    result.assertPathLikeEnv(PATH, *emptyArray())
+  }
+
   private fun customizer(handler: (execOptions: MutableShellExecOptions) -> Unit): ShellExecOptionsCustomizer {
     return object : ShellExecOptionsCustomizer {
       override fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions) {
@@ -380,9 +404,9 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
   }
 
   private fun CustomizationResult.assertPathLikeEnv(envName: String, vararg expectedEntries: String) {
-    val expectedValue = expectedEntries.toList().reduce { result, entries ->
+    val expectedValue = expectedEntries.toList().reduceOrNull { result, entries ->
       joinEntries(result, entries, eelApi.descriptor)
-    }
+    } ?: ""
     Assertions.assertThat(shellExecOptions.envs[envName]).isEqualTo(expectedValue)
   }
 

@@ -11,6 +11,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl;
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand;
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl;
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizerDisabler;
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 
 import java.nio.charset.Charset;
@@ -89,6 +91,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
+    boolean disableCustomizers = ContainerUtil.exists(ShellExecOptionsCustomizerDisabler.EP_NAME.getExtensionList(), disabler -> {
+      return disabler.shouldDisable(myProject);
+    });
+    if (disableCustomizers) return options;
+
     List<String> shellCommand = Objects.requireNonNull(options.getShellCommand(), () -> {
       return "Shell command must not be null, " + options;
     });
