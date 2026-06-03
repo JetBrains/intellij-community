@@ -22,8 +22,9 @@
                 "groupId": "org.jetbrains.kotlinx",
                 "artifactId": "kotlinx-datetime",
                 "versions": {
-                    "2.3": "0.7.1",
-                    "2.2": "0.7.1",
+                    "2.4": "0.8.0",
+                    "2.3": "0.8.0",
+                    "2.2": "0.8.0",
                     "2.1": "0.7.1",
                     "2.0": "0.6.2",
                     "1.9": "0.6.2",
@@ -37,7 +38,8 @@
                 "groupId": "org.jetbrains.kotlinx",
                 "artifactId": "kotlinx-serialization-json",
                 "versions": {
-                    "2.3": "1.9.0",
+                    "2.4": "1.11.0",
+                    "2.3": "1.10.0",
                     "2.2": "1.9.0",
                     "2.1": "1.9.0",
                     "2.0": "1.7.3",
