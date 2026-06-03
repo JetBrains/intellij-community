@@ -47,7 +47,6 @@ kotlin {
     }
   }
   sourceSets.jvmMain.dependencies {
-    api(jps.org.junit.jupiter.junit.jupiter.api1894444205.get())
     api(jps.org.junit.jupiter.junit.jupiter.engine1404327319.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
@@ -57,6 +56,7 @@ kotlin {
     api(jps.org.jetbrains.kotlin.kotlin.test.junit5960045374.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
+    api(jps.org.junit.jupiter.junit.jupiter.api1894444205.get())
     api(jps.org.junit.jupiter.junit.jupiter.params1101092435.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }

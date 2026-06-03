@@ -6224,10 +6224,10 @@ http_file(
 )
 
 http_file(
-    name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http",
-    downloaded_file_path = "junit-jupiter-api-5.13.4.jar",
-    sha256 = "d1bb81abfd9e03418306b4e6a3390c8db52c58372e749c2980ac29f0c08278f1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4.jar",
+    name = "org_junit_jupiter-junit-jupiter-api-6_0_0_http",
+    downloaded_file_path = "junit-jupiter-api-6.0.0.jar",
+    sha256 = "88d690d2d373cd66170770c317977196ce9e465f2388930f4bc9665e887385f6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0.jar",
 )
 
 http_file(
@@ -6238,10 +6238,10 @@ http_file(
 )
 
 http_file(
-    name = "org_junit_platform-junit-platform-commons-1_13_4_http",
-    downloaded_file_path = "junit-platform-commons-1.13.4.jar",
-    sha256 = "1c25ca641ebaae44ff3ad21ca1b2ef68d0dd84bfeb07c4805ba7840899b77408",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar",
+    name = "org_junit_platform-junit-platform-commons-6_0_0_http",
+    downloaded_file_path = "junit-platform-commons-6.0.0.jar",
+    sha256 = "86e8faf87f3151a3d545850852a0f2cc55ea8a2434eee9e08f83881c52d55992",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar",
 )
 
 http_file(
@@ -6252,10 +6252,10 @@ http_file(
 )
 
 http_file(
-    name = "org_junit_jupiter-junit-jupiter-api-5_13_4-sources_http",
-    downloaded_file_path = "junit-jupiter-api-5.13.4-sources.jar",
-    sha256 = "c6d33325ffa47307b795c13cb227f002417eebf0927e40487159c53938f2793e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4-sources.jar",
+    name = "org_junit_jupiter-junit-jupiter-api-6_0_0-sources_http",
+    downloaded_file_path = "junit-jupiter-api-6.0.0-sources.jar",
+    sha256 = "52a9bb01e348a87c5743c6555274be8999d72ebdae0db3991b99f24bcd078e5e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0-sources.jar",
 )
 
 http_file(
@@ -6266,10 +6266,10 @@ http_file(
 )
 
 http_file(
-    name = "org_junit_platform-junit-platform-commons-1_13_4-sources_http",
-    downloaded_file_path = "junit-platform-commons-1.13.4-sources.jar",
-    sha256 = "8bf2533dc967499bbb957a7b1cd0be471a0794d8d792fcb47c66393edfa66503",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4-sources.jar",
+    name = "org_junit_platform-junit-platform-commons-6_0_0-sources_http",
+    downloaded_file_path = "junit-platform-commons-6.0.0-sources.jar",
+    sha256 = "eb76cc1b09296370774f1de11c2fa037464753d98f0d542312e270b647a4c106",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar",
 )
 
 http_file(
@@ -6277,34 +6277,6 @@ http_file(
     downloaded_file_path = "apiguardian-api-1.1.2-sources.jar",
     sha256 = "277a7a4315412817beb6655b324dc7276621e95ebff00b8bf65e17a27b685e2d",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar",
-)
-
-http_file(
-    name = "org_junit_jupiter-junit-jupiter-api-6_0_0_http",
-    downloaded_file_path = "junit-jupiter-api-6.0.0.jar",
-    sha256 = "88d690d2d373cd66170770c317977196ce9e465f2388930f4bc9665e887385f6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0.jar",
-)
-
-http_file(
-    name = "org_junit_platform-junit-platform-commons-6_0_0_http",
-    downloaded_file_path = "junit-platform-commons-6.0.0.jar",
-    sha256 = "86e8faf87f3151a3d545850852a0f2cc55ea8a2434eee9e08f83881c52d55992",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar",
-)
-
-http_file(
-    name = "org_junit_jupiter-junit-jupiter-api-6_0_0-sources_http",
-    downloaded_file_path = "junit-jupiter-api-6.0.0-sources.jar",
-    sha256 = "52a9bb01e348a87c5743c6555274be8999d72ebdae0db3991b99f24bcd078e5e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0-sources.jar",
-)
-
-http_file(
-    name = "org_junit_platform-junit-platform-commons-6_0_0-sources_http",
-    downloaded_file_path = "junit-platform-commons-6.0.0-sources.jar",
-    sha256 = "eb76cc1b09296370774f1de11c2fa037464753d98f0d542312e270b647a4c106",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar",
 )
 
 http_file(
@@ -9819,6 +9791,34 @@ http_file(
     downloaded_file_path = "jsvg-2.1.0-sources.jar",
     sha256 = "6616050e4b185d5a7313f8ea9f4c5446a1d26ac880e1c35cccf44c9176bbd866",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0-sources.jar",
+)
+
+http_file(
+    name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http",
+    downloaded_file_path = "junit-jupiter-api-5.13.4.jar",
+    sha256 = "d1bb81abfd9e03418306b4e6a3390c8db52c58372e749c2980ac29f0c08278f1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4.jar",
+)
+
+http_file(
+    name = "org_junit_platform-junit-platform-commons-1_13_4_http",
+    downloaded_file_path = "junit-platform-commons-1.13.4.jar",
+    sha256 = "1c25ca641ebaae44ff3ad21ca1b2ef68d0dd84bfeb07c4805ba7840899b77408",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar",
+)
+
+http_file(
+    name = "org_junit_jupiter-junit-jupiter-api-5_13_4-sources_http",
+    downloaded_file_path = "junit-jupiter-api-5.13.4-sources.jar",
+    sha256 = "c6d33325ffa47307b795c13cb227f002417eebf0927e40487159c53938f2793e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4-sources.jar",
+)
+
+http_file(
+    name = "org_junit_platform-junit-platform-commons-1_13_4-sources_http",
+    downloaded_file_path = "junit-platform-commons-1.13.4-sources.jar",
+    sha256 = "8bf2533dc967499bbb957a7b1cd0be471a0794d8d792fcb47c66393edfa66503",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4-sources.jar",
 )
 
 http_file(

@@ -190,7 +190,7 @@
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />

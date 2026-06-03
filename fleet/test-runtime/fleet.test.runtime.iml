@@ -7,7 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="JUnit5Jupiter" type="repository">

@@ -45,7 +45,8 @@ jvm_library(
         "//platform/util-rt:util-rt_test_lib",
         "@lib//:kotlin-test",
         "@lib//:kotlin-test-junit5",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.text.matching` end
@@ -103,7 +104,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:kotlin-test",
         "@lib//:kotlin-test-junit5",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.text.matching.tests` end

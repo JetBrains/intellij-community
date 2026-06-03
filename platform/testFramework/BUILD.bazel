@@ -286,7 +286,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit5-provided",
+        "//libraries/junit5",
         "//libraries/junit5-params",
         "//libraries/junit4",
         "//platform/ide-core-impl",
@@ -320,7 +320,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit5-provided",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
         "//libraries/junit4",
@@ -351,7 +352,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:jet_check",
-        "@lib//:junit5-provided",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
         "//libraries/assertj-core",

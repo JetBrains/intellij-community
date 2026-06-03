@@ -218,7 +218,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   public void testRunAllInPackageJUnit5() throws ExecutionException, IOException {
     
     VirtualFile module1Content = findFile("module7");
-    createModule(module1Content, true, "JUnit5");
+    createModuleWithJUnit5(module1Content);
     Module module = getModule(3);
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("tests1");
     JUnitConfiguration configuration = createConfiguration(psiPackage, module);
@@ -234,7 +234,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   public void testPatternConfigurationWith() throws ExecutionException, IOException {
 
     VirtualFile module1Content = findFile("moduleWithBothVersions");
-    createModule(module1Content, true, "JUnit5");
+    createModuleWithJUnit5(module1Content);
 
     Module module = getModule(3);
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
@@ -721,6 +721,11 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     assertNotNull(output);
     PsiTestUtil.setCompilerOutputPath(module, output.getUrl(), testOutput);
     return output.getPath().replace('/', File.separatorChar);
+  }
+
+  private void createModuleWithJUnit5(VirtualFile moduleContent) {
+    createModule(moduleContent, true, "JUnit5",
+                 IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit5", "JUnit5"));
   }
 
   private static void addSourcePath(Module module, String path, boolean testSource) {

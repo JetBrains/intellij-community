@@ -200,7 +200,8 @@ jvm_library(
         "@lib//:kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-common",
         "@lib//:kotlinc-kotlin-scripting-jvm",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.main.kts.tests` end

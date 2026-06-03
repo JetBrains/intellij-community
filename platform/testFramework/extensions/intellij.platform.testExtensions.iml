@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="library" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="module" module-name="intellij.java.rt" />
   </component>
 </module>

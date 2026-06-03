@@ -16,7 +16,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit5",
+        "//libraries/junit5",
         "//libraries/junit5-params",
         "@lib//:fleet-test-runtime-_j_unit5_jupiter",
         "//libraries/junit5-launcher",
@@ -26,7 +26,7 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:junit5",
+        "//libraries/junit5",
         "//libraries/junit5-params",
         "@lib//:fleet-test-runtime-_j_unit5_jupiter",
         "//libraries/junit5-launcher",
@@ -47,7 +47,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
         "@lib//:fleet-test-runtime-_j_unit5_jupiter",
@@ -60,6 +61,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":test-runtime",
+        "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params:junit5-params_test_lib",
         "//libraries/junit5-launcher:junit5-launcher_test_lib",
     ],

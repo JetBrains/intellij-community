@@ -33,7 +33,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
     ],

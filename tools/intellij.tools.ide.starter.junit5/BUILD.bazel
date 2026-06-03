@@ -10,6 +10,11 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
     name = "libraries_junit5-params_provided",
     lib = "//libraries/junit5-params",
 )
@@ -42,12 +47,12 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "@lib//:kodein-di-jvm",
-        "@lib//:junit5-provided",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//platform/remote-driver/model",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//libraries/opentelemetry",
         "//platform/testFramework/common",
+        ":libraries_junit5_provided",
         ":libraries_junit5-params_provided",
         ":libraries_junit5-launcher_provided",
     ],
@@ -68,7 +73,8 @@ jvm_library(
         ":ide-starter-junit5",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "@lib//:junit5-provided",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//platform/remote-driver/model:model_test_lib",
         "@lib//:kotlin-test-assertions-core-jvm",
@@ -160,7 +166,8 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "@lib//:kodein-di-jvm",
-        "@lib//:junit5-provided",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",

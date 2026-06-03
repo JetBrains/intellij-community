@@ -10,6 +10,6 @@
     <orderEntry type="module" module-name="intellij.junit.rt" exported="" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
   </component>
 </module>

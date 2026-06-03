@@ -17,7 +17,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-test-assertions-core-jvm",
-        "@lib//:junit5",
+        "//libraries/junit5",
         "//platform/remote-driver/client",
         "//platform/remote-driver/test-sdk:driver-sdk",
         "//platform/remote-driver/model",
@@ -37,6 +37,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jupyter.ui.test.util",
+        "//libraries/junit5:junit5_test_lib",
         "//platform/remote-driver/client:client_test_lib",
         "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
         "//platform/remote-driver/model:model_test_lib",

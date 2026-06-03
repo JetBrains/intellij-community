@@ -12,7 +12,7 @@
     <orderEntry type="library" scope="TEST" name="joni" level="project" />
     <orderEntry type="library" scope="TEST" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.textmate.core.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.textmate.joni" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.textmate.joni" />

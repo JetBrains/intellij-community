@@ -104,7 +104,8 @@ jvm_library(
     runtime_deps = [":turboComplete-tests"],
     deps = [
         # do not sort,
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//plugins/turboComplete",
         "//plugins/turboComplete:turboComplete_test_lib",
         "@lib//:kotlin-stdlib",

@@ -111,7 +111,8 @@ jvm_library(
         "//platform/projectModel-impl",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/platform-impl:ide-impl",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.experiment.tests` end

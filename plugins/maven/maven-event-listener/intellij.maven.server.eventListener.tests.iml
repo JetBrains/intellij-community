@@ -181,7 +181,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.eventListener" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.maven.server.eventListener" />

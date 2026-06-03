@@ -57,7 +57,8 @@ jvm_library(
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "@lib//:kotlin-test-junit",
         "@lib//:kotlin-test",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.i18n` end
@@ -107,7 +108,8 @@ jvm_library(
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "@lib//:kotlin-test-junit",
         "@lib//:kotlin-test",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "@lib//:jetbrains-annotations",
     ],
 )

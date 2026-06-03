@@ -57,7 +57,8 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "@lib//:kotlin-test",
     ],
 )
@@ -109,7 +110,8 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "@lib//:kotlin-test",
     ],
 )

@@ -11,6 +11,7 @@ val compileOnlyDependenciesInCommunity: List<Pair<String, String>> = listOf(
   "*" to "intellij.platform.compose.compilerPlugin", // dependency is needed for compose compiler plugin
   "intellij.kotlin.jvm.debugger.coroutines" to "intellij.java.rt", // module is used to compile debugger helper classes for external processes
   "intellij.java.rt" to "intellij.libraries.junit4", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.junit.v5.rt" to "intellij.libraries.junit5", // module is used in external processes where the library from user's project is added to the classpath
   "intellij.junit.v5.rt" to "intellij.libraries.junit5.launcher", // module is used in external processes where the library from user's project is added to the classpath
   "intellij.platform.util" to "intellij.platform.util.troveCompileOnly", //used only for compilation of deprecated FileUtil.FILE_HASHING_STRATEGY left for compatibility
 )

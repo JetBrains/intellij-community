@@ -42,7 +42,8 @@ jvm_library(
         ":server-eventListener",
         "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
         "@lib//:maven-server-event_listener-com-google-inject-guice-no_aop-4-0-provided",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.server.eventListener` end
@@ -89,7 +90,8 @@ jvm_library(
         # do not sort,
         "@lib//:maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",
         "@lib//:maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
-        "@lib//:junit5",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.server.eventListener.tests` end

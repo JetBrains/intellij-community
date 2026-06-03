@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="com.willowtreeapps.assertk:assertk-jvm" type="repository">
         <properties maven-id="com.willowtreeapps.assertk:assertk-jvm:0.23">
