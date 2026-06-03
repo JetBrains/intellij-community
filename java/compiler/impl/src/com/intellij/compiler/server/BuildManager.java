@@ -1831,7 +1831,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
     var lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
-    if (localProject && OS.CURRENT != OS.Windows && lowPriority) {
+    if (localProject && (OS.CURRENT == OS.macOS || OS.isGenericUnix()) && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
     if (localProject && OS.CURRENT == OS.Linux && Registry.is("compiler.process.new.session", true)) {
