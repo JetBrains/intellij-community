@@ -134,6 +134,8 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val worktreeProject = ProjectUtil.openOrImport(workingTreeData.workingTreePath.path, null, false)
     if (worktreeProject != null) {
       GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)
+    } else {
+      repository.workingTreeHolder.scheduleReload()
     }
   }
 }
