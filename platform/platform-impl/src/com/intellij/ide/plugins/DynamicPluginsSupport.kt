@@ -18,6 +18,8 @@ interface DynamicPluginsSupport {
 
   suspend fun performDynamicReconfiguration(targetState: PluginSet): DynamicPluginsReconfigurationResult
 
+  // TODO consider adding suspend fun runPreventingDynamicReconfiguration(body: suspend? () -> Unit)
+
   companion object
 }
 
