@@ -215,6 +215,9 @@
 - name: lib/modules/intellij.java.vcs.jar
   contentModules:
   - name: intellij.java.vcs
+- name: lib/modules/intellij.java.xml.dom.impl.jar
+  contentModules:
+  - name: intellij.java.xml.dom.impl
 - name: lib/modules/intellij.jsp.jar
   contentModules:
   - name: intellij.jsp

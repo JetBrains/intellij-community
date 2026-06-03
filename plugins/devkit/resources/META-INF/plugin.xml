@@ -49,6 +49,7 @@
     <module name="intellij.devkit.modules"/>
     <module name="intellij.devkit.mcp"/>
     <module name="intellij.devkit.threading"/>
+    <module name="intellij.devkit.smartupdate"/>
 
     <module name="intellij.platform.jewel.samples.showcase"/>
   </content>

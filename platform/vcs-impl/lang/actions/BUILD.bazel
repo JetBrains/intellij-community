@@ -1,34 +1,48 @@
-### auto-generated section `build intellij.platform.vcs.impl.lang.actions` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.vcs.impl.lang.actions` start
+
 jvm_library(
-  name = "actions",
-  module_name = "intellij.platform.vcs.impl.lang.actions",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/vcs-impl",
-  ]
+    name = "actions",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.impl.lang.actions",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/vcs-impl",
+    ],
 )
 
 jvm_library(
-  name = "actions_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.vcs.impl.lang.actions",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":actions",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-  ]
+    name = "actions_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.impl.lang.actions",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":actions",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang.actions` end
 
 ### auto-generated section `iml intellij.platform.vcs.impl.lang.actions` start
-exports_files([
-  "intellij.platform.vcs.impl.lang.actions.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.vcs.impl.lang.actions.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.vcs.impl.lang.actions` end

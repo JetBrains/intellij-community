@@ -1,39 +1,55 @@
-### auto-generated section `build intellij.tools.apiDump` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.tools.apiDump` start
+
 jvm_library(
-  name = "apiDump",
-  module_name = "intellij.tools.apiDump",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/asm-tools",
-    "@lib//:kotlinx-bcv",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "@lib//:kotlin-metadata",
-  ],
-  exports = ["@lib//:kotlinx-bcv"]
+    name = "apiDump",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.apiDump",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-bcv"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/asm-tools",
+        "@lib//:kotlinx-bcv",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "@lib//:kotlin-metadata",
+    ],
 )
 
 jvm_library(
-  name = "apiDump_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.apiDump",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:kotlinx-bcv"],
-  runtime_deps = [
-    ":apiDump",
-    "//libraries/asm-tools:asm-tools_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "apiDump_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.apiDump",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-bcv"],
+    runtime_deps = [
+        # do not sort,
+        ":apiDump",
+        "//libraries/asm-tools:asm-tools_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.tools.apiDump` end
 
 ### auto-generated section `iml intellij.tools.apiDump` start
-exports_files([
-  "intellij.tools.apiDump.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.apiDump.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.apiDump` end

@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.lombok.generated` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.lombok.generated` start
+
 jvm_library(
-  name = "generated",
-  module_name = "intellij.lombok.generated",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "generated",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lombok.generated",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "generated_test_lib",
-  testonly = True,
-  module_name = "intellij.lombok.generated",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":generated"]
+    name = "generated_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lombok.generated",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":generated"],
 )
 ### auto-generated section `build intellij.lombok.generated` end
 
 ### auto-generated section `iml intellij.lombok.generated` start
-exports_files([
-  "intellij.lombok.generated.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.lombok.generated.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.lombok.generated` end

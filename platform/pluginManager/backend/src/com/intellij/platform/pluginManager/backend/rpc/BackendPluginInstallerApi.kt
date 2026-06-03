@@ -135,12 +135,6 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     val pluginDescriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
     return DynamicPlugins.allowLoadUnloadSynchronously(pluginDescriptor)
   }
-
-
-  override suspend fun allowLoadUnloadWithoutRestart(pluginId: String): Boolean {
-    val pluginDescriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId)) ?: return false
-    return DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor)
-  }
 }
 
 private val LOG = Logger.getInstance(BackendPluginInstallerApi::class.java)

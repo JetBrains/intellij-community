@@ -1,46 +1,62 @@
-### auto-generated section `build intellij.platform.ide.bootstrap.eel` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.bootstrap.eel` start
+
 jvm_library(
-  name = "eel",
-  module_name = "intellij.platform.ide.bootstrap.eel",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/core-nio-fs",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ijent/buildConstants",
-    "//platform/ijent/impl",
-  ]
+    name = "eel",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.bootstrap.eel",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-nio-fs",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ijent/buildConstants",
+        "//platform/ijent/impl",
+    ],
 )
 
 jvm_library(
-  name = "eel_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.bootstrap.eel",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":eel",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-nio-fs:core-nio-fs_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ijent/buildConstants:buildConstants_test_lib",
-    "//platform/ijent/impl:impl_test_lib",
-  ]
+    name = "eel_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.bootstrap.eel",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":eel",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ijent/buildConstants:buildConstants_test_lib",
+        "//platform/ijent/impl:impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.eel` end
 
 ### auto-generated section `iml intellij.platform.ide.bootstrap.eel` start
-exports_files([
-  "intellij.platform.ide.bootstrap.eel.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.bootstrap.eel.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.bootstrap.eel` end

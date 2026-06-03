@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.idea.devkit.stacktrace">
+<idea-plugin>
   <dependencies>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.unscramble"/>

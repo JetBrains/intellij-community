@@ -17,6 +17,8 @@ private const val moduleWithDokka = "intellij.libraries.dokka"
 
 /**
  * Both Javadoc and KDoc are processed, see https://kotlinlang.org/docs/dokka-introduction.html
+ *
+ * TODO (MRI-4481): Dokka shouldn't pull its own version of the Kotlin compiler in classpath since this complicates debugging; at the moment analysis-kotlin-descriptors.jar contains classes like KtElement
  */
 @OptIn(ExperimentalPathApi::class)
 internal class Dokka(private val context: CompilationContext) {

@@ -4,6 +4,7 @@ package org.editorconfig.language.services.impl
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -22,8 +23,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.psi.reference.EditorConfigVirtualFileDescriptor
@@ -35,11 +37,14 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.hasValidRootDeclaration
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
+import kotlin.time.Duration.Companion.milliseconds
 
-class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener, Disposable {
+class EditorConfigFileHierarchyServiceImpl(private val project: Project, cs: CoroutineScope) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener, Disposable {
   private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorConfig.notification.vfs.update.executor")
 
-  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, this)
+  private val updateQueue = DebouncedUpdates.forScope<Unit>(cs, "EditorConfigFileHierarchy UpdateQueue", 500.milliseconds)
+    .withContext(Dispatchers.EDT)
+    .runLatest { notifyCodeStyleSettingsChanged() }
 
   @Volatile
   private var cacheDropsCount = 0
@@ -56,10 +61,12 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   override fun dispose() {
   }
 
-  private fun updateHandlers(project: Project) {
-    updateQueue.queue(Update.create("editorconfig hierarchy update") {
-      CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
-    })
+  private fun updateHandlers() {
+    updateQueue.queue(Unit)
+  }
+
+  private fun notifyCodeStyleSettingsChanged() {
+    CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
   }
 
   // method of BulkFileListener
@@ -73,7 +80,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
         cacheDropsCount += 1
         parentFilesCache.clear()
       }
-      updateHandlers(project)
+      updateHandlers()
     }
   }
 

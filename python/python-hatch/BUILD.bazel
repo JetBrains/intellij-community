@@ -1,78 +1,98 @@
-### auto-generated section `build intellij.python.hatch` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.hatch` start
 
 create_kotlinc_options(
-  name = "custom_hatch",
-  opt_in = ["kotlin.time.ExperimentalTime"]
+    name = "custom_hatch",
+    opt_in = ["kotlin.time.ExperimentalTime"],
 )
 
 jvm_library(
-  name = "hatch",
-  module_name = "intellij.python.hatch",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_hatch",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/eel-provider",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/ide-core",
-    "//platform/projectModel-api:projectModel",
-    "//python/openapi:community",
-    "//python/python-exec-service:community-execService",
-    "//python/python-sdk:sdk",
-    "//python/python-pyproject:pyproject",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
-    "//python/python-sdk-ui:sdk-ui",
-    "//python/common",
-    "//python/python-exec-service/execService.python",
-    "//python/python-process-output/common",
-    "//python/python-pytools:pytools",
-  ]
+    name = "hatch",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_hatch",
+    module_name = "intellij.python.hatch",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/eel-provider",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/projectModel-api:projectModel",
+        "//python/openapi:community",
+        "//python/python-exec-service:community-execService",
+        "//python/python-sdk:sdk",
+        "//python/python-pyproject:pyproject",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+        "//python/python-sdk-ui:sdk-ui",
+        "//python/common",
+        "//python/python-exec-service/execService.python",
+        "//python/python-process-output/common",
+        "//python/python-pytools:pytools",
+    ],
 )
 
 jvm_library(
-  name = "hatch_test_lib",
-  testonly = True,
-  module_name = "intellij.python.hatch",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_hatch",
-  runtime_deps = [
-    ":hatch",
-    "//platform/util:util_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//python/openapi:community_test_lib",
-    "//python/python-exec-service:community-execService_test_lib",
-    "//python/python-sdk:sdk_test_lib",
-    "//python/python-pyproject:pyproject_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
-    "//python/python-sdk-ui:sdk-ui_test_lib",
-    "//python/common:common_test_lib",
-    "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//python/python-process-output/common:common_test_lib",
-    "//python/python-pytools:pytools_test_lib",
-  ]
+    name = "hatch_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_hatch",
+    module_name = "intellij.python.hatch",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":hatch",
+        "//platform/util:util_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+        "//python/python-sdk-ui:sdk-ui_test_lib",
+        "//python/common:common_test_lib",
+        "//python/python-exec-service/execService.python:execService.python_test_lib",
+        "//python/python-process-output/common:common_test_lib",
+        "//python/python-pytools:pytools_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.hatch` end
 
 ### auto-generated section `iml intellij.python.hatch` start
-exports_files([
-  "intellij.python.hatch.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.hatch.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.hatch` end

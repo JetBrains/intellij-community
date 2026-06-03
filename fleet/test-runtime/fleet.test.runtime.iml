@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="JUnit5" level="project" />
-    <orderEntry type="library" exported="" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="JUnit5Jupiter" type="repository">
         <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-engine:5.13.4">
@@ -27,7 +27,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" exported="" name="JUnit5Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" exported="" />
     <orderEntry type="library" exported="" name="hamcrest" level="project" />
     <orderEntry type="library" exported="" name="kotlin-test-junit5" level="project" />
     <orderEntry type="library" exported="" name="kotlin-test" level="project" />

@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.platform.rpc.topics.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.rpc.topics.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.platform.rpc.topics.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/kernel/shared:kernel",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/remote-topics/shared:rpc-topics",
-    "//platform/project/shared:project",
-    "//fleet/rhizomedb",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rpc.topics.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/shared:kernel",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//platform/project/shared:project",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.rpc.topics.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/remote-topics/shared:rpc-topics_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rpc.topics.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.rpc.topics.frontend` end
 
 ### auto-generated section `iml intellij.platform.rpc.topics.frontend` start
-exports_files([
-  "intellij.platform.rpc.topics.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.rpc.topics.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.rpc.topics.frontend` end

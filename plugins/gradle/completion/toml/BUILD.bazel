@@ -1,143 +1,179 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
 ### auto-generated section `iml intellij.gradle.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "toml",
-  module_name = "intellij.gradle.completion.toml",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/analysis-api:analysis",
-    "//plugins/toml/core",
-    "//plugins/repository-search/completion",
-    "//plugins/gradle/completion",
-    "//plugins/gradle",
-    "//platform/statistics",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//platform/analysis-impl",
-    "//platform/editor-ui-api:editor-ui",
-  ]
+    name = "toml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.completion.toml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/analysis-api:analysis",
+        "//plugins/toml/core",
+        "//plugins/repository-search/completion",
+        "//plugins/gradle/completion",
+        "//plugins/gradle",
+        "//platform/statistics",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/analysis-impl",
+        "//platform/editor-ui-api:editor-ui",
+    ],
 )
 
 jvm_library(
-  name = "toml_test_lib",
-  testonly = True,
-  module_name = "intellij.gradle.completion.toml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":toml",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//plugins/toml/core:core_test_lib",
-    "//plugins/repository-search/completion:completion_test_lib",
-    "//plugins/gradle/completion:completion_test_lib",
-    "//plugins/gradle:gradle_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-  ]
+    name = "toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.completion.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":toml",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//plugins/toml/core:core_test_lib",
+        "//plugins/repository-search/completion:completion_test_lib",
+        "//plugins/gradle/completion:completion_test_lib",
+        "//plugins/gradle:gradle_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.gradle.completion.toml` end
 
 ### auto-generated section `iml intellij.gradle.completion.toml` start
-exports_files([
-  "intellij.gradle.completion.toml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.gradle.completion.toml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.gradle.completion.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml.tests` start
+
 jvm_library(
-  name = "gradle-completion-toml-tests",
-  module_name = "intellij.gradle.completion.toml.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//plugins/toml",
-    "//plugins/toml/core",
-  ]
+    name = "gradle-completion-toml-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.completion.toml.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/toml",
+        "//plugins/toml/core",
+    ],
 )
 
 jvm_library(
-  name = "gradle-completion-toml-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.gradle.completion.toml.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//plugins/repository-search/completion",
-    "//plugins/repository-search/completion:completion_test_lib",
-    "//plugins/gradle/completion",
-    "//plugins/gradle/completion:completion_test_lib",
-    "//plugins/gradle/completion/toml",
-    "//plugins/gradle/completion/toml:toml_test_lib",
-    "//plugins/gradle",
-    "//plugins/gradle:gradle_test_lib",
-    "@lib//:kotlin-test-junit",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/testFramework/common",
-    "//platform/testFramework/common:common_test_lib",
-    "//java/testFramework",
-    "//java/testFramework:testFramework_test_lib",
-    "//plugins/gradle:gradle-tests",
-    "//plugins/gradle:gradle-tests_test_lib",
-    "//plugins/groovy",
-    "//plugins/groovy:groovy_test_lib",
-    "//plugins/groovy:groovy-tests",
-    "//plugins/groovy:groovy-tests_test_lib",
-    "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
-    "@lib//:junit5",
-    "@lib//:junit5Params",
-    "//platform/eel-provider",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util/jdom",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/analysis-impl",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-  ],
-  runtime_deps = [
-    ":gradle-completion-toml-tests",
-    "//plugins/toml:toml_test_lib",
-    "//plugins/toml/core:core_test_lib",
-  ]
+    name = "gradle-completion-toml-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.completion.toml.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":gradle-completion-toml-tests",
+        "//plugins/toml:toml_test_lib",
+        "//plugins/toml/core:core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//plugins/repository-search/completion",
+        "//plugins/repository-search/completion:completion_test_lib",
+        "//plugins/gradle/completion",
+        "//plugins/gradle/completion:completion_test_lib",
+        "//plugins/gradle/completion/toml",
+        "//plugins/gradle/completion/toml:toml_test_lib",
+        "//plugins/gradle",
+        "//plugins/gradle:gradle_test_lib",
+        "@lib//:kotlin-test-junit",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//plugins/gradle:gradle-tests",
+        "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/groovy",
+        "//plugins/groovy:groovy_test_lib",
+        "//plugins/groovy:groovy-tests",
+        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/repository-search",
+        "//plugins/repository-search:repository-search_test_lib",
+        "@lib//:junit5",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/eel-provider",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.gradle.completion.toml.tests` end
 
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` start
-exports_files([
-  "intellij.gradle.completion.toml.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.gradle.completion.toml.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` end
 
 ### auto-generated section `test intellij.gradle.completion.toml.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "gradle-completion-toml-tests_test",
-  runtime_deps = [":gradle-completion-toml-tests_test_lib"]
+    name = "gradle-completion-toml-tests_test",
+    runtime_deps = [":gradle-completion-toml-tests_test_lib"],
 )
 ### auto-generated section `test intellij.gradle.completion.toml.tests` end

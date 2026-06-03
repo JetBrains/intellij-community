@@ -1,37 +1,51 @@
-### auto-generated section `build intellij.libraries.ktor.io` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.ktor.io` start
+
 jvm_library(
-  name = "io",
-  module_name = "intellij.libraries.ktor.io",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-ktor-io-ktor-io"],
-  runtime_deps = [
-    "@lib//:libraries-ktor-io-ktor-io",
-    "//libraries/io",
-  ]
+    name = "io",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ktor.io",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-io-ktor-io"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ktor-io-ktor-io",
+        "//libraries/io",
+    ],
 )
 
 jvm_library(
-  name = "io_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.ktor.io",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-ktor-io-ktor-io"],
-  runtime_deps = [
-    ":io",
-    "//libraries/io:io_test_lib",
-  ]
+    name = "io_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.ktor.io",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-io-ktor-io"],
+    runtime_deps = [
+        # do not sort,
+        ":io",
+        "//libraries/io:io_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ktor.io` end
 
 ### auto-generated section `iml intellij.libraries.ktor.io` start
-exports_files([
-  "intellij.libraries.ktor.io.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.ktor.io.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.ktor.io` end

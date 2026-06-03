@@ -1,51 +1,67 @@
-### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp.common` start
+
 jvm_library(
-  name = "opentelemetry-exporter-otlp-common",
-  module_name = "intellij.libraries.opentelemetry.exporter.otlp.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-sdk-autoconfigure-spi",
-  ],
-  runtime_deps = [
-    "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-sdk-autoconfigure-spi",
-    "//libraries/opentelemetry-exporter-sender-jdk",
-  ]
+    name = "opentelemetry-exporter-otlp-common",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.opentelemetry.exporter.otlp.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-sdk-autoconfigure-spi",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-sdk-autoconfigure-spi",
+        "//libraries/opentelemetry-exporter-sender-jdk",
+    ],
 )
 
 jvm_library(
-  name = "opentelemetry-exporter-otlp-common_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.opentelemetry.exporter.otlp.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-sdk-autoconfigure-spi",
-    "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
-  ],
-  runtime_deps = [
-    ":opentelemetry-exporter-otlp-common",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
-    "//libraries/opentelemetry-exporter-sender-jdk:opentelemetry-exporter-sender-jdk_test_lib",
-  ]
+    name = "opentelemetry-exporter-otlp-common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.opentelemetry.exporter.otlp.common",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-sdk-autoconfigure-spi",
+        "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":opentelemetry-exporter-otlp-common",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
+        "//libraries/opentelemetry-exporter-sender-jdk:opentelemetry-exporter-sender-jdk_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp.common` end
 
 ### auto-generated section `iml intellij.libraries.opentelemetry.exporter.otlp.common` start
-exports_files([
-  "intellij.libraries.opentelemetry.exporter.otlp.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.opentelemetry.exporter.otlp.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.opentelemetry.exporter.otlp.common` end

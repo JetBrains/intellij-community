@@ -1,153 +1,188 @@
-### auto-generated section `build intellij.python.terminal` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.terminal` start
+
 jvm_library(
-  name = "terminal",
-  module_name = "intellij.python.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//python:python-community-impl",
-    "//plugins/terminal",
-    "//platform/core-api:core",
-    "//platform/execution",
-    "//platform/projectModel-api:projectModel",
-    "@lib//:kotlin-stdlib",
-    "//python/python-sdk:sdk",
-    "//platform/lang-api:lang",
-    "//platform/ide-core",
-    "//platform/platform-impl:ide-impl",
-  ]
+    name = "terminal",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.terminal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//python:python-community-impl",
+        "//plugins/terminal",
+        "//platform/core-api:core",
+        "//platform/execution",
+        "//platform/projectModel-api:projectModel",
+        "@lib//:kotlin-stdlib",
+        "//python/python-sdk:sdk",
+        "//platform/lang-api:lang",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+    ],
 )
 
 jvm_library(
-  name = "terminal_test_lib",
-  testonly = True,
-  module_name = "intellij.python.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":terminal",
-    "//python:python-community-impl_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-    "//libraries/mockito",
-    "//libraries/mockito:mockito_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//python/python-sdk:sdk_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//python/junit5Tests-framework:community-junit5Tests-framework",
-    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//python/testFramework",
-    "//python/testFramework:testFramework_test_lib",
-    "//platform/eel-provider",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//libraries/hamcrest",
-    "//libraries/hamcrest:hamcrest_test_lib",
-    "//python/python-venv:venv",
-    "//python/python-venv:venv_test_lib",
-    "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "//libraries/junit5-pioneer",
-    "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
-    "//platform/testFramework/common",
-    "//platform/testFramework/common:common_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//python/python-test-env/junit5",
-    "//python/python-test-env/junit5:junit5_test_lib",
-  ]
+    name = "terminal_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.terminal",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":terminal",
+        "//python:python-community-impl_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//python/testFramework",
+        "//python/testFramework:testFramework_test_lib",
+        "//platform/eel-provider",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+        "//python/python-venv:venv",
+        "//python/python-venv:venv_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit5-pioneer",
+        "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.terminal` end
 
 ### auto-generated section `iml intellij.python.terminal` start
-exports_files([
-  "intellij.python.terminal.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.terminal.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.terminal` end
 
 ### auto-generated section `build intellij.python.terminal.tests` start
+
 jvm_library(
-  name = "terminal-tests",
-  module_name = "intellij.python.terminal.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "terminal-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.terminal.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "terminal-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  associates = [
-    "//python/python-terminal:terminal",
-    "//python/python-terminal:terminal_test_lib",
-  ],
-  deps = [
-    "//python:python-community-impl",
-    "//python:python-community-impl_test_lib",
-    "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
-    "//libraries/mockito",
-    "//libraries/mockito:mockito_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/execution",
-    "//platform/execution:execution_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "@lib//:kotlin-stdlib",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//python/junit5Tests-framework:community-junit5Tests-framework",
-    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//python/testFramework",
-    "//python/testFramework:testFramework_test_lib",
-    "//platform/eel-provider",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//libraries/hamcrest",
-    "//libraries/hamcrest:hamcrest_test_lib",
-    "//python/python-venv:venv",
-    "//python/python-venv:venv_test_lib",
-    "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "//libraries/junit5-pioneer",
-    "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
-    "//platform/testFramework/common",
-    "//platform/testFramework/common:common_test_lib",
-    "//python/python-test-env/junit5",
-    "//python/python-test-env/junit5:junit5_test_lib",
-  ],
-  runtime_deps = [":terminal-tests"]
+    name = "terminal-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/python-terminal:terminal",
+        "//python/python-terminal:terminal_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":terminal-tests"],
+    deps = [
+        # do not sort,
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+        "//plugins/terminal",
+        "//plugins/terminal:terminal_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//python/python-sdk:sdk",
+        "//python/python-sdk:sdk_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//python/testFramework",
+        "//python/testFramework:testFramework_test_lib",
+        "//platform/eel-provider",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+        "//python/python-venv:venv",
+        "//python/python-venv:venv_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit5-pioneer",
+        "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.terminal.tests` end
 
 ### auto-generated section `iml intellij.python.terminal.tests` start
-exports_files([
-  "intellij.python.terminal.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.terminal.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.terminal.tests` end
 
 ### auto-generated section `test intellij.python.terminal.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "terminal-tests_test",
-  runtime_deps = [":terminal-tests_test_lib"]
+    name = "terminal-tests_test",
+    runtime_deps = [":terminal-tests_test_lib"],
 )
 ### auto-generated section `test intellij.python.terminal.tests` end

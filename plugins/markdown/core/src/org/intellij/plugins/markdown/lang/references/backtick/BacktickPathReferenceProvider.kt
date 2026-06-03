@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.references.backtick
 
-import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -15,6 +13,7 @@ import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
+import org.intellij.plugins.markdown.lang.references.ReferenceUtil.isRelativePathLike
 
 internal object BacktickPathReferenceProvider {
   private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
@@ -52,12 +51,6 @@ internal object BacktickPathReferenceProvider {
     }
     if (!text.isRelativePathLike()) return null
     return PathReferenceInfo(text, 0, PathType.Project)
-  }
-
-  private fun String.isRelativePathLike(): Boolean {
-    if (startsWith('/')) return false
-    if (contains('/')) return true
-    return FileTypeRegistry.getInstance().getFileTypeByFileName(this) != UnknownFileType.INSTANCE
   }
 
   private fun PathReferenceInfo.getContexts(codeSpan: MarkdownCodeSpan): Collection<PsiFileSystemItem> {

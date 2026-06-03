@@ -15,19 +15,27 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
 
-/**
- * @author Konstantin Bulenkov
- */
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   private boolean autoScrollPreview;
 
+  /**
+   * @deprecated use constructor overload with {@link MarkdownSettings} parameter
+   */
+  @Deprecated
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview, @NotNull Project project) {
+    this(editor, preview, project, MarkdownSettings.getInstance(project));
+  }
+
+  public MarkdownEditorWithPreview(@NotNull TextEditor editor,
+                                   @NotNull MarkdownPreviewFileEditor preview,
+                                   @NotNull Project project,
+                                   @NotNull MarkdownSettings settings) {
     super(
       editor,
       preview,
       MarkdownBundle.message("markdown.editor.name"),
       Layout.SHOW_EDITOR_AND_PREVIEW,
-      !MarkdownSettings.getInstance(project).isVerticalSplit()
+      !settings.isVerticalSplit()
     );
 
     // allow launching actions while in preview mode;
@@ -35,7 +43,6 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     editor.getEditor().getContentComponent().putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
     preview.setMainEditor(editor.getEditor());
 
-    MarkdownSettings settings = MarkdownSettings.getInstance(project);
     autoScrollPreview = settings.isAutoScrollEnabled();
 
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, new MarkdownSettings.ChangeListener() {

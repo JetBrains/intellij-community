@@ -1,49 +1,65 @@
-### auto-generated section `build intellij.tools.jps.build.standalone` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.tools.jps.build.standalone` start
+
 jvm_library(
-  name = "tools-jps-build-standalone",
-  module_name = "intellij.tools.jps.build.standalone",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//libraries/groovy",
-    "//jps/jps-builders:build",
-    "//jps/model-api:model",
-    "//platform/util",
-    "//libraries/cli-parser",
-    "//jps/model-serialization",
-    "@community//build:build-javac-rt",
-    "//libraries/protobuf",
-    "//platform/util/base",
-  ]
+    name = "tools-jps-build-standalone",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.tools.jps.build.standalone",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/groovy",
+        "//jps/jps-builders:build",
+        "//jps/model-api:model",
+        "//platform/util",
+        "//libraries/cli-parser",
+        "//jps/model-serialization",
+        "@community//build:build-javac-rt",
+        "//libraries/protobuf",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "tools-jps-build-standalone_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.jps.build.standalone",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":tools-jps-build-standalone",
-    "//libraries/groovy:groovy_test_lib",
-    "//jps/jps-builders:build_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/cli-parser:cli-parser_test_lib",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "@community//build:build-javac-rt_test_lib",
-    "//libraries/protobuf:protobuf_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "tools-jps-build-standalone_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.tools.jps.build.standalone",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tools-jps-build-standalone",
+        "//libraries/groovy:groovy_test_lib",
+        "//jps/jps-builders:build_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/cli-parser:cli-parser_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "@community//build:build-javac-rt_test_lib",
+        "//libraries/protobuf:protobuf_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.tools.jps.build.standalone` end
 
 ### auto-generated section `iml intellij.tools.jps.build.standalone` start
-exports_files([
-  "intellij.tools.jps.build.standalone.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.jps.build.standalone.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.jps.build.standalone` end

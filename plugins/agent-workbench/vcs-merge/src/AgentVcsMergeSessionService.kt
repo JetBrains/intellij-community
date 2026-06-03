@@ -13,12 +13,12 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.service.AgentDeferredNewSessionHandle
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runWriteAction
@@ -30,12 +30,10 @@ import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.FileStatus
@@ -44,20 +42,14 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
 import com.intellij.openapi.vcs.merge.MergeData
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vcs.merge.MergeSessionEx
-import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.changes.ChangesUtil
-import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +59,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal data class AgentVcsMergeLaunchRequest(
   @JvmField val selectionHintFiles: List<VirtualFile>,
@@ -76,18 +69,18 @@ internal data class AgentVcsMergeLaunchRequest(
 
 private data class MergeProviderScope(
   @JvmField val mergeProvider: MergeProvider,
-  @JvmField val mergeDialogCustomizer: MergeDialogCustomizer,
   @JvmField val mergeSession: MergeSession?,
   @JvmField val files: MutableSet<VirtualFile>,
+  @JvmField val nonBinaryFiles: Set<VirtualFile>,
 )
 
 private data class DiscoveredMergeProviderScope(
   @JvmField val mergeProvider: MergeProvider,
-  @JvmField val mergeDialogCustomizer: MergeDialogCustomizer,
   @JvmField val files: List<VirtualFile>,
+  @JvmField val nonBinaryFiles: List<VirtualFile>,
 )
 
-private data class DiscoveredProjectConflicts(
+private data class DiscoveredMergeConflicts(
   @JvmField val hadConflicts: Boolean,
   @JvmField val scopes: List<DiscoveredMergeProviderScope>,
 )
@@ -116,8 +109,10 @@ internal class AgentVcsMergeSessionService(
   private val coroutineScope: CoroutineScope,
 ) : com.intellij.openapi.Disposable {
   private val sessions = ConcurrentHashMap<String, ActiveAgentVcsMergeSession>()
+  private val promptOnlyLaunchGate = AgentVcsMergeSessionSupport.PromptOnlyLaunchGate()
 
   fun startOrFocusSession(request: AgentVcsMergeLaunchRequest) {
+    val selectionHintFiles = normalizeSelectionHintFiles(request.selectionHintFiles)
     val existing = sessions[PROJECT_WIDE_SESSION_KEY]
     if (existing != null) {
       if (!existing.disposable.isDisposed) {
@@ -127,7 +122,13 @@ internal class AgentVcsMergeSessionService(
       sessions.remove(PROJECT_WIDE_SESSION_KEY, existing)
     }
 
-    val session = createSession(request)
+    val normalizedRequest = request.copy(selectionHintFiles = selectionHintFiles)
+    if (selectionHintFiles.isEmpty()) {
+      startPromptOnlySession(normalizedRequest)
+      return
+    }
+
+    val session = createSession(normalizedRequest)
     val activeSession = sessions.putIfAbsent(PROJECT_WIDE_SESSION_KEY, session)
     if (activeSession != null) {
       Disposer.dispose(session.disposable)
@@ -145,39 +146,18 @@ internal class AgentVcsMergeSessionService(
         return@launch
       }
 
-      val deferredLaunch = try {
-        serviceAsync<AgentSessionLaunchService>().createDeferredNewSession(
-          path = projectPath,
-          provider = session.agentProvider,
-          mode = session.launchMode,
-          entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-          preferredDedicatedFrame = false,
-          openedChatHandler = { _, file ->
-            session.threadFile = file
-            pinThread(file)
-            serviceAsync<AgentSessionUiPreferencesStateService>()
-              .updateVcsMergeProviderPreferencesOnLaunch(session.agentProvider, session.launchMode)
-          },
-          updateGeneralProviderPreferences = false,
-          threadTitle = AgentVcsMergeBundle.message("merge.agent.thread.title"),
-          waitingTitle = AgentVcsMergeBundle.message("merge.agent.thread.preparing.title"),
-          waitingMessage = AgentVcsMergeBundle.message("merge.agent.thread.preparing.body"),
-        )
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        LOG.warn("Failed to open deferred merge agent thread", t)
-        disposeSession(session)
-        showError(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.generic"))
-        return@launch
-      }
-
-      val deferredHandle = deferredLaunch.handle
+      val deferredHandle = openDeferredHandle(
+        projectPath = projectPath,
+        request = normalizedRequest,
+        openedChatHandler = { _, file ->
+          session.threadFile = file
+          pinThread(file)
+          serviceAsync<AgentSessionUiPreferencesStateService>()
+            .updateVcsMergeProviderPreferencesOnLaunch(session.agentProvider, session.launchMode)
+        },
+      )
       if (deferredHandle == null) {
         disposeSession(session)
-        showError(AgentPromptLaunchResult.failure(deferredLaunch.error ?: AgentPromptLaunchError.INTERNAL_ERROR).asMessage())
         return@launch
       }
 
@@ -191,7 +171,7 @@ internal class AgentVcsMergeSessionService(
         }
 
         PreparationOutcome.Ready -> {
-          deferredHandle.start(buildInitialMessageRequest(projectPath, session))
+          deferredHandle.start(buildInitialMessageRequest(projectPath, session.selectionHintFiles))
         }
 
         is PreparationOutcome.Failed -> {
@@ -205,6 +185,69 @@ internal class AgentVcsMergeSessionService(
     }
   }
 
+  private fun startPromptOnlySession(request: AgentVcsMergeLaunchRequest) {
+    if (!promptOnlyLaunchGate.tryStart()) return
+
+    coroutineScope.launch(Dispatchers.Default) {
+      try {
+        val projectPath = project.basePath
+        if (projectPath.isNullOrBlank()) {
+          showError(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.project.path"))
+          return@launch
+        }
+
+        val deferredHandle = openDeferredHandle(
+          projectPath = projectPath,
+          request = request,
+          openedChatHandler = { _, _ ->
+            serviceAsync<AgentSessionUiPreferencesStateService>()
+              .updateVcsMergeProviderPreferencesOnLaunch(request.agentProvider, request.launchMode)
+          },
+        ) ?: return@launch
+        deferredHandle.start(buildInitialMessageRequest(projectPath, request.selectionHintFiles))
+      }
+      finally {
+        promptOnlyLaunchGate.finish()
+      }
+    }
+  }
+
+  private suspend fun openDeferredHandle(
+    projectPath: String,
+    request: AgentVcsMergeLaunchRequest,
+    openedChatHandler: suspend (Project, VirtualFile) -> Unit,
+  ): AgentDeferredNewSessionHandle? {
+    val deferredLaunch = try {
+      serviceAsync<AgentSessionLaunchService>().createDeferredNewSession(
+        path = projectPath,
+        provider = request.agentProvider,
+        mode = request.launchMode,
+        entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
+        preferredDedicatedFrame = false,
+        openedChatHandler = openedChatHandler,
+        updateGeneralProviderPreferences = false,
+        threadTitle = AgentVcsMergeBundle.message("merge.agent.thread.title"),
+        waitingTitle = AgentVcsMergeBundle.message("merge.agent.thread.preparing.title"),
+        waitingMessage = AgentVcsMergeBundle.message("merge.agent.thread.preparing.body"),
+      )
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to open deferred merge agent thread", t)
+      showError(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.generic"))
+      return null
+    }
+
+    val deferredHandle = deferredLaunch.handle
+    if (deferredHandle == null) {
+      showError(AgentPromptLaunchResult.failure(deferredLaunch.error ?: AgentPromptLaunchError.INTERNAL_ERROR).asMessage())
+      return null
+    }
+    return deferredHandle
+  }
+
   private fun createSession(request: AgentVcsMergeLaunchRequest): ActiveAgentVcsMergeSession {
     val disposable = Disposer.newCheckedDisposable(this, "AgentVcsMergeSession:$PROJECT_WIDE_SESSION_KEY")
     val session = ActiveAgentVcsMergeSession(
@@ -215,7 +258,7 @@ internal class AgentVcsMergeSessionService(
       launchMode = request.launchMode,
       disposable = disposable,
       unresolvedFiles = Collections.synchronizedList(ArrayList()),
-      selectionHintFiles = normalizeSelectionHintFiles(request.selectionHintFiles),
+      selectionHintFiles = request.selectionHintFiles,
     )
     registerExternalResolutionListener(session)
     Disposer.register(disposable) {
@@ -227,31 +270,36 @@ internal class AgentVcsMergeSessionService(
 
   private suspend fun prepareSession(session: ActiveAgentVcsMergeSession): PreparationOutcome {
     return try {
-      val discoveredConflicts = discoverProjectConflicts(project)
+      val discoveredConflicts = discoverSelectedConflicts(project, session.selectionHintFiles)
       if (!discoveredConflicts.hadConflicts) {
         return PreparationOutcome.AutoResolved
       }
       if (discoveredConflicts.scopes.isEmpty()) {
         return PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
       }
+      if (discoveredConflicts.scopes.none { scope -> scope.nonBinaryFiles.isNotEmpty() }) {
+        return PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
+      }
 
       val requestFactory = DiffRequestFactory.getInstance()
-      for (scope in discoveredConflicts.scopes) {
-        val mergeSession = (scope.mergeProvider as? MergeProvider2)?.createMergeSession(scope.files)
+      for ((mergeProvider, files, nonBinaryFiles) in discoveredConflicts.scopes) {
+        val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
         val providerScope = MergeProviderScope(
-          mergeProvider = scope.mergeProvider,
-          mergeDialogCustomizer = scope.mergeDialogCustomizer,
+          mergeProvider = mergeProvider,
           mergeSession = mergeSession,
-          files = Collections.synchronizedSet(LinkedHashSet(scope.files)),
+          files = Collections.synchronizedSet(LinkedHashSet(files)),
+          nonBinaryFiles = nonBinaryFiles.toSet(),
         )
         session.providerScopes.add(providerScope)
 
-        for (file in scope.files) {
+        for (file in files) {
           session.fileScopes[file] = providerScope
           session.addUnresolvedFile(file)
+        }
 
-          val conflictData = loadConflictData(file, providerScope.mergeProvider, providerScope.mergeDialogCustomizer)
-          val request = createMergeRequest(project, file, requestFactory, providerScope.mergeProvider, conflictData)
+        for (file in nonBinaryFiles) {
+          val mergeData = loadMergeData(file, providerScope.mergeProvider)
+          val request = createTextMergeRequest(project, file, requestFactory, mergeData)
           session.iterativeDataHolder.prepareModelIfSupported(file, request)
           withContext(Dispatchers.EDT) {
             session.iterativeDataHolder.resolveAutoResolvableConflicts(file)
@@ -272,7 +320,7 @@ internal class AgentVcsMergeSessionService(
       }
       else {
         val launchableFiles = unresolvedFiles.filter { file ->
-          session.fileScopes[file]?.mergeProvider?.isBinary(file) != true
+          session.fileScopes[file]?.nonBinaryFiles?.contains(file) == true
         }
         if (launchableFiles.isEmpty()) PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
         else PreparationOutcome.Ready
@@ -307,14 +355,14 @@ internal class AgentVcsMergeSessionService(
 
   private fun buildInitialMessageRequest(
     projectPath: String,
-    session: ActiveAgentVcsMergeSession,
+    selectionHintFiles: List<VirtualFile>,
   ): AgentPromptInitialMessageRequest {
     return AgentPromptInitialMessageRequest(
       prompt = AgentVcsMergeSessionSupport.buildInitialPrompt(),
       projectPath = projectPath,
       contextItems = listOfNotNull(
         AgentVcsMergeSessionSupport.buildSelectionHintContextItem(
-          session.selectionHintFiles.map { file -> toProjectRelativePath(file, project) },
+          selectionHintFiles.map { file -> toProjectRelativePath(file, project) },
         ),
       ),
     )
@@ -449,32 +497,29 @@ internal class AgentVcsMergeSessionService(
   }
 }
 
-private fun discoverProjectConflicts(project: Project): DiscoveredProjectConflicts {
+private fun discoverSelectedConflicts(
+  project: Project,
+  selectionHintFiles: List<VirtualFile>,
+): DiscoveredMergeConflicts {
+  val conflictFiles = AgentVcsMergeSessionSupport.collectSelectedConflictFiles(
+    selectionHintFiles = selectionHintFiles,
+    getStatus = { file -> FileStatusManager.getInstance(project).getStatus(file) },
+  )
   val scopes = LinkedHashMap<MergeProvider, MutableList<VirtualFile>>()
-  val mergeCustomizers = LinkedHashMap<MergeProvider, MergeDialogCustomizer>()
-  val seenPaths = LinkedHashSet<String>()
   val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  var hadConflicts = false
 
-  for (change in ChangeListManager.getInstance(project).allChanges) {
-    if (!ChangesUtil.isMergeConflict(change)) continue
-    hadConflicts = true
-
-    val file = resolveConflictVirtualFile(change) ?: continue
-    if (!seenPaths.add(file.path)) continue
-
+  for (file in conflictFiles) {
     val mergeProvider = vcsManager.getVcsFor(file)?.mergeProvider ?: continue
     scopes.getOrPut(mergeProvider) { ArrayList() }.add(file)
-    mergeCustomizers.putIfAbsent(mergeProvider, mergeProvider.createDefaultMergeDialogCustomizer())
   }
 
-  return DiscoveredProjectConflicts(
-    hadConflicts = hadConflicts,
+  return DiscoveredMergeConflicts(
+    hadConflicts = conflictFiles.isNotEmpty(),
     scopes = scopes.entries.map { (mergeProvider, files) ->
       DiscoveredMergeProviderScope(
         mergeProvider = mergeProvider,
-        mergeDialogCustomizer = mergeCustomizers.getValue(mergeProvider),
         files = files,
+        nonBinaryFiles = AgentVcsMergeSessionSupport.collectNonBinaryConflictFiles(files, mergeProvider),
       )
     },
   )
@@ -506,56 +551,32 @@ private fun ActiveAgentVcsMergeSession.isUnresolved(file: VirtualFile): Boolean 
   }
 }
 
-private fun createMergeRequest(
+private fun createTextMergeRequest(
   project: Project,
   file: VirtualFile,
   requestFactory: DiffRequestFactory,
-  mergeProvider: MergeProvider,
-  conflictData: ConflictData,
+  mergeData: MergeData,
 ): MergeRequest {
-  val mergeData = conflictData.mergeData
   val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
 
-  return if (mergeProvider.isBinary(file)) {
-    requestFactory.createBinaryMergeRequest(project, file, byteContents, conflictData.title, conflictData.contentTitles, null)
-  }
-  else {
-    requestFactory.createMergeRequest(
-      project,
-      file,
-      byteContents,
-      mergeData.CONFLICT_TYPE,
-      conflictData.title,
-      conflictData.contentTitles,
-      null,
-    )
-  }.also { request ->
-    MergeUtils.putRevisionInfos(request, mergeData)
-    conflictData.contentTitleCustomizers.run {
-      DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
-    }
-  }
+  return requestFactory.createTextMergeRequest(
+    project,
+    file,
+    byteContents,
+    mergeData.CONFLICT_TYPE,
+    null,
+    listOf(null, null, null),
+    null,
+  )
 }
 
-private suspend fun loadConflictData(
+private suspend fun loadMergeData(
   file: VirtualFile,
   mergeProvider: MergeProvider,
-  mergeDialogCustomizer: MergeDialogCustomizer,
-): ConflictData {
-  val filePath = VcsUtil.getFilePath(file)
-  val mergeData = withContext(Dispatchers.IO) {
+): MergeData {
+  return withContext(Dispatchers.IO) {
     mergeProvider.loadRevisions(file)
   }
-
-  val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
-  val conflictTitles = listOf(
-    tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
-    tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
-    tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) },
-  )
-  val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
-                        ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
-  return ConflictData(mergeData, title, conflictTitles, titleCustomizer)
 }
 
 private fun InvalidDiffRequestException.asUserMessage(): @Nls String {
@@ -569,22 +590,6 @@ private fun InvalidDiffRequestException.asUserMessage(): @Nls String {
   }
 }
 
-private fun <T> tryCompute(task: () -> T): T? {
-  try {
-    return task()
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: VcsException) {
-    LOG.warn(e)
-  }
-  catch (e: Exception) {
-    LOG.error(e)
-  }
-  return null
-}
-
 private fun checkMarkModifiedProject(project: Project?, file: VirtualFile) {
   com.intellij.diff.merge.MergeUtil.reportProjectFileChangeIfNeeded(project, file)
 }
@@ -596,15 +601,34 @@ private fun saveDocument(file: VirtualFile) {
   }
 }
 
-private data class ConflictData(
-  @JvmField val mergeData: MergeData,
-  @JvmField val title: @NlsContexts.DialogTitle String?,
-  @JvmField val contentTitles: List<@NlsContexts.Label String?>,
-  @JvmField val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList,
-)
-
 @Internal
 object AgentVcsMergeSessionSupport {
+  class PromptOnlyLaunchGate {
+    private val inProgress = AtomicBoolean(false)
+
+    fun tryStart(): Boolean = inProgress.compareAndSet(false, true)
+
+    fun finish() {
+      inProgress.set(false)
+    }
+  }
+
+  fun collectSelectedConflictFiles(
+    selectionHintFiles: List<VirtualFile>,
+    getStatus: (VirtualFile) -> FileStatus,
+  ): List<VirtualFile> {
+    return normalizeSelectionHintFiles(selectionHintFiles).filter { file ->
+      isMergeConflictStatus(getStatus(file))
+    }
+  }
+
+  fun collectNonBinaryConflictFiles(
+    files: Collection<VirtualFile>,
+    mergeProvider: MergeProvider,
+  ): List<VirtualFile> {
+    return files.filter { file -> !mergeProvider.isBinary(file) }
+  }
+
   fun buildInitialPrompt(): String {
     return buildString {
       appendLine("Resolve the current merge conflicts for this IntelliJ IDEA worktree.")
@@ -694,15 +718,6 @@ private fun normalizeSelectionHintFiles(files: List<VirtualFile>): List<VirtualF
     }
   }
   return result
-}
-
-private fun resolveConflictVirtualFile(change: Change): VirtualFile? {
-  val afterFile = change.afterRevision?.file?.virtualFile
-  if (afterFile != null && afterFile.isValid) {
-    return afterFile
-  }
-  val fallbackFile = ChangesUtil.getFilePath(change).virtualFile
-  return fallbackFile?.takeIf(VirtualFile::isValid)
 }
 
 internal fun toProjectRelativePath(file: VirtualFile, project: Project): String {

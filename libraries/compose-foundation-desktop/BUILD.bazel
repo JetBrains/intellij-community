@@ -1,45 +1,61 @@
-### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
+
 jvm_library(
-  name = "compose-foundation-desktop",
-  module_name = "intellij.libraries.compose.foundation.desktop",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "//libraries/compose-runtime-desktop",
-    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
-  ],
-  runtime_deps = [
-    "//libraries/skiko",
-    "//libraries/compose-runtime-desktop",
-    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
-  ]
+    name = "compose-foundation-desktop",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.compose.foundation.desktop",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//libraries/compose-runtime-desktop",
+        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/skiko",
+        "//libraries/compose-runtime-desktop",
+        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+    ],
 )
 
 jvm_library(
-  name = "compose-foundation-desktop_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.compose.foundation.desktop",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//libraries/compose-runtime-desktop",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
-  ],
-  runtime_deps = [
-    ":compose-foundation-desktop",
-    "//libraries/skiko:skiko_test_lib",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-  ]
+    name = "compose-foundation-desktop_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.compose.foundation.desktop",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":compose-foundation-desktop",
+        "//libraries/skiko:skiko_test_lib",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` end
 
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop` start
-exports_files([
-  "intellij.libraries.compose.foundation.desktop.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.compose.foundation.desktop.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop` end

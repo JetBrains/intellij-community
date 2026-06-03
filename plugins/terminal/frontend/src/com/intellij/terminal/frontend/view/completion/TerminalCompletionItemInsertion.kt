@@ -85,7 +85,7 @@ private fun calculateInsertionInfo(
   }
 
   val shellName = process.context.shellName
-  if (!needsEscaping(shellName, baseInsertValue)) {
+  if (!needsShellEscaping(shellName, baseInsertValue.replace(CURSOR_MARKER, ""))) {
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
 
@@ -104,8 +104,8 @@ private fun calculateInsertionInfo(
     // PowerShell prefers escaping by wrapping the token into quotes.
     // Let's wrap the whole token into single quotes.
     val addCursor = !baseInsertValue.contains(CURSOR_MARKER)
-    val escapedTokenText = tokenText.replace("'", "''")
-    val escapedBaseInsertValue = baseInsertValue.replace("'", "''")
+    val escapedTokenText = escapePowerShellSingleQuoted(tokenText)
+    val escapedBaseInsertValue = escapePowerShellSingleQuoted(baseInsertValue)
     val insertValue = "'${escapedTokenText}${escapedBaseInsertValue}${if (addCursor) CURSOR_MARKER else ""}'"
     val beforeReplacementLength = tokenText.length
     val textAfterCursor =
@@ -115,23 +115,21 @@ private fun calculateInsertionInfo(
   }
   else {
     // Unix shells prefer escaping by adding backslashes before the special characters
-    val insertValue = buildString {
-      val cursorIndex = baseInsertValue.indexOf(CURSOR_MARKER)
-      val valueNoCursor = baseInsertValue.replace(CURSOR_MARKER, "")
-      for (ind in 0 until valueNoCursor.length) {
-        val ch = valueNoCursor[ind]
-        if (ind == cursorIndex) {
-          append(CURSOR_MARKER)
-        }
-        if (ch in UNIX_SHELLS_CHARS_TO_ESCAPE) {
-          append("\\")
-        }
-        append(ch)
-      }
-    }
+    val insertValue = escapeUnixArgumentWithCursor(baseInsertValue)
 
     return CompletionItemInsertionInfo(insertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
+}
+
+private fun escapeUnixArgumentWithCursor(value: String): String {
+  val cursorIndex = value.indexOf(CURSOR_MARKER)
+  val valueNoCursor = value.replace(CURSOR_MARKER, "")
+  if (cursorIndex == -1) {
+    return escapeUnixShellArgument(valueNoCursor)
+  }
+  return escapeUnixShellArgument(valueNoCursor.substring(0, cursorIndex)) +
+         CURSOR_MARKER +
+         escapeUnixShellArgument(valueNoCursor.substring(cursorIndex))
 }
 
 private fun optimizeInsertionInfo(
@@ -176,11 +174,6 @@ private fun doOptimizeInsertionInfo(
   return CompletionItemInsertionInfo(newInsertValue, newBeforeReplacementLength, newAfterReplacementLength)
 }
 
-private fun needsEscaping(shellName: ShellName, value: String): Boolean {
-  val charsToEscape = if (ShellName.isPowerShell(shellName)) POWERSHELL_CHARS_TO_ESCAPE else UNIX_SHELLS_CHARS_TO_ESCAPE
-  return value.replace(CURSOR_MARKER, "").any { it in charsToEscape }
-}
-
 /** For debugging purposes */
 private fun TerminalOutputModel.getCursorLineContext(): String {
   val cursorLine = getLineByOffset(cursorOffset)
@@ -207,9 +200,5 @@ private fun String.isEscaped(): Boolean {
 }
 
 private const val CURSOR_MARKER = "{cursor}"
-
-private const val POWERSHELL_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&,@#"
-
-private const val UNIX_SHELLS_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&*?\\"
 
 private val LOG = fileLogger()

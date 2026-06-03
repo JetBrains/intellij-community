@@ -219,7 +219,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       venvPath = model.uvViewModel.uvVenvPath.get()?.pathHolder,
       fileSystem = model.fileSystem,
       version = pythonVersion.get(),
-      errorSink = errorSink
+      errorSink = errorSink,
+      overrideExistingEnv = venvAlreadyExistsError.get() != null,
     )
   }
 }

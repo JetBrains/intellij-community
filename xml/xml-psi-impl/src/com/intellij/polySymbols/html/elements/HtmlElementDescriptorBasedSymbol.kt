@@ -41,7 +41,7 @@ internal class HtmlElementDescriptorBasedSymbol(
   override val defaultValue: String?
     get() = descriptor.defaultValue
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = descriptor.declaration
 
   override fun createPointer(): Pointer<HtmlElementDescriptorBasedSymbol> {

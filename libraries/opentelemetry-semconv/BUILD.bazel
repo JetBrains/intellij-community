@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.opentelemetry.semconv` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.opentelemetry.semconv` start
+
 jvm_library(
-  name = "opentelemetry-semconv",
-  module_name = "intellij.libraries.opentelemetry.semconv",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
-  runtime_deps = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"]
+    name = "opentelemetry-semconv",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.opentelemetry.semconv",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+    runtime_deps = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
 )
 
 jvm_library(
-  name = "opentelemetry-semconv_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.opentelemetry.semconv",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
-  runtime_deps = [":opentelemetry-semconv"]
+    name = "opentelemetry-semconv_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.opentelemetry.semconv",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+    runtime_deps = [":opentelemetry-semconv"],
 )
 ### auto-generated section `build intellij.libraries.opentelemetry.semconv` end
 
 ### auto-generated section `iml intellij.libraries.opentelemetry.semconv` start
-exports_files([
-  "intellij.libraries.opentelemetry.semconv.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.opentelemetry.semconv.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.opentelemetry.semconv` end

@@ -400,8 +400,14 @@ public class AnnotationUtil {
 
     if (BitUtil.isSet(flags, CHECK_EXTERNAL)) {
       Project project = listOwner.getProject();
-      if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null) {
+      ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
+      if (manager.findExternalAnnotation(listOwner, annotationFQN) != null) {
         return true;
+      }
+      if (BitUtil.isSet(flags, CHECK_TYPE)) {
+        if (manager.findExternalTypeAnnotation(listOwner, "", annotationFQN) != null) {
+          return true;
+        }
       }
     }
 

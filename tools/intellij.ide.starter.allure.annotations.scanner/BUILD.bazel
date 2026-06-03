@@ -1,33 +1,49 @@
-### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` start
+
 jvm_library(
-  name = "ide-starter-allure-annotations-scanner",
-  module_name = "intellij.ide.starter.allure.annotations.scanner",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/gson",
-  ]
+    name = "ide-starter-allure-annotations-scanner",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.ide.starter.allure.annotations.scanner",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/gson",
+    ],
 )
 
 jvm_library(
-  name = "ide-starter-allure-annotations-scanner_test_lib",
-  testonly = True,
-  module_name = "intellij.ide.starter.allure.annotations.scanner",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ide-starter-allure-annotations-scanner",
-    "//libraries/gson:gson_test_lib",
-  ]
+    name = "ide-starter-allure-annotations-scanner_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.ide.starter.allure.annotations.scanner",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-starter-allure-annotations-scanner",
+        "//libraries/gson:gson_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` end
 
 ### auto-generated section `iml intellij.ide.starter.allure.annotations.scanner` start
-exports_files([
-  "intellij.ide.starter.allure.annotations.scanner.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.ide.starter.allure.annotations.scanner.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.ide.starter.allure.annotations.scanner` end

@@ -1,49 +1,69 @@
-### auto-generated section `build intellij.devkit.apiDump` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.devkit.apiDump` start
+
 jvm_library(
-  name = "api-dump",
-  module_name = "intellij.devkit.apiDump",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/workspace/jps",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//platform/ide-core",
-    "//platform/analysis-api:analysis",
-    "//platform/util",
-    "//platform/util/multiplatform",
-    "//platform/workspace/storage",
-    "//platform/projectModel-impl",
-  ]
+    name = "api-dump",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.apiDump",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/workspace/jps",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/workspace/storage",
+        "//platform/projectModel-impl",
+    ],
 )
 
 jvm_library(
-  name = "api-dump_test_lib",
-  testonly = True,
-  module_name = "intellij.devkit.apiDump",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":api-dump",
-    "//platform/core-api:core_test_lib",
-    "//platform/workspace/jps:jps_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/workspace/storage:storage_test_lib",
-    "//platform/projectModel-impl:projectModel-impl_test_lib",
-  ]
+    name = "api-dump_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.apiDump",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":api-dump",
+        "//platform/core-api:core_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.devkit.apiDump` end
 
 ### auto-generated section `iml intellij.devkit.apiDump` start
-exports_files([
-  "intellij.devkit.apiDump.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.devkit.apiDump.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.devkit.apiDump` end

@@ -181,6 +181,7 @@ def compute_build_dir(iml_dir_parts, content_root_rel_paths, iml_path = None):
     Returns:
         list of path segments for the BUILD directory
     """
+
     # Compute absolute content root paths (relative to project root), resolving ".."
     absolute_roots = []
     for rel in content_root_rel_paths:

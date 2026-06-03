@@ -4,7 +4,7 @@ package com.intellij.polySymbols.refactoring
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.refactoring.impl.PolySymbolRenameTargetImpl
-import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
+import com.intellij.polySymbols.utils.acceptSymbolForPsiLinkedPolySymbolRenameHandler
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameUsageSearcher
 
@@ -22,7 +22,7 @@ interface PolySymbolRenameTarget : RenameTarget {
 
   companion object {
     fun create(symbol: PolySymbol): PolySymbolRenameTarget? =
-      if (!acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol))
+      if (!acceptSymbolForPsiLinkedPolySymbolRenameHandler(symbol))
         PolySymbolRenameTargetImpl(symbol)
       else
         null

@@ -29,9 +29,10 @@ import kotlin.io.path.relativeTo
 internal data class BazelLabel(
   val label: String,
   // module if label is produced from that module, null in case of a library
-  val module: ModuleDescriptor?,
-) : Renderable {
+  val module: ModuleDescriptor? = null,
+) : Renderable, Comparable<BazelLabel> {
   override fun render(): String = "\"$label\""
+  override fun compareTo(other: BazelLabel): Int = BazelLabelComparator().compare(this.label, other.label)
 }
 
 internal data class ModuleDeps(

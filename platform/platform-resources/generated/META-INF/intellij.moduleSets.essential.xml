@@ -116,6 +116,7 @@
     <module name="fleet.fastutil" loading="embedded"/>
     <module name="fleet.kernel" loading="embedded"/>
     <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.openmap" loading="embedded"/>
     <module name="fleet.radixTrie" loading="embedded"/>
     <module name="fleet.reporting.api" loading="embedded"/>
     <module name="fleet.reporting.shared" loading="embedded"/>
@@ -193,7 +194,6 @@
     <!-- region direct modules -->
     <module name="intellij.platform.macro" loading="embedded"/>
     <module name="intellij.platform.usageView.impl" loading="embedded"/>
-    <module name="intellij.platform.testRunner" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>
@@ -307,7 +307,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
     <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
-    <module name="intellij.platform.smRunner" loading="embedded"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
     <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
     <module name="intellij.platform.externalProcessAuthHelper" loading="embedded"/>

@@ -1,37 +1,51 @@
-### auto-generated section `build intellij.libraries.commons.compress` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.commons.compress` start
+
 jvm_library(
-  name = "compress",
-  module_name = "intellij.libraries.commons.compress",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-commons-compress-commons-compress"],
-  runtime_deps = [
-    "@lib//:libraries-commons-compress-commons-compress",
-    "//libraries/commons/lang3",
-  ]
+    name = "compress",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.compress",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-compress-commons-compress"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-commons-compress-commons-compress",
+        "//libraries/commons/lang3",
+    ],
 )
 
 jvm_library(
-  name = "compress_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.commons.compress",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-commons-compress-commons-compress"],
-  runtime_deps = [
-    ":compress",
-    "//libraries/commons/lang3:lang3_test_lib",
-  ]
+    name = "compress_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.compress",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-compress-commons-compress"],
+    runtime_deps = [
+        # do not sort,
+        ":compress",
+        "//libraries/commons/lang3:lang3_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.commons.compress` end
 
 ### auto-generated section `iml intellij.libraries.commons.compress` start
-exports_files([
-  "intellij.libraries.commons.compress.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.commons.compress.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.commons.compress` end

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />

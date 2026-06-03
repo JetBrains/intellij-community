@@ -29,7 +29,7 @@ interface ModuleOutputProvider {
    * Returns a map from project library name to library module name.
    *
    * This is required to translate project-level JPS library dependencies
-   * (e.g., assertJ, JUnit5Params) into intellij.libraries.* modules when
+   * (e.g., assertJ) into intellij.libraries.* modules when
    * building the plugin graph and DSL test plugin content.
    *
    * Will be removed as soon as all indirect usages are replaced.

@@ -29,11 +29,11 @@ import andel.undo.UndoLogData
 import andel.undo.UndoOperationType
 import andel.undo.UndoScope
 import andel.undo.addGroup
+import fleet.openmap.BoundedOpenMap
+import fleet.openmap.MutableBoundedOpenMap
+import fleet.openmap.MutableOpenMap
+import fleet.openmap.OpenMap
 import fleet.util.UID
-import fleet.util.openmap.BoundedOpenMap
-import fleet.util.openmap.MutableBoundedOpenMap
-import fleet.util.openmap.MutableOpenMap
-import fleet.util.openmap.OpenMap
 
 fun simpleEditor(
   text: Text = Text.fromString(""),

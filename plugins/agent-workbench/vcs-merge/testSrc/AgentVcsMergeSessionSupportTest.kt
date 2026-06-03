@@ -8,6 +8,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.merge.MergeData
+import com.intellij.openapi.vcs.merge.MergeProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import org.assertj.core.api.Assertions.assertThat
@@ -61,6 +63,24 @@ class AgentVcsMergeSessionSupportTest {
   }
 
   @Test
+  fun promptOnlyLaunchGateRejectsConcurrentLaunch() {
+    val gate = AgentVcsMergeSessionSupport.PromptOnlyLaunchGate()
+
+    assertThat(gate.tryStart()).isTrue()
+    assertThat(gate.tryStart()).isFalse()
+  }
+
+  @Test
+  fun promptOnlyLaunchGateAllowsLaunchAfterFinish() {
+    val gate = AgentVcsMergeSessionSupport.PromptOnlyLaunchGate()
+
+    assertThat(gate.tryStart()).isTrue()
+    gate.finish()
+
+    assertThat(gate.tryStart()).isTrue()
+  }
+
+  @Test
   fun collectExternallyResolvedFilesReturnsOnlyNonConflictingFiles() {
     val resolved = LightVirtualFile("resolved.txt", "resolved")
     val conflicted = LightVirtualFile("conflicted.txt", "conflicted")
@@ -87,4 +107,70 @@ class AgentVcsMergeSessionSupportTest {
     assertThat(AgentVcsMergeSessionSupport.isMergeConflictStatus(FileStatus.MERGED_WITH_BOTH_CONFLICTS)).isTrue()
     assertThat(AgentVcsMergeSessionSupport.isMergeConflictStatus(FileStatus.MODIFIED)).isFalse()
   }
+
+  @Test
+  fun collectSelectedConflictFilesDoesNotQueryStatusForEmptySelection() {
+    val files = AgentVcsMergeSessionSupport.collectSelectedConflictFiles(emptyList()) {
+      error("Empty selection must not query file status")
+    }
+
+    assertThat(files).isEmpty()
+  }
+
+  @Test
+  fun collectSelectedConflictFilesReturnsOnlyStillConflictingSelection() {
+    val resolved = LightVirtualFile("resolved.txt", "resolved")
+    val conflicted = LightVirtualFile("conflicted.txt", "conflicted")
+    val bothConflicts = LightVirtualFile("both.txt", "both")
+    val statuses: Map<VirtualFile, FileStatus> = mapOf(
+      resolved to FileStatus.MODIFIED,
+      conflicted to FileStatus.MERGED_WITH_CONFLICTS,
+      bothConflicts to FileStatus.MERGED_WITH_BOTH_CONFLICTS,
+    )
+
+    val files = AgentVcsMergeSessionSupport.collectSelectedConflictFiles(
+      selectionHintFiles = listOf(resolved, conflicted, bothConflicts),
+      getStatus = { file -> statuses.getValue(file) },
+    )
+
+    assertThat(files).containsExactly(conflicted, bothConflicts)
+  }
+
+  @Test
+  fun collectNonBinaryConflictFilesSkipsBinaryFiles() {
+    val textFile = LightVirtualFile("text.txt", "content")
+    val binaryFile = LightVirtualFile("binary.bin", "content")
+
+    val files = AgentVcsMergeSessionSupport.collectNonBinaryConflictFiles(
+      files = listOf(binaryFile, textFile),
+      mergeProvider = BinaryAwareMergeProvider(binaryFiles = setOf(binaryFile)),
+    )
+
+    assertThat(files).containsExactly(textFile)
+  }
+
+  @Test
+  fun collectNonBinaryConflictFilesReturnsEmptyForBinaryOnlyFiles() {
+    val binaryFile = LightVirtualFile("binary.bin", "content")
+
+    val files = AgentVcsMergeSessionSupport.collectNonBinaryConflictFiles(
+      files = listOf(binaryFile),
+      mergeProvider = BinaryAwareMergeProvider(binaryFiles = setOf(binaryFile)),
+    )
+
+    assertThat(files).isEmpty()
+  }
+}
+
+private class BinaryAwareMergeProvider(
+  private val binaryFiles: Set<VirtualFile>,
+) : MergeProvider {
+  override fun loadRevisions(file: VirtualFile): MergeData {
+    error("Binary skip tests must not load revisions")
+  }
+
+  override fun conflictResolvedForFile(file: VirtualFile) {
+  }
+
+  override fun isBinary(file: VirtualFile): Boolean = file in binaryFiles
 }

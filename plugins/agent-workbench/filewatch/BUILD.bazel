@@ -1,82 +1,115 @@
-### auto-generated section `build intellij.agent.workbench.filewatch` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.agent.workbench.filewatch` start
+
 jvm_library(
-  name = "filewatch",
-  module_name = "intellij.agent.workbench.filewatch",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jna",
-    "//platform/util",
-  ]
+    name = "filewatch",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.filewatch",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jna",
+        "//platform/util",
+    ],
 )
 
 jvm_library(
-  name = "filewatch_test_lib",
-  testonly = True,
-  module_name = "intellij.agent.workbench.filewatch",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":filewatch",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/util:util_test_lib",
-  ]
+    name = "filewatch_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.filewatch",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":filewatch",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.filewatch` end
 
 ### auto-generated section `iml intellij.agent.workbench.filewatch` start
-exports_files([
-  "intellij.agent.workbench.filewatch.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.filewatch.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.filewatch` end
 
 ### auto-generated section `build intellij.agent.workbench.filewatch.tests` start
+
 jvm_library(
-  name = "agent-workbench-filewatch-tests",
-  module_name = "intellij.agent.workbench.filewatch.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "agent-workbench-filewatch-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.filewatch.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "agent-workbench-filewatch-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//plugins/agent-workbench/filewatch",
-    "//plugins/agent-workbench/filewatch:filewatch_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ],
-  runtime_deps = [":agent-workbench-filewatch-tests"]
+    name = "agent-workbench-filewatch-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/agent-workbench/filewatch",
+        "//plugins/agent-workbench/filewatch:filewatch_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":agent-workbench-filewatch-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.filewatch.tests` end
 
 ### auto-generated section `iml intellij.agent.workbench.filewatch.tests` start
-exports_files([
-  "intellij.agent.workbench.filewatch.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.filewatch.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.filewatch.tests` end
 
 ### auto-generated section `test intellij.agent.workbench.filewatch.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "agent-workbench-filewatch-tests_test",
-  runtime_deps = [":agent-workbench-filewatch-tests_test_lib"]
+    name = "agent-workbench-filewatch-tests_test",
+    runtime_deps = [":agent-workbench-filewatch-tests_test_lib"],
 )
 ### auto-generated section `test intellij.agent.workbench.filewatch.tests` end

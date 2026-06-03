@@ -1,8 +1,9 @@
-<idea-plugin package="org.jetbrains.idea.devkit.kotlin">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>

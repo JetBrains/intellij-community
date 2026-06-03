@@ -11,6 +11,18 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
+- name: lib/intellij.kotlin.base.resources.jar
+  contentModules:
+  - name: intellij.kotlin.base.resources
+- name: lib/intellij.kotlin.codeInsight.shared.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.shared
+- name: lib/intellij.kotlin.jvm.debugger.base.util.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.base.util
+- name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.coroutines
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -40,7 +52,6 @@
   - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:
-  - name: intellij.kotlin.base.resources
   - name: intellij.kotlin.base.codeInsight.minimal
   - name: intellij.kotlin.highlighting.minimal
   - name: intellij.kotlin.formatter.minimal
@@ -193,11 +204,9 @@
   - name: intellij.kotlin.projectWizard.maven
   - name: intellij.kotlin.projectWizard.gradle
   - name: intellij.kotlin.projectWizard.compose
-  - name: intellij.kotlin.jvm.debugger.base.util
   - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.evaluation
-  - name: intellij.kotlin.jvm.debugger.coroutines
   - name: intellij.kotlin.jvm.debugger.eval4j
   - name: intellij.kotlin.uast.base
   - name: intellij.kotlin.uast.idea.base
@@ -213,7 +222,6 @@
   - name: intellij.kotlin.codeInsight.utils
   - name: kotlin.code-insight.intentions.shared
   - name: kotlin.code-insight.inspections.shared
-  - name: intellij.kotlin.codeInsight.shared
   - name: intellij.kotlin.codeInsight.descriptions
   - name: intellij.kotlin.codeInsight.fixes
   - name: intellij.kotlin.codeInsight.intentions

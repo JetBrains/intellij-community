@@ -28,6 +28,20 @@ class CustomElementsMemberSymbol private constructor(
   override val defaultValue: String?
     get() = (contribution as? ClassField)?.default
 
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is CustomElementsMemberSymbol
+    && other.name == name
+    && other.contribution == contribution
+    && other.origin == origin
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + contribution.hashCode()
+    result = 31 * result + origin.hashCode()
+    return result
+  }
+
   companion object {
     fun create(member: MemberBase, origin: CustomElementsJsonOrigin): CustomElementsMemberSymbol? {
       if (member !is CustomElementsMember) return null

@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.keymap.visualStudioForMac` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.keymap.visualStudioForMac` start
+
 jvm_library(
-  name = "keymap-visualStudioForMac",
-  module_name = "intellij.keymap.visualStudioForMac",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "keymap-visualStudioForMac",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudioForMac",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "keymap-visualStudioForMac_test_lib",
-  testonly = True,
-  module_name = "intellij.keymap.visualStudioForMac",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":keymap-visualStudioForMac"]
+    name = "keymap-visualStudioForMac_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudioForMac",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":keymap-visualStudioForMac"],
 )
 ### auto-generated section `build intellij.keymap.visualStudioForMac` end
 
 ### auto-generated section `iml intellij.keymap.visualStudioForMac` start
-exports_files([
-  "intellij.keymap.visualStudioForMac.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.keymap.visualStudioForMac.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.keymap.visualStudioForMac` end

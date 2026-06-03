@@ -1,44 +1,62 @@
-### auto-generated section `build intellij.json.backend.regexp` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.json.backend.regexp` start
+
 jvm_library(
-  name = "regexp",
-  module_name = "intellij.json.backend.regexp",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//json/backend",
-    "//platform/core-api:core",
-    "//platform/util/multiplatform",
-    "//platform/util",
-    "//RegExpSupport:regexp",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "regexp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.backend.regexp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//json/backend",
+        "//platform/core-api:core",
+        "//platform/util/multiplatform",
+        "//platform/util",
+        "//RegExpSupport:regexp",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "regexp_test_lib",
-  testonly = True,
-  module_name = "intellij.json.backend.regexp",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":regexp",
-    "//json/backend:backend_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util:util_test_lib",
-    "//RegExpSupport:regexp_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "regexp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.backend.regexp",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":regexp",
+        "//json/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util:util_test_lib",
+        "//RegExpSupport:regexp_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.json.backend.regexp` end
 
 ### auto-generated section `iml intellij.json.backend.regexp` start
-exports_files([
-  "intellij.json.backend.regexp.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.json.backend.regexp.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.json.backend.regexp` end

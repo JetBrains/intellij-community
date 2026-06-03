@@ -42,7 +42,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   private val uvCli: UvCli<P>,
   private val fileSystem: FileSystem<P>,
 ) : UvLowLevel<P> {
-  override suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P> {
+  override suspend fun initializeEnvironment(init: Boolean, version: Version?, clearExisting: Boolean): PyResult<P> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
         args.add("--python")
@@ -65,6 +65,9 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val venvArgs = mutableListOf("venv")
     venvPath?.also { venvArgs += it.toString() }
+    if (clearExisting) {
+      venvArgs.add("--clear")
+    }
     addPythonArg(venvArgs)
     uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
       .getOr { return it }

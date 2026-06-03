@@ -51,7 +51,6 @@ public final class JsonSchemaCatalogManager {
   );
 
   private final @NotNull Project myProject;
-  private final @NotNull JsonSchemaRemoteContentProvider myRemoteContentProvider;
   private @Nullable VirtualFile myCatalog = null;
   private final @NotNull ConcurrentMap<VirtualFile, String> myResolvedMappings = ContainerUtil.createConcurrentSoftMap();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
@@ -60,18 +59,17 @@ public final class JsonSchemaCatalogManager {
 
   private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = CollectionFactory.createConcurrentWeakMap();
 
-  public JsonSchemaCatalogManager(@NotNull Project project) {
+  public JsonSchemaCatalogManager(@NotNull Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
-    myRemoteContentProvider = new JsonSchemaRemoteContentProvider();
+    JsonSchemaRemoteContentProvider remoteContentProvider = new JsonSchemaRemoteContentProvider();
+    RemoteFileManager.getInstance().addRemoteContentProvider(remoteContentProvider, parentDisposable);
   }
 
-  public void startUpdates() {
+  public void startUpdates(@NotNull Disposable parentDisposable) {
     JsonSchemaCatalogProjectConfiguration.getInstance(myProject).addChangeHandler(() -> {
       update();
       JsonSchemaService.Impl.get(myProject).reset();
-    });
-    RemoteFileManager instance = RemoteFileManager.getInstance();
-    instance.addRemoteContentProvider(myRemoteContentProvider);
+    }, parentDisposable);
     update();
   }
 

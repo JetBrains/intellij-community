@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Models a single LSP `TextDocument` from the IDE side of the protocol.
@@ -15,6 +16,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
  * The [toHostPosition]/[toHostRange]/[toHostLine] helpers translate them back to the host file's
  * coordinate space so the rest of the platform sees positions in the file the user edits.
  */
+@ApiStatus.Internal
 interface LspDocument {
   /**
    * The URI of the host [VirtualFile][com.intellij.openapi.vfs.VirtualFile] (without cell fragment).
@@ -58,6 +60,7 @@ interface LspDocument {
  * For notebooks, the document may contain a cell URI (e.g., "file.ipynb#cell-0")
  * and the position is cell-relative.
  */
+@ApiStatus.Internal
 data class LspDocumentPosition(
   val document: LspDocument,
   val position: Position,
@@ -68,6 +71,7 @@ data class LspDocumentPosition(
  *
  * For notebooks, the document may contain a cell URI and the range is cell-relative.
  */
+@ApiStatus.Internal
 data class LspDocumentRange(
   val document: LspDocument,
   val range: Range,

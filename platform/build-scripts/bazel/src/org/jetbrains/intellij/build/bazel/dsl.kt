@@ -59,8 +59,7 @@ internal open class BuildFile {
       .joinToString("\n")
     val targetStatements = (targets.joinToString("\n") { it.render() }).trim()
 
-    val exportsFiles = if (exportsFiles.isEmpty()) "" else
-      "exports_files([\n" + exportsFiles.sorted().joinToString("") { "  \"$it\",\n" } + "], visibility = [\"//visibility:public\"])"
+    val exportsFiles = exportsFilesSection(exportsFiles)
 
     val render = sequenceOf(loadStatements, targetStatements, exportsFiles, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
@@ -68,6 +67,20 @@ internal open class BuildFile {
 
     return render
   }
+}
+
+private fun exportsFilesSection(exportsFiles: Set<String>) : String {
+  return if (exportsFiles.isNotEmpty()) {
+    buildString {
+      appendLine("exports_files(")
+      appendLine("$INDENT[")
+      exportsFiles.forEach { appendLine("$INDENT$INDENT\"$it\",") }
+      appendLine("$INDENT],")
+      appendLine("${INDENT}visibility = [\"//visibility:public\"],")
+      appendLine(")")
+    }
+  }
+  else ""
 }
 
 // Class to represent a load statement
@@ -114,11 +127,10 @@ internal class Target(private val type: String) : Renderable {
           verifyTypeIsSupported(item.value!!)
         }
       }
+      DoNotSortIndicator::class.java.isAssignableFrom(klass) -> Unit
       else -> error("Unsupported type '$klass' for value: $value")
     }
   }
-
-  fun optionCount(): Int = attributes.size
 
   fun visibility(targets: Array<String>) {
     option("visibility", targets.toList())
@@ -127,26 +139,41 @@ internal class Target(private val type: String) : Renderable {
   internal fun glob(list: List<String>, exclude: List<String> = emptyList(), allowEmpty: Boolean = true): Renderable {
     return object : Renderable {
       override fun render(): String {
-        val opts = LinkedHashMap<String, Any>()
-        if (allowEmpty) {
-          opts["allow_empty"] = true
+        return buildString {
+          appendLine("glob(")
+          appendFormattedList(elements = list, nesting = 2)
+          if (allowEmpty) {
+            appendLine("$INDENT${INDENT}allow_empty = True,")
+          }
+          if (exclude.isNotEmpty()) {
+            appendFormattedList(name = "exclude", elements = exclude, nesting = 2)
+          }
+          append("$INDENT)")
         }
-        if (exclude.isNotEmpty()) {
-          opts["exclude"] = exclude
+      }
+    }
+  }
+
+  private fun StringBuilder.appendFormattedList(name: String? = null, elements: List<String> = emptyList(), nesting: Int = 0) {
+    val localIndent = INDENT.repeat(nesting)
+    val opening = name?.let { "$localIndent$name = " } ?: localIndent
+    when (elements.size) {
+      0 -> appendLine("$opening[],")
+      1 -> appendLine("$opening[${formatValue(elements.single())}],")
+      else -> {
+        appendLine("$opening[")
+        elements.forEach { item ->
+          appendLine("$localIndent$INDENT${formatValue(item)},")
         }
-
-        val extra = if (opts.isEmpty()) "" else ", ${opts.entries.joinToString(", ") { "${it.key} = ${formatValue(it.value)}" }}"
-
-        // allow_empty - avoid detection of whether we have Kotlin/Java files or not
-        return "glob([${list.joinToString(", ") { formatValue(it) }}]$extra)"
+        appendLine("$localIndent],")
       }
     }
   }
 
   override fun render(): String {
     val renderedAttributes = attributes.map { (key, value) ->
-      "  $key = ${formatValue(value)}"
-    }.joinToString(",\n")
+      "$INDENT$key = ${formatValue(value)},"
+    }.joinToString("\n")
 
     return buildString {
       if (type.isEmpty()) {
@@ -165,7 +192,7 @@ private fun formatValue(value: Any?): String {
   return when (value) {
     is Collection<*> -> {
       if (value.size > 1) {
-        value.joinToString(separator = ",\n    ", prefix = "[\n    ", postfix = ",\n  ]") { formatValue(it) }
+        value.joinToString(separator = ",\n$INDENT$INDENT", prefix = "[\n$INDENT$INDENT", postfix = ",\n$INDENT]") { formatValue(it) }
       }
       else {
         value.joinToString(separator = ", ", prefix = "[", postfix = "]") { formatValue(it) }
@@ -174,12 +201,24 @@ private fun formatValue(value: Any?): String {
     is Array<*> -> value.joinToString(separator = ", ", prefix = "[", postfix = "]") { formatValue(it) }
     is String -> "\"$value\""
     is Number -> value.toString()
-    is Map<*, *> -> value.entries.joinToString(",\n    ", prefix = "{\n    ", postfix = ",\n  }") {
+    is Map<*, *> -> value.entries.joinToString(",\n$INDENT$INDENT", prefix = "{\n$INDENT$INDENT", postfix = ",\n$INDENT}") {
       (key, value) -> "\"$key\": ${formatValue(value)}"
     }
     true -> "True"
     false -> "False"
     is Renderable -> value.render()
+    is DoNotSortIndicator -> "# do not sort"
     else -> value.toString()
+  }
+}
+
+internal const val INDENT = "    "
+internal object DoNotSortIndicator
+
+internal fun List<Any>.unsorted(): List<Any> {
+  return if (this.size < 2) {
+    this
+  } else {
+    listOf<Any>(DoNotSortIndicator) + this
   }
 }

@@ -6,6 +6,8 @@
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.gradle.toolingProxy"/>
     <module name="intellij.libraries.jspecify"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->
 

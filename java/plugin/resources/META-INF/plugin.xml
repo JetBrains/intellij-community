@@ -45,6 +45,7 @@
     <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 
     <module name="intellij.java.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.java.bookmarks" loading="optional"/>
     <module name="intellij.java.impl.refactorings" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.compiler.impl" required-if-available="intellij.platform.backend"/>
@@ -55,8 +56,8 @@
     <module name="intellij.uiDesigner" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.manifest" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.ui" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.execution.impl" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.debugger.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.debugger.memory.agent" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers.impl" loading="optional"/>
     <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
@@ -85,10 +86,10 @@
     <module name="intellij.java.vcs"/>
     <module name="intellij.java.terminal" loading="optional"/>
     <module name="intellij.jvm.analysis.impl"/>
-    <module name="intellij.java.debugger.impl.frontend" required-if-available="intellij.platform.frontend"/>
-    <module name="intellij.java.debugger.impl.backend" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.execution.impl.frontend" required-if-available="intellij.platform.frontend"/>
-    <module name="intellij.java.execution.impl.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger.impl.frontend"/>
+    <module name="intellij.java.debugger.impl.backend"/>
+    <module name="intellij.java.execution.impl.frontend"/>
+    <module name="intellij.java.execution.impl.backend"/>
     <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>

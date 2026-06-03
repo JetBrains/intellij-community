@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,9 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
     return state != null && state.myIsPreferRemoteSchemas;
   }
 
-  public void addChangeHandler(Runnable runnable) {
+  public void addChangeHandler(Runnable runnable, @NotNull Disposable parentDisposable) {
     myChangeHandlers.add(runnable);
+    Disposer.register(parentDisposable, () -> myChangeHandlers.remove(runnable));
   }
 
   public static JsonSchemaCatalogProjectConfiguration getInstance(final @NotNull Project project) {

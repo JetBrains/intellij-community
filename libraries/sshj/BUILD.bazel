@@ -1,30 +1,42 @@
-### auto-generated section `build intellij.libraries.sshj` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.sshj` start
+
 jvm_library(
-  name = "sshj",
-  module_name = "intellij.libraries.sshj",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-sshj-_s_s_h_j"],
-  runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"]
+    name = "sshj",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sshj",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+    runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"],
 )
 
 jvm_library(
-  name = "sshj_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.sshj",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-sshj-_s_s_h_j"],
-  runtime_deps = [":sshj"]
+    name = "sshj_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sshj",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+    runtime_deps = [":sshj"],
 )
 ### auto-generated section `build intellij.libraries.sshj` end
 
 ### auto-generated section `iml intellij.libraries.sshj` start
-exports_files([
-  "intellij.libraries.sshj.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.sshj.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.sshj` end

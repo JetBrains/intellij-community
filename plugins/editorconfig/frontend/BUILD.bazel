@@ -1,57 +1,75 @@
-### auto-generated section `build intellij.editorconfig.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.editorconfig.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.editorconfig.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-api:lang",
-    "//plugins/editorconfig/common",
-    "//platform/util:util-ui",
-    "//platform/util-ex",
-    "//platform/analysis-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/lang-impl",
-    "//platform/core-ui",
-    "//platform/platform-frontend:frontend",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.editorconfig.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-api:lang",
+        "//plugins/editorconfig/common",
+        "//platform/util:util-ui",
+        "//platform/util-ex",
+        "//platform/analysis-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-impl",
+        "//platform/core-ui",
+        "//platform/platform-frontend:frontend",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.editorconfig.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//plugins/editorconfig/common:common_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-frontend:frontend_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.editorconfig.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//plugins/editorconfig/common:common_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.editorconfig.frontend` end
 
 ### auto-generated section `iml intellij.editorconfig.frontend` start
-exports_files([
-  "intellij.editorconfig.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.editorconfig.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.editorconfig.frontend` end

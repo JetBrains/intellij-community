@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.searchEverywhereLucene.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.searchEverywhereLucene.plugin` start
+
 jvm_library(
-  name = "searchEverywhereLucene-plugin",
-  module_name = "intellij.searchEverywhereLucene.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "searchEverywhereLucene-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereLucene.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "searchEverywhereLucene-plugin_test_lib",
-  testonly = True,
-  module_name = "intellij.searchEverywhereLucene.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":searchEverywhereLucene-plugin"]
+    name = "searchEverywhereLucene-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereLucene.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":searchEverywhereLucene-plugin"],
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
 
 ### auto-generated section `iml intellij.searchEverywhereLucene.plugin` start
-exports_files([
-  "intellij.searchEverywhereLucene.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.searchEverywhereLucene.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.searchEverywhereLucene.plugin` end

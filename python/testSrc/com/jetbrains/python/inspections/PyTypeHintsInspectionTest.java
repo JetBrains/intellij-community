@@ -381,6 +381,46 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testInconsistentTypeVarOrder() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+               
+                   T1 = TypeVar('T1')
+                   T2 = TypeVar('T2')
+               
+                   class Grandparent(Generic[T1, T2]): ...
+                   class Parent(Grandparent[T1, T2]): ...
+                   class BadChild(Parent[T1, T2], <warning descr="Generic base class 'Grandparent' is inherited with inconsistent type arguments: 'Grandparent[T1, T2]' and 'Grandparent[T2, T1]'">Grandparent[T2, T1]</warning>): ...
+                   """);
+  }
+
+  public void testInconsistentTypeVarOrderDiamond() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+               
+                   T1 = TypeVar('T1')
+                   T2 = TypeVar('T2')
+               
+                   class Base(Generic[T1, T2]): ...
+                   class Left(Base[T1, T2]): ...
+                   class Right(Base[T2, T1]): ...
+                   class BadDiamond(Left[T1, T2], <warning descr="Generic base class 'Base' is inherited with inconsistent type arguments: 'Base[T1, T2]' and 'Base[T2, T1]'">Right[T1, T2]</warning>): ...
+                   """);
+  }
+
+  public void testConsistentTypeVarOrderWithReorderedIntermediate() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+               
+                   T1 = TypeVar('T1')
+                   T2 = TypeVar('T2')
+               
+                   class Base(Generic[T1, T2]): ...
+                   class Reordered(Generic[T1, T2], Base[T2, T1]): ...
+                   class GoodChild(Reordered[T1, T2], Base[T2, T1]): ...
+                   """);
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnAny() {
     doTestByText("""
@@ -3347,7 +3387,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
       {"C[(((<warning descr=\"Unbound type variable\">TV</warning>)))]"},
       {"list[((<warning descr=\"Unbound type variable\">TV</warning>))]"},
-      {"Generic[((<warning descr=\"Unbound type variable\">TV</warning>))]"},
+      {"<warning descr=\"'Generic' cannot be used as a type expression\">Generic</warning>[((<warning descr=\"Unbound type variable\">TV</warning>))]"},
       {"dict[((int)), (((<warning descr=\"Unbound type variable\">TV</warning>)))]"},
       {"Annotated[((str, dict[str, str]))]"},
     });

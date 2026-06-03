@@ -1073,6 +1073,14 @@ class ContentParseResult(
   @JvmField val pluginDependencies: List<String> = emptyList(),
   /** Plugin aliases from <module value="..."/> elements at root level */
   @JvmField val pluginAliases: List<String> = emptyList(),
+  /** Service keys registered by service extension points. */
+  @JvmField val registeredServiceKeys: Set<String> = emptySet(),
+  /** Service keys registered with `overrides="true"`. */
+  @JvmField val overridingServiceKeys: Set<String> = emptySet(),
+  /** Action group IDs declared by `<actions><group id="...">`. */
+  @JvmField val declaredActionGroupIds: Set<String> = emptySet(),
+  /** Action group IDs referenced by `<add-to-group group-id="...">`. */
+  @JvmField val referencedActionGroupIds: Set<String> = emptySet(),
 )
 
 /**
@@ -1082,6 +1090,8 @@ class ContentParseResult(
  * This is a lightweight parser that only looks for:
  * - `<content><module>` elements
  * - `xi:include` elements (at root level)
+ * - service registrations
+ * - action group declarations and references
  *
  * All other elements are skipped efficiently.
  */
@@ -1109,6 +1119,10 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   val moduleDependencies = ArrayList<String>()
   val pluginDependencies = ArrayList<String>()
   val pluginAliases = ArrayList<String>()
+  val registeredServiceKeys = HashSet<String>()
+  val overridingServiceKeys = HashSet<String>()
+  val declaredActionGroupIds = HashSet<String>()
+  val referencedActionGroupIds = HashSet<String>()
   consumeChildElements(reader) { localName ->
     when (localName) {
       PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
@@ -1158,6 +1172,12 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
         }
         reader.skipElement()
       }
+      PluginXmlConst.EXTENSIONS_ELEM -> {
+        readRegisteredServiceKeys(reader, registeredServiceKeys, overridingServiceKeys)
+      }
+      PluginXmlConst.ACTIONS_ELEM -> {
+        readActionGroupIds(reader, declaredActionGroupIds, referencedActionGroupIds)
+      }
       else -> {
         // Recursively check nested elements for xi:includes (they can appear at root level only,
         // but we still need to traverse to find them in case of nested structures)
@@ -1168,7 +1188,108 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
       }
     }
   }
-  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies, pluginDependencies, pluginAliases)
+  return ContentParseResult(
+    contentModules = contentModules,
+    xIncludePaths = xIncludePaths,
+    moduleDependencies = moduleDependencies,
+    pluginDependencies = pluginDependencies,
+    pluginAliases = pluginAliases,
+    registeredServiceKeys = registeredServiceKeys,
+    overridingServiceKeys = overridingServiceKeys,
+    declaredActionGroupIds = declaredActionGroupIds,
+    referencedActionGroupIds = referencedActionGroupIds,
+  )
+}
+
+private fun readActionGroupIds(
+  reader: XMLStreamReader2,
+  declaredActionGroupIds: MutableSet<String>,
+  referencedActionGroupIds: MutableSet<String>,
+) {
+  consumeChildElements(reader) { elementName ->
+    readActionElementGroupIds(reader, elementName, declaredActionGroupIds, referencedActionGroupIds)
+  }
+}
+
+private fun readActionElementGroupIds(
+  reader: XMLStreamReader2,
+  elementName: String,
+  declaredActionGroupIds: MutableSet<String>,
+  referencedActionGroupIds: MutableSet<String>,
+) {
+  when (elementName) {
+    PluginXmlConst.ACTION_GROUP_ELEM -> {
+      if (!isActionOverride(reader)) {
+        XmlReadUtils.findAttributeValue(reader, PluginXmlConst.ACTION_GROUP_ID_ATTR)?.let(declaredActionGroupIds::add)
+      }
+      consumeChildElements(reader) { childName ->
+        readActionElementGroupIds(reader, childName, declaredActionGroupIds, referencedActionGroupIds)
+      }
+    }
+    PluginXmlConst.ACTION_ELEM -> {
+      consumeChildElements(reader) { childName ->
+        readActionElementGroupIds(reader, childName, declaredActionGroupIds, referencedActionGroupIds)
+      }
+    }
+    PluginXmlConst.ADD_TO_GROUP_ELEM -> {
+      XmlReadUtils.findAttributeValue(reader, PluginXmlConst.ADD_TO_GROUP_GROUP_ID_ATTR)?.let(referencedActionGroupIds::add)
+      reader.skipElement()
+    }
+    else -> reader.skipElement()
+  }
+}
+
+private fun isActionOverride(reader: XMLStreamReader2): Boolean {
+  for (i in 0 until reader.attributeCount) {
+    if (reader.getAttributeLocalName(i) == PluginXmlConst.ACTION_OVERRIDES_ATTR) {
+      return reader.getAttributeAsBoolean(i)
+    }
+  }
+  return false
+}
+
+private fun readRegisteredServiceKeys(
+  reader: XMLStreamReader2,
+  registeredServiceKeys: MutableSet<String>,
+  overridingServiceKeys: MutableSet<String>,
+) {
+  val defaultExtensionNs = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.EXTENSIONS_DEFAULT_EXTENSION_NS_ATTR)
+  consumeChildElements(reader) { elementName ->
+    var serviceInterface: String? = null
+    var serviceImplementation: String? = null
+    var qualifiedExtensionPointName: String? = null
+    var overrides = false
+
+    for (i in 0 until reader.attributeCount) {
+      when (reader.getAttributeLocalName(i)) {
+        PluginXmlConst.SERVICE_EP_SERVICE_INTERFACE_ATTR -> serviceInterface = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.SERVICE_EP_SERVICE_IMPLEMENTATION_ATTR -> serviceImplementation = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.SERVICE_EP_OVERRIDES_ATTR -> overrides = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.EXTENSION_POINT_ATTR -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
+      }
+    }
+
+    if (qualifiedExtensionPointName == null) {
+      qualifiedExtensionPointName = "${defaultExtensionNs ?: reader.namespaceURI}.${elementName}"
+    }
+
+    when (qualifiedExtensionPointName) {
+      PluginXmlConst.FQN_APPLICATION_SERVICE,
+      PluginXmlConst.FQN_PROJECT_SERVICE,
+      PluginXmlConst.FQN_MODULE_SERVICE,
+        -> {
+        val serviceKey = serviceInterface ?: serviceImplementation
+        if (serviceKey != null) {
+          registeredServiceKeys.add(serviceKey)
+          if (overrides) {
+            overridingServiceKeys.add(serviceKey)
+          }
+        }
+      }
+    }
+
+    reader.skipElement()
+  }
 }
 
 private fun readContentModuleElement(reader: XMLStreamReader2, namespace: String?): ContentModuleElement {

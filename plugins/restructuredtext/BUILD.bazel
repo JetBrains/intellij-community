@@ -1,177 +1,210 @@
-### auto-generated section `build intellij.restructuredtext` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.restructuredtext` start
+
 jvm_provided_library(
-  name = "platform_lang-impl_provided",
-  lib = "//platform/lang-impl"
+    name = "platform_lang-impl_provided",
+    lib = "//platform/lang-impl",
 )
 
 jvm_provided_library(
-  name = "platform_execution-impl_provided",
-  lib = "//platform/execution-impl"
+    name = "platform_execution-impl_provided",
+    lib = "//platform/execution-impl",
 )
 
 jvm_provided_library(
-  name = "platform_core-ui_provided",
-  lib = "//platform/core-ui"
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
 )
 
 jvm_provided_library(
-  name = "spellchecker_provided",
-  lib = "//spellchecker"
+    name = "spellchecker_provided",
+    lib = "//spellchecker",
 )
 
 jvm_library(
-  name = "restructuredtext",
-  module_name = "intellij.restructuredtext",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/code-style-api:codeStyle",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//libraries/guava",
-    "//platform/projectModel-api:projectModel",
-    "//platform/structure-view-impl:structureView-impl",
-    "//platform/editor-ui-ex:editor-ex",
-    "//platform/platform-impl:ide-impl",
-    "//platform/util:util-ui",
-    "//platform/ide-core",
-    "//platform/indexing-impl",
-    "//libraries/jsoup",
-    "//platform/util/jdom",
-    "//libraries/jcef",
-    "//platform/indexing-api:indexing",
-    "//platform/core-impl",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//jps/model-api:model",
-    ":platform_lang-impl_provided",
-    ":platform_execution-impl_provided",
-    ":platform_core-ui_provided",
-    ":spellchecker_provided",
-  ]
+    name = "restructuredtext",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//libraries/guava",
+        "//platform/projectModel-api:projectModel",
+        "//platform/structure-view-impl:structureView-impl",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util:util-ui",
+        "//platform/ide-core",
+        "//platform/indexing-impl",
+        "//libraries/jsoup",
+        "//platform/util/jdom",
+        "//libraries/jcef",
+        "//platform/indexing-api:indexing",
+        "//platform/core-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+        ":platform_lang-impl_provided",
+        ":platform_execution-impl_provided",
+        ":platform_core-ui_provided",
+        ":spellchecker_provided",
+    ],
 )
 
 jvm_library(
-  name = "restructuredtext_test_lib",
-  testonly = True,
-  module_name = "intellij.restructuredtext",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":restructuredtext",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/execution-impl",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//libraries/guava:guava_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/editor-ui-ex:editor-ex_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/indexing-impl:indexing-impl_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//libraries/jcef:jcef_test_lib",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//jps/model-api:model_test_lib",
-  ]
+    name = "restructuredtext_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":restructuredtext",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/jcef:jcef_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//jps/model-api:model_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.restructuredtext` end
 
 ### auto-generated section `iml intellij.restructuredtext` start
-exports_files([
-  "intellij.restructuredtext.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.restructuredtext.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.restructuredtext` end
 
 ### auto-generated section `build intellij.restructuredtext.tests` start
+
 jvm_library(
-  name = "restructuredtext-tests",
-  module_name = "intellij.restructuredtext.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "restructuredtext-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "restructuredtext-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.restructuredtext.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["testData/**/*"]),
-  resource_strip_prefix = "testData",
-  runtime_deps = [
-    ":restructuredtext-tests",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/code-style-api:codeStyle",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/execution-impl",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//libraries/guava",
-    "//libraries/guava:guava_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/structure-view-impl:structureView-impl",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/editor-ui-ex:editor-ex",
-    "//platform/editor-ui-ex:editor-ex_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/indexing-impl",
-    "//platform/indexing-impl:indexing-impl_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/jsoup",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//platform/util/jdom",
-    "//platform/util/jdom:jdom_test_lib",
-    "//libraries/jcef",
-    "//libraries/jcef:jcef_test_lib",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//platform/indexing-api:indexing",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//jps/model-api:model",
-    "//jps/model-api:model_test_lib",
-    "//plugins/restructuredtext",
-    "//plugins/restructuredtext:restructuredtext_test_lib",
-  ]
+    name = "restructuredtext-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext.tests",
+    resource_strip_prefix = "testData",
+    resources = glob(
+        ["testData/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":restructuredtext-tests",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//libraries/guava",
+        "//libraries/guava:guava_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/structure-view-impl:structureView-impl",
+        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/indexing-impl",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/jsoup",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/jcef",
+        "//libraries/jcef:jcef_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+        "//plugins/restructuredtext",
+        "//plugins/restructuredtext:restructuredtext_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.restructuredtext.tests` end
 
 ### auto-generated section `iml intellij.restructuredtext.tests` start
-exports_files([
-  "intellij.restructuredtext.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.restructuredtext.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.restructuredtext.tests` end

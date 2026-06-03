@@ -1,47 +1,64 @@
-### auto-generated section `build fleet.build.scrambling` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.build.scrambling` start
 
 create_kotlinc_options(
-  name = "custom_scrambling",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_scrambling",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "scrambling",
-  module_name = "fleet.build.scrambling",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_scrambling",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:slf4j-api",
-  ]
+    name = "scrambling",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scrambling",
+    module_name = "fleet.build.scrambling",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:slf4j-api",
+    ],
 )
 
 jvm_library(
-  name = "scrambling_test_lib",
-  testonly = True,
-  module_name = "fleet.build.scrambling",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_scrambling",
-  runtime_deps = [":scrambling"]
+    name = "scrambling_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scrambling",
+    module_name = "fleet.build.scrambling",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":scrambling"],
 )
 ### auto-generated section `build fleet.build.scrambling` end
 
 ### auto-generated section `iml fleet.build.scrambling` start
-exports_files([
-  "fleet.build.scrambling.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.build.scrambling.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.build.scrambling` end

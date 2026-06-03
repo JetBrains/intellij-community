@@ -1,30 +1,42 @@
-### auto-generated section `build intellij.libraries.kotlinTest` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.kotlinTest` start
+
 jvm_library(
-  name = "libraries-kotlinTest",
-  module_name = "intellij.libraries.kotlinTest",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:kotlin-test"],
-  runtime_deps = ["@lib//:kotlin-test"]
+    name = "libraries-kotlinTest",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinTest",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlin-test"],
+    runtime_deps = ["@lib//:kotlin-test"],
 )
 
 jvm_library(
-  name = "libraries-kotlinTest_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.kotlinTest",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:kotlin-test"],
-  runtime_deps = [":libraries-kotlinTest"]
+    name = "libraries-kotlinTest_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinTest",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlin-test"],
+    runtime_deps = [":libraries-kotlinTest"],
 )
 ### auto-generated section `build intellij.libraries.kotlinTest` end
 
 ### auto-generated section `iml intellij.libraries.kotlinTest` start
-exports_files([
-  "intellij.libraries.kotlinTest.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.kotlinTest.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.kotlinTest` end

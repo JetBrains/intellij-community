@@ -8,10 +8,6 @@
   <condition property="is.windows">
     <os family="windows"/>
   </condition>
-  <condition property="script.suffix" value=".cmd">
-    <os family="windows" />
-  </condition>
-  <property name="script.suffix" value=".sh" />
 
   <macrodef name="apply.patch">
     <attribute name="file"/>
@@ -45,12 +41,12 @@
     <symlink link="${platform.root}/.mps" resource="${platform.root}/.idea"/>
   </target>
 
-  <!-- Raw JPS build of modules and plugins required by MPS -->
+  <!-- Bazel build of modules and plugins required by MPS -->
   <target name="ij-platform" description="Compile and package the raw IJ platform">
-    <exec failonerror="true" executable="${platform.root}/platform/jps-bootstrap/jps-bootstrap${script.suffix}">
-      <arg value="${platform.root}"/>
-      <arg value="intellij.mps.build"/>
-      <arg value="org.jetbrains.intellij.build.mps.MPSBuilder"/>
+    <exec failonerror="true" executable="${platform.root}/bazel.cmd" dir="${platform.root}">
+      <arg value="run"/>
+      <arg value="//mps/build:mps_builder"/>
+      <arg value="--"/>
       <arg value="${platform.root}"/>
     </exec>
     <jar destfile="${target.root}/dist.all/lib/jps/jps-build-test.jar" duplicate="preserve">

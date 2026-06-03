@@ -174,13 +174,15 @@ public enum Mutability {
     if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
-                                   AnnotationUtil.CHECK_INFERRED)) {
+                                   AnnotationUtil.CHECK_INFERRED |
+                                   AnnotationUtil.CHECK_TYPE)) {
       return UNMODIFIABLE;
     }
     if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_VIEW_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
-                                   AnnotationUtil.CHECK_INFERRED)) {
+                                   AnnotationUtil.CHECK_INFERRED |
+                                   AnnotationUtil.CHECK_TYPE)) {
       return UNMODIFIABLE_VIEW;
     }
     if (owner instanceof PsiField field && owner.hasModifierProperty(PsiModifier.FINAL)) {

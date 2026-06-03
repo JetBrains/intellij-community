@@ -1,35 +1,51 @@
-### auto-generated section `build intellij.platform.icons.api` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.icons.api` start
+
 jvm_library(
-  name = "icons-api",
-  module_name = "intellij.platform.icons.api",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "icons-api",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.icons.api",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "icons-api_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.icons.api",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":icons-api",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-  ]
+    name = "icons-api_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.icons.api",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":icons-api",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.icons.api` end
 
 ### auto-generated section `iml intellij.platform.icons.api` start
-exports_files([
-  "intellij.platform.icons.api.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.icons.api.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.icons.api` end

@@ -309,8 +309,12 @@ def _parse_library_element(lib_el, lib_xml_path):
         local_urls = local_urls,
     )
 
-def derive_library_targets(ctx, library_xmls, iml_data_list,
-                           is_community_only, community_root_rel):
+def derive_library_targets(
+        ctx,
+        library_xmls,
+        iml_data_list,
+        is_community_only,
+        community_root_rel):
     """Derive all library jar targets from project and module libraries.
 
     This is the main entry point called from repo rule implementations.
@@ -349,6 +353,7 @@ def derive_library_targets(ctx, library_xmls, iml_data_list,
     for iml_data in iml_data_list:
         for lib_ref in iml_data.parsed_iml.project_library_refs:
             all_referenced_libs[lib_ref] = True
+
             # For ultimate mode: track whether any community module references each lib
             if not is_community_only and iml_data.is_community:
                 lib_community_status[lib_ref] = True

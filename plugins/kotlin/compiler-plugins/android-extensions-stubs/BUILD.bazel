@@ -1,25 +1,39 @@
-### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` start
+
 jvm_library(
-  name = "android-extensions-stubs",
-  module_name = "kotlin.compiler-plugins.android-extensions-stubs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True)
+    name = "android-extensions-stubs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.compiler-plugins.android-extensions-stubs",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "android-extensions-stubs_test_lib",
-  testonly = True,
-  module_name = "kotlin.compiler-plugins.android-extensions-stubs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":android-extensions-stubs"]
+    name = "android-extensions-stubs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.compiler-plugins.android-extensions-stubs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":android-extensions-stubs"],
 )
 ### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` end
 
 ### auto-generated section `iml kotlin.compiler-plugins.android-extensions-stubs` start
-exports_files([
-  "kotlin.compiler-plugins.android-extensions-stubs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "kotlin.compiler-plugins.android-extensions-stubs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml kotlin.compiler-plugins.android-extensions-stubs` end

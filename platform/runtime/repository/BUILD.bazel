@@ -1,28 +1,42 @@
-### auto-generated section `build intellij.platform.runtime.repository` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.runtime.repository` start
+
 jvm_library(
-  name = "repository",
-  module_name = "intellij.platform.runtime.repository",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  deps = ["@lib//:jetbrains-annotations"]
+    name = "repository",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.runtime.repository",
+    visibility = ["//visibility:public"],
+    deps = ["@lib//:jetbrains-annotations"],
 )
 
 jvm_library(
-  name = "repository_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.runtime.repository",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [":repository"]
+    name = "repository_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.runtime.repository",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":repository"],
 )
 ### auto-generated section `build intellij.platform.runtime.repository` end
 
 ### auto-generated section `iml intellij.platform.runtime.repository` start
-exports_files([
-  "intellij.platform.runtime.repository.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.runtime.repository.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.runtime.repository` end

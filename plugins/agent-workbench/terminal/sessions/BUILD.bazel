@@ -1,119 +1,152 @@
-### auto-generated section `build intellij.agent.workbench.terminal.sessions` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.agent.workbench.terminal.sessions` start
+
 jvm_library(
-  name = "sessions",
-  module_name = "intellij.agent.workbench.terminal.sessions",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/prompt/core",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-  ]
+    name = "sessions",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.terminal.sessions",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//plugins/agent-workbench/common",
+        "//plugins/agent-workbench/prompt/core",
+        "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    ],
 )
 
 jvm_library(
-  name = "sessions_test_lib",
-  testonly = True,
-  module_name = "intellij.agent.workbench.terminal.sessions",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":sessions",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ]
+    name = "sessions_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.terminal.sessions",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":sessions",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//plugins/agent-workbench/common:common_test_lib",
+        "//plugins/agent-workbench/prompt/core:core_test_lib",
+        "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.terminal.sessions` end
 
 ### auto-generated section `iml intellij.agent.workbench.terminal.sessions` start
-exports_files([
-  "intellij.agent.workbench.terminal.sessions.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.terminal.sessions.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.terminal.sessions` end
 
 ### auto-generated section `build intellij.agent.workbench.terminal.sessions.tests` start
+
 jvm_library(
-  name = "agent-workbench-terminal-sessions-tests",
-  module_name = "intellij.agent.workbench.terminal.sessions.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "agent-workbench-terminal-sessions-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.terminal.sessions.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "agent-workbench-terminal-sessions-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//plugins/agent-workbench/terminal/sessions",
-    "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ],
-  runtime_deps = [":agent-workbench-terminal-sessions-tests"]
+    name = "agent-workbench-terminal-sessions-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/agent-workbench/terminal/sessions",
+        "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":agent-workbench-terminal-sessions-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//plugins/agent-workbench/common",
+        "//plugins/agent-workbench/common:common_test_lib",
+        "//plugins/agent-workbench/prompt/core",
+        "//plugins/agent-workbench/prompt/core:core_test_lib",
+        "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+        "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.terminal.sessions.tests` end
 
 ### auto-generated section `iml intellij.agent.workbench.terminal.sessions.tests` start
-exports_files([
-  "intellij.agent.workbench.terminal.sessions.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.terminal.sessions.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.terminal.sessions.tests` end
 
 ### auto-generated section `test intellij.agent.workbench.terminal.sessions.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "agent-workbench-terminal-sessions-tests_test",
-  runtime_deps = [":agent-workbench-terminal-sessions-tests_test_lib"]
+    name = "agent-workbench-terminal-sessions-tests_test",
+    runtime_deps = [":agent-workbench-terminal-sessions-tests_test_lib"],
 )
 ### auto-generated section `test intellij.agent.workbench.terminal.sessions.tests` end

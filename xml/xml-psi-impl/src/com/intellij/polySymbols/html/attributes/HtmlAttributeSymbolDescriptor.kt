@@ -8,7 +8,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -83,7 +83,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
         if (strictEnumValues) null
         else super.getEnumeratedValueDeclaration(xmlElement, value)
       }
-      else matches.firstNotNullOfOrNull { (it.symbol as? PsiSourcedPolySymbol)?.source } ?: xmlElement
+      else matches.firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.linkedElement } ?: xmlElement
     }
     else if (value.isNullOrEmpty())
       null
@@ -92,7 +92,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
 
   override fun getDefaultValueDeclaration(): PsiElement? =
     if (defaultValue != null && supportsEnums) {
-      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiSourcedPolySymbol)?.source }
+      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiLinkedPolySymbol)?.linkedElement }
     }
     else super.getDefaultValueDeclaration()
 

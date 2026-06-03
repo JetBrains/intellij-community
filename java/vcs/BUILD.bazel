@@ -1,55 +1,73 @@
-### auto-generated section `build intellij.java.vcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.vcs` start
+
 jvm_library(
-  name = "vcs",
-  module_name = "intellij.java.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//java/execution/openapi:java-execution",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/execution",
-    "//platform/lang-api:lang",
-    "//platform/projectModel-api:projectModel",
-    "//platform/vcs-api:vcs",
-    "//java/java-psi-api:psi",
-    "//uast/uast-common:uast",
-    "//platform/diff-api:diff",
-    "//platform/vcs-impl",
-    "//platform/ide-core",
-  ]
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/execution/openapi:java-execution",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/execution",
+        "//platform/lang-api:lang",
+        "//platform/projectModel-api:projectModel",
+        "//platform/vcs-api:vcs",
+        "//java/java-psi-api:psi",
+        "//uast/uast-common:uast",
+        "//platform/diff-api:diff",
+        "//platform/vcs-impl",
+        "//platform/ide-core",
+    ],
 )
 
 jvm_library(
-  name = "vcs_test_lib",
-  testonly = True,
-  module_name = "intellij.java.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":vcs",
-    "//java/execution/openapi:java-execution_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//uast/uast-common:uast_test_lib",
-    "//platform/diff-api:diff_test_lib",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-  ]
+    name = "vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs",
+        "//java/execution/openapi:java-execution_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//platform/diff-api:diff_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.vcs` end
 
 ### auto-generated section `iml intellij.java.vcs` start
-exports_files([
-  "intellij.java.vcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.vcs` end

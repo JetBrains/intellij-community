@@ -228,7 +228,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
         base.jsonOrigin.resolveSourceLocation(it)
       }
 
-  final override val source: PsiElement?
+  final override val linkedElement: PsiElement?
     // Should not reach to super contributions, because it can lead to stack overflow
     // when special containers are trying to merge symbols
     get() = base.contribution.source

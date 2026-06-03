@@ -1,65 +1,88 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 kt_jvm_library(
-  name = "kernel.plugins.processor-kt",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_kernel.plugins.processor",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-io-core",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
-  ]
+    name = "kernel.plugins.processor-kt",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kernel.plugins.processor",
+    resource_strip_prefix = "resources",
+    resources = glob(["resources/**/*"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:kotlinx-io-core",
+    ],
 )
 
 ### auto-generated section `build fleet.build.kernel.plugins.processor` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_kernel.plugins.processor",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_kernel.plugins.processor",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "kernel.plugins.processor",
-  module_name = "fleet.build.kernel.plugins.processor",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_kernel.plugins.processor",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-io-core",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
-  ]
+    name = "kernel.plugins.processor",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kernel.plugins.processor",
+    module_name = "fleet.build.kernel.plugins.processor",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-io-core",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
+    ],
 )
 
 jvm_library(
-  name = "kernel.plugins.processor_test_lib",
-  testonly = True,
-  module_name = "fleet.build.kernel.plugins.processor",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_kernel.plugins.processor",
-  runtime_deps = [":kernel.plugins.processor"]
+    name = "kernel.plugins.processor_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kernel.plugins.processor",
+    module_name = "fleet.build.kernel.plugins.processor",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":kernel.plugins.processor"],
 )
 ### auto-generated section `build fleet.build.kernel.plugins.processor` end
 
 ### auto-generated section `iml fleet.build.kernel.plugins.processor` start
-exports_files([
-  "fleet.build.kernel.plugins.processor.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.build.kernel.plugins.processor.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.build.kernel.plugins.processor` end

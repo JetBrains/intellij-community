@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.commons.codec` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.commons.codec` start
+
 jvm_library(
-  name = "codec",
-  module_name = "intellij.libraries.commons.codec",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-commons-codec-commons-codec"],
-  runtime_deps = ["@lib//:libraries-commons-codec-commons-codec"]
+    name = "codec",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.codec",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-codec-commons-codec"],
+    runtime_deps = ["@lib//:libraries-commons-codec-commons-codec"],
 )
 
 jvm_library(
-  name = "codec_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.commons.codec",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-commons-codec-commons-codec"],
-  runtime_deps = [":codec"]
+    name = "codec_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.codec",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-codec-commons-codec"],
+    runtime_deps = [":codec"],
 )
 ### auto-generated section `build intellij.libraries.commons.codec` end
 
 ### auto-generated section `iml intellij.libraries.commons.codec` start
-exports_files([
-  "intellij.libraries.commons.codec.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.commons.codec.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.commons.codec` end

@@ -7,12 +7,16 @@
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->
 

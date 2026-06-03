@@ -11,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @ApiStatus.Internal
 public final class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
@@ -24,7 +24,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
   private final Map<Url, HttpVirtualFileImpl> remoteDirectories = new HashMap<>();
 
   private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
-  private final List<RemoteContentProvider> myProviders = new ArrayList<>();
+  private final List<RemoteContentProvider> myProviders = new CopyOnWriteArrayList<>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
 
   public RemoteFileManagerImpl() {

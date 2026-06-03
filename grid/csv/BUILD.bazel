@@ -1,50 +1,68 @@
-### auto-generated section `build intellij.grid.csv.core.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grid.csv.core.impl` start
+
 jvm_library(
-  name = "csv-core-impl",
-  module_name = "intellij.grid.csv.core.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//platform/util",
-    "//platform/util/jdom",
-    "//platform/util/base",
-    "//platform/core-api:core",
-    "//grid/types",
-    "//platform/core-impl",
-    "//platform/projectModel-api:projectModel",
-    "//libraries/automaton",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "csv-core-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.csv.core.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//platform/util",
+        "//platform/util/jdom",
+        "//platform/util/base",
+        "//platform/core-api:core",
+        "//grid/types",
+        "//platform/core-impl",
+        "//platform/projectModel-api:projectModel",
+        "//libraries/automaton",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "csv-core-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.grid.csv.core.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":csv-core-impl",
-    "//platform/util:util_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//grid/types:types_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//libraries/automaton:automaton_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "csv-core-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.csv.core.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":csv-core-impl",
+        "//platform/util:util_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//grid/types:types_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//libraries/automaton:automaton_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grid.csv.core.impl` end
 
 ### auto-generated section `iml intellij.grid.csv.core.impl` start
-exports_files([
-  "intellij.grid.csv.core.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grid.csv.core.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grid.csv.core.impl` end

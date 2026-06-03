@@ -1,57 +1,75 @@
-### auto-generated section `build intellij.python.community.execService.python` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.execService.python` start
+
 jvm_library(
-  name = "execService.python",
-  module_name = "intellij.python.community.execService.python",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python/python-exec-service:community-execService",
-    "//python/openapi:community",
-    "@lib//:jetbrains-annotations",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "//python/impl.helperLocator:community-helpersLocator",
-    "//platform/util",
-    "//platform/core-api:core",
-  ]
+    name = "execService.python",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.execService.python",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/python-exec-service:community-execService",
+        "//python/openapi:community",
+        "@lib//:jetbrains-annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//python/impl.helperLocator:community-helpersLocator",
+        "//platform/util",
+        "//platform/core-api:core",
+    ],
 )
 
 jvm_library(
-  name = "execService.python_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.execService.python",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":execService.python",
-    "//python/python-exec-service:community-execService_test_lib",
-    "//python/openapi:community_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//python/impl.helperLocator:community-helpersLocator_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5/eel",
-    "//platform/testFramework/junit5/eel:eel_test_lib",
-    "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-  ]
+    name = "execService.python_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.execService.python",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":execService.python",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//python/openapi:community_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//python/impl.helperLocator:community-helpersLocator_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/eel",
+        "//platform/testFramework/junit5/eel:eel_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.execService.python` end
 
 ### auto-generated section `iml intellij.python.community.execService.python` start
-exports_files([
-  "intellij.python.community.execService.python.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.execService.python.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.execService.python` end

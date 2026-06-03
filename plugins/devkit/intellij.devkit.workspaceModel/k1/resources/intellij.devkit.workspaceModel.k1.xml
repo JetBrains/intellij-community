@@ -1,5 +1,4 @@
-<idea-plugin package="com.intellij.devkit.workspaceModel.k1">
-
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k1"/>
     <module name="intellij.devkit.workspaceModel"/>
@@ -9,9 +8,9 @@
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider"
-      serviceImplementation="com.intellij.devkit.workspaceModel.k1.metaModel.WorkspaceMetaModelProviderImpl"
-    />
+    <applicationService
+      serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider"
+      serviceImplementation="com.intellij.devkit.workspaceModel.k1.metaModel.WorkspaceMetaModelProviderImpl"/>
     <localInspection language="kotlin"
                      shortName="WorkspaceImplAbsent"
                      projectType="INTELLIJ_PLUGIN"

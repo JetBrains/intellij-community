@@ -176,7 +176,7 @@ internal class RunConfigurationsFile : BuildFile() {
   override fun render(existingLoads: Map<String, Set<String>>): String {
     return "def dev_server_run_configurations():\n" +
         super.render(existingLoads).lines().joinToString("\n") { line ->
-          if (line.isNotEmpty()) "  $line" else line
+          if (line.isNotEmpty()) "$INDENT$line" else line
         }.let { it + if (!it.endsWith("\n")) "\n" else "" }   // preserve trailing newline
   }
 
@@ -205,7 +205,7 @@ internal class RunConfigurationsFile : BuildFile() {
       option("jvm_flags",
              (runConfigurationProperties + envsWithProjectDir)
                .map { (k, v) -> "-D$k=${v.projectDirToBazelWorkspace(generatedName)}" }
-               .plus(runConfiguration.vmOptions.jvmFlags)
+               .plus(runConfiguration.vmOptions.jvmFlags).sorted()
       )
       runConfiguration.env.filterNot { (_, v) -> v.contains(projectDirVar)}.also { env ->
         if (env.isNotEmpty()) {

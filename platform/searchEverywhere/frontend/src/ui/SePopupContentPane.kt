@@ -55,7 +55,6 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionListener
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
@@ -361,7 +360,7 @@ class SePopupContentPane(
                   val currentTab = vm.currentTab
                   if (currentTab.tabId == searchContext.tabId) {
 
-                    if ((currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                    if (currentTab.getAutoToggleAction()?.autoToggle(true) ?: false) {
                       currentTab.lastNotFoundString = textField.text
                       headerPane.updateActionsAsync()
                       return@withContext

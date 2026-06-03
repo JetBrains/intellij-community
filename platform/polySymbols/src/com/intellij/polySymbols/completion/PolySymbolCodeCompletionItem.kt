@@ -10,8 +10,8 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.completion.impl.CodeCompletionPolySymbolWithDocumentation
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
-import com.intellij.polySymbols.completion.impl.PsiSourcedCodeCompletionPolySymbolWithDocumentation
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.completion.impl.PsiLinkedCodeCompletionPolySymbolWithDocumentation
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
@@ -138,7 +138,7 @@ interface PolySymbolCodeCompletionItem {
         ?.let {
           when (it) {
             is CodeCompletionPolySymbolWithDocumentation -> it.delegate
-            is PsiSourcedCodeCompletionPolySymbolWithDocumentation -> it.delegate
+            is PsiLinkedCodeCompletionPolySymbolWithDocumentation -> it.delegate
             is PolySymbol -> it
             else -> null
           }
@@ -148,8 +148,8 @@ interface PolySymbolCodeCompletionItem {
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =
       lookupElement.psiElement
       ?: getPolySymbol(lookupElement)
-        ?.let { it as? PsiSourcedPolySymbol }
-        ?.source
+        ?.let { it as? PsiLinkedPolySymbol }
+        ?.linkedElement
 
   }
 

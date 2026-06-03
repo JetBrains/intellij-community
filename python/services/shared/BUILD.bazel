@@ -1,111 +1,146 @@
-### auto-generated section `build intellij.python.community.services.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.services.shared` start
+
 jvm_library(
-  name = "shared",
-  module_name = "intellij.python.community.services.shared",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python/openapi:community",
-    "@lib//:jetbrains-annotations",
-    "//platform/eel-provider",
-    "//python/python-exec-service/execService.python",
-    "//platform/diagnostic",
-    "//platform/util",
-  ]
+    name = "shared",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.services.shared",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/openapi:community",
+        "@lib//:jetbrains-annotations",
+        "//platform/eel-provider",
+        "//python/python-exec-service/execService.python",
+        "//platform/diagnostic",
+        "//platform/util",
+    ],
 )
 
 jvm_library(
-  name = "shared_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.services.shared",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":shared",
-    "//python/openapi:community_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/hamcrest",
-    "//libraries/hamcrest:hamcrest_test_lib",
-    "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//platform/diagnostic:diagnostic_test_lib",
-    "//platform/util:util_test_lib",
-  ]
+    name = "shared_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.services.shared",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":shared",
+        "//python/openapi:community_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+        "//python/python-exec-service/execService.python:execService.python_test_lib",
+        "//platform/diagnostic:diagnostic_test_lib",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.services.shared` end
 
 ### auto-generated section `iml intellij.python.community.services.shared` start
-exports_files([
-  "intellij.python.community.services.shared.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.services.shared.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.services.shared` end
 
 ### auto-generated section `build intellij.python.community.services.shared.tests` start
+
 jvm_library(
-  name = "python-community-services-shared-tests",
-  module_name = "intellij.python.community.services.shared.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "python-community-services-shared-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.services.shared.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "python-community-services-shared-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  associates = [
-    "//python/services/shared",
-    "//python/services/shared:shared_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python/openapi:community",
-    "//python/openapi:community_test_lib",
-    "@lib//:jetbrains-annotations",
-    "//platform/eel-provider",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/hamcrest",
-    "//libraries/hamcrest:hamcrest_test_lib",
-    "//python/python-exec-service/execService.python",
-    "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//platform/diagnostic",
-    "//platform/diagnostic:diagnostic_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-  ],
-  runtime_deps = [":python-community-services-shared-tests"]
+    name = "python-community-services-shared-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/services/shared",
+        "//python/services/shared:shared_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":python-community-services-shared-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/openapi:community",
+        "//python/openapi:community_test_lib",
+        "@lib//:jetbrains-annotations",
+        "//platform/eel-provider",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+        "//python/python-exec-service/execService.python",
+        "//python/python-exec-service/execService.python:execService.python_test_lib",
+        "//platform/diagnostic",
+        "//platform/diagnostic:diagnostic_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.services.shared.tests` end
 
 ### auto-generated section `iml intellij.python.community.services.shared.tests` start
-exports_files([
-  "intellij.python.community.services.shared.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.services.shared.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.services.shared.tests` end
 
 ### auto-generated section `test intellij.python.community.services.shared.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "python-community-services-shared-tests_test",
-  runtime_deps = [":python-community-services-shared-tests_test_lib"]
+    name = "python-community-services-shared-tests_test",
+    runtime_deps = [":python-community-services-shared-tests_test_lib"],
 )
 ### auto-generated section `test intellij.python.community.services.shared.tests` end

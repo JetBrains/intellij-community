@@ -1,48 +1,67 @@
-### auto-generated section `build intellij.jsp` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jsp` start
+
 jvm_library(
-  name = "jsp",
-  module_name = "intellij.jsp",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//java/java-psi-api:psi",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//xml/xml-psi-api:psi",
-    "//java/jsp-base-openapi:jsp-base",
-  ],
-  exports = ["//java/jsp-base-openapi:jsp-base"],
-  runtime_deps = ["//platform/backend"]
+    name = "jsp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//java/jsp-base-openapi:jsp-base"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//java/java-psi-api:psi",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//xml/xml-psi-api:psi",
+        "//java/jsp-base-openapi:jsp-base",
+    ],
 )
 
 jvm_library(
-  name = "jsp_test_lib",
-  testonly = True,
-  module_name = "intellij.jsp",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//java/jsp-base-openapi:jsp-base",
-    "//java/jsp-base-openapi:jsp-base_test_lib",
-  ],
-  runtime_deps = [
-    ":jsp",
-    "//java/java-psi-api:psi_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//platform/backend:backend_test_lib",
-    "//java/jsp-base-openapi:jsp-base_test_lib",
-  ]
+    name = "jsp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsp",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//java/jsp-base-openapi:jsp-base",
+        "//java/jsp-base-openapi:jsp-base_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":jsp",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//java/jsp-base-openapi:jsp-base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.jsp` end
 
 ### auto-generated section `iml intellij.jsp` start
-exports_files([
-  "intellij.jsp.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jsp.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jsp` end

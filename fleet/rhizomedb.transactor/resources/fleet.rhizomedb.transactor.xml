@@ -4,6 +4,7 @@
     <module name="fleet.bifurcan"/>
     <module name="fleet.fastutil"/>
     <module name="fleet.multiplatform.shims"/>
+    <module name="fleet.openmap"/>
     <module name="fleet.reporting.api"/>
     <module name="fleet.reporting.shared"/>
     <module name="fleet.rhizomedb"/>

@@ -86,6 +86,7 @@ kotlin {
     implementation(project(":fleet.multiplatform.shims"))
     implementation(project(":fleet.bifurcan"))
     implementation(project(":fleet.fastutil"))
+    implementation(project(":fleet.openmap"))
   }
   // KOTLIN__MARKER_END
 }

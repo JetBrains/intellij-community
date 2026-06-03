@@ -37,11 +37,11 @@ internal open class CodeFenceInjector : MultiHostInjector {
     if (host.children.all { it.elementType != MarkdownTokenTypes.CODE_FENCE_CONTENT }) {
       return
     }
-    val language = findLangForInjection(host) ?: return
+    val (language, extension) = findLangForInjection(host) ?: return
     if (!canBeInjected(language)) {
       return
     }
-    registrar.startInjecting(language)
+    registrar.startInjecting(language, extension)
     injectAsOnePlace(host, registrar, language)
     registrar.makeInspectionsLenient(true)
     registrar.doneInjecting()
@@ -51,9 +51,9 @@ internal open class CodeFenceInjector : MultiHostInjector {
     return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null
   }
 
-  protected open fun findLangForInjection(element: MarkdownCodeFence): Language? {
+  protected open fun findLangForInjection(element: MarkdownCodeFence): Pair<Language, String?>? {
     val name = element.fenceLanguage ?: return null
-    return CodeFenceLanguageGuesser.guessLanguageForInjection(name).takeIf {
+    return CodeFenceLanguageGuesser.guessLanguageWithExtensionForInjection(name).takeIf {
       MarkdownSettings.getInstance(element.project).areInjectionsEnabled
     }
   }

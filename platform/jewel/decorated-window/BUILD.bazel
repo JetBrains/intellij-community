@@ -1,134 +1,167 @@
-### auto-generated section `build intellij.platform.jewel.decoratedWindow` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.jewel.decoratedWindow` start
 
 create_kotlinc_options(
-  name = "custom_decorated-window",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True,
-  x_explicit_api_mode = "strict"
+    name = "custom_decorated-window",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
 )
 
 jvm_library(
-  name = "decorated-window",
-  module_name = "intellij.platform.jewel.decoratedWindow",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  kotlinc_opts = ":custom_decorated-window",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-    "//platform/jewel/ui",
-    "//libraries/compose-foundation-desktop",
-    "//platform/jewel/foundation",
-    "//libraries/compose-runtime-desktop",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//libraries/jbr",
-    "@lib//:jna",
-  ]
+    name = "decorated-window",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_decorated-window",
+    module_name = "intellij.platform.jewel.decoratedWindow",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+        "//platform/jewel/ui",
+        "//libraries/compose-foundation-desktop",
+        "//platform/jewel/foundation",
+        "//libraries/compose-runtime-desktop",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+        "//libraries/jbr",
+        "@lib//:jna",
+    ],
 )
 
 jvm_library(
-  name = "decorated-window_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jewel.decoratedWindow",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_decorated-window",
-  runtime_deps = [
-    ":decorated-window",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/jewel/ui:ui_test_lib",
-    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
-    "//libraries/jbr:jbr_test_lib",
-  ]
+    name = "decorated-window_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_decorated-window",
+    module_name = "intellij.platform.jewel.decoratedWindow",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":decorated-window",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/jewel/ui:ui_test_lib",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+        "//libraries/jbr:jbr_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end
 
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow` start
-exports_files([
-  "intellij.platform.jewel.decoratedWindow.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.decoratedWindow.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow` end
 
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow.tests` start
+
 create_kotlinc_options(
-  name = "custom_decoratedWindow-tests",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True,
-  x_explicit_api_mode = "strict"
+    name = "custom_decoratedWindow-tests",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
 )
 
 jvm_library(
-  name = "decoratedWindow-tests",
-  module_name = "intellij.platform.jewel.decoratedWindow.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "decoratedWindow-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jewel.decoratedWindow.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "decoratedWindow-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_decoratedWindow-tests",
-  associates = [
-    "//platform/jewel/decorated-window",
-    "//platform/jewel/decorated-window:decorated-window_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-test",
-    "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:kotlin-test-junit",
-    "@lib//:jbr-api",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/jewel/foundation",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//platform/jewel/ui",
-    "//platform/jewel/ui:ui_test_lib",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
-    "//libraries/compose-foundation-desktop-junit",
-    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-    "//libraries/junit4",
-    "//libraries/junit4:junit4_test_lib",
-    "//libraries/compose-runtime-desktop",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-  ],
-  runtime_deps = [":decoratedWindow-tests"]
+    name = "decoratedWindow-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/test/kotlin/**/*.kt",
+            "src/test/kotlin/**/*.java",
+            "src/test/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/jewel/decorated-window",
+        "//platform/jewel/decorated-window:decorated-window_test_lib",
+    ],
+    kotlinc_opts = ":custom_decoratedWindow-tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":decoratedWindow-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-test",
+        "@lib//:kotlin-test-assertions-core-jvm",
+        "@lib//:kotlin-test-junit",
+        "@lib//:jbr-api",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/jewel/foundation",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+        "//libraries/compose-foundation-desktop-junit",
+        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow.tests` end
 
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow.tests` start
-exports_files([
-  "intellij.platform.jewel.decoratedWindow.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.decoratedWindow.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow.tests` end
 
 ### auto-generated section `test intellij.platform.jewel.decoratedWindow.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "decoratedWindow-tests_test",
-  runtime_deps = [":decoratedWindow-tests_test_lib"]
+    name = "decoratedWindow-tests_test",
+    runtime_deps = [":decoratedWindow-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.jewel.decoratedWindow.tests` end

@@ -1,52 +1,70 @@
-### auto-generated section `build intellij.driver.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.driver.impl` start
+
 jvm_library(
-  name = "driver-impl",
-  module_name = "intellij.driver.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/remote-driver/model",
-    "@lib//:jetbrains-annotations",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/diagnostic/telemetry",
-    "//platform/util",
-    "//platform/util/base",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//libraries/commons/lang3",
-  ]
+    name = "driver-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/remote-driver/model",
+        "@lib//:jetbrains-annotations",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/diagnostic/telemetry",
+        "//platform/util",
+        "//platform/util/base",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/commons/lang3",
+    ],
 )
 
 jvm_library(
-  name = "driver-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.driver.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":driver-impl",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/remote-driver/model:model_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//libraries/commons/lang3:lang3_test_lib",
-  ]
+    name = "driver-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":driver-impl",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/remote-driver/model:model_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//libraries/commons/lang3:lang3_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.driver.impl` end
 
 ### auto-generated section `iml intellij.driver.impl` start
-exports_files([
-  "intellij.driver.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.driver.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.driver.impl` end

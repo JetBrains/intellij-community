@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.groovy.live.templates` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.groovy.live.templates` start
+
 jvm_library(
-  name = "groovy-live-templates",
-  module_name = "intellij.groovy.live.templates",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/groovy",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-impl",
-    "//platform/util",
-    "//platform/ide-core",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "groovy-live-templates",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.live.templates",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/groovy",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/util",
+        "//platform/ide-core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "groovy-live-templates_test_lib",
-  testonly = True,
-  module_name = "intellij.groovy.live.templates",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":groovy-live-templates",
-    "//libraries/groovy:groovy_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "groovy-live-templates_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.live.templates",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":groovy-live-templates",
+        "//libraries/groovy:groovy_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.groovy.live.templates` end
 
 ### auto-generated section `iml intellij.groovy.live.templates` start
-exports_files([
-  "intellij.groovy.live.templates.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.groovy.live.templates.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.groovy.live.templates` end

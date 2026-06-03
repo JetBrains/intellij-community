@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.libraries.cglib` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.cglib` start
+
 jvm_library(
-  name = "cglib",
-  module_name = "intellij.libraries.cglib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:libraries-cglib-cglib",
-    "//platform/util/base",
-    "//platform/util-rt",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//libraries/fastutil",
-    "//platform/util-class-loader:util-classLoader",
-  ],
-  exports = ["@lib//:libraries-cglib-cglib"]
+    name = "cglib",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.cglib",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-cglib-cglib"],
+    deps = [
+        # do not sort,
+        "@lib//:libraries-cglib-cglib",
+        "//platform/util/base",
+        "//platform/util-rt",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//libraries/fastutil",
+        "//platform/util-class-loader:util-classLoader",
+    ],
 )
 
 jvm_library(
-  name = "cglib_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.cglib",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-cglib-cglib"],
-  runtime_deps = [
-    ":cglib",
-    "//platform/util/base:base_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/util-class-loader:util-classLoader_test_lib",
-  ]
+    name = "cglib_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.cglib",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-cglib-cglib"],
+    runtime_deps = [
+        # do not sort,
+        ":cglib",
+        "//platform/util/base:base_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.cglib` end
 
 ### auto-generated section `iml intellij.libraries.cglib` start
-exports_files([
-  "intellij.libraries.cglib.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.cglib.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.cglib` end

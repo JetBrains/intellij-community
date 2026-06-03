@@ -1,58 +1,75 @@
-### auto-generated section `build intellij.junit.testFramework` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.junit.testFramework` start
+
 jvm_library(
-  name = "testFramework",
-  module_name = "intellij.junit.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
-    "//plugins/junit",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/testFramework",
-    "//java/java-syntax:syntax",
-    "//java/java-psi-api:psi",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//jps/model-api:model",
-    "//platform/testFramework",
-    "//platform/projectModel-api:projectModel",
-  ],
-  exports = ["//plugins/junit"]
+    name = "testFramework",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.junit.testFramework",
+    visibility = ["//visibility:public"],
+    exports = ["//plugins/junit"],
+    deps = [
+        # do not sort,
+        "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+        "//plugins/junit",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/testFramework",
+        "//java/java-syntax:syntax",
+        "//java/java-psi-api:psi",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//jps/model-api:model",
+        "//platform/testFramework",
+        "//platform/projectModel-api:projectModel",
+    ],
 )
 
 jvm_library(
-  name = "testFramework_test_lib",
-  testonly = True,
-  module_name = "intellij.junit.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//plugins/junit",
-    "//plugins/junit:junit_test_lib",
-  ],
-  runtime_deps = [
-    ":testFramework",
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
-    "//plugins/junit:junit_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//java/testFramework:testFramework_test_lib",
-    "//java/java-syntax:syntax_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-  ]
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.junit.testFramework",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//plugins/junit",
+        "//plugins/junit:junit_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":testFramework",
+        "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+        "//plugins/junit:junit_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/testFramework:testFramework_test_lib",
+        "//java/java-syntax:syntax_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.junit.testFramework` end
 
 ### auto-generated section `iml intellij.junit.testFramework` start
-exports_files([
-  "intellij.junit.testFramework.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.junit.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.junit.testFramework` end

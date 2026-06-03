@@ -123,8 +123,9 @@ private suspend fun computeOutputJarPath(
   descriptorCacheWriter: DescriptorCacheWriter,
 ): String? {
   if (loadingRule == "embedded") {
+    //todo pack embedded to separate jar by default
     // Case 1: Embedded lib modules → separate jar in root directory
-    if (moduleName.startsWith(LIB_MODULE_PREFIX)) {
+    if (moduleName.startsWith(LIB_MODULE_PREFIX) || moduleName.startsWith("intellij.kotlin.")) {
       return "$moduleName.jar"
     }
 

@@ -1,170 +1,200 @@
-load("@rules_java//java:defs.bzl", "java_binary")
-
-load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
-  name = "i_build_target",
-  runtime_deps = [":build"],
-  main_class = "PyCharmCommunityInstallersBuildTarget",
-  add_opens = INTELLIJ_ADD_OPENS,
-  jvm_flags = [
-    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
-  ],
-  data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    name = "i_build_target",
+    add_opens = INTELLIJ_ADD_OPENS,
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
+    main_class = "PyCharmCommunityInstallersBuildTarget",
+    runtime_deps = [":build"],
 )
 
 ### auto-generated section `build intellij.pycharm.community.build` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "build",
-  module_name = "intellij.pycharm.community.build",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "//build",
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/build-scripts/downloader",
-    "//build/tasks",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//libraries/opentelemetry-extension-kotlin",
-    "//platform/core-api:core",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core",
-    "//python/python-sdk:sdk",
-    "//python/python-parser:parser",
-    "//jps/model-api:model",
-    "//libraries/jsoup",
-  ]
+    name = "build",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.build",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//build",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/build-scripts/downloader",
+        "//build/tasks",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//platform/core-api:core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//python/python-sdk:sdk",
+        "//python/python-parser:parser",
+        "//jps/model-api:model",
+        "//libraries/jsoup",
+    ],
 )
 
 jvm_library(
-  name = "build_test_lib",
-  testonly = True,
-  module_name = "intellij.pycharm.community.build",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":build",
-    "//build:build_test_lib",
-    "//platform/build-scripts/testFramework",
-    "//platform/build-scripts/testFramework:testFramework_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-    "//build/tasks:tasks_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-    "@lib//:junit5",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//python/python-sdk:sdk_test_lib",
-    "//python/python-parser:parser_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//images:images-tests",
-    "//images:images-tests_test_lib",
-    "//RegExpSupport:regexp-tests",
-    "//RegExpSupport:regexp-tests_test_lib",
-    "//platform/xdebugger-impl:debugger-impl-tests",
-    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
-  ]
+    name = "build_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.build",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":build",
+        "//build:build_test_lib",
+        "//platform/build-scripts/testFramework",
+        "//platform/build-scripts/testFramework:testFramework_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+        "//build/tasks:tasks_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
+        "@lib//:junit5",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//python/python-parser:parser_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//images:images-tests",
+        "//images:images-tests_test_lib",
+        "//RegExpSupport:regexp-tests",
+        "//RegExpSupport:regexp-tests_test_lib",
+        "//platform/xdebugger-impl:debugger-impl-tests",
+        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.pycharm.community.build` end
 
 ### auto-generated section `iml intellij.pycharm.community.build` start
-exports_files([
-  "intellij.pycharm.community.build.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.pycharm.community.build.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.pycharm.community.build` end
 
 ### auto-generated section `build intellij.pycharm.community.build.tests` start
+
 jvm_library(
-  name = "pycharm-community-build-tests",
-  module_name = "intellij.pycharm.community.build.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "pycharm-community-build-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.build.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "pycharm-community-build-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//python/build",
-    "//python/build:build_test_lib",
-  ],
-  deps = [
-    "//build",
-    "//build:build_test_lib",
-    "//platform/build-scripts/testFramework",
-    "//platform/build-scripts/testFramework:testFramework_test_lib",
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/build-scripts/downloader",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-    "//build/tasks",
-    "//build/tasks:tasks_test_lib",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//libraries/opentelemetry-extension-kotlin",
-    "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-    "@lib//:junit5",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-    "//python/python-parser:parser",
-    "//python/python-parser:parser_test_lib",
-    "//jps/model-api:model",
-    "//jps/model-api:model_test_lib",
-    "//libraries/jsoup",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//images:images-tests",
-    "//images:images-tests_test_lib",
-    "//RegExpSupport:regexp-tests",
-    "//RegExpSupport:regexp-tests_test_lib",
-    "//platform/xdebugger-impl:debugger-impl-tests",
-    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
-  ],
-  runtime_deps = [
-    ":pycharm-community-build-tests",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-  ]
+    name = "pycharm-community-build-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/build",
+        "//python/build:build_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":pycharm-community-build-tests",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//build",
+        "//build:build_test_lib",
+        "//platform/build-scripts/testFramework",
+        "//platform/build-scripts/testFramework:testFramework_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/build-scripts/downloader",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+        "//build/tasks",
+        "//build/tasks:tasks_test_lib",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
+        "@lib//:junit5",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//python/python-sdk:sdk",
+        "//python/python-sdk:sdk_test_lib",
+        "//python/python-parser:parser",
+        "//python/python-parser:parser_test_lib",
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+        "//libraries/jsoup",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//images:images-tests",
+        "//images:images-tests_test_lib",
+        "//RegExpSupport:regexp-tests",
+        "//RegExpSupport:regexp-tests_test_lib",
+        "//platform/xdebugger-impl:debugger-impl-tests",
+        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.pycharm.community.build.tests` end
 
 ### auto-generated section `iml intellij.pycharm.community.build.tests` start
-exports_files([
-  "intellij.pycharm.community.build.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.pycharm.community.build.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.pycharm.community.build.tests` end
 
 ### auto-generated section `test intellij.pycharm.community.build.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "pycharm-community-build-tests_test",
-  runtime_deps = [":pycharm-community-build-tests_test_lib"]
+    name = "pycharm-community-build-tests_test",
+    runtime_deps = [":pycharm-community-build-tests_test_lib"],
 )
 ### auto-generated section `test intellij.pycharm.community.build.tests` end

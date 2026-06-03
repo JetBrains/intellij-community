@@ -1,38 +1,56 @@
-### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
+
 jvm_library(
-  name = "grpc-netty-shaded",
-  module_name = "intellij.libraries.grpc.netty.shaded",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:grpc-netty-shaded",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//libraries/grpc",
-  ],
-  exports = ["@lib//:grpc-netty-shaded"]
+    name = "grpc-netty-shaded",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc.netty.shaded",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:grpc-netty-shaded"],
+    deps = [
+        # do not sort,
+        "@lib//:grpc-netty-shaded",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//libraries/grpc",
+    ],
 )
 
 jvm_library(
-  name = "grpc-netty-shaded_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.grpc.netty.shaded",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:grpc-netty-shaded"],
-  runtime_deps = [
-    ":grpc-netty-shaded",
-    "//libraries/grpc:grpc_test_lib",
-  ]
+    name = "grpc-netty-shaded_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc.netty.shaded",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:grpc-netty-shaded"],
+    runtime_deps = [
+        # do not sort,
+        ":grpc-netty-shaded",
+        "//libraries/grpc:grpc_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` end
 
 ### auto-generated section `iml intellij.libraries.grpc.netty.shaded` start
-exports_files([
-  "intellij.libraries.grpc.netty.shaded.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.grpc.netty.shaded.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.grpc.netty.shaded` end

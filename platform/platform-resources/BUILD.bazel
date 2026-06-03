@@ -1,38 +1,53 @@
-### auto-generated section `build intellij.platform.resources` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
+### auto-generated section `build intellij.platform.resources` start
+
 resourcegroup(
-  name = "resources_resources",
-  srcs = glob(["src/**/*"]),
-  strip_prefix = "src"
+    name = "resources_resources",
+    srcs = glob(
+        ["src/**/*"],
+    ),
+    strip_prefix = "src",
 )
 
 jvm_library(
-  name = "resources",
-  module_name = "intellij.platform.resources",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["generated/**/*"]),
-  resource_strip_prefix = "generated",
-  resource_jars = [":resources_resources"],
-  runtime_deps = ["//platform/platform-impl/concurrency"]
+    name = "resources",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources",
+    resource_jars = [":resources_resources"],
+    resource_strip_prefix = "generated",
+    resources = glob(
+        ["generated/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl/concurrency"],
 )
 
 jvm_library(
-  name = "resources_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.resources",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":resources",
-    "//platform/platform-impl/concurrency:concurrency_test_lib",
-  ]
+    name = "resources_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":resources",
+        "//platform/platform-impl/concurrency:concurrency_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.resources` end
 
 ### auto-generated section `iml intellij.platform.resources` start
-exports_files([
-  "intellij.platform.resources.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.resources.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.resources` end

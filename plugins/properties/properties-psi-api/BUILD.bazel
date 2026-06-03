@@ -1,61 +1,82 @@
-### auto-generated section `build intellij.properties.psi` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.properties.psi` start
+
 jvm_library(
-  name = "psi",
-  module_name = "intellij.properties.psi",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/code-style-api:codeStyle",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/analysis-api:analysis",
-    "//platform/indexing-api:indexing",
-    "//platform/projectModel-api:projectModel",
-    "//platform/lang-api:lang",
-    "//platform/boot",
-    "//platform/util/jdom",
-    "//platform/core-ui",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//jps/model-api:model",
-  ],
-  exports = ["//platform/boot"]
+    name = "psi",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "gen/**/*.kt",
+            "gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.properties.psi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/boot"],
+    deps = [
+        # do not sort,
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/analysis-api:analysis",
+        "//platform/indexing-api:indexing",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lang-api:lang",
+        "//platform/boot",
+        "//platform/util/jdom",
+        "//platform/core-ui",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
 )
 
 jvm_library(
-  name = "psi_test_lib",
-  testonly = True,
-  module_name = "intellij.properties.psi",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/boot",
-    "//platform/boot:boot_test_lib",
-  ],
-  runtime_deps = [
-    ":psi",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/boot:boot_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//jps/model-api:model_test_lib",
-  ]
+    name = "psi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.properties.psi",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/boot",
+        "//platform/boot:boot_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":psi",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/boot:boot_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//jps/model-api:model_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.properties.psi` end
 
 ### auto-generated section `iml intellij.properties.psi` start
-exports_files([
-  "intellij.properties.psi.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.properties.psi.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.properties.psi` end

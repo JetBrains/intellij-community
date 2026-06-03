@@ -1,39 +1,54 @@
-### auto-generated section `build intellij.libraries.lucene.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.lucene.common` start
+
 jvm_library(
-  name = "lucene.common",
-  module_name = "intellij.libraries.lucene.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:lucene-analysis-common",
-    "@lib//:lucene-core",
-  ],
-  runtime_deps = [
-    "@lib//:lucene-analysis-common",
-    "@lib//:lucene-core",
-  ]
+    name = "lucene.common",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.lucene.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:lucene-analysis-common",
+        "@lib//:lucene-core",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:lucene-analysis-common",
+        "@lib//:lucene-core",
+    ],
 )
 
 jvm_library(
-  name = "lucene.common_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.lucene.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "@lib//:lucene-analysis-common",
-    "@lib//:lucene-core",
-  ],
-  runtime_deps = [":lucene.common"]
+    name = "lucene.common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.lucene.common",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:lucene-analysis-common",
+        "@lib//:lucene-core",
+    ],
+    runtime_deps = [":lucene.common"],
 )
 ### auto-generated section `build intellij.libraries.lucene.common` end
 
 ### auto-generated section `iml intellij.libraries.lucene.common` start
-exports_files([
-  "intellij.libraries.lucene.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.lucene.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.lucene.common` end

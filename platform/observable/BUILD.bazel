@@ -1,46 +1,62 @@
-### auto-generated section `build intellij.platform.ide.observable` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.observable` start
+
 jvm_library(
-  name = "observable",
-  module_name = "intellij.platform.ide.observable",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "//platform/util-ex",
-    "//platform/util:util-ui",
-    "//platform/util",
-    "//platform/util/base",
-    "//platform/core-api:core",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/util/concurrency",
-    "//platform/core-ui",
-    "@lib//:kotlin-stdlib",
-  ]
+    name = "observable",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.observable",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util-ex",
+        "//platform/util:util-ui",
+        "//platform/util",
+        "//platform/util/base",
+        "//platform/core-api:core",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util/concurrency",
+        "//platform/core-ui",
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "observable_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.observable",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":observable",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-  ]
+    name = "observable_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.observable",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":observable",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.observable` end
 
 ### auto-generated section `iml intellij.platform.ide.observable` start
-exports_files([
-  "intellij.platform.ide.observable.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.observable.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.observable` end

@@ -1,13 +1,16 @@
-### auto-generated section `local-libs` start
 load("@rules_java//java:defs.bzl", "java_import")
 
+### auto-generated section `local-libs` start
 java_import(
-  name = "webp-libwebp",
-  jars = ["libwebp.jar"],
-  visibility = ["//visibility:public"]
+    name = "webp-libwebp",
+    jars = ["libwebp.jar"],
+    visibility = ["//visibility:public"],
 )
 
-exports_files([
-  "libwebp.jar",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "libwebp.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `local-libs` end

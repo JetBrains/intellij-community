@@ -40,8 +40,8 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito-junit-jupiter" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5Params" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector" scope="TEST" />

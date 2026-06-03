@@ -1455,6 +1455,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
                 runTest("testData/quickfix/autoImports/operatorAssignPlusAssign.test");
             }
 
+            @TestMetadata("operatorAssignPlusAssignJavaSyntheticProperty.test")
+            public void testOperatorAssignPlusAssignJavaSyntheticProperty() throws Exception {
+                runTest("testData/quickfix/autoImports/operatorAssignPlusAssignJavaSyntheticProperty.test");
+            }
+
             @TestMetadata("operatorAssignPlusTwoVariantsDifferentPackages.test")
             public void testOperatorAssignPlusTwoVariantsDifferentPackages() throws Exception {
                 runTest("testData/quickfix/autoImports/operatorAssignPlusTwoVariantsDifferentPackages.test");

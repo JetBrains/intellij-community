@@ -6,7 +6,9 @@ import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.messages.Topic
@@ -16,47 +18,47 @@ import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 @Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
-  var areInjectionsEnabled
+  var areInjectionsEnabled: Boolean
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }
 
-  var showProblemsInCodeBlocks
+  var showProblemsInCodeBlocks: Boolean
     get() = state.showProblemsInCodeBlocks
     set(value) { state.showProblemsInCodeBlocks = value }
 
-  var splitLayout
+  var splitLayout: TextEditorWithPreview.Layout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }
 
-  var previewPanelProviderInfo
+  var previewPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
     get() = state.previewPanelProviderInfo
     set(value) { state.previewPanelProviderInfo = value }
 
-  var isVerticalSplit
+  var isVerticalSplit: Boolean
     get() = state.isVerticalSplit
     set(value) { state.isVerticalSplit = value }
 
-  var isAutoScrollEnabled
+  var isAutoScrollEnabled: Boolean
     get() = state.isAutoScrollEnabled
     set(value) { state.isAutoScrollEnabled = value }
 
-  var useCustomStylesheetPath
+  var useCustomStylesheetPath: Boolean
     get() = state.useCustomStylesheetPath
     set(value) { state.useCustomStylesheetPath = value }
 
-  var customStylesheetPath
+  var customStylesheetPath: String?
     get() = state.customStylesheetPath
     set(value) { state.customStylesheetPath = value }
 
-  var useCustomStylesheetText
+  var useCustomStylesheetText: Boolean
     get() = state.useCustomStylesheetText
     set(value) { state.useCustomStylesheetText = value }
 
-  var customStylesheetText
+  var customStylesheetText: String?
     get() = state.customStylesheetText
     set(value) { state.customStylesheetText = value }
 
-  var isFileGroupingEnabled
+  var isFileGroupingEnabled: Boolean
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
@@ -83,7 +85,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     companion object {
       @Topic.ProjectLevel
       @JvmField
-      val TOPIC = Topic("MarkdownSettingsChanged", ChangeListener::class.java, Topic.BroadcastDirection.NONE)
+      val TOPIC: Topic<ChangeListener> = Topic("MarkdownSettingsChanged", ChangeListener::class.java, Topic.BroadcastDirection.NONE)
     }
   }
 
@@ -105,5 +107,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): MarkdownSettings = project.service()
+
+    suspend fun getInstanceAsync(project: Project): MarkdownSettings = project.serviceAsync()
   }
 }

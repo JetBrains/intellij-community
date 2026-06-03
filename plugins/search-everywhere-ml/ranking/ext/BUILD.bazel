@@ -1,39 +1,57 @@
-### auto-generated section `build intellij.searchEverywhereMl.ranking.ext` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.searchEverywhereMl.ranking.ext` start
+
 jvm_library(
-  name = "ext",
-  module_name = "intellij.searchEverywhereMl.ranking.ext",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util",
-    "//platform/extensions",
-    "//platform/statistics",
-  ]
+    name = "ext",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.ext",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/util",
+        "//platform/extensions",
+        "//platform/statistics",
+    ],
 )
 
 jvm_library(
-  name = "ext_test_lib",
-  testonly = True,
-  module_name = "intellij.searchEverywhereMl.ranking.ext",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ext",
-    "//platform/util:util_test_lib",
-    "//platform/extensions:extensions_test_lib",
-    "//platform/statistics:statistics_test_lib",
-  ]
+    name = "ext_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.ext",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ext",
+        "//platform/util:util_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/statistics:statistics_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.ext` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.ext` start
-exports_files([
-  "intellij.searchEverywhereMl.ranking.ext.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.searchEverywhereMl.ranking.ext.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.ext` end

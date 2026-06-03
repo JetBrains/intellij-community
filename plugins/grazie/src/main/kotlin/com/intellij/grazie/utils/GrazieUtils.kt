@@ -30,6 +30,7 @@ import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
 import com.intellij.grazie.rule.SentenceTokenizer
+import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.CheckerRunner
@@ -110,10 +111,7 @@ internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allC
 
 private fun getAllProblems(texts: List<TextContent>, checkedDomains: Set<TextDomain>, allCheckers: List<TextChecker>): List<TextProblem> =
   buildProblemMap(allCheckers, texts, checkedDomains)
-    .flatMap { (text, problems) ->
-      val sentences = SentenceTokenizer.toTokens(text).map { it.token }
-      TextProblemAggregator.aggregate(problems, sentences, false)
-    }
+    .flatMap { (text, problems) -> TextProblemAggregator.aggregate(problems, toTokens(text), false) }
 
 private fun buildProblemMap(
   allCheckers: List<TextChecker>,

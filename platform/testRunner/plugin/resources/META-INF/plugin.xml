@@ -1,0 +1,15 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.testRunner.plugin</id>
+  <name>Test Runner</name>
+  <description>Provides test runner platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.testRunner" loading="required"/>
+    <module name="intellij.platform.smRunner" loading="required"/>
+    <module name="intellij.platform.smRunner.frontend.split" required-if-available="intellij.platform.frontend.split"/>
+    <module name="intellij.platform.smRunner.vcs"/>
+    <module name="intellij.platform.smRunner.backend.split"/>
+  </content>
+</idea-plugin>

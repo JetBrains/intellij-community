@@ -23,11 +23,11 @@
       <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
       <with attribute="implementationClass" implements="com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbolProvider"
-                    interface="com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiLinkedSymbolProvider"
+                    interface="com.intellij.polySymbols.search.PsiLinkedPolySymbolProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbol"
-                    beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiLinkedSymbol"
+                    beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiLinkedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.inspectionToolMapping"
                     beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP"
@@ -57,9 +57,9 @@
     <polySymbols.psiReferenceCacheInfoProvider
       implementation="com.intellij.polySymbols.references.impl.DefaultPsiPolySymbolReferenceCacheInfoProvider"/>
 
-    <referencesSearch implementation="com.intellij.polySymbols.search.PsiSourcedPolySymbolReferenceSearcher"/>
-    <refactoring.helper implementation="com.intellij.polySymbols.refactoring.PsiSourcedPolySymbolRefactoringHelper"/>
-    <renameHandler implementation="com.intellij.polySymbols.refactoring.PsiSourcedPolySymbolRenameHandler"/>
+    <referencesSearch implementation="com.intellij.polySymbols.search.PsiLinkedPolySymbolReferenceSearcher"/>
+    <refactoring.helper implementation="com.intellij.polySymbols.refactoring.PsiLinkedPolySymbolRefactoringHelper"/>
+    <renameHandler implementation="com.intellij.polySymbols.refactoring.PsiLinkedPolySymbolRenameHandler"/>
 
     <rename.symbolRenameTargetFactory implementation="com.intellij.polySymbols.refactoring.PolySymbolRenameTargetFactory"/>
     <lang.symbolSearchTarget forClass="com.intellij.polySymbols.PolySymbol"

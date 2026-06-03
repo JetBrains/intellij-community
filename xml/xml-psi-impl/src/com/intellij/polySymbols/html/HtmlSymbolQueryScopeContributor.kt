@@ -126,7 +126,7 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getDomEventDocumentation(name)
 
-    override val source: PsiElement?
+    override val linkedElement: PsiElement?
       get() = null
 
     override val project: Project?
@@ -142,6 +142,15 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
     override fun createPointer(): Pointer<HtmlEventDescriptorBasedSymbol> =
       Pointer.hardPointer(this)
+
+    override fun equals(other: Any?): Boolean =
+      other === this
+      || other is HtmlEventDescriptorBasedSymbol
+      && other.descriptor == descriptor
+
+    override fun hashCode(): Int {
+      return descriptor.hashCode()
+    }
 
   }
 

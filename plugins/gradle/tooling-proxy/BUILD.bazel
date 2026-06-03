@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.gradle.toolingProxy` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.gradle.toolingProxy` start
+
 jvm_library(
-  name = "tooling-proxy",
-  module_name = "intellij.gradle.toolingProxy",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:gradle",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:slf4j-api",
-    "@lib//:slf4j-jdk14",
-    "//plugins/gradle/tooling-extension-api:toolingExtension",
-    "//libraries/jspecify",
-  ]
+    name = "tooling-proxy",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.gradle.toolingProxy",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:gradle",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//libraries/jspecify",
+    ],
 )
 
 jvm_library(
-  name = "tooling-proxy_test_lib",
-  testonly = True,
-  module_name = "intellij.gradle.toolingProxy",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":tooling-proxy",
-    "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-    "//libraries/jspecify:jspecify_test_lib",
-  ]
+    name = "tooling-proxy_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.gradle.toolingProxy",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tooling-proxy",
+        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//libraries/jspecify:jspecify_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.gradle.toolingProxy` end
 
 ### auto-generated section `iml intellij.gradle.toolingProxy` start
-exports_files([
-  "intellij.gradle.toolingProxy.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.gradle.toolingProxy.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.gradle.toolingProxy` end

@@ -11,10 +11,10 @@ import andel.operation.normalizeHard
 import fleet.bifurcan.BifurcanVector
 import fleet.bifurcan.IBifurcanVector
 import fleet.bifurcan.serialization.BifurcanListSerializer
+import fleet.openmap.SerializableKey
+import fleet.openmap.SerializableOpenMap
+import fleet.openmap.SerializedValue
 import fleet.util.UID
-import fleet.util.openmap.SerializableKey
-import fleet.util.openmap.SerializableOpenMap
-import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

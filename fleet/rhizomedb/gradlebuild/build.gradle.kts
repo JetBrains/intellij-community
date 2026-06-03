@@ -81,6 +81,7 @@ kotlin {
     implementation(project(":fleet.multiplatform.shims"))
     implementation(project(":fleet.radixTrie"))
     implementation(project(":fleet.fastutil"))
+    implementation(project(":fleet.openmap"))
   }
   // KOTLIN__MARKER_END
 }

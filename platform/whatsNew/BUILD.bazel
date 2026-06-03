@@ -1,172 +1,208 @@
-### auto-generated section `build intellij.platform.whatsNew` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.whatsNew` start
 
 create_kotlinc_options(
-  name = "custom_whatsNew",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+    name = "custom_whatsNew",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
 )
 
 jvm_library(
-  name = "whatsNew",
-  module_name = "intellij.platform.whatsNew",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_whatsNew",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/util/concurrency",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-api:ide",
-    "//platform/statistics",
-    "//platform/platform-impl:ide-impl",
-    "//platform/core-ui",
-    "//platform/util:util-ui",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core-impl",
-    "//platform/ide-core",
-    "//libraries/miglayout-swing",
-    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/ui.jcef",
-    "//platform/analysis-api:analysis",
-    "//platform/util/coroutines",
-  ]
+    name = "whatsNew",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_whatsNew",
+    module_name = "intellij.platform.whatsNew",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/util/concurrency",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/statistics",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//libraries/miglayout-swing",
+        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/ui.jcef",
+        "//platform/analysis-api:analysis",
+        "//platform/util/coroutines",
+    ],
 )
 
 jvm_library(
-  name = "whatsNew_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.whatsNew",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_whatsNew",
-  runtime_deps = [
-    ":whatsNew",
-    "//platform/core-api:core_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//libraries/miglayout-swing:miglayout-swing_test_lib",
-    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/ui.jcef:ui.jcef_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-  ]
+    name = "whatsNew_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_whatsNew",
+    module_name = "intellij.platform.whatsNew",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":whatsNew",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//libraries/miglayout-swing:miglayout-swing_test_lib",
+        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.whatsNew` end
 
 ### auto-generated section `iml intellij.platform.whatsNew` start
-exports_files([
-  "intellij.platform.whatsNew.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.whatsNew.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.whatsNew` end
 
 ### auto-generated section `build intellij.platform.whatsNew.tests` start
+
 create_kotlinc_options(
-  name = "custom_whatsNew-tests",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+    name = "custom_whatsNew-tests",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
 )
 
 jvm_library(
-  name = "whatsNew-tests",
-  module_name = "intellij.platform.whatsNew.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "whatsNew-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.whatsNew.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "whatsNew-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  kotlinc_opts = ":custom_whatsNew-tests",
-  associates = [
-    "//platform/whatsNew",
-    "//platform/whatsNew:whatsNew_test_lib",
-  ],
-  deps = [
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/util/concurrency",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-api:ide",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/statistics",
-    "//platform/statistics:statistics_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core-impl",
-    "//libraries/miglayout-swing",
-    "//libraries/miglayout-swing:miglayout-swing_test_lib",
-    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/ui.jcef",
-    "//platform/ui.jcef:ui.jcef_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/util/coroutines",
-    "//platform/util/coroutines:coroutines_test_lib",
-  ],
-  runtime_deps = [
-    ":whatsNew-tests",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-  ]
+    name = "whatsNew-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/whatsNew",
+        "//platform/whatsNew:whatsNew_test_lib",
+    ],
+    kotlinc_opts = ":custom_whatsNew-tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":whatsNew-tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/concurrency",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core-impl",
+        "//libraries/miglayout-swing",
+        "//libraries/miglayout-swing:miglayout-swing_test_lib",
+        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/ui.jcef",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/util/coroutines",
+        "//platform/util/coroutines:coroutines_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.whatsNew.tests` end
 
 ### auto-generated section `iml intellij.platform.whatsNew.tests` start
-exports_files([
-  "intellij.platform.whatsNew.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.whatsNew.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.whatsNew.tests` end
 
 ### auto-generated section `test intellij.platform.whatsNew.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "whatsNew-tests_test",
-  runtime_deps = [":whatsNew-tests_test_lib"]
+    name = "whatsNew-tests_test",
+    runtime_deps = [":whatsNew-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.whatsNew.tests` end

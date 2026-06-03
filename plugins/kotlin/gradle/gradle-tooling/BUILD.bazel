@@ -1,32 +1,45 @@
-### auto-generated section `build intellij.kotlin.gradle.tooling` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.gradle.tooling` start
+
 jvm_library(
-  name = "kotlin-gradle-tooling",
-  module_name = "intellij.kotlin.gradle.tooling",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = ["//plugins/gradle/tooling-extension-api:toolingExtension"]
+    name = "kotlin-gradle-tooling",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.gradle.tooling",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/gradle/tooling-extension-api:toolingExtension"],
 )
 
 jvm_library(
-  name = "kotlin-gradle-tooling_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.gradle.tooling",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":kotlin-gradle-tooling",
-    "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-  ]
+    name = "kotlin-gradle-tooling_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.kotlin.gradle.tooling",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-gradle-tooling",
+        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.tooling` start
-exports_files([
-  "intellij.kotlin.gradle.tooling.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.gradle.tooling.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.gradle.tooling` end

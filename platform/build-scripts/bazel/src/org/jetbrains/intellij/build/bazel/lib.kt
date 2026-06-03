@@ -147,14 +147,13 @@ internal fun BuildFile.generateMavenLib(
 
     target("jvm_import") {
       option("name", targetName)
+      if (targetName == "kotlinx-serialization-core") {
+        option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
+      }
       option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
       if (sourceJar != null) {
         option("source_jar", "@${fileToHttpRuleFile(sourceJar.mavenCoordinates)}")
       }
-      if (targetName == "kotlinx-serialization-core") {
-        option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
-      }
-
       libVisibility?.let {
         visibility(arrayOf(it))
       }
@@ -164,12 +163,12 @@ internal fun BuildFile.generateMavenLib(
     load("@rules_java//java:defs.bzl", "java_library")
     target("java_library") {
       option("name", targetName)
-      option("exports", lib.jars.map {
-        ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates)}_import"
-      })
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", lib.jars.map {
+        ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates)}_import"
+      }.unsorted())
     }
 
     for (jar in lib.jars) {
@@ -222,23 +221,23 @@ internal fun BuildFile.generateProvidedMavenLib(
   if (exportedCompilerPlugins.isEmpty()) {
     target("java_library") {
       option("name", targetName + PROVIDED_SUFFIX)
-      option("exports", listOf(exportsLabel))
       option("neverlink", true)
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", listOf(exportsLabel))
     }
   }
   else {
     load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
     target("kt_jvm_library") {
       option("name", targetName + PROVIDED_SUFFIX)
-      option("exports", listOf(exportsLabel))
-      option("neverlink", true)
       option("exported_compiler_plugins", exportedCompilerPlugins)
+      option("neverlink", true)
       libVisibility?.let {
         visibility(arrayOf(it))
       }
+      option("exports", listOf(exportsLabel))
     }
   }
 }
@@ -276,9 +275,9 @@ internal fun generateBazelModuleSectionsForLibs(
         val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
         target("http_file") {
           option("name", label)
-          option("url", entry.url)
-          option("sha256", entry.sha256)
           option("downloaded_file_path", jar.path.fileName.name)
+          option("sha256", entry.sha256)
+          option("url", entry.url)
         }
       }
 
@@ -297,9 +296,9 @@ internal fun generateBazelModuleSectionsForLibs(
         val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
         target("http_file") {
           option("name", label)
-          option("url", entry.url)
-          option("sha256", entry.sha256)
           option("downloaded_file_path", jar.path.fileName.name)
+          option("sha256", entry.sha256)
+          option("url", entry.url)
         }
       }
     }
@@ -356,8 +355,9 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
   for ((dir, libs) in libs.sortedBy { it.target.targetName }.groupBy { it.bazelBuildFileDir }) {
     val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")
+    val loadSymbols = mutableMapOf<String, Set<String>>()
     buildFile(bazelFileUpdater, "local-libs") {
-      load("@rules_java//java:defs.bzl", "java_import")
+      loadSymbols["@rules_java//java:defs.bzl"] = setOf("java_import")
       for (lib in libs) {
         val targetName = lib.target.targetName
         target("java_import") {
@@ -369,12 +369,12 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         }
 
         if (isLibraryProvided(lib)) {
-          load("@rules_java//java:defs.bzl", "java_library")
+          loadSymbols["@rules_java//java:defs.bzl"] = setOf("java_library")
           target("java_library") {
             option("name", targetName + PROVIDED_SUFFIX)
-            option("exports", listOf(":$targetName"))
             option("neverlink", true)
             visibility(arrayOf("//visibility:public"))
+            option("exports", listOf(":$targetName"))
           }
         }
 
@@ -383,5 +383,6 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         }
       }
     }
+    bazelFileUpdater.appendLoadSymbols(loadSymbols)
   }
 }

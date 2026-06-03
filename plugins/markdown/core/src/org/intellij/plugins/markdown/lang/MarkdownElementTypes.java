@@ -11,6 +11,7 @@ import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
 import org.intellij.plugins.markdown.lang.parser.blocks.CommentElementTypesKt;
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider;
+import org.intellij.plugins.markdown.lang.parser.testlink.TestLinkElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 
 import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformType;
@@ -56,6 +57,8 @@ public interface MarkdownElementTypes {
   IElementType FULL_REFERENCE_LINK = platformType(org.intellij.markdown.MarkdownElementTypes.FULL_REFERENCE_LINK);
   IElementType SHORT_REFERENCE_LINK = platformType(org.intellij.markdown.MarkdownElementTypes.SHORT_REFERENCE_LINK);
   IElementType IMAGE = platformType(org.intellij.markdown.MarkdownElementTypes.IMAGE);
+
+  IElementType TEST_LINK = platformType(TestLinkElementTypes.LINK);
 
   IElementType HTML_BLOCK = platformType(org.intellij.markdown.MarkdownElementTypes.HTML_BLOCK);
 

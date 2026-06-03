@@ -1,0 +1,72 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.markdown.fenceInjector.textMate` start
+
+jvm_library(
+    name = "textMate",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.fenceInjector.textMate",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/markdown/core:markdown",
+        "//plugins/markdown/fenceInjection",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//plugins/IntelliLang:langInjection",
+        "//platform/projectModel-api:projectModel",
+        "//platform/analysis-api:analysis",
+        "//plugins/textmate",
+        "//libraries/markdown",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+jvm_library(
+    name = "textMate_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.fenceInjector.textMate",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":textMate",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/fenceInjection:fenceInjection_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/IntelliLang:langInjection_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//plugins/textmate:textmate_test_lib",
+        "//libraries/markdown:markdown_test_lib",
+    ],
+)
+### auto-generated section `build intellij.markdown.fenceInjector.textMate` end
+
+### auto-generated section `iml intellij.markdown.fenceInjector.textMate` start
+exports_files(
+    [
+        "intellij.markdown.fenceInjector.textMate.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.markdown.fenceInjector.textMate` end

@@ -30,6 +30,7 @@ def get_associates(ctx):
         fail("if associates have been set then module_name cannot be provided")
     else:
         jars = [depset([it], transitive = it[KtJvmInfo].module_jars) for it in associates]
+
         # use dictionary for deduplication
         module_names = {it[KtJvmInfo].module_name: None for it in associates}
         if len(module_names) > 1:

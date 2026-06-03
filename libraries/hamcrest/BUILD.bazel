@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.hamcrest` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.hamcrest` start
+
 jvm_library(
-  name = "hamcrest",
-  module_name = "intellij.libraries.hamcrest",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:hamcrest"],
-  runtime_deps = ["@lib//:hamcrest"]
+    name = "hamcrest",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.hamcrest",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:hamcrest"],
+    runtime_deps = ["@lib//:hamcrest"],
 )
 
 jvm_library(
-  name = "hamcrest_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.hamcrest",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:hamcrest"],
-  runtime_deps = [":hamcrest"]
+    name = "hamcrest_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.hamcrest",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:hamcrest"],
+    runtime_deps = [":hamcrest"],
 )
 ### auto-generated section `build intellij.libraries.hamcrest` end
 
 ### auto-generated section `iml intellij.libraries.hamcrest` start
-exports_files([
-  "intellij.libraries.hamcrest.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.hamcrest.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.hamcrest` end

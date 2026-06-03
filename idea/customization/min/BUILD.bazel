@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.platform.customization.min` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.customization.min` start
+
 jvm_library(
-  name = "min",
-  module_name = "intellij.platform.customization.min",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "min",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.customization.min",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "min_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.customization.min",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":min"]
+    name = "min_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.customization.min",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":min"],
 )
 ### auto-generated section `build intellij.platform.customization.min` end
 
 ### auto-generated section `iml intellij.platform.customization.min` start
-exports_files([
-  "intellij.platform.customization.min.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.customization.min.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.customization.min` end

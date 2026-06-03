@@ -4,8 +4,8 @@ package com.jetbrains.rhizomedb
 import com.jetbrains.rhizomedb.impl.Editor
 import com.jetbrains.rhizomedb.impl.Index
 import fleet.fastutil.ints.IntList
-import fleet.util.openmap.MutableBoundedOpenMap
-import fleet.util.openmap.MutableOpenMap
+import fleet.openmap.MutableBoundedOpenMap
+import fleet.openmap.MutableOpenMap
 
 class MutableDb internal constructor(
   override val dbBefore: DB,

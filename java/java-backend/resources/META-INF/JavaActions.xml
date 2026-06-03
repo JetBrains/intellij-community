@@ -50,35 +50,6 @@
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
-    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
-      <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
-    </action>
-
-    <group id="ChangesViewPopupMenuRunGroup">
-      <reference ref="RunContextPopupGroup"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="before" relative-to-action="ShowDiscoveredTests"/>
-    </group>
-
-    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
-      <add-to-group group-id="RunTestGroup" anchor="last"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
-    </action>
-
-    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
-            internal="true"/>
-
-
-
-    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
-      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
-      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
-    </action>
-
-    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
-      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
-      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
-    </action>
-
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
@@ -182,16 +153,6 @@
       <reference ref="Compile"/>
 
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
-    </group>
-
-
-    <group id="JavaCompileGroup">
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-
-      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
-      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
     <group id="AnalyzeJavaMenu">
@@ -389,7 +350,6 @@
     <group id="Internal.Java" popup="true" internal="true" compact="true">
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"/>
 
-      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"/>
       <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"/>
 
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"/>

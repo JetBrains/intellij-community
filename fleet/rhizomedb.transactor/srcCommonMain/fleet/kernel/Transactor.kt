@@ -20,9 +20,9 @@ import fleet.util.channels.consumeAll
 import fleet.util.channels.consumeEach
 import fleet.util.logging.KLogger
 import fleet.util.logging.KLoggers
-import fleet.util.openmap.Key
-import fleet.util.openmap.MutableOpenMap
-import fleet.util.openmap.OpenMap
+import fleet.openmap.Key
+import fleet.openmap.MutableOpenMap
+import fleet.openmap.OpenMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*

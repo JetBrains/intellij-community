@@ -1,39 +1,57 @@
-### auto-generated section `build intellij.space.java.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.space.java.jps` start
+
 jvm_library(
-  name = "java-jps",
-  module_name = "intellij.space.java.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//platform/util",
-    "//jps/jps-builders:build",
-    "//platform/util/base",
-  ]
+    name = "java-jps",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.space.java.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//jps/jps-builders:build",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "java-jps_test_lib",
-  testonly = True,
-  module_name = "intellij.space.java.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":java-jps",
-    "//platform/util:util_test_lib",
-    "//jps/jps-builders:build_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "java-jps_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.space.java.jps",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-jps",
+        "//platform/util:util_test_lib",
+        "//jps/jps-builders:build_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.space.java.jps` end
 
 ### auto-generated section `iml intellij.space.java.jps` start
-exports_files([
-  "intellij.space.java.jps.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.space.java.jps.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.space.java.jps` end

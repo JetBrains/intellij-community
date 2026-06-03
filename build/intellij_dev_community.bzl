@@ -1,8 +1,8 @@
 """Macros for IntelliJ-based IDE development builds."""
 
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_java//java:defs.bzl", "java_binary")
 load(":intellij_dev.bzl", "intellij_dev_binary")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 
 intellij_dev_binary_community = macro(
     doc = """Macro for IDEA-based dev-build targets.

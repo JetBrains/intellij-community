@@ -1,45 +1,61 @@
-### auto-generated section `build kotlin.compiler-plugins.noarg.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build kotlin.compiler-plugins.noarg.common` start
+
 jvm_library(
-  name = "common",
-  module_name = "kotlin.compiler-plugins.noarg.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//platform/core-api:core",
-    "//platform/util",
-    "@lib//:kotlinc-noarg-compiler-plugin",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
-    "//platform/core-impl",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-psi-api:psi",
-  ]
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.compiler-plugins.noarg.common",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "@lib//:kotlinc-kotlin-compiler-fe10",
+        "//platform/core-api:core",
+        "//platform/util",
+        "@lib//:kotlinc-noarg-compiler-plugin",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+        "//platform/core-impl",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-psi-api:psi",
+    ],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "kotlin.compiler-plugins.noarg.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":common",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.compiler-plugins.noarg.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+    ],
 )
 ### auto-generated section `build kotlin.compiler-plugins.noarg.common` end
 
 ### auto-generated section `iml kotlin.compiler-plugins.noarg.common` start
-exports_files([
-  "kotlin.compiler-plugins.noarg.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "kotlin.compiler-plugins.noarg.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml kotlin.compiler-plugins.noarg.common` end

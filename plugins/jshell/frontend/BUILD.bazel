@@ -1,31 +1,46 @@
-### auto-generated section `build intellij.java.jshell.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.jshell.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.java.jshell.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  deps = ["//plugins/jshell/protocol"]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.jshell.frontend",
+    visibility = ["//visibility:public"],
+    deps = ["//plugins/jshell/protocol"],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.java.jshell.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":frontend",
-    "//plugins/jshell/protocol:protocol_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.jshell.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//plugins/jshell/protocol:protocol_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.jshell.frontend` end
 
 ### auto-generated section `iml intellij.java.jshell.frontend` start
-exports_files([
-  "intellij.java.jshell.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.jshell.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.jshell.frontend` end

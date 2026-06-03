@@ -1,5 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_binary")
-
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 java_binary(
     name = "haven",
@@ -9,64 +10,80 @@ java_binary(
 )
 
 ### auto-generated section `build fleet.build.cli` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_cli",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_cli",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "cli",
-  module_name = "fleet.build.cli",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_cli",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-io-core",
-    "@lib//:slf4j-api",
-    "@lib//:fleet-logback-classic",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
-    "@lib//:fleet-google-devtools-ksp-symbol-processing-aa-embeddable",
-    "@lib//:fleet-google-devtools-ksp-symbol-processing-common-deps",
-    "@lib//:fleet-clikt-core",
-    "@lib//:fleet-clikt",
-  ],
-  exports = [
-    "@lib//:fleet-clikt-core",
-    "@lib//:fleet-clikt",
-  ]
+    name = "cli",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_cli",
+    module_name = "fleet.build.cli",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:fleet-clikt-core",
+        "@lib//:fleet-clikt",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-io-core",
+        "@lib//:slf4j-api",
+        "@lib//:fleet-logback-classic",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
+        "@lib//:fleet-google-devtools-ksp-symbol-processing-aa-embeddable",
+        "@lib//:fleet-google-devtools-ksp-symbol-processing-common-deps",
+        "@lib//:fleet-clikt-core",
+        "@lib//:fleet-clikt",
+    ],
 )
 
 jvm_library(
-  name = "cli_test_lib",
-  testonly = True,
-  module_name = "fleet.build.cli",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_cli",
-  exports = [
-    "@lib//:fleet-clikt-core",
-    "@lib//:fleet-clikt",
-  ],
-  runtime_deps = [":cli"]
+    name = "cli_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_cli",
+    module_name = "fleet.build.cli",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:fleet-clikt-core",
+        "@lib//:fleet-clikt",
+    ],
+    runtime_deps = [":cli"],
 )
 ### auto-generated section `build fleet.build.cli` end
 
 ### auto-generated section `iml fleet.build.cli` start
-exports_files([
-  "fleet.build.cli.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.build.cli.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.build.cli` end

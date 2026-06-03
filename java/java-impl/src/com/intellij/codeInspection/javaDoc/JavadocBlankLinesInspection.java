@@ -22,7 +22,7 @@ import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,9 +104,9 @@ public final class JavadocBlankLinesInspection extends LocalInspectionTool {
    * @return true if the text starts with an HTML block tag, false otherwise
    */
   private static boolean startsWithHtmlBlockTag(String text) {
-    String startTag = HtmlUtil.getStartTag(text);
+    String startTag = BasicHtmlUtil.getStartTag(text);
     if (startTag == null) return false;
-    return HtmlUtil.isHtmlBlockTag(startTag, false) || "br".equalsIgnoreCase(startTag);
+    return BasicHtmlUtil.isHtmlBlockTag(startTag, false) || "br".equalsIgnoreCase(startTag);
   }
 
   private static boolean endsWithHtmlBlockTag(String text) {
@@ -114,7 +114,7 @@ public final class JavadocBlankLinesInspection extends LocalInspectionTool {
     if (text.isEmpty() || text.charAt(text.length() - 1) != '>') return false;
     String maybeBlockTag = text.substring(text.lastIndexOf('<') + 1, text.length() - 1);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
+    return BasicHtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
   }
 
   private static boolean isNullOrBlockTag(PsiElement element) {

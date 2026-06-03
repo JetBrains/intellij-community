@@ -1,46 +1,64 @@
-### auto-generated section `build intellij.copyright.vcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.copyright.vcs` start
+
 jvm_library(
-  name = "vcs",
-  module_name = "intellij.copyright.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/copyright",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/vcs-api:vcs",
-    "//platform/platform-api:ide",
-    "//platform/util/progress",
-    "//platform/vcs-impl",
-  ]
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.copyright.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/copyright",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/vcs-api:vcs",
+        "//platform/platform-api:ide",
+        "//platform/util/progress",
+        "//platform/vcs-impl",
+    ],
 )
 
 jvm_library(
-  name = "vcs_test_lib",
-  testonly = True,
-  module_name = "intellij.copyright.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":vcs",
-    "//plugins/copyright:copyright_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/util/progress:progress_test_lib",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-  ]
+    name = "vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.copyright.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs",
+        "//plugins/copyright:copyright_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.copyright.vcs` end
 
 ### auto-generated section `iml intellij.copyright.vcs` start
-exports_files([
-  "intellij.copyright.vcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.copyright.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.copyright.vcs` end

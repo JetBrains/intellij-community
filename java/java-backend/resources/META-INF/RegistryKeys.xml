@@ -126,5 +126,8 @@
     <registryKey key="java.import.with.write.action" defaultValue="false" description="Whether to use WriteAction for import optimization"/>
     <registryKey key="java.functional.expression.search.fail.fast.in.dumb.mode" defaultValue="true"
                  description="When true (default), JavaFunctionalExpressionSearcher throws IndexNotReadyException immediately in dumb mode instead of waiting for smart mode. When false, falls back to the legacy behavior of waiting for smart mode."/>
+
+    <registryKey key="java.resolve.prefer.test.sources" defaultValue="true"
+                 description="When resolving from test code, prefer a same-FQN class from the module's test source root over the production one (matches javac test-source shadowing)."/>
   </extensions>
 </idea-plugin>

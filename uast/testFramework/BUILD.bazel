@@ -1,67 +1,84 @@
-### auto-generated section `build intellij.platform.uast.testFramework` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.uast.testFramework` start
+
 jvm_library(
-  name = "testFramework",
-  module_name = "intellij.platform.uast.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/indexing-api:indexing",
-    "//jps/model-api:model",
-    "//platform/lang-core",
-    "//platform/execution",
-    "//platform/projectModel-api:projectModel",
-    "//uast/uast-common:uast",
-    "//platform/testFramework",
-    "//java/openapi:java",
-    "//java/java-psi-api:psi",
-    "@lib//:kotlin-stdlib",
-    "//platform/ide-core-impl",
-    "//platform/vcs-api:vcs",
-    "//java/testFramework",
-    "//platform/vcs-impl",
-  ],
-  exports = ["//uast/uast-common:uast"]
+    name = "testFramework",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.uast.testFramework",
+    visibility = ["//visibility:public"],
+    exports = ["//uast/uast-common:uast"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/indexing-api:indexing",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+        "//platform/execution",
+        "//platform/projectModel-api:projectModel",
+        "//uast/uast-common:uast",
+        "//platform/testFramework",
+        "//java/openapi:java",
+        "//java/java-psi-api:psi",
+        "@lib//:kotlin-stdlib",
+        "//platform/ide-core-impl",
+        "//platform/vcs-api:vcs",
+        "//java/testFramework",
+        "//platform/vcs-impl",
+    ],
 )
 
 jvm_library(
-  name = "testFramework_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.uast.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//uast/uast-common:uast",
-    "//uast/uast-common:uast_test_lib",
-  ],
-  runtime_deps = [
-    ":testFramework",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/lang-core:lang-core_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//uast/uast-common:uast_test_lib",
-    "//platform/testFramework:testFramework_test_lib",
-    "//java/openapi:java_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//java/testFramework:testFramework_test_lib",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-  ]
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.uast.testFramework",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//uast/uast-common:uast",
+        "//uast/uast-common:uast_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":testFramework",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//java/openapi:java_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//java/testFramework:testFramework_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.uast.testFramework` end
 
 ### auto-generated section `iml intellij.platform.uast.testFramework` start
-exports_files([
-  "intellij.platform.uast.testFramework.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.uast.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.uast.testFramework` end

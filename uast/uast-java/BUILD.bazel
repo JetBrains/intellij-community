@@ -1,57 +1,76 @@
-### auto-generated section `build intellij.java.uast` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.uast` start
+
 jvm_library(
-  name = "java-uast",
-  module_name = "intellij.java.uast",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//java/java-psi-api:psi",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//uast/uast-common:uast",
-    "@lib//:kotlin-stdlib",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-syntax:syntax",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//platform/util",
-    "//platform/util/base",
-  ],
-  exports = ["//uast/uast-common:uast"]
+    name = "java-uast",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.uast",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//uast/uast-common:uast"],
+    deps = [
+        # do not sort,
+        "//java/java-psi-api:psi",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//uast/uast-common:uast",
+        "@lib//:kotlin-stdlib",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-syntax:syntax",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/util",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "java-uast_test_lib",
-  testonly = True,
-  module_name = "intellij.java.uast",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  exports = [
-    "//uast/uast-common:uast",
-    "//uast/uast-common:uast_test_lib",
-  ],
-  runtime_deps = [
-    ":java-uast",
-    "//java/java-psi-api:psi_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//uast/uast-common:uast_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-syntax:syntax_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "java-uast_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.uast",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//uast/uast-common:uast",
+        "//uast/uast-common:uast_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":java-uast",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-syntax:syntax_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.uast` end
 
 ### auto-generated section `iml intellij.java.uast` start
-exports_files([
-  "intellij.java.uast.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.uast.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.uast` end

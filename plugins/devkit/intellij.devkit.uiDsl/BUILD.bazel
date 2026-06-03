@@ -1,62 +1,80 @@
-### auto-generated section `build intellij.devkit.uiDsl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.devkit.uiDsl` start
+
 jvm_library(
-  name = "uiDsl",
-  module_name = "intellij.devkit.uiDsl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl/internal",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//platform/core-api:core",
-    "//libraries/kotlin/reflect",
-    "//platform/core-ui",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/projectModel-api:projectModel",
-    "//plugins/devkit/devkit-core:core",
-    "//platform/analysis-api:analysis",
-    "//java/java-psi-api:psi",
-    "@lib//:kotlinc-kotlin-compiler-common-provided",
-    "//platform/util:util-ui",
-  ]
+    name = "uiDsl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.uiDsl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl/internal",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/core-api:core",
+        "//libraries/kotlin/reflect",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/devkit/devkit-core:core",
+        "//platform/analysis-api:analysis",
+        "//java/java-psi-api:psi",
+        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "uiDsl_test_lib",
-  testonly = True,
-  module_name = "intellij.devkit.uiDsl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":uiDsl",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl/internal:internal_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//libraries/kotlin/reflect:reflect_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//plugins/devkit/devkit-core:core_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "@lib//:kotlinc-kotlin-compiler-common-provided",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "uiDsl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.uiDsl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":uiDsl",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//plugins/devkit/devkit-core:core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.devkit.uiDsl` end
 
 ### auto-generated section `iml intellij.devkit.uiDsl` start
-exports_files([
-  "intellij.devkit.uiDsl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.devkit.uiDsl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.devkit.uiDsl` end

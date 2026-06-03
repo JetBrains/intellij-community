@@ -13,6 +13,8 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck -->
+    <executionTargetLanguageRuntimeType implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType"/>
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.execution.impl.backend.BackendExecutionRemoteApiProvider"/>
     <execution.impl.runSessionService implementation="com.intellij.platform.execution.impl.backend.BackendRunSessionService"/>

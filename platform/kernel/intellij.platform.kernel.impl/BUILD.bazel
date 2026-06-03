@@ -1,46 +1,64 @@
-### auto-generated section `build intellij.platform.kernel.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.kernel.impl` start
+
 jvm_library(
-  name = "impl",
-  module_name = "intellij.platform.kernel.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/core-api:core",
-    "//platform/ide-core",
-    "//platform/util",
-    "//platform/kernel/shared:kernel",
-    "//platform/util/coroutines",
-    "//fleet/rhizomedb",
-  ]
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/util",
+        "//platform/kernel/shared:kernel",
+        "//platform/util/coroutines",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.kernel.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":impl",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.kernel.impl` end
 
 ### auto-generated section `iml intellij.platform.kernel.impl` start
-exports_files([
-  "intellij.platform.kernel.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.kernel.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.kernel.impl` end

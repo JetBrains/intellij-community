@@ -4,7 +4,6 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
@@ -41,6 +40,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabInfo
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
+import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
@@ -102,7 +102,7 @@ sealed interface SeTabVm {
   suspend fun itemSelected(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean, modifiers: Int, searchText: String): SeSelectionResult
   suspend fun openInFindWindow(session: SeSession): Boolean
   suspend fun canBeShownInFindResults(): Boolean
-  suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction?
+  suspend fun getAutoToggleAction(): AutoToggleAction?
   suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation?
   suspend fun performExtendedAction(item: SeItemData): Boolean
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo?
@@ -181,7 +181,7 @@ class SeTabVmImpl(
               val newPatternContainsPrevious = lastNotFoundString!!.length > 1 && it.contains(lastNotFoundString!!)
               if (!newPatternContainsPrevious) {
                 SeLog.log(SeLog.PATTERN) { "SeTabVm<$tabId>: resetting auto toggle due to pattern family change" }
-                (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+                getAutoToggleAction()?.autoToggle(false)
               }
             }
           }
@@ -335,11 +335,9 @@ class SeTabVmImpl(
     return tab.openInFindToolWindow(session, params)
   }
 
-  override suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
-    return tab.getFilterEditor()?.getHeaderActions()?.firstOrNull {
-      it is SearchEverywhereToggleAction
-    } as? SearchEverywhereToggleAction
-  }
+  override suspend fun getAutoToggleAction(): AutoToggleAction? =
+    tab.getFilterEditor()?.getHeaderActions()?.filterIsInstance<AutoToggleAction>()?.firstOrNull()
+    ?: (tab as? SeAdaptedTab)?.autoToggleAction
 
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
     if (item.presentation is SeAdaptedItemPresentation) return null
@@ -451,7 +449,7 @@ class SeDummyTabVm private constructor(
   override suspend fun itemSelected(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean, modifiers: Int, searchText: String): SeSelectionResult = SeSelectionResultKeep()
   override suspend fun openInFindWindow(session: SeSession): Boolean = false
   override suspend fun canBeShownInFindResults(): Boolean = false
-  override suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? = null
+  override suspend fun getAutoToggleAction(): AutoToggleAction? = null
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? = null
   override suspend fun performExtendedAction(item: SeItemData): Boolean = false
   override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? = null

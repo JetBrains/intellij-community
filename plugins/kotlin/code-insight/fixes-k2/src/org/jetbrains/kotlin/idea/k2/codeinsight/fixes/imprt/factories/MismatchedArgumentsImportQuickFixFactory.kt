@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
 import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AbstractImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
@@ -41,7 +42,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             is KaFirDiagnostic.WrongNumberOfTypeArguments,
             is KaFirDiagnostic.CannotInferParameterType -> {
 
-                val originalDiagnosticPsi = diagnostic.psi
+                val originalDiagnosticPsi = diagnostic.psi.operationReferenceForBinaryExpressionOrThis
 
                 val adjustedDiagnosticPsi = when {
                     originalDiagnosticPsi is KtOperationReferenceExpression -> originalDiagnosticPsi

@@ -1,62 +1,80 @@
-### auto-generated section `build intellij.platform.ide.newUiOnboarding` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.newUiOnboarding` start
+
 jvm_library(
-  name = "new-ui-onboarding",
-  module_name = "intellij.platform.ide.newUiOnboarding",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/ui",
-    "//platform/ide-core",
-    "//platform/core-ui",
-    "//platform/execution",
-    "//platform/execution-impl",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//platform/projectModel-api:projectModel",
-    "//platform/statistics",
-    "//libraries/jcef",
-    "//platform/util:util-ui",
-  ]
+    name = "new-ui-onboarding",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.newUiOnboarding",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/ui",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/projectModel-api:projectModel",
+        "//platform/statistics",
+        "//libraries/jcef",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "new-ui-onboarding_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.newUiOnboarding",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":new-ui-onboarding",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/ui:ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//libraries/jcef:jcef_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "new-ui-onboarding_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.newUiOnboarding",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":new-ui-onboarding",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/ui:ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//libraries/jcef:jcef_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.newUiOnboarding` end
 
 ### auto-generated section `iml intellij.platform.ide.newUiOnboarding` start
-exports_files([
-  "intellij.platform.ide.newUiOnboarding.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.newUiOnboarding.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.newUiOnboarding` end

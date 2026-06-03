@@ -173,13 +173,14 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   fileSystem: FileSystem<P>,
   version: Version?,
   errorSink: ErrorSink,
+  overrideExistingEnv: Boolean = false,
 ): PyResult<Sdk> {
   val shouldInitProject = !workingDir.resolve(PY_PROJECT_TOML).exists()
   val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
 
   val uv = createUvLowLevel(workingDir, createUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, fileSystem, venvPath)
   val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
-    uv.initializeEnvironment(shouldInitProject, version)
+    uv.initializeEnvironment(shouldInitProject, version, clearExisting = overrideExistingEnv)
   }.getOr { return it }
 
   val sdk = setupExistingEnvAndSdk(

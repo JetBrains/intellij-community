@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` start
+
 jvm_library(
-  name = "maven",
-  module_name = "intellij.kotlin.compilerPlugins.support.maven",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/util/jdom",
-    "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/maven",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
-    "//plugins/maven",
-    "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/plugin",
-    "//platform/eel-provider",
-  ]
+    name = "maven",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.compilerPlugins.support.maven",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util/jdom",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/maven",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+        "//plugins/maven",
+        "@lib//:kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/base/plugin",
+        "//platform/eel-provider",
+    ],
 )
 
 jvm_library(
-  name = "maven_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.compilerPlugins.support.maven",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":maven",
-    "//platform/core-api:core_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//plugins/kotlin/base/facet:facet_test_lib",
-    "//plugins/kotlin/maven:maven_test_lib",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
-    "//plugins/maven:maven_test_lib",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-  ]
+    name = "maven_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.compilerPlugins.support.maven",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":maven",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/maven:maven_test_lib",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+        "//plugins/maven:maven_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` end
 
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.support.maven` start
-exports_files([
-  "intellij.kotlin.compilerPlugins.support.maven.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.compilerPlugins.support.maven.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.support.maven` end

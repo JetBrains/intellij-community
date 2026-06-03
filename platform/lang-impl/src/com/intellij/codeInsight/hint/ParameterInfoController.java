@@ -42,8 +42,15 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.openapi.application.CoroutinesKt;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
+
+import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -119,7 +126,12 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     final Boolean[] isLookupActive = {false};
 
     LookupListener lookupListener = new LookupListener() {
-      final MergingUpdateQueue queue = new MergingUpdateQueue("Update parameter info position", 200, true, myComponent);
+      final CoroutineScope queueScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
+      final UpdateQueue<Unit> queue = DebouncedUpdates.<Unit>forScope(queueScope, "Update parameter info position", 200)
+        .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+        .withComponentModality(myComponent)
+        .runLatest(ignored -> refreshUi())
+        .cancelOnDispose(ParameterInfoController.this);
 
       @Override
       public void lookupShown(@NotNull LookupEvent event) {
@@ -128,14 +140,13 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
       @Override
       public void uiRefreshed() {
-        queue.queue(new Update("PI update") {
-          @Override
-          public void run() {
-            if (isLookupActive[0]) {
-              WriteIntentReadAction.run(ParameterInfoController.this::updateComponent);
-            }
-          }
-        });
+        queue.queue(Unit.INSTANCE);
+      }
+
+      private void refreshUi() {
+        if (isLookupActive[0]) {
+          WriteIntentReadAction.run(ParameterInfoController.this::updateComponent);
+        }
       }
     };
 

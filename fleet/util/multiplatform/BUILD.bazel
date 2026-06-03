@@ -1,40 +1,56 @@
-### auto-generated section `build fleet.util.multiplatform` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.util.multiplatform` start
 
 create_kotlinc_options(
-  name = "custom_multiplatform",
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_multiplatform",
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "multiplatform",
-  module_name = "fleet.util.multiplatform",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_multiplatform",
-  exported_compiler_plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
-  deps = ["@lib//:kotlin-stdlib"]
+    name = "multiplatform",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    exported_compiler_plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
+    kotlinc_opts = ":custom_multiplatform",
+    module_name = "fleet.util.multiplatform",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 
 jvm_library(
-  name = "multiplatform_test_lib",
-  testonly = True,
-  module_name = "fleet.util.multiplatform",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_multiplatform",
-  runtime_deps = [":multiplatform"]
+    name = "multiplatform_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_multiplatform",
+    module_name = "fleet.util.multiplatform",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":multiplatform"],
 )
 ### auto-generated section `build fleet.util.multiplatform` end
 
 ### auto-generated section `iml fleet.util.multiplatform` start
-exports_files([
-  "fleet.util.multiplatform.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.util.multiplatform.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.util.multiplatform` end

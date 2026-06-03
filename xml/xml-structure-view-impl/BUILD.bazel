@@ -1,59 +1,77 @@
-### auto-generated section `build intellij.xml.structureView.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.xml.structureView.impl` start
+
 jvm_library(
-  name = "structureView-impl",
-  module_name = "intellij.xml.structureView.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//xml/dom-openapi:dom",
-    "//xml/dom-impl",
-    "//xml/xml-psi-api:psi",
-    "//xml/xml-structure-view-api:structureView",
-    "//xml/xml-psi-impl:psi-impl",
-    "//platform/structure-view-impl:structureView-impl",
-    "//platform/core-impl",
-    "//platform/util:util-ui",
-    "//xml/xml-parser:parser",
-    "//platform/lang-impl",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "structureView-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.structureView.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//xml/dom-openapi:dom",
+        "//xml/dom-impl",
+        "//xml/xml-psi-api:psi",
+        "//xml/xml-structure-view-api:structureView",
+        "//xml/xml-psi-impl:psi-impl",
+        "//platform/structure-view-impl:structureView-impl",
+        "//platform/core-impl",
+        "//platform/util:util-ui",
+        "//xml/xml-parser:parser",
+        "//platform/lang-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "structureView-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.xml.structureView.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":structureView-impl",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//xml/dom-openapi:dom_test_lib",
-    "//xml/dom-impl:dom-impl_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//xml/xml-structure-view-api:structureView_test_lib",
-    "//xml/xml-psi-impl:psi-impl_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//xml/xml-parser:parser_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/backend:backend_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "structureView-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.structureView.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structureView-impl",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//xml/dom-openapi:dom_test_lib",
+        "//xml/dom-impl:dom-impl_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//xml/xml-structure-view-api:structureView_test_lib",
+        "//xml/xml-psi-impl:psi-impl_test_lib",
+        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//xml/xml-parser:parser_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.xml.structureView.impl` end
 
 ### auto-generated section `iml intellij.xml.structureView.impl` start
-exports_files([
-  "intellij.xml.structureView.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.xml.structureView.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.xml.structureView.impl` end

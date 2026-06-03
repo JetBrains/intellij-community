@@ -365,7 +365,6 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.macro")
     embeddedModule("intellij.platform.usageView.impl")
 
-    embeddedModule("intellij.platform.testRunner")
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
 
@@ -421,6 +420,7 @@ object CoreModuleSets {
     embeddedModule("fleet.fastutil")
     embeddedModule("fleet.kernel")
     embeddedModule("fleet.multiplatform.shims")
+    embeddedModule("fleet.openmap")
     embeddedModule("fleet.radixTrie")
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")

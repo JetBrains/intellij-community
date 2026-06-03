@@ -1192,12 +1192,12 @@
 - a:getSymbol():com.intellij.polySymbols.PolySymbol
 *f:com.intellij.polySymbols.search.PolySymbolSearchTarget$Companion
 - f:create(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.search.PolySymbolSearchTarget
-*:com.intellij.polySymbols.search.PsiSourcedPolySymbol
+*:com.intellij.polySymbols.search.PsiLinkedPolySymbol
 - com.intellij.polySymbols.PolySymbol
 - a:createPointer():com.intellij.model.Pointer
+- a:getLinkedElement():com.intellij.psi.PsiElement
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - getPsiContext():com.intellij.psi.PsiElement
-- a:getSource():com.intellij.psi.PsiElement
 - isEquivalentTo(com.intellij.model.Symbol):Z
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
@@ -1377,13 +1377,13 @@
 - sf:withOffset(java.util.List,I):java.util.List
 - sf:withSegments(com.intellij.polySymbols.query.PolySymbolMatch,java.util.List):com.intellij.polySymbols.query.PolySymbolMatch
 - sf:withSymbols(com.intellij.polySymbols.PolySymbolNameSegment,java.util.List):com.intellij.polySymbols.PolySymbolNameSegment
-*:com.intellij.polySymbols.utils.PsiSourcedPolySymbolDelegate
-- com.intellij.polySymbols.search.PsiSourcedPolySymbol
+*:com.intellij.polySymbols.utils.PsiLinkedPolySymbolDelegate
+- com.intellij.polySymbols.search.PsiLinkedPolySymbol
 - com.intellij.polySymbols.utils.PolySymbolDelegate
 - a:createPointer():com.intellij.model.Pointer
+- getLinkedElement():com.intellij.psi.PsiElement
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - getPsiContext():com.intellij.psi.PsiElement
-- getSource():com.intellij.psi.PsiElement
 *f:com.intellij.polySymbols.utils.ReferencingPolySymbol
 - sf:INSTANCE:com.intellij.polySymbols.utils.ReferencingPolySymbol
 - sf:create(com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.polySymbols.PolySymbolKind[]):com.intellij.polySymbols.PolySymbol
@@ -1392,7 +1392,7 @@
 - bs:create$default(com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.polySymbols.PolySymbolKind[],com.intellij.polySymbols.PolySymbol$Priority,java.util.List,I,java.lang.Object):com.intellij.polySymbols.PolySymbol
 *:com.intellij.polySymbols.webTypes.WebTypesSymbol
 - com.intellij.polySymbols.query.PolySymbolScope
-- com.intellij.polySymbols.search.PsiSourcedPolySymbol
+- com.intellij.polySymbols.search.PsiLinkedPolySymbol
 - *sf:Companion:com.intellij.polySymbols.webTypes.WebTypesSymbol$Companion
 - sf:PROP_NO_DOC:com.intellij.polySymbols.PolySymbolProperty
 - a:createPointer():com.intellij.model.Pointer
@@ -1445,6 +1445,7 @@
 - f:getExtension():Z
 - f:getIcon():javax.swing.Icon
 - f:getKind():com.intellij.polySymbols.PolySymbolKind
+- f:getLinkedElement():com.intellij.psi.PsiElement
 - f:getLocation():com.intellij.polySymbols.webTypes.WebTypesSymbol$Location
 - f:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - getModifiers():java.util.Set
@@ -1452,7 +1453,6 @@
 - f:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - pf:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - f:getQueryScope():java.util.List
-- f:getSource():com.intellij.psi.PsiElement
 - f:getSymbols(com.intellij.polySymbols.PolySymbolKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - hashCode():I
 - isEquivalentTo(com.intellij.model.Symbol):Z

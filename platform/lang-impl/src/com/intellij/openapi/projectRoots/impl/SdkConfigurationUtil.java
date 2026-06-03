@@ -453,6 +453,17 @@ public final class SdkConfigurationUtil {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #selectSdkHome(SdkType, Component, Path, Project, Consumer)} providing the correct project.
+   */
+  @Deprecated
+  public static void selectSdkHome(final @NotNull SdkType sdkType,
+                                   @Nullable Component component,
+                                   @NotNull Path path,
+                                   final @NotNull Consumer<? super String> consumer) {
+    selectSdkHome(sdkType, component, path, null, consumer);
+  }
+
   public static void selectSdkHome(final @NotNull SdkType sdkType,
                                    @Nullable Component component,
                                    @NotNull Path path,

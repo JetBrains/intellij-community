@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.caffeine` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.caffeine` start
+
 jvm_library(
-  name = "caffeine",
-  module_name = "intellij.libraries.caffeine",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-caffeine-caffeine"],
-  runtime_deps = ["@lib//:libraries-caffeine-caffeine"]
+    name = "caffeine",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.caffeine",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-caffeine-caffeine"],
+    runtime_deps = ["@lib//:libraries-caffeine-caffeine"],
 )
 
 jvm_library(
-  name = "caffeine_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.caffeine",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-caffeine-caffeine"],
-  runtime_deps = [":caffeine"]
+    name = "caffeine_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.caffeine",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-caffeine-caffeine"],
+    runtime_deps = [":caffeine"],
 )
 ### auto-generated section `build intellij.libraries.caffeine` end
 
 ### auto-generated section `iml intellij.libraries.caffeine` start
-exports_files([
-  "intellij.libraries.caffeine.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.caffeine.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.caffeine` end

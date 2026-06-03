@@ -1,45 +1,63 @@
-### auto-generated section `build intellij.java.remoteServers` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.remoteServers` start
+
 jvm_library(
-  name = "java-remoteServers",
-  module_name = "intellij.java.remoteServers",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/projectModel-api:projectModel",
-    "//platform/remote-servers/api:remoteServers",
-    "//platform/core-api:core",
-    "//platform/lang-api:lang",
-    "//platform/xdebugger-api:debugger",
-    "//java/execution/openapi:java-execution",
-    "//java/compiler/openapi:java-compiler",
-  ]
+    name = "java-remoteServers",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.remoteServers",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/projectModel-api:projectModel",
+        "//platform/remote-servers/api:remoteServers",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/xdebugger-api:debugger",
+        "//java/execution/openapi:java-execution",
+        "//java/compiler/openapi:java-compiler",
+    ],
 )
 
 jvm_library(
-  name = "java-remoteServers_test_lib",
-  testonly = True,
-  module_name = "intellij.java.remoteServers",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":java-remoteServers",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/remote-servers/api:remoteServers_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/xdebugger-api:debugger_test_lib",
-    "//java/execution/openapi:java-execution_test_lib",
-    "//java/compiler/openapi:java-compiler_test_lib",
-  ]
+    name = "java-remoteServers_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.remoteServers",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-remoteServers",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/remote-servers/api:remoteServers_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//java/execution/openapi:java-execution_test_lib",
+        "//java/compiler/openapi:java-compiler_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.remoteServers` end
 
 ### auto-generated section `iml intellij.java.remoteServers` start
-exports_files([
-  "intellij.java.remoteServers.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.remoteServers.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.remoteServers` end

@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.winp` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.winp` start
+
 jvm_library(
-  name = "winp",
-  module_name = "intellij.libraries.winp",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-winp-winp"],
-  runtime_deps = ["@lib//:libraries-winp-winp"]
+    name = "winp",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.winp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-winp-winp"],
+    runtime_deps = ["@lib//:libraries-winp-winp"],
 )
 
 jvm_library(
-  name = "winp_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.winp",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-winp-winp"],
-  runtime_deps = [":winp"]
+    name = "winp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.winp",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-winp-winp"],
+    runtime_deps = [":winp"],
 )
 ### auto-generated section `build intellij.libraries.winp` end
 
 ### auto-generated section `iml intellij.libraries.winp` start
-exports_files([
-  "intellij.libraries.winp.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.winp.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.winp` end

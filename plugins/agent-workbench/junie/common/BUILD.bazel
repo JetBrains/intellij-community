@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.agent.workbench.junie.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.agent.workbench.junie.common` start
+
 jvm_library(
-  name = "common",
-  module_name = "intellij.agent.workbench.junie.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/execution-impl",
-    "//platform/platform-util-io:ide-util-io",
-    "//plugins/terminal",
-    "//plugins/terminal/backend",
-    "//platform/eel",
-    "//platform/eel-provider",
-  ]
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.junie.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/execution-impl",
+        "//platform/platform-util-io:ide-util-io",
+        "//plugins/terminal",
+        "//plugins/terminal/backend",
+        "//platform/eel",
+        "//platform/eel-provider",
+    ],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "intellij.agent.workbench.junie.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":common",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-    "//plugins/terminal/backend:backend_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.junie.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//plugins/terminal/backend:backend_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.junie.common` end
 
 ### auto-generated section `iml intellij.agent.workbench.junie.common` start
-exports_files([
-  "intellij.agent.workbench.junie.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.junie.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.junie.common` end

@@ -1,52 +1,70 @@
-### auto-generated section `build intellij.platform.navbar.testFramework` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.navbar.testFramework` start
+
 jvm_library(
-  name = "testFramework",
-  module_name = "intellij.platform.navbar.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/core-ui",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-impl",
-    "//platform/ide-core-impl",
-    "//platform/ide-core",
-    "//platform/navbar/backend",
-    "//platform/navbar/frontend",
-    "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = ["//platform/navbar/plugin"]
+    name = "testFramework",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.navbar.testFramework",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/navbar/plugin"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//platform/navbar/backend",
+        "//platform/navbar/frontend",
+        "//platform/platform-impl:ide-impl",
+    ],
 )
 
 jvm_library(
-  name = "testFramework_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.navbar.testFramework",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":testFramework",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/navbar/backend:backend_test_lib",
-    "//platform/navbar/frontend:frontend_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/navbar/plugin:plugin_test_lib",
-  ]
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.navbar.testFramework",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":testFramework",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/navbar/backend:backend_test_lib",
+        "//platform/navbar/frontend:frontend_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/navbar/plugin:plugin_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.navbar.testFramework` end
 
 ### auto-generated section `iml intellij.platform.navbar.testFramework` start
-exports_files([
-  "intellij.platform.navbar.testFramework.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.navbar.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.navbar.testFramework` end

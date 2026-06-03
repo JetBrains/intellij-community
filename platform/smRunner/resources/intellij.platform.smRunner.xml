@@ -23,7 +23,7 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="255" 

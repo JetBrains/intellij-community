@@ -6,12 +6,13 @@
             serviceImplementation="org.jetbrains.kotlin.idea.j2k.old.post.processing.OldJ2KPostProcessingRegistrarImpl"/>
   </extensions>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.code-insight.intentions.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
 </idea-plugin>

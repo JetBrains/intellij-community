@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.netty.buffer` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.netty.buffer` start
+
 jvm_library(
-  name = "buffer",
-  module_name = "intellij.libraries.netty.buffer",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
-  runtime_deps = ["@lib//:libraries-netty-buffer-netty-buffer"]
+    name = "buffer",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.netty.buffer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
+    runtime_deps = ["@lib//:libraries-netty-buffer-netty-buffer"],
 )
 
 jvm_library(
-  name = "buffer_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.netty.buffer",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
-  runtime_deps = [":buffer"]
+    name = "buffer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.netty.buffer",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
+    runtime_deps = [":buffer"],
 )
 ### auto-generated section `build intellij.libraries.netty.buffer` end
 
 ### auto-generated section `iml intellij.libraries.netty.buffer` start
-exports_files([
-  "intellij.libraries.netty.buffer.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.netty.buffer.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.netty.buffer` end

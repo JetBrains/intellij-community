@@ -1,35 +1,51 @@
-### auto-generated section `build intellij.platform.bazel.runfiles` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.bazel.runfiles` start
+
 jvm_library(
-  name = "bazel-runfiles",
-  module_name = "intellij.platform.bazel.runfiles",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-  ]
+    name = "bazel-runfiles",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.bazel.runfiles",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "bazel-runfiles_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.bazel.runfiles",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":bazel-runfiles",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "bazel-runfiles_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.bazel.runfiles",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bazel-runfiles",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.bazel.runfiles` end
 
 ### auto-generated section `iml intellij.platform.bazel.runfiles` start
-exports_files([
-  "intellij.platform.bazel.runfiles.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.bazel.runfiles.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.bazel.runfiles` end

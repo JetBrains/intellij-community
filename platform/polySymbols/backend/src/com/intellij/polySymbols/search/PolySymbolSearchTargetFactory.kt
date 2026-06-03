@@ -5,10 +5,19 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.openapi.project.Project
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PolySymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
   override fun searchTarget(project: Project, symbol: PolySymbol): SearchTarget? =
-    if (symbol !is SearchTarget) symbol.searchTarget else null
+    when (symbol) {
+      is SearchTarget -> null
+      is PsiLinkedPolySymbol ->
+        symbol.searchTarget
+        ?: if (symbol.linkedElement is PsiNamedElement)
+          PolySymbolSearchTarget.create(symbol)
+        else null
+      else -> symbol.searchTarget
+    }
 }

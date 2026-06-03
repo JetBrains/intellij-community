@@ -1,0 +1,19 @@
+// EXPECTED_TEXT: println("Hi from shared")
+
+// FILE: gotoImportedScript.main.kts
+@file:Import("left.main.kts")
+@file:Import("right.main.kts")
+fooFrom<caret>Shared()
+
+// FILE: left.main.kts
+@file:Import("shared.kts")
+
+// FILE: right.main.kts
+@file:Import("shared.kts")
+
+// FILE: shared.kts
+println("Hi from shared")
+
+fun fooFromShared() {
+
+}

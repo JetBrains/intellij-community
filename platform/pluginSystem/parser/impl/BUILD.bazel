@@ -1,91 +1,122 @@
-### auto-generated section `build intellij.platform.pluginSystem.parser.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.pluginSystem.parser.impl` start
+
 jvm_library(
-  name = "impl",
-  module_name = "intellij.platform.pluginSystem.parser.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util/xmlDom",
-    "//libraries/aalto-xml",
-    "//platform/util",
-    "//platform/util/base/multiplatform",
-  ]
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.pluginSystem.parser.impl",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/xmlDom",
+        "//libraries/aalto-xml",
+        "//platform/util",
+        "//platform/util/base/multiplatform",
+    ],
 )
 
 jvm_library(
-  name = "impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.pluginSystem.parser.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":impl",
-    "//platform/util/xmlDom:xmlDom_test_lib",
-    "//libraries/aalto-xml:aalto-xml_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "@lib//:junit5",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ]
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.pluginSystem.parser.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//libraries/aalto-xml:aalto-xml_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "@lib//:junit5",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl` end
 
 ### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` start
-exports_files([
-  "intellij.platform.pluginSystem.parser.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.pluginSystem.parser.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` end
 
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` start
+
 jvm_library(
-  name = "pluginSystem-parser-impl-tests",
-  module_name = "intellij.platform.pluginSystem.parser.impl.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "pluginSystem-parser-impl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.pluginSystem.parser.impl.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "pluginSystem-parser-impl-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//platform/pluginSystem/parser/impl",
-    "//platform/pluginSystem/parser/impl:impl_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util/xmlDom",
-    "//platform/util/xmlDom:xmlDom_test_lib",
-    "//libraries/aalto-xml",
-    "//libraries/aalto-xml:aalto-xml_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "@lib//:junit5",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ],
-  runtime_deps = [":pluginSystem-parser-impl-tests"]
+    name = "pluginSystem-parser-impl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/pluginSystem/parser/impl",
+        "//platform/pluginSystem/parser/impl:impl_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":pluginSystem-parser-impl-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/xmlDom",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//libraries/aalto-xml",
+        "//libraries/aalto-xml:aalto-xml_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "@lib//:junit5",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` end
 
 ### auto-generated section `iml intellij.platform.pluginSystem.parser.impl.tests` start
-exports_files([
-  "intellij.platform.pluginSystem.parser.impl.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.pluginSystem.parser.impl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.pluginSystem.parser.impl.tests` end
 
 ### auto-generated section `test intellij.platform.pluginSystem.parser.impl.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "pluginSystem-parser-impl-tests_test",
-  runtime_deps = [":pluginSystem-parser-impl-tests_test_lib"]
+    name = "pluginSystem-parser-impl-tests_test",
+    runtime_deps = [":pluginSystem-parser-impl-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.pluginSystem.parser.impl.tests` end

@@ -1,39 +1,54 @@
-### auto-generated section `build intellij.libraries.batik` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.batik` start
+
 jvm_library(
-  name = "batik",
-  module_name = "intellij.libraries.batik",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:libraries-batik-batik-transcoder",
-    "@lib//:libraries-batik-xml-apis-ext",
-  ],
-  runtime_deps = [
-    "@lib//:libraries-batik-batik-transcoder",
-    "@lib//:libraries-batik-xml-apis-ext",
-  ]
+    name = "batik",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.batik",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
 )
 
 jvm_library(
-  name = "batik_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.batik",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "@lib//:libraries-batik-batik-transcoder",
-    "@lib//:libraries-batik-xml-apis-ext",
-  ],
-  runtime_deps = [":batik"]
+    name = "batik_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.batik",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
+    runtime_deps = [":batik"],
 )
 ### auto-generated section `build intellij.libraries.batik` end
 
 ### auto-generated section `iml intellij.libraries.batik` start
-exports_files([
-  "intellij.libraries.batik.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.batik.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.batik` end

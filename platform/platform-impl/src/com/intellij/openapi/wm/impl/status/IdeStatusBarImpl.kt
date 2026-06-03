@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -36,8 +35,8 @@ import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
@@ -138,9 +137,7 @@ import java.awt.Insets
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
 import java.awt.Point
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.Transferable
-import java.awt.datatransfer.UnsupportedFlavorException
+import java.awt.event.ActionEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
@@ -150,11 +147,13 @@ import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
+import javax.swing.AbstractAction
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import javax.swing.ToolTipManager
 import javax.swing.TransferHandler
@@ -166,6 +165,7 @@ import kotlin.math.max
 
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
+private const val STATUS_BAR_WIDGET_ACTIVATE = "statusBarWidgetActivate"
 
 private val LOG = logger<IdeStatusBarImpl>()
 
@@ -689,11 +689,18 @@ open class IdeStatusBarImpl @Internal constructor(
       override fun focusLost(e: FocusEvent) = effectRenderer.repaintFocusBorder(component)
     })
 
-    DumbAwareAction.create {
-      if (currentFocusOwner() === component && component.isShowing && component.isEnabled) {
-        StatusBarUtil.performPrimaryAction(component, activationTarget, onActivate?.let { Runnable { it() } })
+    val activate = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) {
+        if (component.isShowing && component.isEnabled) {
+          StatusBarUtil.performPrimaryAction(component, activationTarget, onActivate?.let { Runnable {
+            it() } })
+        }
       }
-    }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), component)
+    }
+    val inputMap = component.getInputMap(WHEN_FOCUSED)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), STATUS_BAR_WIDGET_ACTIVATE)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), STATUS_BAR_WIDGET_ACTIVATE)
+    component.actionMap.put(STATUS_BAR_WIDGET_ACTIVATE, activate)
   }
 
   private fun restoreFocusToPreviousComponent() {

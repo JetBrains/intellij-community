@@ -1,52 +1,70 @@
-### auto-generated section `build intellij.platform.execution.serviceView.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.execution.serviceView.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.platform.execution.serviceView.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/lang-impl",
-    "//platform/execution.serviceView",
-    "//platform/core-impl",
-    "//platform/core-ui",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/kernel/rpc",
-    "//platform/platform-impl/rpc",
-    "//platform/core-api:core",
-    "//platform/lang-api:lang",
-    "//platform/util:util-ui",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.execution.serviceView.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/lang-impl",
+        "//platform/execution.serviceView",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/kernel/rpc",
+        "//platform/platform-impl/rpc",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.execution.serviceView.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/execution.serviceView:execution.serviceView_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/kernel/rpc:rpc_test_lib",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.execution.serviceView.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/execution.serviceView:execution.serviceView_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.execution.serviceView.frontend` end
 
 ### auto-generated section `iml intellij.platform.execution.serviceView.frontend` start
-exports_files([
-  "intellij.platform.execution.serviceView.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.execution.serviceView.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.execution.serviceView.frontend` end

@@ -1,47 +1,65 @@
-### auto-generated section `build intellij.platform.editor.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.editor.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.platform.editor.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//fleet/kernel",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/editor/shared:editor",
-    "//platform/platform-impl:ide-impl",
-    "//fleet/rhizomedb",
-  ],
-  runtime_deps = ["//platform/platform-frontend:frontend"]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.editor.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//fleet/kernel",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/editor/shared:editor",
+        "//platform/platform-impl:ide-impl",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.editor.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//fleet/kernel:kernel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor/shared:editor_test_lib",
-    "//platform/platform-frontend:frontend_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.editor.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//fleet/kernel:kernel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor/shared:editor_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.editor.frontend` end
 
 ### auto-generated section `iml intellij.platform.editor.frontend` start
-exports_files([
-  "intellij.platform.editor.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.editor.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.editor.frontend` end

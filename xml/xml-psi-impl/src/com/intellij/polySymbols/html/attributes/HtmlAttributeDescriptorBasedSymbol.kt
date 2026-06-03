@@ -62,7 +62,7 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
   override val defaultValue: String?
     get() = descriptor.defaultValue
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = descriptor.declaration
 
   @PolySymbol.Property(HtmlAttributeValueProperty::class)

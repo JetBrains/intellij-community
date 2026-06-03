@@ -1,54 +1,72 @@
-### auto-generated section `build intellij.grazie.markdown` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie.markdown` start
+
 jvm_library(
-  name = "markdown",
-  module_name = "intellij.grazie.markdown",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:ai-grazie-semantic-engine",
-    "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
-    "//plugins/grazie/src:core",
-    "//libraries/ai.grazie.spell.gec.engine.local",
-    "//plugins/markdown/core:markdown",
-    "//platform/core-api:core",
-    "//platform/ide-core-impl",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-impl",
-    "//platform/projectModel-api:projectModel",
-  ]
+    name = "markdown",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.markdown",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:ai-grazie-semantic-engine",
+        "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
+        "//plugins/grazie/src:core",
+        "//libraries/ai.grazie.spell.gec.engine.local",
+        "//plugins/markdown/core:markdown",
+        "//platform/core-api:core",
+        "//platform/ide-core-impl",
+        "//platform/util",
+        "//platform/util-ex",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/projectModel-api:projectModel",
+    ],
 )
 
 jvm_library(
-  name = "markdown_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie.markdown",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":markdown",
-    "//plugins/grazie/src:core_test_lib",
-    "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
-    "//plugins/markdown/core:markdown_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-  ]
+    name = "markdown_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.markdown",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":markdown",
+        "//plugins/grazie/src:core_test_lib",
+        "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie.markdown` end
 
 ### auto-generated section `iml intellij.grazie.markdown` start
-exports_files([
-  "intellij.grazie.markdown.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.markdown.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie.markdown` end

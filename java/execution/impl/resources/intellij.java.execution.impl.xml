@@ -1,24 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.platform.smRunner"/>
-    <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.platform.diff"/>
-    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.lang"/>
   </dependencies>
@@ -32,4 +27,91 @@
     <extensionPoint qualifiedName="com.intellij.threadDumpProvider"
                     interface="com.intellij.execution.impl.ThreadDumpProvider" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
+                        serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.execution.filters.StackTraceFoldingSettings"/>
+    <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
+                    serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
+    <console.folding implementation="com.intellij.execution.filters.StackTraceFolding"/>
+    <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
+                        serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
+    <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
+    <externalSystem.runConfigurationEx implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.MakeProjectStepBeforeRun" id="makeProjectBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck"
+                            id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
+    <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
+    <java.programPatcher implementation="com.intellij.execution.ClasspathModificationPatcher" order="last"/>
+    <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
+    <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
+    <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
+    <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.jar.JarApplicationRunConfigurationImporter"/>
+    <runLineMarkerContributor language="JVM"
+                              order="before applicationRunLineMarkerProvider"
+                              implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
+                              implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.execution.ui.VmOptionsCompletionContributor"
+                            order="first" id="VmOptionsCompletionContributor"/>
+    <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
+                        serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
+    <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
+    <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
+    <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
+    <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
+    <runConfigurationExtension implementation="com.intellij.execution.impl.JavaDebuggerAutoAttach"/>
+    <testDiffProvider language="JAVA" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+    <consoleOptionsProvider instance="com.intellij.execution.filters.StackTraceFoldingConfigurable"/>
+    <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
+    <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
+    <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
+    <threadDumpProvider implementation="com.intellij.execution.impl.JstackThreadDumpProvider"/>
+    <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
+    <applicationSettings service="com.intellij.execution.filters.StackTraceFoldingSettings"/>
+    <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
+    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
+    <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
+    <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
+    <projectSettings service="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
+      <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
+    </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
+            internal="true"/>
+
+    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
+    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
+    <group id="ChangesViewPopupMenuRunGroup">
+      <reference ref="RunContextPopupGroup"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="before" relative-to-action="ShowDiscoveredTests"/>
+    </group>
+
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
+      <add-to-group group-id="RunTestGroup" anchor="last"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

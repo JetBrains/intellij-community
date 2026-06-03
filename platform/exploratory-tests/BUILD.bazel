@@ -1,45 +1,58 @@
-### auto-generated section `build intellij.platform.exploratory.tests.main` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.exploratory.tests.main` start
+
 jvm_library(
-  name = "exploratory-tests-main",
-  module_name = "intellij.platform.exploratory.tests.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "exploratory-tests-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.exploratory.tests.main",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "exploratory-tests-main_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.exploratory.tests.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  runtime_deps = [
-    ":exploratory-tests-main",
-    "//platform/bootstrap/coroutine",
-    "//platform/bootstrap/coroutine:coroutine_test_lib",
-    "//plugins/groovy:groovy-tests",
-    "//plugins/groovy:groovy-tests_test_lib",
-    "//java/compiler:compiler-tests",
-    "//java/compiler:compiler-tests_test_lib",
-    "//java/java-tests:tests",
-    "//java/java-tests:tests_test_lib",
-    "//platform/workspace/jps/tests",
-    "//platform/workspace/jps/tests:tests_test_lib",
-    "//platform/workspace/storage/tests",
-    "//platform/workspace/storage/tests:tests_test_lib",
-    "//plugins/properties/tests",
-    "//plugins/properties/tests:tests_test_lib",
-    "//plugins/yaml/backend:backend-tests",
-    "//plugins/yaml/backend:backend-tests_test_lib",
-  ]
+    name = "exploratory-tests-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.exploratory.tests.main",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":exploratory-tests-main",
+        "//platform/bootstrap/coroutine",
+        "//platform/bootstrap/coroutine:coroutine_test_lib",
+        "//plugins/groovy:groovy-tests",
+        "//plugins/groovy:groovy-tests_test_lib",
+        "//java/compiler:compiler-tests",
+        "//java/compiler:compiler-tests_test_lib",
+        "//java/java-tests:tests",
+        "//java/java-tests:tests_test_lib",
+        "//platform/workspace/jps/tests",
+        "//platform/workspace/jps/tests:tests_test_lib",
+        "//platform/workspace/storage/tests",
+        "//platform/workspace/storage/tests:tests_test_lib",
+        "//plugins/properties/tests",
+        "//plugins/properties/tests:tests_test_lib",
+        "//plugins/yaml/backend:backend-tests",
+        "//plugins/yaml/backend:backend-tests_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.exploratory.tests.main` end
 
 ### auto-generated section `iml intellij.platform.exploratory.tests.main` start
-exports_files([
-  "intellij.platform.exploratory.tests.main.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.exploratory.tests.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.exploratory.tests.main` end

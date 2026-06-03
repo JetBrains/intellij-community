@@ -1,6 +1,9 @@
-<idea-plugin package="org.jetbrains.idea.devkit.smartupdate">
+<idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.smartUpdate"/>
+    <module name="intellij.devkit.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

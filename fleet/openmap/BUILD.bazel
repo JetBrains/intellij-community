@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.openmap` start
+
+create_kotlinc_options(
+    name = "custom_openmap",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "openmap",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_openmap",
+    module_name = "fleet.openmap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "@lib//:kotlinx-collections-immutable",
+        "//fleet/util/serialization",
+    ],
+)
+
+jvm_library(
+    name = "openmap_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_openmap",
+    module_name = "fleet.openmap",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":openmap",
+        "//fleet/util/serialization:serialization_test_lib",
+    ],
+)
+### auto-generated section `build fleet.openmap` end
+
+### auto-generated section `iml fleet.openmap` start
+exports_files(
+    [
+        "fleet.openmap.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.openmap` end

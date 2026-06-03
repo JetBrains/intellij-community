@@ -31,9 +31,9 @@ Status: Draft
 Date: 2026-04-05
 
 ## Summary
-Define agent-assisted merge conflict resolution as a handoff from existing non-iterative VCS conflict surfaces into a pinned standard Agent Workbench thread backed by a plugin-owned merge session.
+Define agent-assisted merge conflict resolution as a handoff from existing non-iterative VCS conflict surfaces into a standard Agent Workbench thread. Explicit file selections are backed by a plugin-owned prepared merge session; launches without selected files are prompt-only.
 
-The Changes conflicts surface, the Git conflicted-file editor banner, and the one-shot modal merge dialog are launch surfaces for the same backend workflow. These surfaces consume a generic VCS merge action contributor EP and pass a lightweight shared merge context through the standard IntelliJ action update and perform pipeline. The modal dialog is not a second workspace: after the user commits launch, it closes immediately and yields to a pinned deferred-start thread that becomes a normal terminal-backed thread only if preparation succeeds. Review and follow-up happen in normal IDE surfaces such as editors, Changes, and VCS state, not in a separate modeless merge dialog.
+The Changes conflicts surface, the Git conflicted-file editor banner, and the one-shot modal merge dialog are launch surfaces for the same backend workflow. These surfaces consume a generic VCS merge action contributor EP and pass a lightweight shared merge context through the standard IntelliJ action update and perform pipeline. The modal dialog is not a second workspace: after the user commits launch, it closes immediately and yields to a deferred-start thread that becomes a normal terminal-backed thread only if preparation succeeds or preparation is intentionally skipped for an empty selection. Review and follow-up happen in normal IDE surfaces such as editors, Changes, and VCS state, not in a separate modeless merge dialog.
 
 Agent Workbench owns the only concrete contributed action today. Platform and `git4idea` stay decoupled from agent action ids and agent services; merge-provider resolution and merge-specific customizer derivation happen inside the agent plugin for non-iterative launch surfaces. Registry-gated iterative merge affordances may reuse the same backend, but they do not define the primary UX contract for this feature.
 
@@ -42,7 +42,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - Keep platform and `git4idea` decoupled from agent-specific action ids and service implementations.
 - Keep merge application inside IDE-controlled merge models and VCS conflict callbacks.
 - Let the agent ask clarifying questions in a normal Agent Workbench thread.
-- Make repeated launches for the same active conflict set converge on a single backend merge session.
+- Make repeated prepared launches for the same active selected conflict set converge on a single backend merge session.
 
 ## Non-goals
 - Introducing a modeless merge dialog as the primary review or apply surface.
@@ -82,7 +82,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - The existing Git “resolve in progress” banner remains manual-window-only and must not gain agent-session state in v1.
   [@test] ../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
 
-- For non-iterative launch surfaces, the agent plugin may treat launch-surface conflicted files as surface scope rather than the authoritative backend merge scope. Backend merge-provider resolution for agent-assisted merge sessions must happen from current project conflict state rather than from merge-specific objects stored in the shared action context.
+- For non-iterative launch surfaces, the agent plugin must treat explicit launch-selection files as the backend preparation scope. If no concrete file selection exists, the launch must skip backend merge preparation and let the agent discover the worktree conflict set through normal IDE, VCS, or git tooling.
 - Selection-capable launch surfaces may attach only their current concrete file selection as an optional launch-selection hint. If no concrete file selection exists, they must omit that hint instead of falling back to the full conflicted-file inventory. Single-file launch surfaces may attach that one file as the launch-selection hint.
 
 - Modal merge dialogs must close immediately after the user activates `Resolve with Agent` with a concrete provider choice, before the Agent thread is launched or focused.
@@ -91,9 +91,9 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - If preparation later fails after the deferred thread opens, the tab must remain open and render the failure inline without starting a terminal session.
 
 - Merge handoff must open a deferred standard Agent Workbench thread through `AgentSessionLaunchService.createDeferredNewSession(...)`; it must not use plan mode or global prompt-entry routing.
-- Active merge-thread tabs must be pinned while their merge session is active. When the merge session finishes or is disposed, the pin-only lifecycle must be released and the transcript may remain open as a normal closable tab.
+- Active merge-thread tabs must be pinned while their prepared merge session is active. Prompt-only launches without selected files are normal unpinned Agent Workbench threads. When the merge session finishes or is disposed, the pin-only lifecycle must be released and the transcript may remain open as a normal closable tab.
 
-- Merge handoff must converge on a single active project-scoped merge session so repeated launches for the same worktree focus the existing thread instead of spawning duplicates.
+- Prepared merge handoff must converge on a single active project-scoped merge session so repeated selected-file launches for the same worktree focus the existing thread instead of spawning duplicates.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - `Resolve with Agent` must store the last used merge provider and launch mode in shared Agent Workbench UI preferences as soon as the user commits that launch, independently from general new-thread preferences, even if preparation later auto-resolves or fails before terminal startup.
@@ -107,7 +107,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
   [@test] ../../vcs-merge/testSrc/AgentResolveConflictsActionTest.kt
 
 - The plugin must own the active merge-session lifecycle. There is no second visible modeless merge workspace for this feature.
-- Session preparation must build merge models with `MergeConflictIterativeDataHolder`, resolve auto-resolvable conflicts before agent launch, and keep IDE merge APIs as the only conflict-apply path.
+- Selected-file session preparation must build merge models with `MergeConflictIterativeDataHolder`, resolve auto-resolvable conflicts before agent launch, and keep IDE merge APIs as the only conflict-apply path for the prepared files.
 - If all selected conflicts resolve during preparation, the service must finalize them, update VCS conflict state, keep the already-open deferred thread visible, and render inline completion without starting a terminal session.
 
 - The initial merge prompt must frame merge resolution as a normal Agent Workbench thread: normal IDE tools, git or file workflow, and installed skills are allowed, and success is defined by the worktree leaving VCS conflict state for the active merge-related operation.
@@ -122,17 +122,17 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - The Git conflicted-file editor banner keeps `Resolve conflicts…` as its primary manual link and, when eligible, shows each enabled contributed merge action as an additional link in provider order. Disabled contributed actions are omitted there.
 - The one-shot modal merge dialog shows one visible control per contributed merge action beside `Accept Yours`, `Accept Theirs`, and `Merge...`. Standard contributed actions render as ordinary dialog buttons; contributed custom components may render compound dialog controls. `Resolve with Agent` uses a dialog-native button-with-selector pattern when multiple provider entries are available, while preserving provider order, icon, enabled state, and description tooltip.
 - When the Changes conflicts node, one-shot merge dialog, or iterative merge dialog has an explicit file selection, the launch-selection hint contains only that selection. When those surfaces have no explicit file selection, no launch-selection hint is attached.
-- After the dialog closes, focus moves to a pinned deferred-start Agent Workbench thread instead of a second merge dialog.
-- The agent may ask clarifying questions in that pinned thread, and the user replies there.
+- After the dialog closes, focus moves to a deferred-start Agent Workbench thread instead of a second merge dialog. Threads backed by a prepared merge session are pinned while that session is active.
+- The agent may ask clarifying questions in that thread, and the user replies there.
 - Review after handoff happens in normal IDE editors, Changes, and VCS surfaces.
-- If preparation resolves everything automatically, the deferred thread stays open and shows inline completion instead of starting a terminal session.
+- If selected-file preparation resolves everything automatically, the deferred thread stays open and shows inline completion instead of starting a terminal session.
 
 ## Data & Backend
-- The backend session must be project-scoped so duplicate launches for the same worktree converge on one active merge session in that project.
-- The merge session owns unresolved-file tracking, merge-model preparation, file finalization, dirty-scope updates, and pin cleanup.
+- Prepared backend sessions must be project-scoped so duplicate selected-file launches for the same worktree converge on one active merge session in that project. Prompt-only launches without selected files do not create backend merge-session state, but duplicate prompt-only invocations must be ignored while the deferred thread is being opened and started.
+- The prepared merge session owns unresolved-file tracking, merge-model preparation, file finalization, dirty-scope updates, and pin cleanup.
 - The generic non-iterative action layer owns only action presentation and event wiring; merge-specific object lookup for non-iterative launches stays in the agent plugin.
 - The merge prompt may include a compact launch-selection hint, but the thread itself remains a normal Agent Workbench chat/editor surface and must not rely on an exhaustive conflicted-file prompt attachment or any fallback to full launch-surface conflict inventories when no explicit selection exists.
-- Unsupported binary files may remain in the active merge set for manual resolution. Text conflicts may still launch and are expected to be resolved through normal workflow.
+- Unsupported binary files may remain in the selected active merge set for manual resolution. Selected text conflicts may still launch and are expected to be resolved through normal workflow.
 
 ## Error Handling
 - Preparation or launch failures must surface `Resolve with Agent Failed` messaging. If the dialog already closed, the error is shown in normal project UI.
@@ -146,9 +146,9 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
 
 ## Open Questions / Risks
-- Direct service-level coverage is still missing for project-wide conflict discovery, mixed-provider conflict sets, auto-resolve-only completion, and stale-session tool rejection.
+- Direct service-level coverage is still missing for selected-file conflict discovery, mixed-provider conflict sets, auto-resolve-only completion, and stale-session tool rejection.
 - If registry-gated iterative merge affordances later add richer status UI or ownership rules, this spec must be extended explicitly rather than treated as implied behavior.
-- Session identity is now project-scoped; if future UX needs multiple concurrent merge sessions inside one worktree, that contract must change deliberately.
+- Prepared merge-session identity is project-scoped; if future UX needs multiple concurrent prepared merge sessions inside one worktree, that contract must change deliberately.
 - If future consumers need more than project, launch-surface selection hints, and handoff callbacks in the shared non-iterative context, that contract must be revised carefully to avoid pulling `intellij.platform.vcs` APIs back into `vcs-impl/shared`.
 
 ## References

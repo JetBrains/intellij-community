@@ -23,7 +23,7 @@ import fleet.kernel.Durable
 import fleet.kernel.DurableEntityType
 import fleet.kernel.deprecatedUid
 import fleet.util.UID
-import fleet.util.openmap.OpenMap
+import fleet.openmap.OpenMap
 import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.builtins.serializer
 import andel.editor.Document as AndelDocument

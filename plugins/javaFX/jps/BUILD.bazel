@@ -1,52 +1,70 @@
-### auto-generated section `build intellij.javaFX.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.javaFX.jps` start
+
 jvm_library(
-  name = "jps",
-  module_name = "intellij.javaFX.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//jps/jps-builders:build",
-    "//jps/model-api:model",
-    "//platform/util",
-    "//jps/model-serialization",
-    "//plugins/javaFX/common",
-    "//jps/model-impl",
-    "//platform/util/jdom",
-    "//platform/util/base/multiplatform",
-    "@lib//:jetbrains-annotations",
-    "//platform/util/base",
-  ]
+    name = "jps",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.javaFX.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//jps/jps-builders:build",
+        "//jps/model-api:model",
+        "//platform/util",
+        "//jps/model-serialization",
+        "//plugins/javaFX/common",
+        "//jps/model-impl",
+        "//platform/util/jdom",
+        "//platform/util/base/multiplatform",
+        "@lib//:jetbrains-annotations",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "jps_test_lib",
-  testonly = True,
-  module_name = "intellij.javaFX.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":jps",
-    "//jps/jps-builders:build_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/util:util_test_lib",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "//plugins/javaFX/common:common_test_lib",
-    "//jps/model-impl:model-impl_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "jps_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.javaFX.jps",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jps",
+        "//jps/jps-builders:build_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/util:util_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//plugins/javaFX/common:common_test_lib",
+        "//jps/model-impl:model-impl_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.javaFX.jps` end
 
 ### auto-generated section `iml intellij.javaFX.jps` start
-exports_files([
-  "intellij.javaFX.jps.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.javaFX.jps.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.javaFX.jps` end

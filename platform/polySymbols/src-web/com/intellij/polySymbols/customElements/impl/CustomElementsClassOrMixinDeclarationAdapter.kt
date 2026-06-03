@@ -23,7 +23,7 @@ import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
@@ -62,7 +62,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
     private val queryExecutor: PolySymbolQueryExecutor,
-  ) : CustomElementsSymbol, PsiSourcedPolySymbol {
+  ) : CustomElementsSymbol, PsiLinkedPolySymbol {
 
     private var _superContributions: List<PolySymbol>? = null
 
@@ -97,7 +97,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
         .plus(this)
         .toList()
 
-    override val source: PsiElement?
+    override val linkedElement: PsiElement?
       get() = base.declaration.source?.let { origin.resolveSourceSymbol(it, base.cacheHolder) }
 
     override fun createPointer(): Pointer<CustomElementClassOrMixinDeclarationSymbol> {
@@ -108,6 +108,18 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
         val base = basePtr.dereference() ?: return@Pointer null
         base.withQueryExecutorContext(queryExecutor) as CustomElementClassOrMixinDeclarationSymbol
       }
+    }
+
+    override fun equals(other: Any?): Boolean =
+      other === this
+      || other is CustomElementClassOrMixinDeclarationSymbol
+      && other.base == base
+      && other.queryExecutor == queryExecutor
+
+    override fun hashCode(): Int {
+      var result = base.hashCode()
+      result = 31 * result + queryExecutor.hashCode()
+      return result
     }
 
     override fun getMatchingSymbols(

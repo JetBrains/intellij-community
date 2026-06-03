@@ -1,67 +1,85 @@
-### auto-generated section `build intellij.python.ml.features` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.ml.features` start
+
 jvm_library(
-  name = "ml-features",
-  module_name = "intellij.python.ml.features",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/analysis-api:analysis",
-    "//platform/indexing-api:indexing",
-    "//platform/statistics",
-    "//platform/projectModel-api:projectModel",
-    "//platform/ml-logs",
-    "//python/python-psi-impl:psi-impl",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl:ide-impl",
-    "//python:python-community-impl",
-    "//python/python-sdk:sdk",
-    "//platform/util/concurrency",
-    "//platform/core-ui",
-    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
-    "//platform/ide-core",
-    "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
-    "@lib//:jetbrains-mlapi-catboost",
-    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
-  ]
+    name = "ml-features",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.ml.features",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/analysis-api:analysis",
+        "//platform/indexing-api:indexing",
+        "//platform/statistics",
+        "//platform/projectModel-api:projectModel",
+        "//platform/ml-logs",
+        "//python/python-psi-impl:psi-impl",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//python:python-community-impl",
+        "//python/python-sdk:sdk",
+        "//platform/util/concurrency",
+        "//platform/core-ui",
+        "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+        "//platform/ide-core",
+        "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
+        "@lib//:jetbrains-mlapi-catboost",
+        "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    ],
 )
 
 jvm_library(
-  name = "ml-features_test_lib",
-  testonly = True,
-  module_name = "intellij.python.ml.features",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ml-features",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/ml-logs:ml-logs_test_lib",
-    "//python/python-psi-impl:psi-impl_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//python:python-community-impl_test_lib",
-    "//python/python-sdk:sdk_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-  ]
+    name = "ml-features_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.ml.features",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ml-features",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/ml-logs:ml-logs_test_lib",
+        "//python/python-psi-impl:psi-impl_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//python:python-community-impl_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.ml.features` end
 
 ### auto-generated section `iml intellij.python.ml.features` start
-exports_files([
-  "intellij.python.ml.features.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.ml.features.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.ml.features` end

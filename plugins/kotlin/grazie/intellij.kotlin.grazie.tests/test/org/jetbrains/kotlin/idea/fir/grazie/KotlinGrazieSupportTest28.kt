@@ -49,6 +49,18 @@ class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
         runHighlightTestForFile("grazie/Umlauts.kt")
     }
 
+    fun `test no german warnings in kdoc with heading and slashes`() {
+        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+        myFixture.configureByText("a.kt", """
+            /**
+             * # Titel
+             * Hier ist ok // Außer am Satzanfang werden nur Nomen und Eigennamen großgeschrieben.
+             */
+            fun f() {}
+        """.trimIndent())
+        myFixture.checkHighlighting()
+    }
+
     fun `test text extraction in string literals`() {
         val file = myFixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
         val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)

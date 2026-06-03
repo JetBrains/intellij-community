@@ -1,53 +1,71 @@
-### auto-generated section `build intellij.java.bookmarks` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.bookmarks` start
+
 jvm_library(
-  name = "bookmarks",
-  module_name = "intellij.java.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/bookmarks",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//java/java-impl:impl",
-    "//java/java-psi-api:psi",
-  ]
+    name = "bookmarks",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.bookmarks",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/bookmarks",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//java/java-impl:impl",
+        "//java/java-psi-api:psi",
+    ],
 )
 
 jvm_library(
-  name = "bookmarks_test_lib",
-  testonly = True,
-  module_name = "intellij.java.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":bookmarks",
-    "//platform/bookmarks:bookmarks_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//java/java-impl:impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-  ]
+    name = "bookmarks_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.bookmarks",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bookmarks",
+        "//platform/bookmarks:bookmarks_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.bookmarks` end
 
 ### auto-generated section `iml intellij.java.bookmarks` start
-exports_files([
-  "intellij.java.bookmarks.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.bookmarks.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.bookmarks` end

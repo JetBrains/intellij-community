@@ -1,159 +1,194 @@
-### auto-generated section `build intellij.platform.structuralSearch` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.structuralSearch` start
+
 jvm_library(
-  name = "structuralSearch",
-  module_name = "intellij.platform.structuralSearch",
-  visibility = ["//visibility:public"],
-  srcs = glob(["source/**/*.kt", "source/**/*.java", "source/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
-    "//jps/model-api:model",
-    "//platform/lvcs-api:lvcs",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util/jdom",
-    "//xml/impl",
-    "//platform/platform-api:ide",
-    "//platform/usageView",
-    "//platform/lang-api:lang",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//xml/xml-parser:parser",
-    "//RegExpSupport:regexp",
-    "//platform/refactoring",
-    "//platform/duplicates-analysis",
-    "//platform/lang-impl",
-    "//platform/core-ui",
-    "//xml/xml-psi-api:psi",
-    "//libraries/fastutil",
-    "//platform/core-impl",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//platform/util/concurrency",
-    "//platform/util:util-ui",
-  ]
+    name = "structuralSearch",
+    srcs = glob(
+        [
+            "source/**/*.kt",
+            "source/**/*.java",
+            "source/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structuralSearch",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/indexing-api:indexing",
+        "//jps/model-api:model",
+        "//platform/lvcs-api:lvcs",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util/jdom",
+        "//xml/impl",
+        "//platform/platform-api:ide",
+        "//platform/usageView",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//xml/xml-parser:parser",
+        "//RegExpSupport:regexp",
+        "//platform/refactoring",
+        "//platform/duplicates-analysis",
+        "//platform/lang-impl",
+        "//platform/core-ui",
+        "//xml/xml-psi-api:psi",
+        "//libraries/fastutil",
+        "//platform/core-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util/concurrency",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "structuralSearch_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.structuralSearch",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":structuralSearch",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/lvcs-api:lvcs_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//xml/impl:impl_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/usageView:usageView_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//xml/xml-parser:parser_test_lib",
-    "//RegExpSupport:regexp_test_lib",
-    "//platform/refactoring:refactoring_test_lib",
-    "//platform/duplicates-analysis:duplicates-analysis_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "structuralSearch_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structuralSearch",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structuralSearch",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/lvcs-api:lvcs_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//xml/impl:impl_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/usageView:usageView_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//xml/xml-parser:parser_test_lib",
+        "//RegExpSupport:regexp_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/duplicates-analysis:duplicates-analysis_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.structuralSearch` end
 
 ### auto-generated section `iml intellij.platform.structuralSearch` start
-exports_files([
-  "intellij.platform.structuralSearch.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.structuralSearch.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.structuralSearch` end
 
 ### auto-generated section `build intellij.platform.structuralSearch.tests` start
+
 jvm_library(
-  name = "structuralSearch-tests",
-  module_name = "intellij.platform.structuralSearch.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//platform/structuralsearch:structuralSearch",
-    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
-    "//xml/impl",
-  ]
+    name = "structuralSearch-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structuralSearch.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/structuralsearch:structuralSearch",
+        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+        "//xml/impl",
+    ],
 )
 
 jvm_library(
-  name = "structuralSearch-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.structuralSearch.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/code-style-api:codeStyle",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/structuralsearch:structuralSearch",
-    "//platform/structuralsearch:structuralSearch_test_lib",
-    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
-    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
-    "//xml/impl",
-    "//xml/impl:impl_test_lib",
-    "//platform/util/jdom",
-    "//platform/util/jdom:jdom_test_lib",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//platform/testRunner",
-    "//platform/testRunner:testRunner_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/ide-core",
-  ],
-  runtime_deps = [
-    ":structuralSearch-tests",
-    "//platform/ide-core:ide-core_test_lib",
-  ]
+    name = "structuralSearch-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSource/**/*.kt",
+            "testSource/**/*.java",
+            "testSource/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.structuralSearch.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structuralSearch-tests",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/structuralsearch:structuralSearch_test_lib",
+        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+        "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
+        "//xml/impl",
+        "//xml/impl:impl_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/ide-core",
+    ],
 )
 ### auto-generated section `build intellij.platform.structuralSearch.tests` end
 
 ### auto-generated section `iml intellij.platform.structuralSearch.tests` start
-exports_files([
-  "intellij.platform.structuralSearch.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.structuralSearch.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.structuralSearch.tests` end
 
 ### auto-generated section `test intellij.platform.structuralSearch.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "structuralSearch-tests_test",
-  runtime_deps = [":structuralSearch-tests_test_lib"]
+    name = "structuralSearch-tests_test",
+    runtime_deps = [":structuralSearch-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.structuralSearch.tests` end

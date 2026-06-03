@@ -276,15 +276,11 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     override fun getAccessibleRole(): AccessibleRole =
       if (this@TextPanel.isFocusable) AccessibleRole.PUSH_BUTTON else AccessibleRole.LABEL
 
-    override fun getAccessibleName(): String? {
-      return StatusBarAccessibilityUtil.getTextOrTooltipAccessibleName(this@TextPanel, text)
-    }
+    override fun getAccessibleName(): String? = text
+
+    override fun getAccessibleDescription(): @Nls String? = StatusBarAccessibilityUtil.getAccessibleDescription(this@TextPanel)
 
     override fun getAccessibleAction(): AccessibleAction? =
       if (this@TextPanel.isFocusable) accessibleAction else null
-
-    override fun getAccessibleDescription(): @Nls String? {
-      return StatusBarAccessibilityUtil.getTooltipAccessibleDescription(this@TextPanel, text)
-    }
   }
 }

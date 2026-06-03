@@ -37,7 +37,6 @@ import com.intellij.refactoring.rename.api.RenameUsageSearcher
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 import javax.swing.Icon
 import kotlin.reflect.KClass
@@ -186,7 +185,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   /**
    * A [PsiElement], which is a file or an element, which can be used to roughly
    * locate the source of the symbol within a project to provide a context for loading additional information,
-   * like types. If the symbol is [com.intellij.polySymbols.search.PsiSourcedPolySymbol], then `psiContext` is equal to source.
+   * like types. If the symbol is [com.intellij.polySymbols.search.PsiLinkedPolySymbol], then `psiContext` is equal to source.
    */
   val psiContext: PsiElement?
     get() = null

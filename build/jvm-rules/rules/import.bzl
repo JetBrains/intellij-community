@@ -15,8 +15,8 @@ def _jvm_import(ctx):
             exported_compiler_plugins = depset(ctx.attr.exported_compiler_plugins),
         ),
         DefaultInfo(
-          files = depset(direct = [ctx.file.jar])
-        )
+            files = depset(direct = [ctx.file.jar]),
+        ),
     ]
 
 jvm_import = rule(

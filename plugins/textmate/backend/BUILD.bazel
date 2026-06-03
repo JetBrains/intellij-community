@@ -1,129 +1,147 @@
-### auto-generated section `build intellij.textmate.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.textmate.backend` start
+
 jvm_provided_library(
-  name = "plugins_textmate_common_provided",
-  lib = "//plugins/textmate/common"
+    name = "plugins_textmate_common_provided",
+    lib = "//plugins/textmate/common",
 )
 
 jvm_provided_library(
-  name = "spellchecker_provided",
-  lib = "//spellchecker"
+    name = "spellchecker_provided",
+    lib = "//spellchecker",
 )
 
 jvm_provided_library(
-  name = "platform_core_provided",
-  lib = "//platform/core-api:core"
+    name = "platform_core_provided",
+    lib = "//platform/core-api:core",
 )
 
 jvm_provided_library(
-  name = "platform_lang-impl_provided",
-  lib = "//platform/lang-impl"
+    name = "platform_lang-impl_provided",
+    lib = "//platform/lang-impl",
 )
 
 jvm_provided_library(
-  name = "platform_editor-ui_provided",
-  lib = "//platform/editor-ui-api:editor-ui"
+    name = "platform_editor-ui_provided",
+    lib = "//platform/editor-ui-api:editor-ui",
 )
 
 jvm_provided_library(
-  name = "platform_ide-impl_provided",
-  lib = "//platform/platform-impl:ide-impl"
+    name = "platform_ide-impl_provided",
+    lib = "//platform/platform-impl:ide-impl",
 )
 
 jvm_provided_library(
-  name = "platform_analysis_provided",
-  lib = "//platform/analysis-api:analysis"
+    name = "platform_analysis_provided",
+    lib = "//platform/analysis-api:analysis",
 )
 
 jvm_provided_library(
-  name = "platform_codeStyle_provided",
-  lib = "//platform/code-style-api:codeStyle"
+    name = "platform_codeStyle_provided",
+    lib = "//platform/code-style-api:codeStyle",
 )
 
 jvm_provided_library(
-  name = "platform_indexing-impl_provided",
-  lib = "//platform/indexing-impl"
+    name = "platform_indexing-impl_provided",
+    lib = "//platform/indexing-impl",
 )
 
 jvm_provided_library(
-  name = "platform_indexing_provided",
-  lib = "//platform/indexing-api:indexing"
+    name = "platform_indexing_provided",
+    lib = "//platform/indexing-api:indexing",
 )
 
 jvm_provided_library(
-  name = "platform_core-impl_provided",
-  lib = "//platform/core-impl"
+    name = "platform_core-impl_provided",
+    lib = "//platform/core-impl",
 )
 
 jvm_library(
-  name = "backend",
-  module_name = "intellij.textmate.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations-provided",
-    "@lib//:kotlin-stdlib-provided",
-    "//platform/ide-core",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//platform/util:util-ui",
-    ":plugins_textmate_common_provided",
-    ":spellchecker_provided",
-    ":platform_core_provided",
-    ":platform_lang-impl_provided",
-    ":platform_editor-ui_provided",
-    ":platform_ide-impl_provided",
-    ":platform_analysis_provided",
-    ":platform_codeStyle_provided",
-    ":platform_indexing-impl_provided",
-    ":platform_indexing_provided",
-    ":platform_core-impl_provided",
-  ]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.textmate.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations-provided",
+        "@lib//:kotlin-stdlib-provided",
+        "//platform/ide-core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util:util-ui",
+        ":plugins_textmate_common_provided",
+        ":spellchecker_provided",
+        ":platform_core_provided",
+        ":platform_lang-impl_provided",
+        ":platform_editor-ui_provided",
+        ":platform_ide-impl_provided",
+        ":platform_analysis_provided",
+        ":platform_codeStyle_provided",
+        ":platform_indexing-impl_provided",
+        ":platform_indexing_provided",
+        ":platform_core-impl_provided",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.textmate.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "//plugins/textmate/common",
-    "//plugins/textmate/common:common_test_lib",
-    "@lib//:jetbrains-annotations-provided",
-    "@lib//:kotlin-stdlib-provided",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/code-style-api:codeStyle",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/indexing-impl",
-    "//platform/indexing-impl:indexing-impl_test_lib",
-    "//platform/indexing-api:indexing",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.textmate.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//plugins/textmate/common",
+        "//plugins/textmate/common:common_test_lib",
+        "@lib//:jetbrains-annotations-provided",
+        "@lib//:kotlin-stdlib-provided",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/indexing-impl",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.textmate.backend` end
 
 ### auto-generated section `iml intellij.textmate.backend` start
-exports_files([
-  "intellij.textmate.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.textmate.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.textmate.backend` end

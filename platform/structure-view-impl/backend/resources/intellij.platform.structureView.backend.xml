@@ -25,5 +25,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.structureView.backend.StructureTreeApiProvider"/>
     <applicationService serviceImplementation="com.intellij.platform.structureView.backend.BackendStructureTreeService" client="all"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.platform.structureView.backend.completion.commands.ViewStructureCompletionCommandProvider" order="last"/>
   </extensions>
 </idea-plugin>

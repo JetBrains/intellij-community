@@ -59,6 +59,7 @@ private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
   "fleet.bifurcan",
   "fleet.kernel",
   "fleet.multiplatform.shims",
+  "fleet.openmap",
   "fleet.radixTrie",
   "fleet.reporting.api",
   "fleet.reporting.shared",

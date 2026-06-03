@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.color.scheme.cobalt` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.color.scheme.cobalt` start
+
 jvm_library(
-  name = "color-scheme-cobalt",
-  module_name = "intellij.color.scheme.cobalt",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "color-scheme-cobalt",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.cobalt",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "color-scheme-cobalt_test_lib",
-  testonly = True,
-  module_name = "intellij.color.scheme.cobalt",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":color-scheme-cobalt"]
+    name = "color-scheme-cobalt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.cobalt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":color-scheme-cobalt"],
 )
 ### auto-generated section `build intellij.color.scheme.cobalt` end
 
 ### auto-generated section `iml intellij.color.scheme.cobalt` start
-exports_files([
-  "intellij.color.scheme.cobalt.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.color.scheme.cobalt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.color.scheme.cobalt` end

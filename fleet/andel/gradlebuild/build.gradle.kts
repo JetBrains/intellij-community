@@ -79,6 +79,7 @@ kotlin {
     implementation(project(":fleet.util.codepoints"))
     api(project(":fleet.bifurcan"))
     implementation(project(":fleet.fastutil"))
+    api(project(":fleet.openmap"))
   }
   // KOTLIN__MARKER_END
 }

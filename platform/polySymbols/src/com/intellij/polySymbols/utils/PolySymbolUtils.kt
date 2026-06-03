@@ -39,7 +39,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -420,7 +420,7 @@ fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTra
   }
 
 @ApiStatus.Internal
-fun acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol: Symbol): Boolean =
-  symbol is PsiSourcedPolySymbol
-  && symbol.source is PsiNamedElement
-  && symbol.source !is SyntheticElement
+fun acceptSymbolForPsiLinkedPolySymbolRenameHandler(symbol: Symbol): Boolean =
+  symbol is PsiLinkedPolySymbol
+  && symbol.linkedElement is PsiNamedElement
+  && symbol.linkedElement !is SyntheticElement

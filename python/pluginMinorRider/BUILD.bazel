@@ -1,39 +1,57 @@
-### auto-generated section `build intellij.python.community.plugin.minorRider` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.plugin.minorRider` start
+
 jvm_library(
-  name = "community-plugin-minorRider",
-  module_name = "intellij.python.community.plugin.minorRider",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/analysis-impl",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "community-plugin-minorRider",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin.minorRider",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/analysis-impl",
+    ],
 )
 
 jvm_library(
-  name = "community-plugin-minorRider_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.plugin.minorRider",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":community-plugin-minorRider",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/backend:backend_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-  ]
+    name = "community-plugin-minorRider_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin.minorRider",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":community-plugin-minorRider",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.plugin.minorRider` end
 
 ### auto-generated section `iml intellij.python.community.plugin.minorRider` start
-exports_files([
-  "intellij.python.community.plugin.minorRider.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.plugin.minorRider.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.plugin.minorRider` end

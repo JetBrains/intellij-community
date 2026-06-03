@@ -5,7 +5,6 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
-import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,7 +25,12 @@ object CodeFenceLanguageGuesser {
    */
   @JvmStatic
   fun guessLanguageForInjection(value: String): Language? {
-    return guessLanguage(value)?.takeIf { LanguageUtil.isInjectableLanguage(it) }
+    return guessLanguage(value)?.first?.takeIf { LanguageUtil.isInjectableLanguage(it) }
+  }
+
+  @JvmStatic
+  fun guessLanguageWithExtensionForInjection(value: String): Pair<Language, String?>? {
+    return guessLanguage(value)?.takeIf { LanguageUtil.isInjectableLanguage(it.first) }
   }
 
   private fun findLanguage(value: String, registeredLanguages: Collection<Language>): Language? {
@@ -39,7 +43,9 @@ object CodeFenceLanguageGuesser {
     return additionalSuggesters.map { it.suggestLanguage(entry) }.firstOrNull()
   }
 
-  private fun findLanguage(value: String): Language? {
+  @JvmStatic
+  @ApiStatus.Internal
+  fun findLanguage(value: String): Language? {
     val registeredLanguages = Language.getRegisteredLanguages()
     val exactMatch = findLanguage(value, registeredLanguages)
     if (exactMatch != null) {
@@ -62,20 +68,20 @@ object CodeFenceLanguageGuesser {
    * It may either be lower-cased id or some of the aliases.
    *
    * Note, that returned language can be non-injectable.
-   * Consider using [guessLanguageForInjection]
+   * Consider using [guessLanguageWithExtensionForInjection]
    *
    * @return IntelliJ Language if it was found
    */
   @JvmStatic
-  private fun guessLanguage(value: String): Language? {
+  private fun guessLanguage(value: String): Pair<Language, String?>? {
     // Custom providers should handle customizations by themselves
     for (provider in customProviders) {
       val lang = provider.getLanguageByInfoString(value)
       if (lang != null) {
-        return lang
+        return Pair(lang, provider.getExtensionByInfoString(value))
       }
     }
     val name = value.lowercase()
-    return findLanguage(name)
+    return findLanguage(name)?.let { Pair(it, null) }
   }
 }

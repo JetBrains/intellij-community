@@ -1,99 +1,133 @@
-### auto-generated section `build intellij.platform.syntax` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.syntax` start
 
 create_kotlinc_options(
-  name = "custom_syntax",
-  jvm_target = "8",
-  x_no_call_assertions = True,
-  x_no_param_assertions = True
+    name = "custom_syntax",
+    jvm_target = "8",
+    x_no_call_assertions = True,
+    x_no_param_assertions = True,
 )
 
 jvm_provided_library(
-  name = "platform_multiplatformSupport_provided",
-  lib = "//platform/multiplatformSupport"
+    name = "platform_multiplatformSupport_provided",
+    lib = "//platform/multiplatformSupport",
 )
 
 jvm_library(
-  name = "syntax",
-  module_name = "intellij.platform.syntax",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvm/**/*.kt", "srcJvm/**/*.java", "srcJvm/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_syntax",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util/multiplatform",
-    ":platform_multiplatformSupport_provided",
-  ]
+    name = "syntax",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "srcJvm/**/*.kt",
+            "srcJvm/**/*.java",
+            "srcJvm/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_syntax",
+    module_name = "intellij.platform.syntax",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/util/multiplatform",
+        ":platform_multiplatformSupport_provided",
+    ],
 )
 
 jvm_library(
-  name = "syntax_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.syntax",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_syntax",
-  runtime_deps = [
-    ":syntax",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/multiplatformSupport",
-    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-    "@lib//:junit5",
-    "@lib//:kotlin-test",
-  ]
+    name = "syntax_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_syntax",
+    module_name = "intellij.platform.syntax",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":syntax",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+        "@lib//:junit5",
+        "@lib//:kotlin-test",
+    ],
 )
 ### auto-generated section `build intellij.platform.syntax` end
 
 ### auto-generated section `iml intellij.platform.syntax` start
-exports_files([
-  "intellij.platform.syntax.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.syntax.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.syntax` end
 
 ### auto-generated section `build intellij.platform.syntax.tests` start
+
 jvm_library(
-  name = "tests",
-  module_name = "intellij.platform.syntax.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.syntax.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [
-    "//platform/syntax/syntax-api:syntax",
-    "//platform/syntax/syntax-api:syntax_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util/multiplatform",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/multiplatformSupport",
-    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-    "@lib//:junit5",
-    "@lib//:kotlin-test",
-  ],
-  runtime_deps = [":tests"]
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/util/multiplatform",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+        "@lib//:junit5",
+        "@lib//:kotlin-test",
+    ],
 )
 ### auto-generated section `build intellij.platform.syntax.tests` end
 
 ### auto-generated section `iml intellij.platform.syntax.tests` start
-exports_files([
-  "intellij.platform.syntax.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.syntax.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.syntax.tests` end
 
 ### auto-generated section `test intellij.platform.syntax.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests_test",
-  runtime_deps = [":tests_test_lib"]
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.syntax.tests` end

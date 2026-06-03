@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" scope="RUNTIME" />
@@ -23,26 +23,18 @@
     <orderEntry type="module" module-name="intellij.java" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.jsp" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.jsp.spi" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.structureView" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.refactoring" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.uiDesigner" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.debugger.impl" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />

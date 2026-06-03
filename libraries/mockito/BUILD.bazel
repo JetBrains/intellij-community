@@ -1,31 +1,42 @@
-### auto-generated section `build intellij.libraries.mockito` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.mockito` start
+
 jvm_library(
-  name = "mockito",
-  module_name = "intellij.libraries.mockito",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:mockito"],
-  runtime_deps = [
-    "@lib//:mockito",
-    "@lib//:byte-buddy",
-  ]
+    name = "mockito",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mockito",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:mockito"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:mockito",
+        "@lib//:byte-buddy",
+    ],
 )
 
 jvm_library(
-  name = "mockito_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.mockito",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:mockito"],
-  runtime_deps = [":mockito"]
+    name = "mockito_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mockito",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:mockito"],
+    runtime_deps = [":mockito"],
 )
 ### auto-generated section `build intellij.libraries.mockito` end
 
 ### auto-generated section `iml intellij.libraries.mockito` start
-exports_files([
-  "intellij.libraries.mockito.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.mockito.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.mockito` end

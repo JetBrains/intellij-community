@@ -1,39 +1,57 @@
-### auto-generated section `build intellij.platform.lvcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.lvcs` start
+
 jvm_library(
-  name = "lvcs",
-  module_name = "intellij.platform.lvcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util/multiplatform",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "lvcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lvcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "lvcs_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.lvcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":lvcs",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-  ]
+    name = "lvcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lvcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":lvcs",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.lvcs` end
 
 ### auto-generated section `iml intellij.platform.lvcs` start
-exports_files([
-  "intellij.platform.lvcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.lvcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.lvcs` end

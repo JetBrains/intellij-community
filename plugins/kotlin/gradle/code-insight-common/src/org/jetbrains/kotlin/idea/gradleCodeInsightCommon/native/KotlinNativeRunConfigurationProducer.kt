@@ -10,10 +10,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.KotlinNativeRunConfigurationProvider
 import org.jetbrains.kotlin.idea.base.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
@@ -69,7 +72,16 @@ internal class KotlinNativeRunConfigurationProducer :
         val module = function.module ?: return emptyList()
 
         return module.externalSystemNativeMainRunTasks()
-            .filter { it.debuggable && it.entryPoint == functionName }
+            .filter { it.debuggable && it.entryPoint == functionName && it.isRunnableOnHost }
             .map { it.taskName }
     }
+
+    private val ExternalSystemNativeMainRunTask.isRunnableOnHost: Boolean
+        get() {
+            val normalisedTargetName = targetName.lowercase()
+            val konanTarget = KonanTarget.predefinedTargets.values.firstOrNull {
+                it.name.replace("_", "") == normalisedTargetName
+            } ?: return false
+            return konanTarget == HostManager.host
+        }
 }

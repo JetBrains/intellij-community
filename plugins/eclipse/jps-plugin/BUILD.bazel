@@ -1,45 +1,63 @@
-### auto-generated section `build intellij.eclipse.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.eclipse.jps` start
+
 jvm_library(
-  name = "jps",
-  module_name = "intellij.eclipse.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//platform/util",
-    "//jps/model-api:model",
-    "//jps/model-serialization",
-    "//plugins/eclipse/common-eclipse-util:common",
-    "//platform/util/jdom",
-    "//platform/util/base",
-  ]
+    name = "jps",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.eclipse.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//plugins/eclipse/common-eclipse-util:common",
+        "//platform/util/jdom",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "jps_test_lib",
-  testonly = True,
-  module_name = "intellij.eclipse.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":jps",
-    "//platform/util:util_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "//plugins/eclipse/common-eclipse-util:common_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "jps_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.eclipse.jps",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jps",
+        "//platform/util:util_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//plugins/eclipse/common-eclipse-util:common_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.eclipse.jps` end
 
 ### auto-generated section `iml intellij.eclipse.jps` start
-exports_files([
-  "intellij.eclipse.jps.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.eclipse.jps.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.eclipse.jps` end

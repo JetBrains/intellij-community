@@ -13,7 +13,7 @@ import com.intellij.polySymbols.impl.PolySymbolBuilderImpl
 import com.intellij.polySymbols.patterns.PolySymbolPatternBuilder
 import com.intellij.polySymbols.patterns.polySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolWithPattern
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +29,7 @@ annotation class PolySymbolDsl
  * Builds a [PolySymbol] with a declarative, read-action-safe DSL.
  *
  * The produced instance additionally implements one of
- * [PolySymbolWithPattern], [PsiSourcedPolySymbol], or [PolySymbolDeclaredInPsi]
+ * [PolySymbolWithPattern], [PsiLinkedPolySymbol], or [PolySymbolDeclaredInPsi]
  * when [PolySymbolBuilder.pattern], [PolySymbolBuilder.linkWithPsiElement], or
  * [PolySymbolBuilder.declaredInPsi] is called inside the [body]. Calling any
  * two of those mode methods throws [IllegalStateException].
@@ -238,7 +238,7 @@ interface PolySymbolBuilder : PolySymbolDslBuilderBase {
    * Override the symbol's [PolySymbol.psiContext].
    *
    * Only meaningful when neither [linkWithPsiElement] nor [declaredInPsi]
-   * is used — those modes already wire [PolySymbol.psiContext] to [PsiSourcedPolySymbol.source]/
+   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.linkedElement]/
    * [PolySymbolDeclaredInPsi.sourceElement] respectively. Calling this setter in either of those
    * modes throws [IllegalStateException] at `build()`.
    *
@@ -250,7 +250,7 @@ interface PolySymbolBuilder : PolySymbolDslBuilderBase {
    * Override the symbol's [PolySymbol.psiContext].
    *
    * Only meaningful when neither [linkWithPsiElement] nor [declaredInPsi]
-   * is used — those modes already wire [PolySymbol.psiContext] to [PsiSourcedPolySymbol.source]/
+   * is used — those modes already wire [PolySymbol.psiContext] to [PsiLinkedPolySymbol.linkedElement]/
    * [PolySymbolDeclaredInPsi.sourceElement] respectively. Calling this setter in either of those
    * modes throws [IllegalStateException] at `build()`.
    *
@@ -334,16 +334,16 @@ interface PolySymbolBuilder : PolySymbolDslBuilderBase {
   fun pattern(body: PolySymbolPatternBuilder.() -> Unit)
 
   /**
-   * Define a [PsiSourcedPolySymbol].
+   * Define a [PsiLinkedPolySymbol].
    *
-   * @see [PsiSourcedPolySymbol]
+   * @see [PsiLinkedPolySymbol]
    */
   fun linkWithPsiElement(element: PsiElement)
 
   /**
-   * Define a [PsiSourcedPolySymbol].
+   * Define a [PsiLinkedPolySymbol].
    *
-   * @see [PsiSourcedPolySymbol]
+   * @see [PsiLinkedPolySymbol]
    */
   fun linkWithPsiElement(provider: () -> PsiElement?)
 

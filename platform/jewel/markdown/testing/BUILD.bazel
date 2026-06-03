@@ -1,70 +1,86 @@
-### auto-generated section `build intellij.platform.jewel.markdown.testing` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.jewel.markdown.testing` start
 
 create_kotlinc_options(
-  name = "custom_testing",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True
+    name = "custom_testing",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
 )
 
 jvm_library(
-  name = "testing",
-  module_name = "intellij.platform.jewel.markdown.testing",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/ui",
-    "//platform/jewel/foundation",
-    "//libraries/compose-foundation-desktop",
-    "//libraries/compose-runtime-desktop",
-  ]
+    name = "testing",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jewel.markdown.testing",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/ui",
+        "//platform/jewel/foundation",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-runtime-desktop",
+    ],
 )
 
 jvm_library(
-  name = "testing_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jewel.markdown.testing",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_testing",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/markdown/core:core_test_lib",
-    "//platform/jewel/ui",
-    "//platform/jewel/ui:ui_test_lib",
-    "//platform/jewel/foundation",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//libraries/compose-foundation-desktop",
-    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-    "//libraries/compose-runtime-desktop",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-  ],
-  runtime_deps = [":testing"]
+    name = "testing_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_testing",
+    module_name = "intellij.platform.jewel.markdown.testing",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":testing"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
+        "//platform/jewel/foundation",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.testing` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.testing` start
-exports_files([
-  "intellij.platform.jewel.markdown.testing.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.markdown.testing.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.markdown.testing` end
 
 ### auto-generated section `test intellij.platform.jewel.markdown.testing` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "testing_test",
-  runtime_deps = [":testing_test_lib"]
+    name = "testing_test",
+    runtime_deps = [":testing_test_lib"],
 )
 ### auto-generated section `test intellij.platform.jewel.markdown.testing` end

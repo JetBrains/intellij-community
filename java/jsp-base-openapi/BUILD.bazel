@@ -1,39 +1,55 @@
-### auto-generated section `build intellij.jsp.base` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jsp.base` start
+
 jvm_library(
-  name = "jsp-base",
-  module_name = "intellij.jsp.base",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//xml/xml-psi-api:psi",
-    "//platform/lang-api:lang",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "jsp-base",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsp.base",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//xml/xml-psi-api:psi",
+        "//platform/lang-api:lang",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "jsp-base_test_lib",
-  testonly = True,
-  module_name = "intellij.jsp.base",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":jsp-base",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "jsp-base_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsp.base",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jsp-base",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.jsp.base` end
 
 ### auto-generated section `iml intellij.jsp.base` start
-exports_files([
-  "intellij.jsp.base.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jsp.base.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jsp.base` end

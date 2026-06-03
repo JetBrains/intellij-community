@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.core.script.shared.definition.BundledScriptDefi
 import org.jetbrains.kotlin.idea.core.script.shared.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplate
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.KotlinType
@@ -41,7 +41,7 @@ internal val Project.defaultDefinition: ScriptDefinition
                 displayName("Default Kotlin Script")
                 hostConfiguration(defaultJvmScriptingHostConfiguration)
                 ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-                kotlinScriptTemplateInfo {
+                kotlinScriptTemplate {
                     id = "default-kts"
                     title = ".kts"
                     description = KotlinBundle.message("action.new.script.description.kts")

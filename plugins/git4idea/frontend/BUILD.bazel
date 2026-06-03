@@ -1,70 +1,88 @@
-### auto-generated section `build intellij.vcs.git.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.vcs.git.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.vcs.git.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//plugins/git4idea/shared",
-    "@lib//:kotlin-stdlib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/kernel/shared:kernel",
-    "//platform/project/shared:project",
-    "//platform/core-ui",
-    "//platform/platform-impl/rpc",
-    "//platform/ide-core",
-    "//platform/progress/shared:ide-progress",
-    "//platform/util/coroutines",
-    "//platform/analysis-api:analysis",
-    "//platform/dvcs-impl/shared",
-    "//platform/vcs-impl/shared",
-    "//fleet/kernel",
-    "//platform/searchEverywhere/frontend",
-    "//platform/scopes",
-    "//platform/util:util-ui",
-    "//fleet/rhizomedb",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//plugins/git4idea/shared",
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/kernel/shared:kernel",
+        "//platform/project/shared:project",
+        "//platform/core-ui",
+        "//platform/platform-impl/rpc",
+        "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
+        "//platform/util/coroutines",
+        "//platform/analysis-api:analysis",
+        "//platform/dvcs-impl/shared",
+        "//platform/vcs-impl/shared",
+        "//fleet/kernel",
+        "//platform/searchEverywhere/frontend",
+        "//platform/scopes",
+        "//platform/util:util-ui",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.vcs.git.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//plugins/git4idea/shared:shared_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/progress/shared:ide-progress_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/dvcs-impl/shared:shared_test_lib",
-    "//platform/vcs-impl/shared:shared_test_lib",
-    "//fleet/kernel:kernel_test_lib",
-    "//platform/searchEverywhere/frontend:frontend_test_lib",
-    "//platform/scopes:scopes_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//plugins/git4idea/shared:shared_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/dvcs-impl/shared:shared_test_lib",
+        "//platform/vcs-impl/shared:shared_test_lib",
+        "//fleet/kernel:kernel_test_lib",
+        "//platform/searchEverywhere/frontend:frontend_test_lib",
+        "//platform/scopes:scopes_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end
 
 ### auto-generated section `iml intellij.vcs.git.frontend` start
-exports_files([
-  "intellij.vcs.git.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.vcs.git.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.vcs.git.frontend` end

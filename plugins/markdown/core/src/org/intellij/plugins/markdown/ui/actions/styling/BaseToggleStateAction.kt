@@ -52,7 +52,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
     val caretSnapshots = SelectionUtil.obtainCaretSnapshots(this, event)?.asSequence() ?: return false
     val selectionElements = caretSnapshots.map { getElementsUnderCaretOrSelection(file, it.selectionStart, it.selectionEnd) }
-    if (shouldIgnoreCodeSpanElement(selectionElements)) {
+    if (shouldIgnoreSelectedElements(selectionElements)) {
       event.presentation.isEnabled = false
       return false
     }
@@ -165,9 +165,9 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
   }
 
-  private fun shouldIgnoreCodeSpanElement(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
-    targetNodeType != MarkdownElementTypes.CODE_SPAN
-    && selectionElements.any { getCommonParentOfType(it.first, it.second, MarkdownElementTypes.CODE_SPAN) != null }
+  private fun shouldIgnoreSelectedElements(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
+    targetNodeType !in elementsToProhibit
+    && elementsToProhibit.any { elementType -> selectionElements.any { getCommonParentOfType(it.first, it.second, elementType) != null } }
 
   private fun shouldIgnoreLinkElement(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
     selectionElements.any { (left, right) ->
@@ -175,6 +175,13 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
 
   companion object {
+    // If element is prohibited then action's presentation will be disabled
+    private val elementsToProhibit = setOf(
+      MarkdownElementTypes.CODE_SPAN,
+      MarkdownElementTypes.TEST_LINK,
+    )
+
+    // If element is ignored then action won't be invoked
     private val elementsToIgnore = setOf(
       MarkdownElementTypes.LINK_DESTINATION,
       MarkdownElementTypes.AUTOLINK,

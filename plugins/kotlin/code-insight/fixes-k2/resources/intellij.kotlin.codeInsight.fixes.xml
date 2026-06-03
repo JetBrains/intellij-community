@@ -1,13 +1,14 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.codeinsight.fixes">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.searching"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinK2QuickFixRegistrar"/>
   </extensions>

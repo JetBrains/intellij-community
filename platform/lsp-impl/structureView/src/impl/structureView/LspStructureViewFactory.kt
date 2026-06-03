@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.lsp.impl.documentSymbol.LspStructureViewSupport
+import com.intellij.platform.lsp.impl.features.documentSymbol.LspStructureViewSupport
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.DocumentSymbol

@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.oro.matcher` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.oro.matcher` start
+
 jvm_library(
-  name = "oro-matcher",
-  module_name = "intellij.libraries.oro.matcher",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
-  runtime_deps = ["@lib//:libraries-oro-matcher-_oro_matcher"]
+    name = "oro-matcher",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.oro.matcher",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
+    runtime_deps = ["@lib//:libraries-oro-matcher-_oro_matcher"],
 )
 
 jvm_library(
-  name = "oro-matcher_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.oro.matcher",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
-  runtime_deps = [":oro-matcher"]
+    name = "oro-matcher_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.oro.matcher",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
+    runtime_deps = [":oro-matcher"],
 )
 ### auto-generated section `build intellij.libraries.oro.matcher` end
 
 ### auto-generated section `iml intellij.libraries.oro.matcher` start
-exports_files([
-  "intellij.libraries.oro.matcher.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.oro.matcher.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.oro.matcher` end

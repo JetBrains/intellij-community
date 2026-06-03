@@ -1,64 +1,82 @@
-### auto-generated section `build intellij.tools.ide.starter.driver` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.tools.ide.starter.driver` start
 
 create_kotlinc_options(
-  name = "custom_ide-starter-driver",
-  opt_in = ["kotlin.time.ExperimentalTime"]
+    name = "custom_ide-starter-driver",
+    opt_in = ["kotlin.time.ExperimentalTime"],
 )
 
 jvm_library(
-  name = "ide-starter-driver",
-  module_name = "intellij.tools.ide.starter.driver",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_ide-starter-driver",
-  deps = [
-    "//platform/remote-driver/client",
-    "//platform/remote-driver/model",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:kotlin-stdlib",
-    "//tools/intellij.tools.ide.starter:ide-starter",
-    "@lib//:kodein-di-jvm",
-    "//platform/remote-driver/test-sdk:driver-sdk",
-    "@lib//:io-qameta-allure-java-commons",
-    "//tools/intellij.tools.ide.util.common:ide-util-common",
-    "//platform/testFramework/common",
-    "//platform/util",
-    "//libraries/opentelemetry",
-    "//platform/testFramework/teamCity",
-  ]
+    name = "ide-starter-driver",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-driver",
+    module_name = "intellij.tools.ide.starter.driver",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/model",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "@lib//:kodein-di-jvm",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "@lib//:io-qameta-allure-java-commons",
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
+        "//platform/testFramework/common",
+        "//platform/util",
+        "//libraries/opentelemetry",
+        "//platform/testFramework/teamCity",
+    ],
 )
 
 jvm_library(
-  name = "ide-starter-driver_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.ide.starter.driver",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_ide-starter-driver",
-  runtime_deps = [
-    ":ide-starter-driver",
-    "//platform/remote-driver/client:client_test_lib",
-    "//platform/remote-driver/model:model_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
-    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
-    "//platform/testFramework/common:common_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//platform/testFramework/teamCity:teamCity_test_lib",
-  ]
+    name = "ide-starter-driver_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-driver",
+    module_name = "intellij.tools.ide.starter.driver",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-starter-driver",
+        "//platform/remote-driver/client:client_test_lib",
+        "//platform/remote-driver/model:model_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
+        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+        "//platform/testFramework/common:common_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/testFramework/teamCity:teamCity_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.driver` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.driver` start
-exports_files([
-  "intellij.tools.ide.starter.driver.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.ide.starter.driver.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.ide.starter.driver` end

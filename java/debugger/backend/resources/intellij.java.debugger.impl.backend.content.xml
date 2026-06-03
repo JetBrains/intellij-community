@@ -9,4 +9,15 @@
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.java.debugger.impl.backend.BackendJavaDebuggerRemoteApiProvider"/>
   </extensions>
+
+  <actions>
+    <group id="JavaCompileGroup">
+      <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>
+
+      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
+      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
+    </group>
+  </actions>
 </idea-plugin>

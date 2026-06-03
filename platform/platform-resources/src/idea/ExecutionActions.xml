@@ -173,14 +173,6 @@
       </group>
     </group>
 
-    <group id="TestTreePopupMenu">
-      <!--suppress PluginXmlCapitalization -->
-      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
-      <separator/>
-      <reference ref="RunContextGroup"/>
-      <reference ref="EditSource"/>
-    </group>
-
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
 
     <group id="RunTestGroup">

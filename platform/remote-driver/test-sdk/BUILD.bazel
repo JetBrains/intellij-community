@@ -1,56 +1,76 @@
-### auto-generated section `build intellij.driver.sdk` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.driver.sdk` start
+
 jvm_library(
-  name = "driver-sdk",
-  module_name = "intellij.driver.sdk",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/remote-driver/client",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/remote-driver/model",
-    "//platform/util",
-  ],
-  exports = [
-    "//platform/remote-driver/client",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-  ]
+    name = "driver-sdk",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/remote-driver/client",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/remote-driver/client",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/remote-driver/model",
+        "//platform/util",
+    ],
 )
 
 jvm_library(
-  name = "driver-sdk_test_lib",
-  testonly = True,
-  module_name = "intellij.driver.sdk",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/remote-driver/client",
-    "//platform/remote-driver/client:client_test_lib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [
-    ":driver-sdk",
-    "//platform/remote-driver/client:client_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/remote-driver/model:model_test_lib",
-    "//platform/util:util_test_lib",
-  ]
+    name = "driver-sdk_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/client:client_test_lib",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":driver-sdk",
+        "//platform/remote-driver/client:client_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/remote-driver/model:model_test_lib",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.driver.sdk` end
 
 ### auto-generated section `iml intellij.driver.sdk` start
-exports_files([
-  "intellij.driver.sdk.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.driver.sdk.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.driver.sdk` end

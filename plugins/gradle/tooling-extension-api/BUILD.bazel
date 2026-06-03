@@ -1,66 +1,84 @@
-### auto-generated section `build intellij.gradle.toolingExtension` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.gradle.toolingExtension` start
 
 create_kotlinc_options(
-  name = "custom_toolingExtension",
-  jvm_target = "8",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+    name = "custom_toolingExtension",
+    jvm_target = "8",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
 )
 
 jvm_provided_library(
-  name = "libraries_groovy_provided",
-  lib = "//libraries/groovy"
+    name = "libraries_groovy_provided",
+    lib = "//libraries/groovy",
 )
 
 jvm_provided_library(
-  name = "libraries_groovy_ant_provided",
-  lib = "//libraries/groovy/ant"
+    name = "libraries_groovy_ant_provided",
+    lib = "//libraries/groovy/ant",
 )
 
 jvm_library(
-  name = "toolingExtension",
-  module_name = "intellij.gradle.toolingExtension",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_toolingExtension",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/external-system-rt:externalSystem-rt",
-    "//platform/util-rt",
-    "@lib//:gradle",
-    ":libraries_groovy_provided",
-    ":libraries_groovy_ant_provided",
-  ]
+    name = "toolingExtension",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_toolingExtension",
+    module_name = "intellij.gradle.toolingExtension",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/external-system-rt:externalSystem-rt",
+        "//platform/util-rt",
+        "@lib//:gradle",
+        ":libraries_groovy_provided",
+        ":libraries_groovy_ant_provided",
+    ],
 )
 
 jvm_library(
-  name = "toolingExtension_test_lib",
-  testonly = True,
-  module_name = "intellij.gradle.toolingExtension",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_toolingExtension",
-  runtime_deps = [
-    ":toolingExtension",
-    "//platform/external-system-rt:externalSystem-rt_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "//libraries/groovy",
-    "//libraries/groovy:groovy_test_lib",
-    "//libraries/groovy/ant",
-    "//libraries/groovy/ant:ant_test_lib",
-  ]
+    name = "toolingExtension_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_toolingExtension",
+    module_name = "intellij.gradle.toolingExtension",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":toolingExtension",
+        "//platform/external-system-rt:externalSystem-rt_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//libraries/groovy",
+        "//libraries/groovy:groovy_test_lib",
+        "//libraries/groovy/ant",
+        "//libraries/groovy/ant:ant_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension` end
 
 ### auto-generated section `iml intellij.gradle.toolingExtension` start
-exports_files([
-  "intellij.gradle.toolingExtension.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.gradle.toolingExtension.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.gradle.toolingExtension` end

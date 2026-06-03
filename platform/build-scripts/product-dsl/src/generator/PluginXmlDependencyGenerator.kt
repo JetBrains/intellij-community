@@ -13,7 +13,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentProvider
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlan
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
@@ -66,6 +68,7 @@ internal object PluginDependencyPlanner : PipelineNode {
       // DSL-defined plugins are generated from Kotlin specs and skipped here.
       val tasks = ArrayList<Deferred<PluginDependencyPlan?>>()
       val pluginGraphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = allRealProductNames)
+      val actionGroupProviderModules = buildActionGroupProviderModules(graph = graph, descriptorCache = model.descriptorCache)
       for (graphDeps in pluginGraphDeps) {
         if (graphDeps.isDslDefined) continue
         tasks.add(async {
@@ -73,6 +76,7 @@ internal object PluginDependencyPlanner : PipelineNode {
             graph = graph,
             graphDeps = graphDeps,
             pluginContentCache = pluginContentCache,
+            actionGroupProviderModules = actionGroupProviderModules,
             suppressionConfig = suppressionConfig,
             updateSuppressions = updateSuppressions,
             emitError = ctx::emitError,
@@ -90,6 +94,7 @@ internal data class PluginGraphDeps(
   val pluginContentModuleName: ContentModuleName,
   @JvmField val isDslDefined: Boolean,
   @JvmField val isTest: Boolean,
+  @JvmField val contentModules: Set<ContentModuleName>,
   @JvmField val jpsModuleDependencies: Set<ContentModuleName>,
   @JvmField val jpsPluginDependencies: Set<PluginId>,
   /** Plugin deps declared via legacy `<depends ... config-file="...">` in plugin.xml. */
@@ -156,6 +161,7 @@ internal fun collectPluginGraphDeps(
         pluginContentModuleName = pluginName,
         isDslDefined = plugin.isDslDefined,
         isTest = plugin.isTest,
+        contentModules = contentModules,
         jpsModuleDependencies = moduleDeps,
         jpsPluginDependencies = pluginDeps,
         legacyConfigFilePluginDependencies = legacyConfigFilePluginDeps,
@@ -165,6 +171,59 @@ internal fun collectPluginGraphDeps(
     }
   }
   return results
+}
+
+internal suspend fun buildActionGroupProviderModules(
+  graph: PluginGraph,
+  descriptorCache: ModuleDescriptorCache,
+): Map<String, Set<ContentModuleName>> {
+  val moduleNames = LinkedHashSet<ContentModuleName>()
+  graph.query {
+    contentModules { contentModule ->
+      if (hasContentSource(contentModule.id)) {
+        moduleNames.add(contentModule.contentName())
+      }
+    }
+  }
+
+  val providers = LinkedHashMap<String, MutableSet<ContentModuleName>>()
+  coroutineScope {
+    moduleNames.map { moduleName ->
+      async {
+        moduleName to descriptorCache.getOrAnalyze(moduleName.value)?.declaredActionGroupIds.orEmpty()
+      }
+    }.awaitAll()
+  }.forEach { (moduleName, groupIds) ->
+    for (groupId in groupIds) {
+      providers.getOrPut(groupId) { LinkedHashSet() }.add(moduleName)
+    }
+  }
+  return providers
+}
+
+internal fun computeActionGroupModuleDependencies(
+  pluginInfo: PluginContentInfo,
+  graphDeps: PluginGraphDeps,
+  actionGroupProviderModules: Map<String, Set<ContentModuleName>>,
+): Set<ContentModuleName> {
+  if (pluginInfo.referencedActionGroupIds.isEmpty()) {
+    return emptySet()
+  }
+
+  val result = LinkedHashSet<ContentModuleName>()
+  for (groupId in pluginInfo.referencedActionGroupIds) {
+    val providers = actionGroupProviderModules[groupId] ?: continue
+    for (provider in providers) {
+      if (provider == graphDeps.pluginContentModuleName || provider in graphDeps.contentModules) {
+        continue
+      }
+      result.add(provider)
+      debug("missingDeps") {
+        "actionGroupOrder plugin=${graphDeps.pluginContentModuleName.value} group=$groupId dep=${provider.value}"
+      }
+    }
+  }
+  return result
 }
 
 /**
@@ -193,6 +252,7 @@ private suspend fun buildPluginDependencyPlan(
   graph: PluginGraph,
   graphDeps: PluginGraphDeps,
   pluginContentCache: PluginContentProvider,
+  actionGroupProviderModules: Map<String, Set<ContentModuleName>>,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
   emitError: (org.jetbrains.intellij.build.productLayout.model.error.ValidationError) -> Unit,
@@ -215,13 +275,20 @@ private suspend fun buildPluginDependencyPlan(
   val mainDependencyEntries = extractDependenciesEntries(info.pluginXmlContent)
   val managedXmlModuleDeps = mainDependencyEntries?.managedModuleNames?.mapTo(HashSet(), ::ContentModuleName) ?: existingXmlModuleDeps
   val managedXmlPluginDeps = mainDependencyEntries?.managedPluginIds?.mapTo(HashSet(), ::PluginId) ?: existingXmlPluginDeps
+  val actionGroupModuleDeps = computeActionGroupModuleDependencies(
+    pluginInfo = info,
+    graphDeps = graphDeps,
+    actionGroupProviderModules = actionGroupProviderModules,
+  )
+  val effectiveJpsModuleDependencies = graphDeps.jpsModuleDependencies + actionGroupModuleDeps
+  val effectiveGraphDeps = graphDeps.copy(jpsModuleDependencies = effectiveJpsModuleDependencies)
   val effectiveJpsPluginDependencies = graphDeps.jpsPluginDependencies - graphDeps.legacyConfigFilePluginDependencies
   val suppressedModules = suppressionConfig.getPluginSuppressedModules(pluginContentModuleName)
   val suppressedPlugins = suppressionConfig.getPluginSuppressedPlugins(pluginContentModuleName)
   val moduleHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlModuleDeps,
-    jpsDeps = graphDeps.jpsModuleDependencies,
+    jpsDeps = effectiveJpsModuleDependencies,
     suppressedDeps = suppressedModules,
     xmlOnlySuppressionCandidateDeps = managedXmlModuleDeps,
   )
@@ -235,7 +302,7 @@ private suspend fun buildPluginDependencyPlan(
   )
 
   val deps = filterPluginDependencies(
-    graphDeps = graphDeps,
+    graphDeps = effectiveGraphDeps,
     pluginInfo = info,
     jpsPluginDependencies = effectiveJpsPluginDependencies,
     suppressedModules = moduleHandling.effectiveSuppressedDeps,

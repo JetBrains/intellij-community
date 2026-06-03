@@ -241,6 +241,8 @@ fleet/lsp.protocol
 fleet/lsp.protocol/test
 fleet/modules/api
 fleet/multiplatform.shims
+fleet/openmap
+fleet/openmap/test
 fleet/radixTrie
 fleet/radixTrie/test
 fleet/reporting/api
@@ -339,6 +341,7 @@ java/testFramework/shared
 java/typeMigration
 java/unscramble
 java/vcs
+java/xml.dom.impl
 jps/antLayout
 jps/jps-builders
 jps/jps-launcher
@@ -874,6 +877,7 @@ platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
 platform/testFramework/teamCity
 platform/testRunner
+platform/testRunner/plugin
 platform/threadDumpParser
 platform/tips-of-the-day
 platform/todo
@@ -1488,6 +1492,7 @@ plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/spellchecker
 plugins/markdown/test
+plugins/markdown/textMate
 plugins/markdown/xml
 plugins/marketplace-ml
 plugins/maven

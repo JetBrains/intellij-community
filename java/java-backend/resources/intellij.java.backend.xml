@@ -27,30 +27,22 @@
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger"/>
-    <module name="intellij.java.debugger.impl"/>
-    <module name="intellij.java.debugger.impl.backend"/>
     <module name="intellij.java.execution"/>
-    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.impl.inspections"/>
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
-    <module name="intellij.java.structureView"/>
     <module name="intellij.java.uast"/>
     <module name="intellij.java.uast.ide"/>
     <module name="intellij.java.ui"/>
-    <module name="intellij.jsp"/>
-    <module name="intellij.jsp.spi"/>
     <module name="intellij.jvm.analysis"/>
     <module name="intellij.jvm.analysis.quickFix"/>
     <module name="intellij.jvm.analysis.refactoring"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.jps.build.dependencyGraph"/>
-    <module name="intellij.platform.structureView.backend"/>
     <module name="intellij.platform.uast"/>
     <module name="intellij.platform.uast.ide"/>
-    <module name="intellij.uiDesigner"/>
   </dependencies>
   <!-- endregion -->
 
@@ -64,4 +56,3 @@
     <newProjectWizard.generator implementation="com.intellij.ide.wizard.language.EmptyProjectGeneratorNewProjectWizard"/>
   </extensions>
 </idea-plugin>
-

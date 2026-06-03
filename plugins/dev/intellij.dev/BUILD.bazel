@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.dev` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.dev` start
+
 jvm_library(
-  name = "dev",
-  module_name = "intellij.dev",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "dev",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.dev",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "dev_test_lib",
-  testonly = True,
-  module_name = "intellij.dev",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":dev"]
+    name = "dev_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.dev",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":dev"],
 )
 ### auto-generated section `build intellij.dev` end
 
 ### auto-generated section `iml intellij.dev` start
-exports_files([
-  "intellij.dev.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.dev.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.dev` end

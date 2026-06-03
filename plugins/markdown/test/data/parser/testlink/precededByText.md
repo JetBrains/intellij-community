@@ -1,0 +1,1 @@
+Some text [@test] text

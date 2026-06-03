@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.grazie.properties` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie.properties` start
+
 jvm_library(
-  name = "properties",
-  module_name = "intellij.grazie.properties",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/grazie/src:core",
-    "//plugins/properties:properties-backend",
-    "//plugins/properties/properties-psi-api:psi",
-    "//plugins/properties/properties-common:properties",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/util-ex",
-  ]
+    name = "properties",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.properties",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+        "//plugins/properties:properties-backend",
+        "//plugins/properties/properties-psi-api:psi",
+        "//plugins/properties/properties-common:properties",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util-ex",
+    ],
 )
 
 jvm_library(
-  name = "properties_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie.properties",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":properties",
-    "//plugins/grazie/src:core_test_lib",
-    "//plugins/properties:properties-backend_test_lib",
-    "//plugins/properties/properties-psi-api:psi_test_lib",
-    "//plugins/properties/properties-common:properties_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-  ]
+    name = "properties_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.properties",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":properties",
+        "//plugins/grazie/src:core_test_lib",
+        "//plugins/properties:properties-backend_test_lib",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
+        "//plugins/properties/properties-common:properties_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie.properties` end
 
 ### auto-generated section `iml intellij.grazie.properties` start
-exports_files([
-  "intellij.grazie.properties.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.properties.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie.properties` end

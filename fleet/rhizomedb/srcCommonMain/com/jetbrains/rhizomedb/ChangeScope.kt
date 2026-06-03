@@ -4,8 +4,8 @@ package com.jetbrains.rhizomedb
 import com.jetbrains.rhizomedb.add
 import com.jetbrains.rhizomedb.impl.entity
 import com.jetbrains.rhizomedb.impl.generateSeed
-import fleet.util.openmap.Key
-import fleet.util.openmap.MutableOpenMap
+import fleet.openmap.Key
+import fleet.openmap.MutableOpenMap
 import com.jetbrains.rhizomedb.add as add_cs
 import com.jetbrains.rhizomedb.clear as clear_cs
 import com.jetbrains.rhizomedb.delete as delete_cs

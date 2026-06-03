@@ -29,7 +29,7 @@ import java.util.function.Predicate;
  */
 @ApiStatus.Internal
 public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 8);
 
   private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
   private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
@@ -97,6 +97,7 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     WINDOW_MANAGERS.put("enlightenment", "Enlightenment");
     WINDOW_MANAGERS.put("hyprland", "Hyprland");
     WINDOW_MANAGERS.put("default.desktop", "default.desktop");
+    WINDOW_MANAGERS.put("cosmic", "Cosmic");
 
     ALL_NAMES.addAll(GNOME_WINDOW_MANAGERS.values());
     ALL_NAMES.addAll(WINDOW_MANAGERS.values());

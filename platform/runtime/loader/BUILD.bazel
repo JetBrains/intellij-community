@@ -1,38 +1,54 @@
-### auto-generated section `build intellij.platform.runtime.loader` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.runtime.loader` start
+
 jvm_library(
-  name = "loader",
-  module_name = "intellij.platform.runtime.loader",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//platform/runtime/repository",
-    "//platform/boot",
-    "//platform/util-class-loader:util-classLoader",
-  ]
+    name = "loader",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.runtime.loader",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//platform/runtime/repository",
+        "//platform/boot",
+        "//platform/util-class-loader:util-classLoader",
+    ],
 )
 
 jvm_library(
-  name = "loader_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.runtime.loader",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":loader",
-    "//platform/runtime/repository:repository_test_lib",
-    "//platform/boot:boot_test_lib",
-    "//platform/util-class-loader:util-classLoader_test_lib",
-  ]
+    name = "loader_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.runtime.loader",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":loader",
+        "//platform/runtime/repository:repository_test_lib",
+        "//platform/boot:boot_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.runtime.loader` end
 
 ### auto-generated section `iml intellij.platform.runtime.loader` start
-exports_files([
-  "intellij.platform.runtime.loader.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.runtime.loader.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.runtime.loader` end

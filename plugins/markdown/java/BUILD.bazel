@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.markdown.java` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.markdown.java` start
+
 jvm_library(
-  name = "java",
-  module_name = "intellij.markdown.java",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/kernel/shared:kernel",
-    "//platform/platform-impl/rpc",
-    "//platform/platform-api:ide",
-    "//plugins/markdown/core:markdown",
-    "//platform/core-api:core",
-    "//java/java-indexing-api:indexing",
-    "//java/java-psi-api:psi",
-    "//platform/lang-api:lang",
-  ]
+    name = "java",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.java",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/shared:kernel",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-api:ide",
+        "//plugins/markdown/core:markdown",
+        "//platform/core-api:core",
+        "//java/java-indexing-api:indexing",
+        "//java/java-psi-api:psi",
+        "//platform/lang-api:lang",
+    ],
 )
 
 jvm_library(
-  name = "java_test_lib",
-  testonly = True,
-  module_name = "intellij.markdown.java",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":java",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//plugins/markdown/core:markdown_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//java/java-indexing-api:indexing_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//platform/lang-api:lang_test_lib",
-  ]
+    name = "java_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.java",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//java/java-indexing-api:indexing_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/lang-api:lang_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.markdown.java` end
 
 ### auto-generated section `iml intellij.markdown.java` start
-exports_files([
-  "intellij.markdown.java.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.markdown.java.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.markdown.java` end

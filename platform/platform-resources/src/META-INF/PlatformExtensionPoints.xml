@@ -403,8 +403,6 @@
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
-    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener" dynamic="true"/>
-
     <extensionPoint name="execution.syntheticConfigurationTypeProvider"
                     interface="com.intellij.execution.configurations.SyntheticConfigurationTypeProvider"
                     dynamic="true"/>

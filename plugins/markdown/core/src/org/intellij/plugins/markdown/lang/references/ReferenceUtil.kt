@@ -1,5 +1,7 @@
 package org.intellij.plugins.markdown.lang.references
 
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiReference
@@ -30,6 +32,15 @@ object ReferenceUtil {
         PsiModificationTracker.MODIFICATION_COUNT
       )
     }
+  }
+
+  @ApiStatus.Internal
+  fun String.isRelativePathLike(): Boolean {
+    if (startsWith('/')) return false
+    if (any(Char::isWhitespace)) return false
+    if (contains("://")) return false
+    if (contains('/')) return true
+    return FileTypeRegistry.getInstance().getFileTypeByFileName(this) != UnknownFileType.INSTANCE
   }
 
   val linkDestinationPattern = PlatformPatterns.psiElement(MarkdownLinkDestination::class.java)

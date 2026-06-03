@@ -1,47 +1,61 @@
-### auto-generated section `build intellij.java.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.plugin` start
+
 jvm_library(
-  name = "plugin",
-  module_name = "intellij.java.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = [
-    "//java/java-syntax:syntax",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-frontback-psi-impl:frontback-psi-impl",
-    "//java/java-psi-api:psi",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-frontback-impl:frontback-impl",
-    "//java/debugger/shared",
-    "//java/execution/shared",
-  ]
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//java/java-syntax:syntax",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-frontback-impl:frontback-impl",
+        "//java/debugger/shared",
+        "//java/execution/shared",
+    ],
 )
 
 jvm_library(
-  name = "plugin_test_lib",
-  testonly = True,
-  module_name = "intellij.java.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":plugin",
-    "//java/java-syntax:syntax_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-frontback-impl:frontback-impl_test_lib",
-    "//java/debugger/shared:shared_test_lib",
-    "//java/execution/shared:shared_test_lib",
-  ]
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//java/java-syntax:syntax_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-frontback-impl:frontback-impl_test_lib",
+        "//java/debugger/shared:shared_test_lib",
+        "//java/execution/shared:shared_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.plugin` end
 
 ### auto-generated section `iml intellij.java.plugin` start
-exports_files([
-  "intellij.java.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.plugin` end

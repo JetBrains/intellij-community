@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.kotlin.codeInsight.descriptions` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.codeInsight.descriptions` start
+
 jvm_library(
-  name = "descriptions",
-  module_name = "intellij.kotlin.codeInsight.descriptions",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources-en/**/*"]),
-  resource_strip_prefix = "resources-en"
+    name = "descriptions",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.codeInsight.descriptions",
+    resource_strip_prefix = "resources-en",
+    resources = glob(
+        ["resources-en/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "descriptions_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.codeInsight.descriptions",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":descriptions"]
+    name = "descriptions_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.codeInsight.descriptions",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":descriptions"],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.descriptions` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.descriptions` start
-exports_files([
-  "intellij.kotlin.codeInsight.descriptions.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.codeInsight.descriptions.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.codeInsight.descriptions` end

@@ -48,22 +48,22 @@ kotlin {
   }
   sourceSets.jvmMain.dependencies {
     api(jps.org.junit.jupiter.junit.jupiter.api1894444205.get())
-    api(jps.org.junit.jupiter.junit.jupiter.params1101092435.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
     api(jps.org.junit.jupiter.junit.jupiter.engine1404327319.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
-    }
-    api(jps.org.junit.platform.junit.platform.launcher1454626487.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.apiguardian", module = "apiguardian-api")
-      exclude(group = "org.opentest4j", module = "opentest4j")
-      exclude(group = "org.junit.platform", module = "junit-platform-commons")
     }
     api(jps.org.hamcrest.hamcrest1545074716.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
     api(jps.org.jetbrains.kotlin.kotlin.test.junit5960045374.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
+    }
+    api(jps.org.junit.jupiter.junit.jupiter.params1101092435.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
+    api(jps.org.junit.platform.junit.platform.launcher1454626487.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.apiguardian", module = "apiguardian-api")
+      exclude(group = "org.opentest4j", module = "opentest4j")
+      exclude(group = "org.junit.platform", module = "junit-platform-commons")
     }
   }
   // KOTLIN__MARKER_END

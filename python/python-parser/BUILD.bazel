@@ -1,46 +1,66 @@
-### auto-generated section `build intellij.python.parser` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.parser` start
+
 jvm_library(
-  name = "parser",
-  module_name = "intellij.python.parser",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util/multiplatform",
-    "//platform/util/base",
-    "//libraries/fastutil",
-    "//platform/core-impl",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "parser",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.parser",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "//libraries/fastutil",
+        "//platform/core-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "parser_test_lib",
-  testonly = True,
-  module_name = "intellij.python.parser",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":parser",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "parser_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.parser",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":parser",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.parser` end
 
 ### auto-generated section `iml intellij.python.parser` start
-exports_files([
-  "intellij.python.parser.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.parser.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.parser` end

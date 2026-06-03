@@ -1,4 +1,3 @@
-load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
@@ -6,13 +5,13 @@ load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
-
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 
 jvm_import(
-  name = "protobuf_java",
-  jar = "@protobuf-java_http//file",
-  source_jar = "@protobuf-java-sources_http//file",
-  visibility = ["//visibility:public"],
+    name = "protobuf_java",
+    jar = "@protobuf-java_http//file",
+    source_jar = "@protobuf-java-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 kt_kotlinc_options(
@@ -35,14 +34,14 @@ bool_flag(
 define_kt_toolchain(
     name = "kotlin_toolchain",
     api_version = "2.3",
-    language_version = "2.3",
+    btapi_annotations = ":annotations_import",
     btapi_build_tools_impl = ":kotlin-build-tools-impl_import",
     btapi_kotlin_compiler_embeddable = ":kotlin-compiler-embeddable_import",
-    btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
-    btapi_kotlin_stdlib = ":kotlin-stdlib_import",
-    btapi_kotlin_reflect = ":kotlin-reflect_import",
     btapi_kotlin_coroutines = ":kotlinx-coroutines-core_import",
-    btapi_annotations = ":annotations_import",
+    btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
+    btapi_kotlin_reflect = ":kotlin-reflect_import",
+    btapi_kotlin_stdlib = ":kotlin-stdlib_import",
+    language_version = "2.3",
 )
 
 # --@rules_jvm//:trace
@@ -149,9 +148,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "kotlin-build-tools-impl_import",
-  jar = "@kotlin-build-tools-impl_http//file",
-  visibility = ["//visibility:public"],
+    name = "kotlin-build-tools-impl_import",
+    jar = "@kotlin-build-tools-impl_http//file",
+    visibility = ["//visibility:public"],
 )
 
 jvm_import(
@@ -370,21 +369,21 @@ jvm_import(
 )
 
 java_library(
-  name = "junit4",
-  exports = [
-    ":junit-junit-4_13_2_http_import",
-  ],
-  visibility = ["//visibility:public"]
+    name = "junit4",
+    visibility = ["//visibility:public"],
+    exports = [
+        ":junit-junit-4_13_2_http_import",
+    ],
 )
 
 jvm_import(
-  name = "org_opentest4j-opentest4j-1_3_0_http_import",
-  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+    name = "org_opentest4j-opentest4j-1_3_0_http_import",
+    jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
 )
 
 jvm_import(
-  name = "junit-junit-4_13_2_http_import",
-  jar = "@junit-junit-4_13_2_http//file",
+    name = "junit-junit-4_13_2_http_import",
+    jar = "@junit-junit-4_13_2_http//file",
 )
 
 kt_javac_options(
@@ -423,25 +422,25 @@ label_flag(
 )
 
 pkg_files(
-  name = "rules_to_zip",
-  srcs = glob(["rules/**/*"]),
-  strip_prefix = strip_prefix.from_pkg(),
+    name = "rules_to_zip",
+    srcs = glob(["rules/**/*"]),
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_zip(
     name = "rules_jvm_zip",
     srcs = glob([
-      "*.bzl",
-      "*.bazel",
-      "*.bazel.lock",
+        "*.bzl",
+        "*.bazel",
+        "*.bazel.lock",
     ]) + [
-      ":rules_to_zip",
-       "//dependency-graph:files_to_zip",
-       "//jps-builders-6:files_to_zip",
-       "//jvm-inc-builder:files_to_zip",
-       "//rules/impl/platforms:files_to_zip",
-       "//worker-framework:files_to_zip",
-       "//zip:files_to_zip",
+        ":rules_to_zip",
+        "//dependency-graph:files_to_zip",
+        "//jps-builders-6:files_to_zip",
+        "//jvm-inc-builder:files_to_zip",
+        "//rules/impl/platforms:files_to_zip",
+        "//worker-framework:files_to_zip",
+        "//zip:files_to_zip",
     ],
     visibility = ["//visibility:public"],
 )

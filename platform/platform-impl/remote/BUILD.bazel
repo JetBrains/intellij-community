@@ -1,60 +1,78 @@
-### auto-generated section `build intellij.platform.ide.remote` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.remote` start
+
 jvm_library(
-  name = "remote",
-  module_name = "intellij.platform.ide.remote",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/remote-core",
-    "//platform/util/jdom",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/forms_rt:java-guiForms-rt",
-    "//platform/lang-core",
-    "//platform/execution",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//platform/util/concurrency",
-    "//libraries/guava",
-    "//platform/core-ui",
-    "//platform/util:util-ui",
-  ]
+    name = "remote",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.remote",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/remote-core",
+        "//platform/util/jdom",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/lang-core",
+        "//platform/execution",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/util/concurrency",
+        "//libraries/guava",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "remote_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.remote",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":remote",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/remote-core:remote-core_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-    "//platform/lang-core:lang-core_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//libraries/guava:guava_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "remote_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.remote",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":remote",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/remote-core:remote-core_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.remote` end
 
 ### auto-generated section `iml intellij.platform.ide.remote` start
-exports_files([
-  "intellij.platform.ide.remote.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.remote.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.remote` end

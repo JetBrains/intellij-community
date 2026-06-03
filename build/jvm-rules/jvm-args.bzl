@@ -12,7 +12,6 @@ def get_jvm_flags(flags):
         #"-XX:+ZGenerational",
         #"-XX:ZUncommitDelay=10",   # reclaim unused memory in 10 secs
         #"-XX:SoftMaxHeapSize=2g",  # try to keep heap compact under 2 Gbytes
-
         "-Xmx20g",
         "-Xms256m",
 

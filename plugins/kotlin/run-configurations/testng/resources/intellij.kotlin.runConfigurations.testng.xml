@@ -1,11 +1,14 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.testng">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="TestNG-J"/>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
-    <!-- endregion -->
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.testng.KotlinTestNgConfigurationProducer"/>

@@ -121,6 +121,10 @@ internal data class PluginContentInfo(
    * Used for IDE capability markers (e.g., `com.intellij.modules.java`, `com.intellij.modules.ruby-capable`).
    */
   @JvmField val pluginAliases: List<PluginId> = emptyList(),
+  /** Action group IDs declared by this plugin.xml and its xi:includes. */
+  @JvmField val declaredActionGroupIds: Set<String> = emptySet(),
+  /** Action group IDs referenced by this plugin.xml and its xi:includes. */
+  @JvmField val referencedActionGroupIds: Set<String> = emptySet(),
 ) {
   /** True if DSL-defined (content computed from spec, not extracted from disk) */
   val isDslDefined: Boolean get() = source == PluginSource.DSL_TEST
@@ -244,6 +248,8 @@ internal suspend fun extractPluginContent(
     source = source,
     legacyDepends = extractLegacyDepends(content),
     pluginAliases = extractedContent.pluginAliases,
+    declaredActionGroupIds = extractedContent.declaredActionGroupIds,
+    referencedActionGroupIds = extractedContent.referencedActionGroupIds,
   )
 }
 
@@ -253,6 +259,8 @@ private class ExtractedContent(
   @JvmField val pluginDependencies: Set<PluginId>,
   /** Plugin aliases declared via `<module value="..."/>` elements (main file + xi:includes) */
   @JvmField val pluginAliases: List<PluginId>,
+  @JvmField val declaredActionGroupIds: Set<String>,
+  @JvmField val referencedActionGroupIds: Set<String>,
   /** Deps by source file: first entry = main plugin.xml, subsequent = xi:includes */
   @JvmField val depsByFile: List<FileDepInfo>,
 )
@@ -273,6 +281,8 @@ private suspend fun extractContentModules(
   val allModuleDependencies = LinkedHashSet<ContentModuleName>()
   val allPluginDependencies = LinkedHashSet<PluginId>()
   val allPluginAliases = LinkedHashSet<PluginId>()
+  val allDeclaredActionGroupIds = LinkedHashSet<String>()
+  val allReferencedActionGroupIds = LinkedHashSet<String>()
   val depsByFile = ArrayList<FileDepInfo>()
   val processedPaths = HashSet<String>()
 
@@ -295,6 +305,8 @@ private suspend fun extractContentModules(
       for (alias in result.pluginAliases) {
         allPluginAliases.add(PluginId(alias))
       }
+      allDeclaredActionGroupIds.addAll(result.declaredActionGroupIds)
+      allReferencedActionGroupIds.addAll(result.referencedActionGroupIds)
       // Track deps per file
       depsByFile.add(FileDepInfo(relativePath = path, moduleDependencies = moduleDeps, pluginDependencies = pluginDeps))
     }
@@ -328,6 +340,8 @@ private suspend fun extractContentModules(
     moduleDependencies = allModuleDependencies,
     pluginDependencies = allPluginDependencies,
     pluginAliases = allPluginAliases.toList(),
+    declaredActionGroupIds = allDeclaredActionGroupIds,
+    referencedActionGroupIds = allReferencedActionGroupIds,
     depsByFile = depsByFile,
   )
 }

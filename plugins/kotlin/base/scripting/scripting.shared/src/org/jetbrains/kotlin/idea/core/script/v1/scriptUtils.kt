@@ -15,12 +15,14 @@ import com.intellij.psi.PsiManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import javax.swing.Icon
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.util.PropertiesCollection
 
@@ -47,31 +49,20 @@ fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     }
 }
 
-class KotlinScriptInfo(
-    var id: String = "",
-    @NlsContexts.ListItem var title: String = "",
-    var templateName: String = "Kotlin Script",
-    var icon: Icon = KotlinIcons.SCRIPT,
-    @param:Nls var description: String = ""
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+data class KotlinScriptTemplate(var id: String = "") {
+    @Nls
+    var title: String = ""
+    var templateName: String = "Kotlin Script"
+    var icon: Icon = KotlinIcons.SCRIPT
 
-        other as KotlinScriptInfo
-
-        return id == other.id
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
-    }
+    @Nls
+    var description: String = ""
 }
 
-val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCollection.Key<KotlinScriptInfo> by PropertiesCollection.key()
+val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplate: PropertiesCollection.Key<KotlinScriptTemplate> by PropertiesCollection.key()
 
-fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplateInfo(init: KotlinScriptInfo.() -> Unit) {
-    ide.kotlinScriptTemplateInfo(KotlinScriptInfo().apply(init))
+fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplate(init: KotlinScriptTemplate.() -> Unit) {
+    ide.kotlinScriptTemplate(KotlinScriptTemplate().apply(init))
 }
 
 fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile? {

@@ -1,104 +1,140 @@
-### auto-generated section `build intellij.platform.jps.model.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.jps.model.impl` start
+
 jvm_library(
-  name = "model-impl",
-  module_name = "intellij.platform.jps.model.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//platform/util",
-    "//platform/util/multiplatform",
-    "//platform/util/base/multiplatform",
-    "//platform/util/base",
-    "//jps/model-api:model",
-    "//libraries/fastutil",
-  ]
+    name = "model-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.jps.model.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base",
+        "//jps/model-api:model",
+        "//libraries/fastutil",
+    ],
 )
 
 jvm_library(
-  name = "model-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jps.model.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":model-impl",
-    "//platform/util:util_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-  ]
+    name = "model-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.jps.model.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":model-impl",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jps.model.impl` end
 
 ### auto-generated section `iml intellij.platform.jps.model.impl` start
-exports_files([
-  "intellij.platform.jps.model.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jps.model.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jps.model.impl` end
 
 ### auto-generated section `build intellij.platform.jps.model.tests` start
+
 jvm_library(
-  name = "model-tests",
-  module_name = "intellij.platform.jps.model.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//jps/model-impl",
-    "@lib//:kotlin-stdlib",
-  ]
+    name = "model-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jps.model.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-impl",
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "model-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jps.model.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  deps = [
-    "//jps/model-api:model",
-    "//jps/model-api:model_test_lib",
-    "//jps/model-impl",
-    "//jps/model-impl:model-impl_test_lib",
-    "@lib//:kotlin-stdlib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "@lib//:junit4",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-    "//platform/testFramework/extensions:testExtensions",
-    "//platform/testFramework/extensions:testExtensions_test_lib",
-    "//jps/model-test-framework:model-testFramework",
-    "//jps/model-test-framework:model-testFramework_test_lib",
-    "//platform/util/multiplatform",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base",
-    "//platform/util/base:base_test_lib",
-  ],
-  runtime_deps = [":model-tests"]
+    name = "model-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jps.model.tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":model-tests"],
+    deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-impl",
+        "//jps/model-impl:model-impl_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "@lib//:junit4",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//platform/testFramework/extensions:testExtensions",
+        "//platform/testFramework/extensions:testExtensions_test_lib",
+        "//jps/model-test-framework:model-testFramework",
+        "//jps/model-test-framework:model-testFramework_test_lib",
+        "//platform/util/multiplatform",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jps.model.tests` end
 
 ### auto-generated section `iml intellij.platform.jps.model.tests` start
-exports_files([
-  "intellij.platform.jps.model.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jps.model.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jps.model.tests` end
 
 ### auto-generated section `test intellij.platform.jps.model.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "model-tests_test",
-  runtime_deps = [":model-tests_test_lib"]
+    name = "model-tests_test",
+    runtime_deps = [":model-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.jps.model.tests` end

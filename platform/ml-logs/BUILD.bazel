@@ -1,40 +1,58 @@
-### auto-generated section `build intellij.platform.ml.logs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ml.logs` start
+
 jvm_library(
-  name = "ml-logs",
-  module_name = "intellij.platform.ml.logs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/statistics",
-    "@lib//:jetbrains-annotations",
-    "@lib//:jetbrains-mlapi-core",
-  ],
-  exports = ["@lib//:jetbrains-mlapi-core"]
+    name = "ml-logs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml.logs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jetbrains-mlapi-core"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/statistics",
+        "@lib//:jetbrains-annotations",
+        "@lib//:jetbrains-mlapi-core",
+    ],
 )
 
 jvm_library(
-  name = "ml-logs_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ml.logs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:jetbrains-mlapi-core"],
-  runtime_deps = [
-    ":ml-logs",
-    "//platform/util:util_test_lib",
-    "//platform/statistics:statistics_test_lib",
-  ]
+    name = "ml-logs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml.logs",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jetbrains-mlapi-core"],
+    runtime_deps = [
+        # do not sort,
+        ":ml-logs",
+        "//platform/util:util_test_lib",
+        "//platform/statistics:statistics_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ml.logs` end
 
 ### auto-generated section `iml intellij.platform.ml.logs` start
-exports_files([
-  "intellij.platform.ml.logs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ml.logs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ml.logs` end

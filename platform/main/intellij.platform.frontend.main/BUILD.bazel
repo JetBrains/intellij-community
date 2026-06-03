@@ -1,57 +1,69 @@
-### auto-generated section `build intellij.platform.frontend.main` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.frontend.main` start
+
 jvm_library(
-  name = "frontend-main",
-  module_name = "intellij.platform.frontend.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//platform/main/intellij.platform.main:main",
-    "//platform/navbar/frontend",
-    "//platform/xdebugger-impl/frontend",
-    "//platform/searchEverywhere/frontend",
-    "//platform/vcs-impl/frontend",
-    "//platform/bookmarks/plugin",
-    "//platform/recentFiles/frontend",
-    "//platform/pluginManager/frontend",
-    "//platform/execution-impl/frontend",
-    "//platform/execution.dashboard/frontend",
-    "//platform/execution.serviceView/frontend",
-    "//platform/remote-topics/frontend",
-    "//platform/buildView/frontend",
-    "//platform/completion/frontend",
-  ]
+    name = "frontend-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.frontend.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.main:main",
+        "//platform/navbar/frontend",
+        "//platform/xdebugger-impl/frontend",
+        "//platform/searchEverywhere/frontend",
+        "//platform/vcs-impl/frontend",
+        "//platform/bookmarks/plugin",
+        "//platform/recentFiles/frontend",
+        "//platform/pluginManager/frontend",
+        "//platform/execution-impl/frontend",
+        "//platform/execution.dashboard/frontend",
+        "//platform/execution.serviceView/frontend",
+        "//platform/remote-topics/frontend",
+        "//platform/buildView/frontend",
+        "//platform/completion/frontend",
+    ],
 )
 
 jvm_library(
-  name = "frontend-main_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.frontend.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend-main",
-    "//platform/main/intellij.platform.main:main_test_lib",
-    "//platform/navbar/frontend:frontend_test_lib",
-    "//platform/xdebugger-impl/frontend:frontend_test_lib",
-    "//platform/searchEverywhere/frontend:frontend_test_lib",
-    "//platform/vcs-impl/frontend:frontend_test_lib",
-    "//platform/bookmarks/plugin:plugin_test_lib",
-    "//platform/recentFiles/frontend:frontend_test_lib",
-    "//platform/pluginManager/frontend:frontend_test_lib",
-    "//platform/execution-impl/frontend:frontend_test_lib",
-    "//platform/execution.dashboard/frontend:frontend_test_lib",
-    "//platform/execution.serviceView/frontend:frontend_test_lib",
-    "//platform/remote-topics/frontend:frontend_test_lib",
-    "//platform/buildView/frontend:frontend_test_lib",
-    "//platform/completion/frontend:frontend_test_lib",
-  ]
+    name = "frontend-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.frontend.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend-main",
+        "//platform/main/intellij.platform.main:main_test_lib",
+        "//platform/navbar/frontend:frontend_test_lib",
+        "//platform/xdebugger-impl/frontend:frontend_test_lib",
+        "//platform/searchEverywhere/frontend:frontend_test_lib",
+        "//platform/vcs-impl/frontend:frontend_test_lib",
+        "//platform/bookmarks/plugin:plugin_test_lib",
+        "//platform/recentFiles/frontend:frontend_test_lib",
+        "//platform/pluginManager/frontend:frontend_test_lib",
+        "//platform/execution-impl/frontend:frontend_test_lib",
+        "//platform/execution.dashboard/frontend:frontend_test_lib",
+        "//platform/execution.serviceView/frontend:frontend_test_lib",
+        "//platform/remote-topics/frontend:frontend_test_lib",
+        "//platform/buildView/frontend:frontend_test_lib",
+        "//platform/completion/frontend:frontend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.frontend.main` end
 
 ### auto-generated section `iml intellij.platform.frontend.main` start
-exports_files([
-  "intellij.platform.frontend.main.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.frontend.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.frontend.main` end

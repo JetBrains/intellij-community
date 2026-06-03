@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.jgoodies.forms` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jgoodies.forms` start
+
 jvm_library(
-  name = "forms",
-  module_name = "intellij.libraries.jgoodies.forms",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
-  runtime_deps = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"]
+    name = "forms",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jgoodies.forms",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
+    runtime_deps = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
 )
 
 jvm_library(
-  name = "forms_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jgoodies.forms",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
-  runtime_deps = [":forms"]
+    name = "forms_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jgoodies.forms",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
+    runtime_deps = [":forms"],
 )
 ### auto-generated section `build intellij.libraries.jgoodies.forms` end
 
 ### auto-generated section `iml intellij.libraries.jgoodies.forms` start
-exports_files([
-  "intellij.libraries.jgoodies.forms.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jgoodies.forms.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jgoodies.forms` end

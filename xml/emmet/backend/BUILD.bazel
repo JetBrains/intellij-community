@@ -1,133 +1,151 @@
-### auto-generated section `build intellij.xml.emmet.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.xml.emmet.backend` start
+
 jvm_provided_library(
-  name = "xml_emmet_provided",
-  lib = "//xml/emmet"
+    name = "xml_emmet_provided",
+    lib = "//xml/emmet",
 )
 
 jvm_provided_library(
-  name = "platform_ide-core_provided",
-  lib = "//platform/ide-core"
+    name = "platform_ide-core_provided",
+    lib = "//platform/ide-core",
 )
 
 jvm_provided_library(
-  name = "platform_lang-impl_provided",
-  lib = "//platform/lang-impl"
+    name = "platform_lang-impl_provided",
+    lib = "//platform/lang-impl",
 )
 
 jvm_provided_library(
-  name = "platform_util-ui_provided",
-  lib = "//platform/util:util-ui"
+    name = "platform_util-ui_provided",
+    lib = "//platform/util:util-ui",
 )
 
 jvm_provided_library(
-  name = "platform_editor-ui_provided",
-  lib = "//platform/editor-ui-api:editor-ui"
+    name = "platform_editor-ui_provided",
+    lib = "//platform/editor-ui-api:editor-ui",
 )
 
 jvm_provided_library(
-  name = "platform_java-guiForms-rt_provided",
-  lib = "//platform/forms_rt:java-guiForms-rt"
+    name = "platform_java-guiForms-rt_provided",
+    lib = "//platform/forms_rt:java-guiForms-rt",
 )
 
 jvm_provided_library(
-  name = "platform_projectModel_provided",
-  lib = "//platform/projectModel-api:projectModel"
+    name = "platform_projectModel_provided",
+    lib = "//platform/projectModel-api:projectModel",
 )
 
 jvm_provided_library(
-  name = "platform_analysis_provided",
-  lib = "//platform/analysis-api:analysis"
+    name = "platform_analysis_provided",
+    lib = "//platform/analysis-api:analysis",
 )
 
 jvm_provided_library(
-  name = "platform_core_provided",
-  lib = "//platform/core-api:core"
+    name = "platform_core_provided",
+    lib = "//platform/core-api:core",
 )
 
 jvm_provided_library(
-  name = "platform_ide_provided",
-  lib = "//platform/platform-api:ide"
+    name = "platform_ide_provided",
+    lib = "//platform/platform-api:ide",
 )
 
 jvm_provided_library(
-  name = "platform_core-ui_provided",
-  lib = "//platform/core-ui"
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
 )
 
 jvm_provided_library(
-  name = "platform_ide-impl_provided",
-  lib = "//platform/platform-impl:ide-impl"
+    name = "platform_ide-impl_provided",
+    lib = "//platform/platform-impl:ide-impl",
 )
 
 jvm_library(
-  name = "backend",
-  module_name = "intellij.xml.emmet.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib-provided",
-    "@lib//:jetbrains-annotations-provided",
-    "//platform/kernel/rpc.backend",
-    ":xml_emmet_provided",
-    ":platform_ide-core_provided",
-    ":platform_lang-impl_provided",
-    ":platform_util-ui_provided",
-    ":platform_editor-ui_provided",
-    ":platform_java-guiForms-rt_provided",
-    ":platform_projectModel_provided",
-    ":platform_analysis_provided",
-    ":platform_core_provided",
-    ":platform_ide_provided",
-    ":platform_core-ui_provided",
-    ":platform_ide-impl_provided",
-  ]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.emmet.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib-provided",
+        "@lib//:jetbrains-annotations-provided",
+        "//platform/kernel/rpc.backend",
+        ":xml_emmet_provided",
+        ":platform_ide-core_provided",
+        ":platform_lang-impl_provided",
+        ":platform_util-ui_provided",
+        ":platform_editor-ui_provided",
+        ":platform_java-guiForms-rt_provided",
+        ":platform_projectModel_provided",
+        ":platform_analysis_provided",
+        ":platform_core_provided",
+        ":platform_ide_provided",
+        ":platform_core-ui_provided",
+        ":platform_ide-impl_provided",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.xml.emmet.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "@lib//:kotlin-stdlib-provided",
-    "//xml/emmet",
-    "//xml/emmet:emmet_test_lib",
-    "@lib//:jetbrains-annotations-provided",
-    "//platform/ide-core",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/forms_rt:java-guiForms-rt",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-api:ide",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.emmet.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "@lib//:kotlin-stdlib-provided",
+        "//xml/emmet",
+        "//xml/emmet:emmet_test_lib",
+        "@lib//:jetbrains-annotations-provided",
+        "//platform/ide-core",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.xml.emmet.backend` end
 
 ### auto-generated section `iml intellij.xml.emmet.backend` start
-exports_files([
-  "intellij.xml.emmet.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.xml.emmet.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.xml.emmet.backend` end

@@ -1,35 +1,53 @@
-### auto-generated section `build intellij.driver.client` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.driver.client` start
+
 jvm_library(
-  name = "client",
-  module_name = "intellij.driver.client",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/remote-driver/model",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "client",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.client",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/remote-driver/model",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "client_test_lib",
-  testonly = True,
-  module_name = "intellij.driver.client",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":client",
-    "//platform/remote-driver/model:model_test_lib",
-  ]
+    name = "client_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.client",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":client",
+        "//platform/remote-driver/model:model_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.driver.client` end
 
 ### auto-generated section `iml intellij.driver.client` start
-exports_files([
-  "intellij.driver.client.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.driver.client.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.driver.client` end

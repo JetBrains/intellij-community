@@ -5,18 +5,18 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.json.CustomElementsContributionWithSource
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 
 abstract class CustomElementsContributionWithSourceSymbol<T : CustomElementsContributionWithSource> protected constructor(
   name: String,
   contribution: T,
   origin: CustomElementsJsonOrigin,
-) : CustomElementsContributionSymbol<T>(name, contribution, origin), PsiSourcedPolySymbol {
+) : CustomElementsContributionSymbol<T>(name, contribution, origin), PsiLinkedPolySymbol {
 
   private val cacheHolder = UserDataHolderBase()
 
-  override val source: PsiElement?
+  override val linkedElement: PsiElement?
     get() = contribution.source?.let { origin.resolveSourceSymbol(it, cacheHolder) }
 
   override fun createPointer(): Pointer<out CustomElementsContributionWithSourceSymbol<T>> =

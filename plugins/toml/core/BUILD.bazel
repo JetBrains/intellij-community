@@ -1,56 +1,76 @@
-### auto-generated section `build intellij.toml.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.toml.core` start
+
 jvm_library(
-  name = "core",
-  module_name = "intellij.toml.core",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/gen/**/*.kt", "src/gen/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/code-style-api:codeStyle",
-    "//platform/util/concurrency",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//platform/util:util-ui",
-    "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:kotlin-stdlib",
-    "//platform/lang-api:lang",
-  ]
+    name = "core",
+    srcs = glob(
+        [
+            "src/gen/**/*.kt",
+            "src/gen/**/*.java",
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.core",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/util:util-ui",
+        "//platform/code-style-impl:codeStyle-impl",
+        "@lib//:kotlin-stdlib",
+        "//platform/lang-api:lang",
+    ],
 )
 
 jvm_library(
-  name = "core_test_lib",
-  testonly = True,
-  module_name = "intellij.toml.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":core",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/code-style-impl:codeStyle-impl_test_lib",
-    "//platform/lang-api:lang_test_lib",
-  ]
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.core",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/code-style-impl:codeStyle-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.toml.core` end
 
 ### auto-generated section `iml intellij.toml.core` start
-exports_files([
-  "intellij.toml.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.toml.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.toml.core` end

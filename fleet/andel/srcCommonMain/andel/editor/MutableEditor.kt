@@ -18,11 +18,11 @@ import andel.undo.NavigationUndoGroupKey
 import andel.undo.UndoGroupKey
 import andel.undo.UndoLog
 import andel.undo.UndoScope
+import fleet.openmap.BoundedOpenMap
+import fleet.openmap.Key
+import fleet.openmap.MutableOpenMap
+import fleet.openmap.OpenMap
 import fleet.util.UID
-import fleet.util.openmap.BoundedOpenMap
-import fleet.util.openmap.Key
-import fleet.util.openmap.MutableOpenMap
-import fleet.util.openmap.OpenMap
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable
 

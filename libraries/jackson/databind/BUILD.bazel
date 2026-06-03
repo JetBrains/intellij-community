@@ -1,46 +1,62 @@
-### auto-generated section `build intellij.libraries.jackson.databind` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jackson.databind` start
+
 jvm_library(
-  name = "databind",
-  module_name = "intellij.libraries.jackson.databind",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:libraries-jackson-databind-jackson-databind",
-    "//libraries/jackson/annotations",
-  ],
-  runtime_deps = [
-    "@lib//:libraries-jackson-databind-jackson-databind",
-    "//libraries/jackson/annotations",
-    "//libraries/jackson/jackson",
-  ]
+    name = "databind",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jackson.databind",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-jackson-databind-jackson-databind",
+        "//libraries/jackson/annotations",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jackson-databind-jackson-databind",
+        "//libraries/jackson/annotations",
+        "//libraries/jackson/jackson",
+    ],
 )
 
 jvm_library(
-  name = "databind_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jackson.databind",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "@lib//:libraries-jackson-databind-jackson-databind",
-    "//libraries/jackson/annotations",
-    "//libraries/jackson/annotations:annotations_test_lib",
-  ],
-  runtime_deps = [
-    ":databind",
-    "//libraries/jackson/annotations:annotations_test_lib",
-    "//libraries/jackson/jackson:jackson_test_lib",
-  ]
+    name = "databind_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jackson.databind",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-jackson-databind-jackson-databind",
+        "//libraries/jackson/annotations",
+        "//libraries/jackson/annotations:annotations_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":databind",
+        "//libraries/jackson/annotations:annotations_test_lib",
+        "//libraries/jackson/jackson:jackson_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jackson.databind` end
 
 ### auto-generated section `iml intellij.libraries.jackson.databind` start
-exports_files([
-  "intellij.libraries.jackson.databind.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jackson.databind.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jackson.databind` end

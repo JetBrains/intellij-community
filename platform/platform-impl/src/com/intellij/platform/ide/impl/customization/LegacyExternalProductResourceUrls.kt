@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   init {
-    thisLogger().warn("""
+    thisLogger().error("""
       |The default implementation LegacyExternalProductResourceUrls is deprecated and will be removed in the future.
       |Provide your own implementation of ExternalProductResourceUrls using data which is currently stored in 
       |<idea.platform.prefix>ApplicationInfo.xml file and register it as the service override.

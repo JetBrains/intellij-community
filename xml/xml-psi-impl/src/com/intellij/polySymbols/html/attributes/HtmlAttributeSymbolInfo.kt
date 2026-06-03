@@ -6,7 +6,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.attributes.impl.HtmlAttributeEnumConstValueSymbol
 import com.intellij.polySymbols.html.attributes.impl.HtmlAttributeSymbolInfoImpl
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -84,7 +84,7 @@ interface HtmlAttributeSymbolInfo {
     fun createEnumConstValueSymbol(
       matchedName: String,
       source: PsiElement?,
-    ): PsiSourcedPolySymbol =
+    ): PsiLinkedPolySymbol =
       HtmlAttributeEnumConstValueSymbol(matchedName, source)
 
     @JvmStatic

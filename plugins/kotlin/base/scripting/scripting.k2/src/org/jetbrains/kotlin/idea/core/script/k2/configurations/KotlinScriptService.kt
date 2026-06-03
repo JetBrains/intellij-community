@@ -323,7 +323,7 @@ private suspend fun <A> topologicalSort(
         // Keeping track of the nodes that are being visited allows the algorithm to throw an exception in case of a cycle. The input should
         // never be cyclic, but this approach gives some additional safety in case of bugs.
         visiting.add(node)
-        node.dependencies().forEach { it.dependencies() }
+        node.dependencies().forEach { visit(it) }
         visiting.remove(node)
 
         visited.add(node)

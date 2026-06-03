@@ -1,12 +1,14 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.jvm.shared">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"

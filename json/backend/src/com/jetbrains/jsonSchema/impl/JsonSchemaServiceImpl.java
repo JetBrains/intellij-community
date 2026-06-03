@@ -85,7 +85,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     JsonSchemaEnabler.EXTENSION_POINT_NAME.addChangeListener(this::reset, this);
     JsonSchemaCatalogExclusion.EP_NAME.addChangeListener(this::reset, this);
 
-    myCatalogManager = new JsonSchemaCatalogManager(myProject);
+    myCatalogManager = new JsonSchemaCatalogManager(myProject, this);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
@@ -94,7 +94,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       myAnyChangeCount.incrementAndGet();
     });
     JsonSchemaVfsListener.startListening(project);
-    myCatalogManager.startUpdates();
+    myCatalogManager.startUpdates(this);
   }
 
   @Override

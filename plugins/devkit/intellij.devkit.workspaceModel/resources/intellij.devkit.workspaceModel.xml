@@ -1,5 +1,4 @@
-<idea-plugin package="com.intellij.devkit.workspaceModel">
-
+<idea-plugin>
   <dependencies>
     <module name="intellij.java.backend"/>
     <plugin id="com.intellij.copyright"/>

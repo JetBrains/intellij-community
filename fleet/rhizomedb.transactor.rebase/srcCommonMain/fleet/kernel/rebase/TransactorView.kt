@@ -40,7 +40,7 @@ import fleet.fastutil.ints.retainAll
 import fleet.kernel.DbSource
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.async.view
-import fleet.util.openmap.MutableOpenMap
+import fleet.openmap.MutableOpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow

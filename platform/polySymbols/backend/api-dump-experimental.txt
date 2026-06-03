@@ -51,9 +51,9 @@
 *f:com.intellij.polySymbols.search.PolySymbolUsageQueries
 - sf:INSTANCE:com.intellij.polySymbols.search.PolySymbolUsageQueries
 - f:buildPolySymbolUsagesQueries(com.intellij.polySymbols.PolySymbol,com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope):java.util.List
-*:com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider
-- *sf:Companion:com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider$Companion
+*:com.intellij.polySymbols.search.PsiLinkedPolySymbolProvider
+- *sf:Companion:com.intellij.polySymbols.search.PsiLinkedPolySymbolProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getSymbols(com.intellij.psi.PsiElement):java.util.List
-*f:com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider$Companion
+*f:com.intellij.polySymbols.search.PsiLinkedPolySymbolProvider$Companion
 - f:getAllSymbols(com.intellij.psi.PsiElement):java.util.Collection

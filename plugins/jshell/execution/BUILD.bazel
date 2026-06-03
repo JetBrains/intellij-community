@@ -1,40 +1,52 @@
-### auto-generated section `local-libs` start
 load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `local-libs` start
 java_import(
-  name = "java-jshell-execution-jshell-frontend",
-  jars = ["jshell-frontend.jar"],
-  visibility = ["//visibility:public"]
+    name = "java-jshell-execution-jshell-frontend",
+    jars = ["jshell-frontend.jar"],
+    visibility = ["//visibility:public"],
 )
 
-exports_files([
-  "jshell-frontend.jar",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "jshell-frontend.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `local-libs` end
 
 ### auto-generated section `build intellij.java.jshell.execution` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "execution",
-  module_name = "intellij.java.jshell.execution",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"]
+    name = "execution",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.execution",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
 )
 
 jvm_library(
-  name = "execution_test_lib",
-  testonly = True,
-  module_name = "intellij.java.jshell.execution",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":execution"]
+    name = "execution_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.execution",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":execution"],
 )
 ### auto-generated section `build intellij.java.jshell.execution` end
 
 ### auto-generated section `iml intellij.java.jshell.execution` start
-exports_files([
-  "intellij.java.jshell.execution.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.jshell.execution.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.jshell.execution` end

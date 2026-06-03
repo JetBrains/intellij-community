@@ -75,6 +75,12 @@ object PluginXmlConst {
 
   const val ACTIONS_ELEM: String = "actions"
   const val ACTIONS_RESOURCE_BUNDLE_ATTR: String = "resource-bundle"
+  const val ACTION_ELEM: String = "action"
+  const val ACTION_GROUP_ELEM: String = "group"
+  const val ACTION_GROUP_ID_ATTR: String = "id"
+  const val ACTION_OVERRIDES_ATTR: String = "overrides"
+  const val ADD_TO_GROUP_ELEM: String = "add-to-group"
+  const val ADD_TO_GROUP_GROUP_ID_ATTR: String = "group-id"
 
   const val APPLICATION_LISTENERS_ELEM: String = "applicationListeners"
   const val PROJECT_LISTENERS_ELEM: String = "projectListeners"

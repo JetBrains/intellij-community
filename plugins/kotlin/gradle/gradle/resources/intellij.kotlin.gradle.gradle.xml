@@ -1,11 +1,12 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradle">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
-    <!-- endregion -->
+    <module name="intellij.java.execution.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.gradleModelFacade"

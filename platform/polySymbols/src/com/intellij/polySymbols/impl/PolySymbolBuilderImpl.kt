@@ -180,7 +180,7 @@ internal class PolySymbolBuilderImpl(
         patternBuilder = patternBuilder ?: error("pattern was not set on PolySymbolBuilder in PATTERN mode"),
         psiContextGetter = psiContextGetter,
       )
-      Mode.LINK_WITH_PSI -> BuiltPsiSourcedPolySymbol(
+      Mode.LINK_WITH_PSI -> BuiltPsiLinkedPolySymbol(
         config, source, initialScope,
         sourceGetter = sourceGetter ?: error("source was not set on PolySymbolBuilder in LINK_WITH_PSI mode"),
       )

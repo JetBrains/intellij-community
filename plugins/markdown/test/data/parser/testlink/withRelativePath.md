@@ -1,0 +1,1 @@
+[@test] ../imgs/img.png

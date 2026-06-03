@@ -1,31 +1,43 @@
-### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` start
+
 jvm_library(
-  name = "jvm-native-trusted-roots",
-  module_name = "intellij.libraries.jvm.native.trusted.roots",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:jvm-native-trusted-roots"],
-  runtime_deps = ["@lib//:jvm-native-trusted-roots"]
+    name = "jvm-native-trusted-roots",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jvm.native.trusted.roots",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jvm-native-trusted-roots"],
+    runtime_deps = ["@lib//:jvm-native-trusted-roots"],
 )
 
 jvm_library(
-  name = "jvm-native-trusted-roots_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jvm.native.trusted.roots",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:jvm-native-trusted-roots"],
-  runtime_deps = [":jvm-native-trusted-roots"]
+    name = "jvm-native-trusted-roots_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jvm.native.trusted.roots",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jvm-native-trusted-roots"],
+    runtime_deps = [":jvm-native-trusted-roots"],
 )
 ### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end
 
 ### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` start
-exports_files([
-  "intellij.libraries.jvm.native.trusted.roots.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jvm.native.trusted.roots.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` end

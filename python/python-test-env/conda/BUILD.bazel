@@ -1,73 +1,91 @@
-### auto-generated section `build intellij.python.test.env.conda` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.test.env.conda` start
+
 jvm_library(
-  name = "conda",
-  module_name = "intellij.python.test.env.conda",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//python/python-test-env/core",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/util",
-    "//python:python-community-impl",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/execution",
-    "//platform/analysis-api:analysis",
-    "//python/python-exec-service:community-execService",
-  ]
+    name = "conda",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.test.env.conda",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-test-env/core",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util",
+        "//python:python-community-impl",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/execution",
+        "//platform/analysis-api:analysis",
+        "//python/python-exec-service:community-execService",
+    ],
 )
 
 jvm_library(
-  name = "conda_test_lib",
-  testonly = True,
-  module_name = "intellij.python.test.env.conda",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//python/python-test-env/core",
-    "//python/python-test-env/core:core_test_lib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//python:python-community-impl",
-    "//python:python-community-impl_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/execution",
-    "//platform/execution:execution_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//python/python-exec-service:community-execService",
-    "//python/python-exec-service:community-execService_test_lib",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-  ],
-  runtime_deps = [":conda"]
+    name = "conda_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.test.env.conda",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":conda"],
+    deps = [
+        # do not sort,
+        "//python/python-test-env/core",
+        "//python/python-test-env/core:core_test_lib",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//python/python-exec-service:community-execService",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//python/python-sdk:sdk",
+        "//python/python-sdk:sdk_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.test.env.conda` end
 
 ### auto-generated section `iml intellij.python.test.env.conda` start
-exports_files([
-  "intellij.python.test.env.conda.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.test.env.conda.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.test.env.conda` end
 
 ### auto-generated section `test intellij.python.test.env.conda` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "conda_test",
-  runtime_deps = [":conda_test_lib"]
+    name = "conda_test",
+    runtime_deps = [":conda_test_lib"],
 )
 ### auto-generated section `test intellij.python.test.env.conda` end

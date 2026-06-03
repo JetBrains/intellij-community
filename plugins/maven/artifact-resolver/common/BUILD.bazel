@@ -1,31 +1,46 @@
-### auto-generated section `build intellij.maven.artifactResolver.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.maven.artifactResolver.common` start
+
 jvm_library(
-  name = "common",
-  module_name = "intellij.maven.artifactResolver.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"]
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.artifactResolver.common",
+    visibility = ["//visibility:public"],
+    deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "intellij.maven.artifactResolver.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":common",
-    "@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.artifactResolver.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided",
+    ],
 )
 ### auto-generated section `build intellij.maven.artifactResolver.common` end
 
 ### auto-generated section `iml intellij.maven.artifactResolver.common` start
-exports_files([
-  "intellij.maven.artifactResolver.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.maven.artifactResolver.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.maven.artifactResolver.common` end

@@ -1,58 +1,76 @@
-### auto-generated section `build intellij.debugger.streams.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.debugger.streams.backend` start
+
 jvm_library(
-  name = "backend",
-  module_name = "intellij.debugger.streams.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/kernel/rpc.backend",
-    "//platform/kernel/shared:kernel",
-    "//platform/kernel/backend",
-    "//platform/platform-impl/rpc",
-    "//plugins/stream-debugger/shared",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/xdebugger-impl:debugger-impl",
-    "//platform/xdebugger-api:debugger",
-    "//plugins/stream-debugger/core",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/xdebugger-impl/rpc",
-    "//fleet/rhizomedb",
-  ]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/shared:kernel",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//plugins/stream-debugger/shared",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/xdebugger-api:debugger",
+        "//plugins/stream-debugger/core",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/xdebugger-impl/rpc",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.debugger.streams.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/kernel/backend:backend_test_lib",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//plugins/stream-debugger/shared:shared_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "//platform/xdebugger-api:debugger_test_lib",
-    "//plugins/stream-debugger/core:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/xdebugger-impl/rpc:rpc_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//plugins/stream-debugger/shared:shared_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/xdebugger-impl:debugger-impl_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//plugins/stream-debugger/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/xdebugger-impl/rpc:rpc_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.debugger.streams.backend` end
 
 ### auto-generated section `iml intellij.debugger.streams.backend` start
-exports_files([
-  "intellij.debugger.streams.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.debugger.streams.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.debugger.streams.backend` end

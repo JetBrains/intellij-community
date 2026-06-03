@@ -21,8 +21,8 @@ import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
-import com.intellij.platform.lsp.impl.usages.LspSearchTarget
-import com.intellij.platform.lsp.impl.usages.LspUsageSearcher
+import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
+import com.intellij.platform.lsp.impl.features.usages.LspUsageSearcher
 import com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture

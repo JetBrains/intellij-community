@@ -1,5 +1,5 @@
-load("@rules_jvm//:jvm.bzl", "ResourceGroupInfo", "jvm_platform_transition")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_import")
+load("@rules_jvm//:jvm.bzl", "ResourceGroupInfo", "jvm_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", KOTLIN_TOOLCHAIN = "TOOLCHAIN_TYPE")
 load("//fleet/build/rules:haven_cli.bzl", "HAVEN_CLI_ATTR", "run_haven_cli")
 
@@ -46,7 +46,7 @@ def _fleet_plugin_services_resources_generate_impl(ctx):
         ResourceGroupInfo(files = [resources_output_dir], strip_prefix = resources_output_dir.path, add_prefix = ""),
         DefaultInfo(
             files = depset([resources_output_jar]),
-        )
+        ),
     ]
 
 _fleet_plugin_services_resources_generate = rule(
@@ -94,7 +94,6 @@ _fleet_plugin_services_resources_expose = rule(
         ),
     },
 )
-
 
 def fleet_plugin_services_resources(name, srcs, deps, module_name = None):
     generate_resources_name = name + "_generate"

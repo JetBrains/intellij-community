@@ -22,7 +22,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.polySymbols.impl.scaleToHeight
 import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -148,7 +148,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
   private fun wrapSymbolForDocumentation(symbol: PolySymbol?, location: PsiElement) =
     when (symbol) {
-      is PsiSourcedPolySymbol -> PsiSourcedCodeCompletionPolySymbolWithDocumentation(symbol, location)
+      is PsiLinkedPolySymbol -> PsiLinkedCodeCompletionPolySymbolWithDocumentation(symbol, location)
       is PolySymbol -> CodeCompletionPolySymbolWithDocumentation(symbol, location)
       else -> null
     }

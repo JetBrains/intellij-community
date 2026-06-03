@@ -12,7 +12,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.declarations.PolySymbolDeclaration
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
@@ -30,12 +30,12 @@ import com.intellij.refactoring.rename.api.RenameTarget
  * to recognize the symbol declaration for the specified code range and provide functionality
  * (documentation, find usages, rename, etc.).
  *
- * In contrast to [PsiSourcedPolySymbol], implementing this interface
+ * In contrast to [PsiLinkedPolySymbol], implementing this interface
  * does not link the symbol to the PSI element, so any usage or rename
  * searches for the [PsiElement] returned by the [sourceElement] will not
  * result in the symbol being recognized as a usage or rename target.
  *
- * @see [PsiSourcedPolySymbol]
+ * @see [PsiLinkedPolySymbol]
  *
  */
 interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {

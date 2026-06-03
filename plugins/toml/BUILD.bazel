@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.toml` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.toml` start
+
 jvm_library(
-  name = "toml",
-  module_name = "intellij.toml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "toml",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "toml_test_lib",
-  testonly = True,
-  module_name = "intellij.toml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":toml"]
+    name = "toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":toml"],
 )
 ### auto-generated section `build intellij.toml` end
 
 ### auto-generated section `iml intellij.toml` start
-exports_files([
-  "intellij.toml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.toml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.toml` end

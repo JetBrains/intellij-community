@@ -1,246 +1,264 @@
-### auto-generated section `build intellij.xml.emmet` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.xml.emmet` start
+
 jvm_provided_library(
-  name = "platform_core_provided",
-  lib = "//platform/core-api:core"
+    name = "platform_core_provided",
+    lib = "//platform/core-api:core",
 )
 
 jvm_provided_library(
-  name = "platform_analysis-impl_provided",
-  lib = "//platform/analysis-impl"
+    name = "platform_analysis-impl_provided",
+    lib = "//platform/analysis-impl",
 )
 
 jvm_provided_library(
-  name = "xml_psi_provided",
-  lib = "//xml/xml-psi-api:psi"
+    name = "xml_psi_provided",
+    lib = "//xml/xml-psi-api:psi",
 )
 
 jvm_provided_library(
-  name = "platform_lang-impl_provided",
-  lib = "//platform/lang-impl"
+    name = "platform_lang-impl_provided",
+    lib = "//platform/lang-impl",
 )
 
 jvm_provided_library(
-  name = "platform_projectModel_provided",
-  lib = "//platform/projectModel-api:projectModel"
+    name = "platform_projectModel_provided",
+    lib = "//platform/projectModel-api:projectModel",
 )
 
 jvm_provided_library(
-  name = "platform_editor-ui_provided",
-  lib = "//platform/editor-ui-api:editor-ui"
+    name = "platform_editor-ui_provided",
+    lib = "//platform/editor-ui-api:editor-ui",
 )
 
 jvm_provided_library(
-  name = "platform_codeStyle_provided",
-  lib = "//platform/code-style-api:codeStyle"
+    name = "platform_codeStyle_provided",
+    lib = "//platform/code-style-api:codeStyle",
 )
 
 jvm_provided_library(
-  name = "xml_psi-impl_provided",
-  lib = "//xml/xml-psi-impl:psi-impl"
+    name = "xml_psi-impl_provided",
+    lib = "//xml/xml-psi-impl:psi-impl",
 )
 
 jvm_provided_library(
-  name = "xml_parser_provided",
-  lib = "//xml/xml-parser:parser"
+    name = "xml_parser_provided",
+    lib = "//xml/xml-parser:parser",
 )
 
 jvm_provided_library(
-  name = "libraries_xerces_provided",
-  lib = "//libraries/xerces"
+    name = "libraries_xerces_provided",
+    lib = "//libraries/xerces",
 )
 
 jvm_provided_library(
-  name = "platform_analysis_provided",
-  lib = "//platform/analysis-api:analysis"
+    name = "platform_analysis_provided",
+    lib = "//platform/analysis-api:analysis",
 )
 
 jvm_provided_library(
-  name = "platform_core-impl_provided",
-  lib = "//platform/core-impl"
+    name = "platform_core-impl_provided",
+    lib = "//platform/core-impl",
 )
 
 jvm_provided_library(
-  name = "xml_ui-common_provided",
-  lib = "//xml/xml-ui-common:ui-common"
+    name = "xml_ui-common_provided",
+    lib = "//xml/xml-ui-common:ui-common",
 )
 
 jvm_provided_library(
-  name = "platform_ide-core_provided",
-  lib = "//platform/ide-core"
+    name = "platform_ide-core_provided",
+    lib = "//platform/ide-core",
 )
 
 jvm_provided_library(
-  name = "platform_ide-impl_provided",
-  lib = "//platform/platform-impl:ide-impl"
+    name = "platform_ide-impl_provided",
+    lib = "//platform/platform-impl:ide-impl",
 )
 
 jvm_provided_library(
-  name = "platform_editor-ex_provided",
-  lib = "//platform/editor-ui-ex:editor-ex"
+    name = "platform_editor-ex_provided",
+    lib = "//platform/editor-ui-ex:editor-ex",
 )
 
 jvm_provided_library(
-  name = "platform_lang_provided",
-  lib = "//platform/lang-api:lang"
+    name = "platform_lang_provided",
+    lib = "//platform/lang-api:lang",
 )
 
 jvm_provided_library(
-  name = "platform_core-ui_provided",
-  lib = "//platform/core-ui"
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
 )
 
 jvm_provided_library(
-  name = "platform_refactoring_provided",
-  lib = "//platform/refactoring"
+    name = "platform_refactoring_provided",
+    lib = "//platform/refactoring",
 )
 
 jvm_provided_library(
-  name = "platform_util-ui_provided",
-  lib = "//platform/util:util-ui"
+    name = "platform_util-ui_provided",
+    lib = "//platform/util:util-ui",
 )
 
 jvm_provided_library(
-  name = "platform_java-guiForms-rt_provided",
-  lib = "//platform/forms_rt:java-guiForms-rt"
+    name = "platform_java-guiForms-rt_provided",
+    lib = "//platform/forms_rt:java-guiForms-rt",
 )
 
 jvm_provided_library(
-  name = "platform_remote-topics_rpc-topics_provided",
-  lib = "//platform/remote-topics/shared:rpc-topics"
+    name = "platform_remote-topics_rpc-topics_provided",
+    lib = "//platform/remote-topics/shared:rpc-topics",
 )
 
 jvm_provided_library(
-  name = "platform_project_project_provided",
-  lib = "//platform/project/shared:project"
+    name = "platform_project_project_provided",
+    lib = "//platform/project/shared:project",
 )
 
 jvm_provided_library(
-  name = "libraries_kotlinx_serialization_core_provided",
-  lib = "//libraries/kotlinx/serialization/core"
+    name = "libraries_kotlinx_serialization_core_provided",
+    lib = "//libraries/kotlinx/serialization/core",
 )
 
 jvm_provided_library(
-  name = "fleet_rpc_provided",
-  lib = "//fleet/rpc"
+    name = "fleet_rpc_provided",
+    lib = "//fleet/rpc",
 )
 
 jvm_provided_library(
-  name = "platform_kernel_rpc_provided",
-  lib = "//platform/kernel/rpc"
+    name = "platform_kernel_rpc_provided",
+    lib = "//platform/kernel/rpc",
 )
 
 jvm_library(
-  name = "emmet",
-  module_name = "intellij.xml.emmet",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/kernel/shared:kernel",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib-provided",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    ":platform_core_provided",
-    ":platform_analysis-impl_provided",
-    ":xml_psi_provided",
-    ":platform_lang-impl_provided",
-    ":platform_projectModel_provided",
-    ":platform_editor-ui_provided",
-    ":platform_codeStyle_provided",
-    ":xml_psi-impl_provided",
-    ":xml_parser_provided",
-    ":libraries_xerces_provided",
-    ":platform_analysis_provided",
-    ":platform_core-impl_provided",
-    ":xml_ui-common_provided",
-    ":platform_ide-core_provided",
-    ":platform_ide-impl_provided",
-    ":platform_editor-ex_provided",
-    ":platform_lang_provided",
-    ":platform_core-ui_provided",
-    ":platform_refactoring_provided",
-    ":platform_util-ui_provided",
-    ":platform_java-guiForms-rt_provided",
-    ":platform_remote-topics_rpc-topics_provided",
-    ":platform_project_project_provided",
-    ":libraries_kotlinx_serialization_core_provided",
-    ":fleet_rpc_provided",
-    ":platform_kernel_rpc_provided",
-  ]
+    name = "emmet",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.emmet",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/kernel/shared:kernel",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib-provided",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        ":platform_core_provided",
+        ":platform_analysis-impl_provided",
+        ":xml_psi_provided",
+        ":platform_lang-impl_provided",
+        ":platform_projectModel_provided",
+        ":platform_editor-ui_provided",
+        ":platform_codeStyle_provided",
+        ":xml_psi-impl_provided",
+        ":xml_parser_provided",
+        ":libraries_xerces_provided",
+        ":platform_analysis_provided",
+        ":platform_core-impl_provided",
+        ":xml_ui-common_provided",
+        ":platform_ide-core_provided",
+        ":platform_ide-impl_provided",
+        ":platform_editor-ex_provided",
+        ":platform_lang_provided",
+        ":platform_core-ui_provided",
+        ":platform_refactoring_provided",
+        ":platform_util-ui_provided",
+        ":platform_java-guiForms-rt_provided",
+        ":platform_remote-topics_rpc-topics_provided",
+        ":platform_project_project_provided",
+        ":libraries_kotlinx_serialization_core_provided",
+        ":fleet_rpc_provided",
+        ":platform_kernel_rpc_provided",
+    ],
 )
 
 jvm_library(
-  name = "emmet_test_lib",
-  testonly = True,
-  module_name = "intellij.xml.emmet",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":emmet",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/analysis-impl",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//xml/xml-psi-api:psi",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "@lib//:kotlin-stdlib-provided",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/code-style-api:codeStyle",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//xml/xml-psi-impl:psi-impl",
-    "//xml/xml-psi-impl:psi-impl_test_lib",
-    "//xml/xml-parser:parser",
-    "//xml/xml-parser:parser_test_lib",
-    "//libraries/xerces",
-    "//libraries/xerces:xerces_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//xml/xml-ui-common:ui-common",
-    "//xml/xml-ui-common:ui-common_test_lib",
-    "//platform/ide-core",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/editor-ui-ex:editor-ex",
-    "//platform/editor-ui-ex:editor-ex_test_lib",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/refactoring",
-    "//platform/refactoring:refactoring_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//platform/forms_rt:java-guiForms-rt",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/remote-topics/shared:rpc-topics",
-    "//platform/remote-topics/shared:rpc-topics_test_lib",
-    "//platform/project/shared:project",
-    "//platform/project/shared:project_test_lib",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//fleet/rpc",
-    "//fleet/rpc:rpc_test_lib",
-    "//platform/kernel/rpc",
-    "//platform/kernel/rpc:rpc_test_lib",
-  ]
+    name = "emmet_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.emmet",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":emmet",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//xml/xml-psi-api:psi",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "@lib//:kotlin-stdlib-provided",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//xml/xml-psi-impl:psi-impl",
+        "//xml/xml-psi-impl:psi-impl_test_lib",
+        "//xml/xml-parser:parser",
+        "//xml/xml-parser:parser_test_lib",
+        "//libraries/xerces",
+        "//libraries/xerces:xerces_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//xml/xml-ui-common:ui-common",
+        "//xml/xml-ui-common:ui-common_test_lib",
+        "//platform/ide-core",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//platform/project/shared:project",
+        "//platform/project/shared:project_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//fleet/rpc",
+        "//fleet/rpc:rpc_test_lib",
+        "//platform/kernel/rpc",
+        "//platform/kernel/rpc:rpc_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.xml.emmet` end
 
 ### auto-generated section `iml intellij.xml.emmet` start
-exports_files([
-  "intellij.xml.emmet.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.xml.emmet.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.xml.emmet` end

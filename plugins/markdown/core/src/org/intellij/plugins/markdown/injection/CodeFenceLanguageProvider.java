@@ -24,13 +24,23 @@ public interface CodeFenceLanguageProvider {
   /**
    * Implement this method to provide custom rule for selecting {@link Language} to inject into the code fences
    * @param infoString the string with "info string" of the code fence. Not trimmed nor lowercased.
-   * @return Language which should be injected into the code fence with the given infoString.
+   * @return Language that should be injected into the code fence with the given infoString.
    *         No custom injection rule is applied if null is returned.
    * @see <a href="http://spec.commonmark.org/0.27/#info-string">Info String</a>
    * @see <a href="http://spec.commonmark.org/0.27/#code-fence">Code Fence</a>
    */
   @Nullable
   Language getLanguageByInfoString(@NotNull String infoString);
+
+  /**
+   * Implement this method to provide additional information about the language to inject into the code fences.
+   * For example, the language can be `TextMateLanguage.LANGUAGE` and extension can be `js`.
+   * Providing this information will result in better highlighting.
+   */
+  @Nullable
+  default String getExtensionByInfoString(@NotNull String infoString) {
+    return null;
+  }
 
   @Experimental
   @Internal

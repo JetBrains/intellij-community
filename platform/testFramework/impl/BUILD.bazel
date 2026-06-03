@@ -1,40 +1,58 @@
-### auto-generated section `build intellij.platform.testFramework.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.testFramework.impl` start
+
 jvm_library(
-  name = "impl",
-  module_name = "intellij.platform.testFramework.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//jps/model-api:model",
-    "//platform/testFramework",
-    "//libraries/asm",
-  ]
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.testFramework.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//jps/model-api:model",
+        "//platform/testFramework",
+        "//libraries/asm",
+    ],
 )
 
 jvm_library(
-  name = "impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.testFramework.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":impl",
-    "//platform/core-api:core_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/testFramework:testFramework_test_lib",
-    "//libraries/asm:asm_test_lib",
-  ]
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.testFramework.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//platform/core-api:core_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//libraries/asm:asm_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.testFramework.impl` end
 
 ### auto-generated section `iml intellij.platform.testFramework.impl` start
-exports_files([
-  "intellij.platform.testFramework.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.testFramework.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.testFramework.impl` end

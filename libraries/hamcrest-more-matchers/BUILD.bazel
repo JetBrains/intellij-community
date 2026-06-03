@@ -1,36 +1,50 @@
-### auto-generated section `build intellij.libraries.hamcrest.more.matchers` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.hamcrest.more.matchers` start
+
 jvm_library(
-  name = "hamcrest-more-matchers",
-  module_name = "intellij.libraries.hamcrest.more.matchers",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
-  runtime_deps = [
-    "//libraries/hamcrest",
-    "@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
-  ]
+    name = "hamcrest-more-matchers",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.hamcrest.more.matchers",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/hamcrest",
+        "@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
+    ],
 )
 
 jvm_library(
-  name = "hamcrest-more-matchers_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.hamcrest.more.matchers",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
-  runtime_deps = [
-    ":hamcrest-more-matchers",
-    "//libraries/hamcrest:hamcrest_test_lib",
-  ]
+    name = "hamcrest-more-matchers_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.hamcrest.more.matchers",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
+    runtime_deps = [
+        # do not sort,
+        ":hamcrest-more-matchers",
+        "//libraries/hamcrest:hamcrest_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.hamcrest.more.matchers` end
 
 ### auto-generated section `iml intellij.libraries.hamcrest.more.matchers` start
-exports_files([
-  "intellij.libraries.hamcrest.more.matchers.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.hamcrest.more.matchers.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.hamcrest.more.matchers` end

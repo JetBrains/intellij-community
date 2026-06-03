@@ -1,57 +1,76 @@
-### auto-generated section `build intellij.platform.vcs.log` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.vcs.log` start
+
 jvm_library(
-  name = "vcs-log",
-  module_name = "intellij.platform.vcs.log",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/util-rt",
-    "//platform/vcs-log/graph-api:vcs-log-graph",
-    "//platform/core-api:core",
-    "//platform/vcs-api/vcs-api-core:vcs-core",
-    "//platform/util",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/vcs-api:vcs",
-    "@lib//:kotlin-stdlib",
-    "//platform/ide-core",
-    "//platform/core-ui",
-    "//platform/diff-api:diff",
-  ],
-  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"]
+    name = "vcs-log",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.log",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
+    deps = [
+        # do not sort,
+        "//platform/util-rt",
+        "//platform/vcs-log/graph-api:vcs-log-graph",
+        "//platform/core-api:core",
+        "//platform/vcs-api/vcs-api-core:vcs-core",
+        "//platform/util",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/vcs-api:vcs",
+        "@lib//:kotlin-stdlib",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "//platform/diff-api:diff",
+    ],
 )
 
 jvm_library(
-  name = "vcs-log_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.vcs.log",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/vcs-log/graph-api:vcs-log-graph",
-    "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
-  ],
-  runtime_deps = [
-    ":vcs-log",
-    "//platform/util-rt:util-rt_test_lib",
-    "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/diff-api:diff_test_lib",
-  ]
+    name = "vcs-log_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.log",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/vcs-log/graph-api:vcs-log-graph",
+        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":vcs-log",
+        "//platform/util-rt:util-rt_test_lib",
+        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/diff-api:diff_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.vcs.log` end
 
 ### auto-generated section `iml intellij.platform.vcs.log` start
-exports_files([
-  "intellij.platform.vcs.log.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.vcs.log.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.vcs.log` end

@@ -1,0 +1,64 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build fleet.openmap.test` start
+
+jvm_library(
+    name = "test",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "fleet.openmap.test",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "test_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "srcCommonTest/**/*.kt",
+            "srcCommonTest/**/*.java",
+            "srcCommonTest/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "fleet.openmap.test",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":test"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/test-runtime",
+        "//fleet/test-runtime:test-runtime_test_lib",
+        "//fleet/openmap",
+        "//fleet/openmap:openmap_test_lib",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "//fleet/util/serialization",
+        "//fleet/util/serialization:serialization_test_lib",
+    ],
+)
+### auto-generated section `build fleet.openmap.test` end
+
+### auto-generated section `iml fleet.openmap.test` start
+exports_files(
+    [
+        "fleet.openmap.test.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.openmap.test` end
+
+### auto-generated section `test fleet.openmap.test` start
+
+jps_test(
+    name = "test_test",
+    runtime_deps = [":test_test_lib"],
+)
+### auto-generated section `test fleet.openmap.test` end

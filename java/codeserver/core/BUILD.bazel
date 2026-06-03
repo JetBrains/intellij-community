@@ -1,68 +1,86 @@
-### auto-generated section `build intellij.java.codeserver.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.codeserver.core` start
+
 jvm_library(
-  name = "core",
-  module_name = "intellij.java.codeserver.core",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//libraries/stream",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//jps/model-api:model",
-    "//platform/util",
-    "//platform/util/multiplatform",
-    "//platform/util/base",
-    "//platform/projectModel-api:projectModel",
-    "//platform/indexing-api:indexing",
-    "//platform/workspace/jps",
-    "//platform/backend/workspace",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-psi-api:psi",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-syntax:syntax",
-    "//platform/workspace/storage",
-    "//java/java-indexing-api:indexing",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "core",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.codeserver.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//libraries/stream",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//jps/model-api:model",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "//platform/projectModel-api:projectModel",
+        "//platform/indexing-api:indexing",
+        "//platform/workspace/jps",
+        "//platform/backend/workspace",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-syntax:syntax",
+        "//platform/workspace/storage",
+        "//java/java-indexing-api:indexing",
+    ],
 )
 
 jvm_library(
-  name = "core_test_lib",
-  testonly = True,
-  module_name = "intellij.java.codeserver.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":core",
-    "//libraries/stream:stream_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/workspace/jps:jps_test_lib",
-    "//platform/backend/workspace:workspace_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-syntax:syntax_test_lib",
-    "//platform/workspace/storage:storage_test_lib",
-    "//java/java-indexing-api:indexing_test_lib",
-    "//platform/backend:backend_test_lib",
-  ]
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.codeserver.core",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//libraries/stream:stream_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-syntax:syntax_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//java/java-indexing-api:indexing_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.codeserver.core` end
 
 ### auto-generated section `iml intellij.java.codeserver.core` start
-exports_files([
-  "intellij.java.codeserver.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.codeserver.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.codeserver.core` end

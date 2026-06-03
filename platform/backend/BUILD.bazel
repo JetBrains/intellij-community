@@ -1,27 +1,39 @@
-### auto-generated section `build intellij.platform.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.backend` start
+
 jvm_library(
-  name = "backend",
-  module_name = "intellij.platform.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "backend",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":backend"]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":backend"],
 )
 ### auto-generated section `build intellij.platform.backend` end
 
 ### auto-generated section `iml intellij.platform.backend` start
-exports_files([
-  "intellij.platform.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.backend` end

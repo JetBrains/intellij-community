@@ -1,40 +1,57 @@
-### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
+
 jvm_library(
-  name = "codeOptimizer",
-  module_name = "intellij.platform.buildScripts.codeOptimizer",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "codeOptimizer",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.codeOptimizer",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "codeOptimizer_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.buildScripts.codeOptimizer",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:platform-build_scripts-code_optimizer-proguard",
-  ],
-  runtime_deps = [":codeOptimizer"]
+    name = "codeOptimizer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.codeOptimizer",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":codeOptimizer"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:platform-build_scripts-code_optimizer-proguard",
+    ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.codeOptimizer` start
-exports_files([
-  "intellij.platform.buildScripts.codeOptimizer.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.buildScripts.codeOptimizer.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.buildScripts.codeOptimizer` end
 
 ### auto-generated section `test intellij.platform.buildScripts.codeOptimizer` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "codeOptimizer_test",
-  runtime_deps = [":codeOptimizer_test_lib"]
+    name = "codeOptimizer_test",
+    runtime_deps = [":codeOptimizer_test_lib"],
 )
 ### auto-generated section `test intellij.platform.buildScripts.codeOptimizer` end

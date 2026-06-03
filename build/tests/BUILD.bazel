@@ -1,56 +1,71 @@
-### auto-generated section `build intellij.idea.community.build.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.idea.community.build.tests` start
+
 jvm_library(
-  name = "tests",
-  module_name = "intellij.idea.community.build.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.community.build.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "tests_test_lib",
-  testonly = True,
-  module_name = "intellij.idea.community.build.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  deps = [
-    "//build",
-    "//build:build_test_lib",
-    "//platform/build-scripts/testFramework",
-    "//platform/build-scripts/testFramework:testFramework_test_lib",
-    "@lib//:kotlin-stdlib",
-    "@lib//:junit5",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/build-scripts/downloader",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-    "//images:images-tests",
-    "//images:images-tests_test_lib",
-    "//RegExpSupport:regexp-tests",
-    "//RegExpSupport:regexp-tests_test_lib",
-    "//platform/xdebugger-impl:debugger-impl-tests",
-    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
-  ],
-  runtime_deps = [":tests"]
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.community.build.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":tests"],
+    deps = [
+        # do not sort,
+        "//build",
+        "//build:build_test_lib",
+        "//platform/build-scripts/testFramework",
+        "//platform/build-scripts/testFramework:testFramework_test_lib",
+        "@lib//:kotlin-stdlib",
+        "@lib//:junit5",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/build-scripts/downloader",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+        "//images:images-tests",
+        "//images:images-tests_test_lib",
+        "//RegExpSupport:regexp-tests",
+        "//RegExpSupport:regexp-tests_test_lib",
+        "//platform/xdebugger-impl:debugger-impl-tests",
+        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.idea.community.build.tests` end
 
 ### auto-generated section `iml intellij.idea.community.build.tests` start
-exports_files([
-  "intellij.idea.community.build.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.idea.community.build.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.idea.community.build.tests` end
 
 ### auto-generated section `test intellij.idea.community.build.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests_test",
-  runtime_deps = [":tests_test_lib"]
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
 )
 ### auto-generated section `test intellij.idea.community.build.tests` end

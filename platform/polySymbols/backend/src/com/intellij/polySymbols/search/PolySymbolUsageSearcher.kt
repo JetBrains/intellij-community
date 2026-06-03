@@ -34,6 +34,7 @@ internal class PolySymbolUsageSearcher : UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> =
     parameters.target
       .let { it as? PolySymbol ?: (it as? PolySymbolSearchTarget)?.symbol }
+      ?.also { checkPsiLinkedPolySymbolHostClasses(it) }
       ?.let { PolySymbolUsageQueries.buildPolySymbolUsagesQueries(it, parameters.project, parameters.searchScope) }
     ?: emptyList()
 
@@ -63,7 +64,7 @@ object PolySymbolUsageQueries {
   private fun findReferencesToSymbol(symbol: PolySymbol, leafOccurrence: LeafOccurrence): Collection<PsiUsage> =
     service<PsiSymbolReferenceService>().run {
       for ((element, offsetInElement) in walkUp(leafOccurrence.start, leafOccurrence.offsetInStart, leafOccurrence.scope)) {
-        val psiSource = (symbol as? PsiSourcedPolySymbol)?.source
+        val psiSource = (symbol as? PsiLinkedPolySymbol)?.linkedElement
 
         if (psiSource == element) {
           val nameIdentifier = (element as? PsiNameIdentifierOwner)?.nameIdentifier

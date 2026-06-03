@@ -1,68 +1,86 @@
-### auto-generated section `build intellij.platform.problemsView.shared` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.problemsView.shared` start
+
 jvm_library(
-  name = "shared",
-  module_name = "intellij.platform.problemsView.shared",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/kernel/shared:kernel",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/core-ui",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//platform/platform-impl:ide-impl",
-    "//platform/projectModel-api:projectModel",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-api:lang",
-    "//fleet/rpc",
-    "//platform/kernel/rpc",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/util/coroutines",
-    "//platform/project/shared:project",
-    "//platform/platform-impl/rpc",
-    "//platform/lang-impl",
-  ]
+    name = "shared",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemsView.shared",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/kernel/shared:kernel",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/analysis-api:analysis",
+        "//platform/lang-api:lang",
+        "//fleet/rpc",
+        "//platform/kernel/rpc",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/util/coroutines",
+        "//platform/project/shared:project",
+        "//platform/platform-impl/rpc",
+        "//platform/lang-impl",
+    ],
 )
 
 jvm_library(
-  name = "shared_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.problemsView.shared",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":shared",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//fleet/rpc:rpc_test_lib",
-    "//platform/kernel/rpc:rpc_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-  ]
+    name = "shared_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemsView.shared",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":shared",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.problemsView.shared` end
 
 ### auto-generated section `iml intellij.platform.problemsView.shared` start
-exports_files([
-  "intellij.platform.problemsView.shared.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.problemsView.shared.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.problemsView.shared` end

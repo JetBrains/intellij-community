@@ -85,11 +85,12 @@ internal class KotlinBuildToolBooleanOverrideFusMetric(metric: String) : Boolean
  * 
  * @param metric The name of the metric
  * @param aggregationStep The aggregation step to use for this metric
+ * @param anonymizeByRounding Use [EventFields.RoundedLong] for anonymization. See FUS-7825
  */
-internal open class LongFusMetric(metric: String, aggregationStep: KotlinBuildToolFusFlowAggregationStep<Long>) :
+internal open class LongFusMetric(metric: String, aggregationStep: KotlinBuildToolFusFlowAggregationStep<Long>, anonymizeByRounding: Boolean = false) :
     KotlinBuildToolFusMetric<Long>(
         metric,
-        eventField = EventFields.Long(metric.lowercase()),
+        eventField = if (anonymizeByRounding) EventFields.RoundedLong(metric.lowercase()) else EventFields.Long(metric.lowercase()),
         validationStep = KotlinBuildToolLongFlowValidationStep(),
         aggregationStep = aggregationStep
     )
@@ -108,8 +109,13 @@ internal class KotlinBuildToolLongOverrideFusMetric(metric: String) :
  * The final value will be the sum of all valid values.
  * 
  * @param metric The name of the metric
+ * @param anonymizeByRounding Use [EventFields.RoundedLong] for anonymization. See FUS-7825
  */
-internal class KotlinBuildToolLongSumFusMetric(metric: String) : LongFusMetric(metric, aggregationStep = SumLongValueAggregationStep())
+internal class KotlinBuildToolLongSumFusMetric(metric: String, anonymizeByRounding: Boolean = false) : LongFusMetric(
+    metric,
+    aggregationStep = SumLongValueAggregationStep(),
+    anonymizeByRounding = anonymizeByRounding,
+)
 
 /**
  * Long FUS metric that uses sum aggregation and then anonymizes the result.

@@ -1,54 +1,72 @@
-### auto-generated section `build intellij.platform.buildScripts.downloader` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.buildScripts.downloader` start
+
 jvm_library(
-  name = "downloader",
-  module_name = "intellij.platform.buildScripts.downloader",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//libraries/commons/compress",
-    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
-    "@lib//:zstd-jni",
-    "//libraries/commons/io",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//libraries/opentelemetry-extension-kotlin",
-    "//libraries/hash4j",
-    "//libraries/ktor/client",
-  ],
-  runtime_deps = ["//libraries/commons/lang3"]
+    name = "downloader",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.downloader",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/commons/lang3"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//libraries/commons/compress",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+        "@lib//:zstd-jni",
+        "//libraries/commons/io",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//libraries/hash4j",
+        "//libraries/ktor/client",
+    ],
 )
 
 jvm_library(
-  name = "downloader_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.buildScripts.downloader",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":downloader",
-    "//libraries/commons/compress:compress_test_lib",
-    "//libraries/commons/lang3:lang3_test_lib",
-    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
-    "//libraries/commons/io:io_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-    "//libraries/hash4j:hash4j_test_lib",
-    "//libraries/ktor/client:client_test_lib",
-  ]
+    name = "downloader_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.downloader",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":downloader",
+        "//libraries/commons/compress:compress_test_lib",
+        "//libraries/commons/lang3:lang3_test_lib",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
+        "//libraries/commons/io:io_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
+        "//libraries/hash4j:hash4j_test_lib",
+        "//libraries/ktor/client:client_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.downloader` start
-exports_files([
-  "intellij.platform.buildScripts.downloader.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.buildScripts.downloader.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.buildScripts.downloader` end

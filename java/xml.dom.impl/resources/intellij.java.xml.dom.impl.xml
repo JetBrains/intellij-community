@@ -1,0 +1,41 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin visibility="public">
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.jsp.spi"/>
+    <module name="intellij.xml.dom.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
+                        serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"
+                        overrides="true"/>
+    <completion.contributor language="XML" id="basic2ClassName" order="after xml, before javaClassReference"
+                            implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator"/>
+    <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomUiControlProvider"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.CanonicalPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassValueConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassArrayConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
+    <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
+  </extensions>
+  <actions>
+    <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction">
+      <add-to-group group-id="Internal.Java" anchor="after" relative-to-action="GenerateVisitorByHierarchy"/>
+    </action>
+  </actions>
+</idea-plugin>

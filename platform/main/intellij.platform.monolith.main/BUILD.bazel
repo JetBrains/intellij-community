@@ -1,37 +1,49 @@
-### auto-generated section `build intellij.platform.monolith.main` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.monolith.main` start
+
 jvm_library(
-  name = "monolith-main",
-  module_name = "intellij.platform.monolith.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//platform/main/intellij.platform.frontend.main:frontend-main",
-    "//platform/main/intellij.platform.backend.main:backend-main",
-    "//platform/monolith",
-    "//platform/navbar/monolith",
-  ]
+    name = "monolith-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.monolith.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.frontend.main:frontend-main",
+        "//platform/main/intellij.platform.backend.main:backend-main",
+        "//platform/monolith",
+        "//platform/navbar/monolith",
+    ],
 )
 
 jvm_library(
-  name = "monolith-main_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.monolith.main",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":monolith-main",
-    "//platform/main/intellij.platform.frontend.main:frontend-main_test_lib",
-    "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
-    "//platform/monolith:monolith_test_lib",
-    "//platform/navbar/monolith:monolith_test_lib",
-  ]
+    name = "monolith-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.monolith.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":monolith-main",
+        "//platform/main/intellij.platform.frontend.main:frontend-main_test_lib",
+        "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
+        "//platform/monolith:monolith_test_lib",
+        "//platform/navbar/monolith:monolith_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.monolith.main` end
 
 ### auto-generated section `iml intellij.platform.monolith.main` start
-exports_files([
-  "intellij.platform.monolith.main.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.monolith.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.monolith.main` end

@@ -1,83 +1,114 @@
-### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` start
+
 jvm_library(
-  name = "rt",
-  module_name = "intellij.platform.diagnostic.telemetry.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//libraries/opentelemetry",
-    "//platform/util-rt",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.diagnostic.telemetry.rt",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/opentelemetry",
+        "//platform/util-rt",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "rt_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.diagnostic.telemetry.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":rt",
-    "@lib//:kotlin-stdlib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "@lib//:junit5",
-  ]
+    name = "rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.diagnostic.telemetry.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rt",
+        "@lib//:kotlin-stdlib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "@lib//:junit5",
+    ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt` start
-exports_files([
-  "intellij.platform.diagnostic.telemetry.rt.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.diagnostic.telemetry.rt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt` end
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` start
+
 jvm_library(
-  name = "diagnostic-telemetry-rt-tests",
-  module_name = "intellij.platform.diagnostic.telemetry.rt.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "diagnostic-telemetry-rt-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.diagnostic.telemetry.rt.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "diagnostic-telemetry-rt-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//platform/diagnostic/telemetry/rt",
-    "//platform/diagnostic/telemetry/rt:rt_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//platform/util-rt",
-    "//platform/util-rt:util-rt_test_lib",
-    "@lib//:jetbrains-annotations",
-    "@lib//:junit5",
-  ],
-  runtime_deps = [":diagnostic-telemetry-rt-tests"]
+    name = "diagnostic-telemetry-rt-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/diagnostic/telemetry/rt",
+        "//platform/diagnostic/telemetry/rt:rt_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":diagnostic-telemetry-rt-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/util-rt",
+        "//platform/util-rt:util-rt_test_lib",
+        "@lib//:jetbrains-annotations",
+        "@lib//:junit5",
+    ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt.tests` start
-exports_files([
-  "intellij.platform.diagnostic.telemetry.rt.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.diagnostic.telemetry.rt.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt.tests` end
 
 ### auto-generated section `test intellij.platform.diagnostic.telemetry.rt.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "diagnostic-telemetry-rt-tests_test",
-  runtime_deps = [":diagnostic-telemetry-rt-tests_test_lib"]
+    name = "diagnostic-telemetry-rt-tests_test",
+    runtime_deps = [":diagnostic-telemetry-rt-tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.diagnostic.telemetry.rt.tests` end

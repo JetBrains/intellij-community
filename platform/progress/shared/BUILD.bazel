@@ -1,53 +1,71 @@
-### auto-generated section `build intellij.platform.ide.progress` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.progress` start
+
 jvm_library(
-  name = "ide-progress",
-  module_name = "intellij.platform.ide.progress",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/util/progress",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/service-container",
-    "//platform/kernel/shared:kernel",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//platform/project/shared:project",
-    "//fleet/rhizomedb",
-  ]
+    name = "ide-progress",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.progress",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util/progress",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/service-container",
+        "//platform/kernel/shared:kernel",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/project/shared:project",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "ide-progress_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.progress",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ide-progress",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/util/progress:progress_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/service-container:service-container_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "ide-progress_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.progress",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-progress",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/service-container:service-container_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.progress` end
 
 ### auto-generated section `iml intellij.platform.ide.progress` start
-exports_files([
-  "intellij.platform.ide.progress.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.progress.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.progress` end

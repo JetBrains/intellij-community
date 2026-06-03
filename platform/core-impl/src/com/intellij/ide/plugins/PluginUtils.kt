@@ -33,8 +33,8 @@ object PluginUtils {
   }
 
   @JvmStatic
-  fun Iterable<PluginId>.joinedPluginIds(operation: String): String =
-    joinToString(prefix = "Plugins to $operation: [", postfix = "]") { it.idString }
+  fun Iterable<PluginId>.joinedPluginIds(state: String): String =
+    joinToString(prefix = "Marking plugins '$state': [", postfix = "]") { it.idString }
 
   /** don't expose user home in error messages */
   @JvmStatic

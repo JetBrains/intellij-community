@@ -1,20 +1,20 @@
-load("//:jvm.bzl", "resourcegroup")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("//:jvm.bzl", "resourcegroup")
 
 pkg_files(
-  name = "files_to_zip",
-  prefix = "jps-builders-6",
-  srcs = glob(
-      ["**"],
-      exclude = [
-          "api-dump.txt",
-          "exposed-third-party-api.txt",
-          "*.iml",
-      ],
-  ),
-  strip_prefix = strip_prefix.from_pkg(),
-  visibility = ["//visibility:public"],
+    name = "files_to_zip",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "api-dump.txt",
+            "exposed-third-party-api.txt",
+            "*.iml",
+        ],
+    ),
+    prefix = "jps-builders-6",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
 )
 
 filegroup(

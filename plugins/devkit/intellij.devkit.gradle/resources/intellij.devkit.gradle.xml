@@ -1,8 +1,9 @@
-<idea-plugin package="org.jetbrains.idea.devkit.gradle">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.devkit.core"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.platform.smRunner"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

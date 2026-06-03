@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.python.community.helpersLocator` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.helpersLocator` start
+
 jvm_library(
-  name = "community-helpersLocator",
-  module_name = "intellij.python.community.helpersLocator",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/extensions",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/core-impl",
-    "//platform/diagnostic",
-  ]
+    name = "community-helpersLocator",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.helpersLocator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/extensions",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/core-impl",
+        "//platform/diagnostic",
+    ],
 )
 
 jvm_library(
-  name = "community-helpersLocator_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.helpersLocator",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":community-helpersLocator",
-    "//platform/extensions:extensions_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/diagnostic:diagnostic_test_lib",
-  ]
+    name = "community-helpersLocator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.helpersLocator",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":community-helpersLocator",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/diagnostic:diagnostic_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.helpersLocator` end
 
 ### auto-generated section `iml intellij.python.community.helpersLocator` start
-exports_files([
-  "intellij.python.community.helpersLocator.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.helpersLocator.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.helpersLocator` end

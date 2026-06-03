@@ -2,7 +2,7 @@ package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.generateSeed
-import fleet.util.openmap.MutableOpenMap
+import fleet.openmap.MutableOpenMap
 
 /**
  * Interface for db mutation.

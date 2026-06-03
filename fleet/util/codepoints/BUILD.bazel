@@ -1,51 +1,72 @@
-### auto-generated section `build fleet.util.codepoints` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.util.codepoints` start
 
 create_kotlinc_options(
-  name = "custom_codepoints",
-  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_lambdas = "class"
+    name = "custom_codepoints",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
 )
 
 jvm_provided_library(
-  name = "fleet_util_multiplatform_provided",
-  lib = "//fleet/util/multiplatform"
+    name = "fleet_util_multiplatform_provided",
+    lib = "//fleet/util/multiplatform",
 )
 
 jvm_library(
-  name = "codepoints",
-  module_name = "fleet.util.codepoints",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_codepoints",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    ":fleet_util_multiplatform_provided",
-  ]
+    name = "codepoints",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_codepoints",
+    module_name = "fleet.util.codepoints",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        ":fleet_util_multiplatform_provided",
+    ],
 )
 
 jvm_library(
-  name = "codepoints_test_lib",
-  testonly = True,
-  module_name = "fleet.util.codepoints",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_codepoints",
-  runtime_deps = [
-    ":codepoints",
-    "//fleet/util/multiplatform",
-    "//fleet/util/multiplatform:multiplatform_test_lib",
-  ]
+    name = "codepoints_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_codepoints",
+    module_name = "fleet.util.codepoints",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":codepoints",
+        "//fleet/util/multiplatform",
+        "//fleet/util/multiplatform:multiplatform_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.util.codepoints` end
 
 ### auto-generated section `iml fleet.util.codepoints` start
-exports_files([
-  "fleet.util.codepoints.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.util.codepoints.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.util.codepoints` end

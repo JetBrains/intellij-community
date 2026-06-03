@@ -1,37 +1,51 @@
-### auto-generated section `build intellij.libraries.jackson.datatype.joda` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jackson.datatype.joda` start
+
 jvm_library(
-  name = "libraries-jackson-datatype-joda",
-  module_name = "intellij.libraries.jackson.datatype.joda",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
-  runtime_deps = [
-    "@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda",
-    "//libraries/jackson/jackson",
-  ]
+    name = "libraries-jackson-datatype-joda",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jackson.datatype.joda",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda",
+        "//libraries/jackson/jackson",
+    ],
 )
 
 jvm_library(
-  name = "libraries-jackson-datatype-joda_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jackson.datatype.joda",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
-  runtime_deps = [
-    ":libraries-jackson-datatype-joda",
-    "//libraries/jackson/jackson:jackson_test_lib",
-  ]
+    name = "libraries-jackson-datatype-joda_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jackson.datatype.joda",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-jackson-datatype-joda",
+        "//libraries/jackson/jackson:jackson_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jackson.datatype.joda` end
 
 ### auto-generated section `iml intellij.libraries.jackson.datatype.joda` start
-exports_files([
-  "intellij.libraries.jackson.datatype.joda.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jackson.datatype.joda.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jackson.datatype.joda` end

@@ -2,9 +2,13 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.java.execution.impl.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

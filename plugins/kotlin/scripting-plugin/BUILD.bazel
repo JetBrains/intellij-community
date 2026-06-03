@@ -1,39 +1,57 @@
-### auto-generated section `build kotlin.scripting-plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build kotlin.scripting-plugin` start
+
 jvm_library(
-  name = "scripting-plugin",
-  module_name = "kotlin.scripting-plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/jsr223",
-    "//platform/util",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/core-impl",
-  ]
+    name = "scripting-plugin",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.scripting-plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/jsr223",
+        "//platform/util",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/core-impl",
+    ],
 )
 
 jvm_library(
-  name = "scripting-plugin_test_lib",
-  testonly = True,
-  module_name = "kotlin.scripting-plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":scripting-plugin",
-    "//plugins/kotlin/jsr223:jsr223_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-  ]
+    name = "scripting-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.scripting-plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scripting-plugin",
+        "//plugins/kotlin/jsr223:jsr223_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
 )
 ### auto-generated section `build kotlin.scripting-plugin` end
 
 ### auto-generated section `iml kotlin.scripting-plugin` start
-exports_files([
-  "kotlin.scripting-plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "kotlin.scripting-plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml kotlin.scripting-plugin` end
