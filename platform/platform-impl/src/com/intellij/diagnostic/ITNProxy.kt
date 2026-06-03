@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.errorreport.error.InternalEAPException
@@ -25,11 +25,11 @@ import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
@@ -57,7 +57,6 @@ import kotlin.io.path.bufferedReader
 
 @Service
 internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
-  @OptIn(ExperimentalCoroutinesApi::class)
   @JvmField
   val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 
@@ -66,18 +65,28 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 }
 
 @ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
 object ITNProxy {
-  private const val DEFAULT_ENDPOINT = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
   private const val REPORT_ENDPOINT_KEY = "ea.diagnostic.endpoint"
   private const val REPORT_ENDPOINT_PUBLIC_KEY_KEY = "ea.diagnostic.endpoint.public.key"
   private const val JETBRAINS_HOST_SUFFIX = ".jetbrains.com"
   private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
+
+  private val DEFAULT_ENDPOINT = URI.create("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
   private val LOG = logger<ITNProxy>()
 
-  private data class ReportEndpoint(
-    val url: String,
-    val pinnedPublicKey: ByteArray? = null,
-  )
+  private typealias Endpoint = Pair<URI, ByteArray?>
+
+  private val endpoint: Endpoint by lazy {
+    val uri = getConfiguredReportEndpoint()
+    if (uri != null) {
+      val pinnedPublicKey = getConfiguredReportEndpointPublicKey()
+      if (pinnedPublicKey != null) {
+        return@lazy Endpoint(uri, pinnedPublicKey)
+      }
+    }
+    Endpoint(DEFAULT_ENDPOINT, null)
+  }
 
   internal val DEVICE_ID: String by lazy {
     DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
@@ -206,10 +215,10 @@ object ITNProxy {
   }
 
   @Throws(Exception::class)
-  internal suspend fun sendError(error: ErrorBean, newThreadPostUrl: String?): Long {
+  internal suspend fun sendError(error: ErrorBean, postUrl: URI?): Long {
     val context = currentCoroutineContext()
     val request = createRequest(error.event, error)
-    val response = post(resolveReportEndpoint(newThreadPostUrl), request)
+    val response = post(resolveReportEndpoint(postUrl), request)
     context.ensureActive()
     val reportId = handleResponse(response)
     logger<ITNProxy>().info("report ID: ${reportId}")
@@ -224,69 +233,48 @@ object ITNProxy {
     return handleResponse(response)
   }
 
-  private fun resolveReportEndpoint(postUrl: String?): ReportEndpoint {
-    if (postUrl != null) {
-      return ReportEndpoint(postUrl)
-    }
-
-    val endpoint = getConfiguredReportEndpoint() ?: return ReportEndpoint(DEFAULT_ENDPOINT)
-    val endpointPublicKey = getConfiguredReportEndpointPublicKey()
-
-    if (!isEndpointValid(endpoint)) {
-      LOG.debug("Ignoring $REPORT_ENDPOINT_KEY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
-      return ReportEndpoint(DEFAULT_ENDPOINT)
-    }
-
-    val pinnedPublicKey = parseRequiredPinnedPublicKey(endpointPublicKey)
-    return ReportEndpoint(endpoint, pinnedPublicKey)
+  private fun resolveReportEndpoint(postUrl: URI?): Endpoint = when {
+    postUrl != null -> Endpoint(postUrl, null)
+    else -> endpoint
   }
 
-  private fun getConfiguredReportEndpoint(): String? {
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      Registry.stringValue(REPORT_ENDPOINT_KEY, "").trim().takeIf { it.isNotEmpty() }?.let {
-        return it
-      }
+  private fun getConfiguredReportEndpoint(): URI? {
+    val raw = when {
+      LoadingState.COMPONENTS_LOADED.isOccurred -> Registry.stringValue(REPORT_ENDPOINT_KEY, "")
+      else -> System.getProperty(REPORT_ENDPOINT_KEY)
     }
-    return System.getProperty(REPORT_ENDPOINT_KEY)?.trim()?.takeIf { it.isNotEmpty() }
-  }
-
-  private fun getConfiguredReportEndpointPublicKey(): String? {
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      val registryValue = Registry.stringValue(REPORT_ENDPOINT_PUBLIC_KEY_KEY, "").trim()
-      if (registryValue.isNotEmpty()) {
-        return registryValue
-      }
+    if (raw.isNullOrBlank()) return null
+    val uri = runCatching { URI(raw.trim()) }.getOrNull()
+    if (
+      uri == null ||
+      !"https".equals(uri.scheme, ignoreCase = true) ||
+      uri.host?.endsWith(JETBRAINS_HOST_SUFFIX, ignoreCase = true) != true
+    ) {
+      LOG.error("Ignoring $REPORT_ENDPOINT_KEY=${raw}: expected an HTTPS endpoint in the ${JETBRAINS_HOST_SUFFIX} domain")
+      return null
     }
-    return System.getProperty(REPORT_ENDPOINT_PUBLIC_KEY_KEY)?.trim()?.takeIf { it.isNotEmpty() }
+    return uri
   }
 
-  internal fun isEndpointValid(endpoint: String): Boolean {
-    val uri = runCatching { URI(endpoint) }.getOrNull() ?: return false
-    val host = uri.host ?: return false
-    if (!uri.scheme.equals("https", ignoreCase = true)) return false
-    if (!host.endsWith(JETBRAINS_HOST_SUFFIX, ignoreCase = true)) return false
-    return true
-  }
-
-  internal fun parsePinnedPublicKey(publicKey: String): ByteArray? {
-    val normalized = publicKey.lineSequence()
+  private fun getConfiguredReportEndpointPublicKey(): ByteArray? {
+    val raw = when {
+      LoadingState.COMPONENTS_LOADED.isOccurred -> Registry.stringValue(REPORT_ENDPOINT_PUBLIC_KEY_KEY, "")
+      else -> System.getProperty(REPORT_ENDPOINT_PUBLIC_KEY_KEY)
+    }
+    if (raw.isNullOrBlank()) {
+      LOG.error("Custom error reporting endpoint requires a pinned public key.")
+      return null
+    }
+    val normalized = raw.lineSequence()
       .map(String::trim)
-      .filter { it.isNotEmpty() && !it.startsWith("-----BEGIN") && !it.startsWith("-----END") }
+      .filterNot { it.isEmpty() || it.startsWith("-----BEGIN") || it.startsWith("-----END") }
       .joinToString(separator = "")
-      .takeIf { it.isNotEmpty() }
-      ?: return null
-    return runCatching { Base64.getDecoder().decode(normalized) }.getOrNull()
-  }
-
-  internal fun parseRequiredPinnedPublicKey(publicKey: String?): ByteArray {
-    if (publicKey == null) {
-      throw InternalEAPException(DiagnosticBundle.message("error.report.endpoint.public.key.required"))
+    val bytes = runCatching { Base64.getDecoder().decode(normalized) }.getOrNull()
+    if (bytes == null || bytes.isEmpty()) {
+      LOG.error("Invalid endpoint public key. Expected Base64-encoded X.509 public key bytes or PEM text.")
+      return null
     }
-    val pinnedPublicKey = parsePinnedPublicKey(publicKey)
-    if (pinnedPublicKey == null) {
-      throw InternalEAPException(DiagnosticBundle.message("error.report.endpoint.public.key.invalid"))
-    }
-    return pinnedPublicKey
+    return bytes
   }
 
   private fun handleResponse(response: HttpResponse<String>): Long {
@@ -397,19 +385,20 @@ object ITNProxy {
   }
 
   @Throws(Exception::class)
-  private fun post(endpoint: ReportEndpoint, formData: CharSequence): HttpResponse<String> {
+  private fun post(endpoint: Endpoint, formData: CharSequence): HttpResponse<String> {
     val compressed = BufferExposingByteArrayOutputStream(formData.length)
     OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8).use { writer ->
       for (element in formData) {
         writer.write(element.code)
       }
     }
-    val request = HttpRequest.newBuilder(URI(endpoint.url))
+    val (url, pinnedPublicKey) = endpoint
+    val request = HttpRequest.newBuilder(url)
       .header("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name())
       .header("Content-Encoding", "gzip")
       .POST(HttpRequest.BodyPublishers.ofByteArray(compressed.toByteArray(), 0, compressed.size()))
       .build()
-    val client = if (endpoint.pinnedPublicKey != null) createPinnedHttpClient(endpoint.pinnedPublicKey) else defaultHttpClient
+    val client = if (pinnedPublicKey != null) createPinnedHttpClient(pinnedPublicKey) else defaultHttpClient
     return client.send(request, HttpResponse.BodyHandlers.ofString())
   }
 
