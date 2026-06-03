@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.jsvg` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jsvg` start
+
 jvm_library(
-  name = "jsvg",
-  module_name = "intellij.libraries.jsvg",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jsvg-jsvg"],
-  runtime_deps = ["@lib//:libraries-jsvg-jsvg"]
+    name = "jsvg",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsvg",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsvg-jsvg"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jsvg-jsvg",
+    ],
 )
 
 jvm_library(
-  name = "jsvg_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jsvg",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-jsvg-jsvg"],
-  runtime_deps = [":jsvg"]
+    name = "jsvg_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jsvg",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsvg-jsvg"],
+    runtime_deps = [
+        # do not sort,
+        ":jsvg",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jsvg` end
 
 ### auto-generated section `iml intellij.libraries.jsvg` start
-exports_files([
-  "intellij.libraries.jsvg.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jsvg.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jsvg` end

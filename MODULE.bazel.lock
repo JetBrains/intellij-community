@@ -404,7 +404,7 @@
     },
     "//build:jps_dynamic_deps_community.bzl%jps_dynamic_deps_community_extension": {
       "general": {
-        "bzlTransitiveDigest": "X5EfcZMVHu/dCgQKnF9+DM8LVrgOSmflhfVkFmpOeYY=",
+        "bzlTransitiveDigest": "G2/FUHjonwpWQWzN6HV/tYhbq1e3z/HM29u2/+5qevE=",
         "usagesDigest": "OSsQY2hkpxdAkgfVzTh+Q1KLtzAuQDVI0/8sRki7FfU=",
         "recordedInputs": [
           "REPO_MAPPING:,xml.bzl xml.bzl+"
@@ -571,7 +571,7 @@
     },
     "@@rules_jvm+//:test_bazel_tool.bzl%extension": {
       "general": {
-        "bzlTransitiveDigest": "est11jllaBqemO2wRWbP/MU5Yui83EQTsycXpbgCSMY=",
+        "bzlTransitiveDigest": "Gai1QviUnj+xK4Z6bU+BOmJdtsslbtSHsSD4759JUYo=",
         "usagesDigest": "5QeAKrSEFoHzobtsR6LPmGmTpOq+A8CNi6zAcGwU9r8=",
         "recordedInputs": [],
         "generatedRepoSpecs": {

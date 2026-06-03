@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.jsoup` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jsoup` start
+
 jvm_library(
-  name = "jsoup",
-  module_name = "intellij.libraries.jsoup",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jsoup-jsoup"],
-  runtime_deps = ["@lib//:libraries-jsoup-jsoup"]
+    name = "jsoup",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsoup",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsoup-jsoup"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jsoup-jsoup",
+    ],
 )
 
 jvm_library(
-  name = "jsoup_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jsoup",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-jsoup-jsoup"],
-  runtime_deps = [":jsoup"]
+    name = "jsoup_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jsoup",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsoup-jsoup"],
+    runtime_deps = [
+        # do not sort,
+        ":jsoup",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jsoup` end
 
 ### auto-generated section `iml intellij.libraries.jsoup` start
-exports_files([
-  "intellij.libraries.jsoup.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jsoup.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jsoup` end

@@ -1,50 +1,68 @@
-### auto-generated section `build intellij.java.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.java.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "//java/java-frontback-psi-impl:frontback-psi-impl",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-frontback-impl:frontback-impl",
-  ],
-  runtime_deps = [
-    "//java/java-syntax:syntax",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-frontback-psi-impl:frontback-psi-impl",
-    "//java/java-psi-api:psi",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-frontback-impl:frontback-impl",
-    "//platform/platform-frontend:frontend",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//java/java-frontback-impl:frontback-impl",
+        "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//java/java-psi-impl:psi-impl",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//java/java-syntax:syntax",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-frontback-impl:frontback-impl",
+        "//platform/platform-frontend:frontend",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.java.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//java/java-syntax:syntax_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-frontback-impl:frontback-impl_test_lib",
-    "//platform/platform-frontend:frontend_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//java/java-syntax:syntax_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-frontback-impl:frontback-impl_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.frontend` end
 
 ### auto-generated section `iml intellij.java.frontend` start
-exports_files([
-  "intellij.java.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.frontend` end

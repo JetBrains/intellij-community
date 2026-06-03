@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.keymap.netbeans` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.keymap.netbeans` start
+
 jvm_library(
-  name = "keymap-netbeans",
-  module_name = "intellij.keymap.netbeans",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "keymap-netbeans",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.netbeans",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "keymap-netbeans_test_lib",
-  testonly = True,
-  module_name = "intellij.keymap.netbeans",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":keymap-netbeans"]
+    name = "keymap-netbeans_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.netbeans",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-netbeans",
+    ],
 )
 ### auto-generated section `build intellij.keymap.netbeans` end
 
 ### auto-generated section `iml intellij.keymap.netbeans` start
-exports_files([
-  "intellij.keymap.netbeans.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.keymap.netbeans.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.keymap.netbeans` end

@@ -1,27 +1,46 @@
-### auto-generated section `build intellij.libraries.microba` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.microba` start
+
 jvm_library(
-  name = "microba",
-  module_name = "intellij.libraries.microba",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "microba",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.microba",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "microba_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.microba",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":microba"]
+    name = "microba_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.microba",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":microba",
+    ],
 )
 ### auto-generated section `build intellij.libraries.microba` end
 
 ### auto-generated section `iml intellij.libraries.microba` start
-exports_files([
-  "intellij.libraries.microba.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.microba.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.microba` end

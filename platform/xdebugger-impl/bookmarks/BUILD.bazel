@@ -1,73 +1,91 @@
-### auto-generated section `build intellij.platform.debugger.impl.bookmarks` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.debugger.impl.bookmarks` start
 
 create_kotlinc_options(
-  name = "custom_bookmarks",
-  x_context_parameters = True
+    name = "custom_bookmarks",
+    x_context_parameters = True,
 )
 
 jvm_library(
-  name = "bookmarks",
-  module_name = "intellij.platform.debugger.impl.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_bookmarks",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/analysis-api:analysis",
-    "//platform/bookmarks",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/core-ui",
-    "//platform/xdebugger-api:debugger",
-    "//platform/xdebugger-impl/shared",
-    "//platform/xdebugger-impl/ui",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/ide-core",
-    "//platform/platform-impl:ide-impl",
-    "//platform/lang-api:lang",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util:util-ui",
-  ]
+    name = "bookmarks",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bookmarks",
+    module_name = "intellij.platform.debugger.impl.bookmarks",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/analysis-api:analysis",
+        "//platform/bookmarks",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/xdebugger-api:debugger",
+        "//platform/xdebugger-impl/shared",
+        "//platform/xdebugger-impl/ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-api:lang",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "bookmarks_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.debugger.impl.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_bookmarks",
-  runtime_deps = [
-    ":bookmarks",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/bookmarks:bookmarks_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/xdebugger-api:debugger_test_lib",
-    "//platform/xdebugger-impl/shared:shared_test_lib",
-    "//platform/xdebugger-impl/ui:ui_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "bookmarks_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bookmarks",
+    module_name = "intellij.platform.debugger.impl.bookmarks",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bookmarks",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/bookmarks:bookmarks_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/xdebugger-impl/shared:shared_test_lib",
+        "//platform/xdebugger-impl/ui:ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.bookmarks` end
 
 ### auto-generated section `iml intellij.platform.debugger.impl.bookmarks` start
-exports_files([
-  "intellij.platform.debugger.impl.bookmarks.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.debugger.impl.bookmarks.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.debugger.impl.bookmarks` end

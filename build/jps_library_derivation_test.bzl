@@ -45,6 +45,7 @@ snapshot_maven_url_test = unittest.make(_snapshot_maven_url_test_impl)
 # Test 3: is_snapshot=True with non-SNAPSHOT filename → still routes to //snapshots:
 def _snapshot_flag_non_snapshot_filename_test_impl(ctx):
     env = unittest.begin(ctx)
+
     # A non-SNAPSHOT filename, but the library was determined to be snapshot at the library level
     url = _maven_url("io/github/pdvrieze/xmlutil", "core-jvm", "0.86.2", "core-jvm-0.86.2.jar")
     result = maven_url_to_jar_target(url, "@lib", is_snapshot = True)
@@ -100,12 +101,16 @@ def _mixed_snapshot_library_test_impl(ctx):
     env = unittest.begin(ctx)
 
     snapshot_url = _maven_url(
-        "io/github/pdvrieze/xmlutil", "serialization-jvm",
-        "0.90.0-SNAPSHOT", "serialization-jvm-0.90.0-SNAPSHOT.jar",
+        "io/github/pdvrieze/xmlutil",
+        "serialization-jvm",
+        "0.90.0-SNAPSHOT",
+        "serialization-jvm-0.90.0-SNAPSHOT.jar",
     )
     non_snapshot_url = _maven_url(
-        "io/github/pdvrieze/xmlutil", "core-jvm",
-        "0.86.2", "core-jvm-0.86.2.jar",
+        "io/github/pdvrieze/xmlutil",
+        "core-jvm",
+        "0.86.2",
+        "core-jvm-0.86.2.jar",
     )
     urls = [snapshot_url, non_snapshot_url]
 

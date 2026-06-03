@@ -1,19 +1,19 @@
-load("//:jvm.bzl", "resourcegroup")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("//:jvm.bzl", "resourcegroup")
 
 pkg_files(
-  name = "files_to_zip",
-  prefix = "dependency-graph",
-  srcs = glob(
-      ["**"],
-      exclude = [
-          "api-dump.txt",
-          "*.iml",
-      ],
-  ),
-  strip_prefix = strip_prefix.from_pkg(),
-  visibility = ["//visibility:public"],
+    name = "files_to_zip",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "api-dump.txt",
+            "*.iml",
+        ],
+    ),
+    prefix = "dependency-graph",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
 )
 
 filegroup(

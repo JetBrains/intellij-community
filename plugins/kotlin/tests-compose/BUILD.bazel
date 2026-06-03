@@ -1,36 +1,59 @@
-### auto-generated section `build kotlin.tests-compose` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build kotlin.tests-compose` start
+
 jvm_library(
-  name = "tests-compose",
-  module_name = "kotlin.tests-compose",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["@lib//:kotlin-stdlib"]
+    name = "tests-compose",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.tests-compose",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "tests-compose_test_lib",
-  testonly = True,
-  module_name = "kotlin.tests-compose",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  deps = ["@lib//:kotlin-stdlib"],
-  runtime_deps = [":tests-compose"]
+    name = "tests-compose_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.tests-compose",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests-compose",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+    ],
 )
 ### auto-generated section `build kotlin.tests-compose` end
 
 ### auto-generated section `iml kotlin.tests-compose` start
-exports_files([
-  "kotlin.tests-compose.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "kotlin.tests-compose.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml kotlin.tests-compose` end
 
 ### auto-generated section `test kotlin.tests-compose` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests-compose_test",
-  runtime_deps = [":tests-compose_test_lib"]
+    name = "tests-compose_test",
+    runtime_deps = [":tests-compose_test_lib"],
 )
 ### auto-generated section `test kotlin.tests-compose` end

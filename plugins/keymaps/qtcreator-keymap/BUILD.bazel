@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.keymap.qtcreator` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.keymap.qtcreator` start
+
 jvm_library(
-  name = "keymap-qtcreator",
-  module_name = "intellij.keymap.qtcreator",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "keymap-qtcreator",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.qtcreator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "keymap-qtcreator_test_lib",
-  testonly = True,
-  module_name = "intellij.keymap.qtcreator",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":keymap-qtcreator"]
+    name = "keymap-qtcreator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.qtcreator",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-qtcreator",
+    ],
 )
 ### auto-generated section `build intellij.keymap.qtcreator` end
 
 ### auto-generated section `iml intellij.keymap.qtcreator` start
-exports_files([
-  "intellij.keymap.qtcreator.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.keymap.qtcreator.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.keymap.qtcreator` end

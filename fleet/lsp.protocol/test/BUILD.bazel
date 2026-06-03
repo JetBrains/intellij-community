@@ -1,68 +1,89 @@
-### auto-generated section `build fleet.lsp.protocol.test` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.lsp.protocol.test` start
 
 create_kotlinc_options(
-  name = "custom_test",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlinx.serialization.ExperimentalSerializationApi",
-    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_lambdas = "class"
+    name = "custom_test",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.serialization.ExperimentalSerializationApi",
+        "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "test",
-  module_name = "fleet.lsp.protocol.test",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-  ]
+    name = "test",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "fleet.lsp.protocol.test",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
+    ],
 )
 
 jvm_library(
-  name = "test_test_lib",
-  testonly = True,
-  module_name = "fleet.lsp.protocol.test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonTest/**/*.kt", "srcCommonTest/**/*.java", "srcCommonTest/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_test",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-test",
-    "@lib//:kotlinx-io-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "//fleet/ktor/client/core",
-    "//fleet/ktor/client/core:core_test_lib",
-    "//fleet/lsp.protocol",
-    "//fleet/lsp.protocol:lsp.protocol_test_lib",
-    "//fleet/test-runtime",
-    "//fleet/test-runtime:test-runtime_test_lib",
-  ],
-  runtime_deps = [":test"]
+    name = "test_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "srcCommonTest/**/*.kt",
+            "srcCommonTest/**/*.java",
+            "srcCommonTest/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_test",
+    module_name = "fleet.lsp.protocol.test",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":test",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:kotlinx-coroutines-test",
+        "@lib//:kotlinx-io-core",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "//fleet/ktor/client/core",
+        "//fleet/ktor/client/core:core_test_lib",
+        "//fleet/lsp.protocol",
+        "//fleet/lsp.protocol:lsp.protocol_test_lib",
+        "//fleet/test-runtime",
+        "//fleet/test-runtime:test-runtime_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.lsp.protocol.test` end
 
 ### auto-generated section `iml fleet.lsp.protocol.test` start
-exports_files([
-  "fleet.lsp.protocol.test.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.lsp.protocol.test.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.lsp.protocol.test` end
 
 ### auto-generated section `test fleet.lsp.protocol.test` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "test_test",
-  runtime_deps = [":test_test_lib"]
+    name = "test_test",
+    runtime_deps = [":test_test_lib"],
 )
 ### auto-generated section `test fleet.lsp.protocol.test` end

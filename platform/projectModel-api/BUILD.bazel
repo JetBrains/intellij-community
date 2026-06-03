@@ -1,63 +1,83 @@
-### auto-generated section `build intellij.platform.projectModel` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.projectModel` start
+
 jvm_library(
-  name = "projectModel",
-  module_name = "intellij.platform.projectModel",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/util",
-    "//jps/model-api:model",
-    "@lib//:kotlin-stdlib",
-    "//platform/util/jdom",
-    "//platform/util/concurrency",
-    "//platform/workspace/storage",
-    "//platform/workspace/jps",
-    "//platform/backend/workspace",
-    "//platform/util/xmlDom",
-    "//platform/util/multiplatform",
-    "//platform/util/base",
-    "//platform/eel",
-    "//platform/eel-nioFs",
-  ],
-  exports = ["//jps/model-api:model"]
+    name = "projectModel",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "gen/**/*.kt",
+            "gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.projectModel",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//jps/model-api:model"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/util",
+        "//jps/model-api:model",
+        "@lib//:kotlin-stdlib",
+        "//platform/util/jdom",
+        "//platform/util/concurrency",
+        "//platform/workspace/storage",
+        "//platform/workspace/jps",
+        "//platform/backend/workspace",
+        "//platform/util/xmlDom",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "//platform/eel",
+        "//platform/eel-nioFs",
+    ],
 )
 
 jvm_library(
-  name = "projectModel_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.projectModel",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//jps/model-api:model",
-    "//jps/model-api:model_test_lib",
-  ],
-  runtime_deps = [
-    ":projectModel",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/workspace/storage:storage_test_lib",
-    "//platform/workspace/jps:jps_test_lib",
-    "//platform/backend/workspace:workspace_test_lib",
-    "//platform/util/xmlDom:xmlDom_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-nioFs:eel-nioFs_test_lib",
-  ]
+    name = "projectModel_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.projectModel",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":projectModel",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.projectModel` end
 
 ### auto-generated section `iml intellij.platform.projectModel` start
-exports_files([
-  "intellij.platform.projectModel.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.projectModel.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.projectModel` end

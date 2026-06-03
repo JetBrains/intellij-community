@@ -28,7 +28,6 @@ Then BUILD files can use labels like @my_repo_name//:foo.zip or the convenience 
 # because the desired workflow is to declare files in per-module .bzl files, not
 # inside MODULE.bazel. The use_repo_rule pattern fits that requirement.
 
-
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
 def test_deps_repository(repository_name):
@@ -48,7 +47,7 @@ def test_deps_repository(repository_name):
                 output = f.name,
                 sha256 = f.sha256,
                 block = False,
-                auth = get_auth(repository_ctx, [f.url])
+                auth = get_auth(repository_ctx, [f.url]),
             ))
         for d in downloads:
             d.wait()
@@ -60,7 +59,7 @@ package(default_visibility = ["//visibility:public"])
 exports_files([
 {files}
 ])
-""".format(files = ",\n".join(["  \"%s\"" % f.name for f in files]))
+""".format(files = ",\n".join(["  \"%s\"" % f.name for f in files])),
         )
         return repository_ctx.repo_metadata(reproducible = True)
 

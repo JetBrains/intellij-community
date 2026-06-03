@@ -1,43 +1,59 @@
-### auto-generated section `build intellij.platform.ide.bootstrap.kernel` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ide.bootstrap.kernel` start
+
 jvm_library(
-  name = "kernel",
-  module_name = "intellij.platform.ide.bootstrap.kernel",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//fleet/kernel",
-    "//platform/kernel/shared:kernel",
-    "//platform/util/coroutines",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-    "//platform/kernel/pasta",
-    "//fleet/rhizomedb",
-  ]
+    name = "kernel",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.bootstrap.kernel",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/kernel",
+        "//platform/kernel/shared:kernel",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+        "//platform/kernel/pasta",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "kernel_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ide.bootstrap.kernel",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":kernel",
-    "//fleet/kernel:kernel_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/kernel/pasta:pasta_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "kernel_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.bootstrap.kernel",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kernel",
+        "//fleet/kernel:kernel_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/kernel/pasta:pasta_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.kernel` end
 
 ### auto-generated section `iml intellij.platform.ide.bootstrap.kernel` start
-exports_files([
-  "intellij.platform.ide.bootstrap.kernel.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ide.bootstrap.kernel.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ide.bootstrap.kernel` end

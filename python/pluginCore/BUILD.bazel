@@ -1,31 +1,47 @@
-### auto-generated section `build intellij.python.community.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.plugin` start
+
 jvm_library(
-  name = "community-plugin",
-  module_name = "intellij.python.community.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = ["//platform/lang-api:lang"]
+    name = "community-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-api:lang",
+    ],
 )
 
 jvm_library(
-  name = "community-plugin_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":community-plugin",
-    "//platform/lang-api:lang_test_lib",
-  ]
+    name = "community-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":community-plugin",
+        "//platform/lang-api:lang_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.plugin` end
 
 ### auto-generated section `iml intellij.python.community.plugin` start
-exports_files([
-  "intellij.python.community.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.plugin` end

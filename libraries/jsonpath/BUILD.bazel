@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.jsonpath` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jsonpath` start
+
 jvm_library(
-  name = "jsonpath",
-  module_name = "intellij.libraries.jsonpath",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jsonpath-jsonpath"],
-  runtime_deps = ["@lib//:libraries-jsonpath-jsonpath"]
+    name = "jsonpath",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsonpath",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsonpath-jsonpath"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jsonpath-jsonpath",
+    ],
 )
 
 jvm_library(
-  name = "jsonpath_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jsonpath",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-jsonpath-jsonpath"],
-  runtime_deps = [":jsonpath"]
+    name = "jsonpath_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jsonpath",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsonpath-jsonpath"],
+    runtime_deps = [
+        # do not sort,
+        ":jsonpath",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jsonpath` end
 
 ### auto-generated section `iml intellij.libraries.jsonpath` start
-exports_files([
-  "intellij.libraries.jsonpath.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jsonpath.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jsonpath` end

@@ -1,41 +1,59 @@
-### auto-generated section `build intellij.sh.python` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.sh.python` start
+
 jvm_library(
-  name = "python",
-  module_name = "intellij.sh.python",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//python/python-psi-api:psi",
-    "//plugins/sh/core",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/backend",
-  ]
+    name = "python",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.python",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//python/python-psi-api:psi",
+        "//plugins/sh/core",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/backend",
+    ],
 )
 
 jvm_library(
-  name = "python_test_lib",
-  testonly = True,
-  module_name = "intellij.sh.python",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":python",
-    "//python/python-psi-api:psi_test_lib",
-    "//plugins/sh/core:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/backend:backend_test_lib",
-  ]
+    name = "python_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.python",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":python",
+        "//python/python-psi-api:psi_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.sh.python` end
 
 ### auto-generated section `iml intellij.sh.python` start
-exports_files([
-  "intellij.sh.python.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.sh.python.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.sh.python` end

@@ -1,80 +1,98 @@
-### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` start
 
 create_kotlinc_options(
-  name = "custom_int-ui-standalone-styling",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True,
-  x_explicit_api_mode = "strict"
+    name = "custom_int-ui-standalone-styling",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
 )
 
 jvm_provided_library(
-  name = "platform_jewel_markdown_extensions_gfm-alerts_provided",
-  lib = "//platform/jewel/markdown/extensions/gfm-alerts"
+    name = "platform_jewel_markdown_extensions_gfm-alerts_provided",
+    lib = "//platform/jewel/markdown/extensions/gfm-alerts",
 )
 
 jvm_provided_library(
-  name = "platform_jewel_markdown_extensions_gfm-tables_provided",
-  lib = "//platform/jewel/markdown/extensions/gfm-tables"
+    name = "platform_jewel_markdown_extensions_gfm-tables_provided",
+    lib = "//platform/jewel/markdown/extensions/gfm-tables",
 )
 
 jvm_library(
-  name = "int-ui-standalone-styling",
-  module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  kotlinc_opts = ":custom_int-ui-standalone-styling",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/ui",
-    "//platform/jewel/foundation",
-    "//libraries/compose-runtime-desktop",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//libraries/compose-foundation-desktop",
-    ":platform_jewel_markdown_extensions_gfm-alerts_provided",
-    ":platform_jewel_markdown_extensions_gfm-tables_provided",
-  ]
+    name = "int-ui-standalone-styling",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_int-ui-standalone-styling",
+    module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/ui",
+        "//platform/jewel/foundation",
+        "//libraries/compose-runtime-desktop",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+        "//libraries/compose-foundation-desktop",
+        ":platform_jewel_markdown_extensions_gfm-alerts_provided",
+        ":platform_jewel_markdown_extensions_gfm-tables_provided",
+    ],
 )
 
 jvm_library(
-  name = "int-ui-standalone-styling_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_int-ui-standalone-styling",
-  runtime_deps = [
-    ":int-ui-standalone-styling",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/jewel/markdown/core:core_test_lib",
-    "//platform/jewel/ui:ui_test_lib",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
-    "//platform/jewel/markdown/extensions/gfm-alerts",
-    "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
-    "//platform/jewel/markdown/extensions/gfm-tables",
-    "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
-    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-    "//libraries/compose-foundation-desktop-junit",
-    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-  ]
+    name = "int-ui-standalone-styling_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_int-ui-standalone-styling",
+    module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":int-ui-standalone-styling",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/ui:ui_test_lib",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-alerts",
+        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-tables",
+        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//libraries/compose-foundation-desktop-junit",
+        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.intUiStandaloneStyling` start
-exports_files([
-  "intellij.platform.jewel.markdown.intUiStandaloneStyling.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.markdown.intUiStandaloneStyling.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.markdown.intUiStandaloneStyling` end

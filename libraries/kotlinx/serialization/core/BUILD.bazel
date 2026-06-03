@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.kotlinx.serialization.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.kotlinx.serialization.core` start
+
 jvm_library(
-  name = "core",
-  module_name = "intellij.libraries.kotlinx.serialization.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:kotlinx-serialization-core"],
-  runtime_deps = ["@lib//:kotlinx-serialization-core"]
+    name = "core",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinx.serialization.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-serialization-core"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlinx-serialization-core",
+    ],
 )
 
 jvm_library(
-  name = "core_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.kotlinx.serialization.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:kotlinx-serialization-core"],
-  runtime_deps = [":core"]
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinx.serialization.core",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-serialization-core"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.core` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.core` start
-exports_files([
-  "intellij.libraries.kotlinx.serialization.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.kotlinx.serialization.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.core` end

@@ -1,40 +1,58 @@
-### auto-generated section `build intellij.platform.vcs.impl.exec` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.vcs.impl.exec` start
+
 jvm_library(
-  name = "exec",
-  module_name = "intellij.platform.vcs.impl.exec",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/vcs-impl",
-    "//platform/core-api:core",
-    "//platform/vcs-api:vcs",
-    "//platform/execution",
-  ]
+    name = "exec",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.impl.exec",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/vcs-impl",
+        "//platform/core-api:core",
+        "//platform/vcs-api:vcs",
+        "//platform/execution",
+    ],
 )
 
 jvm_library(
-  name = "exec_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.vcs.impl.exec",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":exec",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/execution:execution_test_lib",
-  ]
+    name = "exec_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.impl.exec",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":exec",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/execution:execution_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.exec` end
 
 ### auto-generated section `iml intellij.platform.vcs.impl.exec` start
-exports_files([
-  "intellij.platform.vcs.impl.exec.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.vcs.impl.exec.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.vcs.impl.exec` end

@@ -1,67 +1,85 @@
-### auto-generated section `build intellij.platform.syntax.psi` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.syntax.psi` start
 
 create_kotlinc_options(
-  name = "custom_psi",
-  jvm_target = "8",
-  x_no_call_assertions = True,
-  x_no_param_assertions = True
+    name = "custom_psi",
+    jvm_target = "8",
+    x_no_call_assertions = True,
+    x_no_param_assertions = True,
 )
 
 jvm_library(
-  name = "psi",
-  module_name = "intellij.platform.syntax.psi",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_psi",
-  deps = [
-    "//platform/util",
-    "//platform/util-rt",
-    "//platform/util/multiplatform",
-    "//platform/util/base",
-    "//platform/syntax/syntax-api:syntax",
-    "//platform/core-api:core",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-impl",
-    "//libraries/fastutil",
-    "//platform/syntax/syntax-util:util",
-    "//platform/syntax/syntax-extensions:extensions",
-  ],
-  exports = ["//platform/syntax/syntax-api:syntax"]
+    name = "psi",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_psi",
+    module_name = "intellij.platform.syntax.psi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/syntax/syntax-api:syntax"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//platform/util-rt",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-impl",
+        "//libraries/fastutil",
+        "//platform/syntax/syntax-util:util",
+        "//platform/syntax/syntax-extensions:extensions",
+    ],
 )
 
 jvm_library(
-  name = "psi_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.syntax.psi",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_psi",
-  exports = [
-    "//platform/syntax/syntax-api:syntax",
-    "//platform/syntax/syntax-api:syntax_test_lib",
-  ],
-  runtime_deps = [
-    ":psi",
-    "//platform/util:util_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "//platform/util/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/syntax/syntax-api:syntax_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/syntax/syntax-util:util_test_lib",
-    "//platform/syntax/syntax-extensions:extensions_test_lib",
-  ]
+    name = "psi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_psi",
+    module_name = "intellij.platform.syntax.psi",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":psi",
+        "//platform/util:util_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/syntax/syntax-util:util_test_lib",
+        "//platform/syntax/syntax-extensions:extensions_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.syntax.psi` end
 
 ### auto-generated section `iml intellij.platform.syntax.psi` start
-exports_files([
-  "intellij.platform.syntax.psi.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.syntax.psi.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.syntax.psi` end

@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.vcs.git.localHistory` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.vcs.git.localHistory` start
+
 jvm_library(
-  name = "localHistory",
-  module_name = "intellij.vcs.git.localHistory",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "localHistory",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.localHistory",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "localHistory_test_lib",
-  testonly = True,
-  module_name = "intellij.vcs.git.localHistory",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":localHistory"]
+    name = "localHistory_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.localHistory",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":localHistory",
+    ],
 )
 ### auto-generated section `build intellij.vcs.git.localHistory` end
 
 ### auto-generated section `iml intellij.vcs.git.localHistory` start
-exports_files([
-  "intellij.vcs.git.localHistory.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.vcs.git.localHistory.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.vcs.git.localHistory` end

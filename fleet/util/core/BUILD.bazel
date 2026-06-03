@@ -1,80 +1,101 @@
-### auto-generated section `build fleet.util.core` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.util.core` start
 
 create_kotlinc_options(
-  name = "custom_core",
-  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_lambdas = "class"
+    name = "custom_core",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
 )
 
 jvm_provided_library(
-  name = "fleet_util_multiplatform_provided",
-  lib = "//fleet/util/multiplatform"
+    name = "fleet_util_multiplatform_provided",
+    lib = "//fleet/util/multiplatform",
 )
 
 jvm_library(
-  name = "core",
-  module_name = "fleet.util.core",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_core",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "//fleet/util/logging/api",
-    "@lib//:kotlinx-collections-immutable",
-    "//fleet/reporting/api",
-    "//fleet/reporting/shared",
-    "//fleet/multiplatform.shims",
-    "//fleet/util/serialization",
-    ":fleet_util_multiplatform_provided",
-  ],
-  exports = [
-    "//fleet/util/logging/api",
-    "@lib//:kotlinx-collections-immutable",
-    "//fleet/multiplatform.shims",
-    "//fleet/util/serialization",
-  ]
+    name = "core",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.util.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//fleet/multiplatform.shims",
+        "//fleet/util/logging/api",
+        "//fleet/util/serialization",
+        "@lib//:kotlinx-collections-immutable",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "//fleet/util/logging/api",
+        "@lib//:kotlinx-collections-immutable",
+        "//fleet/reporting/api",
+        "//fleet/reporting/shared",
+        "//fleet/multiplatform.shims",
+        "//fleet/util/serialization",
+        ":fleet_util_multiplatform_provided",
+    ],
 )
 
 jvm_library(
-  name = "core_test_lib",
-  testonly = True,
-  module_name = "fleet.util.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_core",
-  exports = [
-    "//fleet/util/logging/api",
-    "//fleet/util/logging/api:api_test_lib",
-    "@lib//:kotlinx-collections-immutable",
-    "//fleet/multiplatform.shims",
-    "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-    "//fleet/util/serialization",
-    "//fleet/util/serialization:serialization_test_lib",
-  ],
-  runtime_deps = [
-    ":core",
-    "//fleet/util/logging/api:api_test_lib",
-    "//fleet/reporting/api:api_test_lib",
-    "//fleet/reporting/shared:shared_test_lib",
-    "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-    "//fleet/util/multiplatform",
-    "//fleet/util/multiplatform:multiplatform_test_lib",
-    "//fleet/util/serialization:serialization_test_lib",
-  ]
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.util.core",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//fleet/multiplatform.shims",
+        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+        "//fleet/util/logging/api",
+        "//fleet/util/logging/api:api_test_lib",
+        "//fleet/util/serialization",
+        "//fleet/util/serialization:serialization_test_lib",
+        "@lib//:kotlinx-collections-immutable",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//fleet/util/logging/api:api_test_lib",
+        "//fleet/reporting/api:api_test_lib",
+        "//fleet/reporting/shared:shared_test_lib",
+        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+        "//fleet/util/multiplatform",
+        "//fleet/util/multiplatform:multiplatform_test_lib",
+        "//fleet/util/serialization:serialization_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.util.core` end
 
 ### auto-generated section `iml fleet.util.core` start
-exports_files([
-  "fleet.util.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.util.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.util.core` end

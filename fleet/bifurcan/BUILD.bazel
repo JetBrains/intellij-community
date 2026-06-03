@@ -1,48 +1,66 @@
-### auto-generated section `build fleet.bifurcan` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.bifurcan` start
 
 create_kotlinc_options(
-  name = "custom_bifurcan",
-  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_lambdas = "class"
+    name = "custom_bifurcan",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "bifurcan",
-  module_name = "fleet.bifurcan",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_bifurcan",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-collections-immutable",
-    "//fleet/util/serialization",
-  ]
+    name = "bifurcan",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bifurcan",
+    module_name = "fleet.bifurcan",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "@lib//:kotlinx-collections-immutable",
+        "//fleet/util/serialization",
+    ],
 )
 
 jvm_library(
-  name = "bifurcan_test_lib",
-  testonly = True,
-  module_name = "fleet.bifurcan",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_bifurcan",
-  runtime_deps = [
-    ":bifurcan",
-    "//fleet/util/serialization:serialization_test_lib",
-  ]
+    name = "bifurcan_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bifurcan",
+    module_name = "fleet.bifurcan",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bifurcan",
+        "//fleet/util/serialization:serialization_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.bifurcan` end
 
 ### auto-generated section `iml fleet.bifurcan` start
-exports_files([
-  "fleet.bifurcan.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.bifurcan.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.bifurcan` end

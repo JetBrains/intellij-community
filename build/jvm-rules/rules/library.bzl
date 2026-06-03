@@ -178,7 +178,7 @@ def jvm_library(
             package_name = package_name + "/"
         standard_resource_strip_prefix = ""
         if resource_strip_prefix:
-          standard_resource_strip_prefix = package_name + resource_strip_prefix
+            standard_resource_strip_prefix = package_name + resource_strip_prefix
         _jvm_library_jps(
             name = name,
             srcs = srcs,

@@ -1,43 +1,63 @@
-### auto-generated section `build intellij.python.community.impl.poetry.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.impl.poetry.common` start
+
 jvm_library(
-  name = "common",
-  module_name = "intellij.python.community.impl.poetry.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//python/common",
-    "//python/openapi:community",
-    "//python/python-process-output/common",
-  ]
+    name = "common",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.impl.poetry.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//python/common",
+        "//python/openapi:community",
+        "//python/python-process-output/common",
+    ],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.impl.poetry.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":common",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//python/common:common_test_lib",
-    "//python/openapi:community_test_lib",
-    "//python/python-process-output/common:common_test_lib",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.impl.poetry.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//python/common:common_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-process-output/common:common_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.common` end
 
 ### auto-generated section `iml intellij.python.community.impl.poetry.common` start
-exports_files([
-  "intellij.python.community.impl.poetry.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.impl.poetry.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.impl.poetry.common` end

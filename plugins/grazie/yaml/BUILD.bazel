@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.grazie.yaml` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie.yaml` start
+
 jvm_library(
-  name = "yaml",
-  module_name = "intellij.grazie.yaml",
-  visibility = ["//visibility:public"],
-  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["main/resources/**/*"]),
-  resource_strip_prefix = "main/resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/grazie/src:core",
-    "//plugins/yaml/backend",
-    "//json/backend",
-    "//platform/util",
-    "//plugins/yaml",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/util-ex",
-  ]
+    name = "yaml",
+    srcs = glob(
+        [
+            "main/kotlin/**/*.kt",
+            "main/kotlin/**/*.java",
+            "main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.yaml",
+    resource_strip_prefix = "main/resources",
+    resources = glob(
+        ["main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+        "//plugins/yaml/backend",
+        "//json/backend",
+        "//platform/util",
+        "//plugins/yaml",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util-ex",
+    ],
 )
 
 jvm_library(
-  name = "yaml_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie.yaml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":yaml",
-    "//plugins/grazie/src:core_test_lib",
-    "//plugins/yaml/backend:backend_test_lib",
-    "//json/backend:backend_test_lib",
-    "//platform/util:util_test_lib",
-    "//plugins/yaml:yaml_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-  ]
+    name = "yaml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.yaml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":yaml",
+        "//plugins/grazie/src:core_test_lib",
+        "//plugins/yaml/backend:backend_test_lib",
+        "//json/backend:backend_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/yaml:yaml_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie.yaml` end
 
 ### auto-generated section `iml intellij.grazie.yaml` start
-exports_files([
-  "intellij.grazie.yaml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.yaml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie.yaml` end

@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.junit5` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.junit5` start
+
 jvm_library(
-  name = "junit5",
-  module_name = "intellij.libraries.junit5",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:junit5"],
-  runtime_deps = ["@lib//:junit5"]
+    name = "junit5",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:junit5"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:junit5",
+    ],
 )
 
 jvm_library(
-  name = "junit5_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.junit5",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:junit5"],
-  runtime_deps = [":junit5"]
+    name = "junit5_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.junit5",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:junit5"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5",
+    ],
 )
 ### auto-generated section `build intellij.libraries.junit5` end
 
 ### auto-generated section `iml intellij.libraries.junit5` start
-exports_files([
-  "intellij.libraries.junit5.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.junit5.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.junit5` end

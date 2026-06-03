@@ -1,65 +1,81 @@
-### auto-generated section `build intellij.tools.ide.metrics.collector.starter` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.tools.ide.metrics.collector.starter` start
+
 jvm_library(
-  name = "ide-metrics-collector-starter",
-  module_name = "intellij.tools.ide.metrics.collector.starter",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/lang-impl",
-    "//tools/intellij.tools.ide.starter:ide-starter",
-    "//platform/remote-driver/model",
-    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-    "//platform/diagnostic/telemetry",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//platform/indexing-impl",
-    "//tools/intellij.tools.ide.util.common:ide-util-common",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "//platform/statistics",
-    "//platform/statistics/uploader",
-    "@lib//:kodein-di-jvm-provided",
-  ]
+    name = "ide-metrics-collector-starter",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.ide.metrics.collector.starter",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/lang-impl",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//platform/remote-driver/model",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//platform/indexing-impl",
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/databind",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+        "//platform/statistics",
+        "//platform/statistics/uploader",
+        "@lib//:kodein-di-jvm-provided",
+    ],
 )
 
 jvm_library(
-  name = "ide-metrics-collector-starter_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.ide.metrics.collector.starter",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ide-metrics-collector-starter",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-    "//platform/remote-driver/model:model_test_lib",
-    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:junit5",
-    "//libraries/mockito",
-    "//libraries/mockito:mockito_test_lib",
-    "//platform/indexing-impl:indexing-impl_test_lib",
-    "@lib//:mockito-junit-jupiter",
-    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
-    "//libraries/jackson/jackson:jackson_test_lib",
-    "//libraries/jackson/databind:databind_test_lib",
-    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//platform/statistics/uploader:uploader_test_lib",
-    "@lib//:kodein-di-jvm-provided",
-  ]
+    name = "ide-metrics-collector-starter_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.ide.metrics.collector.starter",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-metrics-collector-starter",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+        "//platform/remote-driver/model:model_test_lib",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "@lib//:kotlin-test-assertions-core-jvm",
+        "@lib//:junit5",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "@lib//:mockito-junit-jupiter",
+        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/statistics/uploader:uploader_test_lib",
+        "@lib//:kodein-di-jvm-provided",
+    ],
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` end
 
 ### auto-generated section `iml intellij.tools.ide.metrics.collector.starter` start
-exports_files([
-  "intellij.tools.ide.metrics.collector.starter.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.ide.metrics.collector.starter.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.ide.metrics.collector.starter` end

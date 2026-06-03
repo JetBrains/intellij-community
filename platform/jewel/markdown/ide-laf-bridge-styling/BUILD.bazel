@@ -1,105 +1,123 @@
-### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` start
 
 create_kotlinc_options(
-  name = "custom_ide-laf-bridge-styling",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True,
-  x_explicit_api_mode = "strict"
+    name = "custom_ide-laf-bridge-styling",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
 )
 
 jvm_provided_library(
-  name = "platform_jewel_markdown_extensions_gfm-alerts_provided",
-  lib = "//platform/jewel/markdown/extensions/gfm-alerts"
+    name = "platform_jewel_markdown_extensions_gfm-alerts_provided",
+    lib = "//platform/jewel/markdown/extensions/gfm-alerts",
 )
 
 jvm_provided_library(
-  name = "platform_jewel_markdown_extensions_gfm-tables_provided",
-  lib = "//platform/jewel/markdown/extensions/gfm-tables"
+    name = "platform_jewel_markdown_extensions_gfm-tables_provided",
+    lib = "//platform/jewel/markdown/extensions/gfm-tables",
 )
 
 jvm_library(
-  name = "ide-laf-bridge-styling",
-  module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  kotlinc_opts = ":custom_ide-laf-bridge-styling",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/ui",
-    "//platform/jewel/foundation",
-    "//platform/jewel/ide-laf-bridge",
-    "//platform/ide-core",
-    "//platform/ide-core-impl",
-    "//platform/platform-impl:ide-impl",
-    "//libraries/compose-foundation-desktop",
-    "//platform/platform-api:ide",
-    "//platform/util:util-ui",
-    ":platform_jewel_markdown_extensions_gfm-alerts_provided",
-    ":platform_jewel_markdown_extensions_gfm-tables_provided",
-  ],
-  exports = [
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/ui",
-    "//platform/jewel/ide-laf-bridge",
-  ]
+    name = "ide-laf-bridge-styling",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-laf-bridge-styling",
+    module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/jewel/ide-laf-bridge",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/ui",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/ui",
+        "//platform/jewel/foundation",
+        "//platform/jewel/ide-laf-bridge",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/platform-impl:ide-impl",
+        "//libraries/compose-foundation-desktop",
+        "//platform/platform-api:ide",
+        "//platform/util:util-ui",
+        ":platform_jewel_markdown_extensions_gfm-alerts_provided",
+        ":platform_jewel_markdown_extensions_gfm-tables_provided",
+    ],
 )
 
 jvm_library(
-  name = "ide-laf-bridge-styling_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_ide-laf-bridge-styling",
-  exports = [
-    "//platform/jewel/markdown/core",
-    "//platform/jewel/markdown/core:core_test_lib",
-    "//platform/jewel/ui",
-    "//platform/jewel/ui:ui_test_lib",
-    "//platform/jewel/ide-laf-bridge",
-    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-  ],
-  runtime_deps = [
-    ":ide-laf-bridge-styling",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/jewel/markdown/core:core_test_lib",
-    "//platform/jewel/ui:ui_test_lib",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-    "//platform/jewel/markdown/extensions/gfm-alerts",
-    "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
-    "//platform/jewel/markdown/extensions/gfm-tables",
-    "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-    "//libraries/compose-foundation-desktop-junit",
-    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "ide-laf-bridge-styling_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-laf-bridge-styling",
+    module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/jewel/ide-laf-bridge",
+        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":ide-laf-bridge-styling",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/ui:ui_test_lib",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-alerts",
+        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-tables",
+        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//libraries/compose-foundation-desktop-junit",
+        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.ideLafBridgeStyling` start
-exports_files([
-  "intellij.platform.jewel.markdown.ideLafBridgeStyling.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.markdown.ideLafBridgeStyling.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.markdown.ideLafBridgeStyling` end

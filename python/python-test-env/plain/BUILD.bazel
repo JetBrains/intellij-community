@@ -1,84 +1,103 @@
-### auto-generated section `build intellij.python.test.env.plain` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.test.env.plain` start
+
 jvm_library(
-  name = "plain",
-  module_name = "intellij.python.test.env.plain",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "@lib//:jetbrains-annotations",
-    "//python/python-test-env/core",
-    "//python/openapi:community",
-    "//python/python-venv:venv",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//python/python-sdk:sdk",
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-impl",
-    "//python:python-community-impl",
-    "//platform/ide-core",
-    "//platform/lang-core",
-    "//python/testFramework",
-  ]
+    name = "plain",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.test.env.plain",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//python/python-test-env/core",
+        "//python/openapi:community",
+        "//python/python-venv:venv",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//python/python-sdk:sdk",
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/lang-impl",
+        "//python:python-community-impl",
+        "//platform/ide-core",
+        "//platform/lang-core",
+        "//python/testFramework",
+    ],
 )
 
 jvm_library(
-  name = "plain_test_lib",
-  testonly = True,
-  module_name = "intellij.python.test.env.plain",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//python/python-test-env/core",
-    "//python/python-test-env/core:core_test_lib",
-    "//python/openapi:community",
-    "//python/openapi:community_test_lib",
-    "//python/python-venv:venv",
-    "//python/python-venv:venv_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//python:python-community-impl",
-    "//python:python-community-impl_test_lib",
-    "//platform/ide-core",
-    "//platform/lang-core",
-    "//platform/lang-core:lang-core_test_lib",
-    "//python/testFramework",
-    "//python/testFramework:testFramework_test_lib",
-    "//python/python-exec-service:community-execService",
-    "//python/python-exec-service:community-execService_test_lib",
-  ],
-  runtime_deps = [
-    ":plain",
-    "//platform/ide-core:ide-core_test_lib",
-  ]
+    name = "plain_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.test.env.plain",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plain",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//python/python-test-env/core",
+        "//python/python-test-env/core:core_test_lib",
+        "//python/openapi:community",
+        "//python/openapi:community_test_lib",
+        "//python/python-venv:venv",
+        "//python/python-venv:venv_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/python-sdk:sdk",
+        "//python/python-sdk:sdk_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+        "//platform/ide-core",
+        "//platform/lang-core",
+        "//platform/lang-core:lang-core_test_lib",
+        "//python/testFramework",
+        "//python/testFramework:testFramework_test_lib",
+        "//python/python-exec-service:community-execService",
+        "//python/python-exec-service:community-execService_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.test.env.plain` end
 
 ### auto-generated section `iml intellij.python.test.env.plain` start
-exports_files([
-  "intellij.python.test.env.plain.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.test.env.plain.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.test.env.plain` end
 
 ### auto-generated section `test intellij.python.test.env.plain` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "plain_test",
-  runtime_deps = [":plain_test_lib"]
+    name = "plain_test",
+    runtime_deps = [":plain_test_lib"],
 )
 ### auto-generated section `test intellij.python.test.env.plain` end

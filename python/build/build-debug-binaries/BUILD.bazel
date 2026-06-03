@@ -1,25 +1,38 @@
-### auto-generated section `build intellij.pycharm.community.build.debugBinaries` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.pycharm.community.build.debugBinaries` start
+
 jvm_library(
-  name = "pycharm-community-build-debugBinaries",
-  module_name = "intellij.pycharm.community.build.debugBinaries",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "pycharm-community-build-debugBinaries",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.build.debugBinaries",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "pycharm-community-build-debugBinaries_test_lib",
-  testonly = True,
-  module_name = "intellij.pycharm.community.build.debugBinaries",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":pycharm-community-build-debugBinaries"]
+    name = "pycharm-community-build-debugBinaries_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.build.debugBinaries",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":pycharm-community-build-debugBinaries",
+    ],
 )
 ### auto-generated section `build intellij.pycharm.community.build.debugBinaries` end
 
 ### auto-generated section `iml intellij.pycharm.community.build.debugBinaries` start
-exports_files([
-  "intellij.pycharm.community.build.debugBinaries.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.pycharm.community.build.debugBinaries.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.pycharm.community.build.debugBinaries` end

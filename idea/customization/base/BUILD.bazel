@@ -1,36 +1,54 @@
-### auto-generated section `build intellij.idea.customization.base` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.idea.customization.base` start
+
 jvm_library(
-  name = "base",
-  module_name = "intellij.idea.customization.base",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-util-io:ide-util-io",
-  ]
+    name = "base",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.customization.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-util-io:ide-util-io",
+    ],
 )
 
 jvm_library(
-  name = "base_test_lib",
-  testonly = True,
-  module_name = "intellij.idea.customization.base",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":base",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-  ]
+    name = "base_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.customization.base",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":base",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.idea.customization.base` end
 
 ### auto-generated section `iml intellij.idea.customization.base` start
-exports_files([
-  "intellij.idea.customization.base.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.idea.customization.base.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.idea.customization.base` end

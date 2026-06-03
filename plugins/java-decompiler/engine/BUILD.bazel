@@ -1,85 +1,123 @@
-### auto-generated section `build intellij.java.decompiler.engine` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.decompiler.engine` start
+
 jvm_library(
-  name = "engine",
-  module_name = "intellij.java.decompiler.engine",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = ["@lib//:jetbrains-annotations"]
+    name = "engine",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler.engine",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "engine_test_lib",
-  testonly = True,
-  module_name = "intellij.java.decompiler.engine",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":engine",
-    "//java/java-runtime:rt",
-    "//java/java-runtime:rt_test_lib",
-    "@lib//:junit6",
-    "@lib//:junit6Params",
-    "@lib//:junit6Launcher",
-    "@lib//:eclipse",
-    "//libraries/groovy",
-    "//libraries/groovy:groovy_test_lib",
-  ]
+    name = "engine_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler.engine",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":engine",
+        "//java/java-runtime:rt",
+        "//java/java-runtime:rt_test_lib",
+        "@lib//:junit6",
+        "@lib//:junit6Params",
+        "@lib//:junit6Launcher",
+        "@lib//:eclipse",
+        "//libraries/groovy",
+        "//libraries/groovy:groovy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end
 
 ### auto-generated section `iml intellij.java.decompiler.engine` start
-exports_files([
-  "intellij.java.decompiler.engine.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.decompiler.engine.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.decompiler.engine` end
 
 ### auto-generated section `build intellij.java.decompiler.engine.tests` start
+
 jvm_library(
-  name = "java-decompiler-engine-tests",
-  module_name = "intellij.java.decompiler.engine.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "java-decompiler-engine-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler.engine.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "java-decompiler-engine-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [
-    "//plugins/java-decompiler/engine",
-    "//plugins/java-decompiler/engine:engine_test_lib",
-  ],
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//java/java-runtime:rt",
-    "//java/java-runtime:rt_test_lib",
-    "@lib//:junit6",
-    "@lib//:junit6Params",
-    "@lib//:junit6Launcher",
-    "@lib//:eclipse",
-    "//libraries/groovy",
-    "//libraries/groovy:groovy_test_lib",
-  ],
-  runtime_deps = [":java-decompiler-engine-tests"]
+    name = "java-decompiler-engine-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/java-decompiler/engine",
+        "//plugins/java-decompiler/engine:engine_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-decompiler-engine-tests",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//java/java-runtime:rt",
+        "//java/java-runtime:rt_test_lib",
+        "@lib//:junit6",
+        "@lib//:junit6Params",
+        "@lib//:junit6Launcher",
+        "@lib//:eclipse",
+        "//libraries/groovy",
+        "//libraries/groovy:groovy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.decompiler.engine.tests` end
 
 ### auto-generated section `iml intellij.java.decompiler.engine.tests` start
-exports_files([
-  "intellij.java.decompiler.engine.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.decompiler.engine.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.decompiler.engine.tests` end
 
 ### auto-generated section `test intellij.java.decompiler.engine.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "java-decompiler-engine-tests_test",
-  runtime_deps = [":java-decompiler-engine-tests_test_lib"]
+    name = "java-decompiler-engine-tests_test",
+    runtime_deps = [":java-decompiler-engine-tests_test_lib"],
 )
 ### auto-generated section `test intellij.java.decompiler.engine.tests` end

@@ -6,9 +6,9 @@ Generates targets.bzl with exported target lists for use by build rules.
 Parity with the JPS-to-Bazel converter is asserted in JpsModuleToBazelTargetsOnly.
 """
 
+load(":jps_library_derivation.bzl", "derive_library_targets")
 load(":jps_model.bzl", "read_project_model")
 load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_targets", "module_name_to_target", "parse_iml")
-load(":jps_library_derivation.bzl", "derive_library_targets")
 
 def _format_target_list(name, targets):
     """Format a list of targets as a Starlark list assignment."""
@@ -49,6 +49,7 @@ def _derive_targets_from_model(ctx, model):
 
     # community-only: community_root_parts is [] (project root IS community root)
     community_root_parts = []
+
     # In community-only mode, ultimateRoot is null
     ultimate_root_parts = None
 

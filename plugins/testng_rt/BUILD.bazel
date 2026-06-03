@@ -1,35 +1,51 @@
-### auto-generated section `build intellij.testng.rt` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.testng.rt` start
+
 jvm_library(
-  name = "testng-rt",
-  module_name = "intellij.testng.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:test_n_g-provided",
-    "//java/java-runtime:rt",
-  ]
+    name = "testng-rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.testng.rt",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:test_n_g-provided",
+        "//java/java-runtime:rt",
+    ],
 )
 
 jvm_library(
-  name = "testng-rt_test_lib",
-  testonly = True,
-  module_name = "intellij.testng.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":testng-rt",
-    "@lib//:test_n_g-provided",
-    "//java/java-runtime:rt_test_lib",
-  ]
+    name = "testng-rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.testng.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":testng-rt",
+        "@lib//:test_n_g-provided",
+        "//java/java-runtime:rt_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.testng.rt` end
 
 ### auto-generated section `iml intellij.testng.rt` start
-exports_files([
-  "intellij.testng.rt.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.testng.rt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.testng.rt` end

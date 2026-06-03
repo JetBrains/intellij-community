@@ -1,56 +1,74 @@
-### auto-generated section `build intellij.grazie.java` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie.java` start
+
 jvm_library(
-  name = "java",
-  module_name = "intellij.grazie.java",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/grazie/src:core",
-    "//java/openapi:java",
-    "//java/java-impl:impl",
-    "//java/java-psi-api:psi",
-    "//java/java-psi-impl:psi-impl",
-    "//java/java-analysis-impl:analysis-impl",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/util-ex",
-    "//platform/analysis-api:analysis",
-    "//spellchecker",
-  ]
+    name = "java",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.java",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+        "//java/openapi:java",
+        "//java/java-impl:impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-analysis-impl:analysis-impl",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util-ex",
+        "//platform/analysis-api:analysis",
+        "//spellchecker",
+    ],
 )
 
 jvm_library(
-  name = "java_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie.java",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":java",
-    "//plugins/grazie/src:core_test_lib",
-    "//java/openapi:java_test_lib",
-    "//java/java-impl:impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//java/java-analysis-impl:analysis-impl_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//spellchecker:spellchecker_test_lib",
-  ]
+    name = "java_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.java",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java",
+        "//plugins/grazie/src:core_test_lib",
+        "//java/openapi:java_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//java/java-analysis-impl:analysis-impl_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//spellchecker:spellchecker_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie.java` end
 
 ### auto-generated section `iml intellij.grazie.java` start
-exports_files([
-  "intellij.grazie.java.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.java.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie.java` end

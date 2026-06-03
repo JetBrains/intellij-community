@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.markdown` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.markdown` start
+
 jvm_library(
-  name = "markdown",
-  module_name = "intellij.libraries.markdown",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:jetbrains-markdown"],
-  runtime_deps = ["@lib//:jetbrains-markdown"]
+    name = "markdown",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.markdown",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jetbrains-markdown"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:jetbrains-markdown",
+    ],
 )
 
 jvm_library(
-  name = "markdown_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.markdown",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:jetbrains-markdown"],
-  runtime_deps = [":markdown"]
+    name = "markdown_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.markdown",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jetbrains-markdown"],
+    runtime_deps = [
+        # do not sort,
+        ":markdown",
+    ],
 )
 ### auto-generated section `build intellij.libraries.markdown` end
 
 ### auto-generated section `iml intellij.libraries.markdown` start
-exports_files([
-  "intellij.libraries.markdown.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.markdown.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.markdown` end

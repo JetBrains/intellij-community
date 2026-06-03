@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.kotlin.base.externalSystem` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.base.externalSystem` start
+
 jvm_library(
-  name = "kotlin-base-externalSystem",
-  module_name = "intellij.kotlin.base.externalSystem",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//plugins/kotlin/base/util",
-    "//plugins/kotlin/base/plugin",
-    "//platform/core-impl",
-    "//platform/projectModel-impl",
-    "//platform/util",
-    "//platform/execution",
-    "//platform/external-system-api:externalSystem",
-    "@lib//:kotlin-tooling-core",
-  ]
+    name = "kotlin-base-externalSystem",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.base.externalSystem",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/plugin",
+        "//platform/core-impl",
+        "//platform/projectModel-impl",
+        "//platform/util",
+        "//platform/execution",
+        "//platform/external-system-api:externalSystem",
+        "@lib//:kotlin-tooling-core",
+    ],
 )
 
 jvm_library(
-  name = "kotlin-base-externalSystem_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.base.externalSystem",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":kotlin-base-externalSystem",
-    "//platform/core-api:core_test_lib",
-    "//plugins/kotlin/base/util:util_test_lib",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/projectModel-impl:projectModel-impl_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/external-system-api:externalSystem_test_lib",
-  ]
+    name = "kotlin-base-externalSystem_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.base.externalSystem",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-base-externalSystem",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/external-system-api:externalSystem_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.externalSystem` end
 
 ### auto-generated section `iml intellij.kotlin.base.externalSystem` start
-exports_files([
-  "intellij.kotlin.base.externalSystem.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.base.externalSystem.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.base.externalSystem` end

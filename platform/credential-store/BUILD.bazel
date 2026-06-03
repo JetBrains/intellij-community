@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.platform.credentialStore` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.credentialStore` start
+
 jvm_library(
-  name = "credential-store",
-  module_name = "intellij.platform.credentialStore",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/util-ex",
-    "//platform/util/base",
-    "//platform/util",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/util/concurrency",
-  ]
+    name = "credential-store",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.credentialStore",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util-ex",
+        "//platform/util/base",
+        "//platform/util",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util/concurrency",
+    ],
 )
 
 jvm_library(
-  name = "credential-store_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.credentialStore",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":credential-store",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-  ]
+    name = "credential-store_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.credentialStore",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":credential-store",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.credentialStore` end
 
 ### auto-generated section `iml intellij.platform.credentialStore` start
-exports_files([
-  "intellij.platform.credentialStore.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.credentialStore.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.credentialStore` end

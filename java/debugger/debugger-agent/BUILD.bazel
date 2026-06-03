@@ -1,26 +1,42 @@
-### auto-generated section `build intellij.java.debugger.agent.holder` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.debugger.agent.holder` start
+
 jvm_library(
-  name = "java-debugger-agent-holder",
-  module_name = "intellij.java.debugger.agent.holder",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["@lib//:java-debugger-agent-holder-debugger-agent"]
+    name = "java-debugger-agent-holder",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.agent.holder",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:java-debugger-agent-holder-debugger-agent",
+    ],
 )
 
 jvm_library(
-  name = "java-debugger-agent-holder_test_lib",
-  testonly = True,
-  module_name = "intellij.java.debugger.agent.holder",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":java-debugger-agent-holder"]
+    name = "java-debugger-agent-holder_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.agent.holder",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-debugger-agent-holder",
+    ],
 )
 ### auto-generated section `build intellij.java.debugger.agent.holder` end
 
 ### auto-generated section `iml intellij.java.debugger.agent.holder` start
-exports_files([
-  "intellij.java.debugger.agent.holder.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.debugger.agent.holder.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.debugger.agent.holder` end

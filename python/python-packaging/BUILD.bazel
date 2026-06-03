@@ -1,45 +1,63 @@
-### auto-generated section `build intellij.python.packaging` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.packaging` start
+
 jvm_library(
-  name = "packaging",
-  module_name = "intellij.python.packaging",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//python/python-pyproject:pyproject",
-    "//python/openapi:community",
-  ]
+    name = "packaging",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.packaging",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//python/python-pyproject:pyproject",
+        "//python/openapi:community",
+    ],
 )
 
 jvm_library(
-  name = "packaging_test_lib",
-  testonly = True,
-  module_name = "intellij.python.packaging",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":packaging",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//python/python-pyproject:pyproject_test_lib",
-    "//python/openapi:community_test_lib",
-  ]
+    name = "packaging_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.packaging",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":packaging",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//python/openapi:community_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.packaging` end
 
 ### auto-generated section `iml intellij.python.packaging` start
-exports_files([
-  "intellij.python.packaging.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.packaging.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.packaging` end

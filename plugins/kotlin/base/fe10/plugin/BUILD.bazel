@@ -1,34 +1,52 @@
-### auto-generated section `build kotlin.base.fe10.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build kotlin.base.fe10.plugin` start
+
 jvm_library(
-  name = "plugin",
-  module_name = "kotlin.base.fe10.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/plugin",
-  ]
+    name = "plugin",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.base.fe10.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/base/plugin",
+    ],
 )
 
 jvm_library(
-  name = "plugin_test_lib",
-  testonly = True,
-  module_name = "kotlin.base.fe10.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-  ]
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.base.fe10.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+    ],
 )
 ### auto-generated section `build kotlin.base.fe10.plugin` end
 
 ### auto-generated section `iml kotlin.base.fe10.plugin` start
-exports_files([
-  "kotlin.base.fe10.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "kotlin.base.fe10.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml kotlin.base.fe10.plugin` end

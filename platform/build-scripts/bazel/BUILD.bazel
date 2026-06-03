@@ -1,19 +1,22 @@
-load("@rules_java//java:defs.bzl", "java_binary", "java_test", "java_import")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_test")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-exports_files(["intellij.platform.buildScripts.bazel.iml"], visibility = ["//visibility:public"])
+exports_files(
+    ["intellij.platform.buildScripts.bazel.iml"],
+    visibility = ["//visibility:public"],
+)
 
 # see usage in .bazelrc
 # this toolchain prevents dependency on C++ toolchain through proguard_allowlister tool
 default_java_toolchain(
     name = "jps_to_bazel_toolchain_jdk_25",
-    source_version = "25",
-    target_version = "25",
     java_runtime = "@rules_java//toolchains:remotejdk_25",
     proguard_allowlister = ":noop_proguard_allowlister",
+    source_version = "25",
+    target_version = "25",
     visibility = ["//visibility:public"],
 )
 
@@ -44,8 +47,11 @@ kt_jvm_library(
 kt_jvm_library(
     name = "jps_to_bazel-lib",
     srcs = glob(["src/**/*.kt"]),
+    runtime_deps = [],
     deps = [
+        ":kotlin_serialization",
         "@j2b_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm",
+        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_impl",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_serialization",
@@ -53,14 +59,11 @@ kt_jvm_library(
         "@j2b_maven//:com_jetbrains_intellij_platform_util_base",
         "@j2b_maven//:com_jetbrains_intellij_platform_util_base_multiplatform",
         "@j2b_maven//:com_jetbrains_intellij_platform_util_jdom",
-        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_reflect",
         "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm",
         "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
-        ":kotlin_serialization",
     ],
-    runtime_deps = [],
 )
 
 kt_jvm_library(
@@ -69,8 +72,8 @@ kt_jvm_library(
     associates = [":jps_to_bazel-lib"],
     deps = [
         "@j2b_maven//:junit_junit",
-        "@j2b_maven//:org_assertj_assertj_core",
         "@j2b_maven//:net_bytebuddy_byte_buddy",
+        "@j2b_maven//:org_assertj_assertj_core",
     ],
 )
 
@@ -84,42 +87,42 @@ filegroup(
 
 java_test(
     name = "bazel-generator-integration-tests",
-    test_class = "org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests",
     data = [
-        ":bazel-generator-integration-test-data",
         "testData/integration/marker.txt",
+        ":bazel-generator-integration-test-data",
     ],
     env = {
         "BAZEL_GENERATOR_INTEGRATION_TEST_DATA_MARKER": "$(rlocationpath testData/integration/marker.txt)",
     },
+    test_class = "org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests",
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 
 java_test(
     name = "kotlinc-project-defaults-tests",
-    test_class = "org.jetbrains.intellij.build.bazel.KotlincProjectDefaultsTest",
     data = [
-        ":bazel-generator-integration-test-data",
         "testData/kotlinc-defaults/marker.txt",
+        ":bazel-generator-integration-test-data",
     ],
     env = {
         "BAZEL_GENERATOR_KOTLINC_DEFAULTS_TEST_DATA_MARKER": "$(rlocationpath testData/kotlinc-defaults/marker.txt)",
     },
+    test_class = "org.jetbrains.intellij.build.bazel.KotlincProjectDefaultsTest",
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 
 java_binary(
     name = "jps-to-bazel",
-    runtime_deps = [ ":jps_to_bazel-lib" ],
-    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazel",
     jvm_flags = [],
+    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazel",
     visibility = ["//visibility:public"],
+    runtime_deps = [":jps_to_bazel-lib"],
 )
 
 java_binary(
     name = "jps-to-bazel-targets-only",
-    runtime_deps = [":jps_to_bazel-lib"],
-    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazelTargetsOnly",
     jvm_flags = [],
+    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazelTargetsOnly",
     visibility = ["//visibility:public"],
+    runtime_deps = [":jps_to_bazel-lib"],
 )

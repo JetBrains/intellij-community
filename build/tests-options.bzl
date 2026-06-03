@@ -64,16 +64,15 @@ JAVA_TEST_ARGS = [
 ]
 
 TEST_FRAMEWORK_DEPS = [
-  # TODO Review this list, most likely only tools-testsBootstrap is required
-  # junit stuff should be propagated via runtime deps of testsBootstrap
+    # TODO Review this list, most likely only tools-testsBootstrap is required
+    # junit stuff should be propagated via runtime deps of testsBootstrap
+    "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "@community//platform/util:util-tests_test_lib",
 
-  "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
-  "@community//platform/util:util-tests_test_lib",
-
-  # Provide test engines to run actual tests
-  # Junit 3/4 is also run by junit5 via junit vintage
-  "@community//libraries/junit5-vintage",
-  "@community//libraries/junit5-launcher",
+    # Provide test engines to run actual tests
+    # Junit 3/4 is also run by junit5 via junit vintage
+    "@community//libraries/junit5-vintage",
+    "@community//libraries/junit5-launcher",
 ]
 
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
@@ -157,5 +156,5 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
         data = all_data,
         env = all_env,
         use_testrunner = False,
-        **kwargs,
+        **kwargs
     )

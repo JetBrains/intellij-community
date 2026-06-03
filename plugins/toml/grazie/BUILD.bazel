@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.toml.grazie` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.toml.grazie` start
+
 jvm_library(
-  name = "grazie",
-  module_name = "intellij.toml.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//plugins/toml/core",
-    "@lib//:kotlin-stdlib",
-    "//plugins/grazie/src:core",
-  ]
+    name = "grazie",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.grazie",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//plugins/toml/core",
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+    ],
 )
 
 jvm_library(
-  name = "grazie_test_lib",
-  testonly = True,
-  module_name = "intellij.toml.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":grazie",
-    "//platform/core-api:core_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//plugins/toml/core:core_test_lib",
-    "//plugins/grazie/src:core_test_lib",
-  ]
+    name = "grazie_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.grazie",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":grazie",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/toml/core:core_test_lib",
+        "//plugins/grazie/src:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.toml.grazie` end
 
 ### auto-generated section `iml intellij.toml.grazie` start
-exports_files([
-  "intellij.toml.grazie.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.toml.grazie.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.toml.grazie` end

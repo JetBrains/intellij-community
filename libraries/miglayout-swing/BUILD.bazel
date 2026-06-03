@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.miglayout.swing` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.miglayout.swing` start
+
 jvm_library(
-  name = "miglayout-swing",
-  module_name = "intellij.libraries.miglayout.swing",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
-  runtime_deps = ["@lib//:libraries-miglayout-swing-miglayout-swing"]
+    name = "miglayout-swing",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.miglayout.swing",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-miglayout-swing-miglayout-swing",
+    ],
 )
 
 jvm_library(
-  name = "miglayout-swing_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.miglayout.swing",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
-  runtime_deps = [":miglayout-swing"]
+    name = "miglayout-swing_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.miglayout.swing",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
+    runtime_deps = [
+        # do not sort,
+        ":miglayout-swing",
+    ],
 )
 ### auto-generated section `build intellij.libraries.miglayout.swing` end
 
 ### auto-generated section `iml intellij.libraries.miglayout.swing` start
-exports_files([
-  "intellij.libraries.miglayout.swing.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.miglayout.swing.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.miglayout.swing` end

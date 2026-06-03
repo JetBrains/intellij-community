@@ -1,43 +1,65 @@
-### auto-generated section `build fleet.fastutil` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.fastutil` start
 
 create_kotlinc_options(
-  name = "custom_fastutil",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_fastutil",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "fastutil",
-  module_name = "fleet.fastutil",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_fastutil",
-  deps = ["@lib//:kotlin-stdlib"]
+    name = "fastutil",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_fastutil",
+    module_name = "fleet.fastutil",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "fastutil_test_lib",
-  testonly = True,
-  module_name = "fleet.fastutil",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_fastutil",
-  runtime_deps = [":fastutil"]
+    name = "fastutil_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_fastutil",
+    module_name = "fleet.fastutil",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":fastutil",
+    ],
 )
 ### auto-generated section `build fleet.fastutil` end
 
 ### auto-generated section `iml fleet.fastutil` start
-exports_files([
-  "fleet.fastutil.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.fastutil.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.fastutil` end

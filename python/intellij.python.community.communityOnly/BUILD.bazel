@@ -1,34 +1,52 @@
-### auto-generated section `build intellij.python.community.communityOnly` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community.communityOnly` start
+
 jvm_library(
-  name = "community-communityOnly",
-  module_name = "intellij.python.community.communityOnly",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python:python-community-impl",
-  ]
+    name = "community-communityOnly",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.communityOnly",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python:python-community-impl",
+    ],
 )
 
 jvm_library(
-  name = "community-communityOnly_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community.communityOnly",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":community-communityOnly",
-    "//python:python-community-impl_test_lib",
-  ]
+    name = "community-communityOnly_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.communityOnly",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":community-communityOnly",
+        "//python:python-community-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community.communityOnly` end
 
 ### auto-generated section `iml intellij.python.community.communityOnly` start
-exports_files([
-  "intellij.python.community.communityOnly.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.communityOnly.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community.communityOnly` end

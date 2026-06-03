@@ -1,55 +1,73 @@
-### auto-generated section `build intellij.kotlin.completion.ml` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.completion.ml` start
+
 jvm_library(
-  name = "completion-ml",
-  module_name = "intellij.kotlin.completion.ml",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//plugins/kotlin/base/util",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/preferences",
-    "//platform/projectModel-api:projectModel",
-    "//platform/lang-api:lang",
-    "//platform/platform-impl:ide-impl",
-    "//plugins/completion-ml-ranking",
-    "//platform/platform-impl/internal",
-    "@lib//:kotlin-completion-ml-completion-ranking-kotlin",
-    "//plugins/kotlin/base/code-insight",
-  ]
+    name = "completion-ml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.completion.ml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/preferences",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//plugins/completion-ml-ranking",
+        "//platform/platform-impl/internal",
+        "@lib//:kotlin-completion-ml-completion-ranking-kotlin",
+        "//plugins/kotlin/base/code-insight",
+    ],
 )
 
 jvm_library(
-  name = "completion-ml_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.completion.ml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":completion-ml",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//plugins/kotlin/base/util:util_test_lib",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/preferences:preferences_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
-    "//platform/platform-impl/internal:internal_test_lib",
-    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-  ]
+    name = "completion-ml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.completion.ml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":completion-ml",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/preferences:preferences_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.completion.ml` end
 
 ### auto-generated section `iml intellij.kotlin.completion.ml` start
-exports_files([
-  "intellij.kotlin.completion.ml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.completion.ml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.completion.ml` end

@@ -1,64 +1,84 @@
-### auto-generated section `build intellij.kotlin.base.resources` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.kotlin.base.resources` start
 
 create_kotlinc_options(
-  name = "custom_kotlin-base-resources",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ],
-  x_context_parameters = True
+    name = "custom_kotlin-base-resources",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
+    x_context_parameters = True,
 )
 
 resourcegroup(
-  name = "kotlin-base-resources_resources",
-  srcs = glob(["resources-en/**/*"]),
-  strip_prefix = "resources-en"
+    name = "kotlin-base-resources_resources",
+    srcs = glob(
+        ["resources-en/**/*"],
+    ),
+    strip_prefix = "resources-en",
 )
 
 jvm_library(
-  name = "kotlin-base-resources",
-  module_name = "intellij.kotlin.base.resources",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  resource_jars = [":kotlin-base-resources_resources"],
-  kotlinc_opts = ":custom_kotlin-base-resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/util:util-ui",
-    "//platform/core-ui",
-    "//java/java-frontback-psi-api:frontback-psi",
-  ]
+    name = "kotlin-base-resources",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-base-resources",
+    module_name = "intellij.kotlin.base.resources",
+    resource_jars = [":kotlin-base-resources_resources"],
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/util-ex",
+        "//platform/util:util-ui",
+        "//platform/core-ui",
+        "//java/java-frontback-psi-api:frontback-psi",
+    ],
 )
 
 jvm_library(
-  name = "kotlin-base-resources_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.base.resources",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-base-resources",
-  runtime_deps = [
-    ":kotlin-base-resources",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-  ]
+    name = "kotlin-base-resources_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-base-resources",
+    module_name = "intellij.kotlin.base.resources",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-base-resources",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.resources` end
 
 ### auto-generated section `iml intellij.kotlin.base.resources` start
-exports_files([
-  "intellij.kotlin.base.resources.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.base.resources.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.base.resources` end

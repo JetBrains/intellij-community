@@ -1,75 +1,94 @@
-### auto-generated section `build intellij.tools.testsBootstrap` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.tools.testsBootstrap` start
+
 jvm_provided_library(
-  name = "libraries_junit5-launcher_provided",
-  lib = "//libraries/junit5-launcher"
+    name = "libraries_junit5-launcher_provided",
+    lib = "//libraries/junit5-launcher",
 )
 
 jvm_provided_library(
-  name = "libraries_junit5_provided",
-  lib = "//libraries/junit5"
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
 )
 
 jvm_provided_library(
-  name = "libraries_junit5-vintage_provided",
-  lib = "//libraries/junit5-vintage"
+    name = "libraries_junit5-vintage_provided",
+    lib = "//libraries/junit5-vintage",
 )
 
 jvm_library(
-  name = "tools-testsBootstrap",
-  module_name = "intellij.tools.testsBootstrap",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/junit4",
-    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
-    "@lib//:opentest4j",
-    "//platform/core-nio-fs",
-    "//libraries/asm-tools",
-    "//platform/bazel-runfiles",
-    "//platform/util/base",
-    ":libraries_junit5-launcher_provided",
-    ":libraries_junit5_provided",
-    ":libraries_junit5-vintage_provided",
-  ],
-  runtime_deps = [
-    "//platform/boot",
-    "//libraries/junit5-jupiter",
-  ]
+    name = "tools-testsBootstrap",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.testsBootstrap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/boot",
+        "//libraries/junit5-jupiter",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit4",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+        "@lib//:opentest4j",
+        "//platform/core-nio-fs",
+        "//libraries/asm-tools",
+        "//platform/bazel-runfiles",
+        "//platform/util/base",
+        ":libraries_junit5-launcher_provided",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-vintage_provided",
+    ],
 )
 
 jvm_library(
-  name = "tools-testsBootstrap_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.testsBootstrap",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":tools-testsBootstrap",
-    "//platform/boot:boot_test_lib",
-    "//libraries/junit4:junit4_test_lib",
-    "//libraries/junit5-launcher",
-    "//libraries/junit5-launcher:junit5-launcher_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/junit5-vintage",
-    "//libraries/junit5-vintage:junit5-vintage_test_lib",
-    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
-    "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
-    "//platform/core-nio-fs:core-nio-fs_test_lib",
-    "//libraries/asm-tools:asm-tools_test_lib",
-    "//platform/bazel-runfiles:bazel-runfiles_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "tools-testsBootstrap_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.testsBootstrap",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tools-testsBootstrap",
+        "//platform/boot:boot_test_lib",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-launcher",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-vintage",
+        "//libraries/junit5-vintage:junit5-vintage_test_lib",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
+        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//libraries/asm-tools:asm-tools_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.tools.testsBootstrap` end
 
 ### auto-generated section `iml intellij.tools.testsBootstrap` start
-exports_files([
-  "intellij.tools.testsBootstrap.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.testsBootstrap.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.testsBootstrap` end

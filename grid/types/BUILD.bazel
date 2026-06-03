@@ -1,36 +1,54 @@
-### auto-generated section `build intellij.grid.types` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grid.types` start
+
 jvm_library(
-  name = "types",
-  module_name = "intellij.grid.types",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//platform/util-rt",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "types",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.grid.types",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util-rt",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "types_test_lib",
-  testonly = True,
-  module_name = "intellij.grid.types",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":types",
-    "//platform/util-rt:util-rt_test_lib",
-  ]
+    name = "types_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.grid.types",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":types",
+        "//platform/util-rt:util-rt_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grid.types` end
 
 ### auto-generated section `iml intellij.grid.types` start
-exports_files([
-  "intellij.grid.types.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grid.types.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grid.types` end

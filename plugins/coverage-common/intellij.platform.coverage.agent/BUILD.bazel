@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.platform.coverage.agent` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.coverage.agent` start
+
 jvm_library(
-  name = "coverage-agent",
-  module_name = "intellij.platform.coverage.agent",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
-  runtime_deps = ["@lib//:platform-coverage-agent-intellij-coverage"]
+    name = "coverage-agent",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.coverage.agent",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:platform-coverage-agent-intellij-coverage",
+    ],
 )
 
 jvm_library(
-  name = "coverage-agent_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.coverage.agent",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
-  runtime_deps = [":coverage-agent"]
+    name = "coverage-agent_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.coverage.agent",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    runtime_deps = [
+        # do not sort,
+        ":coverage-agent",
+    ],
 )
 ### auto-generated section `build intellij.platform.coverage.agent` end
 
 ### auto-generated section `iml intellij.platform.coverage.agent` start
-exports_files([
-  "intellij.platform.coverage.agent.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.coverage.agent.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.coverage.agent` end

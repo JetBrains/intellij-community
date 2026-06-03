@@ -1,48 +1,66 @@
-### auto-generated section `build intellij.devkit.smartupdate` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.devkit.smartupdate` start
+
 jvm_library(
-  name = "smartupdate",
-  module_name = "intellij.devkit.smartupdate",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/smart-update",
-    "//plugins/devkit/devkit-core:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/ide-core",
-    "//platform/core-api:core",
-    "//platform/platform-impl:ide-impl",
-    "//platform/util:util-ui",
-  ]
+    name = "smartupdate",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.smartupdate",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/smart-update",
+        "//plugins/devkit/devkit-core:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/core-api:core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "smartupdate_test_lib",
-  testonly = True,
-  module_name = "intellij.devkit.smartupdate",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":smartupdate",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/smart-update:smart-update_test_lib",
-    "//plugins/devkit/devkit-core:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/util:util-ui_test_lib",
-  ]
+    name = "smartupdate_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.smartupdate",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":smartupdate",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/smart-update:smart-update_test_lib",
+        "//plugins/devkit/devkit-core:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.devkit.smartupdate` end
 
 ### auto-generated section `iml intellij.devkit.smartupdate` start
-exports_files([
-  "intellij.devkit.smartupdate.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.devkit.smartupdate.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.devkit.smartupdate` end

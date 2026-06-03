@@ -1,63 +1,81 @@
-### auto-generated section `build intellij.mcpserver.terminal` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.mcpserver.terminal` start
+
 jvm_library(
-  name = "mcpserver.terminal",
-  module_name = "intellij.mcpserver.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//plugins/mcp-server:mcpserver",
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//platform/core-ui",
-    "//platform/util:util-ui",
-    "//platform/util",
-    "//platform/execution-impl",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/execution",
-    "//plugins/terminal",
-    "//plugins/terminal/backend",
-    "//plugins/sh/core",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-  ]
+    name = "mcpserver.terminal",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.terminal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//plugins/mcp-server:mcpserver",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//platform/util",
+        "//platform/execution-impl",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/execution",
+        "//plugins/terminal",
+        "//plugins/terminal/backend",
+        "//plugins/sh/core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+    ],
 )
 
 jvm_library(
-  name = "mcpserver.terminal_test_lib",
-  testonly = True,
-  module_name = "intellij.mcpserver.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":mcpserver.terminal",
-    "//plugins/mcp-server:mcpserver_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-    "//plugins/terminal/backend:backend_test_lib",
-    "//plugins/sh/core:core_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "mcpserver.terminal_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.terminal",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":mcpserver.terminal",
+        "//plugins/mcp-server:mcpserver_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//plugins/terminal/backend:backend_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.mcpserver.terminal` end
 
 ### auto-generated section `iml intellij.mcpserver.terminal` start
-exports_files([
-  "intellij.mcpserver.terminal.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.mcpserver.terminal.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.mcpserver.terminal` end

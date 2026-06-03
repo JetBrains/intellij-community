@@ -1,73 +1,91 @@
-### auto-generated section `build intellij.python.community` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.community` start
+
 jvm_library(
-  name = "community",
-  module_name = "intellij.python.community",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//python/python-psi-api:psi",
-    "//platform/analysis-api:analysis",
-    "//platform/platform-util-io:ide-util-io",
-    "//libraries/jsoup",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util",
-    "//platform/extensions",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "//platform/execution",
-    "//jps/model-api:model",
-    "//platform/backend/workspace",
-    "//platform/workspace/storage",
-    "//platform/workspace/jps",
-  ],
-  exports = [
-    "//python/python-psi-api:psi",
-    "//platform/platform-util-io:ide-util-io",
-  ]
+    name = "community",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/platform-util-io:ide-util-io",
+        "//python/python-psi-api:psi",
+    ],
+    deps = [
+        # do not sort,
+        "//python/python-psi-api:psi",
+        "//platform/analysis-api:analysis",
+        "//platform/platform-util-io:ide-util-io",
+        "//libraries/jsoup",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/util",
+        "//platform/extensions",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/execution",
+        "//jps/model-api:model",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
+        "//platform/workspace/jps",
+    ],
 )
 
 jvm_library(
-  name = "community_test_lib",
-  testonly = True,
-  module_name = "intellij.python.community",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//python/python-psi-api:psi",
-    "//python/python-psi-api:psi_test_lib",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-  ],
-  runtime_deps = [
-    ":community",
-    "//python/python-psi-api:psi_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/extensions:extensions_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/backend/workspace:workspace_test_lib",
-    "//platform/workspace/storage:storage_test_lib",
-    "//platform/workspace/jps:jps_test_lib",
-  ]
+    name = "community_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-api:psi_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":community",
+        "//python/python-psi-api:psi_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.community` end
 
 ### auto-generated section `iml intellij.python.community` start
-exports_files([
-  "intellij.python.community.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.community.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.community` end

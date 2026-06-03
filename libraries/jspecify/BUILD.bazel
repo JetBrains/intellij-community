@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.jspecify` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jspecify` start
+
 jvm_library(
-  name = "jspecify",
-  module_name = "intellij.libraries.jspecify",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:jspecify"],
-  runtime_deps = ["@lib//:jspecify"]
+    name = "jspecify",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jspecify",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jspecify"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:jspecify",
+    ],
 )
 
 jvm_library(
-  name = "jspecify_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jspecify",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:jspecify"],
-  runtime_deps = [":jspecify"]
+    name = "jspecify_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jspecify",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:jspecify"],
+    runtime_deps = [
+        # do not sort,
+        ":jspecify",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jspecify` end
 
 ### auto-generated section `iml intellij.libraries.jspecify` start
-exports_files([
-  "intellij.libraries.jspecify.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jspecify.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jspecify` end

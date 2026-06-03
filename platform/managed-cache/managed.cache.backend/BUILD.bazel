@@ -1,55 +1,73 @@
-### auto-generated section `build intellij.platform.managed.cache.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.managed.cache.backend` start
+
 jvm_library(
-  name = "managed.cache.backend",
-  module_name = "intellij.platform.managed.cache.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/kernel/backend",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/project/shared:project",
-    "//platform/util",
-    "//platform/platform-impl:ide-impl",
-    "//platform/managed-cache/managed.cache",
-    "//platform/util/concurrency",
-    "//platform/core-api:core",
-    "//fleet/rhizomedb",
-  ]
+    name = "managed.cache.backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.managed.cache.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/kernel/backend",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/project/shared:project",
+        "//platform/util",
+        "//platform/platform-impl:ide-impl",
+        "//platform/managed-cache/managed.cache",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "managed.cache.backend_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.managed.cache.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":managed.cache.backend",
-    "//platform/kernel/backend:backend_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/managed-cache/managed.cache:managed.cache_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "managed.cache.backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.managed.cache.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":managed.cache.backend",
+        "//platform/kernel/backend:backend_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/managed-cache/managed.cache:managed.cache_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.managed.cache.backend` end
 
 ### auto-generated section `iml intellij.platform.managed.cache.backend` start
-exports_files([
-  "intellij.platform.managed.cache.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.managed.cache.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.managed.cache.backend` end

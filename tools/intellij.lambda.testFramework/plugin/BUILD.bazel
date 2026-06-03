@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.lambda.test.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.lambda.test.plugin` start
+
 jvm_library(
-  name = "plugin",
-  module_name = "intellij.lambda.test.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lambda.test.plugin",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "plugin_test_lib",
-  testonly = True,
-  module_name = "intellij.lambda.test.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  runtime_deps = [":plugin"]
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lambda.test.plugin",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+    ],
 )
 ### auto-generated section `build intellij.lambda.test.plugin` end
 
 ### auto-generated section `iml intellij.lambda.test.plugin` start
-exports_files([
-  "intellij.lambda.test.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.lambda.test.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.lambda.test.plugin` end

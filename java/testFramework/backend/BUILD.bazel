@@ -1,53 +1,71 @@
-### auto-generated section `build intellij.java.testFramework.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.testFramework.backend` start
+
 jvm_library(
-  name = "backend",
-  module_name = "intellij.java.testFramework.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//java/compiler/impl",
-    "//java/java-impl:impl",
-    "//platform/core-api:core",
-    "//platform/eel",
-    "//platform/ide-core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/testFramework/common",
-    "//platform/util",
-    "//platform/util-ex",
-    "//jps/jps-builders:build",
-    "//jps/model-api:model",
-  ]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.testFramework.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/compiler/impl",
+        "//java/java-impl:impl",
+        "//platform/core-api:core",
+        "//platform/eel",
+        "//platform/ide-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework/common",
+        "//platform/util",
+        "//platform/util-ex",
+        "//jps/jps-builders:build",
+        "//jps/model-api:model",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.java.testFramework.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "//java/compiler/impl:impl_test_lib",
-    "//java/java-impl:impl_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/testFramework/common:common_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//jps/jps-builders:build_test_lib",
-    "//jps/model-api:model_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.testFramework.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//java/compiler/impl:impl_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework/common:common_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//jps/jps-builders:build_test_lib",
+        "//jps/model-api:model_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.testFramework.backend` end
 
 ### auto-generated section `iml intellij.java.testFramework.backend` start
-exports_files([
-  "intellij.java.testFramework.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.testFramework.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.testFramework.backend` end

@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.keymap.visualStudio2022` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.keymap.visualStudio2022` start
+
 jvm_library(
-  name = "keymap-visualStudio2022",
-  module_name = "intellij.keymap.visualStudio2022",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "keymap-visualStudio2022",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudio2022",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "keymap-visualStudio2022_test_lib",
-  testonly = True,
-  module_name = "intellij.keymap.visualStudio2022",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":keymap-visualStudio2022"]
+    name = "keymap-visualStudio2022_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudio2022",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-visualStudio2022",
+    ],
 )
 ### auto-generated section `build intellij.keymap.visualStudio2022` end
 
 ### auto-generated section `iml intellij.keymap.visualStudio2022` start
-exports_files([
-  "intellij.keymap.visualStudio2022.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.keymap.visualStudio2022.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.keymap.visualStudio2022` end

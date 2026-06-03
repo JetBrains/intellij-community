@@ -1,70 +1,88 @@
-### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
 
 create_kotlinc_options(
-  name = "custom_telemetry.exporters",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "kotlinx.serialization.ExperimentalSerializationApi",
-  ]
+    name = "custom_telemetry.exporters",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "kotlinx.serialization.ExperimentalSerializationApi",
+    ],
 )
 
 jvm_library(
-  name = "telemetry.exporters",
-  module_name = "intellij.platform.diagnostic.telemetry.exporters",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_telemetry.exporters",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/diagnostic/telemetry",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//libraries/opentelemetry-exporter-otlp-common",
-    "//platform/util/http",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/util",
-    "//platform/util/base",
-    "//libraries/jackson3/jackson:libraries-jackson3",
-    "//libraries/jackson3/databind",
-    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/protobuf",
-  ]
+    name = "telemetry.exporters",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_telemetry.exporters",
+    module_name = "intellij.platform.diagnostic.telemetry.exporters",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/opentelemetry-exporter-otlp-common",
+        "//platform/util/http",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util",
+        "//platform/util/base",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/protobuf",
+    ],
 )
 
 jvm_library(
-  name = "telemetry.exporters_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.diagnostic.telemetry.exporters",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_telemetry.exporters",
-  runtime_deps = [
-    ":telemetry.exporters",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
-    "//platform/util/http:http_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-    "//libraries/jackson3/databind:databind_test_lib",
-    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
-  ]
+    name = "telemetry.exporters_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_telemetry.exporters",
+    module_name = "intellij.platform.diagnostic.telemetry.exporters",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":telemetry.exporters",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
+        "//platform/util/http:http_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.exporters` start
-exports_files([
-  "intellij.platform.diagnostic.telemetry.exporters.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.diagnostic.telemetry.exporters.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.exporters` end

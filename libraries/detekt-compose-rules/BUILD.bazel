@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # Build detekt-compose-rules-binary_deploy.jar to get plugin binary
 java_binary(
@@ -9,36 +10,48 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.libraries.detekt.compose.rules` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "detekt-compose-rules",
-  module_name = "intellij.libraries.detekt.compose.rules",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = [
-    "@lib//:libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
-    "//libraries/kotlin/reflect",
-  ]
+    name = "detekt-compose-rules",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.detekt.compose.rules",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
+        "//libraries/kotlin/reflect",
+    ],
 )
 
 jvm_library(
-  name = "detekt-compose-rules_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.detekt.compose.rules",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":detekt-compose-rules",
-    "//libraries/kotlin/reflect:reflect_test_lib",
-  ]
+    name = "detekt-compose-rules_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.detekt.compose.rules",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":detekt-compose-rules",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.detekt.compose.rules` end
 
 ### auto-generated section `iml intellij.libraries.detekt.compose.rules` start
-exports_files([
-  "intellij.libraries.detekt.compose.rules.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.detekt.compose.rules.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.detekt.compose.rules` end

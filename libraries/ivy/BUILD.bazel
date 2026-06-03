@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.ivy` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.ivy` start
+
 jvm_library(
-  name = "ivy",
-  module_name = "intellij.libraries.ivy",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-ivy-ivy"],
-  runtime_deps = ["@lib//:libraries-ivy-ivy"]
+    name = "ivy",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ivy",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ivy-ivy"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+    ],
 )
 
 jvm_library(
-  name = "ivy_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.ivy",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-ivy-ivy"],
-  runtime_deps = [":ivy"]
+    name = "ivy_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.ivy",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ivy-ivy"],
+    runtime_deps = [
+        # do not sort,
+        ":ivy",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ivy` end
 
 ### auto-generated section `iml intellij.libraries.ivy` start
-exports_files([
-  "intellij.libraries.ivy.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.ivy.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.ivy` end

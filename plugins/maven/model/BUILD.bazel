@@ -1,30 +1,52 @@
-### auto-generated section `build intellij.maven.model` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.maven.model` start
+
 jvm_library(
-  name = "model",
-  module_name = "intellij.maven.model",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:jetbrains-annotations"]
+    name = "model",
+    srcs = glob(
+        [
+            "src/main/java/**/*.kt",
+            "src/main/java/**/*.java",
+            "src/main/java/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.model",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "model_test_lib",
-  testonly = True,
-  module_name = "intellij.maven.model",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [":model"]
+    name = "model_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.model",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":model",
+    ],
 )
 ### auto-generated section `build intellij.maven.model` end
 
 ### auto-generated section `iml intellij.maven.model` start
-exports_files([
-  "intellij.maven.model.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.maven.model.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.maven.model` end

@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.gradle.java.coverage` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.gradle.java.coverage` start
+
 jvm_library(
-  name = "coverage",
-  module_name = "intellij.gradle.java.coverage",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/external-system-impl:externalSystem-impl",
-    "//platform/execution",
-    "//platform/smRunner",
-    "//platform/lang-api:lang",
-    "//platform/ide-core",
-    "//platform/testRunner",
-    "//plugins/gradle",
-    "//plugins/coverage",
-  ]
+    name = "coverage",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.java.coverage",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//platform/execution",
+        "//platform/smRunner",
+        "//platform/lang-api:lang",
+        "//platform/ide-core",
+        "//platform/testRunner",
+        "//plugins/gradle",
+        "//plugins/coverage",
+    ],
 )
 
 jvm_library(
-  name = "coverage_test_lib",
-  testonly = True,
-  module_name = "intellij.gradle.java.coverage",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":coverage",
-    "//platform/external-system-impl:externalSystem-impl_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/smRunner:smRunner_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/testRunner:testRunner_test_lib",
-    "//plugins/gradle:gradle_test_lib",
-    "//plugins/coverage:coverage_test_lib",
-  ]
+    name = "coverage_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.java.coverage",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":coverage",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/smRunner:smRunner_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/testRunner:testRunner_test_lib",
+        "//plugins/gradle:gradle_test_lib",
+        "//plugins/coverage:coverage_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.gradle.java.coverage` end
 
 ### auto-generated section `iml intellij.gradle.java.coverage` start
-exports_files([
-  "intellij.gradle.java.coverage.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.gradle.java.coverage.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.gradle.java.coverage` end

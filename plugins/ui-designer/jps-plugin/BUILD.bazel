@@ -1,57 +1,75 @@
-### auto-generated section `build intellij.java.guiForms.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.guiForms.jps` start
+
 jvm_library(
-  name = "java-guiForms-jps",
-  module_name = "intellij.java.guiForms.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    "//platform/util",
-    "//jps/model-api:model",
-    "//jps/model-serialization",
-    "//jps/jps-builders:build",
-    "@community//build:build-javac-rt",
-    "//java/compiler/instrumentation-util",
-    "//java/compiler/forms-compiler:java-guiForms-compiler",
-    "//platform/forms_rt:java-guiForms-rt",
-    "//libraries/asm",
-    "//platform/util/jdom",
-    "//platform/util/base/multiplatform",
-    "//platform/util/base",
-  ]
+    name = "java-guiForms-jps",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.guiForms.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//jps/jps-builders:build",
+        "@community//build:build-javac-rt",
+        "//java/compiler/instrumentation-util",
+        "//java/compiler/forms-compiler:java-guiForms-compiler",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/asm",
+        "//platform/util/jdom",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "java-guiForms-jps_test_lib",
-  testonly = True,
-  module_name = "intellij.java.guiForms.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k11",
-  runtime_deps = [
-    ":java-guiForms-jps",
-    "//platform/util:util_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "//jps/jps-builders:build_test_lib",
-    "@community//build:build-javac-rt_test_lib",
-    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-    "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-    "//libraries/asm:asm_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "java-guiForms-jps_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.guiForms.jps",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-guiForms-jps",
+        "//platform/util:util_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//jps/jps-builders:build_test_lib",
+        "@community//build:build-javac-rt_test_lib",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/asm:asm_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.guiForms.jps` end
 
 ### auto-generated section `iml intellij.java.guiForms.jps` start
-exports_files([
-  "intellij.java.guiForms.jps.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.guiForms.jps.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.guiForms.jps` end

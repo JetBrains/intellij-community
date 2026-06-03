@@ -1,59 +1,73 @@
-### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` start
 
 create_kotlinc_options(
-  name = "custom_jewel-intUi-decoratedWindow",
-  opt_in = [
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
-    "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ],
-  x_context_parameters = True,
-  x_explicit_api_mode = "strict"
+    name = "custom_jewel-intUi-decoratedWindow",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
 )
 
 jvm_library(
-  name = "jewel-intUi-decoratedWindow",
-  module_name = "intellij.platform.jewel.intUi.decoratedWindow",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jetbrains-annotations",
-    "//platform/jewel/decorated-window",
-    "//platform/jewel/ui",
-    "//libraries/compose-foundation-desktop",
-    "//platform/jewel/foundation",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-  ]
+    name = "jewel-intUi-decoratedWindow",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jewel.intUi.decoratedWindow",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:jetbrains-annotations",
+        "//platform/jewel/decorated-window",
+        "//platform/jewel/ui",
+        "//libraries/compose-foundation-desktop",
+        "//platform/jewel/foundation",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    ],
 )
 
 jvm_library(
-  name = "jewel-intUi-decoratedWindow_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.jewel.intUi.decoratedWindow",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_jewel-intUi-decoratedWindow",
-  runtime_deps = [
-    ":jewel-intUi-decoratedWindow",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/jewel/decorated-window:decorated-window_test_lib",
-    "//platform/jewel/ui:ui_test_lib",
-    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-    "//platform/jewel/foundation:foundation_test_lib",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
-  ]
+    name = "jewel-intUi-decoratedWindow_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jewel-intUi-decoratedWindow",
+    module_name = "intellij.platform.jewel.intUi.decoratedWindow",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jewel-intUi-decoratedWindow",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/jewel/decorated-window:decorated-window_test_lib",
+        "//platform/jewel/ui:ui_test_lib",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` end
 
 ### auto-generated section `iml intellij.platform.jewel.intUi.decoratedWindow` start
-exports_files([
-  "intellij.platform.jewel.intUi.decoratedWindow.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.jewel.intUi.decoratedWindow.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.jewel.intUi.decoratedWindow` end

@@ -1,91 +1,127 @@
-### auto-generated section `build intellij.agent.workbench.common` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.agent.workbench.common` start
+
 jvm_library(
-  name = "common",
-  module_name = "intellij.agent.workbench.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util/concurrency",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util:util-ui",
-  ]
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/util:util-ui",
+    ],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "intellij.agent.workbench.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":common",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.common` end
 
 ### auto-generated section `iml intellij.agent.workbench.common` start
-exports_files([
-  "intellij.agent.workbench.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.common` end
 
 ### auto-generated section `build intellij.agent.workbench.common.tests` start
+
 jvm_library(
-  name = "agent-workbench-common-tests",
-  module_name = "intellij.agent.workbench.common.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "agent-workbench-common-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.common.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "agent-workbench-common-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ],
-  runtime_deps = [":agent-workbench-common-tests"]
+    name = "agent-workbench-common-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/agent-workbench/common",
+        "//plugins/agent-workbench/common:common_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":agent-workbench-common-tests",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.agent.workbench.common.tests` end
 
 ### auto-generated section `iml intellij.agent.workbench.common.tests` start
-exports_files([
-  "intellij.agent.workbench.common.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.agent.workbench.common.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.agent.workbench.common.tests` end
 
 ### auto-generated section `test intellij.agent.workbench.common.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "agent-workbench-common-tests_test",
-  runtime_deps = [":agent-workbench-common-tests_test_lib"]
+    name = "agent-workbench-common-tests_test",
+    runtime_deps = [":agent-workbench-common-tests_test_lib"],
 )
 ### auto-generated section `test intellij.agent.workbench.common.tests` end

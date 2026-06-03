@@ -1,81 +1,99 @@
-### auto-generated section `build intellij.platform.testFramework.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.platform.testFramework.core` start
+
 jvm_provided_library(
-  name = "libraries_junit4_provided",
-  lib = "//libraries/junit4"
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
 )
 
 jvm_provided_library(
-  name = "libraries_junit5_provided",
-  lib = "//libraries/junit5"
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
 )
 
 jvm_library(
-  name = "core",
-  module_name = "intellij.platform.testFramework.core",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/util",
-    "//platform/bazel-runfiles",
-    "//platform/util-class-loader:util-classLoader",
-    "//platform/util/base/multiplatform",
-    "//platform/util/base",
-    "//platform/boot",
-    "//platform/testFramework/bootstrap:tools-testsBootstrap",
-    "@lib//:opentest4j",
-    "//java/java-runtime:rt",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/jackson3/jackson:libraries-jackson3",
-    "//libraries/jackson3/databind",
-    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
-    "//libraries/http-client",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//platform/testFramework/teamCity",
-    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
-    ":libraries_junit4_provided",
-    ":libraries_junit5_provided",
-  ]
+    name = "core",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.testFramework.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//platform/bazel-runfiles",
+        "//platform/util-class-loader:util-classLoader",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base",
+        "//platform/boot",
+        "//platform/testFramework/bootstrap:tools-testsBootstrap",
+        "@lib//:opentest4j",
+        "//java/java-runtime:rt",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+        "//libraries/http-client",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/testFramework/teamCity",
+        "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
+    ],
 )
 
 jvm_library(
-  name = "core_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.testFramework.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":core",
-    "//platform/util:util_test_lib",
-    "//platform/bazel-runfiles:bazel-runfiles_test_lib",
-    "//platform/util-class-loader:util-classLoader_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/boot:boot_test_lib",
-    "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
-    "//libraries/junit4",
-    "//libraries/junit4:junit4_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//java/java-runtime:rt_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-    "//libraries/jackson3/databind:databind_test_lib",
-    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-    "//libraries/http-client:http-client_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/testFramework/teamCity:teamCity_test_lib",
-    "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
-  ]
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.testFramework.core",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//platform/util:util_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/boot:boot_test_lib",
+        "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//java/java-runtime:rt_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+        "//libraries/http-client:http-client_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/testFramework/teamCity:teamCity_test_lib",
+        "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.testFramework.core` end
 
 ### auto-generated section `iml intellij.platform.testFramework.core` start
-exports_files([
-  "intellij.platform.testFramework.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.testFramework.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.testFramework.core` end

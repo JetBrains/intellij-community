@@ -1,107 +1,127 @@
-### auto-generated section `build intellij.repository.search.common` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.repository.search.common` start
 
 create_kotlinc_options(
-  name = "custom_common",
-  opt_in = [
-    "kotlinx.serialization.InternalSerializationApi",
-    "kotlinx.serialization.ExperimentalSerializationApi",
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-  ]
+    name = "custom_common",
+    opt_in = [
+        "kotlinx.serialization.InternalSerializationApi",
+        "kotlinx.serialization.ExperimentalSerializationApi",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    ],
 )
 
 resourcegroup(
-  name = "common_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
+    name = "common_resources",
+    srcs = glob(
+        ["src/main/resources/**/*"],
+    ),
+    strip_prefix = "src/main/resources",
 )
 
 jvm_library(
-  name = "common",
-  module_name = "intellij.repository.search.common",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  resource_jars = [":common_resources"],
-  kotlinc_opts = ":custom_common",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//platform/core-impl",
-    "//platform/lang-api:lang",
-    "//platform/platform-impl:ide-impl",
-    "//plugins/maven/model",
-    "//platform/statistics",
-    "//libraries/gson",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/util-ex",
-    "@lib//:kotlin-stdlib",
-    "//platform/util/concurrency",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/coroutines/slf4j",
-    "//libraries/io",
-    "//libraries/ktor/client",
-    "@lib//:package-search-api-client",
-    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
-    "//libraries/mvstore",
-    "//platform/eel",
-    "//platform/external-system-api:externalSystem",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-impl",
-  ],
-  exports = ["@lib//:package-search-api-client"]
+    name = "common",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.repository.search.common",
+    resource_jars = [":common_resources"],
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:package-search-api-client"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/core-impl",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//plugins/maven/model",
+        "//platform/statistics",
+        "//libraries/gson",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/util-ex",
+        "@lib//:kotlin-stdlib",
+        "//platform/util/concurrency",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/coroutines/slf4j",
+        "//libraries/io",
+        "//libraries/ktor/client",
+        "@lib//:package-search-api-client",
+        "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
+        "//libraries/mvstore",
+        "//platform/eel",
+        "//platform/external-system-api:externalSystem",
+        "//platform/analysis-api:analysis",
+        "//platform/lang-impl",
+    ],
 )
 
 jvm_library(
-  name = "common_test_lib",
-  testonly = True,
-  module_name = "intellij.repository.search.common",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_common",
-  exports = ["@lib//:package-search-api-client"],
-  runtime_deps = [
-    ":common",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//plugins/maven/model:model_test_lib",
-    "//platform/statistics:statistics_test_lib",
-    "//libraries/gson:gson_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
-    "@lib//:ktor-client-mock",
-    "//libraries/kotlinx/coroutines/test",
-    "//libraries/kotlinx/coroutines/test:test_test_lib",
-    "//libraries/io:io_test_lib",
-    "//libraries/ktor/client:client_test_lib",
-    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_test_lib",
-    "//libraries/mvstore:mvstore_test_lib",
-    "//platform/eel:eel_test_lib",
-    "//platform/external-system-api:externalSystem_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-  ]
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.repository.search.common",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:package-search-api-client"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/maven/model:model_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//libraries/gson:gson_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
+        "@lib//:ktor-client-mock",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
+        "//libraries/io:io_test_lib",
+        "//libraries/ktor/client:client_test_lib",
+        "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_test_lib",
+        "//libraries/mvstore:mvstore_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/external-system-api:externalSystem_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.repository.search.common` end
 
 ### auto-generated section `iml intellij.repository.search.common` start
-exports_files([
-  "intellij.repository.search.common.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.repository.search.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.repository.search.common` end

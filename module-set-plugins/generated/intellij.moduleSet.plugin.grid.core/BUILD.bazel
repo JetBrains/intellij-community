@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.moduleSet.plugin.grid.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.moduleSet.plugin.grid.core` start
+
 jvm_library(
-  name = "moduleSet-plugin-grid-core",
-  module_name = "intellij.moduleSet.plugin.grid.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "moduleSet-plugin-grid-core",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.moduleSet.plugin.grid.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "moduleSet-plugin-grid-core_test_lib",
-  testonly = True,
-  module_name = "intellij.moduleSet.plugin.grid.core",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":moduleSet-plugin-grid-core"]
+    name = "moduleSet-plugin-grid-core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.moduleSet.plugin.grid.core",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":moduleSet-plugin-grid-core",
+    ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.grid.core` end
 
 ### auto-generated section `iml intellij.moduleSet.plugin.grid.core` start
-exports_files([
-  "intellij.moduleSet.plugin.grid.core.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.moduleSet.plugin.grid.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.moduleSet.plugin.grid.core` end

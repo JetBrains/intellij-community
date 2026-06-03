@@ -1,46 +1,64 @@
-### auto-generated section `build intellij.platform.builtInServer` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.builtInServer` start
+
 jvm_library(
-  name = "builtInServer",
-  module_name = "intellij.platform.builtInServer",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "@lib//:kotlin-stdlib",
-    "//libraries/netty/codec-http:libraries-netty-codec-http",
-    "//platform/util-ex",
-    "//platform/util",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core",
-    "//platform/analysis-api:analysis",
-  ]
+    name = "builtInServer",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.builtInServer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//platform/util-ex",
+        "//platform/util",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+    ],
 )
 
 jvm_library(
-  name = "builtInServer_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.builtInServer",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":builtInServer",
-    "//platform/core-api:core_test_lib",
-    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-  ]
+    name = "builtInServer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.builtInServer",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":builtInServer",
+        "//platform/core-api:core_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.builtInServer` end
 
 ### auto-generated section `iml intellij.platform.builtInServer` start
-exports_files([
-  "intellij.platform.builtInServer.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.builtInServer.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.builtInServer` end

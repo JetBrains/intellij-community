@@ -1,52 +1,70 @@
-### auto-generated section `build intellij.platform.vcs.dvcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.vcs.dvcs` start
+
 jvm_library(
-  name = "vcs-dvcs",
-  module_name = "intellij.platform.vcs.dvcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-ui",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util-rt",
-    "//platform/core-api:core",
-    "//platform/vcs-api:vcs",
-    "//platform/extensions",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//platform/vcs-log/api:vcs-log",
-    "@lib//:kotlin-stdlib",
-    "//platform/dvcs-impl/shared",
-  ]
+    name = "vcs-dvcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.dvcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util-rt",
+        "//platform/core-api:core",
+        "//platform/vcs-api:vcs",
+        "//platform/extensions",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/vcs-log/api:vcs-log",
+        "@lib//:kotlin-stdlib",
+        "//platform/dvcs-impl/shared",
+    ],
 )
 
 jvm_library(
-  name = "vcs-dvcs_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.vcs.dvcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":vcs-dvcs",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/extensions:extensions_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/vcs-log/api:vcs-log_test_lib",
-    "//platform/dvcs-impl/shared:shared_test_lib",
-  ]
+    name = "vcs-dvcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.dvcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs-dvcs",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/vcs-log/api:vcs-log_test_lib",
+        "//platform/dvcs-impl/shared:shared_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs` end
 
 ### auto-generated section `iml intellij.platform.vcs.dvcs` start
-exports_files([
-  "intellij.platform.vcs.dvcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.vcs.dvcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.vcs.dvcs` end

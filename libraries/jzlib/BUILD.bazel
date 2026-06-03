@@ -1,30 +1,48 @@
-### auto-generated section `build intellij.libraries.jzlib` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jzlib` start
+
 jvm_library(
-  name = "jzlib",
-  module_name = "intellij.libraries.jzlib",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-jzlib-jzlib"],
-  runtime_deps = ["@lib//:libraries-jzlib-jzlib"]
+    name = "jzlib",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jzlib",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jzlib-jzlib"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jzlib-jzlib",
+    ],
 )
 
 jvm_library(
-  name = "jzlib_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jzlib",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-jzlib-jzlib"],
-  runtime_deps = [":jzlib"]
+    name = "jzlib_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jzlib",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jzlib-jzlib"],
+    runtime_deps = [
+        # do not sort,
+        ":jzlib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jzlib` end
 
 ### auto-generated section `iml intellij.libraries.jzlib` start
-exports_files([
-  "intellij.libraries.jzlib.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jzlib.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jzlib` end

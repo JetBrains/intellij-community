@@ -1,53 +1,71 @@
-### auto-generated section `build intellij.java.structureView` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.structureView` start
+
 jvm_library(
-  name = "structureView",
-  module_name = "intellij.java.structureView",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/structure-view-impl:structureView-impl",
-    "//java/java-psi-api:psi",
-    "//java/java-psi-impl:psi-impl",
-    "//platform/util:util-ui",
-    "//java/java-analysis-impl:analysis-impl",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//platform/platform-api:ide",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "structureView",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.structureView",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/structure-view-impl:structureView-impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//platform/util:util-ui",
+        "//java/java-analysis-impl:analysis-impl",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/platform-api:ide",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "structureView_test_lib",
-  testonly = True,
-  module_name = "intellij.java.structureView",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":structureView",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-    "//java/java-psi-impl:psi-impl_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//java/java-analysis-impl:analysis-impl_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "structureView_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.structureView",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structureView",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//java/java-analysis-impl:analysis-impl_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.structureView` end
 
 ### auto-generated section `iml intellij.java.structureView` start
-exports_files([
-  "intellij.java.structureView.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.structureView.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.structureView` end

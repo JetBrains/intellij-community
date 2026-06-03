@@ -1,68 +1,86 @@
-### auto-generated section `build intellij.performanceTesting.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.performanceTesting.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.performanceTesting.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/performanceTesting/core:performanceTesting",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//platform/recentFiles/frontend",
-    "//platform/core-ui",
-    "//platform/lang-api:lang",
-    "//platform/analysis-api:analysis",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//platform/diagnostic/telemetry",
-    "//platform/lang-impl",
-    "//platform/structure-view-impl:structureView-impl",
-    "//platform/structure-view-impl/frontend",
-    "//platform/util/coroutines",
-    "//platform/util:util-ui",
-    "//platform/util/concurrency",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/performanceTesting/core:performanceTesting",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/recentFiles/frontend",
+        "//platform/core-ui",
+        "//platform/lang-api:lang",
+        "//platform/analysis-api:analysis",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//platform/diagnostic/telemetry",
+        "//platform/lang-impl",
+        "//platform/structure-view-impl:structureView-impl",
+        "//platform/structure-view-impl/frontend",
+        "//platform/util/coroutines",
+        "//platform/util:util-ui",
+        "//platform/util/concurrency",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.performanceTesting.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//plugins/performanceTesting/core:performanceTesting_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/recentFiles/frontend:frontend_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
-    "//platform/structure-view-impl/frontend:frontend_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//plugins/performanceTesting/core:performanceTesting_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/recentFiles/frontend:frontend_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/structure-view-impl:structureView-impl_test_lib",
+        "//platform/structure-view-impl/frontend:frontend_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.performanceTesting.frontend` end
 
 ### auto-generated section `iml intellij.performanceTesting.frontend` start
-exports_files([
-  "intellij.performanceTesting.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.performanceTesting.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.performanceTesting.frontend` end

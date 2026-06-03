@@ -1,46 +1,64 @@
-### auto-generated section `build intellij.tools.ide.starter.product.webstorm` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.tools.ide.starter.product.webstorm` start
 
 create_kotlinc_options(
-  name = "custom_ide-starter-product-webstorm",
-  opt_in = ["kotlin.time.ExperimentalTime"]
+    name = "custom_ide-starter-product-webstorm",
+    opt_in = ["kotlin.time.ExperimentalTime"],
 )
 
 jvm_library(
-  name = "ide-starter-product-webstorm",
-  module_name = "intellij.tools.ide.starter.product.webstorm",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_ide-starter-product-webstorm",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//tools/intellij.tools.ide.starter:ide-starter",
-    "//libraries/junit5-launcher",
-    "@lib//:kodein-di-jvm-provided",
-  ]
+    name = "ide-starter-product-webstorm",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-product-webstorm",
+    module_name = "intellij.tools.ide.starter.product.webstorm",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//libraries/junit5-launcher",
+        "@lib//:kodein-di-jvm-provided",
+    ],
 )
 
 jvm_library(
-  name = "ide-starter-product-webstorm_test_lib",
-  testonly = True,
-  module_name = "intellij.tools.ide.starter.product.webstorm",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_ide-starter-product-webstorm",
-  runtime_deps = [
-    ":ide-starter-product-webstorm",
-    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-    "//libraries/junit5-launcher:junit5-launcher_test_lib",
-    "@lib//:kodein-di-jvm-provided",
-  ]
+    name = "ide-starter-product-webstorm_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-product-webstorm",
+    module_name = "intellij.tools.ide.starter.product.webstorm",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-starter-product-webstorm",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "@lib//:kodein-di-jvm-provided",
+    ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.product.webstorm` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.product.webstorm` start
-exports_files([
-  "intellij.tools.ide.starter.product.webstorm.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.tools.ide.starter.product.webstorm.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.tools.ide.starter.product.webstorm` end

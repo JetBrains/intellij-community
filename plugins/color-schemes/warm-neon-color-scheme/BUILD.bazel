@@ -1,27 +1,42 @@
-### auto-generated section `build intellij.color.scheme.warmNeon` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.color.scheme.warmNeon` start
+
 jvm_library(
-  name = "color-scheme-warmNeon",
-  module_name = "intellij.color.scheme.warmNeon",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources"
+    name = "color-scheme-warmNeon",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.warmNeon",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "color-scheme-warmNeon_test_lib",
-  testonly = True,
-  module_name = "intellij.color.scheme.warmNeon",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":color-scheme-warmNeon"]
+    name = "color-scheme-warmNeon_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.warmNeon",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":color-scheme-warmNeon",
+    ],
 )
 ### auto-generated section `build intellij.color.scheme.warmNeon` end
 
 ### auto-generated section `iml intellij.color.scheme.warmNeon` start
-exports_files([
-  "intellij.color.scheme.warmNeon.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.color.scheme.warmNeon.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.color.scheme.warmNeon` end

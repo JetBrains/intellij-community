@@ -1,45 +1,63 @@
-### auto-generated section `build intellij.platform.managed.cache` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.managed.cache` start
+
 jvm_library(
-  name = "managed.cache",
-  module_name = "intellij.platform.managed.cache",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/kernel/shared:kernel",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/project/shared:project",
-    "//fleet/rhizomedb",
-  ]
+    name = "managed.cache",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.managed.cache",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/kernel/shared:kernel",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/project/shared:project",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "managed.cache_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.managed.cache",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":managed.cache",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "managed.cache_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.managed.cache",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":managed.cache",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.managed.cache` end
 
 ### auto-generated section `iml intellij.platform.managed.cache` start
-exports_files([
-  "intellij.platform.managed.cache.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.managed.cache.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.managed.cache` end

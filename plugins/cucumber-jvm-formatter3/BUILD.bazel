@@ -1,35 +1,51 @@
-### auto-generated section `build intellij.cucumber.jvmFormatter3` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.cucumber.jvmFormatter3` start
+
 jvm_library(
-  name = "cucumber-jvmFormatter3",
-  module_name = "intellij.cucumber.jvmFormatter3",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
-    "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
-  ]
+    name = "cucumber-jvmFormatter3",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.cucumber.jvmFormatter3",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
+        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
+    ],
 )
 
 jvm_library(
-  name = "cucumber-jvmFormatter3_test_lib",
-  testonly = True,
-  module_name = "intellij.cucumber.jvmFormatter3",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":cucumber-jvmFormatter3",
-    "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
-    "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter_test_lib",
-  ]
+    name = "cucumber-jvmFormatter3_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.cucumber.jvmFormatter3",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":cucumber-jvmFormatter3",
+        "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
+        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.cucumber.jvmFormatter3` end
 
 ### auto-generated section `iml intellij.cucumber.jvmFormatter3` start
-exports_files([
-  "intellij.cucumber.jvmFormatter3.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.cucumber.jvmFormatter3.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.cucumber.jvmFormatter3` end

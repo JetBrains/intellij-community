@@ -1,54 +1,75 @@
-### auto-generated section `build intellij.sh.terminal` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.sh.terminal` start
+
 jvm_library(
-  name = "terminal",
-  module_name = "intellij.sh.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/projectModel-api:projectModel",
-    "//plugins/terminal",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//platform/execution-impl",
-    "//platform/core-ui",
-    "//libraries/jediterm-ui",
-    "//plugins/sh/core",
-    "//libraries/jediterm-core",
-    "//platform/core-api:core",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "terminal",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.terminal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/terminal",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/execution-impl",
+        "//platform/core-ui",
+        "//libraries/jediterm-ui",
+        "//plugins/sh/core",
+        "//libraries/jediterm-core",
+        "//platform/core-api:core",
+    ],
 )
 
 jvm_library(
-  name = "terminal_test_lib",
-  testonly = True,
-  module_name = "intellij.sh.terminal",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":terminal",
-    "//platform/backend:backend_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/jediterm-ui:jediterm-ui_test_lib",
-    "//plugins/sh/core:core_test_lib",
-    "//libraries/jediterm-core:jediterm-core_test_lib",
-    "//platform/core-api:core_test_lib",
-  ]
+    name = "terminal_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.terminal",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":terminal",
+        "//platform/backend:backend_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/jediterm-ui:jediterm-ui_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//platform/core-api:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.sh.terminal` end
 
 ### auto-generated section `iml intellij.sh.terminal` start
-exports_files([
-  "intellij.sh.terminal.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.sh.terminal.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.sh.terminal` end

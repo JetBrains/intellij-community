@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.commons.cli` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.commons.cli` start
+
 jvm_library(
-  name = "cli",
-  module_name = "intellij.libraries.commons.cli",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-commons-cli-commons-cli"],
-  runtime_deps = ["@lib//:libraries-commons-cli-commons-cli"]
+    name = "cli",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.cli",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-cli-commons-cli"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-commons-cli-commons-cli",
+    ],
 )
 
 jvm_library(
-  name = "cli_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.commons.cli",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-commons-cli-commons-cli"],
-  runtime_deps = [":cli"]
+    name = "cli_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.cli",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-cli-commons-cli"],
+    runtime_deps = [
+        # do not sort,
+        ":cli",
+    ],
 )
 ### auto-generated section `build intellij.libraries.commons.cli` end
 
 ### auto-generated section `iml intellij.libraries.commons.cli` start
-exports_files([
-  "intellij.libraries.commons.cli.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.commons.cli.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.commons.cli` end

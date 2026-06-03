@@ -1,44 +1,58 @@
-### auto-generated section `build intellij.libraries.jackson3` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.jackson3` start
+
 jvm_library(
-  name = "libraries-jackson3",
-  module_name = "intellij.libraries.jackson3",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:libraries-jackson3-jackson3",
-    "//libraries/jackson/annotations",
-  ],
-  runtime_deps = [
-    "@lib//:libraries-jackson3-jackson3",
-    "//libraries/jackson/annotations",
-  ]
+    name = "libraries-jackson3",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jackson3",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/jackson/annotations",
+        "@lib//:libraries-jackson3-jackson3",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jackson3-jackson3",
+        "//libraries/jackson/annotations",
+    ],
 )
 
 jvm_library(
-  name = "libraries-jackson3_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.jackson3",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "@lib//:libraries-jackson3-jackson3",
-    "//libraries/jackson/annotations",
-    "//libraries/jackson/annotations:annotations_test_lib",
-  ],
-  runtime_deps = [
-    ":libraries-jackson3",
-    "//libraries/jackson/annotations:annotations_test_lib",
-  ]
+    name = "libraries-jackson3_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jackson3",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/jackson/annotations",
+        "//libraries/jackson/annotations:annotations_test_lib",
+        "@lib//:libraries-jackson3-jackson3",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-jackson3",
+        "//libraries/jackson/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jackson3` end
 
 ### auto-generated section `iml intellij.libraries.jackson3` start
-exports_files([
-  "intellij.libraries.jackson3.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.jackson3.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.jackson3` end

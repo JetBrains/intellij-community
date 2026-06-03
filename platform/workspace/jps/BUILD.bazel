@@ -1,76 +1,96 @@
-### auto-generated section `build intellij.platform.workspace.jps` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.workspace.jps` start
 
 create_kotlinc_options(
-  name = "custom_jps",
-  jvm_target = "11",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+    name = "custom_jps",
+    jvm_target = "11",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
 )
 
 jvm_library(
-  name = "jps",
-  module_name = "intellij.platform.workspace.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_jps",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/workspace/storage",
-    "//jps/model-api:model",
-    "//jps/model-impl",
-    "//jps/model-serialization",
-    "//platform/util",
-    "//libraries/fastutil",
-    "//platform/util/jdom",
-    "//libraries/kryo5",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry-semconv",
-    "//platform/diagnostic/telemetry",
-    "//platform/util/coroutines",
-    "//platform/util/base/multiplatform",
-    "//platform/util/base",
-    "//platform/core-api:core",
-  ]
+    name = "jps",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jps",
+    module_name = "intellij.platform.workspace.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/workspace/storage",
+        "//jps/model-api:model",
+        "//jps/model-impl",
+        "//jps/model-serialization",
+        "//platform/util",
+        "//libraries/fastutil",
+        "//platform/util/jdom",
+        "//libraries/kryo5",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//platform/diagnostic/telemetry",
+        "//platform/util/coroutines",
+        "//platform/util/base/multiplatform",
+        "//platform/util/base",
+        "//platform/core-api:core",
+    ],
 )
 
 jvm_library(
-  name = "jps_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.workspace.jps",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_jps",
-  runtime_deps = [
-    ":jps",
-    "//platform/workspace/storage:storage_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//jps/model-impl:model-impl_test_lib",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//libraries/kryo5:kryo5_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-    "//platform/util/base:base_test_lib",
-    "//platform/core-api:core_test_lib",
-  ]
+    name = "jps_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jps",
+    module_name = "intellij.platform.workspace.jps",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jps",
+        "//platform/workspace/storage:storage_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-impl:model-impl_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/kryo5:kryo5_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/core-api:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end
 
 ### auto-generated section `iml intellij.platform.workspace.jps` start
-exports_files([
-  "intellij.platform.workspace.jps.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.workspace.jps.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.workspace.jps` end

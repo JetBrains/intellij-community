@@ -1,46 +1,62 @@
-### auto-generated section `build intellij.groovy.rt` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.groovy.rt` start
+
 jvm_library(
-  name = "rt",
-  module_name = "intellij.groovy.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//libraries/groovy",
-    "@lib//:jetbrains-annotations",
-    "//plugins/groovy/rt-constants:constants-rt",
-  ],
-  exports = [
-    "//libraries/groovy",
-    "//plugins/groovy/rt-constants:constants-rt",
-  ]
+    name = "rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.groovy.rt",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/groovy",
+        "//plugins/groovy/rt-constants:constants-rt",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/groovy",
+        "@lib//:jetbrains-annotations",
+        "//plugins/groovy/rt-constants:constants-rt",
+    ],
 )
 
 jvm_library(
-  name = "rt_test_lib",
-  testonly = True,
-  module_name = "intellij.groovy.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "//libraries/groovy",
-    "//libraries/groovy:groovy_test_lib",
-    "//plugins/groovy/rt-constants:constants-rt",
-    "//plugins/groovy/rt-constants:constants-rt_test_lib",
-  ],
-  runtime_deps = [
-    ":rt",
-    "//libraries/groovy:groovy_test_lib",
-    "//plugins/groovy/rt-constants:constants-rt_test_lib",
-  ]
+    name = "rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.groovy.rt",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/groovy",
+        "//libraries/groovy:groovy_test_lib",
+        "//plugins/groovy/rt-constants:constants-rt",
+        "//plugins/groovy/rt-constants:constants-rt_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":rt",
+        "//libraries/groovy:groovy_test_lib",
+        "//plugins/groovy/rt-constants:constants-rt_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.groovy.rt` end
 
 ### auto-generated section `iml intellij.groovy.rt` start
-exports_files([
-  "intellij.groovy.rt.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.groovy.rt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.groovy.rt` end

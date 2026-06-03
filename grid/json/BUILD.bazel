@@ -1,40 +1,58 @@
-### auto-generated section `build intellij.grid.json.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grid.json.impl` start
+
 jvm_library(
-  name = "json-impl",
-  module_name = "intellij.grid.json.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//grid/impl",
-    "//platform/platform-impl:ide-impl",
-    "//json/backend",
-  ]
+    name = "json-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.json.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//grid/impl",
+        "//platform/platform-impl:ide-impl",
+        "//json/backend",
+    ],
 )
 
 jvm_library(
-  name = "json-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.grid.json.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":json-impl",
-    "//platform/core-api:core_test_lib",
-    "//grid/impl:impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//json/backend:backend_test_lib",
-  ]
+    name = "json-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.json.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":json-impl",
+        "//platform/core-api:core_test_lib",
+        "//grid/impl:impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//json/backend:backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grid.json.impl` end
 
 ### auto-generated section `iml intellij.grid.json.impl` start
-exports_files([
-  "intellij.grid.json.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grid.json.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grid.json.impl` end

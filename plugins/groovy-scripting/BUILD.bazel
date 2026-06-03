@@ -1,35 +1,49 @@
-### auto-generated section `build intellij.groovy.scripting` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.groovy.scripting` start
+
 jvm_library(
-  name = "groovy-scripting",
-  module_name = "intellij.groovy.scripting",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = [
-    "//libraries/groovy",
-    "//libraries/groovy/jsr223",
-  ]
+    name = "groovy-scripting",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.scripting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/groovy",
+        "//libraries/groovy/jsr223",
+    ],
 )
 
 jvm_library(
-  name = "groovy-scripting_test_lib",
-  testonly = True,
-  module_name = "intellij.groovy.scripting",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":groovy-scripting",
-    "//libraries/groovy:groovy_test_lib",
-    "//libraries/groovy/jsr223:jsr223_test_lib",
-  ]
+    name = "groovy-scripting_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.scripting",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":groovy-scripting",
+        "//libraries/groovy:groovy_test_lib",
+        "//libraries/groovy/jsr223:jsr223_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.groovy.scripting` end
 
 ### auto-generated section `iml intellij.groovy.scripting` start
-exports_files([
-  "intellij.groovy.scripting.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.groovy.scripting.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.groovy.scripting` end

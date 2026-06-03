@@ -1,40 +1,58 @@
-### auto-generated section `build intellij.jcef.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jcef.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.jcef.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/platform-frontend:frontend",
-    "//platform/ui.jcef",
-    "//platform/core-impl",
-    "//platform/platform-impl:ide-impl",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-frontend:frontend",
+        "//platform/ui.jcef",
+        "//platform/core-impl",
+        "//platform/platform-impl:ide-impl",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.jcef.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/platform-frontend:frontend_test_lib",
-    "//platform/ui.jcef:ui.jcef_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.jcef.frontend` end
 
 ### auto-generated section `iml intellij.jcef.frontend` start
-exports_files([
-  "intellij.jcef.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jcef.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jcef.frontend` end

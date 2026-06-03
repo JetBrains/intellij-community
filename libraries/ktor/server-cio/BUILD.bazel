@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.ktor.server.cio` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.ktor.server.cio` start
+
 jvm_library(
-  name = "libraries-ktor-server-cio",
-  module_name = "intellij.libraries.ktor.server.cio",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
-  runtime_deps = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"]
+    name = "libraries-ktor-server-cio",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ktor.server.cio",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-cio-ktor-server-cio-internal",
+    ],
 )
 
 jvm_library(
-  name = "libraries-ktor-server-cio_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.ktor.server.cio",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
-  runtime_deps = [":libraries-ktor-server-cio"]
+    name = "libraries-ktor-server-cio_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.ktor.server.cio",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-ktor-server-cio",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ktor.server.cio` end
 
 ### auto-generated section `iml intellij.libraries.ktor.server.cio` start
-exports_files([
-  "intellij.libraries.ktor.server.cio.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.ktor.server.cio.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.ktor.server.cio` end

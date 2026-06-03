@@ -1,122 +1,140 @@
-### auto-generated section `build intellij.platform.icons.impl.intellij` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.platform.icons.impl.intellij` start
+
 jvm_provided_library(
-  name = "platform_icons-api_provided",
-  lib = "//platform/icons-api"
+    name = "platform_icons-api_provided",
+    lib = "//platform/icons-api",
 )
 
 jvm_provided_library(
-  name = "platform_icons-api_rendering_provided",
-  lib = "//platform/icons-api/rendering"
+    name = "platform_icons-api_rendering_provided",
+    lib = "//platform/icons-api/rendering",
 )
 
 jvm_provided_library(
-  name = "platform_icons-impl_provided",
-  lib = "//platform/icons-impl"
+    name = "platform_icons-impl_provided",
+    lib = "//platform/icons-impl",
 )
 
 jvm_provided_library(
-  name = "platform_util_provided",
-  lib = "//platform/util"
+    name = "platform_util_provided",
+    lib = "//platform/util",
 )
 
 jvm_provided_library(
-  name = "platform_util-ui_provided",
-  lib = "//platform/util:util-ui"
+    name = "platform_util-ui_provided",
+    lib = "//platform/util:util-ui",
 )
 
 jvm_provided_library(
-  name = "platform_core_provided",
-  lib = "//platform/core-api:core"
+    name = "platform_core_provided",
+    lib = "//platform/core-api:core",
 )
 
 jvm_provided_library(
-  name = "platform_core-impl_provided",
-  lib = "//platform/core-impl"
+    name = "platform_core-impl_provided",
+    lib = "//platform/core-impl",
 )
 
 jvm_provided_library(
-  name = "platform_core-ui_provided",
-  lib = "//platform/core-ui"
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
 )
 
 jvm_provided_library(
-  name = "platform_ide-impl_provided",
-  lib = "//platform/platform-impl:ide-impl"
+    name = "platform_ide-impl_provided",
+    lib = "//platform/platform-impl:ide-impl",
 )
 
 jvm_library(
-  name = "intellij",
-  module_name = "intellij.platform.icons.impl.intellij",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:jetbrains-annotations",
-    ":platform_icons-api_provided",
-    ":platform_icons-api_rendering_provided",
-    ":platform_icons-impl_provided",
-    ":platform_util_provided",
-    ":platform_util-ui_provided",
-    ":platform_core_provided",
-    ":platform_core-impl_provided",
-    ":platform_core-ui_provided",
-    ":platform_ide-impl_provided",
-  ],
-  exports = [
-    "//platform/icons-api",
-    "//platform/icons-api/rendering",
-    "//platform/icons-impl",
-  ]
+    name = "intellij",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.icons.impl.intellij",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/icons-api",
+        "//platform/icons-api/rendering",
+        "//platform/icons-impl",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:jetbrains-annotations",
+        ":platform_icons-api_provided",
+        ":platform_icons-api_rendering_provided",
+        ":platform_icons-impl_provided",
+        ":platform_util_provided",
+        ":platform_util-ui_provided",
+        ":platform_core_provided",
+        ":platform_core-impl_provided",
+        ":platform_core-ui_provided",
+        ":platform_ide-impl_provided",
+    ],
 )
 
 jvm_library(
-  name = "intellij_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.icons.impl.intellij",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/icons-api",
-    "//platform/icons-api:icons-api_test_lib",
-    "//platform/icons-api/rendering",
-    "//platform/icons-api/rendering:rendering_test_lib",
-    "//platform/icons-impl",
-    "//platform/icons-impl:icons-impl_test_lib",
-  ],
-  runtime_deps = [
-    ":intellij",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/icons-api",
-    "//platform/icons-api:icons-api_test_lib",
-    "//platform/icons-api/rendering",
-    "//platform/icons-api/rendering:rendering_test_lib",
-    "//platform/icons-impl",
-    "//platform/icons-impl:icons-impl_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-  ]
+    name = "intellij_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.icons.impl.intellij",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/icons-api",
+        "//platform/icons-api:icons-api_test_lib",
+        "//platform/icons-api/rendering",
+        "//platform/icons-api/rendering:rendering_test_lib",
+        "//platform/icons-impl",
+        "//platform/icons-impl:icons-impl_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":intellij",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/icons-api",
+        "//platform/icons-api:icons-api_test_lib",
+        "//platform/icons-api/rendering",
+        "//platform/icons-api/rendering:rendering_test_lib",
+        "//platform/icons-impl",
+        "//platform/icons-impl:icons-impl_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij` end
 
 ### auto-generated section `iml intellij.platform.icons.impl.intellij` start
-exports_files([
-  "intellij.platform.icons.impl.intellij.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.icons.impl.intellij.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.icons.impl.intellij` end

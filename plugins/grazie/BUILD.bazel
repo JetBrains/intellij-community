@@ -1,50 +1,64 @@
-### auto-generated section `build intellij.grazie` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie` start
+
 jvm_library(
-  name = "grazie",
-  module_name = "intellij.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["//plugins/grazie/src:core"],
-  runtime_deps = [
-    "//plugins/grazie/src:core",
-    "//plugins/grazie/java",
-    "//plugins/grazie/json",
-    "//plugins/grazie/markdown",
-    "//plugins/grazie/properties",
-    "//plugins/grazie/xml",
-    "//plugins/grazie/yaml",
-  ]
+    name = "grazie",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//plugins/grazie/src:core"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/grazie/src:core",
+        "//plugins/grazie/java",
+        "//plugins/grazie/json",
+        "//plugins/grazie/markdown",
+        "//plugins/grazie/properties",
+        "//plugins/grazie/xml",
+        "//plugins/grazie/yaml",
+    ],
 )
 
 jvm_library(
-  name = "grazie_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//plugins/grazie/src:core",
-    "//plugins/grazie/src:core_test_lib",
-  ],
-  runtime_deps = [
-    ":grazie",
-    "//plugins/grazie/src:core_test_lib",
-    "//plugins/grazie/java:java_test_lib",
-    "//plugins/grazie/json:json_test_lib",
-    "//plugins/grazie/markdown:markdown_test_lib",
-    "//plugins/grazie/properties:properties_test_lib",
-    "//plugins/grazie/xml:xml_test_lib",
-    "//plugins/grazie/yaml:yaml_test_lib",
-  ]
+    name = "grazie_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//plugins/grazie/src:core",
+        "//plugins/grazie/src:core_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":grazie",
+        "//plugins/grazie/src:core_test_lib",
+        "//plugins/grazie/java:java_test_lib",
+        "//plugins/grazie/json:json_test_lib",
+        "//plugins/grazie/markdown:markdown_test_lib",
+        "//plugins/grazie/properties:properties_test_lib",
+        "//plugins/grazie/xml:xml_test_lib",
+        "//plugins/grazie/yaml:yaml_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie` end
 
 ### auto-generated section `iml intellij.grazie` start
-exports_files([
-  "intellij.grazie.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie` end

@@ -1,48 +1,69 @@
-### auto-generated section `build intellij.terminal.sh` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.terminal.sh` start
+
 jvm_library(
-  name = "sh",
-  module_name = "intellij.terminal.sh",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "@lib//:kotlin-stdlib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl:ide-impl",
-    "//plugins/terminal",
-    "//plugins/sh/core",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "sh",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.sh",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//plugins/terminal",
+        "//plugins/sh/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
 )
 
 jvm_library(
-  name = "sh_test_lib",
-  testonly = True,
-  module_name = "intellij.terminal.sh",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":sh",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-    "//plugins/sh/core:core_test_lib",
-    "//platform/backend:backend_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-  ]
+    name = "sh_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.sh",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":sh",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.terminal.sh` end
 
 ### auto-generated section `iml intellij.terminal.sh` start
-exports_files([
-  "intellij.terminal.sh.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.terminal.sh.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.terminal.sh` end

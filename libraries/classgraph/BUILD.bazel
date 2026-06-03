@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.classgraph` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.classgraph` start
+
 jvm_library(
-  name = "classgraph",
-  module_name = "intellij.libraries.classgraph",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-classgraph-classgraph"],
-  runtime_deps = ["@lib//:libraries-classgraph-classgraph"]
+    name = "classgraph",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.classgraph",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-classgraph-classgraph"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-classgraph-classgraph",
+    ],
 )
 
 jvm_library(
-  name = "classgraph_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.classgraph",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-classgraph-classgraph"],
-  runtime_deps = [":classgraph"]
+    name = "classgraph_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.classgraph",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-classgraph-classgraph"],
+    runtime_deps = [
+        # do not sort,
+        ":classgraph",
+    ],
 )
 ### auto-generated section `build intellij.libraries.classgraph` end
 
 ### auto-generated section `iml intellij.libraries.classgraph` start
-exports_files([
-  "intellij.libraries.classgraph.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.classgraph.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.classgraph` end

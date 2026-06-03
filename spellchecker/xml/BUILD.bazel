@@ -1,51 +1,69 @@
-### auto-generated section `build intellij.spellchecker.xml` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.spellchecker.xml` start
+
 jvm_library(
-  name = "xml",
-  module_name = "intellij.spellchecker.xml",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/core-api:core",
-    "//spellchecker",
-    "//xml/dom-openapi:dom",
-    "//xml/xml-parser:parser",
-    "//xml/impl",
-    "//platform/util",
-    "//platform/analysis-api:analysis",
-    "//xml/xml-psi-api:psi",
-    "//platform/core-impl",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "xml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.spellchecker.xml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//spellchecker",
+        "//xml/dom-openapi:dom",
+        "//xml/xml-parser:parser",
+        "//xml/impl",
+        "//platform/util",
+        "//platform/analysis-api:analysis",
+        "//xml/xml-psi-api:psi",
+        "//platform/core-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "xml_test_lib",
-  testonly = True,
-  module_name = "intellij.spellchecker.xml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":xml",
-    "//platform/core-api:core_test_lib",
-    "//spellchecker:spellchecker_test_lib",
-    "//xml/dom-openapi:dom_test_lib",
-    "//xml/xml-parser:parser_test_lib",
-    "//xml/impl:impl_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//xml/xml-psi-api:psi_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "xml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.spellchecker.xml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":xml",
+        "//platform/core-api:core_test_lib",
+        "//spellchecker:spellchecker_test_lib",
+        "//xml/dom-openapi:dom_test_lib",
+        "//xml/xml-parser:parser_test_lib",
+        "//xml/impl:impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.spellchecker.xml` end
 
 ### auto-generated section `iml intellij.spellchecker.xml` start
-exports_files([
-  "intellij.spellchecker.xml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.spellchecker.xml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.spellchecker.xml` end

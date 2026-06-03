@@ -1,52 +1,73 @@
-### auto-generated section `build intellij.toml.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.toml.backend` start
+
 jvm_library(
-  name = "backend",
-  module_name = "intellij.toml.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
-    "//platform/core-impl",
-    "//platform/indexing-impl",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//plugins/toml/core",
-  ],
-  runtime_deps = ["//platform/backend"]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/indexing-api:indexing",
+        "//platform/core-impl",
+        "//platform/indexing-impl",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//plugins/toml/core",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.toml.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/backend:backend_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/indexing-impl:indexing-impl_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//plugins/toml/core:core_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/toml/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.toml.backend` end
 
 ### auto-generated section `iml intellij.toml.backend` start
-exports_files([
-  "intellij.toml.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.toml.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.toml.backend` end

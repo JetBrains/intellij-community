@@ -1,60 +1,79 @@
-### auto-generated section `build intellij.junit.kotlin.tests.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.junit.kotlin.tests.k2` start
+
 jvm_library(
-  name = "kotlin-tests-k2",
-  module_name = "intellij.junit.kotlin.tests.k2",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["//plugins/kotlin/plugin/k2"]
+    name = "kotlin-tests-k2",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.junit.kotlin.tests.k2",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/plugin/k2",
+    ],
 )
 
 jvm_library(
-  name = "kotlin-tests-k2_test_lib",
-  testonly = True,
-  module_name = "intellij.junit.kotlin.tests.k2",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  deps = [
-    "//java/testFramework",
-    "//java/testFramework:testFramework_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//plugins/junit/kotlin-tests-shared",
-    "//plugins/junit/kotlin-tests-shared:kotlin-tests-shared_test_lib",
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
-    "//plugins/kotlin/base/testFramework",
-    "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
-    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-  ],
-  runtime_deps = [
-    ":kotlin-tests-k2",
-    "//plugins/kotlin/plugin/k2:k2_test_lib",
-  ]
+    name = "kotlin-tests-k2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.junit.kotlin.tests.k2",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-tests-k2",
+        "//plugins/kotlin/plugin/k2:k2_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/junit/kotlin-tests-shared",
+        "//plugins/junit/kotlin-tests-shared:kotlin-tests-shared_test_lib",
+        "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+        "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k2` end
 
 ### auto-generated section `iml intellij.junit.kotlin.tests.k2` start
-exports_files([
-  "intellij.junit.kotlin.tests.k2.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.junit.kotlin.tests.k2.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.junit.kotlin.tests.k2` end
 
 ### auto-generated section `test intellij.junit.kotlin.tests.k2` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-tests-k2_test",
-  runtime_deps = [":kotlin-tests-k2_test_lib"]
+    name = "kotlin-tests-k2_test",
+    runtime_deps = [":kotlin-tests-k2_test_lib"],
 )
 ### auto-generated section `test intellij.junit.kotlin.tests.k2` end

@@ -1,44 +1,58 @@
-### auto-generated section `build intellij.libraries.junit4` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.junit4` start
+
 jvm_library(
-  name = "junit4",
-  module_name = "intellij.libraries.junit4",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:junit4",
-    "//libraries/hamcrest",
-  ],
-  runtime_deps = [
-    "@lib//:junit4",
-    "//libraries/hamcrest",
-  ]
+    name = "junit4",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit4",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/hamcrest",
+        "@lib//:junit4",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:junit4",
+        "//libraries/hamcrest",
+    ],
 )
 
 jvm_library(
-  name = "junit4_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.junit4",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "@lib//:junit4",
-    "//libraries/hamcrest",
-    "//libraries/hamcrest:hamcrest_test_lib",
-  ],
-  runtime_deps = [
-    ":junit4",
-    "//libraries/hamcrest:hamcrest_test_lib",
-  ]
+    name = "junit4_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.junit4",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+        "@lib//:junit4",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":junit4",
+        "//libraries/hamcrest:hamcrest_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.junit4` end
 
 ### auto-generated section `iml intellij.libraries.junit4` start
-exports_files([
-  "intellij.libraries.junit4.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.junit4.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.junit4` end

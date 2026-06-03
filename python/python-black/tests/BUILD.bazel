@@ -1,99 +1,117 @@
-### auto-generated section `build intellij.python.black.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.black.tests` start
+
 jvm_library(
-  name = "tests",
-  module_name = "intellij.python.black.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.black.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  associates = [
-    "//python/python-black:black",
-    "//python/python-black:black_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/editor/shared:editor",
-    "//platform/editor/shared:editor_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/platform-api:ide",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core",
-    "//platform/ide-core-impl",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-core",
-    "//platform/lang-core:lang-core_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/common",
-    "//platform/testFramework/common:common_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//python/common",
-    "//python/common:common_test_lib",
-    "//python/openapi:community",
-    "//python/openapi:community_test_lib",
-    "//python:python-community-impl",
-    "//python:python-community-impl_test_lib",
-    "//python/junit5Tests-framework:community-junit5Tests-framework",
-    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-    "//python/python-psi-api:psi",
-    "//python/python-psi-api:psi_test_lib",
-    "//python/python-pyproject:pyproject",
-    "//python/python-pyproject:pyproject_test_lib",
-    "//python/python-pytools:pytools",
-    "//python/python-pytools:pytools_test_lib",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-    "//python/python-test-env/junit5",
-    "//python/python-test-env/junit5:junit5_test_lib",
-  ],
-  runtime_deps = [
-    ":tests",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-  ]
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/python-black:black",
+        "//python/python-black:black_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor/shared:editor",
+        "//platform/editor/shared:editor_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-core",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//python/common",
+        "//python/common:common_test_lib",
+        "//python/openapi:community",
+        "//python/openapi:community_test_lib",
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-api:psi_test_lib",
+        "//python/python-pyproject:pyproject",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//python/python-pytools:pytools",
+        "//python/python-pytools:pytools_test_lib",
+        "//python/python-sdk:sdk",
+        "//python/python-sdk:sdk_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.black.tests` end
 
 ### auto-generated section `iml intellij.python.black.tests` start
-exports_files([
-  "intellij.python.black.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.black.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.black.tests` end
 
 ### auto-generated section `test intellij.python.black.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests_test",
-  runtime_deps = [":tests_test_lib"]
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
 )
 ### auto-generated section `test intellij.python.black.tests` end

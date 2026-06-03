@@ -1,41 +1,57 @@
-### auto-generated section `build intellij.platform.settings` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.settings` start
+
 jvm_library(
-  name = "settings",
-  module_name = "intellij.platform.settings",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/extensions",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-  ]
+    name = "settings",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//platform/extensions",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
 )
 
 jvm_library(
-  name = "settings_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.settings",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":settings",
-    "//platform/extensions:extensions_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-  ]
+    name = "settings_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":settings",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.settings` end
 
 ### auto-generated section `iml intellij.platform.settings` start
-exports_files([
-  "intellij.platform.settings.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.settings.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.settings` end

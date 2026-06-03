@@ -1,28 +1,48 @@
-### auto-generated section `build intellij.platform.util.rt.java8` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.util.rt.java8` start
+
 jvm_library(
-  name = "rt-java8",
-  module_name = "intellij.platform.util.rt.java8",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:jetbrains-annotations"]
+    name = "rt-java8",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.rt.java8",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "rt-java8_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.util.rt.java8",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [":rt-java8"]
+    name = "rt-java8_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.rt.java8",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rt-java8",
+    ],
 )
 ### auto-generated section `build intellij.platform.util.rt.java8` end
 
 ### auto-generated section `iml intellij.platform.util.rt.java8` start
-exports_files([
-  "intellij.platform.util.rt.java8.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.util.rt.java8.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.util.rt.java8` end

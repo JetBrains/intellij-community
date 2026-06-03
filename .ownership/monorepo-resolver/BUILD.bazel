@@ -1,43 +1,61 @@
-### auto-generated section `build intellij.codeowners.monorepo.resolver` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.codeowners.monorepo.resolver` start
+
 jvm_library(
-  name = "codeowners-monorepo-resolver",
-  module_name = "intellij.codeowners.monorepo.resolver",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//.ownership:codeowners",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/core",
-  ],
-  exports = ["//.ownership:codeowners"]
+    name = "codeowners-monorepo-resolver",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners.monorepo.resolver",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//.ownership:codeowners"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//.ownership:codeowners",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+    ],
 )
 
 jvm_library(
-  name = "codeowners-monorepo-resolver_test_lib",
-  testonly = True,
-  module_name = "intellij.codeowners.monorepo.resolver",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "//.ownership:codeowners",
-    "//.ownership:codeowners_test_lib",
-  ],
-  runtime_deps = [
-    ":codeowners-monorepo-resolver",
-    "//.ownership:codeowners_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "codeowners-monorepo-resolver_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners.monorepo.resolver",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//.ownership:codeowners",
+        "//.ownership:codeowners_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":codeowners-monorepo-resolver",
+        "//.ownership:codeowners_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.codeowners.monorepo.resolver` end
 
 ### auto-generated section `iml intellij.codeowners.monorepo.resolver` start
-exports_files([
-  "intellij.codeowners.monorepo.resolver.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.codeowners.monorepo.resolver.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.codeowners.monorepo.resolver` end

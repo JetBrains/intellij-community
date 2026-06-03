@@ -1,51 +1,69 @@
-### auto-generated section `build intellij.python.uv.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.uv.backend` start
+
 jvm_library(
-  name = "backend",
-  module_name = "intellij.python.uv.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python/python-uv/common",
-    "@lib//:jetbrains-annotations",
-    "//platform/util",
-    "//python/python-pyproject:pyproject",
-    "//platform/core-api:core",
-    "//python/openapi:community",
-    "//python/common",
-    "//python/python-pytools:pytools",
-    "//python/python-exec-service:community-execService",
-    "//platform/eel-provider",
-  ]
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.uv.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/python-uv/common",
+        "@lib//:jetbrains-annotations",
+        "//platform/util",
+        "//python/python-pyproject:pyproject",
+        "//platform/core-api:core",
+        "//python/openapi:community",
+        "//python/common",
+        "//python/python-pytools:pytools",
+        "//python/python-exec-service:community-execService",
+        "//platform/eel-provider",
+    ],
 )
 
 jvm_library(
-  name = "backend_test_lib",
-  testonly = True,
-  module_name = "intellij.python.uv.backend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
-    "//python/python-uv/common:common_test_lib",
-    "//platform/util:util_test_lib",
-    "//python/python-pyproject:pyproject_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//python/openapi:community_test_lib",
-    "//python/common:common_test_lib",
-    "//python/python-pytools:pytools_test_lib",
-    "//python/python-exec-service:community-execService_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-  ]
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.uv.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//python/python-uv/common:common_test_lib",
+        "//platform/util:util_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/common:common_test_lib",
+        "//python/python-pytools:pytools_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.uv.backend` end
 
 ### auto-generated section `iml intellij.python.uv.backend` start
-exports_files([
-  "intellij.python.uv.backend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.uv.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.uv.backend` end

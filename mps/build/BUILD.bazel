@@ -1,104 +1,140 @@
-load("@rules_java//java:defs.bzl", "java_binary")
-load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 
 java_binary(
-  name = "mps_builder",
-  runtime_deps = [":build"],
-  main_class = "org.jetbrains.intellij.build.mps.MPSBuilder",
-  add_opens = INTELLIJ_ADD_OPENS,
-  jvm_flags = [
-    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
-  ],
-  data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    name = "mps_builder",
+    add_opens = INTELLIJ_ADD_OPENS,
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
+    main_class = "org.jetbrains.intellij.build.mps.MPSBuilder",
+    runtime_deps = [":build"],
 )
 
 ### auto-generated section `build intellij.mps.build` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "build",
-  module_name = "intellij.mps.build",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//ant/lib:ant",
-    "//build",
-    "//java/java-runtime:rt",
-    "//jps/standalone-builder:tools-jps-build-standalone",
-    "@lib//:kotlin-stdlib",
-    "//platform/build-scripts/downloader",
-    "@lib//:kotlinx-collections-immutable",
-    "@lib//:kotlinx-coroutines-core",
-  ]
+    name = "build",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mps.build",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//ant/lib:ant",
+        "//build",
+        "//java/java-runtime:rt",
+        "//jps/standalone-builder:tools-jps-build-standalone",
+        "@lib//:kotlin-stdlib",
+        "//platform/build-scripts/downloader",
+        "@lib//:kotlinx-collections-immutable",
+        "@lib//:kotlinx-coroutines-core",
+    ],
 )
 
 jvm_library(
-  name = "build_test_lib",
-  testonly = True,
-  module_name = "intellij.mps.build",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":build",
-    "//build:build_test_lib",
-    "//java/java-runtime:rt_test_lib",
-    "//jps/standalone-builder:tools-jps-build-standalone_test_lib",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-  ]
+    name = "build_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mps.build",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":build",
+        "//build:build_test_lib",
+        "//java/java-runtime:rt_test_lib",
+        "//jps/standalone-builder:tools-jps-build-standalone_test_lib",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.mps.build` end
 
 ### auto-generated section `iml intellij.mps.build` start
-exports_files([
-  "intellij.mps.build.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.mps.build.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.mps.build` end
 
 ### auto-generated section `build intellij.mps.build.tests` start
+
 jvm_library(
-  name = "build-tests",
-  module_name = "intellij.mps.build.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["@lib//:kotlin-stdlib"]
+    name = "build-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mps.build.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "build-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.mps.build.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:junit5",
-    "//platform/build-scripts/testFramework",
-    "//platform/build-scripts/testFramework:testFramework_test_lib",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/build-scripts",
-    "//platform/build-scripts:build-scripts_test_lib",
-    "//mps/build",
-    "//mps/build:build_test_lib",
-    "//platform/build-scripts/downloader",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-  ],
-  runtime_deps = [":build-tests"]
+    name = "build-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mps.build.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":build-tests",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:junit5",
+        "//platform/build-scripts/testFramework",
+        "//platform/build-scripts/testFramework:testFramework_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/build-scripts",
+        "//platform/build-scripts:build-scripts_test_lib",
+        "//mps/build",
+        "//mps/build:build_test_lib",
+        "//platform/build-scripts/downloader",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.mps.build.tests` end
 
 ### auto-generated section `iml intellij.mps.build.tests` start
-exports_files([
-  "intellij.mps.build.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.mps.build.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.mps.build.tests` end
 
 ### auto-generated section `test intellij.mps.build.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "build-tests_test",
-  runtime_deps = [":build-tests_test_lib"]
+    name = "build-tests_test",
+    runtime_deps = [":build-tests_test_lib"],
 )
 ### auto-generated section `test intellij.mps.build.tests` end

@@ -1,54 +1,72 @@
-### auto-generated section `build intellij.platform.rd.community` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.rd.community` start
+
 jvm_library(
-  name = "rd-community",
-  module_name = "intellij.platform.rd.community",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/platform-api:ide",
-    "//platform/progress/shared:ide-progress",
-    "//libraries/rd/core",
-    "//libraries/rd/text",
-    "//libraries/rd/swing",
-    "//platform/util/progress",
-    "//platform/util/concurrency",
-    "//platform/core-api:core",
-    "//libraries/rd/framework",
-    "//platform/core-impl",
-  ]
+    name = "rd-community",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rd.community",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/platform-api:ide",
+        "//platform/progress/shared:ide-progress",
+        "//libraries/rd/core",
+        "//libraries/rd/text",
+        "//libraries/rd/swing",
+        "//platform/util/progress",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//libraries/rd/framework",
+        "//platform/core-impl",
+    ],
 )
 
 jvm_library(
-  name = "rd-community_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.rd.community",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":rd-community",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/progress/shared:ide-progress_test_lib",
-    "//libraries/rd/core:core_test_lib",
-    "//libraries/rd/text:text_test_lib",
-    "//libraries/rd/swing:swing_test_lib",
-    "//platform/util/progress:progress_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//libraries/rd/framework:framework_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-  ]
+    name = "rd-community_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rd.community",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rd-community",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//libraries/rd/core:core_test_lib",
+        "//libraries/rd/text:text_test_lib",
+        "//libraries/rd/swing:swing_test_lib",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/rd/framework:framework_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.rd.community` end
 
 ### auto-generated section `iml intellij.platform.rd.community` start
-exports_files([
-  "intellij.platform.rd.community.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.rd.community.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.rd.community` end

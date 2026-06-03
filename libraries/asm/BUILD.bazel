@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.asm` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.asm` start
+
 jvm_library(
-  name = "asm",
-  module_name = "intellij.libraries.asm",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-asm-asm"],
-  runtime_deps = ["@lib//:libraries-asm-asm"]
+    name = "asm",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.asm",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-asm-asm"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-asm-asm",
+    ],
 )
 
 jvm_library(
-  name = "asm_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.asm",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-asm-asm"],
-  runtime_deps = [":asm"]
+    name = "asm_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.asm",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-asm-asm"],
+    runtime_deps = [
+        # do not sort,
+        ":asm",
+    ],
 )
 ### auto-generated section `build intellij.libraries.asm` end
 
 ### auto-generated section `iml intellij.libraries.asm` start
-exports_files([
-  "intellij.libraries.asm.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.asm.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.asm` end

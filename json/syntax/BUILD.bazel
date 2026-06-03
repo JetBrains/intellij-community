@@ -1,54 +1,77 @@
-### auto-generated section `build intellij.json.syntax` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.json.syntax` start
 
 create_kotlinc_options(
-  name = "custom_syntax",
-  x_no_call_assertions = True,
-  x_no_param_assertions = True
+    name = "custom_syntax",
+    x_no_call_assertions = True,
+    x_no_param_assertions = True,
 )
 
 jvm_provided_library(
-  name = "platform_multiplatformSupport_provided",
-  lib = "//platform/multiplatformSupport"
+    name = "platform_multiplatformSupport_provided",
+    lib = "//platform/multiplatformSupport",
 )
 
 jvm_library(
-  name = "syntax",
-  module_name = "intellij.json.syntax",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvm/**/*.kt", "srcJvm/**/*.java", "srcJvm/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_syntax",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/syntax/syntax-api:syntax",
-    "//platform/syntax/syntax-util:util",
-    "@lib//:jetbrains-annotations",
-    ":platform_multiplatformSupport_provided",
-  ]
+    name = "syntax",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "srcJvm/**/*.kt",
+            "srcJvm/**/*.java",
+            "srcJvm/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_syntax",
+    module_name = "intellij.json.syntax",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-util:util",
+        "@lib//:jetbrains-annotations",
+        ":platform_multiplatformSupport_provided",
+    ],
 )
 
 jvm_library(
-  name = "syntax_test_lib",
-  testonly = True,
-  module_name = "intellij.json.syntax",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_syntax",
-  runtime_deps = [
-    ":syntax",
-    "//platform/syntax/syntax-api:syntax_test_lib",
-    "//platform/syntax/syntax-util:util_test_lib",
-    "//platform/multiplatformSupport",
-    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-  ]
+    name = "syntax_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_syntax",
+    module_name = "intellij.json.syntax",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":syntax",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+        "//platform/syntax/syntax-util:util_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.json.syntax` end
 
 ### auto-generated section `iml intellij.json.syntax` start
-exports_files([
-  "intellij.json.syntax.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.json.syntax.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.json.syntax` end

@@ -1,73 +1,91 @@
-### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` start
+
 jvm_library(
-  name = "kotlin-jvm-debugger-performance-test",
-  module_name = "intellij.kotlin.jvm.debugger.performance.test",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "kotlin-jvm-debugger-performance-test",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.performance.test",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-performance-test_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.jvm.debugger.performance.test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:jb-jdi",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/lang-core",
-    "//platform/lang-core:lang-core_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//java/debugger/openapi:java-debugger",
-    "//java/debugger/openapi:java-debugger_test_lib",
-    "//java/debugger/impl",
-    "//java/debugger/impl:impl_test_lib",
-    "//java/testFramework",
-    "//java/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/testFramework",
-    "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/jvm-debugger/testFramework",
-    "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/tests-common:common-tests",
-    "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
-    "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":kotlin-jvm-debugger-performance-test"]
+    name = "kotlin-jvm-debugger-performance-test_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.performance.test",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-jvm-debugger-performance-test",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "@lib//:jb-jdi",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/lang-core",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//java/debugger/openapi:java-debugger",
+        "//java/debugger/openapi:java-debugger_test_lib",
+        "//java/debugger/impl",
+        "//java/debugger/impl:impl_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/jvm-debugger/testFramework",
+        "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/tests-common:common-tests",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
+        "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` end
 
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.performance.test` start
-exports_files([
-  "intellij.kotlin.jvm.debugger.performance.test.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.jvm.debugger.performance.test.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.performance.test` end
 
 ### auto-generated section `test intellij.kotlin.jvm.debugger.performance.test` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-jvm-debugger-performance-test_test",
-  runtime_deps = [
-    ":kotlin-jvm-debugger-performance-test_test_lib",
-    "//:main_test_lib",
-  ]
+    name = "kotlin-jvm-debugger-performance-test_test",
+    runtime_deps = [
+        ":kotlin-jvm-debugger-performance-test_test_lib",
+        "//:main_test_lib",
+    ],
 )
 ### auto-generated section `test intellij.kotlin.jvm.debugger.performance.test` end

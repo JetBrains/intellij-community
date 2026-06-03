@@ -1,63 +1,81 @@
-### auto-generated section `build intellij.platform.vcs.log.impl.bookmarks` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.vcs.log.impl.bookmarks` start
+
 jvm_library(
-  name = "bookmarks",
-  module_name = "intellij.platform.vcs.log.impl.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/bookmarks",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/core-ui",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/ide-core",
-    "//platform/lang-api:lang",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//platform/vcs-impl",
-    "//platform/vcs-impl/shared",
-    "//platform/vcs-log/api:vcs-log",
-    "//platform/vcs-log/impl",
-    "//platform/vcs-api/shared",
-  ]
+    name = "bookmarks",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.log.impl.bookmarks",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/bookmarks",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/lang-api:lang",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/vcs-impl",
+        "//platform/vcs-impl/shared",
+        "//platform/vcs-log/api:vcs-log",
+        "//platform/vcs-log/impl",
+        "//platform/vcs-api/shared",
+    ],
 )
 
 jvm_library(
-  name = "bookmarks_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.vcs.log.impl.bookmarks",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":bookmarks",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/bookmarks:bookmarks_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/vcs-impl/shared:shared_test_lib",
-    "//platform/vcs-log/api:vcs-log_test_lib",
-    "//platform/vcs-log/impl:impl_test_lib",
-    "//platform/vcs-api/shared:shared_test_lib",
-  ]
+    name = "bookmarks_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.log.impl.bookmarks",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bookmarks",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/bookmarks:bookmarks_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/vcs-impl/shared:shared_test_lib",
+        "//platform/vcs-log/api:vcs-log_test_lib",
+        "//platform/vcs-log/impl:impl_test_lib",
+        "//platform/vcs-api/shared:shared_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl.bookmarks` end
 
 ### auto-generated section `iml intellij.platform.vcs.log.impl.bookmarks` start
-exports_files([
-  "intellij.platform.vcs.log.impl.bookmarks.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.vcs.log.impl.bookmarks.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.vcs.log.impl.bookmarks` end

@@ -1,60 +1,74 @@
-### auto-generated section `build fleet.test.runtime` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build fleet.test.runtime` start
+
 jvm_library(
-  name = "test-runtime",
-  module_name = "fleet.test.runtime",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:junit5",
-    "//libraries/junit5-params",
-    "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "//libraries/junit5-launcher",
-    "@lib//:hamcrest",
-    "@lib//:kotlin-test-junit5",
-    "@lib//:kotlin-test",
-  ],
-  runtime_deps = [
-    "@lib//:junit5",
-    "//libraries/junit5-params",
-    "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "//libraries/junit5-launcher",
-    "@lib//:hamcrest",
-    "@lib//:kotlin-test-junit5",
-    "@lib//:kotlin-test",
-  ]
+    name = "test-runtime",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "fleet.test.runtime",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/junit5-launcher",
+        "//libraries/junit5-params",
+        "@lib//:fleet-test-runtime-_j_unit5_jupiter",
+        "@lib//:hamcrest",
+        "@lib//:junit5",
+        "@lib//:kotlin-test",
+        "@lib//:kotlin-test-junit5",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:junit5",
+        "//libraries/junit5-params",
+        "@lib//:fleet-test-runtime-_j_unit5_jupiter",
+        "//libraries/junit5-launcher",
+        "@lib//:hamcrest",
+        "@lib//:kotlin-test-junit5",
+        "@lib//:kotlin-test",
+    ],
 )
 
 jvm_library(
-  name = "test-runtime_test_lib",
-  testonly = True,
-  module_name = "fleet.test.runtime",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = [
-    "@lib//:junit5",
-    "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "@lib//:fleet-test-runtime-_j_unit5_jupiter",
-    "//libraries/junit5-launcher",
-    "//libraries/junit5-launcher:junit5-launcher_test_lib",
-    "@lib//:hamcrest",
-    "@lib//:kotlin-test-junit5",
-    "@lib//:kotlin-test",
-  ],
-  runtime_deps = [
-    ":test-runtime",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "//libraries/junit5-launcher:junit5-launcher_test_lib",
-  ]
+    name = "test-runtime_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "fleet.test.runtime",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/junit5-launcher",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "@lib//:fleet-test-runtime-_j_unit5_jupiter",
+        "@lib//:hamcrest",
+        "@lib//:junit5",
+        "@lib//:kotlin-test",
+        "@lib//:kotlin-test-junit5",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":test-runtime",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.test.runtime` end
 
 ### auto-generated section `iml fleet.test.runtime` start
-exports_files([
-  "fleet.test.runtime.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.test.runtime.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.test.runtime` end

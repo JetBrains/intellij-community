@@ -1,38 +1,52 @@
-### auto-generated section `build intellij.libraries.junit5.vintage` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.junit5.vintage` start
+
 jvm_library(
-  name = "junit5-vintage",
-  module_name = "intellij.libraries.junit5.vintage",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
-  runtime_deps = [
-    "@lib//:libraries-junit5-vintage-_j_unit5_vintage",
-    "//libraries/junit4",
-    "//libraries/junit5-launcher",
-  ]
+    name = "junit5-vintage",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5.vintage",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-junit5-vintage-_j_unit5_vintage",
+        "//libraries/junit4",
+        "//libraries/junit5-launcher",
+    ],
 )
 
 jvm_library(
-  name = "junit5-vintage_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.junit5.vintage",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
-  runtime_deps = [
-    ":junit5-vintage",
-    "//libraries/junit4:junit4_test_lib",
-    "//libraries/junit5-launcher:junit5-launcher_test_lib",
-  ]
+    name = "junit5-vintage_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5.vintage",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5-vintage",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.junit5.vintage` end
 
 ### auto-generated section `iml intellij.libraries.junit5.vintage` start
-exports_files([
-  "intellij.libraries.junit5.vintage.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.junit5.vintage.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.junit5.vintage` end

@@ -1,41 +1,55 @@
-### auto-generated section `build intellij.codeowners` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.codeowners` start
+
 jvm_library(
-  name = "codeowners",
-  module_name = "intellij.codeowners",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership",
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:slf4j-api",
-    "@lib//:kaml",
-    "@lib//:squareup-okio-jvm",
-    "@lib//:slf4j-jdk14",
-  ]
+    name = "codeowners",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership",
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:slf4j-api",
+        "@lib//:kaml",
+        "@lib//:squareup-okio-jvm",
+        "@lib//:slf4j-jdk14",
+    ],
 )
 
 jvm_library(
-  name = "codeowners_test_lib",
-  testonly = True,
-  module_name = "intellij.codeowners",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
-  runtime_deps = [
-    ":codeowners",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "codeowners_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
+    runtime_deps = [
+        # do not sort,
+        ":codeowners",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.codeowners` end
 
 ### auto-generated section `iml intellij.codeowners` start
-exports_files([
-  "intellij.codeowners.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.codeowners.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.codeowners` end

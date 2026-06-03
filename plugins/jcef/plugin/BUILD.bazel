@@ -1,28 +1,46 @@
-### auto-generated section `build intellij.jcef.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jcef.plugin` start
+
 jvm_library(
-  name = "plugin",
-  module_name = "intellij.jcef.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  runtime_deps = ["@lib//:kotlin-stdlib"]
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "plugin_test_lib",
-  testonly = True,
-  module_name = "intellij.jcef.plugin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [":plugin"]
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+    ],
 )
 ### auto-generated section `build intellij.jcef.plugin` end
 
 ### auto-generated section `iml intellij.jcef.plugin` start
-exports_files([
-  "intellij.jcef.plugin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jcef.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jcef.plugin` end

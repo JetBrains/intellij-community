@@ -1,42 +1,58 @@
-### auto-generated section `build intellij.platform.icons.api.rendering` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.icons.api.rendering` start
+
 jvm_library(
-  name = "rendering",
-  module_name = "intellij.platform.icons.api.rendering",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/icons-api",
-    "@lib//:jetbrains-annotations",
-  ],
-  exports = ["//platform/icons-api"]
+    name = "rendering",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.icons.api.rendering",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/icons-api"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/icons-api",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "rendering_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.icons.api.rendering",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "//platform/icons-api",
-    "//platform/icons-api:icons-api_test_lib",
-  ],
-  runtime_deps = [
-    ":rendering",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/icons-api:icons-api_test_lib",
-  ]
+    name = "rendering_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.icons.api.rendering",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/icons-api",
+        "//platform/icons-api:icons-api_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":rendering",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/icons-api:icons-api_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.icons.api.rendering` end
 
 ### auto-generated section `iml intellij.platform.icons.api.rendering` start
-exports_files([
-  "intellij.platform.icons.api.rendering.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.icons.api.rendering.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.icons.api.rendering` end

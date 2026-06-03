@@ -1,89 +1,108 @@
-### auto-generated section `build intellij.platform.lsp.impl.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.lsp.impl.tests` start
+
 jvm_library(
-  name = "tests",
-  module_name = "intellij.platform.lsp.impl.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/testRunner",
-  ]
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lsp.impl.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/testRunner",
+    ],
 )
 
 jvm_library(
-  name = "tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
-  associates = [
-    "//platform/lsp-impl",
-    "//platform/lsp-impl:lsp-impl_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:eclipse-lsp4j",
-    "@lib//:eclipse-lsp4j-jsonrpc",
-    "//platform/lsp",
-    "//platform/lsp:lsp_test_lib",
-    "//platform/lsp/testFramework",
-    "//platform/lsp/testFramework:testFramework_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5/codeInsight",
-    "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/platform-api:ide",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/indexing-api:indexing",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/code-style-api:codeStyle",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/code-style-impl:codeStyle-impl",
-    "//platform/code-style-impl:codeStyle-impl_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//xml/xml-psi-impl:psi-impl",
-    "//xml/xml-psi-impl:psi-impl_test_lib",
-  ],
-  runtime_deps = [
-    ":tests",
-    "//platform/testRunner:testRunner_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-  ]
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/lsp-impl",
+        "//platform/lsp-impl:lsp-impl_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:eclipse-lsp4j",
+        "@lib//:eclipse-lsp4j-jsonrpc",
+        "//platform/lsp",
+        "//platform/lsp:lsp_test_lib",
+        "//platform/lsp/testFramework",
+        "//platform/lsp/testFramework:testFramework_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/codeInsight",
+        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/code-style-impl:codeStyle-impl",
+        "//platform/code-style-impl:codeStyle-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//xml/xml-psi-impl:psi-impl",
+        "//xml/xml-psi-impl:psi-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.tests` end
 
 ### auto-generated section `iml intellij.platform.lsp.impl.tests` start
-exports_files([
-  "intellij.platform.lsp.impl.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.lsp.impl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.lsp.impl.tests` end
 
 ### auto-generated section `test intellij.platform.lsp.impl.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tests_test",
-  runtime_deps = [":tests_test_lib"]
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
 )
 ### auto-generated section `test intellij.platform.lsp.impl.tests` end

@@ -1,173 +1,209 @@
-### auto-generated section `build intellij.kotlin.devkit.k1` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.kotlin.devkit.k1` start
 
 create_kotlinc_options(
-  name = "custom_k1",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.K1Deprecation",
-  ]
+    name = "custom_k1",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.K1Deprecation",
+    ],
 )
 
 jvm_library(
-  name = "k1",
-  module_name = "intellij.kotlin.devkit.k1",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_k1",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common-provided",
-    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/core-impl",
-    "//platform/refactoring",
-    "//platform/lang-impl",
-    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
-    "//plugins/kotlin/idea",
-    "//plugins/kotlin/base/code-insight",
-    "//plugins/kotlin/base/fe10/analysis",
-    "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/code-insight/api",
-  ]
+    name = "k1",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_k1",
+    module_name = "intellij.kotlin.devkit.k1",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-impl",
+        "//platform/refactoring",
+        "//platform/lang-impl",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "//plugins/kotlin/idea",
+        "//plugins/kotlin/base/code-insight",
+        "//plugins/kotlin/base/fe10/analysis",
+        "//plugins/devkit/devkit-core:core",
+        "//plugins/kotlin/code-insight/api",
+    ],
 )
 
 jvm_library(
-  name = "k1_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.devkit.k1",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_k1",
-  runtime_deps = [
-    ":k1",
-    "@lib//:kotlinc-kotlin-compiler-common-provided",
-    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/refactoring:refactoring_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
-    "//plugins/kotlin/idea:idea_test_lib",
-    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
-    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
-    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
-    "//plugins/devkit/devkit-tests:testFramework",
-    "//plugins/devkit/devkit-tests:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/test-framework",
-    "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/plugin/k1",
-    "//plugins/kotlin/plugin/k1:k1_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/testFramework",
-    "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-    "//plugins/devkit/devkit-core:core_test_lib",
-    "//plugins/kotlin/code-insight/api:api_test_lib",
-  ]
+    name = "k1_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_k1",
+    module_name = "intellij.kotlin.devkit.k1",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":k1",
+        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
+        "//plugins/kotlin/idea:idea_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+        "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+        "//plugins/devkit/devkit-tests:testFramework",
+        "//plugins/devkit/devkit-tests:testFramework_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/test-framework",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/plugin/k1",
+        "//plugins/kotlin/plugin/k1:k1_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/devkit/devkit-core:core_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.devkit.k1` end
 
 ### auto-generated section `iml intellij.kotlin.devkit.k1` start
-exports_files([
-  "intellij.kotlin.devkit.k1.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.devkit.k1.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.devkit.k1` end
 
 ### auto-generated section `build intellij.kotlin.devkit.k1.tests` start
+
 create_kotlinc_options(
-  name = "custom_kotlin-devkit-k1-tests",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.K1Deprecation",
-  ]
+    name = "custom_kotlin-devkit-k1-tests",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.K1Deprecation",
+    ],
 )
 
 jvm_library(
-  name = "kotlin-devkit-k1-tests",
-  module_name = "intellij.kotlin.devkit.k1.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "kotlin-devkit-k1-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.devkit.k1.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "kotlin-devkit-k1-tests_test_lib",
-  testonly = True,
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-devkit-k1-tests",
-  associates = [
-    "//plugins/devkit/intellij.kotlin.devkit/k1",
-    "//plugins/devkit/intellij.kotlin.devkit/k1:k1_test_lib",
-  ],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common-provided",
-    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/refactoring",
-    "//platform/refactoring:refactoring_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
-    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
-    "//plugins/kotlin/idea",
-    "//plugins/kotlin/idea:idea_test_lib",
-    "//plugins/kotlin/base/code-insight",
-    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/analysis",
-    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
-    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
-    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
-    "//plugins/devkit/devkit-tests:testFramework",
-    "//plugins/devkit/devkit-tests:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/test-framework",
-    "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/plugin/k1",
-    "//plugins/kotlin/plugin/k1:k1_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/testFramework",
-    "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-    "//plugins/devkit/devkit-core:core",
-    "//plugins/devkit/devkit-core:core_test_lib",
-    "//plugins/kotlin/code-insight/api",
-    "//plugins/kotlin/code-insight/api:api_test_lib",
-  ],
-  runtime_deps = [":kotlin-devkit-k1-tests"]
+    name = "kotlin-devkit-k1-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/devkit/intellij.kotlin.devkit/k1",
+        "//plugins/devkit/intellij.kotlin.devkit/k1:k1_test_lib",
+    ],
+    kotlinc_opts = ":custom_kotlin-devkit-k1-tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-devkit-k1-tests",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
+        "//plugins/kotlin/idea",
+        "//plugins/kotlin/idea:idea_test_lib",
+        "//plugins/kotlin/base/code-insight",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+        "//plugins/kotlin/base/fe10/analysis",
+        "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+        "//plugins/devkit/devkit-tests:testFramework",
+        "//plugins/devkit/devkit-tests:testFramework_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/test-framework",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/plugin/k1",
+        "//plugins/kotlin/plugin/k1:k1_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/devkit/devkit-core:core",
+        "//plugins/devkit/devkit-core:core_test_lib",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.devkit.k1.tests` end
 
 ### auto-generated section `iml intellij.kotlin.devkit.k1.tests` start
-exports_files([
-  "intellij.kotlin.devkit.k1.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.devkit.k1.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.devkit.k1.tests` end
 
 ### auto-generated section `test intellij.kotlin.devkit.k1.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-devkit-k1-tests_test",
-  runtime_deps = [":kotlin-devkit-k1-tests_test_lib"]
+    name = "kotlin-devkit-k1-tests_test",
+    runtime_deps = [":kotlin-devkit-k1-tests_test_lib"],
 )
 ### auto-generated section `test intellij.kotlin.devkit.k1.tests` end

@@ -1,44 +1,62 @@
-### auto-generated section `build intellij.jvm.analysis.refactoring` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jvm.analysis.refactoring` start
+
 jvm_library(
-  name = "analysis-refactoring",
-  module_name = "intellij.jvm.analysis.refactoring",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/util",
-    "//uast/uast-common:uast",
-    "//jvm/jvm-analysis-api:analysis",
-    "//platform/core-api:core",
-    "//java/java-psi-api:psi",
-  ]
+    name = "analysis-refactoring",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jvm.analysis.refactoring",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/util",
+        "//uast/uast-common:uast",
+        "//jvm/jvm-analysis-api:analysis",
+        "//platform/core-api:core",
+        "//java/java-psi-api:psi",
+    ],
 )
 
 jvm_library(
-  name = "analysis-refactoring_test_lib",
-  testonly = True,
-  module_name = "intellij.jvm.analysis.refactoring",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":analysis-refactoring",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/util:util_test_lib",
-    "//uast/uast-common:uast_test_lib",
-    "//jvm/jvm-analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//java/java-psi-api:psi_test_lib",
-  ]
+    name = "analysis-refactoring_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jvm.analysis.refactoring",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":analysis-refactoring",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util:util_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//jvm/jvm-analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.jvm.analysis.refactoring` end
 
 ### auto-generated section `iml intellij.jvm.analysis.refactoring` start
-exports_files([
-  "intellij.jvm.analysis.refactoring.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jvm.analysis.refactoring.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jvm.analysis.refactoring` end

@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.python.grazie` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.python.grazie` start
+
 jvm_library(
-  name = "grazie",
-  module_name = "intellij.python.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//plugins/grazie",
-    "//platform/core-api:core",
-    "//python:python-community-impl",
-    "//platform/util",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-impl",
-  ]
+    name = "grazie",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.grazie",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/grazie",
+        "//platform/core-api:core",
+        "//python:python-community-impl",
+        "//platform/util",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-impl",
+    ],
 )
 
 jvm_library(
-  name = "grazie_test_lib",
-  testonly = True,
-  module_name = "intellij.python.grazie",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":grazie",
-    "//plugins/grazie:grazie_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//python:python-community-impl_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-  ]
+    name = "grazie_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.grazie",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":grazie",
+        "//plugins/grazie:grazie_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//python:python-community-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.python.grazie` end
 
 ### auto-generated section `iml intellij.python.grazie` start
-exports_files([
-  "intellij.python.grazie.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.python.grazie.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.python.grazie` end

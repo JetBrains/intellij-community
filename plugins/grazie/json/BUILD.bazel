@@ -1,42 +1,60 @@
-### auto-generated section `build intellij.grazie.json` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.grazie.json` start
+
 jvm_library(
-  name = "json",
-  module_name = "intellij.grazie.json",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = glob(["src/main/resources/**/*"]),
-  resource_strip_prefix = "src/main/resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/grazie/src:core",
-    "//platform/core-api:core",
-    "//json/backend",
-    "//platform/util",
-    "//platform/util-ex",
-  ]
+    name = "json",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.json",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+        "//platform/core-api:core",
+        "//json/backend",
+        "//platform/util",
+        "//platform/util-ex",
+    ],
 )
 
 jvm_library(
-  name = "json_test_lib",
-  testonly = True,
-  module_name = "intellij.grazie.json",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":json",
-    "//plugins/grazie/src:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//json/backend:backend_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util-ex:util-ex_test_lib",
-  ]
+    name = "json_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.json",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":json",
+        "//plugins/grazie/src:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//json/backend:backend_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.grazie.json` end
 
 ### auto-generated section `iml intellij.grazie.json` start
-exports_files([
-  "intellij.grazie.json.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.grazie.json.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.grazie.json` end

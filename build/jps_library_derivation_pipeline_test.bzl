@@ -27,13 +27,13 @@ def _project_library_xml(name, maven_roots = [], local_roots = []):
         roots += '      <root url="%s" />\n' % url
 
     return (
-        '<component name="libraryTable">\n'
-        + '  <library name="%s">\n' % name
-        + "    <CLASSES>\n"
-        + roots
-        + "    </CLASSES>\n"
-        + "  </library>\n"
-        + "</component>"
+        '<component name="libraryTable">\n' +
+        '  <library name="%s">\n' % name +
+        "    <CLASSES>\n" +
+        roots +
+        "    </CLASSES>\n" +
+        "  </library>\n" +
+        "</component>"
     )
 
 def _library_xml_struct(name, xml_content):
@@ -54,20 +54,20 @@ def _iml_xml(project_libraries = [], module_library_roots = []):
         for url in jar_urls:
             roots += '          <root url="%s" />\n' % url
         entries += (
-            '    <orderEntry type="module-library">\n'
-            + "      <library>\n"
-            + "        <CLASSES>\n"
-            + roots
-            + "        </CLASSES>\n"
-            + "      </library>\n"
-            + "    </orderEntry>\n"
+            '    <orderEntry type="module-library">\n' +
+            "      <library>\n" +
+            "        <CLASSES>\n" +
+            roots +
+            "        </CLASSES>\n" +
+            "      </library>\n" +
+            "    </orderEntry>\n"
         )
     return (
-        '<module type="JAVA_MODULE" version="4">\n'
-        + '  <component name="NewModuleRootManager">\n'
-        + entries
-        + "  </component>\n"
-        + "</module>"
+        '<module type="JAVA_MODULE" version="4">\n' +
+        '  <component name="NewModuleRootManager">\n' +
+        entries +
+        "  </component>\n" +
+        "</module>"
     )
 
 def _iml_data(module_name, iml_rel_path, iml_xml_str, is_community = True):
@@ -80,8 +80,12 @@ def _iml_data(module_name, iml_rel_path, iml_xml_str, is_community = True):
         parsed_iml = parse_iml(iml_xml_str, iml_rel_path),
     )
 
-def _derive(library_xmls = [], iml_data_list = [], env = {},
-            is_community_only = True, community_root_rel = ""):
+def _derive(
+        library_xmls = [],
+        iml_data_list = [],
+        env = {},
+        is_community_only = True,
+        community_root_rel = ""):
     return derive_library_targets(
         ctx = _fake_ctx(env),
         library_xmls = library_xmls,

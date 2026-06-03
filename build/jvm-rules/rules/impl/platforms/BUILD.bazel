@@ -25,10 +25,10 @@ platform(
 
 pkg_files(
     name = "files_to_zip",
-    prefix = "rules/impl/platforms",
     srcs = glob(
         ["**"],
     ),
+    prefix = "rules/impl/platforms",
     strip_prefix = strip_prefix.from_pkg(),
     visibility = ["//visibility:public"],
 )

@@ -1,47 +1,63 @@
-### auto-generated section `build intellij.platform.buildScripts.api` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.buildScripts.api` start
+
 jvm_library(
-  name = "api",
-  module_name = "intellij.platform.buildScripts.api",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/groovy/rt/classLoader",
-    "//platform/util-class-loader:util-classLoader",
-    "//platform/util",
-    "@lib//:jetbrains-annotations",
-    "//platform/build-scripts/downloader",
-    "//jps/model-api:model",
-    "//platform/util/zip",
-    "//libraries/kotlinx/coroutines/core",
-    "@community//build:zip",
-  ]
+    name = "api",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.api",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/groovy/rt/classLoader",
+        "//platform/util-class-loader:util-classLoader",
+        "//platform/util",
+        "@lib//:jetbrains-annotations",
+        "//platform/build-scripts/downloader",
+        "//jps/model-api:model",
+        "//platform/util/zip",
+        "//libraries/kotlinx/coroutines/core",
+        "@community//build:zip",
+    ],
 )
 
 jvm_library(
-  name = "api_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.buildScripts.api",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":api",
-    "//plugins/groovy/rt/classLoader:classLoader_test_lib",
-    "//platform/util-class-loader:util-classLoader_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/build-scripts/downloader:downloader_test_lib",
-    "//jps/model-api:model_test_lib",
-    "//platform/util/zip:zip_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "@community//build:zip_test_lib",
-  ]
+    name = "api_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.api",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":api",
+        "//plugins/groovy/rt/classLoader:classLoader_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/util/zip:zip_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "@community//build:zip_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.api` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.api` start
-exports_files([
-  "intellij.platform.buildScripts.api.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.buildScripts.api.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.buildScripts.api` end

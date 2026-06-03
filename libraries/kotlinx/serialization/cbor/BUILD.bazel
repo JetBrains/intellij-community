@@ -1,37 +1,51 @@
-### auto-generated section `build intellij.libraries.kotlinx.serialization.cbor` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.kotlinx.serialization.cbor` start
+
 jvm_library(
-  name = "cbor",
-  module_name = "intellij.libraries.kotlinx.serialization.cbor",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor"],
-  runtime_deps = [
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor",
-  ]
+    name = "cbor",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinx.serialization.cbor",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor",
+    ],
 )
 
 jvm_library(
-  name = "cbor_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.kotlinx.serialization.cbor",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor"],
-  runtime_deps = [
-    ":cbor",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "cbor_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinx.serialization.cbor",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor"],
+    runtime_deps = [
+        # do not sort,
+        ":cbor",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.cbor` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` start
-exports_files([
-  "intellij.libraries.kotlinx.serialization.cbor.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.kotlinx.serialization.cbor.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` end

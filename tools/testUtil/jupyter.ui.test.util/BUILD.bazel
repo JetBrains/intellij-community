@@ -1,39 +1,55 @@
-### auto-generated section `build intellij.jupyter.ui.test.util` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.jupyter.ui.test.util` start
+
 jvm_library(
-  name = "jupyter.ui.test.util",
-  module_name = "intellij.jupyter.ui.test.util",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:junit5",
-    "//platform/remote-driver/client",
-    "//platform/remote-driver/test-sdk:driver-sdk",
-    "//platform/remote-driver/model",
-    "//tools/testUtil/debugger.ui.test.util",
-  ]
+    name = "jupyter.ui.test.util",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jupyter.ui.test.util",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-test-assertions-core-jvm",
+        "@lib//:junit5",
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/model",
+        "//tools/testUtil/debugger.ui.test.util",
+    ],
 )
 
 jvm_library(
-  name = "jupyter.ui.test.util_test_lib",
-  testonly = True,
-  module_name = "intellij.jupyter.ui.test.util",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":jupyter.ui.test.util",
-    "//platform/remote-driver/client:client_test_lib",
-    "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
-    "//platform/remote-driver/model:model_test_lib",
-    "//tools/testUtil/debugger.ui.test.util:debugger.ui.test.util_test_lib",
-  ]
+    name = "jupyter.ui.test.util_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jupyter.ui.test.util",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jupyter.ui.test.util",
+        "//platform/remote-driver/client:client_test_lib",
+        "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
+        "//platform/remote-driver/model:model_test_lib",
+        "//tools/testUtil/debugger.ui.test.util:debugger.ui.test.util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.jupyter.ui.test.util` end
 
 ### auto-generated section `iml intellij.jupyter.ui.test.util` start
-exports_files([
-  "intellij.jupyter.ui.test.util.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.jupyter.ui.test.util.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.jupyter.ui.test.util` end

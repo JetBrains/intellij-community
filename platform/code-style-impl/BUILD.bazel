@@ -1,60 +1,78 @@
-### auto-generated section `build intellij.platform.codeStyle.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.codeStyle.impl` start
+
 jvm_library(
-  name = "codeStyle-impl",
-  module_name = "intellij.platform.codeStyle.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-impl",
-    "//platform/code-style-api:codeStyle",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//platform/core-impl",
-    "@lib//:kotlin-stdlib",
-    "//libraries/stream",
-    "//libraries/fastutil",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/progress/shared:ide-progress",
-    "//platform/util/coroutines",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "codeStyle-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.codeStyle.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/core-impl",
+        "@lib//:kotlin-stdlib",
+        "//libraries/stream",
+        "//libraries/fastutil",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/progress/shared:ide-progress",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "codeStyle-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.codeStyle.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":codeStyle-impl",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/code-style-api:codeStyle_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/stream:stream_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/progress/shared:ide-progress_test_lib",
-    "//platform/util/coroutines:coroutines_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "codeStyle-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.codeStyle.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":codeStyle-impl",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/stream:stream_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.codeStyle.impl` end
 
 ### auto-generated section `iml intellij.platform.codeStyle.impl` start
-exports_files([
-  "intellij.platform.codeStyle.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.codeStyle.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.codeStyle.impl` end

@@ -1,39 +1,55 @@
-### auto-generated section `build intellij.maven.server.indexer` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.maven.server.indexer` start
+
 jvm_library(
-  name = "server-indexer",
-  module_name = "intellij.maven.server.indexer",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//plugins/maven-server-api:maven-server",
-    "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
-    "@lib//:maven-server-indexer-apache-maven-core-3-8-3",
-    "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2",
-    "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1",
-    "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
-  ]
+    name = "server-indexer",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.server.indexer",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/maven-server-api:maven-server",
+        "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
+        "@lib//:maven-server-indexer-apache-maven-core-3-8-3",
+        "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2",
+        "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1",
+        "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
+    ],
 )
 
 jvm_library(
-  name = "server-indexer_test_lib",
-  testonly = True,
-  module_name = "intellij.maven.server.indexer",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":server-indexer",
-    "//plugins/maven-server-api:maven-server_test_lib",
-    "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
-  ]
+    name = "server-indexer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.server.indexer",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":server-indexer",
+        "//plugins/maven-server-api:maven-server_test_lib",
+        "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
+    ],
 )
 ### auto-generated section `build intellij.maven.server.indexer` end
 
 ### auto-generated section `iml intellij.maven.server.indexer` start
-exports_files([
-  "intellij.maven.server.indexer.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.maven.server.indexer.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.maven.server.indexer` end

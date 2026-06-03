@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.platform.eel.nioFs.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.eel.nioFs.impl` start
+
 jvm_library(
-  name = "eel-nioFs-impl",
-  module_name = "intellij.platform.eel.nioFs.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//platform/eel",
-    "//platform/eel-nioFs",
-    "//platform/eel-impl",
-    "//platform/core-nio-fs",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/diagnostic/telemetry",
-    "//libraries/opentelemetry",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "eel-nioFs-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.eel.nioFs.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel-nioFs",
+        "//platform/eel-impl",
+        "//platform/core-nio-fs",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "eel-nioFs-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.eel.nioFs.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":eel-nioFs-impl",
-    "//platform/eel:eel_test_lib",
-    "//platform/eel-nioFs:eel-nioFs_test_lib",
-    "//platform/eel-impl:eel-impl_test_lib",
-    "//platform/core-nio-fs:core-nio-fs_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-  ]
+    name = "eel-nioFs-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.eel.nioFs.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":eel-nioFs-impl",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/eel-impl:eel-impl_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.eel.nioFs.impl` end
 
 ### auto-generated section `iml intellij.platform.eel.nioFs.impl` start
-exports_files([
-  "intellij.platform.eel.nioFs.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.eel.nioFs.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.eel.nioFs.impl` end

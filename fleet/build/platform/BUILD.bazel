@@ -1,48 +1,68 @@
-### auto-generated section `build fleet.build.platform` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.build.platform` start
 
 create_kotlinc_options(
-  name = "custom_platform",
-  opt_in = [
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi",
-  ],
-  x_consistent_data_class_copy_visibility = True,
-  x_context_parameters = True,
-  x_jvm_default = "all-compatibility",
-  x_lambdas = "class"
+    name = "custom_platform",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
 )
 
 jvm_library(
-  name = "platform",
-  module_name = "fleet.build.platform",
-  visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_platform",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-coroutines-core",
-  ]
+    name = "platform",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_platform",
+    module_name = "fleet.build.platform",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+        "@lib//:kotlinx-coroutines-core",
+    ],
 )
 
 jvm_library(
-  name = "platform_test_lib",
-  testonly = True,
-  module_name = "fleet.build.platform",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_platform",
-  runtime_deps = [":platform"]
+    name = "platform_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_platform",
+    module_name = "fleet.build.platform",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":platform",
+    ],
 )
 ### auto-generated section `build fleet.build.platform` end
 
 ### auto-generated section `iml fleet.build.platform` start
-exports_files([
-  "fleet.build.platform.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "fleet.build.platform.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml fleet.build.platform` end

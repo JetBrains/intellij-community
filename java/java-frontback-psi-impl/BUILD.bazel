@@ -1,56 +1,76 @@
-### auto-generated section `build intellij.java.frontback.psi.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.frontback.psi.impl` start
+
 jvm_library(
-  name = "frontback-psi-impl",
-  module_name = "intellij.java.frontback.psi.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//libraries/asm",
-    "//libraries/stream",
-    "//platform/util",
-    "//libraries/fastutil",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/syntax/syntax-psi:psi",
-    "//java/java-syntax:syntax",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ]
+    name = "frontback-psi-impl",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.frontback.psi.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//libraries/asm",
+        "//libraries/stream",
+        "//platform/util",
+        "//libraries/fastutil",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/syntax/syntax-psi:psi",
+        "//java/java-syntax:syntax",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
 )
 
 jvm_library(
-  name = "frontback-psi-impl_test_lib",
-  testonly = True,
-  module_name = "intellij.java.frontback.psi.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":frontback-psi-impl",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//libraries/asm:asm_test_lib",
-    "//libraries/stream:stream_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/fastutil:fastutil_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/syntax/syntax-psi:psi_test_lib",
-    "//java/java-syntax:syntax_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-  ]
+    name = "frontback-psi-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.frontback.psi.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontback-psi-impl",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/asm:asm_test_lib",
+        "//libraries/stream:stream_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/syntax/syntax-psi:psi_test_lib",
+        "//java/java-syntax:syntax_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.frontback.psi.impl` end
 
 ### auto-generated section `iml intellij.java.frontback.psi.impl` start
-exports_files([
-  "intellij.java.frontback.psi.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.frontback.psi.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.frontback.psi.impl` end

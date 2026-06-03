@@ -1,44 +1,60 @@
-### auto-generated section `build intellij.platform.eel.nioFs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.eel.nioFs` start
+
 jvm_library(
-  name = "eel-nioFs",
-  module_name = "intellij.platform.eel.nioFs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//platform/eel",
-    "//platform/util-rt",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-  ],
-  exports = ["//platform/eel"]
+    name = "eel-nioFs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.eel.nioFs",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/eel"],
+    deps = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/util-rt",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "eel-nioFs_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.eel.nioFs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "//platform/eel",
-    "//platform/eel:eel_test_lib",
-  ],
-  runtime_deps = [
-    ":eel-nioFs",
-    "//platform/eel:eel_test_lib",
-    "//platform/util-rt:util-rt_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-  ]
+    name = "eel-nioFs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.eel.nioFs",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":eel-nioFs",
+        "//platform/eel:eel_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.eel.nioFs` end
 
 ### auto-generated section `iml intellij.platform.eel.nioFs` start
-exports_files([
-  "intellij.platform.eel.nioFs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.eel.nioFs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.eel.nioFs` end

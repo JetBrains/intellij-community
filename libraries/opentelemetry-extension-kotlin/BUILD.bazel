@@ -1,44 +1,58 @@
-### auto-generated section `build intellij.libraries.opentelemetry.extension.kotlin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.opentelemetry.extension.kotlin` start
+
 jvm_library(
-  name = "opentelemetry-extension-kotlin",
-  module_name = "intellij.libraries.opentelemetry.extension.kotlin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = [
-    "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
-    "//libraries/opentelemetry",
-  ],
-  runtime_deps = [
-    "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
-    "//libraries/opentelemetry",
-  ]
+    name = "opentelemetry-extension-kotlin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.opentelemetry.extension.kotlin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/opentelemetry",
+        "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
+        "//libraries/opentelemetry",
+    ],
 )
 
 jvm_library(
-  name = "opentelemetry-extension-kotlin_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.opentelemetry.extension.kotlin",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
-    "//libraries/opentelemetry",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-  ],
-  runtime_deps = [
-    ":opentelemetry-extension-kotlin",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-  ]
+    name = "opentelemetry-extension-kotlin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.opentelemetry.extension.kotlin",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "@lib//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":opentelemetry-extension-kotlin",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.opentelemetry.extension.kotlin` end
 
 ### auto-generated section `iml intellij.libraries.opentelemetry.extension.kotlin` start
-exports_files([
-  "intellij.libraries.opentelemetry.extension.kotlin.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.opentelemetry.extension.kotlin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.opentelemetry.extension.kotlin` end

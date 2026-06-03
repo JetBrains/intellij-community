@@ -1,73 +1,91 @@
-### auto-generated section `build intellij.platform.ijent.community.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ijent.community.impl` start
+
 jvm_library(
-  name = "impl",
-  module_name = "intellij.platform.ijent.community.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/util",
-    "//libraries/opentelemetry",
-    "//platform/core-api:core",
-    "//platform/core-nio-fs",
-    "//platform/diagnostic/telemetry",
-    "//platform/ijent",
-    "//platform/eel-provider",
-    "//platform/core-impl",
-    "//platform/eel-nioFs-impl",
-    "//platform/eel-impl-base",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//platform/progress/shared:ide-progress",
-    "//platform/core-ui",
-    "//platform/diagnostic",
-    "//platform/editor-ui-api:editor-ui",
-  ]
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ijent.community.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/util",
+        "//libraries/opentelemetry",
+        "//platform/core-api:core",
+        "//platform/core-nio-fs",
+        "//platform/diagnostic/telemetry",
+        "//platform/ijent",
+        "//platform/eel-provider",
+        "//platform/core-impl",
+        "//platform/eel-nioFs-impl",
+        "//platform/eel-impl-base",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
+        "//platform/core-ui",
+        "//platform/diagnostic",
+        "//platform/editor-ui-api:editor-ui",
+    ],
 )
 
 jvm_library(
-  name = "impl_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ijent.community.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":impl",
-    "@lib//:junit5",
-    "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
-    "@lib//:kotlin-test",
-    "@lib//:kotlin-test-assertions-core-jvm",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/coroutines/test",
-    "//libraries/kotlinx/coroutines/test:test_test_lib",
-    "//platform/util:util_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-nio-fs:core-nio-fs_test_lib",
-    "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/ijent:ijent_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
-    "//platform/eel-impl-base:eel-impl-base_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/progress/shared:ide-progress_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/diagnostic:diagnostic_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-  ]
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ijent.community.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "@lib//:junit5",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "@lib//:kotlin-test",
+        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/ijent:ijent_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+        "//platform/eel-impl-base:eel-impl-base_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/diagnostic:diagnostic_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ijent.community.impl` end
 
 ### auto-generated section `iml intellij.platform.ijent.community.impl` start
-exports_files([
-  "intellij.platform.ijent.community.impl.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ijent.community.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ijent.community.impl` end

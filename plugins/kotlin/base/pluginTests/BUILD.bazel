@@ -1,91 +1,108 @@
-### auto-generated section `build intellij.kotlin.base.plugin.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.base.plugin.tests` start
+
 jvm_library(
-  name = "kotlin-base-plugin-tests",
-  module_name = "intellij.kotlin.base.plugin.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:junit4",
-    "//platform/testFramework",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/util",
-    "//platform/util:util-ui",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/compiler-configuration",
-    "//aether-dependency-resolver",
-    "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
-    "//platform/util/jdom",
-    "//jps/model-api:model",
-    "//jps/model-serialization",
-    "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/projectModel-api:projectModel",
-  ]
+    name = "kotlin-base-plugin-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.base.plugin.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:junit4",
+        "//platform/testFramework",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/compiler-configuration",
+        "//aether-dependency-resolver",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+        "//platform/util/jdom",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "@lib//:kotlinc-kotlin-jps-common",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+    ],
 )
 
 jvm_library(
-  name = "kotlin-base-plugin-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.base.plugin.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:junit4",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/util",
-    "//platform/util:util_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/base/compiler-configuration",
-    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
-    "//aether-dependency-resolver",
-    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
-    "//java/openapi:java",
-    "//java/openapi:java_test_lib",
-    "//platform/util/jdom",
-    "//platform/util/jdom:jdom_test_lib",
-    "//jps/model-api:model",
-    "//jps/model-api:model_test_lib",
-    "//jps/model-serialization",
-    "//jps/model-serialization:model-serialization_test_lib",
-    "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-  ],
-  runtime_deps = [
-    ":kotlin-base-plugin-tests",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
-  ]
+    name = "kotlin-base-plugin-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.base.plugin.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-base-plugin-tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:junit4",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//aether-dependency-resolver",
+        "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+        "//java/openapi:java",
+        "//java/openapi:java_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-serialization",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "@lib//:kotlinc-kotlin-jps-common",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.plugin.tests` end
 
 ### auto-generated section `iml intellij.kotlin.base.plugin.tests` start
-exports_files([
-  "intellij.kotlin.base.plugin.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.base.plugin.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.base.plugin.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.plugin.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-base-plugin-tests_test",
-  runtime_deps = [":kotlin-base-plugin-tests_test_lib"]
+    name = "kotlin-base-plugin-tests_test",
+    runtime_deps = [":kotlin-base-plugin-tests_test_lib"],
 )
 ### auto-generated section `test intellij.kotlin.base.plugin.tests` end

@@ -1,45 +1,61 @@
-### auto-generated section `build intellij.maven.server.telemetry` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.maven.server.telemetry` start
+
 jvm_library(
-  name = "server-telemetry",
-  module_name = "intellij.maven.server.telemetry",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "//platform/util-rt",
-    "//plugins/maven-server-api:maven-server",
-    "@lib//:jetbrains-annotations",
-    "//libraries/opentelemetry",
-    "//platform/diagnostic/telemetry/rt",
-  ],
-  exports = ["//platform/diagnostic/telemetry/rt"]
+    name = "server-telemetry",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.server.telemetry",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/diagnostic/telemetry/rt"],
+    deps = [
+        # do not sort,
+        "//platform/util-rt",
+        "//plugins/maven-server-api:maven-server",
+        "@lib//:jetbrains-annotations",
+        "//libraries/opentelemetry",
+        "//platform/diagnostic/telemetry/rt",
+    ],
 )
 
 jvm_library(
-  name = "server-telemetry_test_lib",
-  testonly = True,
-  module_name = "intellij.maven.server.telemetry",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = [
-    "//platform/diagnostic/telemetry/rt",
-    "//platform/diagnostic/telemetry/rt:rt_test_lib",
-  ],
-  runtime_deps = [
-    ":server-telemetry",
-    "//platform/util-rt:util-rt_test_lib",
-    "//plugins/maven-server-api:maven-server_test_lib",
-    "//libraries/opentelemetry:opentelemetry_test_lib",
-    "//platform/diagnostic/telemetry/rt:rt_test_lib",
-  ]
+    name = "server-telemetry_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.maven.server.telemetry",
+    visibility = ["//visibility:public"],
+    exports = [
+        "//platform/diagnostic/telemetry/rt",
+        "//platform/diagnostic/telemetry/rt:rt_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":server-telemetry",
+        "//platform/util-rt:util-rt_test_lib",
+        "//plugins/maven-server-api:maven-server_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/diagnostic/telemetry/rt:rt_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.maven.server.telemetry` end
 
 ### auto-generated section `iml intellij.maven.server.telemetry` start
-exports_files([
-  "intellij.maven.server.telemetry.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.maven.server.telemetry.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.maven.server.telemetry` end

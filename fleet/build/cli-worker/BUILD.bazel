@@ -10,10 +10,13 @@ java_binary(
 
 jvm_library(
     name = "haven-cli-worker-lib",
+    srcs = glob(
+        ["srcJvmMain/**/*.kt"],
+        allow_empty = True,
+    ),
     visibility = ["//visibility:public"],
-    srcs = glob(["srcJvmMain/**/*.kt"], allow_empty = True),
     deps = [
-        "//fleet/build/cli:cli",
+        "//fleet/build/cli",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
         "@rules_jvm//:opentelemetry-api_import",

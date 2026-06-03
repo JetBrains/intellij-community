@@ -1,49 +1,67 @@
-### auto-generated section `build intellij.platform.runtime.product` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.runtime.product` start
 
 create_kotlinc_options(
-  name = "custom_product",
-  jvm_target = "11",
-  opt_in = [
-    "com.intellij.openapi.util.IntellijInternalApi",
-    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+    name = "custom_product",
+    jvm_target = "11",
+    opt_in = [
+        "com.intellij.openapi.util.IntellijInternalApi",
+        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    ],
 )
 
 jvm_library(
-  name = "product",
-  module_name = "intellij.platform.runtime.product",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = ":custom_product",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//platform/runtime/repository",
-    "@lib//:kotlin-stdlib",
-    "//platform/util/base",
-  ]
+    name = "product",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_product",
+    module_name = "intellij.platform.runtime.product",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//platform/runtime/repository",
+        "@lib//:kotlin-stdlib",
+        "//platform/util/base",
+    ],
 )
 
 jvm_library(
-  name = "product_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.runtime.product",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom_product",
-  runtime_deps = [
-    ":product",
-    "//platform/runtime/repository:repository_test_lib",
-    "//platform/util/base:base_test_lib",
-  ]
+    name = "product_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_product",
+    module_name = "intellij.platform.runtime.product",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":product",
+        "//platform/runtime/repository:repository_test_lib",
+        "//platform/util/base:base_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.runtime.product` end
 
 ### auto-generated section `iml intellij.platform.runtime.product` start
-exports_files([
-  "intellij.platform.runtime.product.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.runtime.product.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.runtime.product` end

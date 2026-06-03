@@ -97,9 +97,9 @@ def _collect_resources(ctx):
     result = []
     if ctx.attr.resources:
         res = struct(
-          files = ctx.files.resources,
-          strip_prefix = ctx.file.strip_prefix,
-          add_prefix = "",
+            files = ctx.files.resources,
+            strip_prefix = ctx.file.strip_prefix,
+            add_prefix = "",
         )
         result.append(res)
     for r in ctx.attr.resource_jars:

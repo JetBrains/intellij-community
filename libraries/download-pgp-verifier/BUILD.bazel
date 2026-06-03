@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.download.pgp.verifier` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.download.pgp.verifier` start
+
 jvm_library(
-  name = "download-pgp-verifier",
-  module_name = "intellij.libraries.download.pgp.verifier",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"],
-  runtime_deps = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"]
+    name = "download-pgp-verifier",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.download.pgp.verifier",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-download-pgp-verifier-download-pgp-verifier",
+    ],
 )
 
 jvm_library(
-  name = "download-pgp-verifier_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.download.pgp.verifier",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"],
-  runtime_deps = [":download-pgp-verifier"]
+    name = "download-pgp-verifier_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.download.pgp.verifier",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"],
+    runtime_deps = [
+        # do not sort,
+        ":download-pgp-verifier",
+    ],
 )
 ### auto-generated section `build intellij.libraries.download.pgp.verifier` end
 
 ### auto-generated section `iml intellij.libraries.download.pgp.verifier` start
-exports_files([
-  "intellij.libraries.download.pgp.verifier.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.download.pgp.verifier.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.download.pgp.verifier` end

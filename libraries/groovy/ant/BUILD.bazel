@@ -1,31 +1,49 @@
-### auto-generated section `build intellij.libraries.groovy.ant` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.libraries.groovy.ant` start
+
 jvm_library(
-  name = "ant",
-  module_name = "intellij.libraries.groovy.ant",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
-  runtime_deps = ["@lib//:libraries-groovy-ant-groovy-ant"]
+    name = "ant",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.groovy.ant",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-groovy-ant-groovy-ant",
+    ],
 )
 
 jvm_library(
-  name = "ant_test_lib",
-  testonly = True,
-  module_name = "intellij.libraries.groovy.ant",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
-  runtime_deps = [":ant"]
+    name = "ant_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.groovy.ant",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
+    runtime_deps = [
+        # do not sort,
+        ":ant",
+    ],
 )
 ### auto-generated section `build intellij.libraries.groovy.ant` end
 
 ### auto-generated section `iml intellij.libraries.groovy.ant` start
-exports_files([
-  "intellij.libraries.groovy.ant.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.libraries.groovy.ant.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.libraries.groovy.ant` end

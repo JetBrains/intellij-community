@@ -1,39 +1,57 @@
-### auto-generated section `build intellij.platform.ml` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.platform.ml` start
+
 jvm_library(
-  name = "ml",
-  module_name = "intellij.platform.ml",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/core-api:core",
-    "//platform/util",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "ml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/util",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "ml_test_lib",
-  testonly = True,
-  module_name = "intellij.platform.ml",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ml",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-  ]
+    name = "ml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ml",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.ml` end
 
 ### auto-generated section `iml intellij.platform.ml` start
-exports_files([
-  "intellij.platform.ml.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.platform.ml.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.platform.ml` end

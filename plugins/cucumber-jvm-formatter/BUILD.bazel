@@ -1,41 +1,57 @@
-### auto-generated section `build intellij.cucumber.jvmFormatter` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.cucumber.jvmFormatter` start
+
 jvm_library(
-  name = "cucumber-jvmFormatter",
-  module_name = "intellij.cucumber.jvmFormatter",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:cucumber-core-1-provided",
-    "@lib//:cucumber-core-2-provided",
-    "//plugins/junit_rt:junit-rt",
-    "//java/java-runtime:rt",
-    "@lib//:junit4-provided",
-  ]
+    name = "cucumber-jvmFormatter",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.cucumber.jvmFormatter",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:cucumber-core-1-provided",
+        "@lib//:cucumber-core-2-provided",
+        "//plugins/junit_rt:junit-rt",
+        "//java/java-runtime:rt",
+        "@lib//:junit4-provided",
+    ],
 )
 
 jvm_library(
-  name = "cucumber-jvmFormatter_test_lib",
-  testonly = True,
-  module_name = "intellij.cucumber.jvmFormatter",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [
-    ":cucumber-jvmFormatter",
-    "@lib//:cucumber-core-1-provided",
-    "@lib//:cucumber-core-2-provided",
-    "//plugins/junit_rt:junit-rt_test_lib",
-    "//java/java-runtime:rt_test_lib",
-    "@lib//:junit4-provided",
-  ]
+    name = "cucumber-jvmFormatter_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.cucumber.jvmFormatter",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":cucumber-jvmFormatter",
+        "@lib//:cucumber-core-1-provided",
+        "@lib//:cucumber-core-2-provided",
+        "//plugins/junit_rt:junit-rt_test_lib",
+        "//java/java-runtime:rt_test_lib",
+        "@lib//:junit4-provided",
+    ],
 )
 ### auto-generated section `build intellij.cucumber.jvmFormatter` end
 
 ### auto-generated section `iml intellij.cucumber.jvmFormatter` start
-exports_files([
-  "intellij.cucumber.jvmFormatter.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.cucumber.jvmFormatter.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.cucumber.jvmFormatter` end

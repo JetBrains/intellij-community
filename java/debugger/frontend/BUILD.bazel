@@ -1,64 +1,82 @@
-### auto-generated section `build intellij.java.debugger.impl.frontend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.debugger.impl.frontend` start
+
 jvm_library(
-  name = "frontend",
-  module_name = "intellij.java.debugger.impl.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util/concurrency",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/kernel/shared:kernel",
-    "//platform/xdebugger-api:debugger",
-    "//platform/xdebugger-impl:debugger-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/core-ui",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//java/debugger/shared",
-    "//platform/xdebugger-impl/frontend",
-    "//platform/xdebugger-impl/shared",
-    "//platform/xdebugger-impl/rpc",
-    "//fleet/rhizomedb",
-  ]
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.impl.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/kernel/shared:kernel",
+        "//platform/xdebugger-api:debugger",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//java/debugger/shared",
+        "//platform/xdebugger-impl/frontend",
+        "//platform/xdebugger-impl/shared",
+        "//platform/xdebugger-impl/rpc",
+        "//fleet/rhizomedb",
+    ],
 )
 
 jvm_library(
-  name = "frontend_test_lib",
-  testonly = True,
-  module_name = "intellij.java.debugger.impl.frontend",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":frontend",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/xdebugger-api:debugger_test_lib",
-    "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//java/debugger/shared:shared_test_lib",
-    "//platform/xdebugger-impl/frontend:frontend_test_lib",
-    "//platform/xdebugger-impl/shared:shared_test_lib",
-    "//platform/xdebugger-impl/rpc:rpc_test_lib",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
-  ]
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.impl.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/xdebugger-impl:debugger-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//java/debugger/shared:shared_test_lib",
+        "//platform/xdebugger-impl/frontend:frontend_test_lib",
+        "//platform/xdebugger-impl/shared:shared_test_lib",
+        "//platform/xdebugger-impl/rpc:rpc_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.debugger.impl.frontend` end
 
 ### auto-generated section `iml intellij.java.debugger.impl.frontend` start
-exports_files([
-  "intellij.java.debugger.impl.frontend.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.debugger.impl.frontend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.debugger.impl.frontend` end

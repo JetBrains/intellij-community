@@ -33,13 +33,13 @@ def watch_project_model_files(ctx, project_root):
     modules_xml = idea_dir.get_child("modules.xml")
 
     # Read (to make sure it exists) and watch all modules to re-run generator on changes
-    for relativeModulePath in _parse_project_relative_module_paths_strict(ctx.read(modules_xml, watch='yes')):
-        ctx.read(project_root.get_child(relativeModulePath), watch='yes')
+    for relativeModulePath in _parse_project_relative_module_paths_strict(ctx.read(modules_xml, watch = "yes")):
+        ctx.read(project_root.get_child(relativeModulePath), watch = "yes")
 
     # Read (to make sure it exists) and watch all libraries under .idea/libraries to re-run generator on changes
     libraries_dir = idea_dir.get_child("libraries")
-    for library_xml in libraries_dir.readdir(watch='yes'):
-        ctx.read(library_xml, watch='yes')
+    for library_xml in libraries_dir.readdir(watch = "yes"):
+        ctx.read(library_xml, watch = "yes")
 
 def read_project_model(ctx, project_root):
     """Read project model files and return their contents for Starlark-based derivation.

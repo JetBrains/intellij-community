@@ -1,34 +1,54 @@
-### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` start
+
 jvm_library(
-  name = "scripting.scratch.definition",
-  module_name = "intellij.kotlin.base.scripting.scratch.definition",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:kotlinc-kotlin-scripting-common",
-    "@lib//:kotlinc-kotlin-scripting-jvm",
-    "@lib//:kotlin-stdlib",
-  ]
+    name = "scripting.scratch.definition",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.kotlin.base.scripting.scratch.definition",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlinc-kotlin-scripting-common",
+        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "@lib//:kotlin-stdlib",
+    ],
 )
 
 jvm_library(
-  name = "scripting.scratch.definition_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.base.scripting.scratch.definition",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
-  runtime_deps = [":scripting.scratch.definition"]
+    name = "scripting.scratch.definition_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.kotlin.base.scripting.scratch.definition",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scripting.scratch.definition",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.definition` start
-exports_files([
-  "intellij.kotlin.base.scripting.scratch.definition.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.base.scripting.scratch.definition.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.definition` end

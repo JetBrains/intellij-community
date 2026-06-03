@@ -1,41 +1,59 @@
-### auto-generated section `build intellij.kotlin.copyright` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.kotlin.copyright` start
+
 jvm_library(
-  name = "copyright",
-  module_name = "intellij.kotlin.copyright",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/projectModel-api:projectModel",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//plugins/copyright",
-  ]
+    name = "copyright",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.copyright",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//plugins/copyright",
+    ],
 )
 
 jvm_library(
-  name = "copyright_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.copyright",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":copyright",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/util:util_test_lib",
-    "//plugins/copyright:copyright_test_lib",
-  ]
+    name = "copyright_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.copyright",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":copyright",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/copyright:copyright_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.copyright` end
 
 ### auto-generated section `iml intellij.kotlin.copyright` start
-exports_files([
-  "intellij.kotlin.copyright.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.kotlin.copyright.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.kotlin.copyright` end

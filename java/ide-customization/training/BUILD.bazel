@@ -1,43 +1,61 @@
-### auto-generated section `build intellij.java.ide.customization.training` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.java.ide.customization.training` start
+
 jvm_library(
-  name = "training",
-  module_name = "intellij.java.ide.customization.training",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "//java/java-features-trainer:featuresTrainer",
-    "//platform/util:util-ui",
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//plugins/ide-features-trainer:featuresTrainer",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-  ]
+    name = "training",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.customization.training",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/java-features-trainer:featuresTrainer",
+        "//platform/util:util-ui",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//plugins/ide-features-trainer:featuresTrainer",
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+    ],
 )
 
 jvm_library(
-  name = "training_test_lib",
-  testonly = True,
-  module_name = "intellij.java.ide.customization.training",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":training",
-    "//java/java-features-trainer:featuresTrainer_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
-  ]
+    name = "training_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.customization.training",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":training",
+        "//java/java-features-trainer:featuresTrainer_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.ide.customization.training` end
 
 ### auto-generated section `iml intellij.java.ide.customization.training` start
-exports_files([
-  "intellij.java.ide.customization.training.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.java.ide.customization.training.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.java.ide.customization.training` end

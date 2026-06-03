@@ -1,63 +1,81 @@
-### auto-generated section `build intellij.mcpserver.vcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.mcpserver.vcs` start
+
 jvm_library(
-  name = "mcpserver.vcs",
-  module_name = "intellij.mcpserver.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-stdlib",
-    "//plugins/mcp-server:mcpserver",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/ide-core",
-    "//platform/project/shared:project",
-    "//platform/util",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/vcs-api:vcs",
-    "//platform/vcs-impl",
-    "//platform/dvcs-impl:vcs-dvcs-impl",
-    "//plugins/git4idea:vcs-git",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-  ]
+    name = "mcpserver.vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//plugins/mcp-server:mcpserver",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/ide-core",
+        "//platform/project/shared:project",
+        "//platform/util",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/analysis-api:analysis",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/vcs-api:vcs",
+        "//platform/vcs-impl",
+        "//platform/dvcs-impl:vcs-dvcs-impl",
+        "//plugins/git4idea:vcs-git",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+    ],
 )
 
 jvm_library(
-  name = "mcpserver.vcs_test_lib",
-  testonly = True,
-  module_name = "intellij.mcpserver.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":mcpserver.vcs",
-    "//plugins/mcp-server:mcpserver_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/project/shared:project_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
-    "//plugins/git4idea:vcs-git_test_lib",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-  ]
+    name = "mcpserver.vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":mcpserver.vcs",
+        "//plugins/mcp-server:mcpserver_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+        "//plugins/git4idea:vcs-git_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.mcpserver.vcs` end
 
 ### auto-generated section `iml intellij.mcpserver.vcs` start
-exports_files([
-  "intellij.mcpserver.vcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.mcpserver.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.mcpserver.vcs` end

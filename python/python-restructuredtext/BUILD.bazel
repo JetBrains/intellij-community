@@ -1,116 +1,134 @@
-### auto-generated section `build intellij.restructuredtext.python` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+### auto-generated section `build intellij.restructuredtext.python` start
+
 jvm_provided_library(
-  name = "platform_lang-impl_provided",
-  lib = "//platform/lang-impl"
+    name = "platform_lang-impl_provided",
+    lib = "//platform/lang-impl",
 )
 
 jvm_provided_library(
-  name = "platform_execution-impl_provided",
-  lib = "//platform/execution-impl"
+    name = "platform_execution-impl_provided",
+    lib = "//platform/execution-impl",
 )
 
 jvm_provided_library(
-  name = "python-community-impl_provided",
-  lib = "//python:python-community-impl"
+    name = "python-community-impl_provided",
+    lib = "//python:python-community-impl",
 )
 
 jvm_provided_library(
-  name = "platform_core-ui_provided",
-  lib = "//platform/core-ui"
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
 )
 
 jvm_provided_library(
-  name = "spellchecker_provided",
-  lib = "//spellchecker"
+    name = "spellchecker_provided",
+    lib = "//spellchecker",
 )
 
 jvm_library(
-  name = "restructuredtext-python",
-  module_name = "intellij.restructuredtext.python",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-core",
-    "//libraries/guava",
-    "//platform/projectModel-api:projectModel",
-    "//libraries/jsoup",
-    "//python/python-sdk:sdk",
-    "//platform/util/jdom",
-    "//platform/util:util-ui",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core",
-    "//libraries/jcef",
-    "//plugins/restructuredtext",
-    "//platform/ui.jcef",
-    "//platform/core-impl",
-    "//platform/execution",
-    "//platform/lang-api:lang",
-    "//platform/forms_rt:java-guiForms-rt",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//platform/util/concurrency",
-    "//python/python-exec-service:community-execService",
-    ":platform_lang-impl_provided",
-    ":platform_execution-impl_provided",
-    ":python-community-impl_provided",
-    ":platform_core-ui_provided",
-    ":spellchecker_provided",
-  ]
+    name = "restructuredtext-python",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext.python",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-core",
+        "//libraries/guava",
+        "//platform/projectModel-api:projectModel",
+        "//libraries/jsoup",
+        "//python/python-sdk:sdk",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//libraries/jcef",
+        "//plugins/restructuredtext",
+        "//platform/ui.jcef",
+        "//platform/core-impl",
+        "//platform/execution",
+        "//platform/lang-api:lang",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util/concurrency",
+        "//python/python-exec-service:community-execService",
+        ":platform_lang-impl_provided",
+        ":platform_execution-impl_provided",
+        ":python-community-impl_provided",
+        ":platform_core-ui_provided",
+        ":spellchecker_provided",
+    ],
 )
 
 jvm_library(
-  name = "restructuredtext-python_test_lib",
-  testonly = True,
-  module_name = "intellij.restructuredtext.python",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":restructuredtext-python",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-core:lang-core_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/execution-impl",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//libraries/guava:guava_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//python:python-community-impl",
-    "//python:python-community-impl_test_lib",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/jsoup:jsoup_test_lib",
-    "//python/python-sdk:sdk_test_lib",
-    "//platform/util/jdom:jdom_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core:ide-core_test_lib",
-    "//libraries/jcef:jcef_test_lib",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//plugins/restructuredtext:restructuredtext_test_lib",
-    "//platform/ui.jcef:ui.jcef_test_lib",
-    "//platform/core-impl:core-impl_test_lib",
-    "//platform/execution:execution_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/forms_rt:java-guiForms-rt_test_lib",
-    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//python/python-exec-service:community-execService_test_lib",
-  ]
+    name = "restructuredtext-python_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.restructuredtext.python",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":restructuredtext-python",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//libraries/jcef:jcef_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//plugins/restructuredtext:restructuredtext_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.restructuredtext.python` end
 
 ### auto-generated section `iml intellij.restructuredtext.python` start
-exports_files([
-  "intellij.restructuredtext.python.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.restructuredtext.python.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.restructuredtext.python` end

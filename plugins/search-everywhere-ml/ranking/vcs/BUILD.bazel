@@ -1,50 +1,68 @@
-### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` start
+
 jvm_library(
-  name = "vcs",
-  module_name = "intellij.searchEverywhereMl.ranking.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/lang-api:lang",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lang-impl",
-    "//platform/vcs-api:vcs",
-    "//plugins/search-everywhere-ml/ranking/core",
-    "//plugins/search-everywhere-ml/ranking/ext",
-    "//platform/vcs-log/impl",
-    "//platform/statistics",
-  ]
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/vcs-api:vcs",
+        "//plugins/search-everywhere-ml/ranking/core",
+        "//plugins/search-everywhere-ml/ranking/ext",
+        "//platform/vcs-log/impl",
+        "//platform/statistics",
+    ],
 )
 
 jvm_library(
-  name = "vcs_test_lib",
-  testonly = True,
-  module_name = "intellij.searchEverywhereMl.ranking.vcs",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":vcs",
-    "//platform/core-api:core_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/vcs-api:vcs_test_lib",
-    "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
-    "//plugins/search-everywhere-ml/ranking/ext:ext_test_lib",
-    "//platform/vcs-log/impl:impl_test_lib",
-    "//platform/statistics:statistics_test_lib",
-  ]
+    name = "vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
+        "//plugins/search-everywhere-ml/ranking/ext:ext_test_lib",
+        "//platform/vcs-log/impl:impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.vcs` start
-exports_files([
-  "intellij.searchEverywhereMl.ranking.vcs.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.searchEverywhereMl.ranking.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.vcs` end
