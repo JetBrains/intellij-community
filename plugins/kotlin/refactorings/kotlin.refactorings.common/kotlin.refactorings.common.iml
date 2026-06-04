@@ -63,5 +63,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
   </component>
 </module>

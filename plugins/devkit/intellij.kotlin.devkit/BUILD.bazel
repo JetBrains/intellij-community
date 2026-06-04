@@ -69,6 +69,7 @@ jvm_library(
         "//platform/polySymbols",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
+        "//plugins/kotlin/references",
     ],
 )
 
@@ -123,6 +124,7 @@ jvm_library(
         "//platform/polySymbols:polySymbols_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.devkit` end

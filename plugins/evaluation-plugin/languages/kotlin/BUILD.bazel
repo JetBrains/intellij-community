@@ -35,6 +35,7 @@ jvm_library(
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
+        "//plugins/kotlin/references",
     ],
 )
 
@@ -71,6 +72,7 @@ jvm_library(
         "//plugins/evaluation-plugin:evaluationPlugin-tests",
         "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
     ],
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` end

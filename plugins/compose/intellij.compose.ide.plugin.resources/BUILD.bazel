@@ -60,6 +60,7 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/references",
     ],
 )
 
@@ -141,6 +142,7 @@ jvm_library(
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end

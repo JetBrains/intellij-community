@@ -34,6 +34,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "//libraries/caffeine",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
@@ -56,6 +57,7 @@ jvm_library(
         "//platform/analysis-impl",
         "//java/java-analysis-impl:analysis-impl",
         "//java/codeserver/core",
+        "//libraries/guava",
     ],
 )
 
@@ -72,6 +74,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-base-analysis-platform",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/workspace/storage:storage_test_lib",
@@ -91,6 +94,7 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//java/java-analysis-impl:analysis-impl_test_lib",
         "//java/codeserver/core:core_test_lib",
+        "//libraries/guava:guava_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` end
