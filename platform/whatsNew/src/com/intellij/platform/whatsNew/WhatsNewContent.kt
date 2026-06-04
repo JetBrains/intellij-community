@@ -313,7 +313,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     dataContext: DataContext?,
   ): HTMLEditorProvider.Request {
     // One-page case
-    val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID) {
+    val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
       html(content)
     }
     // Multipage case

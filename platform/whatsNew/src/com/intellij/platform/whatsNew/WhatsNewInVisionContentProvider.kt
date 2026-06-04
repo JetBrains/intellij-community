@@ -127,6 +127,9 @@ open class WhatsNewInVisionContentProvider {
       return container
     }
     for (page in container.entities) {
+      if (page.multipageIds.size == 1) {
+        continue
+      }
       for (multipageId in page.multipageIds) {
         if (multipageId !in allowedIds) {
           logger.error("Multipage ID '$multipageId' is not allowed in this provider. Allowed IDs: $allowedIds")
