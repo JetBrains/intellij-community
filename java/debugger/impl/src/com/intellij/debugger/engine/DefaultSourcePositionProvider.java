@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
@@ -15,13 +16,21 @@ import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.AbsentInformationException;
@@ -32,6 +41,7 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -128,12 +138,27 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
         PsiField field = aClass.findFieldByName(fieldName, false);
         if (field == null) return null;
         if (nearest) {
-          return DebuggerContextUtil.findNearest(context, field.getNavigationElement(), aClass.getContainingFile());
+          return DebuggerContextUtil.findNearest(context, aClass.getContainingFile(), searchScope -> findThisFieldUsages(field, searchScope));
         }
         return SourcePosition.createFromElement(field);
       }
       return null;
     }
+  }
+
+  private static @NotNull Collection<TextRange> findThisFieldUsages(@NotNull PsiField field, @NotNull PsiElement searchScope) {
+    Collection<TextRange> ranges = new ArrayList<>();
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(searchScope)).asIterable()) {
+      PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiReferenceExpression.class, false);
+      if (expression == null) {
+        continue;
+      }
+      PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        HighlightUsagesHandler.collectHighlightRanges(reference, ranges);
+      }
+    }
+    return ranges;
   }
 
   private static @Nullable SourcePosition getSourcePositionForLocalVariable(String name,
