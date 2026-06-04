@@ -235,6 +235,33 @@ internal class SaveAndSyncHandlerScheduledRefreshTest {
   }
 
   @Test
+  fun `suppressing periodic refresh does not block scheduled scoped refresh`(): Unit = timeoutRunBlocking(120.seconds) {
+    // Regression guard for RIDER-139430: suppressPeriodicRefresh must NOT block the
+    // frame-activation / scheduled refresh path (unlike blockSyncOnFrameActivation).
+    val requestedDir = Files.createTempDirectory("suppress-periodic-scoped-refresh")
+
+    try {
+      withSaveAndSyncHandler { handler ->
+        val requestedRoot = loadDirectory(requestedDir)
+
+        handler.suppressPeriodicRefresh("test").use {
+          requestedDir.resolve("created.txt").writeText("requested")
+          VfsUtil.markDirty(false, false, requestedRoot)
+
+          handler.scheduleRefresh(listOf(requestedDir))
+
+          waitUntil("Scoped scheduled VFS refresh did not run while periodic refresh suppressed", timeout = 60.seconds) {
+            requestedRoot.findChild("created.txt") != null
+          }
+        }
+      }
+    }
+    finally {
+      NioFiles.deleteRecursively(requestedDir)
+    }
+  }
+
+  @Test
   fun `newer pending same path supersedes older unstarted path`() {
     val path = Path.of("project")
 

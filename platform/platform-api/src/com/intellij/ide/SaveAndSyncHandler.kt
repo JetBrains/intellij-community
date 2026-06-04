@@ -58,6 +58,19 @@ abstract class SaveAndSyncHandler {
 
   abstract fun unblockSyncOnFrameActivation()
 
+  /**
+   * Suppresses ONLY the periodic background VFS refresh (the loop that runs while the user is idle
+   * or the IDE frame is unfocused).
+   *
+   * Unlike [blockSyncOnFrameActivation], refresh-on-frame-activation, scheduled refreshes and
+   * [maybeRefresh] keep working while suppressed, so the IDE still picks up external file changes.
+   * Close the returned token to resume periodic refresh. Reentrant (counted).
+   *
+   * @param reason human-readable cause
+   */
+  @ApiStatus.Internal
+  open fun suppressPeriodicRefresh(reason: String): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
   @ApiStatus.Internal
   abstract fun maybeRefresh(modalityState: ModalityState)
 

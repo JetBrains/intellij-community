@@ -23,6 +23,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -71,6 +72,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.ArrayDeque
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -94,6 +96,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncCount = AtomicInteger()
+  private val suppressPeriodicRefreshReasons = CopyOnWriteArrayList<String>()
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
@@ -439,6 +442,10 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     if (roots.isEmpty()) {
       return false
     }
+    if (suppressPeriodicRefreshReasons.isNotEmpty()) {
+      LOG.trace { "Periodic background VFS refresh skipped, suppressed by: ${suppressPeriodicRefreshReasons.joinToString()}" }
+      return false
+    }
     if (isSyncBlockedTemporarily() || roots.none { it is NewVirtualFile && it.isDirty }) {
       return false
     }
@@ -509,6 +516,20 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
       scopedVfsRefreshScheduler.requestProcessing()
     }
     LOG.debug("sync unblocked")
+  }
+
+  override fun suppressPeriodicRefresh(reason: String): AccessToken {
+    suppressPeriodicRefreshReasons.add(reason)
+    LOG.info("Periodic background VFS refresh suppressed: $reason")
+    val released = AtomicBoolean()
+    return object : AccessToken() {
+      override fun finish() {
+        if (released.compareAndSet(false, true)) {
+          suppressPeriodicRefreshReasons.remove(reason)
+          LOG.info("Periodic background VFS refresh resumed: $reason")
+        }
+      }
+    }
   }
 
 

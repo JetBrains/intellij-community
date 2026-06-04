@@ -72,6 +72,91 @@ internal class SaveAndSyncHandlerBackgroundRefreshTest {
     assertBackgroundRefresh(expectedRefreshCount = 0)
   }
 
+  @Test
+  fun `suppressPeriodicRefresh blocks idle background refresh until released`(): Unit = timeoutRunBlocking(120.seconds) {
+    val dirtyFile = Files.createTempFile("background-refresh-suppressed", ".txt")
+    val virtualFile = VfsUtil.findFile(dirtyFile, true)
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val handlerCoroutineScope = CoroutineScope(coroutineContext + SupervisorJob() + CoroutineName("SaveAndSyncHandlerBackgroundRefreshTest"))
+    val handler = SaveAndSyncHandlerImpl(handlerCoroutineScope, listenDelay = 0.seconds)
+
+    try {
+      delay(1.seconds) // wait for handler to start listening
+      VfsTestUtil.syncRefresh()
+      serviceAsync<IdleTracker>().restartIdleTimer()
+
+      val virtualFileManager = VirtualFileManager.getInstance()
+      val modificationCountBaseline = virtualFileManager.modificationCount
+
+      val token = handler.suppressPeriodicRefresh("test")
+      dirtyFile.writeText("after")
+      VfsUtil.markDirty(false, false, virtualFile)
+
+      // While suppressed, the periodic background refresh must not run even though the user stays idle.
+      delay(3.seconds)
+      Assertions.assertThat(virtualFileManager.modificationCount).isEqualTo(modificationCountBaseline)
+
+      // After release, the next idle interval picks up the dirty root again.
+      token.close()
+      VfsUtil.markDirty(false, false, virtualFile)
+      waitUntil("Background VFS refresh did not resume after releasing suppressPeriodicRefresh", timeout = 60.seconds) {
+        virtualFileManager.modificationCount > modificationCountBaseline
+      }
+    }
+    finally {
+      dirtyFile.deleteIfExists()
+      handlerCoroutineScope.coroutineContext.job.cancelAndJoin()
+    }
+  }
+
+  @Test
+  fun `suppressPeriodicRefresh is reentrant - resumes only after the last token is released`(): Unit = timeoutRunBlocking(120.seconds) {
+    val dirtyFile = Files.createTempFile("background-refresh-reentrant", ".txt")
+    val virtualFile = VfsUtil.findFile(dirtyFile, true)
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val handlerCoroutineScope = CoroutineScope(coroutineContext + SupervisorJob() + CoroutineName("SaveAndSyncHandlerBackgroundRefreshTest"))
+    val handler = SaveAndSyncHandlerImpl(handlerCoroutineScope, listenDelay = 0.seconds)
+
+    // Both tokens share the same reason on purpose: that is the case where the double-close guard is
+    // load-bearing. Without it, closing one token twice would remove both reasons and wrongly resume.
+    val firstToken = handler.suppressPeriodicRefresh("test")
+    val secondToken = handler.suppressPeriodicRefresh("test")
+
+    try {
+      delay(1.seconds) // wait for handler to start listening
+      VfsTestUtil.syncRefresh()
+      serviceAsync<IdleTracker>().restartIdleTimer()
+
+      val virtualFileManager = VirtualFileManager.getInstance()
+      val baseline = virtualFileManager.modificationCount
+
+      dirtyFile.writeText("after")
+      VfsUtil.markDirty(false, false, virtualFile)
+
+      // Release the first token twice (idempotent). The second token is still held -> still suppressed.
+      firstToken.close()
+      firstToken.close()
+      VfsUtil.markDirty(false, false, virtualFile)
+      delay(3.seconds)
+      Assertions.assertThat(virtualFileManager.modificationCount).isEqualTo(baseline)
+
+      // Release the last token -> periodic refresh resumes.
+      secondToken.close()
+      VfsUtil.markDirty(false, false, virtualFile)
+      waitUntil("Background VFS refresh did not resume after releasing the last token", timeout = 60.seconds) {
+        virtualFileManager.modificationCount > baseline
+      }
+    }
+    finally {
+      firstToken.close()
+      secondToken.close()
+      dirtyFile.deleteIfExists()
+      handlerCoroutineScope.coroutineContext.job.cancelAndJoin()
+    }
+  }
+
   private suspend fun CoroutineScope.assertBackgroundRefresh(expectedRefreshCount: Int) {
     val dirtyFile = Files.createTempFile("background-refresh", ".txt")
     val virtualFile = VfsUtil.findFile(dirtyFile, true)
