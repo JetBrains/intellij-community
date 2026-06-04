@@ -39,6 +39,9 @@ afterEvaluate {
 
 project.plugins.withType<NodeJsRootPlugin>().configureEach {
   extensions.configure<NodeJsRootExtension> {
-    nodeDownloadBaseUrl = "https://packages.jetbrains.team/files/p/grazi/node-mirror"
+    nodeVersion = "20.11.1"
+    if (findProperty("useNodeMirror")?.toString()?.toBoolean() != false) {
+      nodeDownloadBaseUrl = "https://packages.jetbrains.team/files/p/grazi/node-mirror"
+    }
   }
 }

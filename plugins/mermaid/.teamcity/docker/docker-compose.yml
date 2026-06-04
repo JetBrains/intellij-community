@@ -1,7 +1,0 @@
-version: "3.9"
-services:
-  mermaid-ci:
-    container_name: mermaid-ci
-    build: .
-    platform: linux/amd64
-    image: registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0

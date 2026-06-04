@@ -45,6 +45,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.eclipse",
   "intellij.sh.plugin",
   "intellij.markdown",
+  "intellij.mermaid",
   "intellij.mcpserver",
   "intellij.webp",
   "intellij.grazie",

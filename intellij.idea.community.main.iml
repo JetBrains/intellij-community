@@ -120,6 +120,7 @@
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mermaid" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
