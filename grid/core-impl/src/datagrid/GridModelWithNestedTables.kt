@@ -2,6 +2,7 @@ package com.intellij.database.datagrid
 
 import com.intellij.database.datagrid.NestedTablesDataGridModel.NestedTableCellCoordinate
 import com.intellij.database.datagrid.nested.NestedTablesAware
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The GridModelWithNestedTables interface represents a grid model that supports nested tables.
@@ -28,6 +29,7 @@ interface GridModelWithNestedTables : NestedTablesAware<NestedTableCellCoordinat
    * @param cellCoordinate the coordinate of the cell within the nested table
    *
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("{@link GridModelWithNestedTables#enterNestedTable} instead.")
   fun navigateIntoNestedTable(cellCoordinate: NestedTableCellCoordinate)
 
@@ -38,6 +40,7 @@ interface GridModelWithNestedTables : NestedTablesAware<NestedTableCellCoordinat
    * @return the coordinate of the cell in the parent table after navigation back, or null if unable to navigate
    *
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("This method is deprecated and marked for removal. Use {@link GridModelWithNestedTables#exitNestedTable} instead.")
   fun navigateBackFromNestedTable(numSteps: Int): NestedTableCellCoordinate?
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Cursor
@@ -70,6 +71,7 @@ class ErrorNotificationPanel private constructor(
     initComponent(items, horizontalLayout)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("This method is deprecated and will be deleted soon." +
               " To provide custom fixes to notification panel, implement the" +
               " [com.intellij.database.connection.throwable.info.RuntimeErrorActionProvider]" +
