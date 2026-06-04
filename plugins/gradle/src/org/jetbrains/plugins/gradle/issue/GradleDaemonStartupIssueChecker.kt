@@ -14,11 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -30,11 +29,11 @@ import kotlin.io.path.isRegularFile
 /**
  * This issue checker provides quick fixes to deal with known startup issues of the Gradle daemon.
  */
-@ApiStatus.Experimental
-internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
+@Internal
+class GradleDaemonStartupIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    val rootCause = getRootCauseAndLocation(issueData.error).first
-    val rootCauseText = rootCause.toString()
+    val rootCause = issueData.failure.rootCause
+    val rootCauseText = rootCause.text
     if (!rootCauseText.startsWith("org.gradle.api.GradleException: Unable to start the daemon process.")) {
       return null
     }
@@ -67,7 +66,7 @@ internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       quickFixDescription.append(" - <a href=\"${gradleSettingsFix.id}\">IDE Gradle VM options</a> \n")
     }
 
-    val issueDescription = StringBuilder(rootCause.message)
+    val issueDescription = StringBuilder(rootCause.messageOrDescription ?: rootCause.text)
     if (quickFixDescription.isNotEmpty()) {
       issueDescription.append("\n-----------------------\n")
       issueDescription.append("Check the JVM arguments defined for the gradle process in:\n")
@@ -94,7 +93,7 @@ internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
 
     if (failureCause == "startup failed:") {
       val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
-      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file?.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
+      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
       val matchResult = GradleConsoleFilter.Holder.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
@@ -104,7 +103,7 @@ internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
 
       messageConsumer.accept(object : FileMessageEventImpl(
         parentEventId, MessageEvent.Kind.ERROR, null, failedStartupReason, message, //NON-NLS
-        FilePosition(location.file, line, column)), DuplicateMessageAware {}
+        FilePosition(location.path, line, column)), DuplicateMessageAware {}
       )
       return true
     }

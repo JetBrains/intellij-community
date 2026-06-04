@@ -31,7 +31,7 @@ interface GradleIssueChecker : BuildIssueChecker<GradleIssueData> {
    * @param parentEventId the parent message id for [BuildEvent] construction
    * @param messageConsumer consumes generated [BuildEvent] based on this piece of build output
    *
-   * @return true if related error message was added by this [GradleIssueChecker] using [messageConsumer] or via [GradleIssueChecker.check] method,
+   * @return true if related error message was added by this [GradleIssueChecker] using [messageConsumer] or via [check] method,
    *         so no further messages should be added to avoid duplicates
    */
   fun consumeBuildOutputFailureMessage(
@@ -45,7 +45,7 @@ interface GradleIssueChecker : BuildIssueChecker<GradleIssueData> {
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName.create<GradleIssueChecker>("org.jetbrains.plugins.gradle.issueChecker")
+    val EP_NAME: ExtensionPointName<GradleIssueChecker> = ExtensionPointName.create("org.jetbrains.plugins.gradle.issueChecker")
 
     @JvmStatic
     fun getKnownIssuesCheckList(): List<GradleIssueChecker> {

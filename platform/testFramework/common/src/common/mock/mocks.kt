@@ -4,6 +4,7 @@
 package com.intellij.testFramework.common.mock
 
 import com.intellij.util.ReflectionUtil
+import kotlin.reflect.KProperty1
 
 /**
  * This function creates the Java proxy that throws [NotImplementedError] on any method invocation.
@@ -20,3 +21,6 @@ fun <T> notImplemented(aClass: Class<T>): T = ReflectionUtil.proxy(aClass) { _, 
   val methodParameterTypes = method.parameterTypes.joinToString { it.simpleName }
   throw NotImplementedError("Method '$className#$methodName($methodParameterTypes)' isn't implemented")
 }
+
+fun <Receiver : Any, Result : Any> Receiver.requireImplemented(property: KProperty1<Receiver, Result?>): Result =
+  property.get(this) ?: throw NotImplementedError("${this.javaClass.simpleName}.${property.name} is not defined")

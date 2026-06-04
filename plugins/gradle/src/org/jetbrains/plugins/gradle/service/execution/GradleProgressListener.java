@@ -28,11 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
 import org.jetbrains.plugins.gradle.issue.GradleIssueData;
+import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final String myOperationId;
-  private final @NotNull String myBuildRootDirPath;
+  private final @NotNull Path myBuildRootDirPath;
   private static final String EXECUTING_BUILD = "Build";
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
@@ -77,7 +78,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir);
     myProgressMapper = new GradleExecutionProgressMapper();
     myDownloadProgressMapper = new GradleDownloadProgressMapper();
-    myBuildRootDirPath = buildRootDir;
+    myBuildRootDirPath = Path.of(buildRootDir);
     sendProgressEventsToOutput = Registry.is(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true);
   }
 
@@ -178,7 +179,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
     Message.FilePosition messageFilePosition = message.getFilePosition();
     FilePosition filePosition = messageFilePosition == null ? null : new FilePosition(
-      new File(messageFilePosition.getFilePath()),
+      Path.of(messageFilePosition.getFilePath()),
       messageFilePosition.getLine(),
       messageFilePosition.getColumn()
     );
@@ -219,20 +220,14 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   private @NotNull GradleIssueData getGradleIssueData(@NotNull Message message) {
     String errorText = StringUtil.notNullize(message.getText(), message.getTitle());
-    Throwable syntheticError = new RuntimeException(errorText);
 
     Message.FilePosition position = message.getFilePosition();
     FilePosition filePosition = position == null ? null : new FilePosition(
-      new File(position.getFilePath()), position.getLine(), position.getColumn()
+      Path.of(position.getFilePath()), position.getLine(), position.getColumn()
     );
 
-    GradleIssueData issueData = new GradleIssueData(
-      myBuildRootDirPath,
-      syntheticError,
-      null,
-      filePosition
-    );
-    return issueData;
+    GradleIssueFailure failure = GradleIssueFailure.createIssueFailure(errorText);
+    return GradleIssueData.createIssueData(myBuildRootDirPath, failure, null, filePosition);
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {

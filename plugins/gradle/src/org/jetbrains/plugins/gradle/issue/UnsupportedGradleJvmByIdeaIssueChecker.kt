@@ -4,15 +4,19 @@ package org.jetbrains.plugins.gradle.issue
 import com.intellij.build.issue.BuildIssue
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
+@Internal
 class UnsupportedGradleJvmByIdeaIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    if (issueData.error is GradleExecutionHelper.UnsupportedGradleJvmByIdeaException) {
-      return UnsupportedGradleJvmBuildIssue(issueData.error.gradleVersion, issueData.error.javaVersion, issueData.projectPath)
+    @Suppress("DEPRECATION")
+    val error = issueData.error
+    if (error is GradleExecutionHelper.UnsupportedGradleJvmByIdeaException) {
+      return UnsupportedGradleJvmBuildIssue(error.gradleVersion, error.javaVersion, issueData.projectPath)
     }
     return null
   }

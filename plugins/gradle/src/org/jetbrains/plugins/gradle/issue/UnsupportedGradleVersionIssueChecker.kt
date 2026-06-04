@@ -3,9 +3,8 @@ package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -14,11 +13,11 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
  *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
+@Internal
 class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    val rootCause = getRootCauseAndLocation(issueData.error).first
+    val rootCause = issueData.failure.rootCause
     val gradleVersion = getGradleVersion(issueData)
 
     when {
@@ -41,31 +40,35 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
   }
 
   private fun getGradleVersion(issueData: GradleIssueData): GradleVersion? {
-    if (issueData.buildEnvironment != null) {
-      return GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null) {
+      return GradleVersion.version(buildEnvironment.gradle.gradleVersion)
     }
-    if (issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
-      return issueData.error.gradleVersion
+    @Suppress("DEPRECATION")
+    val error = issueData.error
+    if (error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
+      return error.gradleVersion
     }
     return null
   }
 
   private fun isGradleUnsupportedByIdea(issueData: GradleIssueData): Boolean {
+    @Suppress("DEPRECATION")
     return issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException
   }
 
-  private fun isOldGradleClasspathInfererIssue(rootCause: Throwable): Boolean {
-    val message = rootCause.message ?: return false
-    if (!message.startsWith("Cannot determine classpath for resource")) return false
-    return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
+  private fun isOldGradleClasspathInfererIssue(rootCause: GradleIssueFailure): Boolean {
+    val message = rootCause.messageOrDescription ?: return false
+    return message.startsWith("Cannot determine classpath for resource") &&
+           rootCause.description?.contains("org.gradle.tooling.internal.provider.ClasspathInferer") == true
   }
 
-  private fun isModelBuilderApiUnsupported(rootCause: Throwable): Boolean {
-    return rootCause.toString().endsWith(UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT)
+  private fun isModelBuilderApiUnsupported(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.text.endsWith(UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT)
   }
 
-  private fun isGradleUnsupportedByToolingApi(rootCause: Throwable): Boolean {
-    return rootCause.toString().startsWith(UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX)
+  private fun isGradleUnsupportedByToolingApi(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.text.startsWith(UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX)
   }
 
   companion object {
@@ -99,7 +102,7 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
   }
 }
 
-@ApiStatus.Internal
+@Internal
 class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
     val oldestNonDeprecatedGradleVersion = GradleJvmSupportMatrix.suggestOldestNonDeprecatedGradleVersionByIdea()
