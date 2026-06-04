@@ -4,6 +4,7 @@ package training.dsl
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.statistic.LearningInternalProblems
@@ -179,6 +180,7 @@ abstract class TaskContext : LearningDslBase {
     triggerByPartOfComponentImpl(T::class.java, options, selector) { rectangle(it) }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use inline version")
   open fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
                                                         options: LearningUiHighlightingManager.HighlightingOptions,
@@ -201,6 +203,7 @@ abstract class TaskContext : LearningDslBase {
     triggerByUiComponentAndHighlightImpl(ComponentType::class.java, options, selector) { finderFunction(it) }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use inline version")
   open fun <ComponentType : Component>
     triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
