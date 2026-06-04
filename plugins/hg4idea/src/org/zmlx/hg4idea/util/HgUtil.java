@@ -481,7 +481,7 @@ public abstract class HgUtil {
   /**
    * @deprecated Prefer {@link #guessWidgetRepository(Project)} or {@link #guessRepositoryForOperation(Project, DataContext)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresEdt
   public static @Nullable HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
