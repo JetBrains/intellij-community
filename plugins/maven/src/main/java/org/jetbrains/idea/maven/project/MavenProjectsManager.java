@@ -678,7 +678,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}}
    */
   // used in third-party plugins
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Promise<List<Module>> scheduleImportAndResolve() {
     var promise = new AsyncPromise<List<Module>>();
     var modules = updateAllMavenProjectsSync();

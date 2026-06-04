@@ -954,6 +954,7 @@ object MavenUtil {
     return emptySet()
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("")
   @JvmStatic
   fun getMavenConfFile(mavenHome: File?): File {
@@ -965,6 +966,7 @@ object MavenUtil {
     return mavenHome.resolve(BIN_DIR).resolve(M2_CONF_FILE)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("")
   @JvmStatic
   fun getMavenHomeFile(mavenHome: StaticResolvedMavenHomeType): File? {
@@ -1090,6 +1092,7 @@ object MavenUtil {
     return resolveLocalRepository(null, overriddenLocalRepository, overriddenMavenHome, overriddenUserSettingsFile).toFile()
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     """do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
   use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
