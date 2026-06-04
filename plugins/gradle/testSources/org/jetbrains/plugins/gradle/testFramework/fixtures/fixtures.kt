@@ -19,7 +19,7 @@ import java.nio.file.Path
 
 fun gradleJvmFixture(
   gradleVersion: GradleVersion = GradleVersion.current(),
-  javaVersion: JavaVersionRestriction = JavaVersionRestriction.NO,
+  javaVersion: JavaVersionRestriction = JavaVersionRestriction.DEFAULT,
 ): TestFixture<GradleJvmTestFixture> = testFixture {
   val fixture = GradleJvmTestFixture(gradleVersion, javaVersion)
   fixture.setUp()
@@ -30,7 +30,7 @@ fun gradleJvmFixture(
 
 fun gradleFixture(
   gradleVersion: GradleVersion = GradleVersion.current(),
-  javaVersion: JavaVersionRestriction = JavaVersionRestriction.NO,
+  javaVersion: JavaVersionRestriction = JavaVersionRestriction.DEFAULT,
 ): TestFixture<GradleTestFixture> = testFixture {
   val multiProjectFixture = multiProjectFixture().init()
   val gradleJvmFixture = gradleJvmFixture(gradleVersion, javaVersion).init()
