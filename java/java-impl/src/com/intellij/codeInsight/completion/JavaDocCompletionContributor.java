@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -54,6 +54,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaDocumentedElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiMember;
@@ -152,13 +153,14 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
         final PsiElement position = parameters.getPosition();
 
         if (isStartOfMarkdownComment(position)) {
-          JavadocMarkdownTemplateLookupElement documentationElement = new JavadocMarkdownTemplateLookupElement(
-            ((PsiDocComment)position.getParent()).getOwner());
-
-          if (documentationElement.isAvailable()) {
-            result.addElement(documentationElement);
-            // Unusual early return, but only the template should be shown
-            return;
+          PsiJavaDocumentedElement owner = ((PsiDocComment)position.getParent()).getOwner();
+          if (owner != null) {
+            JavadocMarkdownTemplateLookupElement documentationElement = new JavadocMarkdownTemplateLookupElement(owner);
+            if (documentationElement.isAvailable()) {
+              result.addElement(documentationElement);
+              // Unusual early return, but only the template should be shown
+              return;
+            }
           }
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -28,9 +28,10 @@ public class GenerateJavadocMarkdownTest extends LightFixtureCompletionTestCase 
   public void testMethodFull() { doTestWithTemplates(); }
   public void testMethodAbstract() { doTestWithTemplates(); }
 
-  public void testGenerationDisabled01(){ doTestWithTemplates(); }
-  public void testGenerationDisabled02(){ doTestWithTemplates(); }
-  public void testGenerationDisabled03(){ doTestWithTemplates(); }
+  public void testGenerationDisabled01() { doTestWithTemplates(); }
+  public void testGenerationDisabled02() { doTestWithTemplates(); }
+  public void testGenerationDisabled03() { doTestWithTemplates(); }
+  public void testDanglingDoc() { doTestWithTemplates(); }
 
   /// Sanity check: verify template-less code path doesn't explode
   public void testMethodFullNoTemplate() { doTestNoTemplates(); }

@@ -23,7 +23,7 @@ final class JavadocMarkdownTemplateLookupElement extends LookupElement implement
   private final PsiJavaDocumentedElement targetElement;
   private String cachedTemplate = null;
 
-  JavadocMarkdownTemplateLookupElement(PsiJavaDocumentedElement element) { targetElement = element; }
+  JavadocMarkdownTemplateLookupElement(@NotNull PsiJavaDocumentedElement element) { targetElement = element; }
 
   @Override
   public @NotNull String getLookupString() {
@@ -46,7 +46,7 @@ final class JavadocMarkdownTemplateLookupElement extends LookupElement implement
     }
     return cachedTemplate;
   }
-  
+
   public boolean isAvailable() {
     return !StringUtil.isEmptyOrSpaces(getTemplate());
   }
