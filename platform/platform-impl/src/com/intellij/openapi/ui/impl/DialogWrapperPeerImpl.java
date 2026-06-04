@@ -159,6 +159,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
         if (project == null && curWindow != null) {
           project = ProjectUtil.getProjectForWindow(curWindow);
+          if (project == null) {
+            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(curWindow));
+          }
         }
 
         myProject = project;
