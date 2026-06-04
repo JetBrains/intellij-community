@@ -257,7 +257,7 @@ public class CodeCompletionHandlerBase {
       completionTracer.spanBuilder("invokeCompletion")
         .setAttribute("project", project.getName())
         .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset()),
-      span -> {
+      _ -> {
         invokeCompletion(project, editor, invocationCount, hasModifiers, caret);
         return null;
       }
@@ -317,12 +317,16 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                            initContext.getInvocationCount(), this,
-                                                                            initContext.getOffsetMap(),
-                                                                            initContext.getHostOffsets(),
-                                                                            hasModifiers, lookup);
-
+    CompletionProgressIndicator indicator = new CompletionProgressIndicator(
+      editor,
+      initContext.getCaret(),
+      initContext.getInvocationCount(),
+      this,
+      initContext.getOffsetMap(),
+      initContext.getHostOffsets(),
+      hasModifiers,
+      lookup
+    );
 
     if (synchronous && isValidContext) {
       OffsetsInFile hostCopyOffsets = withTimeout(calcSyncTimeOut(startingTime), () -> {
