@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Acts as the only source of [PluginInitializationContext] instances that are used to initialize
@@ -89,7 +89,7 @@ private object PluginInitContextFactoryHolder {
 
 @ApiStatus.Internal
 @IntellijInternalApi
-@VisibleForTesting
+@TestOnly
 fun <R> PluginInitContextFactory.Companion.withCustomFactoryInUnitTests(instance: PluginInitContextFactory, body: () -> R): R {
   PluginInitContextFactoryHolder.testInstance = instance
   try {
