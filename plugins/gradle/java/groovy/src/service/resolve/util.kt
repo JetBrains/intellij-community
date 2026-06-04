@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.groovy.service.resolve
 
-import com.intellij.gradle.java.properties.util.module
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiClass
@@ -40,5 +40,6 @@ internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extens
 
 @ApiStatus.Internal
 fun PsiElement.getLinkedGradleProjectPath() : String? {
+  val module = findModuleForPsiElement(this)
   return ExternalSystemApiUtil.getExternalProjectPath(module)
 }

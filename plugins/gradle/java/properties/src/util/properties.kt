@@ -3,6 +3,7 @@ package com.intellij.gradle.java.properties.util
 
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.findVirtualFileOrDirectory
 import com.intellij.psi.PsiElement
@@ -14,9 +15,11 @@ import java.nio.file.Path
 @ApiStatus.Internal
 @RequiresReadLock
 fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
-  val projectPath = ExternalSystemApiUtil.getExternalRootProjectPath(place.module) ?: return emptySequence()
-  return GradlePropertiesFile.getPropertyPaths(place.project, Path.of(projectPath)).asSequence()
+  val module = findModuleForPsiElement(place)
+  val projectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptySequence()
+  val project = place.project
+  return GradlePropertiesFile.getPropertyPaths(project, Path.of(projectPath)).asSequence()
     .mapNotNull { it.findVirtualFileOrDirectory() }
-    .mapNotNull { it.findPsiFile(place.project) }
+    .mapNotNull { it.findPsiFile(project) }
     .filterIsInstance<PropertiesFile>()
 }
