@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +45,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
@@ -684,7 +684,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           .runProcessWithProgressSynchronously(() ->
                                                  ReadAction.computeCancellable(
                                                    () -> file.getViewProvider().getDocument()),
-                                               UIBundle.message("progress.decompiling.file", file.getName()), true, file.getProject());
+                                               IdeBundle.message("progress.title.preparing.navigation"), true, file.getProject());
       }
       else {
         file.getViewProvider().getDocument(); // to ensure decompilation

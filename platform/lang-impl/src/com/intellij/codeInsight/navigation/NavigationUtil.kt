@@ -6,6 +6,7 @@ package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.ide.util.PsiElementListCellRenderer
@@ -61,7 +62,6 @@ import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.UIBundle
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
@@ -413,7 +413,7 @@ private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boole
         {
           ReadAction.computeCancellable<Document, Throwable> {  element.containingFile.viewProvider.document }
         },
-        UIBundle.message("progress.decompiling.file", vFile.name), true, element.project)
+        IdeBundle.message("progress.title.preparing.navigation"), true, element.project)
       if(!success) return false
     }
     fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
