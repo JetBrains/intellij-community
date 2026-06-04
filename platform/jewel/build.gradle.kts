@@ -6,8 +6,6 @@ plugins {
     `jewel-linting`
 }
 
-
-
 tasks {
     register<Delete>("clean") { delete(rootProject.layout.buildDirectory) }
 

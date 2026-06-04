@@ -11,25 +11,31 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="compose-foundation-desktop" type="repository">
-        <properties maven-id="org.jetbrains.compose.foundation:foundation-desktop:1.10.0">
+        <properties maven-id="org.jetbrains.compose.foundation:foundation-desktop:1.11.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.10.0/foundation-desktop-1.10.0.jar">
-              <sha256sum>f988ef9d9517dc26b360943349bf1412d5735beb8ecf4f5304f10ecfe6ca05db</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.11.0/foundation-desktop-1.11.0.jar">
+              <sha256sum>32601653637e47cc442fa77c9e5dd95a557a0533a5304ba5200cc72c565f074a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.10.0/animation-desktop-1.10.0.jar">
-              <sha256sum>3ec5254288b1e872263009221f677063ea728f90969598f399a5b02500ebc014</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.11.0/animation-desktop-1.11.0.jar">
+              <sha256sum>bb41c6c550a471c68c51185c3bb0458482a4e803ee074bf215adc8832e2007e1</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.10.0/animation-core-desktop-1.10.0.jar">
-              <sha256sum>41c0220ddbc55cb897feb0d5816b748f9c11162171f12743c04b50d0d84db628</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.11.0/animation-core-desktop-1.11.0.jar">
+              <sha256sum>1b3af8d20627b01101d827f72e26dbadccc8d212c0ffc0c02ff2a6fc967a6ca8</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.10.0/ui-geometry-desktop-1.10.0.jar">
-              <sha256sum>cdbfdabccac8abef2d9bc0420ec0c4be7a880f6d26b2d1cc4e2317c0d252ee27</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.11.0/ui-geometry-desktop-1.11.0.jar">
+              <sha256sum>ad6d5557572708aceebf1aa626c5900e8fce61f040a6d5d971b1adca5869ab8c</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.10.0/foundation-layout-desktop-1.10.0.jar">
-              <sha256sum>bd086a9f5ce453967ea1124bb709612bca14a4fbb6522a6023092a8866ee4ef0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.11.0/ui-graphics-desktop-1.11.0.jar">
+              <sha256sum>c7d7620c78f0e64052f1f28df54a969b36cf4918e7965b566875855569346e59</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.10.0/ui-desktop-1.10.0.jar">
-              <sha256sum>c699d8571082a7f507fbede0b9d567c661f47013a4f3f9b68109b8a0bd828ea8</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.11.0/foundation-layout-desktop-1.11.0.jar">
+              <sha256sum>d79929b45521dff0c77d3184412007b3b9695755c8b1933d5ff9e4f1e93fa131</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.11.0/ui-unit-desktop-1.11.0.jar">
+              <sha256sum>9c91868b0bd967d64f726edc319c895e359871a44ef7e75dc69ff0cad46ac0da</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.11.0/ui-desktop-1.11.0.jar">
+              <sha256sum>c2b3f12ecd91fe6126f4e2ab44968d2f18fea26d3959024d1524cd07ad692d7b</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.4/lifecycle-viewmodel-desktop-2.9.4.jar">
               <sha256sum>98f816be6869407c87d46058756f97780fa6c6cf61acdba97216f413731af15d</sha256sum>
@@ -40,23 +46,17 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/navigationevent/navigationevent-desktop/1.0.1/navigationevent-desktop-1.0.1.jar">
               <sha256sum>43deeb5774fd737fa945e09a47f93b6f1a508d17fac8f3b65f1c863e7f7d0660</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.10.0/ui-backhandler-desktop-1.10.0.jar">
-              <sha256sum>1babf68f5a05cbe1ba8cf934f0e575bb0d0b184444514e6aa7ec1f8004c9ce33</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.11.0/ui-backhandler-desktop-1.11.0.jar">
+              <sha256sum>007fb9a83fa405b8bfe1ddbefef3dd929dea2be42953e6510ce46f85ff635e30</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.10.0/ui-graphics-desktop-1.10.0.jar">
-              <sha256sum>d1710a4a15b115fc4c37878b32b10a476a0ec3b8399fa1fb588181dba83dbdd2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.11.0/ui-text-desktop-1.11.0.jar">
+              <sha256sum>c1a8ceb1e875c6f1bb2e67eca8778fc04027dd618f31a69f886368cbdd35eeec</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.10.0/ui-unit-desktop-1.10.0.jar">
-              <sha256sum>f0f3439928b3d9132f07cb2d7a86091696372ebc8354d16b48830b6ce15e8161</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.11.0/ui-util-desktop-1.11.0.jar">
+              <sha256sum>73d04930a91fb9a2044f2c198ec6e3f1da61696ccb59a288d1ff0a15bab08eed</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.10.0/ui-text-desktop-1.10.0.jar">
-              <sha256sum>6ee18433659f389621386e759217b3ed5ef0f1e22ea177cad705457dc75aa27b</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.10.0/ui-util-desktop-1.10.0.jar">
-              <sha256sum>7bfc93a8cad2974cdfd5a2c817e3083e0e3c48ef99e4dbba51eb98a14c92ed2d</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar">
-              <sha256sum>101ff43ff563fca167af5ade98c3b69bf569010eab745013b84d8955034d3b3c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.28.0/atomicfu-jvm-0.28.0.jar">
+              <sha256sum>39576ec46b83412ff7a2909d24cccbba90400e91f9aa67b250309bc0872ecf52</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -71,6 +71,7 @@
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
             <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+            <dependency maven-id="org.jetbrains.runtime:jbr-api" />
             <dependency maven-id="androidx.annotation:annotation" />
             <dependency maven-id="androidx.annotation:annotation-jvm" />
             <dependency maven-id="androidx.collection:collection-jvm" />
@@ -85,52 +86,52 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.10.0/foundation-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.10.0/animation-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.10.0/animation-core-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.10.0/ui-geometry-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.10.0/foundation-layout-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.10.0/ui-desktop-1.10.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.11.0/foundation-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.11.0/animation-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.11.0/animation-core-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.11.0/ui-geometry-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.11.0/ui-graphics-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.11.0/foundation-layout-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.11.0/ui-unit-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.11.0/ui-desktop-1.11.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.4/lifecycle-viewmodel-desktop-2.9.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2.9.4/lifecycle-viewmodel-savedstate-desktop-2.9.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/navigationevent/navigationevent-desktop/1.0.1/navigationevent-desktop-1.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.10.0/ui-backhandler-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.10.0/ui-graphics-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.10.0/ui-unit-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.10.0/ui-text-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.10.0/ui-util-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.11.0/ui-backhandler-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.11.0/ui-text-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.11.0/ui-util-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.28.0/atomicfu-jvm-0.28.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.10.0/foundation-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.10.0/animation-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.10.0/animation-core-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.10.0/ui-geometry-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.10.0/foundation-layout-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.10.0/ui-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.10.0/ui-backhandler-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.10.0/ui-graphics-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.10.0/ui-unit-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.10.0/ui-text-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.10.0/ui-util-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.11.0/foundation-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.11.0/animation-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.11.0/animation-core-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.11.0/ui-geometry-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.11.0/ui-graphics-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.11.0/foundation-layout-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.11.0/ui-unit-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.11.0/ui-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.11.0/ui-backhandler-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.11.0/ui-text-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.11.0/ui-util-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.28.0/atomicfu-jvm-0.28.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.10.0/foundation-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.10.0/animation-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.10.0/animation-core-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.10.0/ui-geometry-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.10.0/foundation-layout-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.10.0/ui-desktop-1.10.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.11.0/foundation-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.11.0/animation-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.11.0/animation-core-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.11.0/ui-geometry-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.11.0/ui-graphics-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.11.0/foundation-layout-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.11.0/ui-unit-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.11.0/ui-desktop-1.11.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.4/lifecycle-viewmodel-desktop-2.9.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2.9.4/lifecycle-viewmodel-savedstate-desktop-2.9.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/navigationevent/navigationevent-desktop/1.0.1/navigationevent-desktop-1.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.10.0/ui-backhandler-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.10.0/ui-graphics-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.10.0/ui-unit-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.10.0/ui-text-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.10.0/ui-util-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1.11.0/ui-backhandler-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.11.0/ui-text-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.11.0/ui-util-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.28.0/atomicfu-jvm-0.28.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

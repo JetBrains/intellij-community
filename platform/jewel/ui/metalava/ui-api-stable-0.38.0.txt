@@ -345,10 +345,9 @@ package org.jetbrains.jewel.ui.component {
   public final class ContextMenuItemOption extends androidx.compose.foundation.ContextMenuItem {
     ctor public ContextMenuItemOption(optional org.jetbrains.jewel.ui.icon.IconKey? icon, optional org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType, optional boolean enabled, String label, kotlin.jvm.functions.Function0<kotlin.Unit> action);
     method public org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? getActionType();
-    method public boolean getEnabled();
     method public org.jetbrains.jewel.ui.icon.IconKey? getIcon();
     property public org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType;
-    property public boolean enabled;
+    property @Deprecated public boolean enabledCompat;
     property public org.jetbrains.jewel.ui.icon.IconKey? icon;
   }
 
@@ -3068,10 +3067,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuOpen;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuPaste;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuSaveall;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_cut;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_open;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_paste;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_saveall;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Minimap;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ModuleDirectory;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey More;
@@ -3145,7 +3140,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunAll;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunAnything;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunToCursor;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Run_anything;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Scratch;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Search;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SearchNewLine;
@@ -3160,7 +3154,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowCode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowImportStatements;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowReadAccess;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowViewer;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowWriteAccess;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SplitHorizontally;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SplitVertically;
@@ -3417,6 +3410,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Any_type;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Archive;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Aspectj;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Bazel;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BinaryData;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey C;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Config;
@@ -3428,6 +3422,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Csv;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Custom;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Diagram;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Docker;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Dtd;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Font;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Gitignore;
@@ -3446,6 +3441,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaClass;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaOutsideSource;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaScript;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jenkins;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jfr;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Json;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JsonSchema;
@@ -3454,20 +3450,17 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jupyter;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Manifest;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Markdown;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MarkdownPlugin;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MicrosoftWindows;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Perl;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Properties;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Regexp;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rst;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rust;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SourceMap;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Sql;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SwiftLang;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Terraform;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Text;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Toml;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TomlFile;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey UiForm;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Unknown;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Vue;
@@ -3578,7 +3571,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LayoutPreviewOnly;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Learn;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LinkDropTriangle;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LocalizationSettings;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Locate;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LockedUltimate;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu;
@@ -3738,7 +3730,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey OutgoingChangesOn;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Pipette;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey PipetteRollover;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Pipette_rollover;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey PowerSaveMode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rating;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rating1;
@@ -3971,7 +3962,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey IdeaModule;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey IdeaProject;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Include;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey InspectionResults;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Interface;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JarDirectory;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaDocFolder;
@@ -4035,7 +4025,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ResourceBundle;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunnableMark;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RwAccess;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rw_access;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SecurityRole;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Services;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Servlet;
@@ -4068,7 +4057,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WarningIntroduction;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WarningMark;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WebFolder;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Weblistener;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Word;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Workspace;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WriteAccess;
@@ -4179,7 +4167,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ApacheIgnite;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ApachePhoenix;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Athena;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Aws;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Azure;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BigQuery;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Cassandra;
@@ -4406,7 +4393,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDebugger;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDevMode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDuplicates;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowFavorites;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowFind;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowHierarchy;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowInspection;

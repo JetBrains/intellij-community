@@ -721,8 +721,7 @@ internal fun <T : Any> ListComboBoxImpl(
             false
         } else {
             when (event.key) {
-                Key.MoveHome,
-                Key.Home -> selectHome()
+                Key.MoveHome -> selectHome()
                 Key.MoveEnd -> selectEnd()
                 Key.DirectionDown -> {
                     navigateDown()

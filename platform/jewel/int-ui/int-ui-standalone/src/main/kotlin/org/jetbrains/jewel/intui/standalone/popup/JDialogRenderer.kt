@@ -206,6 +206,7 @@ private fun JPopupImpl(
 
     val composePanel = remember {
         ComposePanel(renderSettings = DEFAULT_RENDER_SETTINGS).apply {
+            isClearFocusOnMouseDownEnabled = false
             layout = null
             isOpaque = false
             background = TRANSPARENT_WITH_WINDOWS_HACK

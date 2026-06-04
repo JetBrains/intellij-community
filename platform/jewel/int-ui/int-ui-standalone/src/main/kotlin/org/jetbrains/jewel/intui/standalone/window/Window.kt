@@ -3,6 +3,7 @@ package org.jetbrains.jewel.intui.standalone.window
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.awt.SwingWindow as ComposeSwingWindow
@@ -399,6 +400,7 @@ public fun singleWindowApplication(
 @Composable
 private fun FrameWindowScope.ProvideComponent(content: @Composable FrameWindowScope.() -> Unit) {
     val currentComponent = remember(window) { window.contentPane.components.filterIsInstance<JComponent>().first() }
+    SideEffect { window.isClearFocusOnMouseDownEnabled = false }
     CompositionLocalProvider(LocalComponent provides currentComponent, LocalPopupRenderer provides JDialogRenderer) {
         content()
     }

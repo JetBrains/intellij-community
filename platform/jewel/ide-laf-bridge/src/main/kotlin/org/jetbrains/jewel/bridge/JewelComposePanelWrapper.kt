@@ -228,6 +228,7 @@ public class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) :
 
     init {
         super.addToCenter(composePanel)
+        composePanel.isClearFocusOnMouseDownEnabled = false
     }
 
     override fun addImpl(comp: Component, constraints: Any?, index: Int) {

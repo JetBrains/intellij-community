@@ -35,13 +35,13 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import java.awt.Cursor
 import kotlin.math.roundToInt
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation.Horizontal
 import org.jetbrains.jewel.ui.Orientation.Vertical
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.theme.dividerStyle
-import org.jetbrains.skiko.Cursor
 
 /**
  * A customizable horizontal split layout Composable function that allows you to divide the available space between two
