@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 abstract class SelfTargetingRangeIntention<TElement : PsiElement>(
@@ -13,6 +14,7 @@ abstract class SelfTargetingRangeIntention<TElement : PsiElement>(
     familyNameGetter: Supplier<@IntentionFamilyName String> = textGetter,
 ) : SelfTargetingIntention<TElement>(elementType, textGetter, familyNameGetter) {
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
         "Replace with primary constructor",
         ReplaceWith("SelfTargetingRangeIntention<TElement>(elementType, { text }, { familyName })")
@@ -24,6 +26,7 @@ abstract class SelfTargetingRangeIntention<TElement : PsiElement>(
     ) : this(elementType, Supplier { text }, Supplier { familyName })
 
     @Suppress("HardCodedStringLiteral")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Replace with primary constructor")
     constructor(
         elementType: Class<TElement>,

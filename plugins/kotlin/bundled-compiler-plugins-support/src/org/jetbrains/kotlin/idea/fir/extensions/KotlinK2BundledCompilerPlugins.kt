@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.ALL_OPEN_COMPILER_PLUGIN
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.ASSIGNMENT_COMPILER_PLUGIN
@@ -106,6 +105,7 @@ enum class KotlinK2BundledCompilerPlugins(
         PathManager.getJarForClass(registrarClass.java)
             ?: error("Unable to find .jar for '$registrarClassName' registrar in IDE distribution")
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("This companion object is left for binary compatibility only; do not use it.")
     companion object
 }

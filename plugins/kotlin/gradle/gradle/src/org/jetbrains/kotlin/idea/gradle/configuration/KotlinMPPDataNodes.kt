@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
@@ -26,6 +27,12 @@ import java.lang.ref.WeakReference
 import com.intellij.openapi.externalSystem.model.Key as ExternalKey
 
 @Deprecated(
+    "This UserData property is deprecated and will be removed soon",
+    ReplaceWith("kotlinSourceSetData?.sourceSetInfo"),
+    DeprecationLevel.ERROR
+)
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
     "This UserData property is deprecated and will be removed soon",
     ReplaceWith("kotlinSourceSetData?.sourceSetInfo"),
     DeprecationLevel.ERROR

@@ -67,6 +67,7 @@ class ClassNameProvider(private val configuration: Configuration = Configuration
 
 
     @Suppress("UNUSED_PARAMETER")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use primary constructor}", replaceWith = ReplaceWith("ClassNameProvider(configuration)"))
     constructor(project: Project, searchScope: GlobalSearchScope, configuration: Configuration) : this(configuration)
 

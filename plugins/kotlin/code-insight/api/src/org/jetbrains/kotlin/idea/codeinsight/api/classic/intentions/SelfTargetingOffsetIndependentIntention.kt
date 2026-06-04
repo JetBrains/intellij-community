@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.function.Supplier
 
@@ -13,6 +14,7 @@ abstract class SelfTargetingOffsetIndependentIntention<TElement : KtElement>(
     familyNameGetter: Supplier<@IntentionFamilyName String> = textGetter,
 ) : SelfTargetingRangeIntention<TElement>(elementType, textGetter, familyNameGetter) {
 
+    @ApiStatus.ScheduledForRemoval
     @Suppress("HardCodedStringLiteral")
     @Deprecated("Use primary constructor")
     constructor(

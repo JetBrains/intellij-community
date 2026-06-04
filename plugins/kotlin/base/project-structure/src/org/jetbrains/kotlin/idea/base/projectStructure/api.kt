@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
@@ -81,6 +82,7 @@ fun ModuleEntity.toKaSourceModule(project: Project, kind: KaSourceModuleKind): K
  *
  * @return The corresponding production or test [KaSourceModule] if it exists, or `null` if not found. If both exist, the production one is returned.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Semantics have changed (KTIJ-34177). Use other `toKaSourceModule*` functions instead.", level = DeprecationLevel.ERROR)
 fun ModuleId.toKaSourceModuleForProductionOrTest(project: Project): KaSourceModule? {
     val projectStructureProvider = project.ideProjectStructureProvider
@@ -128,6 +130,7 @@ fun Module.toKaSourceModuleForProduction(): KaSourceModule? =
  *
  * @return The corresponding production or test [KaSourceModule] if it exists, or `null` if not found. If both exist, the production one is returned.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Semantics have changed (KTIJ-34177). Use other `toKaSourceModule*` functions instead.", level = DeprecationLevel.ERROR)
 fun Module.toKaSourceModuleForProductionOrTest(): KaSourceModule? {
     val provider = project.ideProjectStructureProvider

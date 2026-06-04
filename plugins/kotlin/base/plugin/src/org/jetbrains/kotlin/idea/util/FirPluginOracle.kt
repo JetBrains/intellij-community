@@ -5,7 +5,10 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import org.jetbrains.annotations.ApiStatus
+
 abstract class FirPluginOracleService {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Should be used only as a very temporary solution to disable some FE1.0 functionality which is used in FIR plugin")
     abstract fun isFirPlugin(): Boolean
 }

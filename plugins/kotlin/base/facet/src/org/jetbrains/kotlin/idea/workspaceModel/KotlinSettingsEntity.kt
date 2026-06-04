@@ -56,9 +56,11 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     //region generated code
     @Deprecated(message = "Use KotlinSettingsEntityBuilder instead")
     interface Builder : KotlinSettingsEntityBuilder {
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(message = "Use new API instead")
         fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(message = "Use new API instead")
         fun setModule(value: ModuleEntity.Builder) {
             module = value
@@ -66,6 +68,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     }
 
     companion object : EntityType<KotlinSettingsEntity, Builder>() {
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(message = "Use new API instead")
         @JvmOverloads
         @JvmStatic
@@ -134,6 +137,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyKotlinSettingsEntity(
     entity: KotlinSettingsEntity,
@@ -144,7 +148,11 @@ fun MutableEntityStorage.modifyKotlinSettingsEntity(
 
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.kotlinSettings: List<KotlinSettingsEntity.Builder>
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use new API instead")
     get() = (this as ModuleEntityBuilder).kotlinSettings as List<KotlinSettingsEntity.Builder>
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use new API instead")
     set(value) {
         (this as ModuleEntityBuilder).kotlinSettings = value
     }

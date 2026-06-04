@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -44,6 +45,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         ) : this(elementType, Supplier { textGetter() }, Supplier { familyNameGetter() }) {
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Replace with the overloaded method")
     @Suppress("HardCodedStringLiteral")
     protected fun setTextGetter(textGetter: () -> @IntentionName String) {

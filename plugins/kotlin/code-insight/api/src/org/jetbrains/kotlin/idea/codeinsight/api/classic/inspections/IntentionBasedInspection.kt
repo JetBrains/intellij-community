@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -45,6 +46,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Please do not use for new inspections. Use AbstractKotlinInspection as base class for them")
     constructor(
         intention: KClass<out SelfTargetingRangeIntention<TElement>>,
