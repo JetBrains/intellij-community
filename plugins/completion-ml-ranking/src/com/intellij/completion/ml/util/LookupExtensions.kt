@@ -25,27 +25,27 @@ import com.intellij.psi.util.PsiUtilCore
  * @return a number of requests in the current completion session
  */
 fun LookupImpl.queryLength(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
+  val lookupOriginalStart = this.lookupOriginalStart
+  val caretOffset = this.editor.caretModel.offset
+  return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }
 
 /**
  * @return a prefix in the current completion session
  */
 fun Lookup.prefix(): String {
-    val text = editor.document.text
-    val offset = editor.caretModel.offset
-    var startOffset = offset
-    for (i in offset - 1 downTo 0) {
-        if (!text[i].isJavaIdentifierPart()) break
-        startOffset = i
-    }
-    return text.substring(startOffset, offset)
+  val text = editor.document.text
+  val offset = editor.caretModel.offset
+  var startOffset = offset
+  for (i in offset - 1 downTo 0) {
+    if (!text[i].isJavaIdentifierPart()) break
+    startOffset = i
+  }
+  return text.substring(startOffset, offset)
 }
 
 fun LookupImpl.language(): Language? {
-    val file = psiFile ?: return null
-    val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(file, offset)
+  val file = psiFile ?: return null
+  val offset = editor.caretModel.offset
+  return PsiUtilCore.getLanguageAtOffset(file, offset)
 }
