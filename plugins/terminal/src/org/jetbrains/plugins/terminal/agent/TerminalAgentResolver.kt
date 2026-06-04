@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.agent
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
@@ -53,7 +54,7 @@ object TerminalAgentResolver {
       findBinaryPath(agent, eelApi) != null -> {
         TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.RUN)
       }
-      agent.getInstallCommand(eelApi.descriptor.osFamily) != null -> {
+      ApplicationInfoEx.getInstanceEx().isVendorJetBrains && agent.getInstallCommand(eelApi.descriptor.osFamily) != null -> {
         TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.INSTALL_AND_RUN)
       }
       else -> null
