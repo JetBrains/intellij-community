@@ -89,19 +89,6 @@ object ExceptionAutoReportUtil {
     return consent?.isAccepted == true && !needsReconfirm
   }
 
-  suspend fun isAutoReportEnabledOrUndecidedAsync(): Boolean {
-    if (!isAutoReportVisible()) return false
-
-    if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
-    if (isAutoReportForced) return true // set by provisioning
-    if (ConsentOptions.getInstance().isEAP) {
-      return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
-    }
-
-    val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
-    return consent?.isAccepted == true || needsReconfirm
-  }
-
   private suspend fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
     return withContext(Dispatchers.IO) {
       val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(ConsentOptions.condEAAutoReportConsent())
