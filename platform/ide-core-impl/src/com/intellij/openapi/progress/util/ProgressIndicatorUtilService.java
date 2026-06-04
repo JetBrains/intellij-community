@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.WriteIntentReadActionListener;
+import com.intellij.openapi.application.WriteLockReacquisitionListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
@@ -42,6 +43,21 @@ final class ProgressIndicatorUtilService implements Disposable {
         if (isWriteActionPending) {
           cancelActionsToBeCancelledBeforeWrite();
         }
+      }
+    }, this);
+    myApplication.addSuspendingWriteActionListener(new WriteLockReacquisitionListener<Void>() {
+      @Override
+      public void beforeWriteLockReacquired(Void v) {
+        cancelActionsToBeCancelledBeforeWrite();
+      }
+
+      @Override
+      public void afterWriteLockReacquired(Void v) {
+      }
+
+      @Override
+      public Void beforeWriteLockTemporarilyReleased() {
+        return null;
       }
     }, this);
   }

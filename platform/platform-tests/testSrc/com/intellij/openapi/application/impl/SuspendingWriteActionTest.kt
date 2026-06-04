@@ -3,11 +3,14 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteActionListener
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.testExceptions
@@ -24,6 +27,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -32,6 +36,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 private const val repetitions: Int = 100
@@ -197,5 +202,32 @@ class SuspendingWriteActionTest {
         com.intellij.openapi.application.WriteAction.runAndWait(tr)
       }
     }
+  }
+
+  @Test
+  fun foo(): Unit = concurrencyTest {
+    readAction {  } // init internal structures
+    val wasCanceled = AtomicBoolean(false)
+    backgroundWriteAction {
+      ApplicationManagerEx.getApplicationEx().threadingSupport!!.executeSuspendingWriteAction {
+        launch {
+          readAction {
+            checkpoint(1)
+            if (wasCanceled.get()) {
+              checkpoint(4)
+            }
+            try {
+              while (true) {
+                ProgressManager.checkCanceled()
+              }
+            } catch (_: ProcessCanceledException) {
+              wasCanceled.set(true)
+            }
+          }
+        }
+        checkpoint(2)
+      }
+    }
+    checkpoint(3)
   }
 }
