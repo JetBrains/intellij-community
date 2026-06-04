@@ -175,14 +175,10 @@ private val LOG = logger<Utils>()
 // 3. Fast-track toolbars in a limited dispatcher, and limit subsequent fast-tracks
 // 4. Regular toolbars in a limited dispatcher
 internal val fastParallelism = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(2)
-@OptIn(ExperimentalCoroutinesApi::class)
-private val shortcutUpdateDispatcher = Dispatchers.IO.limitedParallelism(fastParallelism)
-@OptIn(ExperimentalCoroutinesApi::class)
-private val contextMenuDispatcher = Dispatchers.IO.limitedParallelism(fastParallelism)
-@OptIn(ExperimentalCoroutinesApi::class)
-private val toolbarFastDispatcher = Dispatchers.IO.limitedParallelism(2)
-@OptIn(ExperimentalCoroutinesApi::class)
-private val toolbarDispatcher = Dispatchers.Default.limitedParallelism(2)
+private val shortcutUpdateDispatcher = Dispatchers.IO.limitedParallelism(fastParallelism, "shortcutUpdateDispatcher")
+private val contextMenuDispatcher = Dispatchers.IO.limitedParallelism(fastParallelism, "contextMenuDispatcher")
+private val toolbarFastDispatcher = Dispatchers.IO.limitedParallelism(2, "toolbarFastDispatcher")
+private val toolbarDispatcher = Dispatchers.Default.limitedParallelism(2, "toolbarDIspatcher")
 
 // Stacking fast-tracks UI freeze protection
 private var lastFailedFastTrackFinishNanos = 0L
