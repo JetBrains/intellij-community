@@ -184,11 +184,8 @@ final class KeyboardShortcutPanel extends ShortcutPanel<Shortcut> {
           return null;
         }
 
-        int modifiers = normalizeModifiers(eventModifiers) & SUPPORTED_MODIFIER_MASKS;
-        if ((modifiers & modifierMask) == 0) {
-          reset();
-          return null;
-        }
+        // Some platforms don't report the pressed modifier in event masks for bare modifier keys.
+        int modifiers = (normalizeModifiers(eventModifiers) | modifierMask) & SUPPORTED_MODIFIER_MASKS;
 
         if (myFirstModifierKeyCode == KeyEvent.VK_UNDEFINED) {
           start(keyCode, modifiers, eventTime);

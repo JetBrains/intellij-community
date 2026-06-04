@@ -53,6 +53,23 @@ public class ShortcutFilteringPanelTest {
   }
 
   @Test
+  void doubleAltSetsKeyboardModifierGestureShortcut() throws ReflectiveOperationException {
+    JPanel panel = createShortcutFilteringPanel();
+    ShortcutTextField field = firstShortcutTextField(panel);
+
+    dispatchAlt(field, KeyEvent.KEY_PRESSED, 0, 10);
+    dispatchAlt(field, KeyEvent.KEY_RELEASED, 0, 20);
+    dispatchAlt(field, KeyEvent.KEY_PRESSED, 0, 30);
+    dispatchAlt(field, KeyEvent.KEY_RELEASED, 0, 40);
+
+    KeyboardModifierGestureShortcut shortcut = assertModifierGestureShortcut(getShortcut(panel));
+    assertEquals(KeyboardGestureAction.ModifierType.dblClick, shortcut.getType());
+    assertEquals(KeyEvent.VK_ALT, shortcut.getStroke().getKeyCode());
+    assertEquals(normalizedModifiers(KeyEvent.VK_ALT, InputEvent.ALT_MASK), shortcut.getStroke().getModifiers());
+    assertEquals(KeymapUtil.getShortcutText(shortcut), field.getText());
+  }
+
+  @Test
   void altDoubleCtrlSetsKeyboardModifierGestureShortcut() throws ReflectiveOperationException {
     JPanel panel = createShortcutFilteringPanel();
     ShortcutTextField field = firstShortcutTextField(panel);
@@ -129,6 +146,23 @@ public class ShortcutFilteringPanelTest {
     assertEquals(KeyboardGestureAction.ModifierType.dblClick, shortcut.getType());
     assertEquals(KeyEvent.VK_CONTROL, shortcut.getStroke().getKeyCode());
     assertEquals(normalizedCtrlModifiers(InputEvent.CTRL_MASK), shortcut.getStroke().getModifiers());
+    assertEquals(KeymapUtil.getShortcutText(shortcut), firstStroke.getText());
+  }
+
+  @Test
+  void keyboardShortcutPanelDoubleAltSetsKeyboardModifierGestureShortcut() throws ReflectiveOperationException {
+    JPanel panel = createKeyboardShortcutPanel();
+    ShortcutTextField firstStroke = shortcutTextField(panel, "myFirstStroke");
+
+    dispatchAlt(firstStroke, KeyEvent.KEY_PRESSED, 0, 10);
+    dispatchAlt(firstStroke, KeyEvent.KEY_RELEASED, 0, 20);
+    dispatchAlt(firstStroke, KeyEvent.KEY_PRESSED, 0, 30);
+    dispatchAlt(firstStroke, KeyEvent.KEY_RELEASED, 0, 40);
+
+    KeyboardModifierGestureShortcut shortcut = assertModifierGestureShortcut(getShortcut(panel));
+    assertEquals(KeyboardGestureAction.ModifierType.dblClick, shortcut.getType());
+    assertEquals(KeyEvent.VK_ALT, shortcut.getStroke().getKeyCode());
+    assertEquals(normalizedModifiers(KeyEvent.VK_ALT, InputEvent.ALT_MASK), shortcut.getStroke().getModifiers());
     assertEquals(KeymapUtil.getShortcutText(shortcut), firstStroke.getText());
   }
 
@@ -226,6 +260,10 @@ public class ShortcutFilteringPanelTest {
     dispatchKey(field, id, modifiers, KeyEvent.VK_CONTROL, when);
   }
 
+  private static void dispatchAlt(ShortcutTextField field, int id, int modifiers, long when) throws ReflectiveOperationException {
+    dispatchKey(field, id, modifiers, KeyEvent.VK_ALT, when);
+  }
+
   private static void dispatchKey(ShortcutTextField field, int id, int modifiers, int keyCode, long when) throws ReflectiveOperationException {
     Method method = ShortcutTextField.class.getDeclaredMethod("processKeyEvent", KeyEvent.class);
     method.setAccessible(true);
@@ -233,7 +271,11 @@ public class ShortcutFilteringPanelTest {
   }
 
   private static int normalizedCtrlModifiers(int modifiers) {
-    return KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, modifiers).getModifiers();
+    return normalizedModifiers(KeyEvent.VK_CONTROL, modifiers);
+  }
+
+  private static int normalizedModifiers(int keyCode, int modifiers) {
+    return KeyStroke.getKeyStroke(keyCode, modifiers).getModifiers();
   }
 
   private static KeyboardModifierGestureShortcut modifierGestureShortcut(String stroke) {
