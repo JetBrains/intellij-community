@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -58,23 +58,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public final class ExtractSetFromComparisonChainAction implements ModCommandAction {
   private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
   private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
   private static final String INITIALIZER_FORMAT_JAVA2 =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(new " + CommonClassNames.JAVA_UTIL_HASH_SET +
     "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new {1}[] '{'{0}'}')))";
   private static final String INITIALIZER_FORMAT_JAVA5 =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
     "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
   private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
-  private static final String INITIALIZER_ENUM_SET =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "java.util.EnumSet.of({0}))";
+  private static final String INITIALIZER_ENUM_SET = CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(java.util.EnumSet.of({0}))";
 
   private final @NotNull ThreeState myProcessDuplicates;
 
@@ -286,26 +280,26 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       return new ExpressionToConstantReplacementContext(this, updater);
     }
 
-    private @Nullable PsiElement replace(@NotNull PsiField field) {
-      Project project = field.getProject();
+    private void replace(@NotNull PsiField field) {
       PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) return null;
-      String name = field.getName();
-      PsiExpression disjunction = tryCast(myFirstComparison.getParent(), PsiPolyadicExpression.class);
-      if (disjunction == null) return null;
+      if (containingClass == null || !(myFirstComparison.getParent() instanceof PsiPolyadicExpression disjunction)) return;
       int startOffset = myFirstComparison.getStartOffsetInParent();
       int endOffset = myLastComparison.getStartOffsetInParent() + myLastComparison.getTextLength();
       String origText = disjunction.getText();
+      String name = field.getName();
+      Project project = field.getProject();
       String fieldReference = PsiResolveHelper.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
                               name : containingClass.getQualifiedName() + "." + name;
       String replacementText = origText.substring(0, startOffset) +
                                fieldReference + ".contains(" + myExpression.getText() + ")" +
                                origText.substring(endOffset);
       PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacementText, disjunction);
-      if (replacement instanceof PsiMethodCallExpression && disjunction.getParent() instanceof PsiParenthesizedExpression) {
-        disjunction = (PsiExpression)disjunction.getParent();
+      if (replacement instanceof PsiMethodCallExpression && disjunction.getParent() instanceof PsiParenthesizedExpression parent) {
+        new CommentTracker().replaceAndRestoreComments(parent, replacement);
       }
-      return new CommentTracker().replaceAndRestoreComments(disjunction, replacement);
+      else {
+        new CommentTracker().replaceAndRestoreComments(disjunction, replacement);
+      }
     }
   }
 
@@ -337,8 +331,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       if (check != null) {
         return fromComparison(candidate, check.getLeft(), check.getRight());
       }
-      PsiBinaryExpression binOp = tryCast(candidate, PsiBinaryExpression.class);
-      if (binOp != null && JavaTokenType.EQEQ.equals(binOp.getOperationTokenType())) {
+      if (candidate instanceof PsiBinaryExpression binOp && JavaTokenType.EQEQ.equals(binOp.getOperationTokenType())) {
         return fromComparison(candidate, binOp.getLOperand(), binOp.getROperand());
       }
       return null;
@@ -352,16 +345,12 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
     }
 
     private static @Nullable ExpressionToConstantComparison tryExtract(PsiExpression candidate, PsiExpression constant, PsiExpression nonConstant) {
-      String constantValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
-      if (constantValue != null) {
+      if (ExpressionUtils.computeConstantExpression(constant) instanceof String constantValue) {
         return new ExpressionToConstantComparison(candidate, nonConstant, constant, constantValue);
       }
-      PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(constant), PsiReferenceExpression.class);
-      if (ref != null) {
-        PsiEnumConstant enumConstant = tryCast(ref.resolve(), PsiEnumConstant.class);
-        if (enumConstant != null) {
-          return new ExpressionToConstantComparison(candidate, nonConstant, ref, enumConstant.getName());
-        }
+      if (PsiUtil.skipParenthesizedExprDown(constant) instanceof PsiReferenceExpression ref
+          && ref.resolve() instanceof PsiEnumConstant enumConstant) {
+        return new ExpressionToConstantComparison(candidate, nonConstant, ref, enumConstant.getName());
       }
       return null;
     }
