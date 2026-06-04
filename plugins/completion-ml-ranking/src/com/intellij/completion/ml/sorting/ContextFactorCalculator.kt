@@ -49,7 +49,7 @@ object ContextFactorCalculator {
 
 private class MyEnvironment(
   private val lookup: LookupImpl,
-  private val parameters: CompletionParameters
+  private val parameters: CompletionParameters,
 ) : CompletionEnvironment, UserDataHolderBase() {
   override fun getLookup(): Lookup = lookup
 
