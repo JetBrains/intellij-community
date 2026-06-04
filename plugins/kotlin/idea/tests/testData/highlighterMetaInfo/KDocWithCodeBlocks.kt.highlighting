@@ -1,0 +1,60 @@
+// FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+/**
+ * - One-liner `fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>main<!>(){ println("Hello, Kotlin") }`
+ * - No error elements `call(...)`
+ * - Kotlin injected and no error elements ``val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!> = 1`` and ```val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>name<!> = "Kotlin"```
+ * - Markdown triple quotes blocks without a language specification, is a Kotlin code block:
+ * ```
+ *       // simple comment
+ *       fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+ *         for (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!> in 0..10) println("i: $<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!>")
+ *       }
+ * ```
+ * - Effectively, it works for multiquoutes blocks, or just indentation blocks
+ *
+ *    fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>() {
+ *      for (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!> in 0..10) println("i: $<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!>")
+ *    }
+ *
+ * - For tilde fenced blocks
+ * ~~~~
+ *     fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+ *       val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!> = 1
+ *     }
+ * ~~~~
+ *
+ * Some java code
+ * ````java
+ *     class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>MyClass<!> {
+ *         public static final void <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='METHOD_DECLARATION_ATTRIBUTES'")!>main<!>() {
+ *         }
+ *     }
+ * ````
+ */
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {}
+
+/**
+ * Incomplete blocks
+ * ```
+ *    fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {
+ *      println("`asd`")
+ *    }
+ */
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>fff<!>(){}
+
+
+/**
+ * ~~~
+ *    fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {
+ *
+ *    }
+ * ~~~
+ *
+ *    fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {
+ *      println("`asd`")
+ *    }
+ *
+ */
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>fff2<!>(){}
