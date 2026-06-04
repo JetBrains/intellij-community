@@ -632,6 +632,59 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun editorShellCreationDoesNotResolveLiveTerminalRegistry() {
+    val editor = AgentChatFileEditor(
+      project = testProject(),
+      file = claudeLifecycleTestFile(),
+      liveTerminalRegistry = object : AgentChatLiveTerminalRegistry {
+        override fun acquireOrCreate(
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
+          startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+        ): AgentChatTerminalTab {
+          throw AssertionError("Live terminal registry must not be used while creating the editor shell")
+        }
+      },
+    ).also(editorsToDispose::add)
+
+    assertThat(editor.component).isNotNull
+    assertThat(editor.preferredFocusedComponent).isSameAs(editor.component)
+  }
+
+  @Test
+  fun selectNotifyResolvesLiveTerminalRegistryWhenTerminalIsInitialized() {
+    val project = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+    val registryAcquisitions = AtomicLong()
+    val editor = AgentChatFileEditor(
+      project = project,
+      file = claudeLifecycleTestFile(),
+      terminalTabs = terminalTabs,
+      editorCoroutineScope = unconfinedTestScope(),
+      liveTerminalRegistry = object : AgentChatLiveTerminalRegistry {
+        override fun acquireOrCreate(
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
+          startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+        ): AgentChatTerminalTab {
+          registryAcquisitions.incrementAndGet()
+          return liveTerminalStore.acquireOrCreate(project, file, terminalTabs, startupLaunchSpec)
+        }
+      },
+    ).also(editorsToDispose::add)
+
+    assertThat(registryAcquisitions.get()).isEqualTo(0)
+
+    editor.selectNotify()
+
+    assertThat(registryAcquisitions.get()).isEqualTo(1)
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+
+    liveTerminalStore.dispose(project)
+  }
+
+  @Test
   fun deferredStartBlocksTerminalInitializationUntilReleased() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile().also {
@@ -2225,7 +2278,7 @@ private fun testEditor(
   liveTerminalRegistry: AgentChatLiveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project),
   snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
-  editorCoroutineScope: CoroutineScope? = null,
+  editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
     project = project,

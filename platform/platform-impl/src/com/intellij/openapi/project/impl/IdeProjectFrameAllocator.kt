@@ -98,6 +98,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
@@ -109,8 +110,10 @@ import java.awt.event.WindowStateListener
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JFrame
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -125,20 +128,25 @@ internal class IdeProjectFrameAllocator(
   }
 
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
-    span("frame allocator background") {
-      coroutineScope {
-        val application = ApplicationManager.getApplication()
-        if (application == null || application.isUnitTestMode || application.isInternal) {
-          launch(CoroutineName("project loading timeout watcher")) {
-            delay(10.seconds)
-            // logged only during development, let's not spam users
-            logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
-          }
+    coroutineScope {
+      val app = ApplicationManager.getApplication()
+      val projectLoadingTimeoutWatcher = if (app == null || app.isInternal || app.isUnitTestMode) {
+        launch(CoroutineName("project loading timeout watcher")) {
+          delay(10.seconds)
+          // logged only during development, let's not spam users
+          logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
         }
+      }
+      else {
+        null
+      }
 
+      try {
         val project = projectInitObservable.awaitProjectInit()
-        val connection = project.messageBus.connect(this)
-        hideSplashWhenEditorOrToolWindowShown(connection)
+        hideSplashWhenEditorOrToolWindowShown(project)
+      }
+      finally {
+        projectLoadingTimeoutWatcher?.cancel()
       }
     }
   }
@@ -393,26 +401,48 @@ internal class IdeProjectFrameAllocator(
   }
 }
 
-private suspend fun hideSplashWhenEditorOrToolWindowShown(connection: SimpleMessageBusConnection) {
-  val splashHiddenDeferred = CompletableDeferred<Unit>()
+private suspend fun hideSplashWhenEditorOrToolWindowShown(project: Project) {
+  suspendCancellableCoroutine { continuation ->
+    val completed = AtomicBoolean(false)
+    val connection = project.messageBus.simpleConnect()
 
-  fun hideSplashAndComplete() {
-    hideSplash()
-    connection.disconnect()
-    splashHiddenDeferred.complete(Unit)
+    fun hideSplashAndResume() {
+      if (!completed.compareAndSet(false, true)) {
+        return
+      }
+      try {
+        hideSplash()
+        continuation.resume(Unit)
+      }
+      finally {
+        connection.disconnect()
+      }
+    }
+
+    try {
+      connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun toolWindowShown(toolWindow: ToolWindow) {
+          hideSplashAndResume()
+        }
+      })
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+          hideSplashAndResume()
+        }
+      })
+      continuation.invokeOnCancellation {
+        if (completed.compareAndSet(false, true)) {
+          connection.disconnect()
+        }
+      }
+    }
+    catch (e: Throwable) {
+      if (completed.compareAndSet(false, true)) {
+        connection.disconnect()
+      }
+      throw e
+    }
   }
-
-  connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-    override fun toolWindowShown(toolWindow: ToolWindow) {
-      hideSplashAndComplete()
-    }
-  })
-  connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-    override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-      hideSplashAndComplete()
-    }
-  })
-  splashHiddenDeferred.await()
 }
 
 private fun applyProjectFrameUiPolicy(
