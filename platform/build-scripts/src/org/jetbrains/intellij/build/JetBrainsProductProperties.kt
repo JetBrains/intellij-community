@@ -55,7 +55,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     val ALLOWED_PLUGIN_VENDORS: Set<String> = setOf(
       "JetBrains", "JetBrains s.r.o.",
       "JetBrains, Google",
-      "JetBrains Experimental",
+      "JetBrains Experimental", "JetBrains-Experimental",
     )
   }
 
