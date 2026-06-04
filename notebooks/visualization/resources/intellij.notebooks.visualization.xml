@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="org.intellij.plugins.markdown"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
