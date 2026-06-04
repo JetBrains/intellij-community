@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -21,7 +20,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditorAsync
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.JsQueryHandler
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
@@ -311,14 +309,19 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   }
 
   private fun getRequest(
-    startPageId: String?,
+    startPageId: String,
     dataContext: DataContext?,
   ): HTMLEditorProvider.Request {
-    val request = startPageId?.let {
-      html(content, "file:///jbcefbrowser#/$it").withOnUrlChanged { oldUrl, newUrl ->
+    // One-page case
+    val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID) {
+      html(content)
+    }
+    // Multipage case
+    else {
+      html(content, "file:///jbcefbrowser#/$startPageId").withOnUrlChanged { oldUrl, newUrl ->
         WhatsNewCounterUsageCollector.multipageIdChanged(dataContext?.project, oldUrl?.substringAfter("#/"), newUrl.substringAfter("#/"))
       }
-    } ?: html(content)
+    }
     return request
       .withQueryHandler(getHandler(dataContext))
       .withResourceHandler(getRequestHandler(dataContext))
