@@ -17,7 +17,7 @@ class PydevdReprStrProvider(StrPresentationProvider):
         return self.get_str(val, context)
 
     def get_str(self, val, context=None):
-        if context == 'variables':
+        if context in ('variables', 'repl'):
             return get_value_repr(val, False)
         else:
             return get_value_repr(val)

@@ -1261,7 +1261,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             return
 
         safe_repr_custom_attrs = {}
-        if context == "clipboard":
+        if context in ("clipboard", "repl"):
             safe_repr_custom_attrs = dict(
                 maxstring_outer=2**64,
                 maxstring_inner=2**64,
