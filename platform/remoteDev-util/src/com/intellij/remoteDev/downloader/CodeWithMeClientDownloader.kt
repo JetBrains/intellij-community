@@ -306,6 +306,7 @@ object CodeWithMeClientDownloader {
 
   private val currentlyDownloading = ConcurrentHashMap<Path, CompletableFuture<Boolean>>()
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use downloadFrontend() instead")
   fun downloadClientAndJdk(clientBuildVersion: String, progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     val clientBuildNumber = BuildNumber.fromStringOrNull(clientBuildVersion) ?: return null
