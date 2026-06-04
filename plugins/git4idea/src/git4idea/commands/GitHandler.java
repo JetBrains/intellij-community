@@ -576,7 +576,7 @@ public abstract class GitHandler {
    * @param exitCode a exit code for process
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void setExitCode(int exitCode) {
     if (myExitCode == null) {
       myExitCode = exitCode;

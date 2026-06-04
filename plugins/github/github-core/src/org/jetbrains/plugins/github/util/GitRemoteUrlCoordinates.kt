@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.util.NlsSafe
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("extracted to collab",
             replaceWith = ReplaceWith("GitRemoteUrlCoordinates", "git4idea.remote.GitRemoteUrlCoordinates"))
 class GitRemoteUrlCoordinates(@NlsSafe val url: String, val remote: GitRemote, val repository: GitRepository) {

@@ -9,6 +9,7 @@ import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.rebase.GitRebaseOption
+import org.jetbrains.annotations.ApiStatus
 
 class GitRebaseParams internal constructor(
   private val version: GitVersion,
@@ -69,6 +70,7 @@ class GitRebaseParams internal constructor(
         return Reference(ref)
       }
 
+      @ApiStatus.ScheduledForRemoval
       @Deprecated("Prefer using fromRefString", ReplaceWith("fromRefString(upstream)"))
       fun fromNullableString(upstream: String?): RebaseUpstream {
         if (upstream.isNullOrBlank()) return Root

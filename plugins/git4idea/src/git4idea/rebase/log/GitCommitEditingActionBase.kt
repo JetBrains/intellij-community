@@ -35,6 +35,7 @@ import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationR
 import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Prohibited
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
@@ -130,6 +131,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract fun getFailureTitle(): String
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Override createCommitEditingData(repository, selection, logData, selectedChanges) instead")
   protected open fun createCommitEditingData(
     repository: GitRepository,

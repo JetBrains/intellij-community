@@ -238,7 +238,7 @@ public final class GitBranchUtil {
   /**
    * @deprecated Prefer {@link #guessRepositoryForOperation(Project, DataContext)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @CalledInAny
   public static @Nullable GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
     if (project.isDisposed()) return null;

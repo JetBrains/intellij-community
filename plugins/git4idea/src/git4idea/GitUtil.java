@@ -414,7 +414,7 @@ public final class GitUtil {
   /**
    * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGitRoot(@NotNull File folder) {
     try {
       return isGitRoot(folder.toPath());

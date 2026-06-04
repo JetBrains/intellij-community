@@ -41,7 +41,7 @@ import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUC
 /**
  * @deprecated Use {@link GitFetchSupport}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);

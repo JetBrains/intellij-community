@@ -3,7 +3,9 @@ package git4idea.history
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Causes memory leaks due to incorrect Disposable usage",
             replaceWith = ReplaceWith("GitHistoryTraverser.create(project, parentDisposable)", "git4idea.history.GitHistoryTraverser"),
             level = DeprecationLevel.ERROR)
