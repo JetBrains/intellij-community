@@ -65,10 +65,18 @@ public interface FrameDiffTool extends DiffTool {
     public @Nullable List<AnAction> rightToolbarActions;
     public @Nullable List<AnAction> popupActions;
     public @Nullable JComponent statusPanel;
+    /**
+     * @deprecated unused
+     */
+    @Deprecated
     public @Nullable DiffInfo diffInfo;
     public boolean needTopToolbarBorder = false;
   }
 
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
   @ApiStatus.Experimental
   interface DiffInfo {
     @NotNull JComponent getComponent();

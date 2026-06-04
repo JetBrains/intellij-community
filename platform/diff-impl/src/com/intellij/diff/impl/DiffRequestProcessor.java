@@ -171,7 +171,6 @@ public abstract class DiffRequestProcessor
   private final @NotNull ActionToolbar myToolbar;
   private final @NotNull ActionToolbar myRightToolbar;
   private final @NotNull Wrapper myToolbarWrapper;
-  private final @NotNull Wrapper myDiffInfoWrapper;
   private final @NotNull Wrapper myRightToolbarWrapper;
   private final @NotNull Wrapper myToolbarStatusPanel;
   private final @NotNull MyProgressBar myProgressBar;
@@ -243,7 +242,6 @@ public abstract class DiffRequestProcessor
     myRightToolbarWrapper = new Wrapper(JBUI.Panels.simplePanel(myRightToolbar.getComponent()));
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
-    myDiffInfoWrapper = new Wrapper();
     myTopPanel = buildTopPanel();
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
@@ -482,7 +480,6 @@ public abstract class DiffRequestProcessor
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
       myTopPanel.setBorder(null);
-      myDiffInfoWrapper.setContent(null);
 
       myToolbarGroup.removeAll();
       myRightToolbarGroup.removeAll();
@@ -626,7 +623,6 @@ public abstract class DiffRequestProcessor
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
-      myDiffInfoWrapper.setContent(null);
 
       myToolbarGroup.removeAll();
       myRightToolbarGroup.removeAll();
@@ -1392,13 +1388,6 @@ public abstract class DiffRequestProcessor
       setTitle(myActiveRequest.getTitle());
 
       FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
-      FrameDiffTool.DiffInfo diffInfo = toolbarComponents.diffInfo;
-      if (diffInfo != null) {
-        myDiffInfoWrapper.setContent(diffInfo.getComponent());
-      }
-      else {
-        myDiffInfoWrapper.setContent(null);
-      }
       buildToolbar(toolbarComponents.toolbarActions, toolbarComponents.rightToolbarActions);
       buildActionPopup(toolbarComponents.popupActions);
 
