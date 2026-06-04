@@ -18,6 +18,8 @@ val supportedOses = supportedPlatforms.map { it.os }.toSet()
 sealed class Platform(val os: OS) : JavaSerializable {
   abstract val arch: Arch
 
+  override fun toString(): String = toS3DistributionSlug()
+
   @Serializable
   sealed class Windows(override val arch: Arch) : Platform(OS.WINDOWS) {
     @Serializable
