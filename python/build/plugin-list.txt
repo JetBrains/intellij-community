@@ -8,6 +8,7 @@ intellij.editorconfig.plugin
 intellij.featuresTrainer
 intellij.grazie
 intellij.markdown
+intellij.mermaid
 intellij.properties
 intellij.restructuredtext
 intellij.searchEverywhereMl
