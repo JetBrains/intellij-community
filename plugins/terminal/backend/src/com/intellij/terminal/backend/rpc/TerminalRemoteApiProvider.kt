@@ -8,6 +8,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksRemoteApi
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
 import org.jetbrains.plugins.terminal.settings.impl.TerminalProjectOptionsRemoteApi
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorageRemoteApi
+import org.jetbrains.plugins.terminal.startup.TerminalExecOptionsCustomizationRemoteApi
 
 internal class TerminalRemoteApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -15,5 +16,6 @@ internal class TerminalRemoteApiProvider : RemoteApiProvider {
     remoteApi(remoteApiDescriptor<TerminalTabsStorageRemoteApi>()) { TerminalTabsStorageRemoteApiImpl() }
     remoteApi(remoteApiDescriptor<TerminalHyperlinksRemoteApi>()) { TerminalHyperlinksRemoteApiImpl() }
     remoteApi(remoteApiDescriptor<TerminalHyperlinksSessionRemoteApi>()) { TerminalHyperlinksSessionRemoteApiImpl() }
+    remoteApi(remoteApiDescriptor<TerminalExecOptionsCustomizationRemoteApi>()) { TerminalExecOptionsCustomizationRemoteApiImpl() }
   }
 }

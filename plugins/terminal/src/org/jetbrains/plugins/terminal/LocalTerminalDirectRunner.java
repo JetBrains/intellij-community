@@ -2,21 +2,17 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.LoggerKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
-import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +22,7 @@ import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 import org.jetbrains.plugins.terminal.shell_integration.TerminalPSReadLineUpdateUtil;
-import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions;
-import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl;
-import org.jetbrains.plugins.terminal.startup.ShellExecCommand;
-import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl;
-import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
-import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizerDisabler;
+import org.jetbrains.plugins.terminal.startup.TerminalExecOptionsCustomizationKt;
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 
 import java.nio.charset.Charset;
@@ -41,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
@@ -87,76 +77,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL) {
       updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
     }
-    return applyTerminalCustomizers(updatedOptions);
-  }
-
-  private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
-    boolean disableCustomizers = ContainerUtil.exists(ShellExecOptionsCustomizerDisabler.EP_NAME.getExtensionList(), disabler -> {
-      return disabler.shouldDisable(myProject);
-    });
-    if (disableCustomizers) return options;
-
-    List<String> shellCommand = Objects.requireNonNull(options.getShellCommand(), () -> {
-      return "Shell command must not be null, " + options;
-    });
-    String workingDirectory = Objects.requireNonNull(options.getWorkingDirectory(), () -> {
-      return "Working directory must not be null, " + options;
-    });
-    EelDescriptor eelDescriptor = options.getEelDescriptorNotNull();
-
-    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(eelDescriptor.getOsFamily(), options.getEnvVariables());
-    if (shouldApplyLocalTerminalCustomizers(eelDescriptor)) {
-      //noinspection deprecation
-      for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
-        try {
-          //noinspection deprecation
-          shellCommand = customizer.customizeCommandAndEnvironment(myProject, workingDirectory, shellCommand, envs, eelDescriptor);
-        }
-        catch (Throwable t) {
-          LoggerKt.rethrowControlFlowException(t);
-          LOG.error("Exception during customization of the terminal session", t);
-        }
-      }
-    }
-
-    EelPath workingDirectoryEelPath = options.getWorkingDirectoryEelPathNotNull();
-    AtomicReference<ShellExecCommand> shellExecCommandRef = new AtomicReference<>(new ShellExecCommandImpl(shellCommand));
-    ShellExecOptionsCustomizer.Companion.getEP_NAME().processWithPluginDescriptor((customizer, _) -> {
-      MutableShellExecOptions execOptions = new MutableShellExecOptionsImpl(
-        shellExecCommandRef.get(),
-        workingDirectoryEelPath,
-        envs,
-        options.getShellIntegration() != null,
-        customizer.getClass()
-      );
-      customizer.customizeExecOptions(myProject, execOptions);
-      shellExecCommandRef.set(execOptions.getExecCommand());
-      return Unit.INSTANCE;
-    });
-    shellCommand = shellExecCommandRef.get().getCommand();
-
-    return options.builder()
-      .shellCommand(shellCommand)
-      .envVariables(envs)
-      .build();
-  }
-
-  private boolean shouldApplyLocalTerminalCustomizers(@NotNull EelDescriptor shellProcessEelDescriptor) {
-    //noinspection deprecation
-    if (!LocalTerminalCustomizer.EP_NAME.hasAnyExtensions()) {
-      return false;
-    }
-    EelDescriptor projectEelDescriptor = EelProviderProjectUtilKt.getEelDescriptor(myProject);
-    // Apply `LocalTerminalCustomizer` only if the project and the shell process
-    // belong to the same environment.
-    // Otherwise, `LocalTerminalCustomizer` implementations may customize wrongly,
-    // like `com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer` does:
-    // environment variables from one environment being injected into the other, breaking the shell.
-    //
-    // Examples of mixed environments:
-    // - Running powershell.exe (using LocalEelDescriptor) in projects under \\wsl.localhost\Ubuntu\
-    // - Running "wsl.exe -d Ubuntu" (using WSL EelDescriptor) in projects under C:\
-    return shellProcessEelDescriptor.equals(projectEelDescriptor);
+    return TerminalExecOptionsCustomizationKt.applyExecOptionsCustomizers(myProject, updatedOptions);
   }
 
   /**

@@ -11,6 +11,9 @@ import java.nio.file.Path
 /**
  * Allows modifying options used to start a shell session.
  *
+ * **Note that in the case of Remote Dev, customizers are executed on the backend,
+ * so it is expected that implementations are registered either in the shared or the backend part of the plugin.**
+ *
  * Register the implementation as `org.jetbrains.plugins.terminal.shellExecOptionsCustomizer`
  * extension in `plugin.xml` file.
  */

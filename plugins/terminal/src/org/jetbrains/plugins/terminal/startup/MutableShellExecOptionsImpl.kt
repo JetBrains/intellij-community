@@ -9,10 +9,12 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.Collections
 
-internal class MutableShellExecOptionsImpl(
+@ApiStatus.Internal
+class MutableShellExecOptionsImpl(
   private var _execCommand: ShellExecCommand,
   override val workingDirectory: EelPath,
   private val mutableEnvs: MutableMap<String, String>,
@@ -140,7 +142,7 @@ internal class MutableShellExecOptionsImpl(
     return translator.translateAbsoluteLocalPathToRemote(path)?.toString()
   }
 
-  override fun toString() = ShellExecOptionsImpl.stringify(_execCommand, workingDirectory, envs)
+  override fun toString(): String = ShellExecOptionsImpl.stringify(_execCommand, workingDirectory, envs)
 }
 
 private fun String.ensureStartsWith(prefix: String): String = if (this.startsWith(prefix)) this else prefix + this
