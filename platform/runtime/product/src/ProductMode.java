@@ -25,6 +25,17 @@ public final class ProductMode {
    * It doesn't show the UI to the user directly, a separate process is responsible for this.
    */
   public static final ProductMode BACKEND = new ProductMode("backend");
+  /**
+   * Indicates that this process is running in a light mode - a minimalistic self-sufficient frontend IDE.
+   */
+  @ApiStatus.Internal
+  public static final ProductMode LIGHT = new ProductMode("light");
+  /**
+   * Indicates that this process is running in a light mode with an established rd connection.
+   * This is a temporary mode which appears during transition from the "light" to "frontend" mode.
+   */
+  @ApiStatus.Internal
+  public static final ProductMode LIGHT_WITH_RD_CONNECTION = new ProductMode("light_with_rd_connection");
 
   private final String myId;
 
@@ -42,6 +53,8 @@ public final class ProductMode {
       case "monolith": return MONOLITH;
       case "frontend": return FRONTEND;
       case "backend": return BACKEND;
+      case "light": return LIGHT;
+      case "light_with_rd_connection": return LIGHT_WITH_RD_CONNECTION;
       default: return null;
     }
   }

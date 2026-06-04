@@ -34,18 +34,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.name
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
-  private val currentMode by lazy {
-    val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
-    val currentMode = ProductMode.findById(currentModeId)
-    if (currentMode == null) {
-      error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
-    }
-    currentMode
-  }
-  
+  private val currentMode: AtomicReference<ProductMode> = AtomicReference(null)
+
   private val productModules by lazy {
     val rootModuleId = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
     if (rootModuleId == null) {
@@ -62,7 +56,29 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   override val currentModeId: String
-    get() = currentMode.id
+    get() {
+      val currentModeId = currentMode.get()?.id
+      if (currentModeId != null) {
+        return currentModeId
+      }
+      else {
+        val initialModeId = if (AppMode.isIjLight()) "light" else System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
+        val initialMode = ProductMode.findById(initialModeId)
+        if (initialMode == null) {
+          error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
+        }
+        currentMode.compareAndSet(null, initialMode)
+        return currentMode.get().id
+      }
+    }
+
+  override fun advanceToLightWithRdConnectionMode(): Boolean {
+    return currentMode.compareAndSet(ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION)
+  }
+
+  override fun advanceToFrontendMode(): Boolean {
+    return currentMode.compareAndSet(ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.FRONTEND)
+  }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
     val logger = logger<ModuleBasedProductLoadingStrategy>()

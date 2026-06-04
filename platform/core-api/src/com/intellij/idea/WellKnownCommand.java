@@ -85,6 +85,7 @@ public final class WellKnownCommand {
 
     put("thinClient", GUI);
     put("thinClient-headless", HEADLESS);
+    put("ijLight", GUI);
     put("serverMode", REMOTE_DEV_HOST);
     put("splitMode", REMOTE_DEV_HOST);
     put("cwmHost", REMOTE_DEV_HOST);

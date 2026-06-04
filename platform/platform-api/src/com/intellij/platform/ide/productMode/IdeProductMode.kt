@@ -27,7 +27,9 @@ interface IdeProductMode {
      */
     @JvmStatic
     val isFrontend: Boolean
-      get() = getInstance().currentMode == ProductMode.FRONTEND
+      get() = getInstance().currentMode.let {
+        it == ProductMode.FRONTEND || it == ProductMode.LIGHT || it == ProductMode.LIGHT_WITH_RD_CONNECTION
+      }
 
     /**
      * Returns `true` if this process is running in a monolithic mode (a regular IDE instance).

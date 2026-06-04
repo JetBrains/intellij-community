@@ -6,8 +6,9 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.runtime.product.ProductMode
 
 internal class IdeProductModeImpl : IdeProductMode {
-  override val currentMode: ProductMode by lazy {
-    val modeId = ProductLoadingStrategy.strategy.currentModeId
-    ProductMode.findById(modeId) ?: error("Unknown product mode: $modeId")
+  override val currentMode: ProductMode
+    get() {
+      val modeId = ProductLoadingStrategy.strategy.currentModeId
+      return ProductMode.findById(modeId) ?: error("Unknown product mode: $modeId")
   }
 }

@@ -38,6 +38,16 @@ abstract class ProductLoadingStrategy {
   abstract val currentModeId: String
 
   /**
+   * Returns `true` if current product mode has successfully advanced from light to light_with_rd_connection
+   */
+  abstract fun advanceToLightWithRdConnectionMode(): Boolean
+
+  /**
+   * Returns `true` if current product mode has successfully advanced from light_with_rd_connection to frontend
+   */
+  abstract fun advanceToFrontendMode(): Boolean
+
+  /**
    * Adds roots of all modules from the main module group and their dependencies to the classpath of [bootstrapClassLoader].
    */
   abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)

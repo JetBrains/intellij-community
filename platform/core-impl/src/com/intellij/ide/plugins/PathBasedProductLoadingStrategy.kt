@@ -17,6 +17,14 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       else -> "monolith"
     }
 
+  override fun advanceToLightWithRdConnectionMode(): Boolean {
+    throw NotImplementedError("It seems that you are starting ij-light with wrong ProductLoadingStrategy (ModuleBasedProductLoadingStrategy is expected)")
+  }
+
+  override fun advanceToFrontendMode(): Boolean {
+    throw NotImplementedError("It seems that you are starting ij-light with wrong ProductLoadingStrategy (ModuleBasedProductLoadingStrategy is expected)")
+  }
+
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
 
