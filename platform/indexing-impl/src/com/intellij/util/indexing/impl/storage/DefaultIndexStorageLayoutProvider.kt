@@ -53,7 +53,11 @@ private val LOG = logger<DefaultIndexStorageLayoutProvider>()
  */
 @Internal
 @VisibleForTesting
-class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
+class DefaultIndexStorageLayoutProvider(
+  private val storageLockContextFactory: () -> StorageLockContext,
+) : FileBasedIndexLayoutProvider {
+
+  constructor() : this(::newStorageLockContext)
 
   override fun <K, V> getLayout(
     extension: FileBasedIndexExtension<K, V>,
@@ -61,10 +65,10 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
   ): VfsAwareIndexStorageLayout<K, V> {
     if (extension is SingleEntryFileBasedIndexExtension<V>) {
       @Suppress("UNCHECKED_CAST")
-      return SingleEntryStorageLayout(extension) as VfsAwareIndexStorageLayout<K, V>
+      return SingleEntryStorageLayout(extension, storageLockContextFactory) as VfsAwareIndexStorageLayout<K, V>
     }
     else if (extension is ShardableIndexExtension && extension.shardsCount() > 1) {
-      val (storageFactory, forwardFactory) = createDefaultFactories(extension)
+      val (storageFactory, forwardFactory) = createDefaultFactories(extension, storageLockContextFactory)
       return ShardedStorageLayout(
         extension,
         forwardFactory,
@@ -72,7 +76,7 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
       )
     }
     else {
-      return DefaultStorageLayout(extension)
+      return DefaultStorageLayout(extension, storageLockContextFactory)
     }
   }
 
@@ -82,8 +86,11 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
 
   override fun toString(): String = DefaultIndexStorageLayoutProvider::class.java.simpleName
 
-  internal class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
-    private val storageLockContext = newStorageLockContext()
+  internal class DefaultStorageLayout<K, V>(
+    private val extension: FileBasedIndexExtension<K, V>,
+    storageLockContextFactory: () -> StorageLockContext,
+  ) : VfsAwareIndexStorageLayout<K, V> {
+    private val storageLockContext = storageLockContextFactory()
 
     private val forwardIndexAccessor = MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
 
@@ -132,9 +139,11 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
     }
   }
 
-  internal class SingleEntryStorageLayout<V> internal constructor(private val extension: SingleEntryFileBasedIndexExtension<V>) :
-    VfsAwareIndexStorageLayout<Int, V> {
-    private val storageLockContext = newStorageLockContext()
+  internal class SingleEntryStorageLayout<V> internal constructor(
+    private val extension: SingleEntryFileBasedIndexExtension<V>,
+    storageLockContextFactory: () -> StorageLockContext,
+  ) : VfsAwareIndexStorageLayout<Int, V> {
+    private val storageLockContext = storageLockContextFactory()
 
     private val forwardIndexAccessor = SingleEntryIndexForwardIndexAccessor(extension)
 
@@ -177,10 +186,13 @@ private data class StorageFactories<K, V>(
   val forwardFactory: ThrowableNotNullFunction<Int, ForwardIndex, IOException>,
 )
 
-private fun <K, V> createDefaultFactories(extension: FileBasedIndexExtension<K, V>): StorageFactories<K, V> {
+private fun <K, V> createDefaultFactories(
+  extension: FileBasedIndexExtension<K, V>,
+  storageLockContextFactory: () -> StorageLockContext,
+): StorageFactories<K, V> {
   val shardsCount = (extension as ShardableIndexExtension).shardsCount()
 
-  val storageLockContexts = Array(shardsCount) { newStorageLockContext() }
+  val storageLockContexts = Array(shardsCount) { storageLockContextFactory() }
 
   val storageFactory = ThrowableNotNullFunction<Int, VfsAwareIndexStorage<K, V>, IOException> { shardNo ->
     val shardStorageFile = IndexInfrastructure.getStorageFile(extension.name, shardNo)
