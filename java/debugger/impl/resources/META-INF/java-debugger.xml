@@ -332,6 +332,8 @@
                  description="Enable async stack traces implementation via breakpoints"/>
     <registryKey key="debugger.breakpoint.instrumentation" defaultValue="true"
                  description="Use instrumentation conditional and logging breakpoints if possible"/>
+    <registryKey key="debugger.breakpoint.instrumentation.hotswap.mode" defaultValue="[NONE|PRESERVE_EXTERNAL|INSTALL_EXTERNAL|PENDING*]"
+                 description="Nested breakpoint instrumentation HotSwap mode. Each option includes previous ones"/>
     <registryKey key="debugger.helper.method.stack.scan.timeout.ms" defaultValue="200"
                  description="Timeout (in ms) for helper-based method stack scans"/>
     <registryKey key="debugger.breakpoint.instrumentation.suspend.context.wait.timeout.ms" defaultValue="200"
@@ -339,7 +341,7 @@
     <registryKey key="debugger.breakpoint.instrumentation.method.stack.jdi.check.timeout.ms" defaultValue="200"
                  description="Timeout (in ms) for JDI rechecks of incomplete method stacks before breakpoint instrumentation HotSwap"/>
     <registryKey key="debugger.breakpoint.instrumentation.pending.retry.delays.ms" defaultValue="500,1000,5000,10000"
-                 description="Retry delays in milliseconds for pending breakpoint instrumentation checks; 0 disables throttling"/>
+                 description="Retry delays in milliseconds for pending breakpoint instrumentation checks; 0 keeps pending requests enabled without throttling"/>
     <registryKey key="debugger.async.stacks.coroutines" defaultValue="true"
                  description="Enable async stack traces for coroutines"/>
     <registryKey key="debugger.async.stacks.max.depth" defaultValue="500"
