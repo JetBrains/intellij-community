@@ -47,10 +47,10 @@ abstract class GradleTestCase {
   }
 
   suspend fun initProject(projectInfo: GradleProjectInfo): Path =
-    initProject(testPath, projectInfo)
+    projectInfo.initProject(testPath)
 
   suspend fun deleteProject(projectInfo: GradleProjectInfo): Unit =
-    deleteProject(testPath, projectInfo)
+    projectInfo.deleteProject(testPath)
 
   fun assertProjectState(project: Project, vararg projectsInfo: GradleProjectInfo): Unit =
     assertProjectState(project, testPath, *projectsInfo)

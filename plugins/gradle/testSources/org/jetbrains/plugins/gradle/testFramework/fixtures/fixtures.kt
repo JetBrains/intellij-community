@@ -45,7 +45,7 @@ fun gradleProjectRootFixture(
   projectInfo: GradleProjectInfo,
 ): TestFixture<Path> = testFixture {
   val testRoot = tempPathFixture().init()
-  val projectRoot = initProject(testRoot, projectInfo)
+  val projectRoot = projectInfo.initProject(testRoot)
   initialized(projectRoot) {}
 }
 

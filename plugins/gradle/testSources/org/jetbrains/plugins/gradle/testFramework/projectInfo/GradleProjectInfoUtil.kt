@@ -22,26 +22,26 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.name
 
-suspend fun initProject(root: Path, projectInfo: GradleProjectInfo): Path {
-  for (compositeInfo in projectInfo.composites) {
-    initProject(root, compositeInfo)
+suspend fun GradleProjectInfo.initProject(root: Path): Path {
+  for (compositeInfo in composites) {
+    compositeInfo.initProject(root)
   }
-  for (moduleInfo in projectInfo.modules) {
+  for (moduleInfo in modules) {
     val moduleRoot = root.resolve(moduleInfo.relativePath)
       .createDirectories()
       .refreshAndGetVirtualDirectory()
     moduleInfo.files.createFiles(moduleRoot)
   }
-  return root.resolve(projectInfo.projectRelativePath)
+  return root.resolve(projectRelativePath)
 }
 
-suspend fun deleteProject(root: Path, projectInfo: GradleProjectInfo) {
-  for (compositeInfo in projectInfo.composites) {
-    deleteProject(root, compositeInfo)
+suspend fun GradleProjectInfo.deleteProject(root: Path) {
+  for (compositeInfo in composites) {
+    compositeInfo.deleteProject(root)
   }
   withContext(Dispatchers.EDT) {
     edtWriteAction {
-      for (moduleInfo in projectInfo.modules) {
+      for (moduleInfo in modules) {
         root.resolve(moduleInfo.relativePath)
           .refreshAndFindVirtualFileOrDirectory()
           ?.deleteRecursively()

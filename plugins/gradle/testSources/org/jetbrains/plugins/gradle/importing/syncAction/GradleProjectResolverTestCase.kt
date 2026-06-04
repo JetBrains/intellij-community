@@ -34,7 +34,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     )
 
   fun initProject(projectInfo: GradleProjectInfo) = runBlocking {
-    initProject(projectNioPath, projectInfo)
+      projectInfo.initProject(projectNioPath)
   }
 
   fun assertProjectStructure(projectInfo: GradleProjectInfo) =

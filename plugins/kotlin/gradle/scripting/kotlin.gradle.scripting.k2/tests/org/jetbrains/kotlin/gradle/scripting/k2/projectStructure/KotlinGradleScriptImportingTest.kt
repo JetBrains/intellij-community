@@ -106,7 +106,7 @@ class KotlinGradleScriptImportingTest {
 
     fun `test base script model is applied to files not opened in editor`(gradle: GradleTestFixture) = runBlocking {
         val projectInfo = simpleJavaProjectInfo(gradle.gradleVersion)
-        val projectRoot = initProject(testRoot, projectInfo)
+        val projectRoot = projectInfo.initProject(testRoot)
 
         val entitiesAtPhases = collectScriptEntityPhasesAtSyncPhases(asDisposable())
 
@@ -129,7 +129,7 @@ class KotlinGradleScriptImportingTest {
             }
             simpleJavaRootModuleInfo()
         }
-        val projectRoot = initProject(testRoot, projectInfo)
+        val projectRoot = projectInfo.initProject(testRoot)
 
         val entitiesAtPhases = collectScriptEntityPhasesAtSyncPhases(asDisposable())
 
@@ -146,7 +146,7 @@ class KotlinGradleScriptImportingTest {
 
     fun `test Kotlin DSL sync phases order`(gradle: GradleTestFixture) = runBlocking {
         val projectInfo = simpleJavaProjectInfo(gradle.gradleVersion)
-        val projectRoot = initProject(testRoot, projectInfo)
+        val projectRoot = projectInfo.initProject(testRoot)
         val expectedPhases = buildList {
             add(GradleSyncPhase.INITIAL_PHASE)
             if (GradleVersionSpecificsUtil.isBaseScriptModelSupported(gradle.gradleVersion)) {
@@ -175,8 +175,8 @@ class KotlinGradleScriptImportingTest {
     fun `test script entities from all linked builds should be preserved in workspace model`(gradle: GradleTestFixture) = runBlocking {
         val project1Info = simpleJavaProjectInfo(gradle.gradleVersion, "project1")
         val project2Info = simpleJavaProjectInfo(gradle.gradleVersion, "project2")
-        val project1Root = initProject(testRoot, project1Info)
-        val project2Root = initProject(testRoot, project2Info)
+        val project1Root = project1Info.initProject(testRoot)
+        val project2Root = project2Info.initProject(testRoot)
 
         val projectScripts = sequenceOf(
             project1Root.resolve(project1Info.rootModule.settingsScriptName),
@@ -200,7 +200,7 @@ class KotlinGradleScriptImportingTest {
 
     fun `test script entities visibility at sync phases`(gradle: GradleTestFixture) = runBlocking {
         val projectInfo = simpleJavaProjectInfo(gradle.gradleVersion)
-        val projectRoot = initProject(testRoot, projectInfo)
+        val projectRoot = projectInfo.initProject(testRoot)
 
         val entitiesAtPhases = collectScriptEntityPhasesAtSyncPhases(asDisposable())
 
