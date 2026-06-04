@@ -1,0 +1,5 @@
+{
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.java.UseNamedGetterInspection",
+    "mainFile": "Test.java",
+    "problem": "none"
+}

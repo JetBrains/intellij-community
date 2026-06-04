@@ -1,0 +1,1 @@
+data class Flags(val isActive: Boolean)

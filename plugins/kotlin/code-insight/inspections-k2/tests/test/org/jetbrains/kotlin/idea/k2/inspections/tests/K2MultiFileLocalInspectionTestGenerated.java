@@ -647,5 +647,123 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
                 }
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter")
+        public abstract static class UseNamedGetter extends AbstractK2MultiFileLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/booleanProperty")
+            public static class BooleanProperty extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("booleanProperty.test")
+                public void testBooleanProperty() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/booleanProperty/booleanProperty.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/customComponentOperator")
+            public static class CustomComponentOperator extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("customComponentOperator.test")
+                public void testCustomComponentOperator() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/customComponentOperator/customComponentOperator.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/multipleComponents")
+            public static class MultipleComponents extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multipleComponents.test")
+                public void testMultipleComponents() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/multipleComponents/multipleComponents.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/nonDataClass")
+            public static class NonDataClass extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nonDataClass.test")
+                public void testNonDataClass() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/nonDataClass/nonDataClass.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/privateProperty")
+            public static class PrivateProperty extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("privateProperty.test")
+                public void testPrivateProperty() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/privateProperty/privateProperty.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/simpleDataClass")
+            public static class SimpleDataClass extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simpleDataClass.test")
+                public void testSimpleDataClass() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/simpleDataClass/simpleDataClass.test");
+                }
+            }
+        }
     }
 }

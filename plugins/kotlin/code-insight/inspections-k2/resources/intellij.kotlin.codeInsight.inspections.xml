@@ -648,6 +648,15 @@
                      suppressId="unused" alternativeId="UNUSED_PARAMETER" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
 
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.java.UseNamedGetterInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="JAVA"
+                     key="inspection.use.named.getter.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.coroutines.SimplifiableFlowCallChainInspection"
                      enabledByDefault="true"
                      groupPath="Kotlin"
