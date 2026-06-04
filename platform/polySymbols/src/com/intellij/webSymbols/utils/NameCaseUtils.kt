@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 object NameCaseUtils {
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.polySymbols.utils.NameCaseUtils.toPascalCase instead",
               replaceWith = ReplaceWith("com.intellij.polySymbols.utils.NameCaseUtils.toPascalCase(str)"))
   fun toPascalCase(str: String): String =
@@ -20,6 +21,7 @@ object NameCaseUtils {
     com.intellij.polySymbols.utils.NameCaseUtils.toCamelCase(str)
 
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.polySymbols.utils.NameCaseUtils.toKebabCase instead",
               replaceWith = ReplaceWith("com.intellij.polySymbols.utils.NameCaseUtils.toKebabCase(str)"))
   fun toKebabCase(str: String): String =
