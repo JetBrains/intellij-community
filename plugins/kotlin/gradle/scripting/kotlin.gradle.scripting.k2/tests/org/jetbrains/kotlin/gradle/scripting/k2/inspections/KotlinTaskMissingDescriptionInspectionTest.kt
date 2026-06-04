@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -47,7 +48,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testMissingDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -58,7 +59,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testMissingDelegationNoConfigBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -84,7 +85,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNotMissingDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -114,7 +115,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNotMissingSetterDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -149,7 +150,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNestedDescriptionAssignmentDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -189,7 +190,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNestedDescriptionSettersDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -224,7 +225,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -239,7 +240,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegationNoConfigBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -271,7 +272,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegationNotMissing(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -303,7 +304,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNotMissingDelegationWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -333,7 +334,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testNotMissingSetterDelegationWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -365,7 +366,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegationNotMissingWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -404,7 +405,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testMissingDelegationWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -415,7 +416,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testMissingDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -441,7 +442,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegationWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -456,7 +457,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testInsideTasksBlockDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -490,7 +491,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testAddingDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -531,7 +532,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testAddingBeforeAnyElementOnlyDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -572,7 +573,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testAddingConfigBlockDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -614,7 +615,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testAddingInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -637,7 +638,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
     fun testAddingConfigBlockInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
