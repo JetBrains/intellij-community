@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="netty-codec-compression" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-compression:4.2.13.Final">
+        <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-compression:4.2.15.Final">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.13.Final/netty-codec-compression-4.2.13.Final.jar">
-              <sha256sum>15a1cea261831a8b92c02aa5ca1a51a180a4c6ff873a01ecaaf53f0ebe1db6e3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar">
+              <sha256sum>4adaa5cdd4d2e9b50b23e4c3eff42e73de6eb40848718b3aa84cd5b454da6ce8</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.13.Final/netty-codec-compression-4.2.13.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.13.Final/netty-codec-compression-4.2.13.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
