@@ -29,11 +29,11 @@ import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
-  override fun newSorter(): MLSorter = MLSorter()
+  override fun newSorter(): CompletionFinalSorter = MLSorter()
 }
 
 
-class MLSorter : CompletionFinalSorter() {
+private class MLSorter : CompletionFinalSorter() {
   private companion object {
     private val LOG = logger<MLSorter>()
     private const val REORDER_ONLY_TOP_K = 5
