@@ -6,10 +6,10 @@ class MinimapLineProjection private constructor(
   val projectedLineCount: Int,
   val collapsedRegions: List<MinimapCollapsedRegion>,
   private val hiddenIntervals: List<MinimapHiddenInterval>,
+  private val sourceSoftWrapsByLogicalLine: Map<Int, List<MinimapSourceSoftWrap>>,
   private val projectedStartsByLogicalLine: IntArray,
   private val projectedSpansByLogicalLine: IntArray,
   private val logicalLineByProjectedLine: IntArray,
-  private val primaryProjectedSlots: BooleanArray,
 ) {
   fun logicalToProjectedLine(logicalLine: Int): Int? {
     if (logicalLine !in 0 until logicalLineCount) return null
@@ -31,6 +31,18 @@ class MinimapLineProjection private constructor(
     return logicalLineByProjectedLine[projectedLine]
   }
 
+  fun projectedLineSlotIndex(projectedLine: Int): Int? {
+    val logicalLine = projectedToLogicalLine(projectedLine) ?: return null
+    val projectedStart = projectedStartsByLogicalLine[logicalLine]
+    val slotIndex = projectedLine - projectedStart
+    return slotIndex.takeIf { it in 0 until projectedSpansByLogicalLine[logicalLine] }
+  }
+
+  fun sourceSoftWraps(logicalLine: Int): List<MinimapSourceSoftWrap>? {
+    if (logicalLine !in 0 until logicalLineCount) return null
+    return sourceSoftWrapsByLogicalLine[logicalLine]
+  }
+
   fun isLineInCollapsedRegion(logicalLine: Int): Boolean {
     if (logicalLine !in 0 until logicalLineCount) return false
     if (collapsedRegions.isEmpty()) return false
@@ -46,11 +58,6 @@ class MinimapLineProjection private constructor(
   fun logicalLineProjectedSpan(logicalLine: Int): Int {
     if (logicalLine !in 0 until logicalLineCount) return 0
     return projectedSpansByLogicalLine[logicalLine].coerceAtLeast(0)
-  }
-
-  fun isPrimaryProjectedLine(projectedLine: Int): Boolean {
-    if (projectedLine !in 0 until projectedLineCount) return false
-    return primaryProjectedSlots[projectedLine]
   }
 
   private fun hiddenIntervalContaining(logicalLine: Int): Int {
@@ -109,6 +116,7 @@ class MinimapLineProjection private constructor(
       logicalLineCount: Int,
       collapsedRegionsByLine: List<Pair<Int, Int>>,
       lineSpanOverrides: Map<Int, Int>,
+      sourceSoftWrapsByLine: Map<Int, List<MinimapSourceSoftWrap>> = emptyMap(),
     ): MinimapLineProjection {
       val safeLogicalLineCount = logicalLineCount.coerceAtLeast(0)
       if (safeLogicalLineCount == 0) return emptyProjection()
@@ -148,7 +156,6 @@ class MinimapLineProjection private constructor(
 
       val projectedLineCount = projectedCursor
       val logicalLineByProjectedLine = IntArray(projectedLineCount)
-      val primaryProjectedSlots = BooleanArray(projectedLineCount)
       for (logicalLine in 0 until safeLogicalLineCount) {
         val lineSpan = projectedSpansByLogicalLine[logicalLine]
         if (lineSpan <= 0) continue
@@ -159,7 +166,6 @@ class MinimapLineProjection private constructor(
         for (projectedLine in projectedStart until projectedEndExclusive) {
           logicalLineByProjectedLine[projectedLine] = logicalLine
         }
-        primaryProjectedSlots[projectedStart] = true
       }
 
       val hiddenIntervals = ArrayList<MinimapHiddenInterval>(acceptedCollapsedRegions.size)
@@ -194,10 +200,10 @@ class MinimapLineProjection private constructor(
         projectedLineCount = projectedLineCount,
         collapsedRegions = collapsedRegions,
         hiddenIntervals = hiddenIntervals,
+        sourceSoftWrapsByLogicalLine = sourceSoftWrapsByLine,
         projectedStartsByLogicalLine = projectedStartsByLogicalLine,
         projectedSpansByLogicalLine = projectedSpansByLogicalLine,
         logicalLineByProjectedLine = logicalLineByProjectedLine,
-        primaryProjectedSlots = primaryProjectedSlots,
       )
     }
 
@@ -207,10 +213,10 @@ class MinimapLineProjection private constructor(
         projectedLineCount = 0,
         collapsedRegions = emptyList(),
         hiddenIntervals = emptyList(),
+        sourceSoftWrapsByLogicalLine = emptyMap(),
         projectedStartsByLogicalLine = IntArray(0),
         projectedSpansByLogicalLine = IntArray(0),
         logicalLineByProjectedLine = IntArray(0),
-        primaryProjectedSlots = BooleanArray(0),
       )
     }
   }

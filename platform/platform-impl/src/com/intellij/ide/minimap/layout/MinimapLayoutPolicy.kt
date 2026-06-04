@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap.layout
 
+import com.intellij.ide.minimap.model.MinimapSourceSoftWrap
 import com.intellij.ide.minimap.settings.MinimapScaleMode
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -15,7 +16,7 @@ import java.util.LinkedHashMap
  * Register via `com.intellij.minimapLayoutPolicy`.
  *
  * For layout profile and scale mode, the first applicable policy wins.
- * For line spans, applicable providers are merged in registration order; the last provider wins for the same line.
+ * For line spans and source soft wraps, applicable providers are merged in registration order; the last provider wins for the same line.
  * For fold region filtering, any policy returning `false` suppresses the region.
  */
 @ApiStatus.OverrideOnly
@@ -43,6 +44,19 @@ interface MinimapLayoutPolicy {
    * - `0` is reserved for internal compression.
    */
   fun getLineSpanOverrides(editor: Editor, document: Document, logicalLineCount: Int): Map<Int, Int> = emptyMap()
+
+  /**
+   * Returns logical-line -> source soft wraps to use instead of the editor's current soft-wrap model.
+   * This is useful for visual-only presentations that hide source text from the editor soft-wrap cache.
+   */
+  fun getSourceSoftWraps(editor: Editor, document: Document, logicalLineCount: Int): Map<Int, List<MinimapSourceSoftWrap>> = emptyMap()
+
+  fun getLineProjectionData(editor: Editor, document: Document, logicalLineCount: Int): MinimapLineProjectionData {
+    val lineSpanOverrides = getLineSpanOverrides(editor, document, logicalLineCount)
+    val sourceSoftWrapsByLine = getSourceSoftWraps(editor, document, logicalLineCount)
+    if (lineSpanOverrides.isEmpty() && sourceSoftWrapsByLine.isEmpty()) return MinimapLineProjectionData.EMPTY
+    return MinimapLineProjectionData(lineSpanOverrides, sourceSoftWrapsByLine)
+  }
 
   /**
    * Controls whether a collapsed [region] should be applied to minimap line projection.
@@ -75,20 +89,31 @@ interface MinimapLayoutPolicy {
       return MinimapLayoutProfile.DEFAULT
     }
 
+    fun collectLineProjectionData(editor: Editor, document: Document, logicalLineCount: Int): MinimapLineProjectionData {
+      if (logicalLineCount <= 0) return MinimapLineProjectionData.EMPTY
+
+      var mergedLineSpans: MutableMap<Int, Int>? = null
+      var mergedSourceSoftWraps: MutableMap<Int, List<MinimapSourceSoftWrap>>? = null
+      for (policy in EP_NAME.extensionList) {
+        if (!policy.isApplicable(editor)) continue
+        val data = policy.getLineProjectionData(editor, document, logicalLineCount)
+        mergedLineSpans = mergeLineSpanOverrides(mergedLineSpans, data.lineSpanOverrides, logicalLineCount)
+        mergedSourceSoftWraps = mergeSourceSoftWraps(mergedSourceSoftWraps, data.sourceSoftWrapsByLine, document, logicalLineCount)
+      }
+
+      val lineSpans = mergedLineSpans?.takeIf { it.isNotEmpty() } ?: emptyMap()
+      val sourceSoftWraps = mergedSourceSoftWraps?.takeIf { it.isNotEmpty() } ?: emptyMap()
+      if (lineSpans.isEmpty() && sourceSoftWraps.isEmpty()) return MinimapLineProjectionData.EMPTY
+      return MinimapLineProjectionData(lineSpans, sourceSoftWraps)
+    }
+
     fun collect(editor: Editor, document: Document, logicalLineCount: Int): Map<Int, Int> {
       if (logicalLineCount <= 0) return emptyMap()
 
       var merged: MutableMap<Int, Int>? = null
       for (policy in EP_NAME.extensionList) {
         if (!policy.isApplicable(editor)) continue
-        val overrides = policy.getLineSpanOverrides(editor, document, logicalLineCount)
-        if (overrides.isEmpty()) continue
-
-        val target = merged ?: LinkedHashMap<Int, Int>().also { merged = it }
-        for ((logicalLine, spanRaw) in overrides) {
-          if (logicalLine !in 0 until logicalLineCount) continue
-          target[logicalLine] = spanRaw.coerceAtLeast(1)
-        }
+        merged = mergeLineSpanOverrides(merged, policy.getLineSpanOverrides(editor, document, logicalLineCount), logicalLineCount)
       }
       return merged ?: emptyMap()
     }
@@ -102,6 +127,44 @@ interface MinimapLayoutPolicy {
         version = version * 31L + policy.getProjectionVersion(editor, document, logicalLineCount)
       }
       return version
+    }
+
+    private fun mergeLineSpanOverrides(targetRaw: MutableMap<Int, Int>?,
+                                       overrides: Map<Int, Int>,
+                                       logicalLineCount: Int): MutableMap<Int, Int>? {
+      if (overrides.isEmpty()) return targetRaw
+      val target = targetRaw ?: LinkedHashMap()
+      for ((logicalLine, spanRaw) in overrides) {
+        if (logicalLine !in 0 until logicalLineCount) continue
+        target[logicalLine] = spanRaw.coerceAtLeast(1)
+      }
+      return target
+    }
+
+    private fun mergeSourceSoftWraps(targetRaw: MutableMap<Int, List<MinimapSourceSoftWrap>>?,
+                                     overrides: Map<Int, List<MinimapSourceSoftWrap>>,
+                                     document: Document,
+                                     logicalLineCount: Int): MutableMap<Int, List<MinimapSourceSoftWrap>>? {
+      if (overrides.isEmpty()) return targetRaw
+      val target = targetRaw ?: LinkedHashMap()
+      for ((logicalLine, wrapsRaw) in overrides) {
+        if (logicalLine !in 0 until logicalLineCount) continue
+        val lineStartOffset = document.getLineStartOffset(logicalLine)
+        val lineEndOffset = document.getLineEndOffset(logicalLine)
+        if (lineEndOffset - lineStartOffset <= 1) continue
+
+        val wraps = wrapsRaw
+          .asSequence()
+          .filter { it.startOffset in (lineStartOffset + 1) until lineEndOffset }
+          .sortedBy { it.startOffset }
+          .distinctBy { it.startOffset }
+          .map { MinimapSourceSoftWrap(it.startOffset, it.indentColumns.coerceAtLeast(0)) }
+          .toList()
+        if (wraps.isNotEmpty()) {
+          target[logicalLine] = wraps
+        }
+      }
+      return target
     }
 
     fun shouldUseCollapsedFoldRegion(

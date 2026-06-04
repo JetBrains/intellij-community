@@ -2,7 +2,6 @@
 package com.intellij.ide.minimap.layout
 
 import com.intellij.ide.minimap.model.MinimapStructureMarker
-import com.intellij.ide.minimap.model.MinimapLineProjection
 import com.intellij.ide.minimap.render.MinimapRenderContext
 import com.intellij.ide.minimap.render.MinimapRenderEntry
 import com.intellij.ide.minimap.render.MinimapTokenRenderPolicy
@@ -105,24 +104,21 @@ class MinimapLayoutCalculator(private val editor: Editor) {
     if (context.visibleLines.isEmpty()) return
     val firstLogicalLine = lineProjection.projectedToLogicalLine(context.visibleLines.first) ?: return
     val iterator = editor.highlighter.createIterator(document.getLineStartOffset(firstLogicalLine))
+    val segmentResolver = MinimapProjectedLineSegmentResolver(editor, lineProjection)
 
     for (projectedLine in context.visibleLines) {
-      if (!lineProjection.isPrimaryProjectedLine(projectedLine)) continue
-      val logicalLine = lineProjection.projectedToLogicalLine(projectedLine) ?: continue
-      val lineStartOffset = document.getLineStartOffset(logicalLine)
-      val lineEndOffset = document.getLineEndOffset(logicalLine)
-      while (!iterator.atEnd() && iterator.end <= lineStartOffset) {
+      val segment = segmentResolver.segmentFor(projectedLine) ?: continue
+      while (!iterator.atEnd() && iterator.end <= segment.startOffset) {
         iterator.advance()
       }
-      if (lineEndOffset <= lineStartOffset) continue
 
-      val trimmedEndOffset = trimLineEnd(chars, lineStartOffset, lineEndOffset)
-      if (trimmedEndOffset <= lineStartOffset) continue
+      val trimmedEndOffset = trimLineEnd(chars, segment.startOffset, segment.endOffset)
+      if (trimmedEndOffset <= segment.startOffset) continue
 
       val band = getLineBand(projectedLine, projectedLine + 1, context) ?: continue
 
       while (!iterator.atEnd() && iterator.start < trimmedEndOffset) {
-        val tokenStart = iterator.start.coerceAtLeast(lineStartOffset)
+        val tokenStart = iterator.start.coerceAtLeast(segment.startOffset)
         val tokenEnd = iterator.end.coerceAtMost(trimmedEndOffset)
 
         if (tokenEnd > tokenStart &&
@@ -130,13 +126,13 @@ class MinimapLayoutCalculator(private val editor: Editor) {
             tokenRenderPolicy.shouldRenderTokenSpan(
               editor = editor,
               document = document,
-              lineStartOffset = lineStartOffset,
-              lineEndOffset = lineEndOffset,
+              lineStartOffset = segment.lineStartOffset,
+              lineEndOffset = segment.lineEndOffset,
               startOffset = tokenStart,
               endOffset = tokenEnd,
             )) {
-          val startColumn = (tokenStart - lineStartOffset).coerceAtLeast(0)
-          val endColumn = (tokenEnd - lineStartOffset).coerceAtLeast(startColumn + 1)
+          val startColumn = segment.visualColumn(tokenStart)
+          val endColumn = segment.visualColumn(tokenEnd).coerceAtLeast(startColumn + 1)
           val rect2d = rectForColumns(startColumn, endColumn, band, context, pxPerColumn)
           result.add(MinimapRenderEntry(null, rect2d, sampleOffset = tokenStart))
         }
@@ -163,6 +159,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
 
     val linesPerPixel = 1.0 / baseLineHeight
     val lineStride = ceil(linesPerPixel).toInt().coerceAtLeast(1)
+    val segmentResolver = MinimapProjectedLineSegmentResolver(editor, lineProjection)
 
     var line = visibleLines.first
     val endLineExclusive = visibleLines.last + 1
@@ -173,7 +170,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
         line = bandEndLine
         continue
       }
-      appendDenseBandFillers(result, context, band, lineProjection, line, bandEndLine, prepared.tokenRenderPolicy)
+      appendDenseBandFillers(result, context, band, segmentResolver, line, bandEndLine, prepared.tokenRenderPolicy)
       line = bandEndLine
     }
   }
@@ -181,57 +178,53 @@ class MinimapLayoutCalculator(private val editor: Editor) {
   private fun appendDenseBandFillers(result: MutableList<MinimapRenderEntry>,
                                      context: MinimapLayoutContext,
                                      band: LineBand,
-                                     lineProjection: MinimapLineProjection,
+                                     segmentResolver: MinimapProjectedLineSegmentResolver,
                                      startLine: Int,
                                      endLineExclusive: Int,
                                      tokenRenderPolicy: MinimapTokenRenderPolicy) {
     val lineCount = endLineExclusive - startLine
     if (lineCount <= 0) return
 
-    appendDenseSampleForLine(result, context, band, lineProjection, startLine, tokenRenderPolicy)
+    appendDenseSampleForLine(result, context, band, segmentResolver, startLine, tokenRenderPolicy)
 
     if (lineCount > 2) {
-      appendDenseSampleForLine(result, context, band, lineProjection, startLine + lineCount / 2, tokenRenderPolicy)
+      appendDenseSampleForLine(result, context, band, segmentResolver, startLine + lineCount / 2, tokenRenderPolicy)
     }
 
     if (lineCount > 1) {
-      appendDenseSampleForLine(result, context, band, lineProjection, endLineExclusive - 1, tokenRenderPolicy)
+      appendDenseSampleForLine(result, context, band, segmentResolver, endLineExclusive - 1, tokenRenderPolicy)
     }
   }
 
   private fun appendDenseSampleForLine(result: MutableList<MinimapRenderEntry>,
                                        context: MinimapLayoutContext,
                                        band: LineBand,
-                                       lineProjection: MinimapLineProjection,
+                                       segmentResolver: MinimapProjectedLineSegmentResolver,
                                        projectedLine: Int,
                                        tokenRenderPolicy: MinimapTokenRenderPolicy) {
-    if (!lineProjection.isPrimaryProjectedLine(projectedLine)) return
-    val logicalLine = lineProjection.projectedToLogicalLine(projectedLine) ?: return
+    val segment = segmentResolver.segmentFor(projectedLine) ?: return
     val document = context.document
     val chars = document.charsSequence
-    val lineStartOffset = document.getLineStartOffset(logicalLine)
-    val lineEndOffset = document.getLineEndOffset(logicalLine)
-    if (lineEndOffset <= lineStartOffset) return
 
-    val trimmedEndOffset = trimLineEnd(chars, lineStartOffset, lineEndOffset)
-    if (trimmedEndOffset <= lineStartOffset) return
+    val trimmedEndOffset = trimLineEnd(chars, segment.startOffset, segment.endOffset)
+    if (trimmedEndOffset <= segment.startOffset) return
 
-    val trimmedStartOffset = trimLineStart(chars, lineStartOffset, trimmedEndOffset)
+    val trimmedStartOffset = trimLineStart(chars, segment.startOffset, trimmedEndOffset)
     if (trimmedStartOffset >= trimmedEndOffset) return
 
     if (!tokenRenderPolicy.shouldRenderTokenSpan(
         editor = editor,
         document = document,
-        lineStartOffset = lineStartOffset,
-        lineEndOffset = lineEndOffset,
+        lineStartOffset = segment.lineStartOffset,
+        lineEndOffset = segment.lineEndOffset,
         startOffset = trimmedStartOffset,
         endOffset = trimmedEndOffset,
       )) {
       return
     }
 
-    val startColumn = (trimmedStartOffset - lineStartOffset).coerceAtLeast(0)
-    val endColumn = (trimmedEndOffset - lineStartOffset).coerceAtLeast(startColumn + 1)
+    val startColumn = segment.visualColumn(trimmedStartOffset)
+    val endColumn = segment.visualColumn(trimmedEndOffset).coerceAtLeast(startColumn + 1)
     val rect2d = rectForColumns(startColumn, endColumn, band, context, context.metrics.pxPerColumn)
     val sampleOffset = denseSampleOffset(trimmedStartOffset, trimmedEndOffset)
     result.add(MinimapRenderEntry(null, rect2d, sampleOffset = sampleOffset))

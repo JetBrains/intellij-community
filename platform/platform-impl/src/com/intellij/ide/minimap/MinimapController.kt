@@ -63,6 +63,7 @@ class MinimapController(
 
   private val stateListeners = MinimapStateListeners(
     parentDisposable = this,
+    coroutineScope = scope,
     editor = editor,
     caretController = caretController,
     scheduleStructureMarkersUpdate = ::scheduleStructureMarkersUpdate,

@@ -81,10 +81,12 @@ class MinimapModel(private val editor: Editor): Disposable {
       }
     }
 
-    val lineSpanOverrides = MinimapLayoutPolicy.collect(editor, document, lineCount)
-    if (foldedRegions.isEmpty() && lineSpanOverrides.isEmpty()) return MinimapLineProjection.identity(lineCount)
+    val projectionData = MinimapLayoutPolicy.collectLineProjectionData(editor, document, lineCount)
+    if (foldedRegions.isEmpty() && projectionData.lineSpanOverrides.isEmpty() && projectionData.sourceSoftWrapsByLine.isEmpty()) {
+      return MinimapLineProjection.identity(lineCount)
+    }
     foldedRegions.sortBy { it.first }
-    return MinimapLineProjection.create(lineCount, foldedRegions, lineSpanOverrides)
+    return MinimapLineProjection.create(lineCount, foldedRegions, projectionData.lineSpanOverrides, projectionData.sourceSoftWrapsByLine)
   }
 
   fun updateStructureMarkers() {
@@ -136,7 +138,6 @@ class MinimapModel(private val editor: Editor): Disposable {
     disposeStructureMarkers()
     structureMarkers = emptyList()
   }
-
 
   private fun disposeStructureMarkers(markersToDispose: List<MinimapStructureMarker> = structureMarkers) {
     val pointerManager = editor.project?.let { SmartPointerManager.getInstance(it) }
