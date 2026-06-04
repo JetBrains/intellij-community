@@ -114,7 +114,7 @@ private fun PomFile.configureKapt(
     kaptExecution.configureSourceDirs(xmlFile)
     kaptExecution.configureAnnotationProcessorPaths(processors)
 
-    if (processors.any { it in KNOWN_PROCESSORS_TO_WRAP }) {
+    if (processors.any { it.copy(version = null) in KNOWN_PROCESSORS_TO_WRAP }) {
         kaptExecution.configureAnnotationProcessorPaths(
             listOf(MavenProcessorPath("org.jetbrains.kotlin", "kotlin-metadata-jvm", $$"${$$KOTLIN_VERSION_PROPERTY}"))
         )
