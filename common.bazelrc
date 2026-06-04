@@ -217,7 +217,4 @@ common --experimental_repository_downloader_retries=5
 # Scale HTTP timeouts by 2x
 common --http_timeout_scaling=2.0
 
-# Prevents `ld.lld: error: unable to find library -lgcc_s` in `//fleet/native/filewatcher_jni:filewatcher_jni_aarch64-unknown-linux-gnu`
-common --@llvm//config:experimental_stub_libgcc_s
-
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
