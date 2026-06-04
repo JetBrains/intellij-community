@@ -1,4 +1,4 @@
-public class Test {
+public class Orchard {
     boolean check(String fruit) {
         return <spot>"Apple".equals(fruit) ||
                 "Pear".equals(fruit) ||

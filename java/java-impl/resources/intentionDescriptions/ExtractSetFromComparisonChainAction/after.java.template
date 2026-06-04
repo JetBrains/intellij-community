@@ -1,8 +1,8 @@
 import java.util.*;
 
-public class Test {
+public class Orchard {
     <spot>private static final Set<String> FRUITS =
-        new HashSet<>(Arrays.asList("Apple", "Pear", "Banana"))</spot>;
+        Set.of("Apple", "Pear", "Banana"))</spot>;
 
     boolean check(String fruit) {
         return <spot>FRUITS.contains(fruit)</spot>;
