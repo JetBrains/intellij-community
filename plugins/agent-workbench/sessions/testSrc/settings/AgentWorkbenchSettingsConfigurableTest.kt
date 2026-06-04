@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaStatusBarWidgetSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
@@ -20,6 +19,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
@@ -50,7 +51,7 @@ class AgentWorkbenchSettingsConfigurableTest {
     service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.CODEX, true)
     AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
     AgentSessionCostPresentationSettings.setEnabled(false)
-    JbCentralQuotaStatusBarWidgetSettings.setEnabled(false)
+    setJbCentralQuotaWidgetEnabled(false)
   }
 
   @Test
@@ -171,7 +172,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       }
     }
 
-    assertThat(JbCentralQuotaStatusBarWidgetSettings.isEnabled()).isTrue()
+    assertThat(isJbCentralQuotaWidgetEnabled()).isTrue()
   }
 
   @Test
@@ -240,6 +241,20 @@ class AgentWorkbenchSettingsConfigurableTest {
     return componentsOfType(JBCheckBox::class.java).single { it.text == text }
   }
 
+  private fun isJbCentralQuotaWidgetEnabled(): Boolean {
+    return StatusBarWidgetSettings.getInstance().isEnabled(jbCentralQuotaWidgetFactory())
+  }
+
+  private fun setJbCentralQuotaWidgetEnabled(enabled: Boolean) {
+    StatusBarWidgetSettings.getInstance().setEnabled(jbCentralQuotaWidgetFactory(), enabled)
+  }
+
+  private fun jbCentralQuotaWidgetFactory(): StatusBarWidgetFactory {
+    return checkNotNull(StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == JBCENTRAL_QUOTA_WIDGET_ID }) {
+      "Missing status bar widget factory: $JBCENTRAL_QUOTA_WIDGET_ID"
+    }
+  }
+
   private fun <T : JComponent> JComponent.componentsOfType(componentClass: Class<T>): List<T> {
     val result = mutableListOf<T>()
     collectComponentsOfType(this, componentClass, result)
@@ -296,6 +311,7 @@ class AgentWorkbenchSettingsConfigurableTest {
   }
 
   companion object {
+    private const val JBCENTRAL_QUOTA_WIDGET_ID = "jbcentral.quota"
     private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
     private const val TEST_CHAT_COMPONENT_CHECKBOX_TEXT = "Test chat setting"
   }

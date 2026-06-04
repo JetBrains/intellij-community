@@ -40,8 +40,6 @@
       <separator/>
       <action id="AgentWorkbenchSessions.ToggleSessionCost"
               class="com.intellij.agent.workbench.sessions.AgentSessionsToggleSessionCostAction"/>
-      <action id="AgentWorkbenchSessions.ToggleJbCentralQuotaWidget"
-              class="com.intellij.agent.workbench.sessions.jbcentral.AgentSessionsToggleJbCentralQuotaWidgetAction"/>
       <action id="AgentWorkbenchSessions.ToggleDedicatedFrame"
               class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
       <action id="AgentWorkbenchSessions.TogglePreventSleepWhileWorking"

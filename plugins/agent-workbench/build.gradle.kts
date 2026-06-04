@@ -106,6 +106,7 @@ dependencies {
     pluginModule(implementation(project(":prompt-vcs")))
     pluginModule(implementation(project(":prompt-testrunner")))
     pluginModule(implementation(project(":sessions")))
+    pluginModule(implementation(project(":sessions-jbcentral")))
     pluginModule(implementation(project(":sessions-core")))
     pluginModule(implementation(project(":sessions-actions")))
     pluginModule(implementation(project(":sessions-toolwindow")))

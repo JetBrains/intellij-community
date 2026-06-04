@@ -89,6 +89,9 @@
 - name: lib/modules/intellij.agent.workbench.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.sessions
+- name: lib/modules/intellij.agent.workbench.sessions.jbcentral.jar
+  contentModules:
+  - name: intellij.agent.workbench.sessions.jbcentral
 - name: lib/modules/intellij.agent.workbench.sessions.launch.config.backend.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.launch.config.backend

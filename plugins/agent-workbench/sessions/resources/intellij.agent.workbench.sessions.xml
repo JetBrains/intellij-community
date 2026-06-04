@@ -14,9 +14,6 @@
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.OpenRouterPriceCatalogStartupActivity"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
-    <statusBarWidgetFactory
-      id="jbcentral.quota"
-      implementation="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaStatusBarWidgetFactory"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
                        key="notification.group.agent.workbench.sessions"/>
     <applicationConfigurable
@@ -61,12 +58,9 @@
     <applicationSettings service="com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService"/>
-    <applicationSettings service="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService"/>
-    <applicationSettings service="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaUsageHistoryService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
     <settingsContributor implementation="com.intellij.agent.workbench.sessions.settings.AgentSessionCostSettingsContributor"/>
-    <settingsContributor implementation="com.intellij.agent.workbench.sessions.settings.JbCentralQuotaSettingsContributor"/>
   </extensions>
 </idea-plugin>
