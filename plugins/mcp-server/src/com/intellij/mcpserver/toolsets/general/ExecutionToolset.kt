@@ -97,8 +97,8 @@ class ExecutionToolset : McpToolset {
 
   @McpTool(name = ExecutionToolNames.EXECUTE_RUN_CONFIGURATION)
   @McpDescription("""
-    |Run either an existing run configuration by name or a temporary run configuration created from a code location
-    |(`filePath` + `line`) in the current project, then wait up to specified timeout for it to finish.
+    |Run either an existing run configuration by name or a temporary run configuration created from a code location (`filePath` + `line`) in the current project, then wait up to specified timeout for it to finish.
+    |
     |Use this tool with either a configuration name returned by `get_run_configurations`, or with a run point
     |(`filePath` + `line`) returned by `get_run_configurations(filePath = ...)`.
     |

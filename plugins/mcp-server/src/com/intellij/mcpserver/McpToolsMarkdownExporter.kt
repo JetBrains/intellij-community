@@ -22,20 +22,22 @@ object McpToolsMarkdownExporter {
         appendLine("## ${category.shortName}")
         appendLine()
         for (tool in categoryTools) {
-          appendToolSection(tool, headingLevel = 3)
+          appendToolSection(tool, headingLevel = 3, omitFirstDescriptionLine = false)
         }
       }
     }
   }
 
   /**
-   * Generates a single-page markdown document for one MCP tool: top-level heading, full description,
+   * Generates a single-page markdown document for one MCP tool: top-level heading, description,
    * input parameters table, and output schema table (when present).
    *
-   * Use together with [generateMarkdownTree] when emitting per-tool reference files.
+   * [omitFirstDescriptionLine] drops the first non-blank line of the description while keeping the rest.
+   * The per-tool files of [generateMarkdownTree] pass `true`: that first line is already shown as the
+   * tool's summary in the index, so repeating it in the per-tool file is duplication and wasted context.
    */
-  fun generateMarkdownForTool(tool: McpTool): String = buildString {
-    appendToolSection(tool, headingLevel = 1)
+  fun generateMarkdownForTool(tool: McpTool, omitFirstDescriptionLine: Boolean = false): String = buildString {
+    appendToolSection(tool, headingLevel = 1, omitFirstDescriptionLine = omitFirstDescriptionLine)
   }
 
   /**
@@ -71,7 +73,7 @@ object McpToolsMarkdownExporter {
     }
     for ((_, categoryTools) in byCategory) {
       for (tool in categoryTools) {
-        result["$TREE_TOOLS_SUBDIR/${tool.descriptor.name}.md"] = generateMarkdownForTool(tool)
+        result["$TREE_TOOLS_SUBDIR/${tool.descriptor.name}.md"] = generateMarkdownForTool(tool, omitFirstDescriptionLine = true)
       }
     }
     return result
@@ -99,10 +101,15 @@ object McpToolsMarkdownExporter {
     "Nested `*` is scoped to the parent object's presence — required nested fields are only guaranteed " +
     "when the optional parent object is emitted."
 
-  private fun StringBuilder.appendToolSection(tool: McpTool, headingLevel: Int) {
+  private fun StringBuilder.appendToolSection(tool: McpTool, headingLevel: Int, omitFirstDescriptionLine: Boolean) {
     val heading = "#".repeat(headingLevel)
     appendLine("$heading ${tool.descriptor.name}")
-    appendLine(tool.descriptor.description.trimIndent().escapeLineBreaks().escapeMarkdown())
+    val description =
+      if (omitFirstDescriptionLine) tool.descriptor.description.dropFirstNonBlankLine()
+      else tool.descriptor.description.trimIndent()
+    if (description.isNotBlank()) {
+      appendLine(description.escapeLineBreaks().escapeMarkdown())
+    }
     appendLine()
     appendLine("$heading# Parameters")
     val inputRows = tool.descriptor.inputSchema.toSchemaTableRows()
@@ -243,7 +250,20 @@ object McpToolsMarkdownExporter {
     return required.mapNotNull { (it as? JsonPrimitive)?.content }.toSet()
   }
 
-  private fun String.escapeLineBreaks(): String = 
+  /**
+   * Drops the first non-blank line (and any blank lines preceding it) and returns the remaining body,
+   * trimmed. That first line is the tool summary shown in the index ([generateMarkdownTree]); see
+   * [generateMarkdownForTool]'s `omitFirstDescriptionLine`. Returns an empty string for a single-line
+   * description.
+   */
+  private fun String.dropFirstNonBlankLine(): String {
+    val lines = trim().lines()
+    val firstNonBlank = lines.indexOfFirst { it.isNotBlank() }
+    if (firstNonBlank < 0) return ""
+    return lines.drop(firstNonBlank + 1).joinToString("\n").trim()
+  }
+
+  private fun String.escapeLineBreaks(): String =
     replace("\r\n", "<br/>").replace("\n", "<br/>").replace("\r", "<br/>")
 
   private fun String.escapeMarkdown(): String = replace("|", "\\|")

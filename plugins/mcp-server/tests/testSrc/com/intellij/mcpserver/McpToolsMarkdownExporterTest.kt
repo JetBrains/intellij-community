@@ -296,14 +296,35 @@ class McpToolsMarkdownExporterTest {
   }
 
   @Test
-  fun generateMarkdownTreePerToolFileMatchesGenerateMarkdownForToolOutput() {
+  fun generateMarkdownTreePerToolFileMatchesFirstLineOmittedSingleToolOutput() {
     val t = setMarkerTool()
 
     val result = McpToolsMarkdownExporter.generateMarkdownTree(listOf(t))
     assertEquals(
-      McpToolsMarkdownExporter.generateMarkdownForTool(t),
+      McpToolsMarkdownExporter.generateMarkdownForTool(t, omitFirstDescriptionLine = true),
       result.getValue("$TREE_TOOLS_SUBDIR/set_marker.md"),
     )
+  }
+
+  @Test
+  fun generateMarkdownTreePerToolFileDropsFirstDescriptionLineButKeepsBody() {
+    val t = startTaskTool(
+      description = "Starts a task using the supplied configuration.\nReturns the task handle.",
+    )
+
+    val result = McpToolsMarkdownExporter.generateMarkdownTree(listOf(t))
+    val index = result.getValue(TREE_INDEX_FILE)
+    val perTool = result.getValue("$TREE_TOOLS_SUBDIR/start_task.md")
+
+    assert(index.contains("Starts a task using the supplied configuration.")) {
+      "Index should keep the first description line: $index"
+    }
+    assert(!perTool.contains("Starts a task using the supplied configuration.")) {
+      "Per-tool file should drop the first description line (it lives in the index): $perTool"
+    }
+    assert(perTool.contains("Returns the task handle.")) {
+      "Per-tool file should keep the rest of the description body: $perTool"
+    }
   }
 
   @Test
