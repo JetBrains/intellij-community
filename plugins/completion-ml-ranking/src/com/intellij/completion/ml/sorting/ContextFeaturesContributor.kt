@@ -15,7 +15,7 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (NewRdCompletionSupport.isFrontendRdCompletionOn()) return // todo make it work
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return
-    val storage = MutableLookupStorage.get(lookup) ?: return
+    val storage = MutableLookupStorage.getMutableLookupStorage(lookup) ?: return
 
     MutableLookupStorage.saveAsUserData(parameters, storage)
 

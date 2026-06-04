@@ -61,7 +61,7 @@ class LookupCompletedTracker : LookupFinishListener() {
                 updater.fireCompletionFinished(!itemStartsWithPrefix)
             }
 
-            val storage = MutableLookupStorage.get(lookup)?.getItemStorage(element.idString())
+            val storage = MutableLookupStorage.getMutableLookupStorage(lookup)?.getItemStorage(element.idString())
             val type = storage?.getLastUsedFactors()?.get("prefix_matching_type") as? PrefixMatchingType
             if (type != null) {
                 UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.PREFIX_MATCHING_TYPE) { updater ->

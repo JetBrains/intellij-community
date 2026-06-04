@@ -78,7 +78,7 @@ private class MLSorter : CompletionFinalSorter() {
   override fun sort(items: Iterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
     if (NewRdCompletionSupport.isFrontendRdCompletionOn()) return items // todo support it on frontend
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
-    val lookupStorage = MutableLookupStorage.get(lookup) ?: return items
+    val lookupStorage = MutableLookupStorage.getMutableLookupStorage(lookup) ?: return items
     // Do nothing if unable to reorder items or to log the weights
     if (!lookupStorage.shouldComputeFeatures()) return items
     val startedTimestamp = System.currentTimeMillis()

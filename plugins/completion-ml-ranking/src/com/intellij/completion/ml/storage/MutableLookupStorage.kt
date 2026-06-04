@@ -64,24 +64,24 @@ class MutableLookupStorage(
       })
     }
 
-    fun get(lookup: LookupImpl): MutableLookupStorage? {
+    fun getMutableLookupStorage(lookup: LookupImpl): MutableLookupStorage? {
       return lookup.getUserData(LOOKUP_STORAGE)
     }
 
     fun initOrGetLookupStorage(lookup: LookupImpl, language: Language): MutableLookupStorage {
-      val existed = get(lookup)
+      val existed = getMutableLookupStorage(lookup)
       if (existed != null) return existed
       val storage = MutableLookupStorage(System.currentTimeMillis(), language, RankingSupport.getRankingModel(language))
       lookup.putUserData(LOOKUP_STORAGE, storage)
       return storage
     }
 
-    fun get(parameters: BaseCompletionParameters): MutableLookupStorage? {
+    fun getMutableLookupStorage(parameters: BaseCompletionParameters): MutableLookupStorage? {
       var storage = parameters.getUserData(LOOKUP_STORAGE)
       if (storage == null && parameters is CompletionParameters) {
         val activeLookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
         if (activeLookup != null) {
-          storage = get(activeLookup)
+          storage = getMutableLookupStorage(activeLookup)
           if (storage != null) {
             LOG.debug("Can't get storage from parameters. Fallback to storage from active lookup")
             saveAsUserData(parameters, storage)

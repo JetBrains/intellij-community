@@ -82,7 +82,7 @@ class MLKindSorter(decisionFunction: DecisionFunction, override val kindVariety:
 
   private fun getCashedLookupStorage(parameters: CompletionParameters): MutableLookupStorage? {
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl? ?: return null
-    val lookupStorage = MutableLookupStorage.get(lookup) ?: return null
+    val lookupStorage = MutableLookupStorage.getMutableLookupStorage(lookup) ?: return null
     log { "Acquired cashed context features" }
     return lookupStorage
   }
