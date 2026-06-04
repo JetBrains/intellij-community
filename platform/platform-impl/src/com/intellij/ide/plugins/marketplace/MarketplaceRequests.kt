@@ -328,7 +328,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
     ): PluginUiModel {
-      val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
+      val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "update-meta")
       val metadata = readOrUpdateFile(
         updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"),
         MarketplaceUrls.getUpdateMetaUrl(ideCompatibleUpdate.externalPluginId, ideCompatibleUpdate.externalUpdateId),
@@ -801,7 +801,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
-        Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
+        Paths.get(PathManager.getPluginTempPath(), "plugin-meta", "${externalPluginId}.json"),
         MarketplaceUrls.getPluginMetaUrl(externalPluginId),
         null,
         ""
