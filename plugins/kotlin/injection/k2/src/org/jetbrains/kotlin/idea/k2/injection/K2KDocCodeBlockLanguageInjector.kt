@@ -53,8 +53,10 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                         }
                     }
 
-                    if (elements.isNotEmpty()) {
-                        injectElements(registrar, context, elements, languageId ?: "")
+                    if (e.isWhiteSpace()) {
+                        elements.add(e)
+                    } else if (elements.isNotEmpty()) {
+                        injectElements(registrar, context, elements, languageId)
 
                         languageId = null
                     }
@@ -73,36 +75,46 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
             e = e.nextSibling
         }
 
-        if (languageId != null) {
-            injectElements(registrar, context, elements, languageId)
-        }
+        injectElements(registrar, context, elements, languageId)
     }
 
     private fun injectElements(
         registrar: MultiHostRegistrar,
         context: KDocSection,
         elements: MutableList<PsiElement>,
-        languageId: String
+        languageId: String?
     ) {
-        if (elements.isEmpty()) return
+        if (elements.isEmpty() || elements.all { it.isWhiteSpace() }) return
 
         val language =
-            languageId.takeIf { it.isNotEmpty() }?.lowercase().let(languages::get)
+            languageId.takeIf { it?.isEmpty() != true }?.lowercase().let(languages::get)
                 ?: KotlinLanguage.INSTANCE
 
         injectTextRanges(registrar, language, elements.toTextRanges(), context)
         elements.clear()
     }
 
-    private fun MutableList<PsiElement>.indent(): Int? {
+    private fun PsiElement.isWhiteSpace() = this is PsiWhiteSpace || text.all { it.isWhitespace() }
+
+    private fun List<PsiElement>.indent(): Int? {
         var indent: Int? = null
 
-        for (element in this) {
+        for ((index, element) in this.withIndex()) {
             val text = element.text
-            if (element is PsiWhiteSpace) continue
+
+            if (element.isWhiteSpace()) {
+                val elementType = element.elementType
+                if (elementType == KDocTokens.CODE_BLOCK_TEXT || elementType == KDocTokens.TEXT)
+                    return text.length
+
+                if (index > 0 && this[index - 1].isWhiteSpace())
+                    return text.substringAfter("\n").length - 1
+
+                continue
+            }
 
             for ((index, ch) in text.withIndex()) {
-                if (!Character.isWhitespace(ch)) {
+                if (!ch.isWhitespace()) {
                     indent = if (indent == null) index else min(indent, index)
                     break
                 }
@@ -147,15 +159,10 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
             iterator.remove()
         }
 
-        // tail whitespaces
-        val listIterator = this.listIterator(lastIndex + 1)
-
-        do {
-            val element = listIterator.previous()
-            if (element !is PsiWhiteSpace) break
-
-            listIterator.remove()
-        } while ((listIterator.hasPrevious()))
+        if (lastOrNull() is PsiWhiteSpace) {
+            // drop tail whitespace
+            removeLast()
+        }
     }
 
     private fun injectTextRanges(
