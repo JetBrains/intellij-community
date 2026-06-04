@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.security.Key;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -74,6 +75,31 @@ import static com.intellij.openapi.util.Pair.pair;
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final Path PROXY_CREDENTIALS_FILE = PathManager.getOptionsDir().resolve("proxy.settings.pwd");
+  private static final Path PROXY_ENCRYPTION_KEY_FILE = PathManager.getOptionsDir().resolve("proxy.settings.pwd.key");
+  private static final Key LEGACY_ENCRYPTION_KEY = new SecretKeySpec(new byte[] {
+    (byte)0x50, (byte)0x72, (byte)0x6f, (byte)0x78, (byte)0x79, (byte)0x20, (byte)0x43, (byte)0x6f,
+    (byte)0x6e, (byte)0x66, (byte)0x69, (byte)0x67, (byte)0x20, (byte)0x53, (byte)0x65, (byte)0x63
+  }, "AES");
+
+  private static Key loadOrCreateEncryptionKey() {
+    if (Files.exists(PROXY_ENCRYPTION_KEY_FILE)) {
+      try {
+        return new SecretKeySpec(Files.readAllBytes(PROXY_ENCRYPTION_KEY_FILE), "AES");
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    Key key = PropertiesEncryptionSupport.generateKey();
+    try {
+      Files.createDirectories(PROXY_ENCRYPTION_KEY_FILE.getParent());
+      Files.write(PROXY_ENCRYPTION_KEY_FILE, key.getEncoded());
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return key;
+  }
 
   // only one out of these three should be true
   /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
@@ -116,23 +142,27 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
   private final transient Object myLock = new Object();
 
-  // -> drop, unify auth methods, use base64 encoding like it is done for generic auth
-  private final transient PropertiesEncryptionSupport myEncryptionSupport = new PropertiesEncryptionSupport(new SecretKeySpec(new byte[] {
-    (byte)0x50, (byte)0x72, (byte)0x6f, (byte)0x78, (byte)0x79, (byte)0x20, (byte)0x43, (byte)0x6f,
-    (byte)0x6e, (byte)0x66, (byte)0x69, (byte)0x67, (byte)0x20, (byte)0x53, (byte)0x65, (byte)0x63
-  }, "AES"));
+  private final transient PropertiesEncryptionSupport myEncryptionSupport = new PropertiesEncryptionSupport(loadOrCreateEncryptionKey());
 
-  // -> drop, see explanation above
   private final transient NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
     try {
       if (!Files.exists(PROXY_CREDENTIALS_FILE)) {
         return new Properties();
       }
-
       return myEncryptionSupport.load(PROXY_CREDENTIALS_FILE);
     }
-    catch (Throwable th) {
-      LOG.info(th);
+    catch (Throwable newKeyEx) {
+      try {
+        PropertiesEncryptionSupport legacySupport = new PropertiesEncryptionSupport(LEGACY_ENCRYPTION_KEY);
+        Properties props = legacySupport.load(PROXY_CREDENTIALS_FILE);
+        if (!props.isEmpty()) {
+          myEncryptionSupport.store(props, "Proxy Credentials", PROXY_CREDENTIALS_FILE);
+        }
+        return props;
+      }
+      catch (Throwable legacyEx) {
+        LOG.info(newKeyEx);
+      }
     }
     return new Properties();
   });
