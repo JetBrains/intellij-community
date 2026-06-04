@@ -3,6 +3,7 @@
 package com.intellij.platform.testFramework.monorepo
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.project.loadIntelliJProject
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.jps.model.JpsProject
@@ -35,7 +36,7 @@ fun JpsModule.hasProductionSources(): Boolean = getSourceRoots(JavaSourceRootTyp
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
 fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T {
-  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
+  val archivedCompiledClassesMapping = getArchivedCompiledClassesMapping(project)
   val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
   if (outputJarPath == null) {
     val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
@@ -51,7 +52,7 @@ fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T
 
 val JpsModule.productionOutputPaths: List<Path>
   get() {
-    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
+    val archivedCompiledClassesMapping = getArchivedCompiledClassesMapping(project)
     if (archivedCompiledClassesMapping != null) {
       val outputJarPath = archivedCompiledClassesMapping["production/$name"]
       return outputJarPath?.let { listOf(Path.of(it)) } ?: emptyList()
@@ -61,10 +62,22 @@ val JpsModule.productionOutputPaths: List<Path>
 
 val JpsModule.testOutputPaths: List<Path>
   get() {
-    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
+    val archivedCompiledClassesMapping = getArchivedCompiledClassesMapping(project)
     if (archivedCompiledClassesMapping != null) {
       val outputJarPath = archivedCompiledClassesMapping["test/$name"]
       return outputJarPath?.let { listOf(Path.of(it)) } ?: emptyList()
     }
     return listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, true) ?: error("Test output directory is not specified for '$name'"))
   }
+
+private fun getArchivedCompiledClassesMapping(project: JpsProject): Map<String, String>? {
+  val compiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
+  if (compiledClassesMapping != null) {
+    val projectHome = JpsModelSerializationDataService.getBaseDirectoryPath(project)
+    val currentProcessHome = PathManager.getHomeDir()
+    require(currentProcessHome == projectHome || currentProcessHome.resolve("community") == projectHome) {
+      "Output classes mapping is requested for the project at $projectHome, but current process home is $currentProcessHome"
+    }
+  }
+  return compiledClassesMapping
+}
