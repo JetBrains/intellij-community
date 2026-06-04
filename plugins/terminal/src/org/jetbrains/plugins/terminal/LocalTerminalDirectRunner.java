@@ -126,7 +126,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         shellExecCommandRef.get(),
         workingDirectoryEelPath,
         envs,
-        options.getShellIntegration(),
+        options.getShellIntegration() != null,
         customizer.getClass()
       );
       customizer.customizeExecOptions(myProject, execOptions);

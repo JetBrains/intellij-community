@@ -9,7 +9,6 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.nio.file.Path
 import java.util.Collections
 
@@ -17,7 +16,7 @@ internal class MutableShellExecOptionsImpl(
   private var _execCommand: ShellExecCommand,
   override val workingDirectory: EelPath,
   private val mutableEnvs: MutableMap<String, String>,
-  private val shellIntegration: ShellIntegration?,
+  private val shellIntegrationAvailable: Boolean,
   private val requester: Class<out ShellExecOptionsCustomizer>,
 ) : MutableShellExecOptions {
 
@@ -46,13 +45,13 @@ internal class MutableShellExecOptionsImpl(
   private fun doSetEnvironmentVariable(name: String, value: String?, context: String) {
     if (value == null) {
       removeEnv(name, context)
-      if (shellIntegration != null) {
+      if (shellIntegrationAvailable) {
         removeEnv(name.ensureStartsWith(INTELLIJ_FORCE_SET_PREFIX), context)
       }
     }
     else {
       setEnv(name, value, context)
-      if (shellIntegration != null) {
+      if (shellIntegrationAvailable) {
         setEnv(name.ensureStartsWith(INTELLIJ_FORCE_SET_PREFIX), value, context)
       }
     }
@@ -90,7 +89,7 @@ internal class MutableShellExecOptionsImpl(
       LOG.debug { "$requester: prependEntryToPathLikeEnv('$envName', '$entry') failed, skipping" }
       return
     }
-    val envName = if (shellIntegration != null) envName.ensureStartsWith(INTELLIJ_FORCE_PREPEND_PREFIX) else envName
+    val envName = if (shellIntegrationAvailable) envName.ensureStartsWith(INTELLIJ_FORCE_PREPEND_PREFIX) else envName
     mutableEnvs[envName] = joinWithPathLikeEnv(remotePath, envName, true)
     LOG.debug { "$requester: prependEntryToPathLikeEnv('$envName', '$remotePath')" }
   }
@@ -112,9 +111,10 @@ internal class MutableShellExecOptionsImpl(
     return value
   }
 
-  override val shellIntegrationConfigurer: ShellIntegrationConfigurer? = shellIntegration?.let {
+  override val shellIntegrationConfigurer: ShellIntegrationConfigurer? = if (shellIntegrationAvailable) {
     ShellIntegrationConfigurerImpl(_execCommand.shellName, mutableEnvs, translator, requester)
   }
+  else null
 
   override val eelDescriptor: EelDescriptor
     get() = workingDirectory.descriptor
