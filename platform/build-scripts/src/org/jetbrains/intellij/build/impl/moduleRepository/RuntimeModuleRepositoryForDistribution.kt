@@ -29,8 +29,10 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
 import java.nio.file.Path
+import java.util.Properties
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.reader
 
 /**
  * Generates a file with descriptors of modules for [com.intellij.platform.runtime.repository.RuntimeModuleRepository].
@@ -174,13 +176,14 @@ private suspend fun generateRepositoryForDistribution(
   val pluginDescriptorModulesForAdditionalFrontendPlugins = additionalFrontendOnlyPlugins.mapTo(HashSet()) { it.layout.mainModule }
   val corePluginDescriptorModuleName = context.productProperties.applicationInfoModule
   val embeddedFrontendDescriptorModuleName = context.getEmbeddedFrontendProductContext()?.productProperties?.applicationInfoModule
-  val pluginDescriptorsData = fetchPluginDescriptorsData(
+  val originalPluginDescriptorsData = fetchPluginDescriptorsData(
     platformLayout,
     corePluginDescriptorModuleName,
     embeddedFrontendDescriptorModuleName,
     bundledPlugins,
     additionalFrontendOnlyPlugins,
   )
+  val pluginDescriptorsData = removeDataForSuppressedPlugins(originalPluginDescriptorsData, context)
   val pluginConfigurationModuleToDistributionEntries =
     (bundledPlugins + additionalFrontendOnlyPlugins).associateByTo(HashMap(), { it.layout.mainModule }, { it.distribution })
   pluginConfigurationModuleToDistributionEntries[corePluginDescriptorModuleName] = platformEntries
@@ -214,6 +217,23 @@ private suspend fun generateRepositoryForDistribution(
       targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME)
     )
   }
+}
+
+/**
+ * If some plugins are suppressed in the product by default, they should not be included in the runtime module repository to avoid ambiguity if they contain modules duplicating
+ * modules from other plugins.
+ */
+private fun removeDataForSuppressedPlugins(originalPluginDescriptorsData: List<PluginDescriptorDataForHeader>, context: BuildContext): List<PluginDescriptorDataForHeader> {
+  val properties = Properties()
+  context.productProperties.additionalIDEPropertiesFilePaths.forEach { propertiesFile ->
+    propertiesFile.reader().buffered().use { reader ->
+      properties.load(reader)
+    }
+  }
+  val selector = properties.getProperty("idea.suppressed.plugins.set.selector") ?: return originalPluginDescriptorsData
+  val suppressedPluginsString = properties.getProperty("idea.suppressed.plugins.set.${selector}") ?: return originalPluginDescriptorsData
+  val suppressedPlugins = suppressedPluginsString.split(",").mapTo(HashSet()) { it.trim() }
+  return originalPluginDescriptorsData.filterNot { it.pluginId in suppressedPlugins }
 }
 
 /**
