@@ -194,7 +194,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       final Deque<PsiMethod> myContextStack = new LinkedList<>();
       final Deque<String> myParamNameStack = new LinkedList<>();
       private int myNextLambdaExpressionOrdinal = 0;
-      private boolean myInsideLambda = false;
 
       private @Nullable String getCurrentParamName() {
         return myParamNameStack.peekFirst();
@@ -214,17 +213,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-        boolean inLambda = myInsideLambda;
-        myInsideLambda = true;
         super.visitLambdaExpression(expression);
-        myInsideLambda = inLambda;
         if (!matchLine(expression)) return;
         targets.add(0, new LambdaSmartStepTarget(expression,
                                                  getCurrentParamName(),
                                                  expression.getBody(),
                                                  myNextLambdaExpressionOrdinal++,
                                                  null,
-                                                 !myInsideLambda));
+                                                 !isInsideLambda(expression)));
       }
 
       @Override
@@ -380,7 +376,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               psiMethod,
               null,
               callExpression,
-              myInsideLambda || (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null),
+              isInsideLambda(expression) ||
+              (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null),
               null
             );
             target.setOrdinal(Math.toIntExact(existingMethodCalls(targets, psiMethod).count()));
@@ -621,6 +618,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
       element = parent;
     }
+  }
+
+  private static boolean isInsideLambda(@NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class) != null;
   }
 
   private static boolean isImmediateMethodCall(SmartStepTarget target) {

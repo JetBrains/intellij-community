@@ -191,19 +191,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
     }
 
-    int lambdaOrdinal = -1;
-    if (DebuggerUtilsEx.isLambda(method)) {
-      int line = sourcePosition.getLine() + 1;
-      Set<Method> lambdas = StreamEx.of(location.declaringType().methods())
-        .filter(DebuggerUtilsEx::isLambda)
-        .filter(m -> !DebuggerUtilsEx.locationsOfLine(m, line).isEmpty())
-        .toSet();
-      if (lambdas.size() > 1) {
-        ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
-        lambdasList.sort(DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
-        lambdaOrdinal = lambdasList.indexOf(method);
-      }
-    }
+    int lambdaOrdinal = LambdaOrdinalResolver.findLambdaOrdinal(sourcePosition, method);
 
     SourcePosition condRetPos = adjustPositionForConditionalReturn(location, psiFile, lineNumber);
     if (condRetPos != null) {
