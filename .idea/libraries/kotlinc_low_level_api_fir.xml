@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.low-level-api-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:2.4.20-dev-5364">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.20-dev-5364/low-level-api-fir-for-ide-2.4.20-dev-5364.jar">
-          <sha256sum>a0512244a91fe95edb8fb79ba2e79cf193fe90eeea538fa511a2ef0f4cc03246</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.low-level-api-fir">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.20-dev-5364/low-level-api-fir-for-ide-2.4.20-dev-5364.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.255-dev-255/low-level-api-fir-for-ide-2.4.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.20-dev-5364/low-level-api-fir-for-ide-2.4.20-dev-5364-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.255-dev-255/low-level-api-fir-for-ide-2.4.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
