@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
+import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.util.progress.reportRawProgress
@@ -128,11 +129,11 @@ internal class LspServerNotificationsHandlerImpl(private val lspServer: LspServe
 
     if (needsInlayHintRefresh) {
       // Also calls `DaemonCodeAnalyzer.restart` internally
-      LspServerManagerImpl.refreshInlayHints(lspServer.project)
+      LspFeaturesRefreshing.refreshInlayHints(lspServer.project)
     }
 
     if (needsCodeLensesRefresh) {
-      LspServerManagerImpl.refreshCodeLenses(lspServer.project)
+      LspFeaturesRefreshing.refreshCodeLenses(lspServer.project)
     }
 
     if (needsFoldingUpdate) {
@@ -293,12 +294,12 @@ internal class LspServerNotificationsHandlerImpl(private val lspServer: LspServe
   }
 
   override fun refreshCodeLenses(): CompletableFuture<Void> {
-    LspServerManagerImpl.refreshCodeLenses(lspServer.project)
+    LspFeaturesRefreshing.refreshCodeLenses(lspServer.project)
     return completedFuture(null)
   }
 
   override fun refreshInlayHints(): CompletableFuture<Void> {
-    LspServerManagerImpl.refreshInlayHints(lspServer.project)
+    LspFeaturesRefreshing.refreshInlayHints(lspServer.project)
     return completedFuture(null)
   }
 

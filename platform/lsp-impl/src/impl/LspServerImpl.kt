@@ -29,13 +29,14 @@ import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorSocket
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorStdio
 import com.intellij.platform.lsp.impl.connector.LspInitializationException
 import com.intellij.platform.lsp.impl.documentSync.LspDocumentSyncManager
-import com.intellij.platform.lsp.impl.fileEvents.LspWatchedFiles
+import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlighting.DiagnosticAndQuickFixes
 import com.intellij.platform.lsp.impl.features.highlighting.LspDocumentLink
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.lsp.impl.features.highlighting.LspSemanticToken
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCacheRegistry
+import com.intellij.platform.lsp.impl.fileEvents.LspWatchedFiles
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
@@ -243,9 +244,9 @@ class LspServerImpl internal constructor(
           }
         }
         documentSyncManager.openForOpenedOrUnsavedFiles()
-        LspServerManagerImpl.restartStructureView()
-        LspServerManagerImpl.refreshInlayHints(project)
-        LspServerManagerImpl.refreshCodeLenses(project)
+        LspFeaturesRefreshing.restartStructureView()
+        LspFeaturesRefreshing.refreshInlayHints(project)
+        LspFeaturesRefreshing.refreshCodeLenses(project)
       }
       catch (e: Exception) {
         // stack trace of the LspInitializationException is always the same, so not interesting; let's log its cause
@@ -283,8 +284,8 @@ class LspServerImpl internal constructor(
 
       highlightingCacheRegistry.clearCache()
 
-      LspServerManagerImpl.refreshInlayHints(project)
-      LspServerManagerImpl.refreshCodeLenses(project)
+      LspFeaturesRefreshing.refreshInlayHints(project)
+      LspFeaturesRefreshing.refreshCodeLenses(project)
     }
 
     shutdownAndExit()
