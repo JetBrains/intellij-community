@@ -225,9 +225,13 @@ internal fun buildClaudeLaunchSpecWithInitialMessage(
   initialMessagePlan: AgentInitialMessagePlan,
 ): AgentSessionTerminalLaunchSpec {
   val effectivePrompt = initialMessagePlan.message ?: return baseLaunchSpec
-  val permissionMode = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) PERMISSION_MODE_PLAN else PERMISSION_MODE_DEFAULT
-  val command = replaceOrAddPermissionMode(baseLaunchSpec.command, permissionMode) + listOf("--", effectivePrompt)
-  return baseLaunchSpec.copy(command = command)
+  val command = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
+    replaceOrAddPermissionMode(baseLaunchSpec.command, PERMISSION_MODE_PLAN)
+  }
+  else {
+    baseLaunchSpec.command
+  }
+  return baseLaunchSpec.copy(command = command + listOf("--", effectivePrompt))
 }
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"

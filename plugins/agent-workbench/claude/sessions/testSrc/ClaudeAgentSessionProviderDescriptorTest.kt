@@ -74,7 +74,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId)
+      .containsExactly("claude", "--session-id", sessionId)
   }
 
   @Test
@@ -102,7 +102,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun buildLaunchSpecWithInitialMessageAddsPermissionModeDefault(): Unit = runBlocking(Dispatchers.Default) {
+  fun buildLaunchSpecWithInitialMessageDoesNotForcePermissionModeDefault(): Unit = runBlocking(Dispatchers.Default) {
     val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
     val launchSpec = bridge.buildLaunchSpecWithInitialMessage(
@@ -112,7 +112,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId, "--", "Refactor this")
+      .containsExactly("claude", "--session-id", sessionId, "--", "Refactor this")
     assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
@@ -130,7 +130,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "plan", "--session-id", sessionId, "--", "Refactor this")
+      .containsExactly("claude", "--session-id", sessionId, "--permission-mode", "plan", "--", "Refactor this")
     assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
@@ -145,7 +145,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId, "--", "/planner Refactor this")
+      .containsExactly("claude", "--session-id", sessionId, "--", "/planner Refactor this")
     assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
@@ -159,7 +159,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     )
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--resume", "session-1", "--permission-mode", "default", "--", "-summarize\nchanges")
+      .containsExactly("claude", "--resume", "session-1", "--", "-summarize\nchanges")
     assertThat(launchSpec.envVariables)
       .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }

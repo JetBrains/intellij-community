@@ -54,7 +54,7 @@ object ClaudeCliSupport {
     listOf(executable, "--dangerously-skip-permissions", SESSION_ID_FLAG, sessionId)
   }
   else {
-    listOf(executable, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT, SESSION_ID_FLAG, sessionId)
+    listOf(executable, SESSION_ID_FLAG, sessionId)
   }
 
   fun buildResumeCommand(

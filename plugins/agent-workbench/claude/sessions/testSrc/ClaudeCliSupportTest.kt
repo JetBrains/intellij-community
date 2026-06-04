@@ -11,7 +11,7 @@ class ClaudeCliSupportTest {
   @Test
   fun buildNewSessionCommandNormal() {
     assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, sessionId = "session-1"))
-      .containsExactly("claude", "--permission-mode", "default", "--session-id", "session-1")
+      .containsExactly("claude", "--session-id", "session-1")
   }
 
   @Test
@@ -29,7 +29,7 @@ class ClaudeCliSupportTest {
   @Test
   fun buildNewSessionCommandUsesProvidedAbsoluteExecutable() {
     assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, sessionId = "session-1", executable = "/opt/tools/claude"))
-      .containsExactly("/opt/tools/claude", "--permission-mode", "default", "--session-id", "session-1")
+      .containsExactly("/opt/tools/claude", "--session-id", "session-1")
   }
 
   @Test
