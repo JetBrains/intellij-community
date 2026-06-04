@@ -8,8 +8,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object HelpUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("help.usage", 3)
-  private val HELP_ID_FIELD = EventFields.StringValidatedByCustomRule("help_id", HelpTopicCustomValidationRule::class.java)
+  private val GROUP = EventLogGroup("jupyter.help.usage", 3)
+  private val JUPYTER_HELP_TOPICS = listOf(
+    "jupyter.settings.page",
+    "reference.settings.jupyter",
+    "tool_window.jupyter_server_log",
+    "reference.jupyter.vcs",
+  )
+  private val HELP_ID_FIELD = EventFields.String("help_id", JUPYTER_HELP_TOPICS)
   private val HELP_OPENED_EVENT = GROUP.registerEvent("opened", HELP_ID_FIELD)
 
   override fun getGroup(): EventLogGroup = GROUP
