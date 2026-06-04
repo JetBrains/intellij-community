@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.impl
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace
@@ -45,16 +46,20 @@ class TypedStoreKey<T : Any>(private val dataType: Class<T>) {
       getStore(namespace).remove(key, key.dataType)
 
     @Suppress("unused", "UNCHECKED_CAST")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use TypedStoreKey#createKey instead")
     fun <T : Any> createList(key: @NonNls String): TypedStoreKey<ArrayList<T>> =
       TypedStoreKey(ArrayList::class.java as Class<ArrayList<T>>)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExtensionContext#get with TypedStoreKey instead")
     fun <T : Any> Store.getTyped(key: TypedStoreKey<T>): T? = get(key, key.dataType)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExtensionContext#put with TypedStoreKey instead")
     fun <T : Any> Store.putTyped(key: TypedStoreKey<T>, data: T): Unit = put(key, data)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExtensionContext#computeIfAbsent with TypedStoreKey instead")
     fun <T : Any> Store.computeIfAbsentTyped(key: TypedStoreKey<T>, create: () -> T): T =
       getOrComputeIfAbsent(key, { create() }, key.dataType)

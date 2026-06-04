@@ -435,7 +435,7 @@ public final class IoTestUtil {
   }
 
   /** @deprecated use {@link #setCaseSensitivity(Path, boolean)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
     setCaseSensitivity(dir.toPath(), caseSensitive);

@@ -37,6 +37,7 @@ import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitNotNull
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
@@ -241,6 +242,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   /**
    * @see shouldContainText For better readability
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use shouldContainText instead", ReplaceWith("shouldContainText(expectedText)"))
   fun containsText(expectedText: String) {
     step("Verify that editor contains text: $expectedText") {

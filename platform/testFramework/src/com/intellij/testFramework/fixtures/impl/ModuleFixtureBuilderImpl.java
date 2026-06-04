@@ -58,7 +58,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
    * @deprecated use {@link #ModuleFixtureBuilderImpl(Supplier, TestFixtureBuilder)} instead.
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ModuleFixtureBuilderImpl(final @NotNull NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleTypeSupplier = moduleTypeProducer;
     myFixtureBuilder = fixtureBuilder;
