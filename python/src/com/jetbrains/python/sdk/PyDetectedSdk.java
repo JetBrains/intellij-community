@@ -46,11 +46,11 @@ public final class PyDetectedSdk extends ProjectJdkImpl {
    */
   @ApiStatus.Obsolete
   public static @Nullable PyDetectedSdk asPyDetectedSdk(Sdk sdk) {
-    if (sdk instanceof PyRichSdk) {
-      return asPyDetectedSdk(((PyRichSdk)sdk).getSdk());
+    if (sdk instanceof PyRichSdk richSdk) {
+      return asPyDetectedSdk(richSdk.getSdk());
     }
-    if (sdk instanceof PyDetectedSdk) {
-      return (PyDetectedSdk)sdk;
+    if (sdk instanceof PyDetectedSdk detectedSdk) {
+      return detectedSdk;
     }
     return null;
   }

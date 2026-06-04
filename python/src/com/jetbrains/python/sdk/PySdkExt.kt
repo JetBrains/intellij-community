@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -14,7 +13,6 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -22,11 +20,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
-import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -137,14 +133,6 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { isPythonSdk(it) && it.isAssociatedWithModule(module) }
 }
 
-
-internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
-  runInEdt {
-    val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt
-    PackagesNotificationPanel.showError(title, description)
-  }
-}
-
 @Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val basePath = module?.baseDir?.path
@@ -231,6 +219,7 @@ private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {
 
 
 private val PY_VER_REGEX = Regex(""".*python(\d\.\d)""")
+
 @Deprecated("See com.intellij.python.junit5Tests.env.services.internal.impl.PythonWithLanguageLevelImplTest.testSunnyDay")
 @get:Internal
 val Sdk.guessedLanguageLevel: LanguageLevel?

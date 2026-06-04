@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ import static com.jetbrains.python.SdkUiUtilKt.isNonToolVirtualEnv;
 @Deprecated(forRemoval = true)
 public abstract class PyPackageManagementService extends PackageManagementServiceEx {
   private static final @NotNull Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
+  @ApiStatus.Internal
   protected static final @NonNls String TEXT_PREFIX = buildHtmlStylePrefix();
 
   private static @NotNull String buildHtmlStylePrefix() {
@@ -94,7 +96,7 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public @Nullable List<String> getAllRepositories() {
+  public final @NotNull List<String> getAllRepositories() {
     final List<String> result = new ArrayList<>();
     if (!PyPackageService.getInstance().PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
     result.addAll(getAdditionalRepositories());
@@ -102,12 +104,12 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public void addRepository(String repositoryUrl) {
+  public final void addRepository(String repositoryUrl) {
     PyPackageService.getInstance().addRepository(repositoryUrl);
   }
 
   @Override
-  public void removeRepository(String repositoryUrl) {
+  public final void removeRepository(String repositoryUrl) {
     PyPackageService.getInstance().removeRepository(repositoryUrl);
   }
 
@@ -131,12 +133,12 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public boolean canInstallToUser() {
+  public final boolean canInstallToUser() {
     return !isNonToolVirtualEnv(mySdk);
   }
 
   @Override
-  public @NotNull String getInstallToUserText() {
+  public final @NotNull String getInstallToUserText() {
     String userSiteText = PyBundle.message("button.install.to.user.site.packages.directory");
     if (!PythonSdkUtil.isRemote(mySdk)) {
       userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
@@ -145,17 +147,17 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public boolean isInstallToUserSelected() {
+  public  final boolean isInstallToUserSelected() {
     return PyPackageService.getInstance().useUserSite(mySdk.getHomePath());
   }
 
   @Override
-  public void installToUserChanged(boolean newValue) {
+  public final void installToUserChanged(boolean newValue) {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
 
-  public static @Nullable ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
+  private static @Nullable ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
     return toErrorDescription(exceptions, sdk, null);
   }
 
@@ -353,12 +355,12 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public int compareVersions(@NotNull String version1, @NotNull String version2) {
+  public final int compareVersions(@NotNull String version1, @NotNull String version2) {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }
 
   @Override
-  public @Nullable String getID() {
+  public final @NotNull String getID() {
     return "Python";
   }
 
@@ -399,7 +401,7 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public boolean canManageRepositories() {
+  public final boolean canManageRepositories() {
     // Package management from ManageRepositoriesDialog is disabled in favor of Packaging toolwindow
     return false;
   }
