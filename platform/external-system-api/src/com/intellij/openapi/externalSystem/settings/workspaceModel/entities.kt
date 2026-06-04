@@ -17,6 +17,7 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
   @Deprecated(message = "Use ExternalProjectsBuildClasspathEntityBuilder instead")
   interface Builder : ExternalProjectsBuildClasspathEntityBuilder
   companion object : EntityType<ExternalProjectsBuildClasspathEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic

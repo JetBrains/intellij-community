@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
@@ -60,6 +61,7 @@ class DAWarning(
   override val message: @Nls String,
 ) : UserDataHolderBase(), Dependency.Status.Warning {
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with warning title")
   constructor(message: @Nls String) : this(message, message)
 }

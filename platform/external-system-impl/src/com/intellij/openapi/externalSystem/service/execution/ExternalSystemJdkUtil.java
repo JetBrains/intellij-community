@@ -215,7 +215,7 @@ public final class ExternalSystemJdkUtil {
   /**
    * @deprecated use {@link #suggestJdkHomePaths()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Collection<String> suggestJdkHomePaths() {
     return getJavaSdkType().suggestHomePaths();
   }

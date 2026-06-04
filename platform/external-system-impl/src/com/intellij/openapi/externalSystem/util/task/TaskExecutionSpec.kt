@@ -89,6 +89,7 @@ interface TaskExecutionSpec {
     }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the TaskExecutionSpec#create() function instead")
     fun create(project: Project,
                systemId: ProjectSystemId,

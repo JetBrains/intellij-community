@@ -90,6 +90,7 @@ abstract class AbstractOpenProjectProvider {
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"), level = DeprecationLevel.ERROR)
   fun linkToExistingProject(projectFilePath: String, project: Project) {
     throw NotImplementedError("Do not use")
