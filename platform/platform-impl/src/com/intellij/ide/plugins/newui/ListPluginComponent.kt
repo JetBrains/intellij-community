@@ -805,6 +805,9 @@ class ListPluginComponent(
   fun pluginInstalled(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel?) {
     if (success) {
       succesefullyFinishedOnce = true
+      if (myUpdateDescriptor != null) {
+        myUpdateDescriptor = null
+      }
       if (restartRequired) {
         enableRestart()
       }
