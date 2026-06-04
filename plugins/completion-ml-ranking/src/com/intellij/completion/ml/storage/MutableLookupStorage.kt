@@ -32,20 +32,24 @@ import org.jetbrains.annotations.TestOnly
 class MutableLookupStorage(
   override val startedTimestamp: Long,
   override val language: Language,
-  override val model: RankingModelWrapper?)
-  : LookupStorage {
+  override val model: RankingModelWrapper?,
+) : LookupStorage {
   private var _userFactors: Map<String, String>? = null
-  override val userFactors: Map<String, String>
-    get() = _userFactors ?: emptyMap()
-
   private var contextFeaturesStorage: ContextFeatures? = null
-  override val contextFactors: Map<String, String>
-    get() = contextFeaturesStorage?.asMap() ?: emptyMap()
 
   private var mlUsed: Boolean = false
   private var shouldReRank = model != null
 
   private var _loggingEnabled: Boolean = false
+
+  private val item2storage: MutableMap<String, MutableElementStorage> = mutableMapOf()
+
+  override val userFactors: Map<String, String>
+    get() = _userFactors ?: emptyMap()
+
+  override val contextFactors: Map<String, String>
+    get() = contextFeaturesStorage?.asMap() ?: emptyMap()
+
   override val performanceTracker: MLCompletionPerformanceTracker = MLCompletionPerformanceTracker()
 
   companion object {
@@ -105,11 +109,10 @@ class MutableLookupStorage(
 
   override val sessionFactors: LookupSessionFactorsStorage = LookupSessionFactorsStorage(startedTimestamp)
 
-  private val item2storage: MutableMap<String, MutableElementStorage> = mutableMapOf()
-
-  override fun getItemStorage(id: String): MutableElementStorage = item2storage.computeIfAbsent(id) {
-    MutableElementStorage()
-  }
+  override fun getItemStorage(id: String): MutableElementStorage =
+    item2storage.computeIfAbsent(id) {
+      MutableElementStorage()
+    }
 
   override fun mlUsed(): Boolean = mlUsed
 
@@ -151,8 +154,10 @@ class MutableLookupStorage(
 
   override fun contextProvidersResult(): ContextFeatures = contextFeaturesStorage ?: ContextFeaturesStorage.EMPTY
 
-  fun initContextFactors(contextFactors: MutableMap<String, MLFeatureValue>,
-                         environment: UserDataHolderBase) {
+  fun initContextFactors(
+    contextFactors: MutableMap<String, MLFeatureValue>,
+    environment: UserDataHolderBase,
+  ) {
     if (isContextFactorsInitialized()) {
       LOG.error("Context factors should be initialized only once")
     }
@@ -165,10 +170,7 @@ class MutableLookupStorage(
 
   private fun experimentWithoutComputingFeatures(): Boolean {
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
-    if (experimentInfo.inExperiment) {
-      return !experimentInfo.shouldCalculateFeatures
-    }
-    return false
+    return experimentInfo.inExperiment && !experimentInfo.shouldCalculateFeatures
   }
 
   fun markLoggingEnabled() {
