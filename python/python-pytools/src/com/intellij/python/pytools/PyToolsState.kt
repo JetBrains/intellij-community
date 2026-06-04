@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.lsp.LSP_TOOLS_STORAGE_FILE
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 
 /**
@@ -39,7 +40,7 @@ class PyToolsState(private val project: Project) : PersistentStateComponent<PyTo
       }
   }
 
-  data class State(var tools: MutableMap<String, ToolEntry> = mutableMapOf())
+  data class State(var tools: MutableMap<String, ToolEntry> = ConcurrentHashMap())
 
   private var state = State()
 
@@ -56,8 +57,7 @@ class PyToolsState(private val project: Project) : PersistentStateComponent<PyTo
       discoveryMode = tool.legacyDiscoveryMode(project),
       customPathToExecutable = tool.legacyCustomPath(project)?.toString().orEmpty(),
     )
-    state.tools[key] = migrated
-    return migrated
+    return state.tools.putIfAbsent(key, migrated) ?: migrated
   }
 
   fun isEnabled(tool: PyTool): Boolean = getEntry(tool).enabled
