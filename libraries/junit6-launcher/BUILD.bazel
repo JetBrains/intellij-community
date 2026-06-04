@@ -1,0 +1,47 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.junit6.launcher` start
+
+jvm_library(
+    name = "junit6-launcher",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit6.launcher",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit6-launcher-_j_unit6_launcher"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-junit6-launcher-_j_unit6_launcher",
+        "//libraries/junit6",
+    ],
+)
+
+jvm_library(
+    name = "junit6-launcher_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.junit6.launcher",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit6-launcher-_j_unit6_launcher"],
+    runtime_deps = [
+        # do not sort,
+        ":junit6-launcher",
+        "//libraries/junit6:junit6_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.junit6.launcher` end
+
+### auto-generated section `iml intellij.libraries.junit6.launcher` start
+exports_files(
+    [
+        "intellij.libraries.junit6.launcher.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.junit6.launcher` end

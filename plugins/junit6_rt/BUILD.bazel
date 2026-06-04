@@ -1,6 +1,16 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.junit.v6.rt` start
+
+jvm_provided_library(
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
+)
+
+jvm_provided_library(
+    name = "libraries_junit6-launcher_provided",
+    lib = "//libraries/junit6-launcher",
+)
 
 jvm_library(
     name = "junit-v6-rt",
@@ -18,8 +28,8 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/junit5_rt:junit-v5-rt",
-        "@lib//:junit6-provided",
-        "@lib//:junit6Launcher-provided",
+        ":libraries_junit6_provided",
+        ":libraries_junit6-launcher_provided",
     ],
 )
 
@@ -37,8 +47,10 @@ jvm_library(
         # do not sort,
         ":junit-v6-rt",
         "//plugins/junit5_rt:junit-v5-rt_test_lib",
-        "@lib//:junit6-provided",
-        "@lib//:junit6Launcher-provided",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.v6.rt` end
