@@ -3,8 +3,8 @@ package com.intellij.platform.lsp.impl.features.inlayHint
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintParams
@@ -33,6 +33,6 @@ internal class LspInlayHintsCache(private val lspServer: LspServerImpl) : LspHig
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    LspServerManagerImpl.refreshInlayHints(lspServer.project, file, this)
+    LspFeaturesRefreshing.refreshInlayHints(lspServer.project, file, this)
   }
 }

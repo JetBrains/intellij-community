@@ -3,8 +3,8 @@ package com.intellij.platform.lsp.impl.features.codeLens
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCodeLensSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
-import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.CodeLensParams
@@ -41,6 +41,6 @@ internal class LspCodeLensCache(private val lspServer: LspServerImpl) : LspHighl
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    LspServerManagerImpl.refreshCodeLenses(lspServer.project)
+    LspFeaturesRefreshing.refreshCodeLenses(lspServer.project)
   }
 }
