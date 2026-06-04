@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -71,6 +71,9 @@ public final class PostfixTemplatesUtils {
                                    @NotNull PsiElement expr) {
     Project project = expr.getProject();
     if (surrounder instanceof ModCommandSurrounder modCommandSurrounder) {
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      String currentCommandName = commandProcessor.getCurrentCommandName();
+      Object currentCommandGroupId = commandProcessor.getCurrentCommandGroupId();
       ActionContext context = ActionContext.from(editor, expr.getContainingFile());
       SmartPsiElementPointer<PsiElement> exprPointer = SmartPointerManager.createPointer(expr);
       ReadAction.nonBlocking(
@@ -86,10 +89,12 @@ public final class PostfixTemplatesUtils {
             showErrorHint(project, editor);
           }
           else {
+            String message = currentCommandName != null ? currentCommandName : CodeInsightBundle.message("command.expand.postfix.template");
+            Object groupId = currentCommandGroupId != null ? currentCommandGroupId : PostfixLiveTemplate.POSTFIX_TEMPLATE_ID;
             CommandProcessor.getInstance().executeCommand(
               project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor),
-              CodeInsightBundle.message("command.expand.postfix.template"),
-              PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
+              message,
+              groupId);
           }
         })
         .submit(AppExecutorUtil.getAppExecutorService());
