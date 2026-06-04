@@ -170,17 +170,17 @@ class MutableLookupStorage(
 
   /** Initializes the context features from [contextFactors] and [environment]; must be called only once. */
   fun initContextFactors(
-    contextFactors: MutableMap<String, MLFeatureValue>,
+    contextFactors: Map<String, MLFeatureValue>,
     environment: UserDataHolderBase,
   ) {
     if (isContextFactorsInitialized()) {
       LOG.error("Context factors should be initialized only once")
+      return
     }
-    else {
-      val features = ContextFeaturesStorage(contextFactors)
-      environment.copyUserDataTo(features)
-      contextFeaturesStorage = features
-    }
+
+    val features = ContextFeaturesStorage(contextFactors)
+    environment.copyUserDataTo(features)
+    contextFeaturesStorage = features
   }
 
   private fun experimentWithoutComputingFeatures(): Boolean {
