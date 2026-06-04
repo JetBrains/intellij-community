@@ -6,6 +6,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="mockito" level="project" />
-    <orderEntry type="library" name="byte-buddy" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" />
   </component>
 </module>

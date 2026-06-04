@@ -77,6 +77,10 @@ class IntelliJProjectConfiguration {
     fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile = getVirtualFile(getProjectLibrary(projectLibraryName))
 
     @JvmStatic
+    fun getJarFromSingleJarModuleLibrary(moduleName: String, libraryName: String): VirtualFile =
+      getVirtualFile(getModuleLibrary(moduleName, libraryName))
+
+    @JvmStatic
     fun getVirtualFile(lib: LibraryRoots): VirtualFile {
       return lib.classesUrls.single().let { url ->
         VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)

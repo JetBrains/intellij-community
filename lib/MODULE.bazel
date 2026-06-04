@@ -287,20 +287,6 @@ http_file(
 )
 
 http_file(
-    name = "net_bytebuddy-byte-buddy-1_17_7_http",
-    downloaded_file_path = "byte-buddy-1.17.7.jar",
-    sha256 = "3575dcb8a98faf943d3c1595c47a16047c4fce8a83ebbb26262f1a2f67546357",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7.jar",
-)
-
-http_file(
-    name = "net_bytebuddy-byte-buddy-1_17_7-sources_http",
-    downloaded_file_path = "byte-buddy-1.17.7-sources.jar",
-    sha256 = "8b4139f2607584938370ed3d2adfc404e893c39db253afae53222aa920c58182",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7-sources.jar",
-)
-
-http_file(
     name = "com_github_ajalt_clikt-clikt-jvm-3_5_4_http",
     downloaded_file_path = "clikt-jvm-3.5.4.jar",
     sha256 = "b58b4d93fc1870b99b2adb3e16e9c483c8e73766b2944bc3cff805c0be47d19e",
@@ -5040,146 +5026,6 @@ http_file(
 )
 
 http_file(
-    name = "io_mockk-mockk-1_14_5_http",
-    downloaded_file_path = "mockk-1.14.5.jar",
-    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-dsl-1_14_5_http",
-    downloaded_file_path = "mockk-dsl-1.14.5.jar",
-    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-1_14_5_http",
-    downloaded_file_path = "mockk-agent-1.14.5.jar",
-    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-api-1_14_5_http",
-    downloaded_file_path = "mockk-agent-api-1.14.5.jar",
-    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-core-1_14_5_http",
-    downloaded_file_path = "mockk-core-1.14.5.jar",
-    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-1_14_5-sources_http",
-    downloaded_file_path = "mockk-1.14.5-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-dsl-1_14_5-sources_http",
-    downloaded_file_path = "mockk-dsl-1.14.5-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-1.14.5-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-api-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-api-1.14.5-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-core-1_14_5-sources_http",
-    downloaded_file_path = "mockk-core-1.14.5-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-jvm-1.14.5.jar",
-    sha256 = "74deb86cbab6871a3e4d0f97ba8eacbdae7aacd7537f142bcb083590465a6219",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-dsl-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-dsl-jvm-1.14.5.jar",
-    sha256 = "d01d6ce85f9824d8ddb22ea7f1bccd581b831ffad504f48a4f18abf9bc6f2eac",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-agent-jvm-1.14.5.jar",
-    sha256 = "9f78e9988e84c98569edcf9a6225d5b7354939529642e54c2c58da3ef3913106",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-api-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-agent-api-jvm-1.14.5.jar",
-    sha256 = "a919a8fec03dfb0c084cb43dafcebe2dd9351431c7a08c2fc8147037de1d06b7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-core-jvm-1_14_5_http",
-    downloaded_file_path = "mockk-core-jvm-1.14.5.jar",
-    sha256 = "060fffe7452e74f6e18bb9dfe1221e92c4ec0de29a84b022fb562ec6cd954691",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-jvm-1.14.5-sources.jar",
-    sha256 = "b2931c01a2e19e3831c161a3b3021173f3e56dd482e94dcccecee9ad57754768",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-dsl-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-dsl-jvm-1.14.5-sources.jar",
-    sha256 = "a1b332c0536906d631408f70e2b27a9e9b4d43227ecf0b9b73cee364544bd6ce",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-jvm-1.14.5-sources.jar",
-    sha256 = "572a634d38fedb6a716df0636c93a3ef4c5cdd052660e7f7cf61940d1a1a545e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-agent-api-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-agent-api-jvm-1.14.5-sources.jar",
-    sha256 = "b88f7e2e15058764ed113d7426e3c9700b7fecbe0840f80ca4d5d3a3f5edaf64",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5-sources.jar",
-)
-
-http_file(
-    name = "io_mockk-mockk-core-jvm-1_14_5-sources_http",
-    downloaded_file_path = "mockk-core-jvm-1.14.5-sources.jar",
-    sha256 = "f2ff944144a5048770574271c6cd874fb8c8726ed0449b8507afd93b4b170249",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5-sources.jar",
-)
-
-http_file(
     name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http",
     downloaded_file_path = "kotlin-sdk-jvm-0.12.0.jar",
     sha256 = "88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc",
@@ -7952,6 +7798,34 @@ http_file(
 )
 
 http_file(
+    name = "net_bytebuddy-byte-buddy-agent-1_17_6_http",
+    downloaded_file_path = "byte-buddy-agent-1.17.6.jar",
+    sha256 = "8a80959465bb09848cd41a89301490c55b9d940dc6ec30d8abac0f63b39fd5d0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6.jar",
+)
+
+http_file(
+    name = "net_bytebuddy-byte-buddy-agent-1_17_6-sources_http",
+    downloaded_file_path = "byte-buddy-agent-1.17.6-sources.jar",
+    sha256 = "8c6566fd9ec6547df29043f86d2930f6fd47e8c13bd308a306bc7f664917bd32",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6-sources.jar",
+)
+
+http_file(
+    name = "net_bytebuddy-byte-buddy-1_17_7_http",
+    downloaded_file_path = "byte-buddy-1.17.7.jar",
+    sha256 = "3575dcb8a98faf943d3c1595c47a16047c4fce8a83ebbb26262f1a2f67546357",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7.jar",
+)
+
+http_file(
+    name = "net_bytebuddy-byte-buddy-1_17_7-sources_http",
+    downloaded_file_path = "byte-buddy-1.17.7-sources.jar",
+    sha256 = "8b4139f2607584938370ed3d2adfc404e893c39db253afae53222aa920c58182",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7-sources.jar",
+)
+
+http_file(
     name = "com_github_ben-manes_caffeine-caffeine-3_2_3_http",
     downloaded_file_path = "caffeine-3.2.3.jar",
     sha256 = "ca70c90a5d1ce1511880ce9c93d4ad22108f61111d3daf91eb52762b571bd179",
@@ -10126,6 +10000,146 @@ http_file(
     downloaded_file_path = "miglayout-core-11.4.2-sources.jar",
     sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-1_14_5_http",
+    downloaded_file_path = "mockk-1.14.5.jar",
+    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-dsl-1_14_5_http",
+    downloaded_file_path = "mockk-dsl-1.14.5.jar",
+    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-1_14_5_http",
+    downloaded_file_path = "mockk-agent-1.14.5.jar",
+    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-api-1_14_5_http",
+    downloaded_file_path = "mockk-agent-api-1.14.5.jar",
+    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-core-1_14_5_http",
+    downloaded_file_path = "mockk-core-1.14.5.jar",
+    sha256 = "089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-1_14_5-sources_http",
+    downloaded_file_path = "mockk-1.14.5-sources.jar",
+    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.14.5/mockk-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-dsl-1_14_5-sources_http",
+    downloaded_file_path = "mockk-dsl-1.14.5-sources.jar",
+    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-1_14_5-sources_http",
+    downloaded_file_path = "mockk-agent-1.14.5-sources.jar",
+    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-api-1_14_5-sources_http",
+    downloaded_file_path = "mockk-agent-api-1.14.5-sources.jar",
+    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-core-1_14_5-sources_http",
+    downloaded_file_path = "mockk-core-1.14.5-sources.jar",
+    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-jvm-1_14_5_http",
+    downloaded_file_path = "mockk-jvm-1.14.5.jar",
+    sha256 = "74deb86cbab6871a3e4d0f97ba8eacbdae7aacd7537f142bcb083590465a6219",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-dsl-jvm-1_14_5_http",
+    downloaded_file_path = "mockk-dsl-jvm-1.14.5.jar",
+    sha256 = "d01d6ce85f9824d8ddb22ea7f1bccd581b831ffad504f48a4f18abf9bc6f2eac",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-jvm-1_14_5_http",
+    downloaded_file_path = "mockk-agent-jvm-1.14.5.jar",
+    sha256 = "9f78e9988e84c98569edcf9a6225d5b7354939529642e54c2c58da3ef3913106",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-api-jvm-1_14_5_http",
+    downloaded_file_path = "mockk-agent-api-jvm-1.14.5.jar",
+    sha256 = "a919a8fec03dfb0c084cb43dafcebe2dd9351431c7a08c2fc8147037de1d06b7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-core-jvm-1_14_5_http",
+    downloaded_file_path = "mockk-core-jvm-1.14.5.jar",
+    sha256 = "060fffe7452e74f6e18bb9dfe1221e92c4ec0de29a84b022fb562ec6cd954691",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-jvm-1_14_5-sources_http",
+    downloaded_file_path = "mockk-jvm-1.14.5-sources.jar",
+    sha256 = "b2931c01a2e19e3831c161a3b3021173f3e56dd482e94dcccecee9ad57754768",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-jvm/1.14.5/mockk-jvm-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-dsl-jvm-1_14_5-sources_http",
+    downloaded_file_path = "mockk-dsl-jvm-1.14.5-sources.jar",
+    sha256 = "a1b332c0536906d631408f70e2b27a9e9b4d43227ecf0b9b73cee364544bd6ce",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-dsl-jvm/1.14.5/mockk-dsl-jvm-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-jvm-1_14_5-sources_http",
+    downloaded_file_path = "mockk-agent-jvm-1.14.5-sources.jar",
+    sha256 = "572a634d38fedb6a716df0636c93a3ef4c5cdd052660e7f7cf61940d1a1a545e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-jvm/1.14.5/mockk-agent-jvm-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-agent-api-jvm-1_14_5-sources_http",
+    downloaded_file_path = "mockk-agent-api-jvm-1.14.5-sources.jar",
+    sha256 = "b88f7e2e15058764ed113d7426e3c9700b7fecbe0840f80ca4d5d3a3f5edaf64",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-agent-api-jvm/1.14.5/mockk-agent-api-jvm-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "io_mockk-mockk-core-jvm-1_14_5-sources_http",
+    downloaded_file_path = "mockk-core-jvm-1.14.5-sources.jar",
+    sha256 = "f2ff944144a5048770574271c6cd874fb8c8726ed0449b8507afd93b4b170249",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5-sources.jar",
 )
 
 http_file(
@@ -14280,13 +14294,6 @@ http_file(
 )
 
 http_file(
-    name = "net_bytebuddy-byte-buddy-agent-1_17_6_http",
-    downloaded_file_path = "byte-buddy-agent-1.17.6.jar",
-    sha256 = "8a80959465bb09848cd41a89301490c55b9d940dc6ec30d8abac0f63b39fd5d0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6.jar",
-)
-
-http_file(
     name = "org_objenesis-objenesis-3_3_http",
     downloaded_file_path = "objenesis-3.3.jar",
     sha256 = "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb",
@@ -14298,13 +14305,6 @@ http_file(
     downloaded_file_path = "mockito-core-5.19.0-sources.jar",
     sha256 = "c28b909e9f0eeaaf4e24c57f188178f24fed4485cf52cb1252dc259d05f24cb0",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.19.0/mockito-core-5.19.0-sources.jar",
-)
-
-http_file(
-    name = "net_bytebuddy-byte-buddy-agent-1_17_6-sources_http",
-    downloaded_file_path = "byte-buddy-agent-1.17.6-sources.jar",
-    sha256 = "8c6566fd9ec6547df29043f86d2930f6fd47e8c13bd308a306bc7f664917bd32",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.6/byte-buddy-agent-1.17.6-sources.jar",
 )
 
 http_file(

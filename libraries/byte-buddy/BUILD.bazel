@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.byte.buddy` start
+
+jvm_library(
+    name = "byte-buddy",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.byte.buddy",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-byte-buddy-byte-buddy"],
+    runtime_deps = ["@lib//:libraries-byte-buddy-byte-buddy"],
+)
+
+jvm_library(
+    name = "byte-buddy_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.byte.buddy",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-byte-buddy-byte-buddy"],
+    runtime_deps = [":byte-buddy"],
+)
+### auto-generated section `build intellij.libraries.byte.buddy` end
+
+### auto-generated section `iml intellij.libraries.byte.buddy` start
+exports_files(
+    [
+        "intellij.libraries.byte.buddy.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.byte.buddy` end

@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.libraries.mockk.jvm.jar
+  modules:
+  - name: intellij.libraries.mockk.jvm
+    libraries:
+      io.mockk.jvm:
+      - name: $MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1/mockk-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1/mockk-dsl-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1/mockk-agent-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1/mockk-agent-api-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1/mockk-core-jvm-1.jar

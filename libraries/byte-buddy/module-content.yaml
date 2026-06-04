@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.byte.buddy.jar
+  modules:
+  - name: intellij.libraries.byte.buddy
+    libraries:
+      byte-buddy:
+      - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar

@@ -1,0 +1,57 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.mockk.jvm` start
+
+jvm_library(
+    name = "jvm",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mockk.jvm",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mockk-jvm-io-mockk-jvm"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-mockk-jvm-io-mockk-jvm",
+        "//libraries/junit5",
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy/agent",
+        "//libraries/objenesis",
+    ],
+)
+
+jvm_library(
+    name = "jvm_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.mockk.jvm",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mockk-jvm-io-mockk-jvm"],
+    runtime_deps = [
+        # do not sort,
+        ":jvm",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//libraries/byte-buddy/agent:agent_test_lib",
+        "//libraries/objenesis:objenesis_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.mockk.jvm` end
+
+### auto-generated section `iml intellij.libraries.mockk.jvm` start
+exports_files(
+    [
+        "intellij.libraries.mockk.jvm.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.mockk.jvm` end

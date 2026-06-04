@@ -643,21 +643,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "net.bytebuddy/byte-buddy-1.17.7.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
-    out = "net.bytebuddy/byte-buddy-1.17.7.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "byte-buddy",
-    jar = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-1_17_7-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar_copy",
     src = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
     out = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar",
@@ -6310,172 +6295,6 @@ java_library(
 )
 
 copy_file(
-    name = "io.mockk/mockk-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-1_14_5_http//file",
-    out = "io.mockk/mockk-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-dsl-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-dsl-1_14_5_http//file",
-    out = "io.mockk/mockk-dsl-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-agent-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-agent-1_14_5_http//file",
-    out = "io.mockk/mockk-agent-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-agent-api-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-agent-api-1_14_5_http//file",
-    out = "io.mockk/mockk-agent-api-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-core-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-core-1_14_5_http//file",
-    out = "io.mockk/mockk-core-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-mockk",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_mockk-mockk-1_14_5_http_import",
-        ":io_mockk-mockk-dsl-1_14_5_http_import",
-        ":io_mockk-mockk-agent-1_14_5_http_import",
-        ":io_mockk-mockk-agent-api-1_14_5_http_import",
-        ":io_mockk-mockk-core-1_14_5_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_mockk-mockk-1_14_5_http_import",
-    jar = "@io_mockk-mockk-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-dsl-1_14_5_http_import",
-    jar = "@io_mockk-mockk-dsl-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-dsl-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-agent-1_14_5_http_import",
-    jar = "@io_mockk-mockk-agent-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-agent-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-agent-api-1_14_5_http_import",
-    jar = "@io_mockk-mockk-agent-api-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-agent-api-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-core-1_14_5_http_import",
-    jar = "@io_mockk-mockk-core-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-core-1_14_5-sources_http//file",
-)
-
-copy_file(
-    name = "io.mockk/mockk-jvm-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-jvm-1_14_5_http//file",
-    out = "io.mockk/mockk-jvm-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-dsl-jvm-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-dsl-jvm-1_14_5_http//file",
-    out = "io.mockk/mockk-dsl-jvm-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-agent-jvm-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-agent-jvm-1_14_5_http//file",
-    out = "io.mockk/mockk-agent-jvm-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-agent-api-jvm-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-agent-api-jvm-1_14_5_http//file",
-    out = "io.mockk/mockk-agent-api-jvm-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.mockk/mockk-core-jvm-1.14.5.jar_copy",
-    src = "@io_mockk-mockk-core-jvm-1_14_5_http//file",
-    out = "io.mockk/mockk-core-jvm-1.14.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-mockk-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_mockk-mockk-jvm-1_14_5_http_import",
-        ":io_mockk-mockk-dsl-jvm-1_14_5_http_import",
-        ":io_mockk-mockk-agent-jvm-1_14_5_http_import",
-        ":io_mockk-mockk-agent-api-jvm-1_14_5_http_import",
-        ":io_mockk-mockk-core-jvm-1_14_5_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_mockk-mockk-jvm-1_14_5_http_import",
-    jar = "@io_mockk-mockk-jvm-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-jvm-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-dsl-jvm-1_14_5_http_import",
-    jar = "@io_mockk-mockk-dsl-jvm-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-dsl-jvm-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-agent-jvm-1_14_5_http_import",
-    jar = "@io_mockk-mockk-agent-jvm-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-agent-jvm-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-agent-api-jvm-1_14_5_http_import",
-    jar = "@io_mockk-mockk-agent-api-jvm-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-agent-api-jvm-1_14_5-sources_http//file",
-)
-
-jvm_import(
-    name = "io_mockk-mockk-core-jvm-1_14_5_http_import",
-    jar = "@io_mockk-mockk-core-jvm-1_14_5_http//file",
-    source_jar = "@io_mockk-mockk-core-jvm-1_14_5-sources_http//file",
-)
-
-copy_file(
     name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
     src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
     out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
@@ -10327,6 +10146,36 @@ jvm_import(
 )
 
 copy_file(
+    name = "net.bytebuddy/byte-buddy-agent-1.17.6.jar_copy",
+    src = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
+    out = "net.bytebuddy/byte-buddy-agent-1.17.6.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-byte-buddy-agent-byte-buddy-agent",
+    jar = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
+    source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_6-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "net.bytebuddy/byte-buddy-1.17.7.jar_copy",
+    src = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
+    out = "net.bytebuddy/byte-buddy-1.17.7.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-byte-buddy-byte-buddy",
+    jar = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
+    source_jar = "@net_bytebuddy-byte-buddy-1_17_7-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar_copy",
     src = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
     out = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
@@ -12908,6 +12757,172 @@ jvm_import(
 )
 
 copy_file(
+    name = "io.mockk/mockk-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-1_14_5_http//file",
+    out = "io.mockk/mockk-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-dsl-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-dsl-1_14_5_http//file",
+    out = "io.mockk/mockk-dsl-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-agent-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-agent-1_14_5_http//file",
+    out = "io.mockk/mockk-agent-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-agent-api-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-agent-api-1_14_5_http//file",
+    out = "io.mockk/mockk-agent-api-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-core-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-core-1_14_5_http//file",
+    out = "io.mockk/mockk-core-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-mockk-io-mockk",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_mockk-mockk-1_14_5_http_import",
+        ":io_mockk-mockk-dsl-1_14_5_http_import",
+        ":io_mockk-mockk-agent-1_14_5_http_import",
+        ":io_mockk-mockk-agent-api-1_14_5_http_import",
+        ":io_mockk-mockk-core-1_14_5_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_mockk-mockk-1_14_5_http_import",
+    jar = "@io_mockk-mockk-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-dsl-1_14_5_http_import",
+    jar = "@io_mockk-mockk-dsl-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-dsl-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-agent-1_14_5_http_import",
+    jar = "@io_mockk-mockk-agent-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-agent-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-agent-api-1_14_5_http_import",
+    jar = "@io_mockk-mockk-agent-api-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-agent-api-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-core-1_14_5_http_import",
+    jar = "@io_mockk-mockk-core-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-core-1_14_5-sources_http//file",
+)
+
+copy_file(
+    name = "io.mockk/mockk-jvm-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-jvm-1_14_5_http//file",
+    out = "io.mockk/mockk-jvm-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-dsl-jvm-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-dsl-jvm-1_14_5_http//file",
+    out = "io.mockk/mockk-dsl-jvm-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-agent-jvm-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-agent-jvm-1_14_5_http//file",
+    out = "io.mockk/mockk-agent-jvm-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-agent-api-jvm-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-agent-api-jvm-1_14_5_http//file",
+    out = "io.mockk/mockk-agent-api-jvm-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.mockk/mockk-core-jvm-1.14.5.jar_copy",
+    src = "@io_mockk-mockk-core-jvm-1_14_5_http//file",
+    out = "io.mockk/mockk-core-jvm-1.14.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-mockk-jvm-io-mockk-jvm",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_mockk-mockk-jvm-1_14_5_http_import",
+        ":io_mockk-mockk-dsl-jvm-1_14_5_http_import",
+        ":io_mockk-mockk-agent-jvm-1_14_5_http_import",
+        ":io_mockk-mockk-agent-api-jvm-1_14_5_http_import",
+        ":io_mockk-mockk-core-jvm-1_14_5_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_mockk-mockk-jvm-1_14_5_http_import",
+    jar = "@io_mockk-mockk-jvm-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-jvm-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-dsl-jvm-1_14_5_http_import",
+    jar = "@io_mockk-mockk-dsl-jvm-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-dsl-jvm-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-agent-jvm-1_14_5_http_import",
+    jar = "@io_mockk-mockk-agent-jvm-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-agent-jvm-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-agent-api-jvm-1_14_5_http_import",
+    jar = "@io_mockk-mockk-agent-api-jvm-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-agent-api-jvm-1_14_5-sources_http//file",
+)
+
+jvm_import(
+    name = "io_mockk-mockk-core-jvm-1_14_5_http_import",
+    jar = "@io_mockk-mockk-core-jvm-1_14_5_http//file",
+    source_jar = "@io_mockk-mockk-core-jvm-1_14_5-sources_http//file",
+)
+
+copy_file(
     name = "com.h2database/h2-mvstore-2.4.240.jar_copy",
     src = "@com_h2database-h2-mvstore-2_4_240_http//file",
     out = "com.h2database/h2-mvstore-2.4.240.jar",
@@ -13237,6 +13252,13 @@ jvm_import(
     name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-windows-x86_64_http_import",
     jar = "@io_netty-netty-tcnative-boringssl-static-2_0_77_Final-windows-x86_64_http//file",
     source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_77_Final-sources_http//file",
+)
+
+jvm_import(
+    name = "libraries-objenesis-_objenesis",
+    jar = "@org_objenesis-objenesis-3_4_http//file",
+    source_jar = "@org_objenesis-objenesis-3_4-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(
@@ -18253,14 +18275,6 @@ copy_file(
 )
 
 copy_file(
-    name = "net.bytebuddy/byte-buddy-agent-1.17.6.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-    out = "net.bytebuddy/byte-buddy-agent-1.17.6.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.objenesis/objenesis-3.3.jar_copy",
     src = "@org_objenesis-objenesis-3_3_http//file",
     out = "org.objenesis/objenesis-3.3.jar",
@@ -18354,13 +18368,6 @@ jvm_import(
     name = "ngram-slp",
     jar = "@org_jetbrains_intellij_deps_completion-ngram-slp-0_0_3_http//file",
     source_jar = "@org_jetbrains_intellij_deps_completion-ngram-slp-0_0_3-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "objenesis",
-    jar = "@org_objenesis-objenesis-3_4_http//file",
-    source_jar = "@org_objenesis-objenesis-3_4-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

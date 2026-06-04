@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.byte.buddy.agent.jar
+  modules:
+  - name: intellij.libraries.byte.buddy.agent
+    libraries:
+      byte-buddy-agent:
+      - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1/byte-buddy-agent-1.jar

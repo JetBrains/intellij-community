@@ -7,6 +7,7 @@
     <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.libraries.mockk.jvm"/>
     <module name="intellij.libraries.sshd.osgi"/>
     <module name="intellij.libraries.system.stubs.jupiter"/>
     <module name="intellij.libraries.testcontainers"/>

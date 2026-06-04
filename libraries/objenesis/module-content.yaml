@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.objenesis.jar
+  modules:
+  - name: intellij.libraries.objenesis
+    libraries:
+      Objenesis:
+      - name: $MAVEN_REPOSITORY$/org/objenesis/objenesis/3/objenesis-3.jar

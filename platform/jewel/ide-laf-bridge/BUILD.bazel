@@ -111,7 +111,8 @@ jvm_library(
         "//plugins/textmate:textmate_test_lib",
         "//plugins/textmate/plugin",
         "//plugins/textmate/plugin:plugin_test_lib",
-        "@lib//:io-mockk-jvm",
+        "//libraries/mockk/jvm",
+        "//libraries/mockk/jvm:jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end
@@ -231,7 +232,8 @@ jvm_library(
         "//plugins/textmate:textmate_test_lib",
         "//plugins/textmate/plugin",
         "//plugins/textmate/plugin:plugin_test_lib",
-        "@lib//:io-mockk-jvm",
+        "//libraries/mockk/jvm",
+        "//libraries/mockk/jvm:jvm_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
     ],

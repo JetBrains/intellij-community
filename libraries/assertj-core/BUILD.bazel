@@ -28,7 +28,12 @@ jvm_library(
     module_name = "intellij.libraries.assertj.core",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-assertj-core-assert_j"],
-    runtime_deps = [":assertj-core"],
+    runtime_deps = [
+        # do not sort,
+        ":assertj-core",
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.assertj.core` end
 

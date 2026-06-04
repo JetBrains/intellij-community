@@ -14,7 +14,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:mockito",
-        "@lib//:byte-buddy",
+        "//libraries/byte-buddy",
     ],
 )
 
@@ -28,7 +28,11 @@ jvm_library(
     module_name = "intellij.libraries.mockito",
     visibility = ["//visibility:public"],
     exports = ["@lib//:mockito"],
-    runtime_deps = [":mockito"],
+    runtime_deps = [
+        # do not sort,
+        ":mockito",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.mockito` end
 

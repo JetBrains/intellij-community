@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.mockk` start
+
+jvm_library(
+    name = "mockk",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mockk",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mockk-io-mockk"],
+    runtime_deps = ["@lib//:libraries-mockk-io-mockk"],
+)
+
+jvm_library(
+    name = "mockk_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.mockk",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mockk-io-mockk"],
+    runtime_deps = [":mockk"],
+)
+### auto-generated section `build intellij.libraries.mockk` end
+
+### auto-generated section `iml intellij.libraries.mockk` start
+exports_files(
+    [
+        "intellij.libraries.mockk.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.mockk` end

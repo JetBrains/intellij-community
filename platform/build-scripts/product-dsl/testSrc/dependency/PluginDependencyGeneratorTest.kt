@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.productLayout.dependency
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -596,6 +597,204 @@ class PluginDependencyGeneratorTest {
         .describedAs("computePluginContentFromDslSpec should auto-add JPS deps with module descriptors")
         .contains(ContentModuleName("intellij.python.processOutput.impl"))  // explicitly declared
         .contains(ContentModuleName("intellij.platform.jewel.intUi.standalone"))  // auto-added
+    }
+  }
+
+  @Test
+  fun `computePluginContentFromDslSpec auto-adds private library deps without explicit namespace`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.consumer.module") {
+          resourceRoot()
+          moduleDep("intellij.libraries.private")
+        }
+        module("intellij.libraries.private") {
+          resourceRoot()
+        }
+      }
+
+      val consumerResourcesDir = tempDir.resolve("intellij/consumer/module/resources")
+      java.nio.file.Files.createDirectories(consumerResourcesDir)
+      java.nio.file.Files.writeString(
+        consumerResourcesDir.resolve("intellij.consumer.module.xml"),
+        """<idea-plugin package="com.intellij.consumer"/>"""
+      )
+
+      val libraryResourcesDir = tempDir.resolve("intellij/libraries/private/resources")
+      java.nio.file.Files.createDirectories(libraryResourcesDir)
+      java.nio.file.Files.writeString(
+        libraryResourcesDir.resolve("intellij.libraries.private.xml"),
+        """<idea-plugin/>"""
+      )
+
+      val spec = org.jetbrains.intellij.build.productLayout.TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.test.plugin"),
+        name = "Consumer Test Plugin",
+        pluginXmlPath = "consumer/testResources/META-INF/plugin.xml",
+        spec = org.jetbrains.intellij.build.productLayout.productModules {
+          requiredModule("intellij.consumer.module")
+        }
+      )
+
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val graph = pluginGraphWithDescriptors(descriptorCache) {
+        moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private" to "COMPILE")
+        product("TestProduct") { }
+      }
+      val result = org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec(
+        testPluginSpec = spec,
+        projectRoot = tempDir,
+        resolvableModules = emptySet(),
+        productName = "TestProduct",
+        pluginGraph = graph,
+        errorSink = ErrorSink(),
+        descriptorCache = descriptorCache,
+      )
+
+      val privateLibrary = result.contentModules.single { it.moduleId.name == "intellij.libraries.private" }
+      assertThat(privateLibrary.moduleId.namespace)
+        .describedAs("Private library modules included in several plugins must use implicit plugin namespace")
+        .isNull()
+
+      val consumerModule = result.contentModules.single { it.moduleId.name == "intellij.consumer.module" }
+      assertThat(consumerModule.moduleId.namespace).isEqualTo(PluginModuleId.DEFAULT_NAMESPACE)
+    }
+  }
+
+  @Test
+  fun `computePluginContentFromDslSpec auto-adds resolvable private library deps in default namespace`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.consumer.module") {
+          resourceRoot()
+          moduleDep("intellij.libraries.private")
+        }
+        module("intellij.libraries.private") {
+          resourceRoot()
+        }
+      }
+
+      val consumerResourcesDir = tempDir.resolve("intellij/consumer/module/resources")
+      java.nio.file.Files.createDirectories(consumerResourcesDir)
+      java.nio.file.Files.writeString(
+        consumerResourcesDir.resolve("intellij.consumer.module.xml"),
+        """<idea-plugin package="com.intellij.consumer"/>"""
+      )
+
+      val libraryResourcesDir = tempDir.resolve("intellij/libraries/private/resources")
+      java.nio.file.Files.createDirectories(libraryResourcesDir)
+      java.nio.file.Files.writeString(
+        libraryResourcesDir.resolve("intellij.libraries.private.xml"),
+        """<idea-plugin/>"""
+      )
+
+      val spec = org.jetbrains.intellij.build.productLayout.TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.test.plugin"),
+        name = "Consumer Test Plugin",
+        pluginXmlPath = "consumer/testResources/META-INF/plugin.xml",
+        spec = org.jetbrains.intellij.build.productLayout.productModules {
+          requiredModule("intellij.consumer.module")
+        }
+      )
+
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val graph = pluginGraphWithDescriptors(descriptorCache) {
+        moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private" to "COMPILE")
+        product("TestProduct") { }
+      }
+      val result = org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec(
+        testPluginSpec = spec,
+        projectRoot = tempDir,
+        resolvableModules = setOf(ContentModuleName("intellij.libraries.private")),
+        productName = "TestProduct",
+        pluginGraph = graph,
+        errorSink = ErrorSink(),
+        descriptorCache = descriptorCache,
+      )
+
+      val privateLibrary = result.contentModules.single { it.moduleId.name == "intellij.libraries.private" }
+      assertThat(privateLibrary.moduleId.namespace)
+        .describedAs("A private library copy from another plugin cannot satisfy dependencies in this test plugin")
+        .isEqualTo(PluginModuleId.DEFAULT_NAMESPACE)
+    }
+  }
+
+  @Test
+  fun `computePluginContentFromDslSpec keeps private library deps with module dependencies in default namespace`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.consumer.module") {
+          resourceRoot()
+          moduleDep("intellij.libraries.private.with.deps")
+        }
+        module("intellij.libraries.private.with.deps") {
+          resourceRoot()
+        }
+        module("intellij.libraries.internal.dep") {
+          resourceRoot()
+        }
+      }
+
+      val consumerResourcesDir = tempDir.resolve("intellij/consumer/module/resources")
+      java.nio.file.Files.createDirectories(consumerResourcesDir)
+      java.nio.file.Files.writeString(
+        consumerResourcesDir.resolve("intellij.consumer.module.xml"),
+        """<idea-plugin package="com.intellij.consumer"/>"""
+      )
+
+      val privateLibraryResourcesDir = tempDir.resolve("intellij/libraries/private/with/deps/resources")
+      java.nio.file.Files.createDirectories(privateLibraryResourcesDir)
+      java.nio.file.Files.writeString(
+        privateLibraryResourcesDir.resolve("intellij.libraries.private.with.deps.xml"),
+        """
+          |<idea-plugin>
+          |  <dependencies>
+          |    <module name="intellij.libraries.internal.dep"/>
+          |  </dependencies>
+          |</idea-plugin>
+        """.trimMargin()
+      )
+
+      val internalDependencyResourcesDir = tempDir.resolve("intellij/libraries/internal/dep/resources")
+      java.nio.file.Files.createDirectories(internalDependencyResourcesDir)
+      java.nio.file.Files.writeString(
+        internalDependencyResourcesDir.resolve("intellij.libraries.internal.dep.xml"),
+        """<idea-plugin visibility="internal"/>"""
+      )
+
+      val spec = org.jetbrains.intellij.build.productLayout.TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.test.plugin"),
+        name = "Consumer Test Plugin",
+        pluginXmlPath = "consumer/testResources/META-INF/plugin.xml",
+        spec = org.jetbrains.intellij.build.productLayout.productModules {
+          requiredModule("intellij.consumer.module")
+        }
+      )
+
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val graph = pluginGraphWithDescriptors(descriptorCache) {
+        moduleWithScopedDeps("intellij.consumer.module", "intellij.libraries.private.with.deps" to "COMPILE")
+        moduleWithScopedDeps("intellij.libraries.internal.dep")
+        moduleWithScopedDeps("intellij.libraries.internal.dep")
+        product("TestProduct") { }
+      }
+      val result = org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec(
+        testPluginSpec = spec,
+        projectRoot = tempDir,
+        resolvableModules = emptySet(),
+        productName = "TestProduct",
+        pluginGraph = graph,
+        errorSink = ErrorSink(),
+        descriptorCache = descriptorCache,
+      )
+
+      val privateLibrary = result.contentModules.single { it.moduleId.name == "intellij.libraries.private.with.deps" }
+      assertThat(privateLibrary.moduleId.namespace)
+        .describedAs("Private library modules with descriptor module dependencies must stay in the default namespace")
+        .isEqualTo(PluginModuleId.DEFAULT_NAMESPACE)
+
+      val internalDependency = result.contentModules.single { it.moduleId.name == "intellij.libraries.internal.dep" }
+      assertThat(internalDependency.moduleId.namespace).isEqualTo(PluginModuleId.DEFAULT_NAMESPACE)
     }
   }
 

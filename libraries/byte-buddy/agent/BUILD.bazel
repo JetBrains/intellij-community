@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.byte.buddy.agent` start
+
+jvm_library(
+    name = "agent",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.byte.buddy.agent",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-byte-buddy-agent-byte-buddy-agent"],
+    runtime_deps = ["@lib//:libraries-byte-buddy-agent-byte-buddy-agent"],
+)
+
+jvm_library(
+    name = "agent_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.byte.buddy.agent",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-byte-buddy-agent-byte-buddy-agent"],
+    runtime_deps = [":agent"],
+)
+### auto-generated section `build intellij.libraries.byte.buddy.agent` end
+
+### auto-generated section `iml intellij.libraries.byte.buddy.agent` start
+exports_files(
+    [
+        "intellij.libraries.byte.buddy.agent.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.byte.buddy.agent` end
