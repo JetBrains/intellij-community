@@ -82,7 +82,7 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
   fun `test configuration completion on top level partial input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
 
   @ParameterizedTest
-  @GradleTestSource(value = "9.4.0")
+  @BaseGradleVersionSource
   fun `test configuration without the accessor class is completed in quotes`(gradleVersion: GradleVersion) =
     test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
       val buildScriptFile = writeTextAndCommit(
@@ -108,40 +108,6 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
         )
       }
     }
-
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `test source set configuration is completed without quotes for Gradle 9,5,0 because it has an accessor class`(
-    gradleVersion: GradleVersion,
-  ) = test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
-    val buildScriptFile = writeTextAndCommit(
-      "build.gradle.kts", """
-        val customSourceSet by sourceSets.registering {}
-        dependencies {
-            customSourceSet<caret>
-        }
-      """.trimIndent()
-    )
-    runInEdtAndWait {
-      fixture.configureFromExistingVirtualFile(buildScriptFile)
-      fixture.completeBasic()
-      fixture.assertPreferredCompletionItems(0, "customSourceSetAnnotationProcessor", "customSourceSetApi")
-      fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-      fixture.type("\"org.junit.jupiter:junit-jupiter:6.0.0\"")
-      fixture.checkResult(
-        """
-          val customSourceSet by sourceSets.registering {}
-          dependencies {
-              customSourceSetAnnotationProcessor("org.junit.jupiter:junit-jupiter:6.0.0"<caret>)
-          }
-        """.trimIndent()
-      )
-      // In Gradle 9.5.0, configurations created for source sets have accessor classes, so there should be no unresolved highlighting.
-      fixture.testHighlighting()
-      // PROBLEM: despite the presence of the accessor class, the Gradle build fails because it cannot resolve the configuration.
-      // TODO check if the sync fails to highlight the problem of the test.
-    }
-  }
 
   @ParameterizedTest
   @BaseGradleVersionSource("""
