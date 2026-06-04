@@ -89,7 +89,7 @@ class MutableLookupStorage(
 
     /** Returns the storage for [parameters], falling back to (and caching from) the active lookup when needed. */
     fun getMutableLookupStorage(parameters: BaseCompletionParameters): MutableLookupStorage? {
-      var storage = parameters.getUserData(LOOKUP_STORAGE)
+      var storage = (parameters.process as? UserDataHolder)?.getUserData(LOOKUP_STORAGE)
       if (storage == null && parameters is CompletionParameters) {
         val activeLookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
         if (activeLookup != null) {
@@ -109,10 +109,6 @@ class MutableLookupStorage(
       if (completionProcess is UserDataHolder) {
         completionProcess.putUserData(LOOKUP_STORAGE, storage)
       }
-    }
-
-    private fun <T> BaseCompletionParameters.getUserData(key: Key<T>): T? {
-      return (process as? UserDataHolder)?.getUserData(key)
     }
   }
 
