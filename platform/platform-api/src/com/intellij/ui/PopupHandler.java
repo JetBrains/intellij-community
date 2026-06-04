@@ -191,7 +191,7 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   /** @deprecated Use {@link #installPopupMenu(JComponent, ActionGroup, String)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static MouseListener installUnknownPopupHandler(JComponent component, ActionGroup group, ActionManager actionManager) {
     return installPopupMenu(component, ActionPlaces.UNKNOWN, actionManager, null, _ -> group);
   }

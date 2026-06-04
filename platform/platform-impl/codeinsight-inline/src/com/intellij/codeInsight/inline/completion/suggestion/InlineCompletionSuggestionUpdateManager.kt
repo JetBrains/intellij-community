@@ -149,6 +149,7 @@ interface InlineCompletionSuggestionUpdateManager {
     fun onManualCall(event: InlineCompletionEvent.ManualCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Do not extend `InlineCompletionEvent`. Use `ManualCall` instead.")
     fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
   }

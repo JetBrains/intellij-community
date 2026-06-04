@@ -38,7 +38,7 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   /**
    * @deprecated override {@link #getIcon(LibraryProperties)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Icon getIcon() {
     return null;
   }

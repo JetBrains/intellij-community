@@ -19,7 +19,7 @@ public abstract class JpsSdkPropertiesSerializer<P extends JpsElement> extends J
   /**
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void saveProperties(@NotNull P properties, @NotNull Element element) {
   }
 }

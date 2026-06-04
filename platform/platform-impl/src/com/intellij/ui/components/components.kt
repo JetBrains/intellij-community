@@ -294,6 +294,7 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(
   FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null /*infer disposable from context*/)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Use `textFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, () -> List<String>, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
   level = DeprecationLevel.ERROR
@@ -327,6 +328,7 @@ fun textFieldWithHistoryWithBrowseButton(
   return component
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Use `textFieldWithBrowseButton(Project, FileChooserDescriptor, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
   level = DeprecationLevel.ERROR

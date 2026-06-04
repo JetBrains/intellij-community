@@ -178,7 +178,7 @@ public class IndexInfrastructureVersionBase {
   /**
    * @deprecated use {@link #getStubFileElementTypeKey(LanguageStubDescriptor)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull String getStubFileElementTypeKey(@NotNull IStubFileElementType<?> fileNodeType) {
     return fileNodeType.getExternalId() + ":" + fileNodeType.getLanguage().getID();
   }
@@ -190,7 +190,7 @@ public class IndexInfrastructureVersionBase {
   /**
    * @deprecated use {@link #getStubFileElementBaseVersion(LanguageStubDescriptor)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int getStubFileElementBaseVersion(@NotNull IStubFileElementType<?> fileNodeType) {
     int stubVersion = fileNodeType.getStubVersion();
     return fileNodeType.getLanguage() instanceof TemplateLanguage

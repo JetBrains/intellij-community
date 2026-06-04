@@ -7,6 +7,7 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiMethodUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -209,6 +210,7 @@ fun findMainInClass(uClass: UClass?): PsiMethod? {
  * or companion object's containing class if the given method is main method annotated with [kotlin.jvm.JvmStatic] in companion object,
  * otherwise *null*.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use PsiMethodUtil.isMainMethodWithProvider instead")
 fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
   val containingClass = uMainMethod.getContainingUClass() ?: return null

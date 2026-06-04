@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Describes a URL excluded from [content root][com.intellij.openapi.roots.ContentEntry.getExcludeFolderUrls] or
@@ -49,7 +50,11 @@ fun MutableEntityStorage.modifyExcludeUrlEntity(
 @Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   get() = (this as ExcludeUrlEntityBuilder).contentRoot as ContentRootEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   set(value) {
     (this as ExcludeUrlEntityBuilder).contentRoot = value
   }
@@ -57,7 +62,11 @@ var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
 @Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   get() = (this as ExcludeUrlEntityBuilder).library as LibraryEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   set(value) {
     (this as ExcludeUrlEntityBuilder).library = value
   }

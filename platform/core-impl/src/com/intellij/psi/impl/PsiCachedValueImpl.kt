@@ -32,6 +32,7 @@ internal constructor(
   private val trackValue: Boolean
 ) : PsiCachedValue<T>(manager), CachedValue<T> {
   @Suppress("DEPRECATION")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use PsiCachedValueImpl.Soft")
   constructor(manager: PsiManager, provider: CachedValueProvider<T>) : this(manager, provider, false)
 

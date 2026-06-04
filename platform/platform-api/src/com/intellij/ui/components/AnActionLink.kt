@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Point
@@ -35,6 +36,7 @@ open class AnActionLink(@Nls text: String,
   constructor(@NonNls actionId: String, @NonNls place: String) : this(ActionManager.getInstance().getAction(actionId), place)
   constructor(@Nls text: String, anAction: AnAction, @NonNls place: String): this(text, anAction, place, null)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Override the class")
   var dataProvider: DataProvider? = anAction as? DataProvider
 

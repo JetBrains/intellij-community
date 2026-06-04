@@ -50,6 +50,7 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   return bytes
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use java.util.Base64.getDecoder().decode()")
 @Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
 inline fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

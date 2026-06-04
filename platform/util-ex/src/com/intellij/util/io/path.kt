@@ -226,6 +226,7 @@ fun Path.isDirectory(): Boolean = isDirectory()
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.isFile(): Boolean = isRegularFile()
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Trivial, just inline", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)

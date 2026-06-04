@@ -182,6 +182,7 @@ fun Lifetime.launchUnderModalProgress(
   withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launchWithBackgroundProgress")
 fun Lifetime.launchUnderBackgroundProgress(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -202,6 +203,7 @@ fun Lifetime.launchUnderBackgroundProgress(
   launch(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use startWithModalProgressAsync")
 fun <T> Lifetime.startUnderModalProgressAsync(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,

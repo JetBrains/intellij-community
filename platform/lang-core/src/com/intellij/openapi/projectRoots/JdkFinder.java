@@ -30,7 +30,7 @@ public interface JdkFinder {
    * The JDK should be searched on the machine where the project is located,
    * not where the IDE is running.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @NotNull List<@NotNull String> suggestHomePaths() {
     return suggestHomePaths(null);
   }

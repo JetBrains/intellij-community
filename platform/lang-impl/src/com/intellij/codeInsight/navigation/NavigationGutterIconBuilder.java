@@ -191,7 +191,7 @@ public class NavigationGutterIconBuilder<T> {
   /**
    * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Annotation install(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)

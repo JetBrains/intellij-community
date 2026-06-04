@@ -4,6 +4,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,6 +129,7 @@ public final class StreamUtil {
   }
 
   /** @deprecated bad style (resource closing should be caller's responsibility); use {@link #readText(Reader)} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull String readText(@NotNull InputStream inputStream) throws IOException {
     return readText(inputStream, StandardCharsets.UTF_8);

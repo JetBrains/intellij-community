@@ -138,7 +138,7 @@ public class Messages {
   public static final String OK_BUTTON = "OK";
 
   /** @deprecated Use {@link #getCancelButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
   public static final String CANCEL_BUTTON = "Cancel";
 
   public static @Nls String getOkButton() { return CommonBundle.getOkButtonText(); }
@@ -439,7 +439,7 @@ public class Messages {
   }
 
   /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int showConfirmationDialog(@NotNull JComponent parent,
                                            @NotNull @DialogMessage String message,
                                            @NotNull @DialogTitle String title,
@@ -523,7 +523,7 @@ public class Messages {
   }
 
   /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
                                     @NotNull @DialogTitle String title,
@@ -545,7 +545,7 @@ public class Messages {
   }
 
   /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int showYesNoDialog(@DialogMessage String message,
                                     @NotNull @DialogTitle String title,
                                     @Nls @NotNull @NlsContexts.Button String yesText,

@@ -24,7 +24,7 @@ import com.intellij.ui.content.Content;
  */
 public interface RunDashboardRunConfigurationNode {
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Content getContent();
 
   RunContentDescriptor getDescriptor();

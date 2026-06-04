@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
@@ -37,6 +38,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
   @Deprecated(message = "Use LibraryEntityBuilder instead")
   interface Builder : LibraryEntityBuilder
   companion object : EntityType<LibraryEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -54,6 +56,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyLibraryEntity(
   entity: LibraryEntity,

@@ -8,6 +8,7 @@ import com.intellij.openapi.observable.util.whenDocumentChanged
 import com.intellij.openapi.observable.util.whenStateChanged
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.EditorTextField
+import org.jetbrains.annotations.ApiStatus
 import java.awt.ItemSelectable
 import javax.swing.text.JTextComponent
 
@@ -44,8 +45,10 @@ val WHEN_GRAPH_PROPAGATION_FINISHED: DialogValidationRequestor.WithParameter<Pro
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use WHEN_PROPERTY_CHANGED instead")
 val AFTER_PROPERTY_CHANGE: DialogValidationRequestor.WithParameter<ObservableProperty<*>> = WHEN_PROPERTY_CHANGED
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use WHEN_GRAPH_PROPAGATION_FINISHED instead")
 val AFTER_GRAPH_PROPAGATION: DialogValidationRequestor.WithParameter<PropertyGraph> = WHEN_GRAPH_PROPAGATION_FINISHED

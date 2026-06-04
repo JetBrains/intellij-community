@@ -2,6 +2,7 @@
 package com.intellij.openapi.util
 
 import com.intellij.util.ObjectUtils
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Get or create the user-data under the current key.
@@ -77,6 +78,7 @@ inline fun <T> UserDataHolder.getOrCreateUserDataUnsafe(key: Key<T>, producer: (
  * Warning: This method is not thread-safe: Use [UserDataHolderEx] based APIs instead
  * See: [UserDataHolderEx.getOrCreateUserData]
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'UserDataHolderEx' APIs instead", replaceWith = ReplaceWith("getOrCreateUserDataUnsafe(key, producer)"))
 inline fun <T> UserDataHolder.getOrCreateUserData(key: Key<T>, producer: () -> T): T {
   return getOrCreateUserDataUnsafe(key, producer)

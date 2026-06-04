@@ -915,7 +915,7 @@ public class HighlightInfo implements Segment {
     /**
      * @deprecated use {@link #IntentionActionDescriptor(IntentionAction, List, String, Icon, HighlightDisplayKey, ProblemGroup, HighlightSeverity, Segment)}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable @Unmodifiable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,

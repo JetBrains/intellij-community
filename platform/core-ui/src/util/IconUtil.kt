@@ -283,6 +283,7 @@ object IconUtil {
   @JvmStatic
   @get:Deprecated("This icon is not used by platform anymore.")
   val analyzeIcon: Icon
+    @ApiStatus.ScheduledForRemoval
     get() = getIcon(toolbarDecoratorIconsFolder + "analyze.png", IconUtil::class.java.classLoader)
 
   @JvmStatic
@@ -598,6 +599,7 @@ object IconUtil {
   }
 
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please use `IconLoader.filterIcon` instead", replaceWith = ReplaceWith("IconLoader.filterIcon", "com.intellij.openapi.util.IconLoader"))
   fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, @Suppress("UNUSED_PARAMETER") ancestor: Component?): Icon {
     return filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {

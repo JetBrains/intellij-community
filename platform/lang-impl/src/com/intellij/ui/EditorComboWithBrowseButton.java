@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @deprecated Not needed and not used in IJ project
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class EditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public EditorComboWithBrowseButton(final ActionListener browseActionListener,
                                      final String text,

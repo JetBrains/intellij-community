@@ -42,7 +42,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     /**
      * @deprecated Use {@link #processNotStarted(Throwable)}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     default void processNotStarted() {}
 
     default void processNotStarted(@Nullable Throwable error) {
@@ -95,7 +95,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @deprecated Not used by platform.
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
   }
 

@@ -105,6 +105,7 @@ internal fun ProgressIndicator.scaleFraction(
  * the parent [parentProgress] into [childProgress] while running the
  * [action]. It may pass either of the progresses to the action
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Migrate to `reportProgress`/`reportSequentialProgress`")
 inline fun <Y> runUnderNestedProgressAndRelayMessages(parentProgress: ProgressIndicator,
                                                       childProgress: ProgressIndicator,

@@ -102,6 +102,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Color
@@ -684,6 +685,10 @@ open class EditorComposite internal constructor(
               replaceWith = ReplaceWith("FileEditorManager.getInstance()"),
               level = DeprecationLevel.ERROR)
   val fileEditorManager: FileEditorManager
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use FileEditorManager.getInstance()",
+                replaceWith = ReplaceWith("FileEditorManager.getInstance()"),
+                level = DeprecationLevel.ERROR)
     get() = FileEditorManager.getInstance(project)
 
   @get:Deprecated("use {@link #getAllEditors()}", ReplaceWith("allEditors"), level = DeprecationLevel.ERROR)

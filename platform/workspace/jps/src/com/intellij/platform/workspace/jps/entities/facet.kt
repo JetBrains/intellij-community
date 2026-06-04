@@ -34,6 +34,7 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
     @Deprecated(message = "Use new API instead")
     fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setModule(value: ModuleEntity.Builder) {
       module = value
@@ -42,6 +43,7 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
     @Deprecated(message = "Use new API instead")
     fun getUnderlyingFacet(): FacetEntity.Builder? = underlyingFacet as FacetEntity.Builder?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setUnderlyingFacet(value: FacetEntity.Builder?) {
       underlyingFacet = value
@@ -49,6 +51,7 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   }
 
   companion object : EntityType<FacetEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -75,7 +78,11 @@ fun MutableEntityStorage.modifyFacetEntity(
 
 @Deprecated(message = "Use new API instead")
 var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   get() = (this as FacetEntityBuilder).childrenFacets as List<FacetEntity.Builder>
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   set(value) {
     (this as FacetEntityBuilder).childrenFacets = value
   }

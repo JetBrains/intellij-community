@@ -53,7 +53,7 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}

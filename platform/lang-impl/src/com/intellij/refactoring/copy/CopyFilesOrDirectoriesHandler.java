@@ -286,7 +286,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
   /**
    * @deprecated it's better to call {@link CopyFilesOrDirectoriesHandler#updateAddedFiles(List, List)} to provide original elements
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void updateAddedFiles(List<? extends PsiFile> added) {
     updateAddedFiles(added, ContainerUtil.emptyList());
   }

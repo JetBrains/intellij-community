@@ -2,11 +2,13 @@
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use {@link PsiScopeProcessor} directly
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public abstract class BaseScopeProcessor implements PsiScopeProcessor {
   @Override

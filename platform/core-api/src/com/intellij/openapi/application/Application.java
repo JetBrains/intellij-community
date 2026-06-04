@@ -666,10 +666,12 @@ public interface Application extends ComponentManager {
   //<editor-fold desc="Deprecated stuff">
 
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
 
   /** @deprecated call {@code Disposer.dispose(disposable);} on disposable passed to {@link #addApplicationListener(ApplicationListener, Disposable)} */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   void removeApplicationListener(@NotNull ApplicationListener listener);
 

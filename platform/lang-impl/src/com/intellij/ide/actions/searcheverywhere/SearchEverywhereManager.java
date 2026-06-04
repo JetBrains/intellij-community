@@ -38,7 +38,7 @@ public interface SearchEverywhereManager {
   /**
    * @deprecated Use {@link #getCurrentlyShownPopupInstance()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   SearchEverywhereUI getCurrentlyShownUI();
 

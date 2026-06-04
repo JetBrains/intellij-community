@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -103,6 +104,7 @@ fun <C : Component> C.initOnShow(
  * @see launchOnShow
  */
 @Experimental
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The given coroutine may never complete, use initOnShow instead", replaceWith = ReplaceWith("initOnShow"))
 fun <C : Component> C.launchOnceOnShow(
   debugName: String,

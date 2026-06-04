@@ -11,6 +11,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBEditorTabsBase
 import com.intellij.ui.tabs.JBTabsPresentation
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
@@ -58,6 +59,7 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   }
 
   @Suppress("UNUSED_PARAMETER")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #JBEditorTabs(Project, Disposable)}", level = DeprecationLevel.ERROR)
   constructor(project: Project?, actionManager: ActionManager, focusManager: IdeFocusManager?, parent: Disposable) : this(project, parent)
 

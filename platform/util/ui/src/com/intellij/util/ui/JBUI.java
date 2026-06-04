@@ -979,7 +979,7 @@ public final class JBUI {
       /**
        * @deprecated Use {@link Widget#HOVER_BACKGROUND} instead.
        */
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static Color hoverBackground() {
         return Widget.HOVER_BACKGROUND;
       }

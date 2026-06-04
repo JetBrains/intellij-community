@@ -426,7 +426,7 @@ public final class UIUtil {
    * @return {@code true} if the property of the specified component is set to {@code true}
    * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
     return component instanceof Component && ClientProperty.isTrue((Component)component, key);
   }
@@ -2058,7 +2058,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link HTMLEditorKitBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
     if (!noGapsBetweenParagraphs) {

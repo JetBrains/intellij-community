@@ -42,7 +42,7 @@ public abstract class CopyPasteManager {
   /**
    * @deprecated Please use overload with parent disposable
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addContentChangedListener(@NotNull ContentChangedListener listener);
 
   public abstract void addContentChangedListener(@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable);

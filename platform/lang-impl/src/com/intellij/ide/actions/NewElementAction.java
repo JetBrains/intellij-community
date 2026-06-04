@@ -148,7 +148,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   /**
    * @deprecated Override {@link #getGroup(DataContext, AnActionEvent)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected ActionGroup getGroup(DataContext dataContext) {
     return null;
   }

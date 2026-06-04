@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
@@ -24,6 +25,7 @@ interface SdkEntity : WorkspaceEntityWithSymbolicId {
   @Deprecated(message = "Use SdkEntityBuilder instead")
   interface Builder : SdkEntityBuilder
   companion object : EntityType<SdkEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -41,6 +43,7 @@ interface SdkEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifySdkEntity(
   entity: SdkEntity,

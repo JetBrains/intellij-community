@@ -187,7 +187,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * @see JBCefBrowserBuilder#setClient(JBCefClient)
    * @deprecated use {@link JBCefBrowserBuilder} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
     this(createBuilder().setCefBrowser(cefBrowser).setClient(client));
   }

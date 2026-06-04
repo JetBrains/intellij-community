@@ -9,12 +9,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link WriteAction}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ActionRunner {
   /**
    * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runInsideWriteAction(final @NotNull InterruptibleRunnable runnable) throws Exception {
     WriteAction.computeAndWait(() -> {
       runnable.run();
@@ -25,7 +25,7 @@ public abstract class ActionRunner {
   /**
    * @deprecated obsolete API
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface InterruptibleRunnable {
     void run() throws Exception;
   }

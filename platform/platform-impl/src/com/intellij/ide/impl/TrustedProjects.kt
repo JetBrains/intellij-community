@@ -12,6 +12,7 @@ import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
 fun confirmLoadingUntrustedProject(
   project: Project,
@@ -43,6 +44,7 @@ fun Project.isTrusted(): Boolean {
 }
 
 @Suppress("unused") // Used externally
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Use TrustedProjects.setProjectTrusted instead",
   ReplaceWith(

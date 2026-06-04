@@ -19,7 +19,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 /**
  * @deprecated unused in the platform
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final Map<StatusBar, Pair<@StatusBarText String, @StatusBarText String>> myStatusBar2SavedText = new HashMap<>();

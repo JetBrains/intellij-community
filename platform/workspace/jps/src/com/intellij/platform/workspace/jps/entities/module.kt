@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -36,6 +37,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   @Deprecated(message = "Use ModuleEntityBuilder instead")
   interface Builder : ModuleEntityBuilder
   companion object : EntityType<ModuleEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -52,6 +54,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleEntity(
   entity: ModuleEntity,
@@ -98,7 +101,11 @@ var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
 
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   get() = (this as ModuleEntityBuilder).sourceRoots as List<SourceRootEntity.Builder>
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   set(value) {
     (this as ModuleEntityBuilder).sourceRoots = value
   }

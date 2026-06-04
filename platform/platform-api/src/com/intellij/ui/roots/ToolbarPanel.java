@@ -37,7 +37,7 @@ public class ToolbarPanel extends JPanel {
   /**
    * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String, JComponent)} instead and specify action place and target component for toolbar explicitly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ToolbarPanel(@NotNull JComponent contentComponent, @NotNull ActionGroup actions, @NotNull @NonNls String toolbarPlace) {
     this(contentComponent, actions, toolbarPlace, null);
   }

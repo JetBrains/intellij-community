@@ -455,6 +455,7 @@ class StructureViewWrapperImpl(
     scheduleRebuild(RebuildDelay.NOW, why)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Every update/rebuild is async now, use scheduleRebuild() to do rebuild at earliest possible time")
   fun rebuild(): Unit = scheduleRebuild()
 

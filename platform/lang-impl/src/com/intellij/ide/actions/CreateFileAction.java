@@ -44,7 +44,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   /**
    * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CreateFileAction(@NlsActions.ActionText String text,
                           @NlsActions.ActionDescription String description,
                           Icon icon) {

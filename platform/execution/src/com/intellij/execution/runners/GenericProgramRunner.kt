@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
@@ -31,6 +32,7 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<S
     return doExecute(environment.project, state, environment.contentToReuse, environment)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("")
   protected open fun doExecute(project: Project,
                                state: RunProfileState,

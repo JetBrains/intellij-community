@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -37,6 +38,7 @@ interface ContentRootEntity : WorkspaceEntity {
     @Deprecated(message = "Use new API instead")
     fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setModule(value: ModuleEntity.Builder) {
       module = value
@@ -44,6 +46,7 @@ interface ContentRootEntity : WorkspaceEntity {
   }
 
   companion object : EntityType<ContentRootEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -60,6 +63,7 @@ interface ContentRootEntity : WorkspaceEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyContentRootEntity(
   entity: ContentRootEntity,
@@ -115,9 +119,11 @@ interface SourceRootEntity : WorkspaceEntity {
   //region generated code
   @Deprecated(message = "Use SourceRootEntityBuilder instead")
   interface Builder : SourceRootEntityBuilder {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun getContentRoot(): ContentRootEntity.Builder = contentRoot as ContentRootEntity.Builder
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setContentRoot(value: ContentRootEntity.Builder) {
       contentRoot = value
@@ -125,6 +131,7 @@ interface SourceRootEntity : WorkspaceEntity {
   }
 
   companion object : EntityType<SourceRootEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -141,6 +148,7 @@ interface SourceRootEntity : WorkspaceEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifySourceRootEntity(
   entity: SourceRootEntity,

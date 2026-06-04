@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
@@ -18,6 +19,7 @@ interface ProjectSettingsEntity : WorkspaceEntity {
   @Deprecated(message = "Use ProjectSettingsEntityBuilder instead")
   interface Builder : ProjectSettingsEntityBuilder
   companion object : EntityType<ProjectSettingsEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -31,6 +33,7 @@ interface ProjectSettingsEntity : WorkspaceEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyProjectSettingsEntity(
   entity: ProjectSettingsEntity,

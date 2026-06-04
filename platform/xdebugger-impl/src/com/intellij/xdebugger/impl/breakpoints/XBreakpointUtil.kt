@@ -93,6 +93,7 @@ object XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    *
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link #toggleLineBreakpoint(Project, XSourcePosition, boolean, Editor, boolean, boolean, boolean)}")
   @JvmStatic
   fun toggleLineBreakpoint(

@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
@@ -47,6 +48,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     fun getRootElement(): CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>? =
       rootElement as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setRootElement(value: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?) {
       rootElement = value
@@ -56,6 +58,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     fun getArtifactOutputPackagingElement(): ArtifactOutputPackagingElementEntity.Builder? =
       artifactOutputPackagingElement as ArtifactOutputPackagingElementEntity.Builder?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setArtifactOutputPackagingElement(value: ArtifactOutputPackagingElementEntity.Builder?) {
       artifactOutputPackagingElement = value
@@ -63,6 +66,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : EntityType<ArtifactEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -81,6 +85,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyArtifactEntity(
   entity: ArtifactEntity,
   modification: ArtifactEntity.Builder.() -> Unit,
@@ -108,12 +113,14 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     fun getArtifact(): ArtifactEntity.Builder = artifact as ArtifactEntity.Builder
 
     @Deprecated(message = "Use new API instead")
+    @ApiStatus.ScheduledForRemoval
     fun setArtifact(value: ArtifactEntity.Builder) {
       artifact = value
     }
   }
 
   companion object : EntityType<ArtifactPropertiesEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -130,6 +137,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   entity: ArtifactPropertiesEntity,
   modification: ArtifactPropertiesEntity.Builder.() -> Unit,
@@ -153,6 +161,7 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
     fun getParentEntity(): CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>? =
       parentEntity as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setParentEntity(value: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?) {
       parentEntity = value
@@ -171,6 +180,7 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
     @Deprecated(message = "Use new API instead")
     fun getArtifact(): ArtifactEntity.Builder? = artifact as ArtifactEntity.Builder?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setArtifact(value: ArtifactEntity.Builder?) {
       artifact = value
@@ -201,6 +211,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyDirectoryPackagingElementEntity(
   entity: DirectoryPackagingElementEntity,
   modification: DirectoryPackagingElementEntity.Builder.() -> Unit,
@@ -231,6 +242,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArchivePackagingElementEntity(
   entity: ArchivePackagingElementEntity,
@@ -260,6 +272,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyArtifactRootElementEntity(
   entity: ArtifactRootElementEntity,
   modification: ArtifactRootElementEntity.Builder.() -> Unit,
@@ -290,6 +303,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   entity: ArtifactOutputPackagingElementEntity,
   modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit,
@@ -297,7 +311,11 @@ fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   return modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 }
 
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
+@get:Deprecated(message = "Use new API instead")
+@set:Deprecated(message = "Use new API instead")
 @Parent
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity.Builder?
   get() = (this as ArtifactOutputPackagingElementEntityBuilder).artifactEntity as ArtifactEntity.Builder?
@@ -332,6 +350,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyModuleOutputPackagingElementEntity(
   entity: ModuleOutputPackagingElementEntity,
   modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit,
@@ -362,6 +381,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyLibraryFilesPackagingElementEntity(
   entity: LibraryFilesPackagingElementEntity,
   modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit,
@@ -377,6 +397,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
   @Deprecated(message = "Use ModuleSourcePackagingElementEntityBuilder instead")
   interface Builder : ModuleSourcePackagingElementEntityBuilder
   companion object : EntityType<ModuleSourcePackagingElementEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -392,6 +413,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyModuleSourcePackagingElementEntity(
   entity: ModuleSourcePackagingElementEntity,
   modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit,
@@ -422,6 +444,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
   entity: ModuleTestOutputPackagingElementEntity,
   modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit,
@@ -458,6 +481,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyDirectoryCopyPackagingElementEntity(
   entity: DirectoryCopyPackagingElementEntity,
   modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit,
@@ -490,6 +514,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyExtractedDirectoryPackagingElementEntity(
   entity: ExtractedDirectoryPackagingElementEntity,
   modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit,
@@ -521,6 +546,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyFileCopyPackagingElementEntity(
   entity: FileCopyPackagingElementEntity,
   modification: FileCopyPackagingElementEntity.Builder.() -> Unit,
@@ -554,6 +580,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyCustomPackagingElementEntity(
   entity: CustomPackagingElementEntity,
   modification: CustomPackagingElementEntity.Builder.() -> Unit,
@@ -573,6 +600,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   @Deprecated(message = "Use ArtifactsOrderEntityBuilder instead")
   interface Builder : ArtifactsOrderEntityBuilder
   companion object : EntityType<ArtifactsOrderEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -589,6 +617,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 
 //region generated code
 @Deprecated(message = "Use new API instead")
+@ApiStatus.ScheduledForRemoval
 fun MutableEntityStorage.modifyArtifactsOrderEntity(
   entity: ArtifactsOrderEntity,
   modification: ArtifactsOrderEntity.Builder.() -> Unit,

@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.eventLog.events.EventIdName
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import org.jetbrains.annotations.ApiStatus
 
 const val FUS_RECORDER: String = "FUS"
 
@@ -128,6 +129,7 @@ open class EventLogGroup {
     @Suppress("unused") description: String
   ): EventId1<T1> = registerEvent(eventId, eventField1)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("This method was added for compatibility with Bazel.", ReplaceWith("registerEvent(eventId, eventField1)"))
   fun <T1> registerEvent(
     @EventIdName eventId: String,

@@ -288,6 +288,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link SmartList#SmartList()}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull <T> List<T> newSmartList() {
     return new SmartList<>();

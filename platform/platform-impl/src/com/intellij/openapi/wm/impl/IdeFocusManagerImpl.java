@@ -18,7 +18,7 @@ import java.awt.Window;
 /**
  * @deprecated Use {@link IdeFocusManager}'s methods directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public @NotNull ActionCallback requestFocus(final @NotNull Component c, final boolean forced) {

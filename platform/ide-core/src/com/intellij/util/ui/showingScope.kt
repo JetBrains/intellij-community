@@ -25,6 +25,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.event.HierarchyEvent
@@ -73,6 +74,7 @@ fun Component.showingScope(
  * @param uiData a function, which is called in the same EDT event when the component becomes showing
  */
 @Experimental
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launchOnShow or launchOnceOnShow")
 fun <T : Any, C : Component> C.showingScope(
   debugName: String,

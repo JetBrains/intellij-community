@@ -123,7 +123,7 @@ public final class CopyReferenceUtil {
   /**
    * @deprecated use {@link FqnUtil#getVirtualFileFqn}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return FqnUtil.getVirtualFileFqn(virtualFile, project);
   }

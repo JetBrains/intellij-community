@@ -170,7 +170,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable XDebuggerEditorsProvider getEditorsProvider() {
     return null;
   }

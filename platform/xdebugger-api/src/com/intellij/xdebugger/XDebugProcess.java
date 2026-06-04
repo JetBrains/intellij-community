@@ -87,7 +87,7 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #startStepOver(XSuspendContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void startStepOver() {
     throw new AbstractMethodError();
   }
@@ -115,7 +115,7 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #startStepInto(XSuspendContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void startStepInto() {
     throw new AbstractMethodError();
   }
@@ -132,7 +132,7 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #startStepOut(XSuspendContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void startStepOut() {
     throw new AbstractMethodError();
   }
@@ -202,7 +202,7 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #runToPosition(XSourcePosition, XSuspendContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void runToPosition(@NotNull XSourcePosition position) {
     throw new AbstractMethodError();
   }

@@ -97,7 +97,7 @@ public final class InspectionEngine {
   /**
    * @deprecated use {@link #inspectEx(List, PsiFile, TextRange, TextRange, boolean, boolean, boolean, ProgressIndicator, PairProcessor)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   // returns map (toolName -> problem descriptors)
   public static @NotNull Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                         @NotNull PsiFile psiFile,

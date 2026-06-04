@@ -115,7 +115,7 @@ public final class LibraryScopeCache {
    * @return a cached use scope
    * @deprecated use {@link #getLibraryUseScope(VirtualFile)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull GlobalSearchScope getLibraryUseScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myOrderEntriesToLibraryUseScopeCache.get(orderEntries);
   }

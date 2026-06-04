@@ -305,7 +305,7 @@ public abstract class SdkType implements SdkTypeId {
   /**
    * @deprecated Please use {@link #getAllTypeList()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static SdkType @NotNull [] getAllTypes() {
     return EP_NAME.getExtensions();
   }

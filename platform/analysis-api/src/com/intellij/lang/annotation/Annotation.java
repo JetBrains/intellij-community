@@ -187,7 +187,7 @@ public final class Annotation implements Segment {
    * @param range the text range (relative to the document) where the quick fix is available.
    * @param key HighlightDisplayKey of the inspection which provided this fix
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     registerBatchFix(fix, fix, range, key);
   }
@@ -207,7 +207,7 @@ public final class Annotation implements Segment {
   /**
    * @deprecated use {@link AnnotationBuilder#newFix(IntentionAction)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, final @Nullable HighlightDisplayKey key) {
     registerBatchFix(fix, range, key);
     registerFix(fix, range, key);
@@ -337,7 +337,7 @@ public final class Annotation implements Segment {
    *
    * @param tooltip the tooltip text.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTooltip(@NlsContexts.Tooltip String tooltip) {
     myTooltip = tooltip;
   }

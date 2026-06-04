@@ -404,6 +404,7 @@ object StartupUiUtil {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(level = DeprecationLevel.ERROR, message = "Please use StartupUiUtil.getFontWithFallback instead")
 fun getFontWithFallback(
   familyName: String?,

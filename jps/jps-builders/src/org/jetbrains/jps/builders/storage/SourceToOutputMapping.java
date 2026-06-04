@@ -24,7 +24,7 @@ public interface SourceToOutputMapping {
   /**
    * @deprecated Use {@link #remove(Path)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void remove(@NotNull String sourcePath) throws IOException {
     remove(Path.of(sourcePath));
   }

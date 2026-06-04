@@ -412,7 +412,7 @@ public abstract class DialogWrapper {
    * <p/>
    * @deprecated use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
     this(null, canBeParent, applicationModalIfPossible);
   }

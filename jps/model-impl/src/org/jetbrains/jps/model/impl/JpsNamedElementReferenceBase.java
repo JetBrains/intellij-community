@@ -64,7 +64,7 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
    * @deprecated override {@link #getNamedElementCollection} instead to speed up {@link #resolve()}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected @Nullable JpsElementCollection<? extends S> getCollection(@NotNull JpsCompositeElement parent) {
     return getNamedElementCollection(parent);
   }

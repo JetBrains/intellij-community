@@ -29,7 +29,7 @@ public abstract class CompilerProjectExtension {
   /**
    * @deprecated Consider using {@link CompilerProjectExtension#setCompilerOutputUrl(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresWriteLock
   public abstract void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer);
 

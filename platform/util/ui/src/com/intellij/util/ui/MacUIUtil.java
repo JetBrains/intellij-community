@@ -35,7 +35,7 @@ public final class MacUIUtil {
    * now has a thick white border and is visible on a dark background.
    * The inverted cursor also doesn't adjust to color customization in the System Settings, so its usage should be avoided.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       Toolkit toolkit = Toolkit.getDefaultToolkit();

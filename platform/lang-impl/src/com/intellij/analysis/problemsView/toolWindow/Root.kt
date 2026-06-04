@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 abstract class Root(
@@ -47,6 +48,7 @@ abstract class Root(
   open fun getChildren(node: FileNode): Collection<Node> =
     getFileProblems(node.file).toProblemNodes(node, node.file)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use toProblemNodes instead", replaceWith = ReplaceWith("fileProblems.toProblemNodes(node, node.file)"))
   protected fun getNodesForProblems(node: FileNode, fileProblems: Collection<Problem>): List<Node> =
     fileProblems.toProblemNodes(node, node.file)

@@ -143,7 +143,7 @@ public abstract class AutoPopupController {
    * @deprecated The name of the method is misleading.
    *             Use {@link #scheduleAutoPopup(Editor, CompletionType, Condition)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void autoPopupMemberLookup(@NotNull Editor editor,
                                              @NotNull CompletionType completionType,
                                              @Nullable Condition<? super PsiFile> condition);

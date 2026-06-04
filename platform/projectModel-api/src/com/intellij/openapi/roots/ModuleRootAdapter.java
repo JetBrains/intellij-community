@@ -18,6 +18,6 @@ package com.intellij.openapi.roots;
 /**
  * @deprecated Please useModuleRootListener
 */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ModuleRootAdapter implements ModuleRootListener {
 }

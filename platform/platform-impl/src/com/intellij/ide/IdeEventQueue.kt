@@ -265,7 +265,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun addDispatcher(dispatcher: NonLockedEventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, nonLockingDispatchers)
   }
-
+  
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
     dispatchers.add(dispatcher)

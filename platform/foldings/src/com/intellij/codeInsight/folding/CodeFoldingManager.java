@@ -47,7 +47,7 @@ public abstract class CodeFoldingManager {
    * @deprecated use {@link #updateFoldRegionsAsync}
    */
   @TestOnly
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void buildInitialFoldings(@NotNull Editor editor);
 
   /**

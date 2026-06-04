@@ -93,7 +93,7 @@ public class PtyCommandLine extends GeneralCommandLine implements CommandLineWit
    * @deprecated do not use it
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
     return this;
   }

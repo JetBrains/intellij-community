@@ -20,19 +20,19 @@ public final class SearchContext {
   /**
    * @deprecated use {@link #inCodeHosts}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final SearchContext IN_CODE_HOSTS = new SearchContext("IN_CODE_HOSTS", UsageSearchContext.IN_FOREIGN_LANGUAGES);
 
   /**
    * @deprecated use {@link #inComments}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final SearchContext IN_COMMENTS = new SearchContext("IN_COMMENTS", UsageSearchContext.IN_COMMENTS);
 
   /**
    * @deprecated use {@link #inStrings}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final SearchContext IN_STRINGS = new SearchContext("IN_STRINGS", UsageSearchContext.IN_STRINGS);
 
   private static final SearchContext IN_PLAIN_TEXT = new SearchContext("IN_PLAIN_TEXT", UsageSearchContext.IN_PLAIN_TEXT);

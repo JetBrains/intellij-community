@@ -27,7 +27,7 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
   /**
    * @deprecated use {@link #ReadWriteAccessUsageInfo2UsageAdapter(UsageInfo, Access)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, boolean accessedForReading, boolean accessedForWriting) {
     this(usageInfo, getRwAccess(accessedForReading, accessedForWriting));
   }

@@ -57,7 +57,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
    * @deprecated Use {@link #JBRunnerTabs(Project, Disposable)}
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, parent);
   }

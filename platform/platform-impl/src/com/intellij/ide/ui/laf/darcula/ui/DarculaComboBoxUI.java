@@ -145,7 +145,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
    * @deprecated Parameter {@code c} is not used. Please use {@link #DarculaComboBoxUI()} constructor instead
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public DarculaComboBoxUI(JComboBox c) {
     this();
   }

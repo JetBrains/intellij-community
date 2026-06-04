@@ -18,7 +18,7 @@ public abstract class EditorColorsManager {
   /**
    * @deprecated use {@link #getDefaultSchemeName()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   public static @NonNls @NotNull String getDefaultSchemeName() {

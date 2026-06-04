@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -30,6 +31,7 @@ interface JavaProjectSettingsEntity : WorkspaceEntity {
     @Deprecated(message = "Use new API instead")
     fun getProjectSettings(): ProjectSettingsEntity.Builder = projectSettings as ProjectSettingsEntity.Builder
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     fun setProjectSettings(value: ProjectSettingsEntity.Builder) {
       projectSettings = value
@@ -37,6 +39,7 @@ interface JavaProjectSettingsEntity : WorkspaceEntity {
   }
 
   companion object : EntityType<JavaProjectSettingsEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
@@ -51,6 +54,7 @@ interface JavaProjectSettingsEntity : WorkspaceEntity {
 }
 
 //region generated code
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyJavaProjectSettingsEntity(
   entity: JavaProjectSettingsEntity,
@@ -61,7 +65,11 @@ fun MutableEntityStorage.modifyJavaProjectSettingsEntity(
 
 @Deprecated(message = "Use new API instead")
 var ProjectSettingsEntity.Builder.javaProjectSettings: JavaProjectSettingsEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   get() = (this as ProjectSettingsEntityBuilder).javaProjectSettings as JavaProjectSettingsEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
   set(value) {
     (this as ProjectSettingsEntityBuilder).javaProjectSettings = value
   }

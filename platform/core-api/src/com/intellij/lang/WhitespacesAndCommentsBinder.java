@@ -2,6 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public interface WhitespacesAndCommentsBinder {
    * Recursive binder is allowed to adjust nested elements positions.
    * @deprecated override {@link #isRecursive()} instead.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   interface RecursiveBinder extends WhitespacesAndCommentsBinder {
   }

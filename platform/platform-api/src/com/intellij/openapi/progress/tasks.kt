@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -123,6 +124,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
   return runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `runWithModalProgressBlocking`, " +

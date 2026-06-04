@@ -161,6 +161,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * batch operation.
    * @deprecated Use {@link #runInBatchFilesMode(Computable)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract void startBatchFilesProcessingMode();
 
@@ -170,6 +171,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * batch operation.
    * @deprecated Use {@link #runInBatchFilesMode(Computable)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract void finishBatchFilesProcessingMode();
 

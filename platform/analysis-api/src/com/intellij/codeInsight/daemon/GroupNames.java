@@ -19,7 +19,7 @@ package com.intellij.codeInsight.daemon;
  * @deprecated specify groupBundle="messages.InspectionsBundle" and corresponding groupKey attribute in localInspection tag instead of
  * using constant from this class
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface GroupNames {
 
 }

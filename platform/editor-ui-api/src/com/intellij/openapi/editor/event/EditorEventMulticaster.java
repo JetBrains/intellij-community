@@ -44,7 +44,7 @@ public interface EditorEventMulticaster {
   /**
    * @deprecated Use {@link #addCaretListener(CaretListener, Disposable)} instead to avoid leaking listeners
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void addCaretListener(@NotNull CaretListener listener);
 
   void addCaretListener(@NotNull CaretListener listener, @NotNull Disposable parentDisposable);
@@ -58,7 +58,7 @@ public interface EditorEventMulticaster {
   /**
    * @deprecated Use {@link #addVisibleAreaListener(VisibleAreaListener, Disposable)} instead to avoid leaking listeners
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void addVisibleAreaListener(@NotNull VisibleAreaListener listener);
 
   default void addVisibleAreaListener(@NotNull VisibleAreaListener listener, @NotNull Disposable parent) {

@@ -145,7 +145,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @deprecated name of this method may be misleading, actually it doesn't check that {@code file} has the 'class' extension. 
    * Use {@link #isInLibraryClasses} with additional {@code !file.isDirectory()} check instead.   
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresReadLock
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 

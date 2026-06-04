@@ -8,7 +8,7 @@ public interface ProgressIndicatorWithDelayedPresentation {
    * @see #setDelayInMillis(int)
    * @deprecated deprecated in favor of {@link com.intellij.ui.progress.ProgressUIUtil#DEFAULT_PROGRESS_DELAY_MILLIS} to avoid the dependency on analysis.impl module
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
 
   /**

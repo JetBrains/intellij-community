@@ -3,6 +3,7 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
@@ -67,6 +68,7 @@ class Credentials(user: String?, val password: OneTimeString?) {
   constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use one of (user, password) constructors", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(user: String?, password: OneTimeString?, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?) :
