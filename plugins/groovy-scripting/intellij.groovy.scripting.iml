@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.groovy.jsr223" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.ivy" scope="RUNTIME" />
   </component>
 </module>

@@ -18,6 +18,7 @@ jvm_library(
         # do not sort,
         "//libraries/groovy",
         "//libraries/groovy/jsr223",
+        "//libraries/ivy",
     ],
 )
 
@@ -35,6 +36,7 @@ jvm_library(
         ":groovy-scripting",
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/jsr223:jsr223_test_lib",
+        "//libraries/ivy:ivy_test_lib",
     ],
 )
 ### auto-generated section `build intellij.groovy.scripting` end
