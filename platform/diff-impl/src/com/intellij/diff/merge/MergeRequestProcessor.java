@@ -25,8 +25,10 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +119,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
     JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel)
-      .addToRight(JBUI.Panels.simplePanel(myToolbarStatusPanel).addToRight(myRightToolbarPanel))
+      .addToRight(myRightToolbarPanel)
       .addToBottom(myNotificationPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
@@ -296,10 +298,28 @@ public abstract class MergeRequestProcessor implements Disposable {
     recursiveRegisterShortcutSet(group, myMainPanel, null);
 
     DefaultActionGroup rightGroup = new DefaultActionGroup();
-    DiffUtil.addActionBlock(rightGroup, rightViewerActions, false);
+    rightGroup.add(new StatusPanelAction(myToolbarStatusPanel));
+    DiffUtil.addActionBlock(rightGroup, rightViewerActions, true);
     ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightGroup, true);
     rightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     myRightToolbarPanel.setContent(rightToolbar.getComponent());
+  }
+
+  private static final class StatusPanelAction extends DumbAwareAction implements CustomComponentAction {
+    private final JComponent myStatusPanel;
+
+    StatusPanelAction(@NotNull JComponent statusPanel) {
+      myStatusPanel = statusPanel;
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return myStatusPanel;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+    }
   }
 
   private @NotNull MergeTool getFittedTool(@NotNull MergeRequest request) {
