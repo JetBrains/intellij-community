@@ -214,7 +214,7 @@ public abstract class CompilerManager {
   /**
    * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**

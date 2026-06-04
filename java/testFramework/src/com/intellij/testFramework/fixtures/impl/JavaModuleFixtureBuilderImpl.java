@@ -66,7 +66,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
   /**
    * @deprecated use {@link #JavaModuleFixtureBuilderImpl(TestFixtureBuilder)} or {@link #JavaModuleFixtureBuilderImpl(Supplier, TestFixtureBuilder)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JavaModuleFixtureBuilderImpl(final ModuleType moduleType, final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(moduleType, fixtureBuilder);
   }

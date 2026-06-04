@@ -18,6 +18,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
@@ -32,6 +33,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   /**
    * @deprecated kept for Kotlin plugin compatibility
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public PsiJavaFileStubImpl(String ignoredPackageName, boolean compiled) {
     this(null, null, compiled);

@@ -543,7 +543,7 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(aPackage, sourceRoot);
   }

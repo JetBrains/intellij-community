@@ -17,7 +17,7 @@ public final class DebuggerInvocationUtil {
   /**
    * @deprecated Use {@link #invokeLaterAnyModality}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void swingInvokeLater(final @Nullable Project project, final @NotNull Runnable runnable) {
     if (project == null) {
       return;

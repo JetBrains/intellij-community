@@ -332,7 +332,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
   /**
    * @deprecated use {@link RemoteConnectionBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,

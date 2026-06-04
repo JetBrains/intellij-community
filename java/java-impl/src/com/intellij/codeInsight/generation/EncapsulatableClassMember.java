@@ -11,7 +11,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(GetterSetterGenerationOptions)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   GenerationInfo generateGetter() throws IncorrectOperationException;
 
@@ -19,7 +19,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(GetterSetterGenerationOptions)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   GenerationInfo generateSetter() throws IncorrectOperationException;
 

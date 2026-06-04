@@ -42,6 +42,7 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -80,6 +81,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
 
 object NewProjectUtil {
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.",
               ReplaceWith("createNewProject(wizard)", "com.intellij.ide.impl.NewProjectUtil.createNewProject"))
   fun createNewProject(@Suppress("unused") projectToClose: Project?, wizard: AbstractProjectWizard) {
@@ -89,6 +91,7 @@ object NewProjectUtil {
 
   @Suppress("DuplicatedCode")
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #createNewProjectAsync(AbstractProjectWizard, Project)}")
   fun createNewProject(wizard: AbstractProjectWizard) {
     // warm-up components

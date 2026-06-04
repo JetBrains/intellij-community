@@ -19,6 +19,7 @@ import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.ArrayDeque
 import java.util.Queue
@@ -66,6 +67,7 @@ public object ByteCodeViewerManager {
     return null
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use findClassFile instead")
   @JvmStatic
   public fun loadClassFileBytes(aClass: PsiClass): ByteArray? {

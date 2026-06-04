@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public final class PsiMethodUtil {
    *
    * @deprecated Use {@link #getMainClassQualifiedName(PsiClass)} instead.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nullable String getMainJVMClassName(@NotNull PsiClass psiClass) {
     return JavaMainMethodSearcher.INSTANCE.getMainJVMClassName(psiClass);

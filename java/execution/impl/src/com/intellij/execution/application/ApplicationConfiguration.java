@@ -78,15 +78,15 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
              FusAwareRunConfiguration, EnvFilesOptions {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated public String MAIN_CLASS_NAME;
+  @Deprecated(forRemoval = true) public String MAIN_CLASS_NAME;
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated public String PROGRAM_PARAMETERS;
+  @Deprecated(forRemoval = true) public String PROGRAM_PARAMETERS;
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated public String WORKING_DIRECTORY;
+  @Deprecated(forRemoval = true) public String WORKING_DIRECTORY;
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
+  @Deprecated(forRemoval = true) public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated public String ALTERNATIVE_JRE_PATH;
+  @Deprecated(forRemoval = true) public String ALTERNATIVE_JRE_PATH;
   /* */
 
   public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {

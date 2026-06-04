@@ -4,5 +4,5 @@ package com.intellij.openapi.compiler.ex;
 import com.intellij.openapi.compiler.CompilerPaths;
 
 /** @deprecated use {@link CompilerPaths} */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class CompilerPathsEx extends CompilerPaths { }

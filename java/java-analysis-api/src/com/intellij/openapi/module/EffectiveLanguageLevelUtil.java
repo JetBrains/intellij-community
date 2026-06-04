@@ -8,7 +8,7 @@ public final class EffectiveLanguageLevelUtil {
   /**
    * @deprecated use {@link LanguageLevelUtil#getEffectiveLanguageLevel(Module)} directly instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getEffectiveLanguageLevel(final @NotNull Module module) {
     return LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }

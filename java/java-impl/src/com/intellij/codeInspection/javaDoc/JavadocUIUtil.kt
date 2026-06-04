@@ -3,10 +3,12 @@ package com.intellij.codeInspection.javaDoc
 
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.Cell
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("unused")
 public object JavadocUIUtil {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Will be removed. Inline if you need this functionality")
   public fun <T> Cell<ComboBox<T>>.bindItem(property: KMutableProperty0<T>): Cell<ComboBox<T>> = applyToComponent {
     selectedItem = property.get()

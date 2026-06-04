@@ -148,7 +148,7 @@ public final class JavaHighlightUtil {
    * @return referring constructor
    * @deprecated use {@link JavaPsiConstructorUtil#getChainedConstructors(PsiMethod)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
     return JavaPsiConstructorUtil.getChainedConstructors(constructor);
   }

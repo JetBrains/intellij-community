@@ -574,7 +574,7 @@ public class BreakpointManager {
   }
 
   /** @deprecated Use removeThreadFilter or version with LightOrRealThreadInfo parameter */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void applyThreadFilter(final @NotNull DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
     if (newFilterThread != null) {
       applyThreadFilter(debugProcess, new RealThreadInfo(newFilterThread));

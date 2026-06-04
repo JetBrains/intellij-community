@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated all the methods are deprecated 
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class HighlightControlFlowUtil {
 
   private HighlightControlFlowUtil() { }
@@ -17,7 +17,7 @@ public final class HighlightControlFlowUtil {
   /**
    * @deprecated use {@link ControlFlowUtil#variableDefinitelyAssignedIn(PsiVariable, PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     return ControlFlowUtil.variableDefinitelyAssignedIn(variable, context);
   }

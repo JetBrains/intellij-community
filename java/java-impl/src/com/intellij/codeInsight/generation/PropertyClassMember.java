@@ -25,14 +25,14 @@ public interface PropertyClassMember extends EncapsulatableClassMember {
    * @return PsiElement or TemplateGenerationInfo
    * @deprecated please, use {@link PropertyClassMember#generateGetters(PsiClass, GetterSetterGenerationOptions)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
    * @deprecated please, use {@link PropertyClassMember#generateSetters(PsiClass, GetterSetterGenerationOptions)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   GenerationInfo @Nullable [] generateSetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**

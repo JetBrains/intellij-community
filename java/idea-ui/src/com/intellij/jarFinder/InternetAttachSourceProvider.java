@@ -284,7 +284,7 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
   /**
    * @deprecated use {@link #attachSourceJar(Path, Collection<? extends Library>)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
     attachSourceJar(
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar),

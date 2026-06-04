@@ -115,7 +115,7 @@ public final class ParenthesesUtils {
   /**
    * @deprecated use {@link PsiUtil#skipParenthesizedExprDown(PsiExpression)} directly instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Contract("null -> null")
   public static @Nullable PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     return PsiUtil.skipParenthesizedExprDown(expression);

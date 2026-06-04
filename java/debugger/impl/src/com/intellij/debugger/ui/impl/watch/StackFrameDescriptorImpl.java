@@ -71,7 +71,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
    * @deprecated Use {@link #StackFrameDescriptorImpl(MethodsTracker, StackFrameProxyImpl)} if you aim at tracking recusrion calls,
    *             or {@link #StackFrameDescriptorImpl(StackFrameProxyImpl)} otherwise.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                   @Nullable MethodsTracker tracker) {
     this(frame, false, null, tracker,

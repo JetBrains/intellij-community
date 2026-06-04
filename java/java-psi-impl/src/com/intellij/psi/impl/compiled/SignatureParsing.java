@@ -15,6 +15,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.TypeReference;
@@ -341,6 +342,7 @@ public final class SignatureParsing {
    * object instead of simple string
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     StringBuilder sb = new StringBuilder();

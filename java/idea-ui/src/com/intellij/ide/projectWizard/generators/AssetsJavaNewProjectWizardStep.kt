@@ -4,9 +4,11 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.ide.projectWizard.generators.prepareJavaSampleOnboardingTips as prepareJavaSampleOnboardingTipsImpl
 import com.intellij.ide.projectWizard.generators.withJavaSampleCodeAsset as withJavaSampleCodeAssetImpl
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use AssetsJava util instead")
 abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
 
@@ -17,7 +19,7 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     prepareJavaSampleOnboardingTipsImpl(project)
 
   companion object {
-
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use AssetsOnboardingTips util instead")
     fun proposeToGenerateOnboardingTipsByDefault() =
       AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault()

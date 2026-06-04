@@ -430,7 +430,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @deprecated use {@link #mirrorOfString(String, EvaluationContext)}
    */
   @SuppressWarnings("SSBasedInspection")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
     VirtualMachine vm = virtualMachineProxy.getVirtualMachine();
