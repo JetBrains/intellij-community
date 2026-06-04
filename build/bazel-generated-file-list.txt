@@ -851,6 +851,7 @@ platform/structuralsearch/plugin
 platform/structure-view-impl
 platform/structure-view-impl/backend
 platform/structure-view-impl/frontend
+platform/structure-view-impl/intellij.platform.structureView.impl
 platform/structure-view-impl/plugin
 platform/syntax/syntax-api
 platform/syntax/syntax-extensions

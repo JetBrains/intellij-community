@@ -9,5 +9,6 @@
     <module name="intellij.platform.structureView" loading="required"/>
     <module name="intellij.platform.structureView.backend"/>
     <module name="intellij.platform.structureView.frontend"/>
+    <module name="intellij.platform.structureView.impl"/>
   </content>
 </idea-plugin>
