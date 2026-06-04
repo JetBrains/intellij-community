@@ -4,11 +4,13 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
  * @see com.intellij.collaboration.ui.EditableComponentFactory
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Migrated to coroutines")
 object ToggleableContainer {
   fun create(

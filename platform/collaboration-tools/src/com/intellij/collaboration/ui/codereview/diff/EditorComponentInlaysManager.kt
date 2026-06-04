@@ -14,6 +14,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -21,6 +22,7 @@ import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated in favour of using inlays directly - com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt.insertComponentAfter")
 class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 

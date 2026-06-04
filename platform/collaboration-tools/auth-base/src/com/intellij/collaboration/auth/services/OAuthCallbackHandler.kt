@@ -15,6 +15,7 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.response
 import org.jetbrains.io.responseStatus
 import org.jetbrains.io.send
@@ -80,6 +81,7 @@ abstract class OAuthCallbackHandler {
     return handleAcceptCode(oAuthResult.isAccepted)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use handleOAuthResult instead", ReplaceWith("handleOAuthResult"))
   open fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
     throw UnsupportedOperationException()

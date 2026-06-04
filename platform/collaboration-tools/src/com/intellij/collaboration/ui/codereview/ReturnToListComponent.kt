@@ -7,9 +7,11 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with the move to a different design")
 object ReturnToListComponent {
   fun createReturnToListSideComponent(@Nls text: String, onClick: () -> Unit): JComponent = BorderLayoutPanel()

@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSets
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with the move to ViewModel-based approach")
 open class EditorRangesController(private val gutterIconRendererFactory: DiffEditorGutterIconRendererFactory,
                                   private val editor: EditorEx) {

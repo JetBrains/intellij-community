@@ -14,6 +14,7 @@ import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Shape
 import java.net.URL
@@ -131,6 +132,7 @@ object HtmlEditorPaneUtil {
    *
    * Syntax is `<icon-inline src="..."/>`
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use inlineIconExtension(Class<*> aClass)")
   val INLINE_ICON_EXTENSION: ExtendableHTMLViewFactory.Extension = inlineIconExtension()
 

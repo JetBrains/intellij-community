@@ -30,6 +30,7 @@ open class BaseHtmlEditorPane : JEditorPane() {
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Deprecated in favour of a generic extension on JEditorPane",
               replaceWith = ReplaceWith("setHtmlBody(body)", "com.intellij.collaboration.ui.setHtmlBody"))
   fun setBody(@Nls body: String) {

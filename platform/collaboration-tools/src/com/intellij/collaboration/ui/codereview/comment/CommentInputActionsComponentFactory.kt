@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.Action
@@ -131,6 +132,7 @@ object CommentInputActionsComponentFactory {
     val submitHint: StateFlow<@Nls String>
   )
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use a version with CoroutineScope")
   fun attachActions(component: JComponent, cfg: Config): JComponent {
     return VerticalListPanel().apply {
