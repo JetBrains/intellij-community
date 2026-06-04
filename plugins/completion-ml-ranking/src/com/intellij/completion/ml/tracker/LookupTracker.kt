@@ -9,16 +9,14 @@ import com.intellij.completion.ml.util.language
 
 abstract class LookupTracker : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    if (newLookup is LookupImpl) {
-      val language = newLookup.language()
-      if (language != null) {
-        val lookupStorage = MutableLookupStorage.initOrGetLookupStorage(newLookup, language)
-        lookupCreated(newLookup, lookupStorage)
-      }
-    }
-    else {
+    if (newLookup !is LookupImpl) {
       lookupClosed()
+      return
     }
+
+    val language = newLookup.language() ?: return
+    val lookupStorage = MutableLookupStorage.initOrGetLookupStorage(newLookup, language)
+    lookupCreated(newLookup, lookupStorage)
   }
 
   protected abstract fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage)
