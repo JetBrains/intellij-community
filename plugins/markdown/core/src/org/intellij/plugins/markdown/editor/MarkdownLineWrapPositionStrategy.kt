@@ -40,15 +40,19 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
 
   override fun calculateWrapPosition(document: Document, project: Project?, startOffset: Int, endOffset: Int, maxPreferredOffset: Int,
                                      allowToBeyondMaxPreferredOffset: Boolean, isSoftWrap: Boolean): Int {
-    val file = project?.let { PsiDocumentManager.getInstance(project).getPsiFile(document) }
-               ?: return super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
-                                                     allowToBeyondMaxPreferredOffset, isSoftWrap)
-
-    PsiDocumentManager.getInstance(project).commitDocument(document)
-
     val position = super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
                                                allowToBeyondMaxPreferredOffset, isSoftWrap)
     if (position < 0) return position
+    val documentManager = project?.let { PsiDocumentManager.getInstance(it) } ?: return position
+    val file = documentManager.getPsiFile(document) ?: return position
+
+    if (isSoftWrap) {
+      if (documentManager.isUncommited(document)) return position
+    }
+    else {
+      documentManager.commitDocument(document)
+    }
+
     val forbidden = runReadAction {
       stopSet.mapNotNull { cls ->
         PsiTreeUtil.findElementOfClassAtOffset(file, position, cls, false)?.takeIf {

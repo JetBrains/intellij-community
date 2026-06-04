@@ -2,12 +2,18 @@
 package org.intellij.plugins.markdown.wrap;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.highlighting.BackgroundHighlighter;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.datatransfer.StringSelection;
 
 public class MarkdownWrapTest extends BasePlatformTestCase {
   private boolean myOldWrap;
@@ -80,6 +86,16 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
 
   public void testWrapDoesNotBreakLinkWhenTypingInsideLink() {
     doTest("X");
+  }
+
+  public void testPasteIntoLineWithLinkDoesNotAssert() {
+    myFixture.configureByFile("pasteIntoLineWithLinkDoesNotAssert.md");
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 40);
+
+    CopyPasteManager.getInstance().setContents(new StringSelection("aaaa"));
+    BackgroundHighlighter.Companion.runWithEnabledListenersInTest(getProject(), () -> {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    });
   }
 
   public void testWrapRightMargin() {
