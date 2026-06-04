@@ -37,7 +37,7 @@ open class WhatsNewMultipageStartIdProvider(val project: Project) {
    *
    * @return the page ID to display, or `null` to use default behavior
    */
-  open suspend fun getId(): String? = WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID
+  open suspend fun getId(): String = WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID
 
   companion object {
     fun getInstance(project: Project): WhatsNewMultipageStartIdProvider = project.service()
