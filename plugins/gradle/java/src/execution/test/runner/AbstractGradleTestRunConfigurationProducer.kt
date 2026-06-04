@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.util.Ref
@@ -16,6 +17,8 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTasks
 import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 import java.util.StringJoiner
 import java.util.function.Consumer
+
+private const val DEFAULT_TEST_TASK_NAME = "test"
 
 abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : PsiElement> : GradleTestRunConfigurationProducer() {
 
@@ -33,9 +36,23 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   protected abstract fun getAllTestsTaskToRun(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<TestTasksToRun>
 
+  override fun findOrCreateConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
+    val configurationFromContext = super.findOrCreateConfigurationFromContext(context) ?: return null
+    val element = getElement(context) ?: return configurationFromContext
+    if (allTestsTaskToRun(context, element).map { it.tasksToRun.testName }.toSet().size > 1) {
+      (configurationFromContext.configuration as GradleRunConfiguration).name =
+        suggestConfigurationName(context, element, emptyList())
+    }
+    return configurationFromContext
+  }
+
   private fun getAllTasksAndArguments(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<GradleCommandLineTasks> {
     return getAllTestsTaskToRun(context, element, chosenElements)
       .map { it.toTasksAndArguments() }
+  }
+
+  private fun allTestsTaskToRun(context: ConfigurationContext, element: E): List<TestTasksToRun> {
+    return getAllTestsTaskToRun(context, element, emptyList())
   }
 
   override fun doSetupConfigurationFromContext(
@@ -69,7 +86,11 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     val module = context.module ?: return false
     val externalProjectPath = resolveProjectPath(module) ?: return false
     val element = getElement(context) ?: return false
-    val allTasksAndArguments = getAllTasksAndArguments(context, element, emptyList())
+    val allTestsTaskToRun = allTestsTaskToRun(context, element)
+    if (allTestsTaskToRun.map { it.tasksToRun.testName }.toSet().size > 1) {
+      return false
+    }
+    val allTasksAndArguments = allTestsTaskToRun.map { it.toTasksAndArguments() }
     val tasksAndArguments = configuration.commandLine.tasks.tokens
     return externalProjectPath == configuration.settings.externalProjectPath &&
            tasksAndArguments.isNotEmpty() && allTasksAndArguments.isNotEmpty() &&
@@ -96,14 +117,44 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
           .mapValues { it.value.map(TestTasksToRun::testFilter).toSet() }
           .map { createTasksAndArguments(it.key, it.value) }
 
-        runConfiguration.name = suggestConfigurationName(context, element, elements)
-        setUniqueNameIfNeeded(project, runConfiguration)
         runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
         runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
+        runConfiguration.name = suggestConfigurationName(context, element, elements)
+          .withGradleTestTaskName(chosenTestsToRun)
+        if (!hasSameExistingConfiguration(runConfiguration)) {
+          setUniqueNameIfNeeded(project, runConfiguration)
+        }
 
         super.onFirstRun(configuration, context, startRunnable)
       }
     }
+  }
+
+  private fun String.withGradleTestTaskName(chosenTestsToRun: List<List<TestTasksToRun>>): String {
+    val testTaskName = chosenTestsToRun.flatten().map { it.tasksToRun.testName }.distinct().singleOrNull()
+    if (testTaskName == null || testTaskName == DEFAULT_TEST_TASK_NAME) return this
+    if (endsWith(".$DEFAULT_TEST_TASK_NAME'")) {
+      return removeSuffix(".$DEFAULT_TEST_TASK_NAME'") + ".$testTaskName'"
+    }
+    if (endsWith("'")) {
+      return dropLast(1) + ".$testTaskName'"
+    }
+    return "$this.$testTaskName"
+  }
+
+  private fun hasSameExistingConfiguration(configuration: GradleRunConfiguration): Boolean {
+    val taskNames = configuration.commandLine.tasks.tokens
+    val scriptParameters = configuration.settings.scriptParameters
+    return RunManager.getInstance(configuration.project)
+      .getConfigurationSettingsList(configurationFactory.type)
+      .any { settings ->
+        val existingConfiguration = settings.configuration as? GradleRunConfiguration ?: return@any false
+        existingConfiguration !== configuration &&
+        existingConfiguration.name == configuration.name &&
+        existingConfiguration.settings.externalProjectPath == configuration.settings.externalProjectPath &&
+        existingConfiguration.commandLine.tasks.tokens == taskNames &&
+        existingConfiguration.settings.scriptParameters == scriptParameters
+      }
   }
 
   /**
