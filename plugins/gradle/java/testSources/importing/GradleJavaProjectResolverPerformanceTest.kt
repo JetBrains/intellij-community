@@ -9,15 +9,16 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
@@ -28,33 +29,33 @@ import org.jetbrains.plugins.gradle.testFramework.projectModel.projectSdkNode
 import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
 @TestApplication
 @PerformanceUnitTest
-class GradleJavaProjectResolverPerformanceTest {
+@ParameterizedClass
+@BaseGradleVersionSource
+class GradleJavaProjectResolverPerformanceTest(gradleVersion: GradleVersion) {
+
+  private val gradleFixture = gradleFixture(gradleVersion)
+  private val gradle by gradleFixture
+
+  private val project by projectFixture()
+    // BUG! IJPL-239938 GlobalWorkspaceModel: externally-added entities (e.g. SDKs) get wiped when a new project opens
+    .dependsOn(gradleFixture)
 
   @Nested
   @PerformanceUnitTest
   inner class SdkData {
-
-    private val gradleJvmFixture = gradleJvmFixture()
-    private val gradleJvm get() = gradleJvmFixture.get().gradleJvm
-
-    //private val project by projectFixture()
-    // BUG! IJPL-239938 GlobalWorkspaceModel: externally-added entities (e.g. SDKs) get wiped when a new project opens
-    private val project by testFixture {
-      gradleJvmFixture.init()
-      initialized(projectFixture().init()) {}
-    }
 
     @ParameterizedTest
     @CsvSource("10000, 10", "1000, 100")
     fun `test JavaGradleProjectResolver#populateProjectExtraModels`(numHolderModules: Int, numSourceSetModules: Int) {
       `test JavaGradleProjectResolver`(numHolderModules, numSourceSetModules) { projectResolver, ideaProject, projectNode ->
         projectResolver.populateJavaProjectCompilerSettings(ideaProject, projectNode)
-        Assertions.assertEquals(gradleJvm, projectNode.projectSdkNode?.data?.sdkName) {
+        Assertions.assertEquals(gradle.gradleJvm, projectNode.projectSdkNode?.data?.sdkName) {
           "Incorrect ProjectSdkData is populated for ${ideaProject.name}"
         }
       }
@@ -66,7 +67,7 @@ class GradleJavaProjectResolverPerformanceTest {
       `test JavaGradleProjectResolver`(numHolderModules, numSourceSetModules) { projectResolver, ideaProject, projectNode ->
         for ((ideaModule, moduleNode) in ideaProject.modules.zip(projectNode.moduleNodes)) {
           projectResolver.populateJavaModuleCompilerSettings(ideaModule, moduleNode)
-          Assertions.assertEquals(gradleJvm, moduleNode.moduleSdkNode?.data?.sdkName) {
+          Assertions.assertEquals(gradle.gradleJvm, moduleNode.moduleSdkNode?.data?.sdkName) {
             "Incorrect ModuleSdkData is populated for ${ideaModule.name}"
           }
         }
@@ -77,9 +78,9 @@ class GradleJavaProjectResolverPerformanceTest {
       numHolderModules: Int, numSourceSetModules: Int,
       test: (JavaGradleProjectResolver, IdeaProject, DataNode<ProjectData>) -> Unit,
     ) {
-      setGradleJvm(project, gradleJvm)
+      setGradleJvm(project, gradle.gradleJvm)
 
-      val ideaProject = ideaProject(project, gradleJvm) {
+      val ideaProject = ideaProject(project, gradle.gradleJvm) {
         it.numHolderModules = numHolderModules
       }
       val externalProjects = externalProjects {

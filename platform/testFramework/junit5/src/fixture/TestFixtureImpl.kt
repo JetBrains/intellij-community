@@ -30,6 +30,8 @@ class TestFixtureImpl<T>(
   // TestFixtureInitializer<T> | Deferred<ScopedValue<T>>
   private var _state: Any = initializer
 
+  private val explicitDependencies = LinkedHashSet<TestFixture<*>>()
+
   override fun get(): T {
     try {
       @Suppress("UNCHECKED_CAST", "TestOnlyProblems")
@@ -59,6 +61,18 @@ class TestFixtureImpl<T>(
     return initSync(testScope, context)
   }
 
+  @Synchronized
+  override fun dependsOn(vararg dependencies: TestFixture<*>): TestFixture<T> {
+    check(_state is TestFixtureInitializer<*>) {
+      "Cannot register fixture dependencies after initialization"
+    }
+    require(dependencies.none { it === this }) {
+      "Fixture cannot depend on itself"
+    }
+    explicitDependencies.addAll(dependencies)
+    return this
+  }
+
   @Synchronized // for simplicity; can be made atomic if needed
   private fun initSync(testScope: CoroutineScope, context: TestContext): Deferred<ScopedValue<T>> {
     val state = _state
@@ -78,6 +92,11 @@ class TestFixtureImpl<T>(
       val initializer = state as TestFixtureInitializer<T>
       val scope = TestFixtureInitializerReceiverImpl<T>(testScope, context)
       val (fixture, tearDown) = try {
+        with(scope) {
+          for (dependency in explicitDependencies) {
+            dependency.init()
+          }
+        }
         with(initializer) {
           val data = scope.initFixture(context) as InitializedTestFixtureData<T>
           val childJob = coroutineContext.job.children.firstOrNull()

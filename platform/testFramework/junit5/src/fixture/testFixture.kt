@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.platform.eel.EelApi
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import org.jetbrains.annotations.TestOnly
 import kotlin.reflect.KProperty
@@ -52,6 +53,16 @@ sealed interface TestFixture<out T> {
    * ```
    */
   operator fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
+
+  /**
+   * Initializes [dependencies] before this fixture and tears them down after this fixture.
+   *
+   * Use this only in exceptional cases when a fixture has no direct dependency to express with [TestFixtureInitializer.R.init],
+   * but production code creates an implicit lifecycle dependency through its internals.
+   * Do not use it for ordinary fixture composition.
+   */
+  @Experimental
+  fun dependsOn(vararg dependencies: TestFixture<*>): TestFixture<T>
 }
 
 sealed interface TestContext {
