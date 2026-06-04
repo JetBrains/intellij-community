@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.channels.FileChannel
@@ -109,9 +110,15 @@ object PyEnvDownloadCache {
     connection.connectTimeout = 30000
     connection.readTimeout = 30000
 
-    if (connection.responseCode != 200) {
-      tempFile.deleteIfExists()
-      error("Failed to download from $url: HTTP ${connection.responseCode}")
+    try {
+      if (connection.responseCode != 200) {
+        tempFile.deleteIfExists()
+        error("Failed to download from $url: HTTP ${connection.responseCode}")
+      }
+    }
+    catch (e: IOException) {
+      LOG.error("Couldn't connect to $url", e)
+      throw e
     }
 
     connection.inputStream.use { input ->
