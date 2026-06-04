@@ -1,84 +1,105 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.junit.Test
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 import java.util.function.Consumer
 
-class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@AllGradleVersionsSource
+class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersion) {
 
-  var lastImportErrorMessage: String? = null
+  private val gradleFixture = gradleFixture(gradleVersion)
+  private val gradle by gradleFixture
 
-  override fun handleImportFailure(errorMessage: String, errorDetails: String?) {
-    // do not fail tests with failed builds and save the import error message
-    lastImportErrorMessage = errorMessage
-  }
+  private val testRootFixture = tempPathFixture()
+  private val testRoot by testRootFixture
+
+  private val projectFixture = projectFixture(testRootFixture, openAfterCreation = true)
+    // BUG! IJPL-239938 GlobalWorkspaceModel: externally-added entities (e.g. SDKs) get wiped when a new project opens
+    .dependsOn(gradleFixture)
+  private val project by projectFixture
+
+  private val buildView by buildViewFixture(projectFixture)
 
   @Test
-  fun `test out of memory build failures`() {
-    createProjectSubFile("gradle.properties",
-                         "org.gradle.jvmargs=-Xmx100m")
-    importProject("""
-      List list = new ArrayList()
-      while (true) {
-         list.add(new byte[1024 * 1024])
+  fun `test out of memory build failures`(): Unit = runBlocking {
+
+    val projectInfo = gradleProjectInfo(gradleVersion, gradleDsl = GradleDsl.GROOVY) {
+      gradleWrapper()
+      file("gradle.properties", """
+        |org.gradle.jvmargs=-Xmx100m
+      """.trimMargin())
+      buildFile {
+        addPostfix("""
+          |def list = new ArrayList<byte[]>()
+          |while (true) {
+          |   list.add(new byte[1024 * 1024])
+          |}
+        """.trimMargin())
       }
-      """.trimIndent())
-
-    val buildScript = myProjectConfig.toNioPath().toString()
-
-    val oomMessage = if (lastImportErrorMessage!!.contains("Java heap space")) "Java heap space" else "GC overhead limit exceeded"
-    val deprecatedGradleMessage =
-      if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) "  Deprecated Gradle Version\n"
-      else ""
-
-    assertSyncViewTreeEquals { treeTestPresentation ->
-      assertThat(treeTestPresentation).satisfiesAnyOf(
-        Consumer {
-          assertThat(it).isEqualTo("-\n" +
-                                   " -failed\n" +
-                                   deprecatedGradleMessage +
-                                   "  -build.gradle\n" +
-                                   "   $oomMessage")
-
-        },
-        Consumer {
-          assertThat(it).isEqualTo("-\n" +
-                                   " -failed\n" +
-                                   deprecatedGradleMessage +
-                                   "  $oomMessage")
-
-        }
-      )
     }
 
-    assertSyncViewSelectedNode(oomMessage) { text ->
-      assertThat(text).satisfiesAnyOf(
-        Consumer {
-          assertThat(it).startsWith("""
-            * Where:
-            Build file '$buildScript' line: 10
-      
-            * What went wrong:
-            Out of memory. $oomMessage
-      
-            Possible solution:
-             - Check the JVM memory arguments defined for the gradle process in:
-               gradle.properties in project root directory
-          """.trimIndent())
-        },
-        Consumer {
-          assertThat(it).startsWith("""
-            * What went wrong:
-            Out of memory. $oomMessage
-      
-            Possible solution:
-             - Check the JVM memory arguments defined for the gradle process in:
-               gradle.properties in project root directory
-          """.trimIndent())
+    val projectRoot = projectInfo.initProject(testRoot)
+    val buildScriptPath = projectRoot.resolve(projectInfo.rootModule.buildScriptName)
+
+    gradle.linkProject(project, projectRoot)
+
+    assertAnyOf({
+      buildView.assertSyncViewTree {
+        assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
+          assertNode("build.gradle") {
+            assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
+          }
         }
-      )
+      }
+    }, {
+      buildView.assertSyncViewTree {
+        assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
+          assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
+        }
+      }
+    })
+
+    buildView.assertSyncViewSelectedNode("(Java heap space|GC overhead limit exceeded)".toRegex()) { text ->
+      assertThat(text).matches("""
+        |(\* Where:
+        |Build file '${Regex.escape(buildScriptPath.toString())}' line: 3
+        |
+        |)?\* What went wrong:
+        |Out of memory. (Java heap space|GC overhead limit exceeded)
+        |
+        |Possible solution:
+        | - Check the JVM memory arguments defined for the gradle process in:
+        | {3}gradle.properties in project root directory
+        |[\s\S]*
+      """.trimMargin().toRegex().toPattern())
     }
+  }
+
+  private fun assertAnyOf(vararg assertions: () -> Unit) {
+    assertThat(Unit)
+      .describedAs("view matches one of accepted variants")
+      .satisfiesAnyOf(*assertions.map { Consumer<Unit> { it() } }.toTypedArray())
   }
 }

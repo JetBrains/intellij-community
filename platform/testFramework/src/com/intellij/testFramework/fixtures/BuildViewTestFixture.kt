@@ -99,6 +99,11 @@ class BuildViewTestFixture(
     BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleTextChecker)
   }
 
+  fun assertSyncViewSelectedNode(nodeText: Regex, consoleTextChecker: (String) -> Unit) {
+    BuildViewAssertions.assertBuildViewNodeIsSelected(syncView, nodeText)
+    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleTextChecker)
+  }
+
   fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     BuildViewAssertions.assertBuildViewTree(buildView, assert)
   }

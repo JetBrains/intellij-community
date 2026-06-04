@@ -37,31 +37,46 @@ object BuildViewAssertions {
     }
   }
 
-  fun assertBuildViewNodeConsole(buildView: BuildView, nodeText: String, assert: (ExecutionConsole) -> Unit) {
+  fun assertBuildViewNodeConsole(buildView: BuildView, nodeText: String, assert: (ExecutionConsole) -> Unit): Unit =
+    assertBuildViewNodeConsole(buildView, BuildViewNodeMatcher.exactly(nodeText), assert)
+
+  private fun assertBuildViewNodeConsole(buildView: BuildView, nodeMatcher: BuildViewNodeMatcher, assert: (ExecutionConsole) -> Unit) {
     val treeConsoleView = getBuildViewTreeConsoleView(buildView)
-    selectTreeNode(treeConsoleView.tree, nodeText)
+    selectTreeNode(treeConsoleView.tree, nodeMatcher)
     waitUntilAssertSucceedsBlocking {
       val nodeConsole = runInEdtAndGet {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         treeConsoleView.selectedNodeConsole
       }
       assertNotNull(nodeConsole) {
-        "Cannot find console of the '$nodeText' node in tree:\n" +
+        "Cannot find console of the '$nodeMatcher' node in tree:\n" +
         getTreeStringPresentation(treeConsoleView.tree) + "\n"
       }
       assert(nodeConsole!!)
     }
   }
 
-  fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeText: String, assert: (String) -> Unit) {
-    assertBuildViewNodeConsole(buildView, nodeText) {
+  fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeText: String, assert: (String) -> Unit): Unit =
+    assertBuildViewNodeConsoleText(buildView, BuildViewNodeMatcher.exactly(nodeText), assert)
+
+  fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeText: Regex, assert: (String) -> Unit): Unit =
+    assertBuildViewNodeConsoleText(buildView, BuildViewNodeMatcher.regex(nodeText), assert)
+
+  private fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeMatcher: BuildViewNodeMatcher, assert: (String) -> Unit) {
+    assertBuildViewNodeConsole(buildView, nodeMatcher) {
       assert((it.unwrapDelegate() as ConsoleViewImpl).text)
     }
   }
 
-  fun assertBuildViewNodeIsSelected(buildView: BuildView, nodeText: String) {
+  fun assertBuildViewNodeIsSelected(buildView: BuildView, nodeText: String): Unit =
+    assertBuildViewNodeIsSelected(buildView, BuildViewNodeMatcher.exactly(nodeText))
+
+  fun assertBuildViewNodeIsSelected(buildView: BuildView, nodeText: Regex): Unit =
+    assertBuildViewNodeIsSelected(buildView, BuildViewNodeMatcher.regex(nodeText))
+
+  private fun assertBuildViewNodeIsSelected(buildView: BuildView, nodeMatcher: BuildViewNodeMatcher) {
     val treeConsoleView = getBuildViewTreeConsoleView(buildView)
-    val node = getTreeNode(treeConsoleView.tree, nodeText)
+    val node = getTreeNode(treeConsoleView.tree, nodeMatcher)
     val selectedNode = getTreeSelectedNode(treeConsoleView.tree)
     if (node != selectedNode) {
       Assertions.assertEquals(node.toString(), selectedNode.toString())
@@ -84,23 +99,23 @@ object BuildViewAssertions {
     return treeView
   }
 
-  private fun getTreeNode(tree: JTree, nodeText: String): TreeNode {
+  private fun getTreeNode(tree: JTree, nodeMatcher: BuildViewNodeMatcher): TreeNode {
     return waitUntilAssertSucceedsBlocking retry@{
-      val node = getTreeNodeOrNull(tree, nodeText)
-      Assertions.assertNotNull(node) {
-        "Cannot find the '$nodeText' node in tree:\n" +
+      val node = getTreeNodeOrNull(tree, nodeMatcher)
+      assertNotNull(node) {
+        "Cannot find the '$nodeMatcher' node in tree:\n" +
         getTreeStringPresentation(tree) + "\n"
       }
       return@retry node!!
     }
   }
 
-  private fun getTreeNodeOrNull(tree: JTree, nodeText: String): DefaultMutableTreeNode? = runInEdtAndGet {
+  private fun getTreeNodeOrNull(tree: JTree, nodeMatcher: BuildViewNodeMatcher): DefaultMutableTreeNode? = runInEdtAndGet {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
     PlatformTestUtil.waitWhileBusy(tree)
 
     TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
-      it.userObject.toString() == nodeText
+      nodeMatcher.matchesNodeText(it.userObject.toString())
     }
   }
 
@@ -119,13 +134,33 @@ object BuildViewAssertions {
     }
   }
 
-  private fun selectTreeNode(tree: JTree, nodeText: String) {
-    val node = getTreeNode(tree, nodeText)
+  private fun selectTreeNode(tree: JTree, nodeMatcher: BuildViewNodeMatcher) {
+    val node = getTreeNode(tree, nodeMatcher)
     runInEdtAndGet {
       TreeUtil.selectNode(tree, node)
 
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       PlatformTestUtil.waitWhileBusy(tree)
+    }
+  }
+
+  private interface BuildViewNodeMatcher {
+
+    fun matchesNodeText(nodeText: String): Boolean
+
+    override fun toString(): String
+
+    companion object {
+
+      fun exactly(expectedNodeText: String): BuildViewNodeMatcher = object : BuildViewNodeMatcher {
+        override fun matchesNodeText(nodeText: String): Boolean = nodeText == expectedNodeText
+        override fun toString(): String = expectedNodeText
+      }
+
+      fun regex(expectedNodeText: Regex): BuildViewNodeMatcher = object : BuildViewNodeMatcher {
+        override fun matchesNodeText(nodeText: String): Boolean = expectedNodeText.matches(nodeText)
+        override fun toString(): String = expectedNodeText.toString()
+      }
     }
   }
 }
