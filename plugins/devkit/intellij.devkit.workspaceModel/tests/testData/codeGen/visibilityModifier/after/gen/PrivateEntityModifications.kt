@@ -1,5 +1,4 @@
 @file:JvmName("PrivateEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.PrivateEntityImpl
 
 @GeneratedCodeApiVersion(3)
 private interface PrivateEntityBuilder: WorkspaceEntityBuilder<PrivateEntity>{
@@ -17,6 +17,7 @@ var name: String
 
 private object PrivateEntityType : EntityType<PrivateEntity, PrivateEntityBuilder>(){
 override val entityClass: Class<PrivateEntity> get() = PrivateEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = PrivateEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
 entitySource: EntitySource,

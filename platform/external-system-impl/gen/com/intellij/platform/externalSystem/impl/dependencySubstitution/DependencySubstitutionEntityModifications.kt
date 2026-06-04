@@ -3,6 +3,7 @@
 
 package com.intellij.platform.externalSystem.impl.dependencySubstitution
 
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.impl.DependencySubstitutionEntityImpl
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
@@ -27,6 +28,7 @@ interface DependencySubstitutionEntityBuilder : WorkspaceEntityBuilder<Dependenc
 
 internal object DependencySubstitutionEntityType : EntityType<DependencySubstitutionEntity, DependencySubstitutionEntityBuilder>() {
   override val entityClass: Class<DependencySubstitutionEntity> get() = DependencySubstitutionEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = DependencySubstitutionEntityImpl.Builder::class.java
   operator fun invoke(
     library: LibraryId,
     module: ModuleId,

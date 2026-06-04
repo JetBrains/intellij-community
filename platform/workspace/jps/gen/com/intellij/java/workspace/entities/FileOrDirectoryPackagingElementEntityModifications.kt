@@ -4,7 +4,6 @@
 package com.intellij.java.workspace.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -15,33 +14,4 @@ interface FileOrDirectoryPackagingElementEntityBuilder<T : FileOrDirectoryPackag
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   var filePath: VirtualFileUrl
-}
-
-internal object FileOrDirectoryPackagingElementEntityType :
-  EntityType<FileOrDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntityBuilder<FileOrDirectoryPackagingElementEntity>>() {
-  override val entityClass: Class<FileOrDirectoryPackagingElementEntity> get() = FileOrDirectoryPackagingElementEntity::class.java
-  operator fun invoke(
-    filePath: VirtualFileUrl,
-    entitySource: EntitySource,
-    init: (FileOrDirectoryPackagingElementEntityBuilder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null,
-  ): FileOrDirectoryPackagingElementEntityBuilder<FileOrDirectoryPackagingElementEntity> {
-    val builder = builder()
-    builder.filePath = filePath
-    builder.entitySource = entitySource
-    init?.invoke(builder)
-    return builder
-  }
-
-  @Deprecated(message = "Use new API instead")
-  fun compatibilityInvoke(
-    filePath: VirtualFileUrl,
-    entitySource: EntitySource,
-    init: (FileOrDirectoryPackagingElementEntity.Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null,
-  ): FileOrDirectoryPackagingElementEntity.Builder<FileOrDirectoryPackagingElementEntity> {
-    val builder = builder() as FileOrDirectoryPackagingElementEntity.Builder<FileOrDirectoryPackagingElementEntity>
-    builder.filePath = filePath
-    builder.entitySource = entitySource
-    init?.invoke(builder)
-    return builder
-  }
 }

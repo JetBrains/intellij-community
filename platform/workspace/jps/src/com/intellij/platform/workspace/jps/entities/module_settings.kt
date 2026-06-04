@@ -12,21 +12,6 @@ interface ModuleSettingsFacetBridgeEntity : WorkspaceEntityWithSymbolicId {
   val moduleId: ModuleId
   val name: @NlsSafe String
 
-  //region generated code
   @Deprecated(message = "Use ModuleSettingsFacetBridgeEntityBuilder instead")
   interface Builder<T : ModuleSettingsFacetBridgeEntity> : ModuleSettingsFacetBridgeEntityBuilder<T>
-  companion object : EntityType<ModuleSettingsFacetBridgeEntity, Builder<ModuleSettingsFacetBridgeEntity>>() {
-    @Deprecated(message = "Use new API instead")
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      moduleId: ModuleId,
-      name: String,
-      entitySource: EntitySource,
-      init: (Builder<ModuleSettingsFacetBridgeEntity>.() -> Unit)? = null,
-    ): Builder<ModuleSettingsFacetBridgeEntity> =
-      ModuleSettingsFacetBridgeEntityType.compatibilityInvoke(moduleId, name, entitySource, init)
-  }
-  //endregion
 }

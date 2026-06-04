@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.DefaultValueEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface DefaultValueEntityBuilder : WorkspaceEntityBuilder<DefaultValueEntity> {
@@ -19,6 +20,7 @@ interface DefaultValueEntityBuilder : WorkspaceEntityBuilder<DefaultValueEntity>
 
 internal object DefaultValueEntityType : EntityType<DefaultValueEntity, DefaultValueEntityBuilder>() {
   override val entityClass: Class<DefaultValueEntity> get() = DefaultValueEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = DefaultValueEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     entitySource: EntitySource,

@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildWithNullsImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildWithNullsBuilder : WorkspaceEntityBuilder<ChildWithNulls> {
@@ -19,6 +20,7 @@ interface ChildWithNullsBuilder : WorkspaceEntityBuilder<ChildWithNulls> {
 
 internal object ChildWithNullsType : EntityType<ChildWithNulls, ChildWithNullsBuilder>() {
   override val entityClass: Class<ChildWithNulls> get() = ChildWithNulls::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildWithNullsImpl.Builder::class.java
   operator fun invoke(
     childData: String,
     entitySource: EntitySource,

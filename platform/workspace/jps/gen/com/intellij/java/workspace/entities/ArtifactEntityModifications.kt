@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.ArtifactEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -24,6 +25,7 @@ interface ArtifactEntityBuilder : WorkspaceEntityBuilder<ArtifactEntity> {
 
 internal object ArtifactEntityType : EntityType<ArtifactEntity, ArtifactEntityBuilder>() {
   override val entityClass: Class<ArtifactEntity> get() = ArtifactEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ArtifactEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     artifactType: String,

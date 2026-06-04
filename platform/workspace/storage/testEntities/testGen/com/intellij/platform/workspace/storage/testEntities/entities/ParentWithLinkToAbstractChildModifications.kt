@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ParentWithLinkToAbstractChildImpl
 
 @GeneratedCodeApiVersion(3)
 interface ParentWithLinkToAbstractChildBuilder : WorkspaceEntityBuilder<ParentWithLinkToAbstractChild> {
@@ -18,6 +19,7 @@ interface ParentWithLinkToAbstractChildBuilder : WorkspaceEntityBuilder<ParentWi
 
 internal object ParentWithLinkToAbstractChildType : EntityType<ParentWithLinkToAbstractChild, ParentWithLinkToAbstractChildBuilder>() {
   override val entityClass: Class<ParentWithLinkToAbstractChild> get() = ParentWithLinkToAbstractChild::class.java
+  override val entityImplBuilderClass: Class<*> get() = ParentWithLinkToAbstractChildImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

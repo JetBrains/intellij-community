@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SetVFUEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -20,6 +21,7 @@ interface SetVFUEntityBuilder : WorkspaceEntityBuilder<SetVFUEntity> {
 
 internal object SetVFUEntityType : EntityType<SetVFUEntity, SetVFUEntityBuilder>() {
   override val entityClass: Class<SetVFUEntity> get() = SetVFUEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SetVFUEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     fileProperty: Set<VirtualFileUrl>,

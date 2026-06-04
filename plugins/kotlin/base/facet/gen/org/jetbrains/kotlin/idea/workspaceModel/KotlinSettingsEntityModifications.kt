@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.idea.workspaceModel.impl.KotlinSettingsEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEntity>,
@@ -48,6 +49,7 @@ interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEnt
 
 internal object KotlinSettingsEntityType : EntityType<KotlinSettingsEntity, KotlinSettingsEntityBuilder>() {
     override val entityClass: Class<KotlinSettingsEntity> get() = KotlinSettingsEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = KotlinSettingsEntityImpl.Builder::class.java
     operator fun invoke(
         moduleId: ModuleId,
         name: String,

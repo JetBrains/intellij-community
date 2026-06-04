@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ParentWithNullsMultipleImpl
 
 @GeneratedCodeApiVersion(3)
 interface ParentWithNullsMultipleBuilder : WorkspaceEntityBuilder<ParentWithNullsMultiple> {
@@ -18,6 +19,7 @@ interface ParentWithNullsMultipleBuilder : WorkspaceEntityBuilder<ParentWithNull
 
 internal object ParentWithNullsMultipleType : EntityType<ParentWithNullsMultiple, ParentWithNullsMultipleBuilder>() {
   override val entityClass: Class<ParentWithNullsMultiple> get() = ParentWithNullsMultiple::class.java
+  override val entityImplBuilderClass: Class<*> get() = ParentWithNullsMultipleImpl.Builder::class.java
   operator fun invoke(
     parentData: String,
     entitySource: EntitySource,

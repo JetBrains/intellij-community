@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildSecondEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildSecondEntityBuilder : WorkspaceEntityBuilder<ChildSecondEntity>, ChildAbstractBaseEntityBuilder<ChildSecondEntity> {
@@ -19,6 +20,7 @@ interface ChildSecondEntityBuilder : WorkspaceEntityBuilder<ChildSecondEntity>, 
 
 internal object ChildSecondEntityType : EntityType<ChildSecondEntity, ChildSecondEntityBuilder>() {
   override val entityClass: Class<ChildSecondEntity> get() = ChildSecondEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildSecondEntityImpl.Builder::class.java
   operator fun invoke(
     commonData: String,
     secondData: String,

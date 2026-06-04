@@ -1,5 +1,4 @@
 @file:JvmName("SubSimpleEntityModifications")
-
 package com.intellij.workspaceModel.test.api.subpackage
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.subpackage.impl.SubSimpleEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SubSimpleEntityBuilder: WorkspaceEntityBuilder<SubSimpleEntity>{
@@ -19,6 +19,7 @@ var isSimple: Boolean
 
 internal object SubSimpleEntityType : EntityType<SubSimpleEntity, SubSimpleEntityBuilder>(){
 override val entityClass: Class<SubSimpleEntity> get() = SubSimpleEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = SubSimpleEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 name: String,

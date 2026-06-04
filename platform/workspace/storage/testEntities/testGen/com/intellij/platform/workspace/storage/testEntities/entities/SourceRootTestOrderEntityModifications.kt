@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SourceRootTestOrderEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SourceRootTestOrderEntityBuilder : WorkspaceEntityBuilder<SourceRootTestOrderEntity> {
@@ -18,6 +19,7 @@ interface SourceRootTestOrderEntityBuilder : WorkspaceEntityBuilder<SourceRootTe
 
 internal object SourceRootTestOrderEntityType : EntityType<SourceRootTestOrderEntity, SourceRootTestOrderEntityBuilder>() {
   override val entityClass: Class<SourceRootTestOrderEntity> get() = SourceRootTestOrderEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SourceRootTestOrderEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

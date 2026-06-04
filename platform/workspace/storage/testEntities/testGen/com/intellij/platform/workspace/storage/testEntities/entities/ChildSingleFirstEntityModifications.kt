@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildSingleFirstEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildSingleFirstEntityBuilder : WorkspaceEntityBuilder<ChildSingleFirstEntity>,
@@ -20,6 +21,7 @@ interface ChildSingleFirstEntityBuilder : WorkspaceEntityBuilder<ChildSingleFirs
 
 internal object ChildSingleFirstEntityType : EntityType<ChildSingleFirstEntity, ChildSingleFirstEntityBuilder>() {
   override val entityClass: Class<ChildSingleFirstEntity> get() = ChildSingleFirstEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildSingleFirstEntityImpl.Builder::class.java
   operator fun invoke(
     commonData: String,
     firstData: String,

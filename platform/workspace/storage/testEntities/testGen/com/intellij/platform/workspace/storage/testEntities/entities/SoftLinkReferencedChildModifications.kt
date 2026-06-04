@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SoftLinkReferencedChildImpl
 
 @GeneratedCodeApiVersion(3)
 interface SoftLinkReferencedChildBuilder : WorkspaceEntityBuilder<SoftLinkReferencedChild> {
@@ -17,6 +18,7 @@ interface SoftLinkReferencedChildBuilder : WorkspaceEntityBuilder<SoftLinkRefere
 
 internal object SoftLinkReferencedChildType : EntityType<SoftLinkReferencedChild, SoftLinkReferencedChildBuilder>() {
   override val entityClass: Class<SoftLinkReferencedChild> get() = SoftLinkReferencedChild::class.java
+  override val entityImplBuilderClass: Class<*> get() = SoftLinkReferencedChildImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (SoftLinkReferencedChildBuilder.() -> Unit)? = null,

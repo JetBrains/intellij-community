@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.FacetsOrderEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface FacetsOrderEntityBuilder : WorkspaceEntityBuilder<FacetsOrderEntity> {
 
 internal object FacetsOrderEntityType : EntityType<FacetsOrderEntity, FacetsOrderEntityBuilder>() {
   override val entityClass: Class<FacetsOrderEntity> get() = FacetsOrderEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = FacetsOrderEntityImpl.Builder::class.java
   operator fun invoke(
     orderOfFacets: List<String>,
     entitySource: EntitySource,

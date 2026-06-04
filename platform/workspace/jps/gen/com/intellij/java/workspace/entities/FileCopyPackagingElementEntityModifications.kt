@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.FileCopyPackagingElementEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface FileCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<FileCop
 
 internal object FileCopyPackagingElementEntityType : EntityType<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityBuilder>() {
   override val entityClass: Class<FileCopyPackagingElementEntity> get() = FileCopyPackagingElementEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = FileCopyPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     filePath: VirtualFileUrl,
     entitySource: EntitySource,

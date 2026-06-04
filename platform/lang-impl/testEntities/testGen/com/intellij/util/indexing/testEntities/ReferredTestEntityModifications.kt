@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.ReferredTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ReferredTestEntityBuilder : WorkspaceEntityBuilder<ReferredTestEntity> {
@@ -19,6 +20,7 @@ interface ReferredTestEntityBuilder : WorkspaceEntityBuilder<ReferredTestEntity>
 
 internal object ReferredTestEntityType : EntityType<ReferredTestEntity, ReferredTestEntityBuilder>() {
   override val entityClass: Class<ReferredTestEntity> get() = ReferredTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ReferredTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     file: VirtualFileUrl,

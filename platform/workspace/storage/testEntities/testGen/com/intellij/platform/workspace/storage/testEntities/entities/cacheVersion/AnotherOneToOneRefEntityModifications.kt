@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.AnotherOneToOneRefEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface AnotherOneToOneRefEntityBuilder : WorkspaceEntityBuilder<AnotherOneToOneRefEntity> {
@@ -19,6 +20,7 @@ interface AnotherOneToOneRefEntityBuilder : WorkspaceEntityBuilder<AnotherOneToO
 
 internal object AnotherOneToOneRefEntityType : EntityType<AnotherOneToOneRefEntity, AnotherOneToOneRefEntityBuilder>() {
   override val entityClass: Class<AnotherOneToOneRefEntity> get() = AnotherOneToOneRefEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = AnotherOneToOneRefEntityImpl.Builder::class.java
   operator fun invoke(
     someString: String,
     boolean: Boolean,

@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.NotNullToNullEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface NotNullToNullEntityBuilder : WorkspaceEntityBuilder<NotNullToNullEntity> {
@@ -20,6 +21,7 @@ interface NotNullToNullEntityBuilder : WorkspaceEntityBuilder<NotNullToNullEntit
 
 internal object NotNullToNullEntityType : EntityType<NotNullToNullEntity, NotNullToNullEntityBuilder>() {
   override val entityClass: Class<NotNullToNullEntity> get() = NotNullToNullEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = NotNullToNullEntityImpl.Builder::class.java
   operator fun invoke(
     notNullString: String,
     notNullList: List<Int>,

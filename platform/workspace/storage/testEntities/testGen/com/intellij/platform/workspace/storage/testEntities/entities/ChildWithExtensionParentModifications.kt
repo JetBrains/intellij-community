@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildWithExtensionParentImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildWithExtensionParentBuilder : WorkspaceEntityBuilder<ChildWithExtensionParent> {
@@ -19,6 +20,7 @@ interface ChildWithExtensionParentBuilder : WorkspaceEntityBuilder<ChildWithExte
 
 internal object ChildWithExtensionParentType : EntityType<ChildWithExtensionParent, ChildWithExtensionParentBuilder>() {
   override val entityClass: Class<ChildWithExtensionParent> get() = ChildWithExtensionParent::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildWithExtensionParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

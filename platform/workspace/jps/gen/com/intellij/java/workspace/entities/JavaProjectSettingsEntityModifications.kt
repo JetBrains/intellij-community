@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.JavaProjectSettingsEntityImpl
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,6 +24,7 @@ interface JavaProjectSettingsEntityBuilder : WorkspaceEntityBuilder<JavaProjectS
 
 internal object JavaProjectSettingsEntityType : EntityType<JavaProjectSettingsEntity, JavaProjectSettingsEntityBuilder>() {
   override val entityClass: Class<JavaProjectSettingsEntity> get() = JavaProjectSettingsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = JavaProjectSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (JavaProjectSettingsEntityBuilder.() -> Unit)? = null,

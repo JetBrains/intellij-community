@@ -1,5 +1,4 @@
 @file:JvmName("ReferredEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -11,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.workspaceModel.test.api.impl.ReferredEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ReferredEntityBuilder: WorkspaceEntityBuilder<ReferredEntity>{
@@ -22,6 +22,7 @@ var contentRoot: ContentRootEntityBuilder?
 
 internal object ReferredEntityType : EntityType<ReferredEntity, ReferredEntityBuilder>(){
 override val entityClass: Class<ReferredEntity> get() = ReferredEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = ReferredEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 name: String,

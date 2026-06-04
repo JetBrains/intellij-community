@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.LibraryEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -24,6 +25,7 @@ interface LibraryEntityBuilder : WorkspaceEntityBuilder<LibraryEntity> {
 
 internal object LibraryEntityType : EntityType<LibraryEntity, LibraryEntityBuilder>() {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = LibraryEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     tableId: LibraryTableId,

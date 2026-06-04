@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.ParentTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ParentTestEntityBuilder : WorkspaceEntityBuilder<ParentTestEntity> {
@@ -21,6 +22,7 @@ interface ParentTestEntityBuilder : WorkspaceEntityBuilder<ParentTestEntity> {
 
 internal object ParentTestEntityType : EntityType<ParentTestEntity, ParentTestEntityBuilder>() {
   override val entityClass: Class<ParentTestEntity> get() = ParentTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ParentTestEntityImpl.Builder::class.java
   operator fun invoke(
     customParentProperty: String,
     parentEntityRoot: VirtualFileUrl,

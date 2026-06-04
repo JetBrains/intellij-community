@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.OptionalOneToOneParentEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OptionalOneToOneParentEntityBuilder : WorkspaceEntityBuilder<OptionalOneToOneParentEntity> {
@@ -17,6 +18,7 @@ interface OptionalOneToOneParentEntityBuilder : WorkspaceEntityBuilder<OptionalO
 
 internal object OptionalOneToOneParentEntityType : EntityType<OptionalOneToOneParentEntity, OptionalOneToOneParentEntityBuilder>() {
   override val entityClass: Class<OptionalOneToOneParentEntity> get() = OptionalOneToOneParentEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OptionalOneToOneParentEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (OptionalOneToOneParentEntityBuilder.() -> Unit)? = null,

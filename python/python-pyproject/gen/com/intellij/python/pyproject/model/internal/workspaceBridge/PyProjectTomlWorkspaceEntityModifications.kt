@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.common.tools.ToolId
+import com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityImpl
 
 @GeneratedCodeApiVersion(3)
 internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<PyProjectTomlWorkspaceEntity> {
@@ -23,6 +24,7 @@ internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<
 
 internal object PyProjectTomlWorkspaceEntityType : EntityType<PyProjectTomlWorkspaceEntity, PyProjectTomlWorkspaceEntityBuilder>() {
   override val entityClass: Class<PyProjectTomlWorkspaceEntity> get() = PyProjectTomlWorkspaceEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = PyProjectTomlWorkspaceEntityImpl.Builder::class.java
   operator fun invoke(
     participatedTools: Map<ToolId, ModuleId?>,
     dirWithToml: VirtualFileUrl,

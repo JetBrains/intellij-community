@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.CustomImlComponentEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,6 +21,7 @@ interface CustomImlComponentEntityBuilder : WorkspaceEntityBuilder<CustomImlComp
 
 internal object CustomImlComponentEntityType : EntityType<CustomImlComponentEntity, CustomImlComponentEntityBuilder>() {
   override val entityClass: Class<CustomImlComponentEntity> get() = CustomImlComponentEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = CustomImlComponentEntityImpl.Builder::class.java
   operator fun invoke(
     components: Map<String, String>,
     entitySource: EntitySource,

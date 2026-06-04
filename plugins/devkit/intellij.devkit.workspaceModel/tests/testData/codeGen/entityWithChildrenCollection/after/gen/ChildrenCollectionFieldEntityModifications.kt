@@ -1,5 +1,4 @@
 @file:JvmName("ChildrenCollectionFieldEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -9,6 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.workspaceModel.test.api.impl.ChildrenCollectionFieldEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildrenCollectionFieldEntityBuilder: WorkspaceEntityBuilder<ChildrenCollectionFieldEntity>{
@@ -19,6 +19,7 @@ var childrenEntitiesCollection: List<SimpleEntityBuilder>
 
 internal object ChildrenCollectionFieldEntityType : EntityType<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityBuilder>(){
 override val entityClass: Class<ChildrenCollectionFieldEntity> get() = ChildrenCollectionFieldEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = ChildrenCollectionFieldEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
 entitySource: EntitySource,

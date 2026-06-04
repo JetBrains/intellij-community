@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.AttachedEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface AttachedEntityBuilder : WorkspaceEntityBuilder<AttachedEntity> {
@@ -18,6 +19,7 @@ interface AttachedEntityBuilder : WorkspaceEntityBuilder<AttachedEntity> {
 
 internal object AttachedEntityType : EntityType<AttachedEntity, AttachedEntityBuilder>() {
   override val entityClass: Class<AttachedEntity> get() = AttachedEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = AttachedEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

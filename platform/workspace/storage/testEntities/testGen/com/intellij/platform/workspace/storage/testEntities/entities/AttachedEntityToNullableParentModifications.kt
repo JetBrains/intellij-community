@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.AttachedEntityToNullableParentImpl
 
 @GeneratedCodeApiVersion(3)
 interface AttachedEntityToNullableParentBuilder : WorkspaceEntityBuilder<AttachedEntityToNullableParent> {
@@ -19,6 +20,7 @@ interface AttachedEntityToNullableParentBuilder : WorkspaceEntityBuilder<Attache
 
 internal object AttachedEntityToNullableParentType : EntityType<AttachedEntityToNullableParent, AttachedEntityToNullableParentBuilder>() {
   override val entityClass: Class<AttachedEntityToNullableParent> get() = AttachedEntityToNullableParent::class.java
+  override val entityImplBuilderClass: Class<*> get() = AttachedEntityToNullableParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

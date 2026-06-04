@@ -3,6 +3,7 @@
 
 package com.intellij.ide.scratch.workspace
 
+import com.intellij.ide.scratch.workspace.impl.ScratchRootsEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -19,6 +20,7 @@ interface ScratchRootsEntityBuilder : WorkspaceEntityBuilder<ScratchRootsEntity>
 
 internal object ScratchRootsEntityType : EntityType<ScratchRootsEntity, ScratchRootsEntityBuilder>() {
   override val entityClass: Class<ScratchRootsEntity> get() = ScratchRootsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ScratchRootsEntityImpl.Builder::class.java
   operator fun invoke(
     roots: List<VirtualFileUrl>,
     entitySource: EntitySource,

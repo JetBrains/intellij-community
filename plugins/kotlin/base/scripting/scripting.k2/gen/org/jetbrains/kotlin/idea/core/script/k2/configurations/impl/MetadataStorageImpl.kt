@@ -43,29 +43,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
         addMetadata(typeMetadata)
 
-        typeMetadata = FinalClassMetadata.ObjectMetadata(
-            fqName = "org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesEntitySource",
-            properties = listOf(
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "virtualFileUrl",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = true,
-                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
-                    ),
-                    withDefault = false
-                )
-            ),
-            supertypes = listOf(
-                "com.intellij.platform.workspace.storage.EntitySource",
-                "org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionEntitySource"
-            )
-        )
-
-        addMetadata(typeMetadata)
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
             properties = listOf(
@@ -127,51 +104,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                 )
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
-        )
-
-        addMetadata(typeMetadata)
-
-        typeMetadata = EntityMetadata(
-            fqName = "org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionTemplateEntity",
-            entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.definitions.impl.ScriptDefinitionTemplateEntityData",
-            supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
-            properties = listOf(
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "entitySource",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "templateFqns",
-                    valueType = ValueTypeMetadata.ParameterizedType(
-                        generics = listOf(primitiveTypeStringNotNullable),
-                        primitive = primitiveTypeListNotNullable
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "classpath",
-                    valueType = ValueTypeMetadata.ParameterizedType(
-                        generics = listOf(primitiveTypeStringNotNullable),
-                        primitive = primitiveTypeListNotNullable
-                    ),
-                    withDefault = false
-                )
-            ),
-            extProperties = listOf(),
-            isAbstract = false
         )
 
         addMetadata(typeMetadata)
@@ -724,10 +656,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionTemplateEntity",
-            metadataHash = 1466644408
-        )
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1743471275)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
         addMetadataHash(
@@ -745,18 +673,10 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.LocationData", metadataHash = -1954134759)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.PositionData", metadataHash = 224932890)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.SeverityData", metadataHash = -1336558338)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1953931747)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -341682740)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptEntitySource",
             metadataHash = -2072272738
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesEntitySource",
-            metadataHash = 1258637705
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionEntitySource",
-            metadataHash = 1723112315
         )
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 415699451)
     }

@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ListVFUEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -20,6 +21,7 @@ interface ListVFUEntityBuilder : WorkspaceEntityBuilder<ListVFUEntity> {
 
 internal object ListVFUEntityType : EntityType<ListVFUEntity, ListVFUEntityBuilder>() {
   override val entityClass: Class<ListVFUEntity> get() = ListVFUEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ListVFUEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     fileProperty: List<VirtualFileUrl>,

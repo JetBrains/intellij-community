@@ -1,5 +1,4 @@
 @file:JvmName("FinalFieldsEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.FinalFieldsEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface FinalFieldsEntityBuilder: WorkspaceEntityBuilder<FinalFieldsEntity>{
@@ -17,6 +17,7 @@ var descriptor: AnotherDataClass
 
 internal object FinalFieldsEntityType : EntityType<FinalFieldsEntity, FinalFieldsEntityBuilder>(){
 override val entityClass: Class<FinalFieldsEntity> get() = FinalFieldsEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = FinalFieldsEntityImpl.Builder::class.java
 operator fun invoke(
 descriptor: AnotherDataClass,
 entitySource: EntitySource,

@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.plugins.gradle.model.projectModel.impl.GradleProjectEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface GradleProjectEntityBuilder : WorkspaceEntityBuilder<GradleProjectEntity> {
@@ -24,6 +25,7 @@ interface GradleProjectEntityBuilder : WorkspaceEntityBuilder<GradleProjectEntit
 
 internal object GradleProjectEntityType : EntityType<GradleProjectEntity, GradleProjectEntityBuilder>() {
   override val entityClass: Class<GradleProjectEntity> get() = GradleProjectEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = GradleProjectEntityImpl.Builder::class.java
   operator fun invoke(
     buildId: GradleBuildEntityId,
     name: String,

@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ContentRootEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -25,6 +26,7 @@ interface ContentRootEntityBuilder : WorkspaceEntityBuilder<ContentRootEntity> {
 
 internal object ContentRootEntityType : EntityType<ContentRootEntity, ContentRootEntityBuilder>() {
   override val entityClass: Class<ContentRootEntity> get() = ContentRootEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ContentRootEntityImpl.Builder::class.java
   operator fun invoke(
     url: VirtualFileUrl,
     excludedPatterns: List<String>,

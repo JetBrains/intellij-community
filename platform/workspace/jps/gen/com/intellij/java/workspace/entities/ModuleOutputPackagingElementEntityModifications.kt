@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.ModuleOutputPackagingElementEntityImpl
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -21,6 +22,7 @@ interface ModuleOutputPackagingElementEntityBuilder : WorkspaceEntityBuilder<Mod
 internal object ModuleOutputPackagingElementEntityType :
   EntityType<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityBuilder>() {
   override val entityClass: Class<ModuleOutputPackagingElementEntity> get() = ModuleOutputPackagingElementEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ModuleOutputPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (ModuleOutputPackagingElementEntityBuilder.() -> Unit)? = null,

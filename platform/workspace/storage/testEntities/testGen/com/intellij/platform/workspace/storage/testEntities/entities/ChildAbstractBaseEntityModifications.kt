@@ -4,7 +4,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 
@@ -13,20 +12,4 @@ interface ChildAbstractBaseEntityBuilder<T : ChildAbstractBaseEntity> : Workspac
   override var entitySource: EntitySource
   var commonData: String
   var parentEntity: ParentAbEntityBuilder
-}
-
-internal object ChildAbstractBaseEntityType :
-  EntityType<ChildAbstractBaseEntity, ChildAbstractBaseEntityBuilder<ChildAbstractBaseEntity>>() {
-  override val entityClass: Class<ChildAbstractBaseEntity> get() = ChildAbstractBaseEntity::class.java
-  operator fun invoke(
-    commonData: String,
-    entitySource: EntitySource,
-    init: (ChildAbstractBaseEntityBuilder<ChildAbstractBaseEntity>.() -> Unit)? = null,
-  ): ChildAbstractBaseEntityBuilder<ChildAbstractBaseEntity> {
-    val builder = builder()
-    builder.commonData = commonData
-    builder.entitySource = entitySource
-    init?.invoke(builder)
-    return builder
-  }
 }

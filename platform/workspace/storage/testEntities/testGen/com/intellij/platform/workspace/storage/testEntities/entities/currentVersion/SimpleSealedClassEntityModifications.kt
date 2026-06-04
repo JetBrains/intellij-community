@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.SimpleSealedClassEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimpleSealedClassEntityBuilder : WorkspaceEntityBuilder<SimpleSealedClassEntity> {
@@ -18,6 +19,7 @@ interface SimpleSealedClassEntityBuilder : WorkspaceEntityBuilder<SimpleSealedCl
 
 internal object SimpleSealedClassEntityType : EntityType<SimpleSealedClassEntity, SimpleSealedClassEntityBuilder>() {
   override val entityClass: Class<SimpleSealedClassEntity> get() = SimpleSealedClassEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SimpleSealedClassEntityImpl.Builder::class.java
   operator fun invoke(
     text: String,
     someData: SimpleSealedClass,

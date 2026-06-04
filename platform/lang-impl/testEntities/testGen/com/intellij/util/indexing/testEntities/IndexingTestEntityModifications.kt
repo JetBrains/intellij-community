@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.IndexingTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface IndexingTestEntityBuilder : WorkspaceEntityBuilder<IndexingTestEntity> {
@@ -20,6 +21,7 @@ interface IndexingTestEntityBuilder : WorkspaceEntityBuilder<IndexingTestEntity>
 
 internal object IndexingTestEntityType : EntityType<IndexingTestEntity, IndexingTestEntityBuilder>() {
   override val entityClass: Class<IndexingTestEntity> get() = IndexingTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = IndexingTestEntityImpl.Builder::class.java
   operator fun invoke(
     roots: List<VirtualFileUrl>,
     excludedRoots: List<VirtualFileUrl>,

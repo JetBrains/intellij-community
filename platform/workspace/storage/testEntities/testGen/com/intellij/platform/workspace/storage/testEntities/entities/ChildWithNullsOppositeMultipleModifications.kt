@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildWithNullsOppositeMultipleImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildWithNullsOppositeMultipleBuilder : WorkspaceEntityBuilder<ChildWithNullsOppositeMultiple> {
@@ -18,6 +19,7 @@ interface ChildWithNullsOppositeMultipleBuilder : WorkspaceEntityBuilder<ChildWi
 
 internal object ChildWithNullsOppositeMultipleType : EntityType<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleBuilder>() {
   override val entityClass: Class<ChildWithNullsOppositeMultiple> get() = ChildWithNullsOppositeMultiple::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildWithNullsOppositeMultipleImpl.Builder::class.java
   operator fun invoke(
     childData: String,
     entitySource: EntitySource,

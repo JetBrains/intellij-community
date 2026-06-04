@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.MiddleEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface MiddleEntityBuilder : WorkspaceEntityBuilder<MiddleEntity>, BaseEntityBuilder<MiddleEntity> {
@@ -18,6 +19,7 @@ interface MiddleEntityBuilder : WorkspaceEntityBuilder<MiddleEntity>, BaseEntity
 
 internal object MiddleEntityType : EntityType<MiddleEntity, MiddleEntityBuilder>() {
   override val entityClass: Class<MiddleEntity> get() = MiddleEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = MiddleEntityImpl.Builder::class.java
   operator fun invoke(
     property: String,
     entitySource: EntitySource,

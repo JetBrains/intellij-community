@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.OneEntityWithSymbolicIdImpl
 
 @GeneratedCodeApiVersion(3)
 interface OneEntityWithSymbolicIdBuilder : WorkspaceEntityBuilder<OneEntityWithSymbolicId> {
@@ -17,6 +18,7 @@ interface OneEntityWithSymbolicIdBuilder : WorkspaceEntityBuilder<OneEntityWithS
 
 internal object OneEntityWithSymbolicIdType : EntityType<OneEntityWithSymbolicId, OneEntityWithSymbolicIdBuilder>() {
   override val entityClass: Class<OneEntityWithSymbolicId> get() = OneEntityWithSymbolicId::class.java
+  override val entityImplBuilderClass: Class<*> get() = OneEntityWithSymbolicIdImpl.Builder::class.java
   operator fun invoke(
     myName: String,
     entitySource: EntitySource,

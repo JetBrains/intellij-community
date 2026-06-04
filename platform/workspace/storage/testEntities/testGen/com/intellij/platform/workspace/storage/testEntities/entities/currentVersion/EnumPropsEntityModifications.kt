@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.EnumPropsEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface EnumPropsEntityBuilder : WorkspaceEntityBuilder<EnumPropsEntity> {
@@ -17,6 +18,7 @@ interface EnumPropsEntityBuilder : WorkspaceEntityBuilder<EnumPropsEntity> {
 
 internal object EnumPropsEntityType : EntityType<EnumPropsEntity, EnumPropsEntityBuilder>() {
   override val entityClass: Class<EnumPropsEntity> get() = EnumPropsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = EnumPropsEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: EnumPropsEnum,
     entitySource: EntitySource,

@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.HeadAbstractionEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface HeadAbstractionEntityBuilder : WorkspaceEntityBuilder<HeadAbstractionEntity> {
@@ -18,6 +19,7 @@ interface HeadAbstractionEntityBuilder : WorkspaceEntityBuilder<HeadAbstractionE
 
 internal object HeadAbstractionEntityType : EntityType<HeadAbstractionEntity, HeadAbstractionEntityBuilder>() {
   override val entityClass: Class<HeadAbstractionEntity> get() = HeadAbstractionEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = HeadAbstractionEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

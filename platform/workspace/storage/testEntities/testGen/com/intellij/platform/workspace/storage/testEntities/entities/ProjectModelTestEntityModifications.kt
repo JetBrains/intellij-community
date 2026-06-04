@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ProjectModelTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ProjectModelTestEntityBuilder : WorkspaceEntityBuilder<ProjectModelTestEntity> {
@@ -21,6 +22,7 @@ interface ProjectModelTestEntityBuilder : WorkspaceEntityBuilder<ProjectModelTes
 
 internal object ProjectModelTestEntityType : EntityType<ProjectModelTestEntity, ProjectModelTestEntityBuilder>() {
   override val entityClass: Class<ProjectModelTestEntity> get() = ProjectModelTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ProjectModelTestEntityImpl.Builder::class.java
   operator fun invoke(
     info: String,
     descriptor: Descriptor,

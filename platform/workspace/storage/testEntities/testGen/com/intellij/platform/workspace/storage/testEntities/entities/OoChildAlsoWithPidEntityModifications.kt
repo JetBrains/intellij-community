@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.OoChildAlsoWithPidEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OoChildAlsoWithPidEntityBuilder : WorkspaceEntityBuilder<OoChildAlsoWithPidEntity> {
@@ -18,6 +19,7 @@ interface OoChildAlsoWithPidEntityBuilder : WorkspaceEntityBuilder<OoChildAlsoWi
 
 internal object OoChildAlsoWithPidEntityType : EntityType<OoChildAlsoWithPidEntity, OoChildAlsoWithPidEntityBuilder>() {
   override val entityClass: Class<OoChildAlsoWithPidEntity> get() = OoChildAlsoWithPidEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OoChildAlsoWithPidEntityImpl.Builder::class.java
   operator fun invoke(
     childProperty: String,
     entitySource: EntitySource,

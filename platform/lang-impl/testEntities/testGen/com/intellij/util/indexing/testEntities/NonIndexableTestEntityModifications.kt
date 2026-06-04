@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.NonIndexableTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface NonIndexableTestEntityBuilder : WorkspaceEntityBuilder<NonIndexableTestEntity> {
@@ -18,6 +19,7 @@ interface NonIndexableTestEntityBuilder : WorkspaceEntityBuilder<NonIndexableTes
 
 internal object NonIndexableTestEntityType : EntityType<NonIndexableTestEntity, NonIndexableTestEntityBuilder>() {
   override val entityClass: Class<NonIndexableTestEntity> get() = NonIndexableTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = NonIndexableTestEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,
     entitySource: EntitySource,

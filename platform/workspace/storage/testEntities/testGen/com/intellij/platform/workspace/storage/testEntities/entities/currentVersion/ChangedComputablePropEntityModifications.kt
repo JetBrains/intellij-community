@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.ChangedComputablePropEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChangedComputablePropEntityBuilder : WorkspaceEntityBuilder<ChangedComputablePropEntity> {
@@ -17,6 +18,7 @@ interface ChangedComputablePropEntityBuilder : WorkspaceEntityBuilder<ChangedCom
 
 internal object ChangedComputablePropEntityType : EntityType<ChangedComputablePropEntity, ChangedComputablePropEntityBuilder>() {
   override val entityClass: Class<ChangedComputablePropEntity> get() = ChangedComputablePropEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChangedComputablePropEntityImpl.Builder::class.java
   operator fun invoke(
     text: String,
     entitySource: EntitySource,

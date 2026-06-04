@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChainedEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChainedEntityBuilder : WorkspaceEntityBuilder<ChainedEntity> {
@@ -20,6 +21,7 @@ interface ChainedEntityBuilder : WorkspaceEntityBuilder<ChainedEntity> {
 
 internal object ChainedEntityType : EntityType<ChainedEntity, ChainedEntityBuilder>() {
   override val entityClass: Class<ChainedEntity> get() = ChainedEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChainedEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

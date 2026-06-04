@@ -1,5 +1,4 @@
 @file:JvmName("EntityWithSelfRefModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -9,6 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.workspaceModel.test.api.impl.EntityWithSelfRefImpl
 
 @GeneratedCodeApiVersion(3)
 interface EntityWithSelfRefBuilder: WorkspaceEntityBuilder<EntityWithSelfRef>{
@@ -20,6 +20,7 @@ var children: List<EntityWithSelfRefBuilder>
 
 internal object EntityWithSelfRefType : EntityType<EntityWithSelfRef, EntityWithSelfRefBuilder>(){
 override val entityClass: Class<EntityWithSelfRef> get() = EntityWithSelfRef::class.java
+override val entityImplBuilderClass: Class<*> get() = EntityWithSelfRefImpl.Builder::class.java
 operator fun invoke(
 name: String,
 entitySource: EntitySource,

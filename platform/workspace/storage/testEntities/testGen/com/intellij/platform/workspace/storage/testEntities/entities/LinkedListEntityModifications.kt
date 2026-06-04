@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.LinkedListEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface LinkedListEntityBuilder : WorkspaceEntityBuilder<LinkedListEntity> {
@@ -18,6 +19,7 @@ interface LinkedListEntityBuilder : WorkspaceEntityBuilder<LinkedListEntity> {
 
 internal object LinkedListEntityType : EntityType<LinkedListEntity, LinkedListEntityBuilder>() {
   override val entityClass: Class<LinkedListEntity> get() = LinkedListEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = LinkedListEntityImpl.Builder::class.java
   operator fun invoke(
     myName: String,
     next: LinkedListEntityId,

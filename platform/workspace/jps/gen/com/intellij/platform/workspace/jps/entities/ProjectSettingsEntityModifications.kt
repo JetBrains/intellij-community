@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ProjectSettingsEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -17,6 +18,7 @@ interface ProjectSettingsEntityBuilder : WorkspaceEntityBuilder<ProjectSettingsE
 
 internal object ProjectSettingsEntityType : EntityType<ProjectSettingsEntity, ProjectSettingsEntityBuilder>() {
   override val entityClass: Class<ProjectSettingsEntity> get() = ProjectSettingsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ProjectSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (ProjectSettingsEntityBuilder.() -> Unit)? = null,

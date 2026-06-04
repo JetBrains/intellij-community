@@ -1,9 +1,9 @@
 @file:JvmName("SimpleEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.workspaceModel.test.api.impl.SimpleEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimpleEntityBuilder: WorkspaceEntityBuilder<SimpleEntity>{
@@ -13,6 +13,7 @@ var name: String
 
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>(){
 override val entityClass: Class<SimpleEntity> get() = SimpleEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = SimpleEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
 entitySource: EntitySource,

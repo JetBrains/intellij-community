@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.TreeMultiparentRootEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface TreeMultiparentRootEntityBuilder : WorkspaceEntityBuilder<TreeMultiparentRootEntity> {
@@ -18,6 +19,7 @@ interface TreeMultiparentRootEntityBuilder : WorkspaceEntityBuilder<TreeMultipar
 
 internal object TreeMultiparentRootEntityType : EntityType<TreeMultiparentRootEntity, TreeMultiparentRootEntityBuilder>() {
   override val entityClass: Class<TreeMultiparentRootEntity> get() = TreeMultiparentRootEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = TreeMultiparentRootEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

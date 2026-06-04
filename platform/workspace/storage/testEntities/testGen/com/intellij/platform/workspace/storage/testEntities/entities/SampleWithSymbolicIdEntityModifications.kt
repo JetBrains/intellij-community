@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SampleWithSymbolicIdEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -25,6 +26,7 @@ interface SampleWithSymbolicIdEntityBuilder : WorkspaceEntityBuilder<SampleWithS
 
 internal object SampleWithSymbolicIdEntityType : EntityType<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityBuilder>() {
   override val entityClass: Class<SampleWithSymbolicIdEntity> get() = SampleWithSymbolicIdEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SampleWithSymbolicIdEntityImpl.Builder::class.java
   operator fun invoke(
     booleanProperty: Boolean,
     stringProperty: String,

@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ExcludeUrlEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,6 +21,7 @@ interface ExcludeUrlEntityBuilder : WorkspaceEntityBuilder<ExcludeUrlEntity> {
 
 internal object ExcludeUrlEntityType : EntityType<ExcludeUrlEntity, ExcludeUrlEntityBuilder>() {
   override val entityClass: Class<ExcludeUrlEntity> get() = ExcludeUrlEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExcludeUrlEntityImpl.Builder::class.java
   operator fun invoke(
     url: VirtualFileUrl,
     entitySource: EntitySource,

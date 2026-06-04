@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.util.indexing.testEntities.impl.SiblingEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SiblingEntityBuilder : WorkspaceEntityBuilder<SiblingEntity> {
@@ -18,6 +19,7 @@ interface SiblingEntityBuilder : WorkspaceEntityBuilder<SiblingEntity> {
 
 internal object SiblingEntityType : EntityType<SiblingEntity, SiblingEntityBuilder>() {
   override val entityClass: Class<SiblingEntity> get() = SiblingEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SiblingEntityImpl.Builder::class.java
   operator fun invoke(
     customSiblingProperty: String,
     entitySource: EntitySource,

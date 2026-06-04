@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.UnknownFieldEntityImpl
 import java.util.Date
 
 @GeneratedCodeApiVersion(3)
@@ -18,6 +19,7 @@ interface UnknownFieldEntityBuilder : WorkspaceEntityBuilder<UnknownFieldEntity>
 
 internal object UnknownFieldEntityType : EntityType<UnknownFieldEntity, UnknownFieldEntityBuilder>() {
   override val entityClass: Class<UnknownFieldEntity> get() = UnknownFieldEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = UnknownFieldEntityImpl.Builder::class.java
   operator fun invoke(
     data: Date,
     entitySource: EntitySource,

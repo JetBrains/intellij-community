@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.WithSealedEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface WithSealedEntityBuilder : WorkspaceEntityBuilder<WithSealedEntity> {
@@ -19,6 +20,7 @@ interface WithSealedEntityBuilder : WorkspaceEntityBuilder<WithSealedEntity> {
 
 internal object WithSealedEntityType : EntityType<WithSealedEntity, WithSealedEntityBuilder>() {
   override val entityClass: Class<WithSealedEntity> get() = WithSealedEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = WithSealedEntityImpl.Builder::class.java
   operator fun invoke(
     classes: List<MySealedClass>,
     interfaces: List<MySealedInterface>,

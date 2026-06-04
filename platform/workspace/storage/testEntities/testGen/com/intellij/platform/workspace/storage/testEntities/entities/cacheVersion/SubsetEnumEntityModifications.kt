@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.SubsetEnumEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SubsetEnumEntityBuilder : WorkspaceEntityBuilder<SubsetEnumEntity> {
@@ -17,6 +18,7 @@ interface SubsetEnumEntityBuilder : WorkspaceEntityBuilder<SubsetEnumEntity> {
 
 internal object SubsetEnumEntityType : EntityType<SubsetEnumEntity, SubsetEnumEntityBuilder>() {
   override val entityClass: Class<SubsetEnumEntity> get() = SubsetEnumEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SubsetEnumEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: SubsetEnumEnum,
     entitySource: EntitySource,

@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl.GradleScriptDefinitionEntityImpl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationData
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
@@ -23,6 +24,7 @@ interface GradleScriptDefinitionEntityBuilder : WorkspaceEntityBuilder<GradleScr
 
 internal object GradleScriptDefinitionEntityType : EntityType<GradleScriptDefinitionEntity, GradleScriptDefinitionEntityBuilder>() {
     override val entityClass: Class<GradleScriptDefinitionEntity> get() = GradleScriptDefinitionEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = GradleScriptDefinitionEntityImpl.Builder::class.java
     operator fun invoke(
         definitionId: String,
         compilationConfigurationData: ScriptCompilationConfigurationData,

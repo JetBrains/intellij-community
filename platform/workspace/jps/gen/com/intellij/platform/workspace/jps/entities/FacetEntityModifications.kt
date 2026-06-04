@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.FacetEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -23,6 +24,7 @@ interface FacetEntityBuilder : WorkspaceEntityBuilder<FacetEntity>, ModuleSettin
 
 internal object FacetEntityType : EntityType<FacetEntity, FacetEntityBuilder>() {
   override val entityClass: Class<FacetEntity> get() = FacetEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = FacetEntityImpl.Builder::class.java
   operator fun invoke(
     moduleId: ModuleId,
     name: String,

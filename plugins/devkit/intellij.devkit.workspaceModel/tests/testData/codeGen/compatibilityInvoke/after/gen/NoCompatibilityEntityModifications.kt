@@ -1,5 +1,4 @@
 @file:JvmName("NoCompatibilityEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.NoCompatibilityEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface NoCompatibilityEntityBuilder: WorkspaceEntityBuilder<NoCompatibilityEntity>{
@@ -19,6 +19,7 @@ var isSimple: Boolean
 
 internal object NoCompatibilityEntityType : EntityType<NoCompatibilityEntity, NoCompatibilityEntityBuilder>(){
 override val entityClass: Class<NoCompatibilityEntity> get() = NoCompatibilityEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = NoCompatibilityEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 name: String,

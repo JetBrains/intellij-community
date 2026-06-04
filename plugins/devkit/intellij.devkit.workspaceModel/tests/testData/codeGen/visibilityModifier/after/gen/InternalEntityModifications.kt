@@ -1,5 +1,4 @@
 @file:JvmName("InternalEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.InternalEntityImpl
 
 @GeneratedCodeApiVersion(3)
 internal interface InternalEntityBuilder: WorkspaceEntityBuilder<InternalEntity>{
@@ -19,6 +19,7 @@ var isSimple: Boolean
 
 internal object InternalEntityType : EntityType<InternalEntity, InternalEntityBuilder>(){
 override val entityClass: Class<InternalEntity> get() = InternalEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = InternalEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 name: String,

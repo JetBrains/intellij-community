@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.AssertConsistencyEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface AssertConsistencyEntityBuilder : WorkspaceEntityBuilder<AssertConsistencyEntity> {
@@ -17,6 +18,7 @@ interface AssertConsistencyEntityBuilder : WorkspaceEntityBuilder<AssertConsiste
 
 internal object AssertConsistencyEntityType : EntityType<AssertConsistencyEntity, AssertConsistencyEntityBuilder>() {
   override val entityClass: Class<AssertConsistencyEntity> get() = AssertConsistencyEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = AssertConsistencyEntityImpl.Builder::class.java
   operator fun invoke(
     passCheck: Boolean,
     entitySource: EntitySource,

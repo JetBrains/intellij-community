@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.OneToManyRefEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OneToManyRefEntityBuilder : WorkspaceEntityBuilder<OneToManyRefEntity> {
@@ -18,6 +19,7 @@ interface OneToManyRefEntityBuilder : WorkspaceEntityBuilder<OneToManyRefEntity>
 
 internal object OneToManyRefEntityType : EntityType<OneToManyRefEntity, OneToManyRefEntityBuilder>() {
   override val entityClass: Class<OneToManyRefEntity> get() = OneToManyRefEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OneToManyRefEntityImpl.Builder::class.java
   operator fun invoke(
     someData: OneToManyRefDataClass,
     entitySource: EntitySource,

@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.BooleanEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface BooleanEntityBuilder : WorkspaceEntityBuilder<BooleanEntity> {
@@ -17,6 +18,7 @@ interface BooleanEntityBuilder : WorkspaceEntityBuilder<BooleanEntity> {
 
 internal object BooleanEntityType : EntityType<BooleanEntity, BooleanEntityBuilder>() {
   override val entityClass: Class<BooleanEntity> get() = BooleanEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = BooleanEntityImpl.Builder::class.java
   operator fun invoke(
     data: Boolean,
     entitySource: EntitySource,

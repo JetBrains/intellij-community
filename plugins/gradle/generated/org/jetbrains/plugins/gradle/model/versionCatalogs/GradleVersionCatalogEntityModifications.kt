@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
+import org.jetbrains.plugins.gradle.model.versionCatalogs.impl.GradleVersionCatalogEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface GradleVersionCatalogEntityBuilder : WorkspaceEntityBuilder<GradleVersionCatalogEntity> {
@@ -22,6 +23,7 @@ interface GradleVersionCatalogEntityBuilder : WorkspaceEntityBuilder<GradleVersi
 
 internal object GradleVersionCatalogEntityType : EntityType<GradleVersionCatalogEntity, GradleVersionCatalogEntityBuilder>() {
   override val entityClass: Class<GradleVersionCatalogEntity> get() = GradleVersionCatalogEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = GradleVersionCatalogEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     url: VirtualFileUrl,

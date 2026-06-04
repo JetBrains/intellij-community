@@ -1,5 +1,4 @@
 @file:JvmName("ChildEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -10,6 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Open
+import com.intellij.workspaceModel.test.api.impl.ChildEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildEntityBuilder: WorkspaceEntityBuilder<ChildEntity>, ParentEntityBuilder<ChildEntity>{
@@ -21,6 +21,7 @@ var data3: String
 
 internal object ChildEntityType : EntityType<ChildEntity, ChildEntityBuilder>(){
 override val entityClass: Class<ChildEntity> get() = ChildEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = ChildEntityImpl.Builder::class.java
 operator fun invoke(
 data1: String,
 data2: String,

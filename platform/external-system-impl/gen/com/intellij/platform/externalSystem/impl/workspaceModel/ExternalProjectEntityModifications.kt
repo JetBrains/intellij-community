@@ -3,6 +3,7 @@
 
 package com.intellij.platform.externalSystem.impl.workspaceModel
 
+import com.intellij.platform.externalSystem.impl.workspaceModel.impl.ExternalProjectEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -19,6 +20,7 @@ interface ExternalProjectEntityBuilder : WorkspaceEntityBuilder<ExternalProjectE
 
 internal object ExternalProjectEntityType : EntityType<ExternalProjectEntity, ExternalProjectEntityBuilder>() {
   override val entityClass: Class<ExternalProjectEntity> get() = ExternalProjectEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExternalProjectEntityImpl.Builder::class.java
   operator fun invoke(
     externalProjectPath: String,
     entitySource: EntitySource,

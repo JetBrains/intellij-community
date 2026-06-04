@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildSourceEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildSourceEntityBuilder : WorkspaceEntityBuilder<ChildSourceEntity> {
@@ -18,6 +19,7 @@ interface ChildSourceEntityBuilder : WorkspaceEntityBuilder<ChildSourceEntity> {
 
 internal object ChildSourceEntityType : EntityType<ChildSourceEntity, ChildSourceEntityBuilder>() {
   override val entityClass: Class<ChildSourceEntity> get() = ChildSourceEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildSourceEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

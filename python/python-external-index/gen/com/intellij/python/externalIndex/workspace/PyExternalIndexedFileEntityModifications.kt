@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.python.externalIndex.workspace.impl.PyExternalIndexedFileEntityImpl
 
 @GeneratedCodeApiVersion(3)
 internal interface PyExternalIndexedFileEntityBuilder : WorkspaceEntityBuilder<PyExternalIndexedFileEntity> {
@@ -18,6 +19,7 @@ internal interface PyExternalIndexedFileEntityBuilder : WorkspaceEntityBuilder<P
 
 internal object PyExternalIndexedFileEntityType : EntityType<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityBuilder>() {
   override val entityClass: Class<PyExternalIndexedFileEntity> get() = PyExternalIndexedFileEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = PyExternalIndexedFileEntityImpl.Builder::class.java
   operator fun invoke(
     file: VirtualFileUrl,
     entitySource: EntitySource,

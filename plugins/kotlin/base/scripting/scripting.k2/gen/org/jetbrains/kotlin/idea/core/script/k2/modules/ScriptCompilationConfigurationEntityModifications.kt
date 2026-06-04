@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import org.jetbrains.kotlin.idea.core.script.k2.modules.impl.ScriptCompilationConfigurationEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<ScriptCompilationConfigurationEntity> {
@@ -19,6 +20,7 @@ interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<S
 internal object ScriptCompilationConfigurationEntityType :
     EntityType<ScriptCompilationConfigurationEntity, ScriptCompilationConfigurationEntityBuilder>() {
     override val entityClass: Class<ScriptCompilationConfigurationEntity> get() = ScriptCompilationConfigurationEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = ScriptCompilationConfigurationEntityImpl.Builder::class.java
     operator fun invoke(
         data: ByteArray,
         identity: ScriptCompilationConfigurationId,

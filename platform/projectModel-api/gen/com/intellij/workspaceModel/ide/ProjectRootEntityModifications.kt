@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.ProjectRootEntityImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -20,6 +21,7 @@ interface ProjectRootEntityBuilder : WorkspaceEntityBuilder<ProjectRootEntity> {
 
 internal object ProjectRootEntityType : EntityType<ProjectRootEntity, ProjectRootEntityBuilder>() {
   override val entityClass: Class<ProjectRootEntity> get() = ProjectRootEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ProjectRootEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,
     entitySource: EntitySource,

@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import org.jetbrains.idea.maven.importing.workspaceModel.impl.MavenProjectsTreeSettingsEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface MavenProjectsTreeSettingsEntityBuilder : WorkspaceEntityBuilder<MavenProjectsTreeSettingsEntity> {
@@ -19,6 +20,7 @@ interface MavenProjectsTreeSettingsEntityBuilder : WorkspaceEntityBuilder<MavenP
 internal object MavenProjectsTreeSettingsEntityType :
   EntityType<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityBuilder>() {
   override val entityClass: Class<MavenProjectsTreeSettingsEntity> get() = MavenProjectsTreeSettingsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = MavenProjectsTreeSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     importedFilePaths: List<String>,
     entitySource: EntitySource,

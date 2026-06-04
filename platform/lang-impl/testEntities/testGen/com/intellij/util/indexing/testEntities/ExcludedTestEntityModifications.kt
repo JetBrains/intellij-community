@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.ExcludedTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ExcludedTestEntityBuilder : WorkspaceEntityBuilder<ExcludedTestEntity> {
@@ -18,6 +19,7 @@ interface ExcludedTestEntityBuilder : WorkspaceEntityBuilder<ExcludedTestEntity>
 
 internal object ExcludedTestEntityType : EntityType<ExcludedTestEntity, ExcludedTestEntityBuilder>() {
   override val entityClass: Class<ExcludedTestEntity> get() = ExcludedTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExcludedTestEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,
     entitySource: EntitySource,

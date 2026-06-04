@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.JavaResourceRootPropertiesEntityImpl
 import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -22,6 +23,7 @@ interface JavaResourceRootPropertiesEntityBuilder : WorkspaceEntityBuilder<JavaR
 internal object JavaResourceRootPropertiesEntityType :
   EntityType<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityBuilder>() {
   override val entityClass: Class<JavaResourceRootPropertiesEntity> get() = JavaResourceRootPropertiesEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = JavaResourceRootPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     generated: Boolean,
     relativeOutputPath: String,

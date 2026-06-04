@@ -10,7 +10,7 @@ public object CodeGeneratorVersions {
   private const val API_VERSION_INTERNAL = 3
   private const val IMPL_MAJOR_VERSION_INTERNAL = 7
   @Suppress("unused")
-  private const val IMPL_MINOR_VERSION_INTERNAL = 20 // is used through reflection
+  private const val IMPL_MINOR_VERSION_INTERNAL = 21 // is used through reflection
 
   @set:TestOnly
   public var API_VERSION: Int = API_VERSION_INTERNAL

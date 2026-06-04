@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildWpidSampleEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChildWpidSampleEntityBuilder : WorkspaceEntityBuilder<ChildWpidSampleEntity> {
@@ -18,6 +19,7 @@ interface ChildWpidSampleEntityBuilder : WorkspaceEntityBuilder<ChildWpidSampleE
 
 internal object ChildWpidSampleEntityType : EntityType<ChildWpidSampleEntity, ChildWpidSampleEntityBuilder>() {
   override val entityClass: Class<ChildWpidSampleEntity> get() = ChildWpidSampleEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChildWpidSampleEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

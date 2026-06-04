@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import org.jetbrains.plugins.gradle.model.projectModel.impl.GradleExternalProjectEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface GradleExternalProjectEntityBuilder : WorkspaceEntityBuilder<GradleExternalProjectEntity> {
@@ -20,6 +21,7 @@ interface GradleExternalProjectEntityBuilder : WorkspaceEntityBuilder<GradleExte
 
 internal object GradleExternalProjectEntityType : EntityType<GradleExternalProjectEntity, GradleExternalProjectEntityBuilder>() {
   override val entityClass: Class<GradleExternalProjectEntity> get() = GradleExternalProjectEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = GradleExternalProjectEntityImpl.Builder::class.java
   operator fun invoke(
     gradleVersion: String,
     entitySource: EntitySource,

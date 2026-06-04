@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.externalSystem.settings.workspaceModel
 
+import com.intellij.openapi.externalSystem.settings.workspaceModel.impl.ExternalProjectsBuildClasspathEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -19,6 +20,7 @@ interface ExternalProjectsBuildClasspathEntityBuilder : WorkspaceEntityBuilder<E
 internal object ExternalProjectsBuildClasspathEntityType :
   EntityType<ExternalProjectsBuildClasspathEntity, ExternalProjectsBuildClasspathEntityBuilder>() {
   override val entityClass: Class<ExternalProjectsBuildClasspathEntity> get() = ExternalProjectsBuildClasspathEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExternalProjectsBuildClasspathEntityImpl.Builder::class.java
   operator fun invoke(
     projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>,
     entitySource: EntitySource,

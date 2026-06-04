@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ModuleCustomImlDataEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface ModuleCustomImlDataEntityBuilder : WorkspaceEntityBuilder<ModuleCustom
 
 internal object ModuleCustomImlDataEntityType : EntityType<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityBuilder>() {
   override val entityClass: Class<ModuleCustomImlDataEntity> get() = ModuleCustomImlDataEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ModuleCustomImlDataEntityImpl.Builder::class.java
   operator fun invoke(
     customModuleOptions: Map<String, String>,
     entitySource: EntitySource,

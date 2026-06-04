@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SimpleChildAbstractEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimpleChildAbstractEntityBuilder : WorkspaceEntityBuilder<SimpleChildAbstractEntity>,
@@ -18,6 +19,7 @@ interface SimpleChildAbstractEntityBuilder : WorkspaceEntityBuilder<SimpleChildA
 
 internal object SimpleChildAbstractEntityType : EntityType<SimpleChildAbstractEntity, SimpleChildAbstractEntityBuilder>() {
   override val entityClass: Class<SimpleChildAbstractEntity> get() = SimpleChildAbstractEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SimpleChildAbstractEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (SimpleChildAbstractEntityBuilder.() -> Unit)? = null,

@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.CustomSourceRootPropertiesEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface CustomSourceRootPropertiesEntityBuilder : WorkspaceEntityBuilder<Custo
 internal object CustomSourceRootPropertiesEntityType :
   EntityType<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityBuilder>() {
   override val entityClass: Class<CustomSourceRootPropertiesEntity> get() = CustomSourceRootPropertiesEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = CustomSourceRootPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     propertiesXmlTag: String,
     entitySource: EntitySource,

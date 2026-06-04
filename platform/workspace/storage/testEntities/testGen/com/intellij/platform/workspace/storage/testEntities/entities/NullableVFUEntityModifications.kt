@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.NullableVFUEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -19,6 +20,7 @@ interface NullableVFUEntityBuilder : WorkspaceEntityBuilder<NullableVFUEntity> {
 
 internal object NullableVFUEntityType : EntityType<NullableVFUEntity, NullableVFUEntityBuilder>() {
   override val entityClass: Class<NullableVFUEntity> get() = NullableVFUEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = NullableVFUEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

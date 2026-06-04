@@ -10,26 +10,12 @@ public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builde
   private val base: EntityType<*, *>? = null
 ) {
     protected open val entityClass: Class<T>? = null
+    protected open val entityImplBuilderClass: Class<*>? = null
   
-    private val ival: Class<T> get() = entityClass ?: javaClass.enclosingClass as Class<T> // entityClass as Class<T>
-
-    private val name: String by lazy {
-        if (ival.enclosingClass == null) ival.simpleName else {
-            var topLevelClass: Class<*> = ival
-            val outerNames = mutableListOf<String>()
-            do {
-                outerNames.add(topLevelClass.simpleName)
-                topLevelClass = topLevelClass.enclosingClass ?: break
-            } while (true)
-            outerNames.reversed().joinToString(".")
-        }
-    }
+    private val ival: Class<T> get() = entityClass ?: javaClass.enclosingClass as Class<T>
 
     private fun loadBuilderFactory(): () -> B {
-      val ivalClass = ival
-      val packageName = ivalClass.packageName
-      val simpleName = name.replace(".", "")
-      val c = ivalClass.classLoader.loadClass("$packageName.impl.${simpleName}Impl\$Builder")
+      val c = entityImplBuilderClass ?: throw RuntimeException("Entity implementation builder class not found for ${ival.simpleName}")
       val ctor = c.constructors.find { it.parameterCount == 0 }!!
       return { ctor.newInstance() as B }
     }

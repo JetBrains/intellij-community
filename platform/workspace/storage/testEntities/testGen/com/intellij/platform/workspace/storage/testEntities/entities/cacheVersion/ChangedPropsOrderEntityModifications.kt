@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.ChangedPropsOrderEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChangedPropsOrderEntityBuilder : WorkspaceEntityBuilder<ChangedPropsOrderEntity> {
@@ -21,6 +22,7 @@ interface ChangedPropsOrderEntityBuilder : WorkspaceEntityBuilder<ChangedPropsOr
 
 internal object ChangedPropsOrderEntityType : EntityType<ChangedPropsOrderEntity, ChangedPropsOrderEntityBuilder>() {
   override val entityClass: Class<ChangedPropsOrderEntity> get() = ChangedPropsOrderEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChangedPropsOrderEntityImpl.Builder::class.java
   operator fun invoke(
     version: Int,
     string: String,

@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.TreeEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface TreeEntityBuilder : WorkspaceEntityBuilder<TreeEntity> {
@@ -19,6 +20,7 @@ interface TreeEntityBuilder : WorkspaceEntityBuilder<TreeEntity> {
 
 internal object TreeEntityType : EntityType<TreeEntity, TreeEntityBuilder>() {
   override val entityClass: Class<TreeEntity> get() = TreeEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = TreeEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

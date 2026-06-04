@@ -4,7 +4,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 
@@ -14,17 +13,4 @@ interface CompositeBaseEntityBuilder<T : CompositeBaseEntity> : WorkspaceEntityB
   override var parentEntity: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
   var children: List<BaseEntityBuilder<out BaseEntity>>
   var parent: HeadAbstractionEntityBuilder?
-}
-
-internal object CompositeBaseEntityType : EntityType<CompositeBaseEntity, CompositeBaseEntityBuilder<CompositeBaseEntity>>() {
-  override val entityClass: Class<CompositeBaseEntity> get() = CompositeBaseEntity::class.java
-  operator fun invoke(
-    entitySource: EntitySource,
-    init: (CompositeBaseEntityBuilder<CompositeBaseEntity>.() -> Unit)? = null,
-  ): CompositeBaseEntityBuilder<CompositeBaseEntity> {
-    val builder = builder()
-    builder.entitySource = entitySource
-    init?.invoke(builder)
-    return builder
-  }
 }

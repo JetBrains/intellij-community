@@ -27,7 +27,6 @@ internal object LibrariesRequiredForWorkspace {
   val jetbrainsAnnotations = JarLibrary("jetbrains-annotations", ApiStatus::class.java)
   private val intellijJava = ModuleLibrary("intellij.java")
 
-  private val rider = ModuleLibrary("intellij.rider")
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
   private val riderUnityPluginModel = ModuleLibrary("intellij.rider.plugins.unity.model")
   private val riderModelGenerated = ModuleLibrary("intellij.rider.model.generated")
@@ -41,6 +40,7 @@ internal object LibrariesRequiredForWorkspace {
   private val kotlinBaseScripting = ModuleLibrary("intellij.kotlin.base.scripting")
   private val androidProjectSystem = ModuleLibrary("intellij.android.projectSystem")
   private val androidGradleModels = ModuleLibrary("intellij.android.projectSystem.gradle.models")
+  private val bazelCommons = ModuleLibrary("intellij.bazel.commons")
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
@@ -74,6 +74,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting)
+      }
+      "intellij.bazel.importer" -> {
+        listOf(bazelCommons)
       }
       "intellij.gradle" -> {
         listOf(gradleToolingExtension, gradleExternalSystemImpl)

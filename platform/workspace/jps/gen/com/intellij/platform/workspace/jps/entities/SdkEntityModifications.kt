@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.SdkEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -24,6 +25,7 @@ interface SdkEntityBuilder : WorkspaceEntityBuilder<SdkEntity> {
 
 internal object SdkEntityType : EntityType<SdkEntity, SdkEntityBuilder>() {
   override val entityClass: Class<SdkEntity> get() = SdkEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SdkEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     type: String,

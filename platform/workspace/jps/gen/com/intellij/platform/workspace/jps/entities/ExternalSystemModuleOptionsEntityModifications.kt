@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ExternalSystemModuleOptionsEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -27,6 +28,7 @@ interface ExternalSystemModuleOptionsEntityBuilder : WorkspaceEntityBuilder<Exte
 internal object ExternalSystemModuleOptionsEntityType :
   EntityType<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityBuilder>() {
   override val entityClass: Class<ExternalSystemModuleOptionsEntity> get() = ExternalSystemModuleOptionsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExternalSystemModuleOptionsEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (ExternalSystemModuleOptionsEntityBuilder.() -> Unit)? = null,

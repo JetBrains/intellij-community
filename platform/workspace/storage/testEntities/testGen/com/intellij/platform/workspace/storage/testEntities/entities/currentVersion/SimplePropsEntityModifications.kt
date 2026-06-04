@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.SimplePropsEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimplePropsEntityBuilder : WorkspaceEntityBuilder<SimplePropsEntity> {
@@ -23,6 +24,7 @@ interface SimplePropsEntityBuilder : WorkspaceEntityBuilder<SimplePropsEntity> {
 
 internal object SimplePropsEntityType : EntityType<SimplePropsEntity, SimplePropsEntityBuilder>() {
   override val entityClass: Class<SimplePropsEntity> get() = SimplePropsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SimplePropsEntityImpl.Builder::class.java
   operator fun invoke(
     text: String,
     list: List<Int>,

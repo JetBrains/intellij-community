@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SecondEntityWithPIdImpl
 
 @GeneratedCodeApiVersion(3)
 interface SecondEntityWithPIdBuilder : WorkspaceEntityBuilder<SecondEntityWithPId> {
@@ -17,6 +18,7 @@ interface SecondEntityWithPIdBuilder : WorkspaceEntityBuilder<SecondEntityWithPI
 
 internal object SecondEntityWithPIdType : EntityType<SecondEntityWithPId, SecondEntityWithPIdBuilder>() {
   override val entityClass: Class<SecondEntityWithPId> get() = SecondEntityWithPId::class.java
+  override val entityImplBuilderClass: Class<*> get() = SecondEntityWithPIdImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ModuleGroupPathEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface ModuleGroupPathEntityBuilder : WorkspaceEntityBuilder<ModuleGroupPathE
 
 internal object ModuleGroupPathEntityType : EntityType<ModuleGroupPathEntity, ModuleGroupPathEntityBuilder>() {
   override val entityClass: Class<ModuleGroupPathEntity> get() = ModuleGroupPathEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ModuleGroupPathEntityImpl.Builder::class.java
   operator fun invoke(
     path: List<String>,
     entitySource: EntitySource,

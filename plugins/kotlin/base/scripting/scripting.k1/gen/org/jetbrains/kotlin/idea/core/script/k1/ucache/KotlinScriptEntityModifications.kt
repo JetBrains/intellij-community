@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.impl.KotlinScriptEntityImpl
 
 @K1Deprecation
 @GeneratedCodeApiVersion(3)
@@ -21,6 +22,7 @@ interface KotlinScriptEntityBuilder : WorkspaceEntityBuilder<KotlinScriptEntity>
 
 internal object KotlinScriptEntityType : EntityType<KotlinScriptEntity, KotlinScriptEntityBuilder>() {
     override val entityClass: Class<KotlinScriptEntity> get() = KotlinScriptEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = KotlinScriptEntityImpl.Builder::class.java
     operator fun invoke(
         path: String,
         dependencies: Set<KotlinScriptLibraryId>,

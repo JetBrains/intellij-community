@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.util.indexing.testEntities.impl.WithReferenceTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface WithReferenceTestEntityBuilder : WorkspaceEntityBuilder<WithReferenceTestEntity> {
@@ -19,6 +20,7 @@ interface WithReferenceTestEntityBuilder : WorkspaceEntityBuilder<WithReferenceT
 
 internal object WithReferenceTestEntityType : EntityType<WithReferenceTestEntity, WithReferenceTestEntityBuilder>() {
   override val entityClass: Class<WithReferenceTestEntity> get() = WithReferenceTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = WithReferenceTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
     references: List<DependencyItem>,

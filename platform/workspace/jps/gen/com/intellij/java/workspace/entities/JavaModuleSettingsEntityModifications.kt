@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.JavaModuleSettingsEntityImpl
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -26,6 +27,7 @@ interface JavaModuleSettingsEntityBuilder : WorkspaceEntityBuilder<JavaModuleSet
 
 internal object JavaModuleSettingsEntityType : EntityType<JavaModuleSettingsEntity, JavaModuleSettingsEntityBuilder>() {
   override val entityClass: Class<JavaModuleSettingsEntity> get() = JavaModuleSettingsEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = JavaModuleSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     inheritedCompilerOutput: Boolean,
     excludeOutput: Boolean,

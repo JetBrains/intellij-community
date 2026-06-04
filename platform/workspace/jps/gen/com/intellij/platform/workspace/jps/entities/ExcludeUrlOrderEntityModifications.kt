@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.ExcludeUrlOrderEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -22,6 +23,7 @@ interface ExcludeUrlOrderEntityBuilder : WorkspaceEntityBuilder<ExcludeUrlOrderE
 
 internal object ExcludeUrlOrderEntityType : EntityType<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityBuilder>() {
   override val entityClass: Class<ExcludeUrlOrderEntity> get() = ExcludeUrlOrderEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ExcludeUrlOrderEntityImpl.Builder::class.java
   operator fun invoke(
     order: List<VirtualFileUrl>,
     entitySource: EntitySource,

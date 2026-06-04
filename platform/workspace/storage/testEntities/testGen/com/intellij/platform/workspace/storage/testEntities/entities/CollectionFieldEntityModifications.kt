@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.CollectionFieldEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface CollectionFieldEntityBuilder : WorkspaceEntityBuilder<CollectionFieldEntity> {
@@ -20,6 +21,7 @@ interface CollectionFieldEntityBuilder : WorkspaceEntityBuilder<CollectionFieldE
 
 internal object CollectionFieldEntityType : EntityType<CollectionFieldEntity, CollectionFieldEntityBuilder>() {
   override val entityClass: Class<CollectionFieldEntity> get() = CollectionFieldEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = CollectionFieldEntityImpl.Builder::class.java
   operator fun invoke(
     versions: Set<Int>,
     names: List<String>,

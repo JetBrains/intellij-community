@@ -3,6 +3,7 @@
 
 package com.intellij.java.impl.dependencySubstitution
 
+import com.intellij.java.impl.dependencySubstitution.impl.ModuleMavenCoordinateEntityImpl
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
@@ -22,6 +23,7 @@ public interface ModuleMavenCoordinateEntityBuilder : WorkspaceEntityBuilder<Mod
 
 internal object ModuleMavenCoordinateEntityType : EntityType<ModuleMavenCoordinateEntity, ModuleMavenCoordinateEntityBuilder>() {
   override val entityClass: Class<ModuleMavenCoordinateEntity> get() = ModuleMavenCoordinateEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ModuleMavenCoordinateEntityImpl.Builder::class.java
   operator fun invoke(
     coordinates: MavenCoordinates,
     entitySource: EntitySource,

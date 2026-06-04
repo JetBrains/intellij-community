@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.idea.eclipse.config.impl.EclipseProjectPropertiesEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface EclipseProjectPropertiesEntityBuilder : WorkspaceEntityBuilder<EclipseProjectPropertiesEntity> {
@@ -28,6 +29,7 @@ interface EclipseProjectPropertiesEntityBuilder : WorkspaceEntityBuilder<Eclipse
 
 internal object EclipseProjectPropertiesEntityType : EntityType<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityBuilder>() {
   override val entityClass: Class<EclipseProjectPropertiesEntity> get() = EclipseProjectPropertiesEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = EclipseProjectPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     variablePaths: Map<String, String>,
     eclipseUrls: List<VirtualFileUrl>,

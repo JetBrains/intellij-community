@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.OoChildWithNullableParentEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OoChildWithNullableParentEntityBuilder : WorkspaceEntityBuilder<OoChildWithNullableParentEntity> {
@@ -18,6 +19,7 @@ interface OoChildWithNullableParentEntityBuilder : WorkspaceEntityBuilder<OoChil
 internal object OoChildWithNullableParentEntityType :
   EntityType<OoChildWithNullableParentEntity, OoChildWithNullableParentEntityBuilder>() {
   override val entityClass: Class<OoChildWithNullableParentEntity> get() = OoChildWithNullableParentEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OoChildWithNullableParentEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (OoChildWithNullableParentEntityBuilder.() -> Unit)? = null,

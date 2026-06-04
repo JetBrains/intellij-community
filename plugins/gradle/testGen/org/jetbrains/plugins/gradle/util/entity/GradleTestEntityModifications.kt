@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.util.entity.impl.GradleTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface GradleTestEntityBuilder : WorkspaceEntityBuilder<GradleTestEntity> {
@@ -18,6 +19,7 @@ interface GradleTestEntityBuilder : WorkspaceEntityBuilder<GradleTestEntity> {
 
 internal object GradleTestEntityType : EntityType<GradleTestEntity, GradleTestEntityBuilder>() {
   override val entityClass: Class<GradleTestEntity> get() = GradleTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = GradleTestEntityImpl.Builder::class.java
   operator fun invoke(
     phase: GradleSyncPhase,
     entitySource: EntitySource,

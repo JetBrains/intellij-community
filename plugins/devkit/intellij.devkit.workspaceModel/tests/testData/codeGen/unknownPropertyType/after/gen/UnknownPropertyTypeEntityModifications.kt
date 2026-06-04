@@ -1,5 +1,4 @@
 @file:JvmName("UnknownPropertyTypeEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -8,6 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.UnknownPropertyTypeEntityImpl
 import java.util.Date
 
 @GeneratedCodeApiVersion(3)
@@ -18,6 +18,7 @@ var date: Date
 
 internal object UnknownPropertyTypeEntityType : EntityType<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityBuilder>(){
 override val entityClass: Class<UnknownPropertyTypeEntity> get() = UnknownPropertyTypeEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = UnknownPropertyTypeEntityImpl.Builder::class.java
 operator fun invoke(
 date: Date,
 entitySource: EntitySource,

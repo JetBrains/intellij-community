@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.util.indexing.testEntities.impl.OneMoreWithReferenceTestEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OneMoreWithReferenceTestEntityBuilder : WorkspaceEntityBuilder<OneMoreWithReferenceTestEntity> {
@@ -18,6 +19,7 @@ interface OneMoreWithReferenceTestEntityBuilder : WorkspaceEntityBuilder<OneMore
 
 internal object OneMoreWithReferenceTestEntityType : EntityType<OneMoreWithReferenceTestEntity, OneMoreWithReferenceTestEntityBuilder>() {
   override val entityClass: Class<OneMoreWithReferenceTestEntity> get() = OneMoreWithReferenceTestEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OneMoreWithReferenceTestEntityImpl.Builder::class.java
   operator fun invoke(
     references: List<DependencyItem>,
     entitySource: EntitySource,

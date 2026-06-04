@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ComposedLinkEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ComposedLinkEntityBuilder : WorkspaceEntityBuilder<ComposedLinkEntity> {
@@ -17,6 +18,7 @@ interface ComposedLinkEntityBuilder : WorkspaceEntityBuilder<ComposedLinkEntity>
 
 internal object ComposedLinkEntityType : EntityType<ComposedLinkEntity, ComposedLinkEntityBuilder>() {
   override val entityClass: Class<ComposedLinkEntity> get() = ComposedLinkEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ComposedLinkEntityImpl.Builder::class.java
   operator fun invoke(
     link: ComposedId,
     entitySource: EntitySource,

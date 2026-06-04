@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.LeftEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface LeftEntityBuilder : WorkspaceEntityBuilder<LeftEntity>, CompositeBaseEntityBuilder<LeftEntity> {
@@ -19,6 +20,7 @@ interface LeftEntityBuilder : WorkspaceEntityBuilder<LeftEntity>, CompositeBaseE
 
 internal object LeftEntityType : EntityType<LeftEntity, LeftEntityBuilder>() {
   override val entityClass: Class<LeftEntity> get() = LeftEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = LeftEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (LeftEntityBuilder.() -> Unit)? = null,

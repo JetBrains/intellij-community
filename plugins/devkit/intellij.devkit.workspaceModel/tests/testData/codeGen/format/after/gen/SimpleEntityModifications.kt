@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.workspaceModel.test.api.impl.SimpleEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimpleEntityBuilder : WorkspaceEntityBuilder<SimpleEntity> {
@@ -22,6 +23,7 @@ interface SimpleEntityBuilder : WorkspaceEntityBuilder<SimpleEntity> {
 
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>() {
     override val entityClass: Class<SimpleEntity> get() = SimpleEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = SimpleEntityImpl.Builder::class.java
     operator fun invoke(
         version: Int,
         name: String,

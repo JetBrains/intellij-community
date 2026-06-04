@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.AttachedEntityToParentImpl
 
 @GeneratedCodeApiVersion(3)
 interface AttachedEntityToParentBuilder : WorkspaceEntityBuilder<AttachedEntityToParent> {
@@ -19,6 +20,7 @@ interface AttachedEntityToParentBuilder : WorkspaceEntityBuilder<AttachedEntityT
 
 internal object AttachedEntityToParentType : EntityType<AttachedEntityToParent, AttachedEntityToParentBuilder>() {
   override val entityClass: Class<AttachedEntityToParent> get() = AttachedEntityToParent::class.java
+  override val entityImplBuilderClass: Class<*> get() = AttachedEntityToParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
     entitySource: EntitySource,

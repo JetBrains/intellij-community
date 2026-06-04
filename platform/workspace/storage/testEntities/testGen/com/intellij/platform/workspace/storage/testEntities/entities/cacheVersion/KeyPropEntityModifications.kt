@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.KeyPropEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -20,6 +21,7 @@ interface KeyPropEntityBuilder : WorkspaceEntityBuilder<KeyPropEntity> {
 
 internal object KeyPropEntityType : EntityType<KeyPropEntity, KeyPropEntityBuilder>() {
   override val entityClass: Class<KeyPropEntity> get() = KeyPropEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = KeyPropEntityImpl.Builder::class.java
   operator fun invoke(
     someInt: Int,
     text: String,

@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl.KotlinForwardDeclarationsWorkspaceEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface KotlinForwardDeclarationsWorkspaceEntityBuilder : WorkspaceEntityBuilder<KotlinForwardDeclarationsWorkspaceEntity> {
@@ -24,6 +25,7 @@ interface KotlinForwardDeclarationsWorkspaceEntityBuilder : WorkspaceEntityBuild
 internal object KotlinForwardDeclarationsWorkspaceEntityType :
     EntityType<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityBuilder>() {
     override val entityClass: Class<KotlinForwardDeclarationsWorkspaceEntity> get() = KotlinForwardDeclarationsWorkspaceEntity::class.java
+    override val entityImplBuilderClass: Class<*> get() = KotlinForwardDeclarationsWorkspaceEntityImpl.Builder::class.java
     operator fun invoke(
         forwardDeclarationRoots: Set<VirtualFileUrl>,
         entitySource: EntitySource,

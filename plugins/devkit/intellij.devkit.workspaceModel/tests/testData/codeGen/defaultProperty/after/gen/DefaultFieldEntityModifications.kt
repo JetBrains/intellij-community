@@ -1,5 +1,4 @@
 @file:JvmName("DefaultFieldEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -9,6 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.workspaceModel.test.api.impl.DefaultFieldEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface DefaultFieldEntityBuilder: WorkspaceEntityBuilder<DefaultFieldEntity>{
@@ -24,6 +24,7 @@ var defaultMap: Map<String, String>
 
 internal object DefaultFieldEntityType : EntityType<DefaultFieldEntity, DefaultFieldEntityBuilder>(){
 override val entityClass: Class<DefaultFieldEntity> get() = DefaultFieldEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = DefaultFieldEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 data: TestData,

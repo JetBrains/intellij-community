@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SelfLinkedEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SelfLinkedEntityBuilder : WorkspaceEntityBuilder<SelfLinkedEntity> {
@@ -18,6 +19,7 @@ interface SelfLinkedEntityBuilder : WorkspaceEntityBuilder<SelfLinkedEntity> {
 
 internal object SelfLinkedEntityType : EntityType<SelfLinkedEntity, SelfLinkedEntityBuilder>() {
   override val entityClass: Class<SelfLinkedEntity> get() = SelfLinkedEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SelfLinkedEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (SelfLinkedEntityBuilder.() -> Unit)? = null,

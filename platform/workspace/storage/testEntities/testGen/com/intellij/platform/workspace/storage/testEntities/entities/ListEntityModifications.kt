@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ListEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ListEntityBuilder : WorkspaceEntityBuilder<ListEntity> {
@@ -18,6 +19,7 @@ interface ListEntityBuilder : WorkspaceEntityBuilder<ListEntity> {
 
 internal object ListEntityType : EntityType<ListEntity, ListEntityBuilder>() {
   override val entityClass: Class<ListEntity> get() = ListEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ListEntityImpl.Builder::class.java
   operator fun invoke(
     data: List<String>,
     entitySource: EntitySource,

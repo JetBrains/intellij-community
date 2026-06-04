@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.OptionalIntEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface OptionalIntEntityBuilder : WorkspaceEntityBuilder<OptionalIntEntity> {
@@ -17,6 +18,7 @@ interface OptionalIntEntityBuilder : WorkspaceEntityBuilder<OptionalIntEntity> {
 
 internal object OptionalIntEntityType : EntityType<OptionalIntEntity, OptionalIntEntityBuilder>() {
   override val entityClass: Class<OptionalIntEntity> get() = OptionalIntEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = OptionalIntEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
     init: (OptionalIntEntityBuilder.() -> Unit)? = null,

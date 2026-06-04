@@ -147,7 +147,6 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   @Parent
   val parentEntity: CompositePackagingElementEntity?
 
-  //region generated code
   @Deprecated(message = "Use PackagingElementEntityBuilder instead")
   interface Builder<T : PackagingElementEntity> : PackagingElementEntityBuilder<T> {
     @Deprecated(message = "Use new API instead")
@@ -159,19 +158,6 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
       parentEntity = value
     }
   }
-
-  companion object : EntityType<PackagingElementEntity, Builder<PackagingElementEntity>>() {
-    @Deprecated(message = "Use new API instead")
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      entitySource: EntitySource,
-      init: (Builder<PackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<PackagingElementEntity> = PackagingElementEntityType.compatibilityInvoke(entitySource, init)
-  }
-  //endregion
-
 }
 
 @Abstract interface CompositePackagingElementEntity : PackagingElementEntity {
@@ -180,7 +166,6 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
 
   val children: List<PackagingElementEntity>
 
-  //region generated code
   @Deprecated(message = "Use CompositePackagingElementEntityBuilder instead")
   interface Builder<T : CompositePackagingElementEntity> : CompositePackagingElementEntityBuilder<T> {
     @Deprecated(message = "Use new API instead")
@@ -191,19 +176,6 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
       artifact = value
     }
   }
-
-  companion object : EntityType<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>() {
-    @Deprecated(message = "Use new API instead")
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      entitySource: EntitySource,
-      init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<CompositePackagingElementEntity> = CompositePackagingElementEntityType.compatibilityInvoke(entitySource, init)
-  }
-  //endregion
-
 }
 
 interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
@@ -461,23 +433,8 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
   val filePath: VirtualFileUrl
 
-  //region generated code
   @Deprecated(message = "Use FileOrDirectoryPackagingElementEntityBuilder instead")
   interface Builder<T : FileOrDirectoryPackagingElementEntity> : FileOrDirectoryPackagingElementEntityBuilder<T>
-  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>() {
-    @Deprecated(message = "Use new API instead")
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      filePath: VirtualFileUrl,
-      entitySource: EntitySource,
-      init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<FileOrDirectoryPackagingElementEntity> =
-      FileOrDirectoryPackagingElementEntityType.compatibilityInvoke(filePath, entitySource, init)
-  }
-  //endregion
-
 }
 
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {

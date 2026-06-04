@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.WithListSoftLinksEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface WithListSoftLinksEntityBuilder : WorkspaceEntityBuilder<WithListSoftLinksEntity> {
@@ -19,6 +20,7 @@ interface WithListSoftLinksEntityBuilder : WorkspaceEntityBuilder<WithListSoftLi
 
 internal object WithListSoftLinksEntityType : EntityType<WithListSoftLinksEntity, WithListSoftLinksEntityBuilder>() {
   override val entityClass: Class<WithListSoftLinksEntity> get() = WithListSoftLinksEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = WithListSoftLinksEntityImpl.Builder::class.java
   operator fun invoke(
     myName: String,
     links: List<NameId>,

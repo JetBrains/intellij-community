@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.CustomPackagingElementEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -22,6 +23,7 @@ interface CustomPackagingElementEntityBuilder : WorkspaceEntityBuilder<CustomPac
 
 internal object CustomPackagingElementEntityType : EntityType<CustomPackagingElementEntity, CustomPackagingElementEntityBuilder>() {
   override val entityClass: Class<CustomPackagingElementEntity> get() = CustomPackagingElementEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = CustomPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     typeId: String,
     propertiesXmlTag: String,

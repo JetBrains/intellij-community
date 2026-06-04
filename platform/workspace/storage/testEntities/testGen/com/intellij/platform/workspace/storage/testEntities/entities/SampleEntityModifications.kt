@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SampleEntityImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 
@@ -27,6 +28,7 @@ interface SampleEntityBuilder : WorkspaceEntityBuilder<SampleEntity> {
 
 internal object SampleEntityType : EntityType<SampleEntity, SampleEntityBuilder>() {
   override val entityClass: Class<SampleEntity> get() = SampleEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = SampleEntityImpl.Builder::class.java
   operator fun invoke(
     booleanProperty: Boolean,
     stringProperty: String,

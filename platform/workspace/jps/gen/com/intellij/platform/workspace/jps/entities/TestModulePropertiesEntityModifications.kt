@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.jps.entities.impl.TestModulePropertiesEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,6 +21,7 @@ interface TestModulePropertiesEntityBuilder : WorkspaceEntityBuilder<TestModuleP
 
 internal object TestModulePropertiesEntityType : EntityType<TestModulePropertiesEntity, TestModulePropertiesEntityBuilder>() {
   override val entityClass: Class<TestModulePropertiesEntity> get() = TestModulePropertiesEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = TestModulePropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     productionModuleId: ModuleId,
     entitySource: EntitySource,

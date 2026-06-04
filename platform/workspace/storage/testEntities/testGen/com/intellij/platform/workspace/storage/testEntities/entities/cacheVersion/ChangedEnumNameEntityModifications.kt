@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl.ChangedEnumNameEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ChangedEnumNameEntityBuilder : WorkspaceEntityBuilder<ChangedEnumNameEntity> {
@@ -17,6 +18,7 @@ interface ChangedEnumNameEntityBuilder : WorkspaceEntityBuilder<ChangedEnumNameE
 
 internal object ChangedEnumNameEntityType : EntityType<ChangedEnumNameEntity, ChangedEnumNameEntityBuilder>() {
   override val entityClass: Class<ChangedEnumNameEntity> get() = ChangedEnumNameEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ChangedEnumNameEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: ChangedEnumNameEnum,
     entitySource: EntitySource,

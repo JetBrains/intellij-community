@@ -3298,21 +3298,21 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(ExtPropertyMetadata(isComputable = false,
                                                                              isOpen = false,
-                                                                             name = "ref",
-                                                                             receiverFqn = "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToParent",
-                                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                                           entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent",
-                                                                                                                           isChild = false,
-                                                                                                                           isNullable = false),
-                                                                             withDefault = false),
-                                                         ExtPropertyMetadata(isComputable = false,
-                                                                             isOpen = false,
                                                                              name = "nullableRef",
                                                                              receiverFqn = "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToNullableParent",
                                                                              valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                                                            entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent",
                                                                                                                            isChild = false,
                                                                                                                            isNullable = true),
+                                                                             withDefault = false),
+                                                         ExtPropertyMetadata(isComputable = false,
+                                                                             isOpen = false,
+                                                                             name = "ref",
+                                                                             receiverFqn = "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToParent",
+                                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                           entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent",
+                                                                                                                           isChild = false,
+                                                                                                                           isNullable = false),
                                                                              withDefault = false)),
                                   isAbstract = false)
 
@@ -8038,7 +8038,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityList", metadataHash = 649455768)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityParentList",
                     metadataHash = -260771205)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent", metadataHash = -456256663)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent",
+                    metadataHash = -1758157325)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MiddleEntity", metadataHash = -1242925205)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity", metadataHash = -1013119376)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity", metadataHash = -1421345485)
@@ -8138,45 +8139,45 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = -1324245436)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity", metadataHash = -2146280434)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntity",
-                    metadataHash = -876323453)
+                    metadataHash = 1245340867)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity",
-                    metadataHash = -1631992406)
+                    metadataHash = -1375003387)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity",
                     metadataHash = 815162342)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntity",
-                    metadataHash = 553621305)
+                    metadataHash = -1842443614)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity",
-                    metadataHash = -1325630945)
+                    metadataHash = 1043581846)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderEntity",
-                    metadataHash = -716692481)
+                    metadataHash = 252648040)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity",
-                    metadataHash = -422321602)
+                    metadataHash = 2035231852)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ComputablePropEntity",
-                    metadataHash = 1219110089)
+                    metadataHash = 1476815671)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.DefaultPropEntity",
-                    metadataHash = -946388714)
+                    metadataHash = 1243569014)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.EnumPropsEntity",
-                    metadataHash = -1473909321)
+                    metadataHash = 2095175456)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity",
-                    metadataHash = -659689738)
+                    metadataHash = -1424456810)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NotNullToNullEntity",
-                    metadataHash = -1399553592)
+                    metadataHash = 402114472)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NullToNotNullEntity",
-                    metadataHash = -1751959421)
+                    metadataHash = -1810358941)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefEntity",
-                    metadataHash = -775915851)
+                    metadataHash = -1930784175)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity",
-                    metadataHash = 1466442561)
+                    metadataHash = -969709640)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleObjectsEntity",
-                    metadataHash = -1044764627)
+                    metadataHash = -2022415466)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimplePropsEntity",
-                    metadataHash = -376123742)
+                    metadataHash = 119295682)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClassEntity",
-                    metadataHash = -2015991516)
+                    metadataHash = -237999681)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEntity",
-                    metadataHash = 1011627374)
+                    metadataHash = 842269939)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClassEntity",
-                    metadataHash = -1297662549)
+                    metadataHash = -1593513448)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToManyRefEntity",
                     metadataHash = 586498122)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToOneRefEntity",
@@ -8196,7 +8197,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntity",
                     metadataHash = 1422735673)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.EnumPropsEntity",
-                    metadataHash = -1473909321)
+                    metadataHash = 2095175456)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.KeyPropEntity",
                     metadataHash = -246764551)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NotNullToNullEntity",
@@ -8276,39 +8277,39 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = 1370686573)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassX", metadataHash = -1389837364)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefDataClass",
-                    metadataHash = -1243683388)
+                    metadataHash = -1148644517)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId",
-                    metadataHash = -15931673)
+                    metadataHash = 2005024702)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntityId",
-                    metadataHash = 853052759)
+                    metadataHash = 157707118)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum",
-                    metadataHash = 1382655187)
+                    metadataHash = 1450112092)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderDataClass",
-                    metadataHash = 1170529618)
+                    metadataHash = 688668393)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.EnumPropsEnum",
                     metadataHash = 1833335773)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleObjectsSealedClass",
-                    metadataHash = -1609147688)
+                    metadataHash = 461547503)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleObjectsSealedClass\$FirstSimpleObjectsSealedClassObject",
-                    metadataHash = 1185517379)
+                    metadataHash = -1889523869)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleObjectsSealedClass\$SecondSimpleObjectsSealedClassObject",
-                    metadataHash = -703257632)
+                    metadataHash = -354288000)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass",
-                    metadataHash = -1178498597)
+                    metadataHash = -159047680)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass\$FirstKeyPropDataClass",
-                    metadataHash = -1387098291)
+                    metadataHash = 1781544109)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass\$SecondKeyPropDataClass",
-                    metadataHash = 1848038687)
+                    metadataHash = 1541918065)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum",
-                    metadataHash = -2098389398)
+                    metadataHash = -1129253965)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClass",
-                    metadataHash = 1670577962)
+                    metadataHash = -158426435)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClass\$FirstSubsetSealedClassDataClass",
-                    metadataHash = 397260186)
+                    metadataHash = 215409594)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClass\$FirstSubsetSealedClassObject",
-                    metadataHash = 1315739634)
+                    metadataHash = -1642784700)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClass\$SecondSubsetSealedClassDataClass",
-                    metadataHash = -471982035)
+                    metadataHash = 1024597119)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefDataClass",
                     metadataHash = -1243683388)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntityId",

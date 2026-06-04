@@ -3,6 +3,7 @@
 
 package com.intellij.java.workspace.entities
 
+import com.intellij.java.workspace.entities.impl.ArchivePackagingElementEntityImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,6 +22,7 @@ interface ArchivePackagingElementEntityBuilder : WorkspaceEntityBuilder<ArchiveP
 
 internal object ArchivePackagingElementEntityType : EntityType<ArchivePackagingElementEntity, ArchivePackagingElementEntityBuilder>() {
   override val entityClass: Class<ArchivePackagingElementEntity> get() = ArchivePackagingElementEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ArchivePackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     fileName: String,
     entitySource: EntitySource,

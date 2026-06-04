@@ -1,5 +1,4 @@
 @file:JvmName("ParentEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -11,6 +10,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.workspaceModel.test.api.impl.ParentEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ParentEntityBuilder: WorkspaceEntityBuilder<ParentEntity>{
@@ -20,6 +20,7 @@ var name: String
 
 internal object ParentEntityType : EntityType<ParentEntity, ParentEntityBuilder>(){
 override val entityClass: Class<ParentEntity> get() = ParentEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = ParentEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
 entitySource: EntitySource,

@@ -1,5 +1,4 @@
 @file:JvmName("CollectionFieldEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -10,6 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.workspaceModel.test.api.impl.CollectionFieldEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface CollectionFieldEntityBuilder: WorkspaceEntityBuilder<CollectionFieldEntity>{
@@ -21,6 +21,7 @@ var manifestAttributes: Map<String, String>
 
 internal object CollectionFieldEntityType : EntityType<CollectionFieldEntity, CollectionFieldEntityBuilder>(){
 override val entityClass: Class<CollectionFieldEntity> get() = CollectionFieldEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = CollectionFieldEntityImpl.Builder::class.java
 operator fun invoke(
 versions: Set<Int>,
 names: List<String>,

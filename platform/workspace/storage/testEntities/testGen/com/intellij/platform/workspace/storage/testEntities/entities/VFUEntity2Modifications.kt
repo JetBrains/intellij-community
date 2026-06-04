@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.VFUEntity2Impl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -22,6 +23,7 @@ interface VFUEntity2Builder : WorkspaceEntityBuilder<VFUEntity2> {
 
 internal object VFUEntity2Type : EntityType<VFUEntity2, VFUEntity2Builder>() {
   override val entityClass: Class<VFUEntity2> get() = VFUEntity2::class.java
+  override val entityImplBuilderClass: Class<*> get() = VFUEntity2Impl.Builder::class.java
   operator fun invoke(
     data: String,
     directoryPath: VirtualFileUrl,

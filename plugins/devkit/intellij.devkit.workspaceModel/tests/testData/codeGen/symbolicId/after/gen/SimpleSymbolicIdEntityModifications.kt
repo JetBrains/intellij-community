@@ -1,5 +1,4 @@
 @file:JvmName("SimpleSymbolicIdEntityModifications")
-
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -9,6 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.workspaceModel.test.api.impl.SimpleSymbolicIdEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface SimpleSymbolicIdEntityBuilder: WorkspaceEntityBuilder<SimpleSymbolicIdEntity>{
@@ -21,6 +21,7 @@ var sealedClassWithLinks: SealedClassWithLinks
 
 internal object SimpleSymbolicIdEntityType : EntityType<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityBuilder>(){
 override val entityClass: Class<SimpleSymbolicIdEntity> get() = SimpleSymbolicIdEntity::class.java
+override val entityImplBuilderClass: Class<*> get() = SimpleSymbolicIdEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
 name: String,

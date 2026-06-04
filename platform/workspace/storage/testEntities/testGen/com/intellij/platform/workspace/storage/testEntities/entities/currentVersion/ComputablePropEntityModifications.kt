@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl.ComputablePropEntityImpl
 
 @GeneratedCodeApiVersion(3)
 interface ComputablePropEntityBuilder : WorkspaceEntityBuilder<ComputablePropEntity> {
@@ -20,6 +21,7 @@ interface ComputablePropEntityBuilder : WorkspaceEntityBuilder<ComputablePropEnt
 
 internal object ComputablePropEntityType : EntityType<ComputablePropEntity, ComputablePropEntityBuilder>() {
   override val entityClass: Class<ComputablePropEntity> get() = ComputablePropEntity::class.java
+  override val entityImplBuilderClass: Class<*> get() = ComputablePropEntityImpl.Builder::class.java
   operator fun invoke(
     list: List<Map<List<Int?>, String>>,
     value: Int,
