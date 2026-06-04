@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.stats.completion.tracker
 
@@ -38,7 +38,7 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
       ids.add(id)
     }
 
-    val storage = LookupStorage.get(lookup)
+    val storage = LookupStorage.getStorage(lookup)
     val commonSessionFactors = storage?.sessionFactors?.getLastUsedCommonFactors() ?: emptyMap()
     val sessionFactorsToLog = computeSessionFactorsToLog(commonSessionFactors)
 
@@ -100,7 +100,7 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   }
 
   private fun calculateRelevance(lookup: LookupImpl, items: List<LookupElement>): Map<String, Map<String, String>> {
-    val lookupStorage = LookupStorage.get(lookup)
+    val lookupStorage = LookupStorage.getStorage(lookup)
     if (lookupStorage?.shouldComputeFeatures() == false) {
       return items.associateBy({ it.idString() }, { emptyMap() })
     }

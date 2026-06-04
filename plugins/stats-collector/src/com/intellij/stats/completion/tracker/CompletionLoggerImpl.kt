@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -37,7 +37,7 @@ class CompletionFileLogger(private val installationUID: String,
                                  timestamp: Long) {
     val state = stateManager.update(lookup, false)
 
-    val lookupStorage = LookupStorage.get(lookup)
+    val lookupStorage = LookupStorage.getStorage(lookup)
     val pluginVersion = calcPluginVersion() ?: "pluginVersion"
     val mlRankingVersion = lookupStorage?.model?.version() ?: "NONE"
 

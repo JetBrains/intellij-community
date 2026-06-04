@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.completion.ml.storage.LookupStorage
@@ -73,7 +73,7 @@ class CompletionLoggingPsiFeaturesTest: CompletionLoggingTestBase() {
   }
 
   private fun checkParentsPsiIs(vararg expectedParents: String) {
-    val features = LookupStorage.get(lookup)?.contextProvidersResult()!!
+    val features = LookupStorage.getStorage(lookup)?.contextProvidersResult()!!
     expectedParents.forEachIndexed { i, expectedParent ->
       val actualParent = features.classNameValue("ml_ctx_common_parent_${i + 1}")
       TestCase.assertEquals("Psi parent features", expectedParent, actualParent)
@@ -84,7 +84,7 @@ class CompletionLoggingPsiFeaturesTest: CompletionLoggingTestBase() {
   }
 
   private fun checkHaveFeatures(expectedFeatures: Map<String, Any>) {
-    val features = LookupStorage.get(lookup)?.contextProvidersResult()!!
+    val features = LookupStorage.getStorage(lookup)?.contextProvidersResult()!!
     expectedFeatures.forEach { fName, fValue ->
       TestCase.assertTrue(features.binaryValue(fName) == fValue)
     }

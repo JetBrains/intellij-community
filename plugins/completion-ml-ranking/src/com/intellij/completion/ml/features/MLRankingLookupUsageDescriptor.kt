@@ -21,7 +21,7 @@ internal class MLRankingLookupUsageDescriptor : LookupUsageDescriptor {
     val lookup = lookupResultDescriptor.lookup
     val data = mutableListOf<EventPair<*>>()
     if (lookup.isCompletion && lookup is LookupImpl) {
-      val storage = LookupStorage.get(lookup)
+      val storage = LookupStorage.getStorage(lookup)
       if (storage != null) {
         data.add(TOTAL_ML_TIME.with(storage.performanceTracker.totalMLTimeContribution()))
 

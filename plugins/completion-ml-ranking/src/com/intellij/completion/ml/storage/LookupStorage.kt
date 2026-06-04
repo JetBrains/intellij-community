@@ -11,9 +11,9 @@ import com.intellij.lang.Language
 
 interface LookupStorage {
   companion object {
-    fun get(lookup: LookupImpl): LookupStorage? = MutableLookupStorage.get(lookup)
+    fun getStorage(lookup: LookupImpl): LookupStorage? = MutableLookupStorage.get(lookup)
 
-    fun get(parameters: BaseCompletionParameters): LookupStorage? = MutableLookupStorage.get(parameters)
+    fun getStorage(parameters: BaseCompletionParameters): LookupStorage? = MutableLookupStorage.get(parameters)
   }
 
   val model: RankingModelWrapper?

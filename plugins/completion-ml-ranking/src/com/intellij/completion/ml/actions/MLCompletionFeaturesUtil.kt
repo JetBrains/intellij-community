@@ -17,7 +17,7 @@ import java.awt.datatransfer.StringSelection
 
 object MLCompletionFeaturesUtil {
   fun getCommonFeatures(lookup: LookupImpl): CommonFeatures {
-    val storage = LookupStorage.get(lookup) ?: return CommonFeatures()
+    val storage = LookupStorage.getStorage(lookup) ?: return CommonFeatures()
     return CommonFeatures(storage.userFactors,
                           storage.sessionFactors.getLastUsedCommonFactors(),
                           storage.contextFactors)
@@ -25,7 +25,7 @@ object MLCompletionFeaturesUtil {
 
   fun getElementFeatures(lookup: LookupImpl, element: LookupElement): ElementFeatures {
     val id = element.idString()
-    val storage = LookupStorage.get(lookup) ?: return ElementFeatures(id)
+    val storage = LookupStorage.getStorage(lookup) ?: return ElementFeatures(id)
     val features = storage.getItemStorage(id).getLastUsedFactors() ?: return ElementFeatures(id)
     return ElementFeatures(id, features.mapValues { it.value.toString() })
   }

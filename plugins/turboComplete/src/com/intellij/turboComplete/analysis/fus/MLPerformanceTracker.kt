@@ -17,7 +17,7 @@ class MLPerformanceTracker : LookupUsageDescriptor {
     val lookup = lookupResultDescriptor.lookup
     val data = mutableListOf<EventPair<*>>()
     if (lookup.isCompletion && lookup is LookupImpl) {
-      val storage = LookupStorage.get(lookup)
+      val storage = LookupStorage.getStorage(lookup)
       if (storage != null) {
         val enabled = storage.contextFactors["ml_ctx_common_completion_kind_performance_enabled"] == "1"
         val shownEarly = storage.contextFactors["ml_ctx_common_completion_kind_show_lookup_early"] == "1"
