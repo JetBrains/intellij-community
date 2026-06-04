@@ -18,6 +18,7 @@ interface ChangesViewEx : ChangesViewI {
   @ApiStatus.Internal
   fun getOrCreateCommitChangesView(): ChangesViewProxy
 
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.")
   val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
 }

@@ -74,7 +74,7 @@ public interface CommitExecutor {
   /**
    * @deprecated Prefer overriding {@link #createCommitSession(CommitContext)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @NotNull CommitSession createCommitSession() {
     throw new AbstractMethodError();
   }

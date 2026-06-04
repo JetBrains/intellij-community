@@ -49,6 +49,7 @@ interface VcsStartupActivity {
    */
   val order: Int
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Implement execute")
   fun runActivity(project: Project) {
     throw AbstractMethodError()

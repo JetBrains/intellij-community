@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
@@ -13,6 +14,7 @@ class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<C
 }
 
 class SingleChangeListCommitter
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Prefer using SingleChangeListCommitter.create",
             replaceWith = ReplaceWith("SingleChangeListCommitter.create(project, commitState, commitContext, localHistoryActionName)"))
 constructor(

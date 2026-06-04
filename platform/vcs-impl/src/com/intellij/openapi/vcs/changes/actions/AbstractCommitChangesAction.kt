@@ -11,7 +11,9 @@ import com.intellij.openapi.vcs.actions.VcsContext
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use [com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction] instead")
 abstract class AbstractCommitChangesAction : AbstractCommonCheckinAction() {
   override fun getRoots(dataContext: VcsContext): Array<FilePath> =

@@ -3,7 +3,7 @@ package com.intellij.history.utils;
 
 import com.intellij.util.ExceptionUtil;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class RunnableAdapter implements Runnable {
   @Override
   public void run() {

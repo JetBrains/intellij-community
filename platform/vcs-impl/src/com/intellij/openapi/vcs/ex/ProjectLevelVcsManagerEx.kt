@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 abstract class ProjectLevelVcsManagerEx : ProjectLevelVcsManager() {
@@ -26,6 +27,7 @@ abstract class ProjectLevelVcsManagerEx : ProjectLevelVcsManager() {
 
   abstract fun getConfirmation(option: StandardConfirmation): PersistentVcsShowConfirmationOption
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("A plugin should not need to call this.")
   abstract fun notifyDirectoryMappingChanged()
 

@@ -23,7 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 /**
  * @deprecated use {@link com.intellij.openapi.actionSystem.IdeActions#ACTION_NEXT_DIFF}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class NextDifferenceAction extends AnAction implements DumbAware {
   public NextDifferenceAction() {
     ActionUtil.copyFrom(this, IdeActions.ACTION_NEXT_DIFF);

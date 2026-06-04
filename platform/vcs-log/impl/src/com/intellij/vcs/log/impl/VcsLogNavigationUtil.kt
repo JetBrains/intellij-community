@@ -33,6 +33,7 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePack.ErrorVisiblePack
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.guava.await
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 
@@ -87,6 +88,7 @@ object VcsLogNavigationUtil {
     }, SettableFuture.create(), silently, focus)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using jumpToBranch(repositoryRoot: VirtualFile?, branchName: String, silently: Boolean, focus: Boolean)")
   @JvmStatic
   fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
@@ -211,6 +213,7 @@ object VcsLogNavigationUtil {
   }
 
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Reports cryptic message if 'silently == false'. Prefer using jumpToCommit(Hash, VirtualFile, ...)")
   fun VcsLogUiEx.jumpToCommit(commitIndex: VcsLogCommitStorageIndex, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     val future = SettableFuture.create<JumpResult>()

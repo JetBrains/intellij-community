@@ -30,7 +30,7 @@ public interface VcsLog {
    */
   @RequiresEdt
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
@@ -45,7 +45,7 @@ public interface VcsLog {
    * @deprecated Use {@link VcsLogCommitSelection#requestFullDetails(java.util.function.Consumer)} instead.
    */
   @RequiresEdt
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer);
 
   /**

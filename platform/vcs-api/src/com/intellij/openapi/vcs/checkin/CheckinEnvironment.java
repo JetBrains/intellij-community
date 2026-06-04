@@ -38,7 +38,7 @@ public interface CheckinEnvironment {
    * @deprecated use {@link #createCommitOptions(CheckinProjectPanel, CommitContext)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
@@ -94,7 +94,7 @@ public interface CheckinEnvironment {
    * @deprecated use {@link com.intellij.openapi.vcs.VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean keepChangeListAfterCommit(ChangeList changeList) { return false; }
 
   /**

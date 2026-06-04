@@ -173,6 +173,7 @@ abstract class NonModalCommitPanel(
     uiDataSnapshotFromProviders(sink)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use UiDataRule instead")
   fun uiDataSnapshotFromProviders(sink: DataSink) {
     dataProviders.forEach {

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JTable
 
 /**
@@ -11,6 +12,7 @@ import javax.swing.JTable
 interface VcsLogCellRenderer {
   fun getCellController(): VcsLogCellController? = null
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Implement getPreferredWidth() instead")
   fun getPreferredWidth(table: JTable): Int? = null
 

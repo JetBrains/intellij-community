@@ -26,7 +26,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
   /**
    * @deprecated Prefer using {@link VcsNotifier#toolWindowNotification()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP =
     Cancellation.forceNonCancellableSectionInClassInitializer(() -> VcsNotifier.toolWindowNotification());
 
