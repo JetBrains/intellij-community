@@ -1541,15 +1541,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-80837
   public void testEnumAttributeDefaultValueType() {
     doTestByText("""
-                   from enum import Enum, IntEnum
+                   from enum import Enum, IntEnum, StrEnum
+                   
+                   class MyEnum(Enum):
+                       A = 1
+                       B = "string"
+                       C = None
                    
                    class MyIntEnum(IntEnum):
                        OK = 1
                        BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
                    
-                   class MyEnum(Enum):
-                       OK = 1
-                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   class MyStrEnum(StrEnum):
+                       OK = "a"
+                       BAD = <warning descr="Expected type 'str', got 'int' instead">1</warning>
                    """);
   }
 

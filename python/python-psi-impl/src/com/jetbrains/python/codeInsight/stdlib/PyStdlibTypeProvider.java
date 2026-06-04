@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyEnumAttributeStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -46,11 +47,13 @@ import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -151,7 +154,10 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (enumType != null) {
             PyClass enumClass = enumType.getPyClass();
             if (isCustomEnum(enumClass, context)) {
-              return Ref.create(getEnumValueType(enumClass, context));
+              // If the qualifier is a specific member (e.g. MyEnum.B), use that member's value type;
+              // otherwise fall back to the union of all members' value types.
+              String memberName = enumType instanceof PyLiteralType literalType ? literalType.getEnumMemberName() : null;
+              return Ref.create(getEnumValueType(enumClass, memberName, context));
             }
           }
         }
@@ -378,6 +384,15 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   // Handle IntEnum/IntFlag, StrEnum, and fall back to assigned type or unknown
   @ApiStatus.Internal
   public static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    return getEnumValueType(enumClass, null, context);
+  }
+
+  /**
+   * returns the type of the {@code value} attribute of an enum member, or the union of all members' value types
+   */
+  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass,
+                                                  @Nullable String memberName,
+                                                  @NotNull TypeEvalContext context) {
     PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
 
     if (enumClass.isSubclass("enum.IntEnum", context) ||
@@ -406,15 +421,23 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return cache.getBoolType();
     }
 
-    // Fallback: Infer from first MEMBER's assigned value (not non-members like helpers/descriptors)
+    // Infer from the MEMBERS' assigned values (not non-members like helpers/descriptors).
+    List<PyType> memberValueTypes = new ArrayList<>();
     for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
       EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
       if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
-        return attributeInfo.assignedValueType;
+        if (Objects.equals(memberName, targetExpr.getName())) {
+          return attributeInfo.assignedValueType;
+        }
+        memberValueTypes.add(attributeInfo.assignedValueType);
       }
     }
-
-    return null;
+    if (memberValueTypes.isEmpty()) {
+      return PyAnyType.getUnknown();
+    }
+    // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
+    // heterogeneous ones, instead of incorrectly reporting just the first member's type.
+    return PyUnionType.union(memberValueTypes);
   }
 
   @Override

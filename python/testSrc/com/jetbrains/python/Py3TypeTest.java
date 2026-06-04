@@ -1016,6 +1016,20 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  @TestFor(issues = "PY-88477")
+  public void testHeterogeneousEnumValues() {
+    doTest("tuple[int | str, int, str]",
+           """
+             from enum import Enum
+             
+             class MyEnum(Enum):
+                 A = 1
+                 B = ""
+             
+             def f(p: MyEnum):
+                 expr = p.value, MyEnum.A.value, MyEnum.B.value""");
+  }
+
   public void testLiteralTypeNarrowingEquals() {
     doTest("Literal[\"abba\"]",
            """
