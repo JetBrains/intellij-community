@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.awt.Cursor;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 @ApiStatus.Internal
@@ -58,8 +59,8 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
     var editor = context.editor();
     var gutter = context.gutter();
     if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
-      int mouseY = e.getMouseEvent().getY();
-      BreakpointArea breakpointArea = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseY);
+      MouseEvent mouseEvent = e.getMouseEvent();
+      BreakpointArea breakpointArea = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseEvent);
       int line = breakpointArea.getLine();
       boolean isBetweenLines = breakpointArea.isBetweenLines();
       Document document = editor.getDocument();

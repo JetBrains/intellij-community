@@ -481,7 +481,7 @@ class XLineBreakpointManager(
     override fun mouseClicked(e: EditorMouseEvent) {
       val editor = e.editor
       val mouseEvent = e.mouseEvent
-      if ((mouseEvent.isPopupTrigger || mouseEvent.isMetaDown || mouseEvent.isControlDown)
+      if ((mouseEvent.isPopupTrigger || mouseEvent.isControlDown)
           || mouseEvent.button != MouseEvent.BUTTON1
           || DiffUtil.isDiffEditor(editor)
           || !isInsideClickableGutterArea(e)
@@ -495,7 +495,7 @@ class XLineBreakpointManager(
       val document = editor.document
       PsiDocumentManager.getInstance(project).commitDocument(document)
       // Use inter-line detection for click handling; configs are calculated asynchronously by the gutter
-      val hitResult = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseEvent.y)
+      val hitResult = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseEvent)
       val line = hitResult.line
       val isInterLine = hitResult.isBetweenLines
       val file = FileDocumentManager.getInstance().getFile(document)

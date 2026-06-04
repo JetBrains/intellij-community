@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -238,13 +239,14 @@ public class EditorUtilTest extends AbstractEditorTest {
   }
 
   private @NotNull InterLineBreakpointConfiguration registerInterLineConfigurationProvider(@NotNull InterLineBreakpointHitArea hitArea,
-                                                                                            int @NotNull ... lines) {
+                                                                                           int @NotNull ... lines) {
     TestInterLineBreakpointConfigurationProvider provider = new TestInterLineBreakpointConfigurationProvider(hitArea, lines);
     ExtensionPointName.<InterLineBreakpointConfigurationProvider>create("com.intellij.editor.interLineBreakpointConfigurationProvider")
       .getPoint()
       .registerExtension(provider, getTestRootDisposable());
     PlatformTestUtil.waitWithEventsDispatching("Inter-line configuration wasn't initialized",
-                                               () -> InterLineBreakpointConfigurationProvider.findConfigurationForLine(getEditor(), lines[0]) != null,
+                                               () -> InterLineBreakpointConfigurationProvider.findConfigurationForLine(getEditor(),
+                                                                                                                       lines[0]) != null,
                                                10);
     return provider.getConfiguration();
   }
@@ -252,7 +254,9 @@ public class EditorUtilTest extends AbstractEditorTest {
   private void assertBreakpointAreas(@NotNull Map<Integer, BreakpointArea> expectedAreas) {
     Map<Integer, BreakpointArea> actualAreas = new LinkedHashMap<>();
     for (Integer y : expectedAreas.keySet()) {
-      actualAreas.put(y, EditorUtil.yToLogicalLineWithInterLineDetection(getEditor(), y));
+      actualAreas.put(y, EditorUtil.yToLogicalLineWithInterLineDetection(getEditor(),
+                                                                         new MouseEvent(getEditor().getContentComponent(), 0, 0, 0, 0, y, 1,
+                                                                                        false)));
     }
     assertEquals(expectedAreas, actualAreas);
   }

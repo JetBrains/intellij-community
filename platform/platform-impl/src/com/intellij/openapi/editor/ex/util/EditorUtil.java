@@ -929,7 +929,8 @@ public final class EditorUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull BreakpointArea yToLogicalLineWithInterLineDetection(@NotNull Editor editor, int y) {
+  public static @NotNull BreakpointArea yToLogicalLineWithInterLineDetection(@NotNull Editor editor, @NotNull MouseEvent event) {
+    int y = event.getY();
     if (!(editor instanceof EditorImpl editorImpl)) {
       int logicalLine = yToLogicalLineNoCustomRenderers(editor, y);
       if (logicalLine < 0) {
@@ -974,15 +975,17 @@ public final class EditorUtil {
       // (i.e., inter-line hits don't take more space than on-line hits)
       int totalPadding = Math.min(padding, lineHeight / 4);
 
-      if (y >= visualLineStartY + totalPadding && y <= visualLineStartY + lineHeight - totalPadding) {
+      boolean onlyInterLine = event.isShiftDown();
+      boolean onlyOnLine = event.isMetaDown();
+      if (onlyOnLine || !onlyInterLine && y >= visualLineStartY + totalPadding && y <= visualLineStartY + lineHeight - totalPadding) {
         return new BreakpointArea.OnLine(logicalLine);
       }
 
-      if (hitAboveLineNumber && logicalLine > 0) {
+      if ((onlyInterLine || hitAboveLineNumber) && logicalLine > 0) {
         return new BreakpointArea.InterLine(logicalLine, configuration);
       }
 
-      if (!hitAboveLineNumber) {
+      if (onlyInterLine || !hitAboveLineNumber) {
         if (nextLogicalLine >= documentLineCount) {
           return BreakpointArea.INVALID;
         }
