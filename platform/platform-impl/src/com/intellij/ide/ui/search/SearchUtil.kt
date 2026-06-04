@@ -43,6 +43,7 @@ import javax.swing.border.TitledBorder
 import javax.swing.plaf.basic.BasicComboPopup
 import javax.swing.text.BadLocationException
 import javax.swing.text.View
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<SearchUtil>()
 
@@ -543,7 +544,8 @@ private fun processFilter(filter: String, quoted: MutableSet<String>): String {
 }
 
 internal fun processExpandedGroups(group: ConfigurableGroup, result: MutableCollection<Configurable>) {
-  val configurables = group.configurables
+  val configurables = group.getConfigurablesSafely()
+                      ?: return
   for (configurable in configurables) {
     result.add(configurable)
   }
@@ -555,7 +557,7 @@ internal fun processExpandedGroups(group: ConfigurableGroup, result: MutableColl
 
 private fun addChildren(configurable: Configurable, result: MutableCollection<Configurable>) {
   if (configurable is Configurable.Composite) {
-    for (kid in configurable.configurables) {
+    for (kid in configurable.getConfigurablesSafely() ?: emptyArray()) {
       result.add(kid)
       addChildren(configurable = kid, result = result)
     }
@@ -791,4 +793,30 @@ fun collectSearchItemsForComponentWithLabel(
     i18n = false,
     rawList = configurableOptions,
   )
+}
+
+
+internal fun Configurable.getDisplayNameSafely(): String? {
+  return runSafely(this) { this.displayName }
+}
+
+internal fun ConfigurableGroup.getConfigurablesSafely(): Array<Configurable>? {
+  return runSafely(this) { this.configurables }
+}
+
+internal fun Configurable.Composite.getConfigurablesSafely(): Array<Configurable>? {
+  return runSafely(this) { this.configurables }
+}
+
+private inline fun <R> runSafely(instance: Any, body: () -> R): R? {
+  return try {
+    body()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error("Failed to process ${instance.javaClass.name}", e)
+    null
+  }
 }

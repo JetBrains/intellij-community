@@ -216,7 +216,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     val options = getProcessedWordsWithoutStemming(optionToCheck)
     if (options.isEmpty()) {
       for (each in effectiveConfigurables) {
-        if (each.getDisplayName() != null) {
+        if (each.getDisplayNameSafely() != null) {
           nameHits.add(each)
           nameFullHits.add(each)
         }
@@ -224,7 +224,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     }
     else {
       for (each in effectiveConfigurables) {
-        val displayName = each.getDisplayName()
+        val displayName = each.getDisplayNameSafely()
         if (displayName != null && displayName.contains(optionToCheck, ignoreCase = true)) {
           nameFullHits.add(each)
           nameHits.add(each)
@@ -463,7 +463,8 @@ private fun findGroupsByPath(groups: List<ConfigurableGroup>, path: String): Con
   val root = groups.singleOrNull()
   var topLevel: List<Configurable>
   if (root is SearchableConfigurable && (root as SearchableConfigurable).getId() == ConfigurableExtensionPointUtil.ROOT_CONFIGURABLE_ID) {
-    topLevel = root.getConfigurables().toList()
+    topLevel = root.getConfigurablesSafely()?.toList()
+               ?: return null
   }
   else {
     topLevel = groups.filterIsInstance<Configurable>()
@@ -475,13 +476,15 @@ private fun findGroupsByPath(groups: List<ConfigurableGroup>, path: String): Con
 
   for (i in split.indices) {
     val option = split.get(i)
-    val matched = current.find { it.getDisplayName().equals(option, ignoreCase = true) } ?: break
+    val matched = current.find { it.getDisplayNameSafely().equals(option, ignoreCase = true) }
+                  ?: break
 
     lastMatched = matched
     lastMatchedIndex = i
 
     if (matched is Configurable.Composite) {
-      current = matched.getConfigurables().asList()
+      current = matched.getConfigurablesSafely()?.toList()
+                ?: break
     }
     else {
       break

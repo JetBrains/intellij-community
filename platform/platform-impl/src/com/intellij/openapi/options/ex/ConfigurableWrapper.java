@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.ui.search.SearchUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -186,7 +187,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       boolean loaded = myConfigurable != null;
       Configurable configurable = cast(Configurable.class, this);
       if (configurable != null) {
-        String name = configurable.getDisplayName();
+        String name = SearchUtilKt.getDisplayNameSafely(configurable);
         if (!loaded) {
           String message = "No display name specified in plugin descriptor XML file for configurable " + configurable.getClass().getName() + ";\n" +
                            "specify it using 'displayName' or 'key' attribute to avoid necessity to load the configurable class when Settings dialog is opened";
@@ -356,7 +357,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       if (super.myEp.dynamic) {
         Composite composite = cast(Composite.class, this);
         if (composite != null) {
-          Collections.addAll(list, composite.getConfigurables());
+          var configurables = SearchUtilKt.getConfigurablesSafely(composite);
+          if (configurables != null) {
+            Collections.addAll(list, configurables);
+          }
         }
       }
       if (super.myEp.children != null) {

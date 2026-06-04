@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
+import com.intellij.ide.ui.search.SearchUtilKt;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
@@ -23,7 +24,7 @@ public interface Weighted {
     return weight1 > weight2 ? -1 :
            weight1 < weight2 ? 1 :
            StringUtil.naturalCompare(
-             configurable1 == null ? null : configurable1.getDisplayName(),
-             configurable2 == null ? null : configurable2.getDisplayName());
+             configurable1 == null ? null : SearchUtilKt.getDisplayNameSafely(configurable1),
+             configurable2 == null ? null : SearchUtilKt.getDisplayNameSafely(configurable2));
   };
 }

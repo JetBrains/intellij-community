@@ -26,7 +26,7 @@ fun createConfigurablesListPanel(description: @NlsContexts.Label String?,
     indent {
       for (configurable in configurables) {
         row {
-          link(configurable.displayName) { event ->
+          link(configurable.displayName ?: "") { event ->
             if (configurableEditor == null) {
               val component = event.source as? Component
               val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(component))
