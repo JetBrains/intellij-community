@@ -238,6 +238,73 @@ class XmlDependencyUpdaterTest {
   }
 
   @Test
+  fun `preserves placeholder comment when transitioning from no region to inside region`(@TempDir tempDir: Path) {
+    // Repro of IJI-2993-style regression: a plugin.xml with hand-authored placeholder comments
+    // and an explicit <dependencies> section but no generated region was rewritten by the
+    // generator, which dropped every comment along with the rebuilt block.
+    val content = """
+      <idea-plugin>
+        <id>org.example</id>
+        <name>Example</name>
+        <dependencies>
+          <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
+          <plugin id="com.intellij.java"/>
+          <module name="intellij.platform.collaborationTools"/>
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("intellij.java.backend"),
+      pluginDependencies = emptyList(),
+      preserveExistingPlugin = { it == "com.intellij.java" },
+      preserveExistingModule = { it == "intellij.platform.collaborationTools" },
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).contains("<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->")
+    assertThat(xml).contains("<plugin id=\"com.intellij.java\"/>")
+    assertThat(xml).contains("<module name=\"intellij.platform.collaborationTools\"/>")
+    assertThat(xml).contains("<module name=\"intellij.java.backend\"/>")
+    assertThat(xml.indexOf("<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->"))
+      .isLessThan(xml.indexOf("<!-- region Generated dependencies"))
+  }
+
+  @Test
+  fun `does not duplicate or re-emit fold region markers as comments`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <id>org.example</id>
+        <name>Example</name>
+        <dependencies>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <module name="intellij.platform.debugger.impl.ui"/>
+          <!-- endregion -->
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("intellij.platform.debugger.impl.ui", "intellij.platform.collaborationTools"),
+      pluginDependencies = emptyList(),
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<!-- region Generated dependencies")
+    assertThat(xml).containsOnlyOnce("<!-- endregion -->")
+  }
+
+  @Test
   fun `removes duplicate legacy depends for modern plugin deps`() {
     val content = """
       <idea-plugin>
