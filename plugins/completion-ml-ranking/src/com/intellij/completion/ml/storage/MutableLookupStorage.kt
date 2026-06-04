@@ -29,6 +29,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.TestOnly
 
+/**
+ * Mutable [LookupStorage] implementation: the single instance attached to a lookup that accumulates
+ * ML state (factors, scores, flags) over the course of one completion session.
+ */
 class MutableLookupStorage(
   override val startedTimestamp: Long,
   override val language: Language,
@@ -59,6 +63,7 @@ class MutableLookupStorage(
     @Volatile
     private var alwaysComputeFeaturesInTests = true
 
+    /** Test-only override of whether features are always computed; restored when [parentDisposable] is disposed. */
     @TestOnly
     fun setComputeFeaturesAlways(value: Boolean, parentDisposable: Disposable) {
       val valueBefore = alwaysComputeFeaturesInTests
@@ -68,10 +73,12 @@ class MutableLookupStorage(
       })
     }
 
+    /** Returns the storage attached to [lookup], or `null` if it has not been initialized yet. */
     fun getMutableLookupStorage(lookup: LookupImpl): MutableLookupStorage? {
       return lookup.getUserData(LOOKUP_STORAGE)
     }
 
+    /** Returns the existing storage for [lookup], or creates and attaches a new one for [language]. */
     fun initOrGetLookupStorage(lookup: LookupImpl, language: Language): MutableLookupStorage {
       val existed = getMutableLookupStorage(lookup)
       if (existed != null) return existed
@@ -80,6 +87,7 @@ class MutableLookupStorage(
       return storage
     }
 
+    /** Returns the storage for [parameters], falling back to (and caching from) the active lookup when needed. */
     fun getMutableLookupStorage(parameters: BaseCompletionParameters): MutableLookupStorage? {
       var storage = parameters.getUserData(LOOKUP_STORAGE)
       if (storage == null && parameters is CompletionParameters) {
@@ -95,6 +103,7 @@ class MutableLookupStorage(
       return storage
     }
 
+    /** Stores [storage] as user data on the completion process behind [parameters] for later retrieval. */
     fun saveAsUserData(parameters: BaseCompletionParameters, storage: MutableLookupStorage) {
       val completionProcess = parameters.process
       if (completionProcess is UserDataHolder) {
@@ -116,6 +125,7 @@ class MutableLookupStorage(
 
   override fun mlUsed(): Boolean = mlUsed
 
+  /** Marks that ML scores were used to reorder items and records it in the performance tracker. */
   fun fireReorderedUsingMLScores() {
     mlUsed = true
     performanceTracker.reorderedByML()
@@ -127,16 +137,20 @@ class MutableLookupStorage(
 
   override fun shouldReRank(): Boolean = model != null && shouldReRank
 
+  /** Disables ML reranking for the rest of this session (features may still be computed for logging). */
   fun disableReRanking() {
     shouldReRank = false
   }
 
+  /** Returns `true` once [initContextFactors] has populated the context features. */
   fun isContextFactorsInitialized(): Boolean = contextFeaturesStorage != null
 
+  /** Records the computed [factors] and ML [mlScore] for the given [element]. */
   fun fireElementScored(element: LookupElement, factors: MutableMap<String, Any>, mlScore: Double?) {
     getItemStorage(element.idString()).fireElementScored(factors, mlScore)
   }
 
+  /** Lazily computes application- and project-level user factors for [project] (once per session). */
   @RequiresReadLock
   fun initUserFactors(project: Project) {
     if (_userFactors == null) {
@@ -154,6 +168,7 @@ class MutableLookupStorage(
 
   override fun contextProvidersResult(): ContextFeatures = contextFeaturesStorage ?: ContextFeaturesStorage.EMPTY
 
+  /** Initializes the context features from [contextFactors] and [environment]; must be called only once. */
   fun initContextFactors(
     contextFactors: MutableMap<String, MLFeatureValue>,
     environment: UserDataHolderBase,
@@ -173,6 +188,7 @@ class MutableLookupStorage(
     return experimentInfo.inExperiment && !experimentInfo.shouldCalculateFeatures
   }
 
+  /** Enables logging of computed features/weights for this lookup. */
   fun markLoggingEnabled() {
     _loggingEnabled = true
   }
