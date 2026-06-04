@@ -77,6 +77,7 @@ object GrazieRemote {
     return languages.filter { it.hunspellRemote?.isGplLicensed != true }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use isValidBundleForLanguage(descriptor, file) instead")
   fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
     val remote = language.ltRemote ?: return false

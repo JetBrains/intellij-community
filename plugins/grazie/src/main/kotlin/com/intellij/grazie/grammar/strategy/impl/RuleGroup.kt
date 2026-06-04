@@ -2,6 +2,7 @@
 package com.intellij.grazie.grammar.strategy.impl
 
 import com.intellij.grazie.utils.LinkedSet
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DEPRECATION")
 @Deprecated(
@@ -15,6 +16,7 @@ class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(ru
     val EMPTY = RuleGroup()
 
     /** Rule for checking double whitespaces */
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use getStealthyRanges() in GrammarCheckingStrategy and StrategyUtils.indentIndexes()")
     val WHITESPACES = RuleGroup("WHITESPACE_RULE")
 
