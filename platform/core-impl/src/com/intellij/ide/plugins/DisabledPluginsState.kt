@@ -148,7 +148,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
       val actuallyChanged = changed && saveDisabledPluginsAndInvalidate(disabled)
       val operation = if (enabled) "enabled" else "disabled"
-      logger.info("${pluginIds.joinedPluginIds(operation)} (${if (actuallyChanged) "applied" else " was already ${operation}, nothing changed"})")
+      logger.info("${pluginIds.joinedPluginIds(operation)} (${if (actuallyChanged) "applied" else "was already ${operation}, nothing changed"})")
       return actuallyChanged
     }
 
