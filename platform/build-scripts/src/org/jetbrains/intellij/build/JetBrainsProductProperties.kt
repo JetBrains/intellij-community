@@ -82,7 +82,12 @@ abstract class JetBrainsProductProperties : ProductProperties() {
       })
       if (result is PluginCreationSuccess) {
         if (!ALLOWED_PLUGIN_VENDORS.contains(result.plugin.vendor)) {
-          add(InvalidPluginDescriptorError("${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"))
+          add(
+            InvalidPluginDescriptorError(
+              "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}.\n" +
+              "Please use one of the following vendors:\n" + ALLOWED_PLUGIN_VENDORS.joinToString("\n")
+            )
+          )
         }
       }
     }
