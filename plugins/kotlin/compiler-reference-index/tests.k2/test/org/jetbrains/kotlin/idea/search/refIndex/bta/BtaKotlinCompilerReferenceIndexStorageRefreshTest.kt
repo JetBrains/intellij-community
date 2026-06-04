@@ -27,17 +27,23 @@ class BtaKotlinCompilerReferenceIndexStorageRefreshTest {
         val subtypeA = createSubtypeStorage(rootA)
         val subtypeB = createSubtypeStorage(rootB)
 
-        val refreshed = refresh(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = listOf(rootA, rootB),
             updatedCriRoots = listOf(rootA),
-            lookupStoragesByRoot = mapOf(rootA to lookupA, rootB to lookupB),
-            subtypeStoragesByRoot = mapOf(rootA to subtypeA, rootB to subtypeB),
+            storagesByRoot = mapOf(rootA to lookupA, rootB to lookupB),
+            createStorage = ::createLookupStorage,
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = listOf(rootA, rootB),
+            updatedCriRoots = listOf(rootA),
+            storagesByRoot = mapOf(rootA to subtypeA, rootB to subtypeB),
+            createStorage = ::createSubtypeStorage,
         )
 
-        assertNotSame(lookupA, refreshed.first[rootA])
-        assertSame(lookupB, refreshed.first[rootB])
-        assertNotSame(subtypeA, refreshed.second[rootA])
-        assertSame(subtypeB, refreshed.second[rootB])
+        assertNotSame(lookupA, refreshedLookupStorages[rootA])
+        assertSame(lookupB, refreshedLookupStorages[rootB])
+        assertNotSame(subtypeA, refreshedSubtypeStorages[rootA])
+        assertSame(subtypeB, refreshedSubtypeStorages[rootB])
     }
 
     @Test
@@ -45,15 +51,21 @@ class BtaKotlinCompilerReferenceIndexStorageRefreshTest {
         val rootA = createCriRoot("rootA")
         val rootB = createCriRoot("rootB")
 
-        val refreshed = refresh(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = listOf(rootA),
             updatedCriRoots = listOf(rootB),
-            lookupStoragesByRoot = mapOf(rootA to createLookupStorage(rootA), rootB to createLookupStorage(rootB)),
-            subtypeStoragesByRoot = mapOf(rootA to createSubtypeStorage(rootA), rootB to createSubtypeStorage(rootB)),
+            storagesByRoot = mapOf(rootA to createLookupStorage(rootA), rootB to createLookupStorage(rootB)),
+            createStorage = ::createLookupStorage,
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = listOf(rootA),
+            updatedCriRoots = listOf(rootB),
+            storagesByRoot = mapOf(rootA to createSubtypeStorage(rootA), rootB to createSubtypeStorage(rootB)),
+            createStorage = ::createSubtypeStorage,
         )
 
-        assertEquals(setOf(rootA), refreshed.first.keys)
-        assertEquals(setOf(rootA), refreshed.second.keys)
+        assertEquals(setOf(rootA), refreshedLookupStorages.keys)
+        assertEquals(setOf(rootA), refreshedSubtypeStorages.keys)
     }
 
     @Test
@@ -63,62 +75,66 @@ class BtaKotlinCompilerReferenceIndexStorageRefreshTest {
         val lookupA = createLookupStorage(rootA)
         val subtypeA = createSubtypeStorage(rootA)
 
-        val refreshed = refresh(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = listOf(rootA, rootB),
             updatedCriRoots = listOf(rootB),
-            lookupStoragesByRoot = mapOf(rootA to lookupA),
-            subtypeStoragesByRoot = mapOf(rootA to subtypeA),
+            storagesByRoot = mapOf(rootA to lookupA),
+            createStorage = ::createLookupStorage,
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = listOf(rootA, rootB),
+            updatedCriRoots = listOf(rootB),
+            storagesByRoot = mapOf(rootA to subtypeA),
+            createStorage = ::createSubtypeStorage,
         )
 
-        assertSame(lookupA, refreshed.first[rootA])
-        assertNotNull(refreshed.first[rootB])
-        assertSame(subtypeA, refreshed.second[rootA])
-        assertNotNull(refreshed.second[rootB])
+        assertSame(lookupA, refreshedLookupStorages[rootA])
+        assertNotNull(refreshedLookupStorages[rootB])
+        assertSame(subtypeA, refreshedSubtypeStorages[rootA])
+        assertNotNull(refreshedSubtypeStorages[rootB])
     }
 
     @Test
     fun `test refresh returns empty maps when all CRI roots disappear`() {
         val root = createCriRoot("root")
 
-        val refreshed = refresh(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = emptyList(),
             updatedCriRoots = listOf(root),
-            lookupStoragesByRoot = mapOf(root to createLookupStorage(root)),
-            subtypeStoragesByRoot = mapOf(root to createSubtypeStorage(root)),
+            storagesByRoot = mapOf(root to createLookupStorage(root)),
+            createStorage = ::createLookupStorage,
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = emptyList(),
+            updatedCriRoots = listOf(root),
+            storagesByRoot = mapOf(root to createSubtypeStorage(root)),
+            createStorage = ::createSubtypeStorage,
         )
 
-        assertTrue(refreshed.first.isEmpty())
-        assertTrue(refreshed.second.isEmpty())
+        assertTrue(refreshedLookupStorages.isEmpty())
+        assertTrue(refreshedSubtypeStorages.isEmpty())
     }
 
     @Test
     fun `test refresh keeps one storage per duplicated current root`() {
         val root = createCriRoot("root")
 
-        val refreshed = refresh(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = listOf(root, root),
             updatedCriRoots = listOf(root),
-            lookupStoragesByRoot = emptyMap(),
-            subtypeStoragesByRoot = emptyMap(),
+            storagesByRoot = emptyMap(),
+            createStorage = ::createLookupStorage,
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = listOf(root, root),
+            updatedCriRoots = listOf(root),
+            storagesByRoot = emptyMap(),
+            createStorage = ::createSubtypeStorage,
         )
 
-        assertEquals(1, refreshed.first.size)
-        assertEquals(1, refreshed.second.size)
+        assertEquals(1, refreshedLookupStorages.size)
+        assertEquals(1, refreshedSubtypeStorages.size)
     }
-
-    private fun refresh(
-        currentCriRoots: Collection<Path>,
-        updatedCriRoots: Collection<Path>,
-        lookupStoragesByRoot: Map<Path, BtaLookupInMemoryStorage>,
-        subtypeStoragesByRoot: Map<Path, BtaSubtypeInMemoryStorage>,
-    ): Pair<Map<Path, BtaLookupInMemoryStorage>, Map<Path, BtaSubtypeInMemoryStorage>> = refreshBtaStorageMaps(
-        currentCriRoots = currentCriRoots,
-        updatedCriRoots = updatedCriRoots,
-        lookupStoragesByRoot = lookupStoragesByRoot,
-        subtypeStoragesByRoot = subtypeStoragesByRoot,
-        createLookupStorage = ::createLookupStorage,
-        createSubtypeStorage = ::createSubtypeStorage,
-    )
 
     private fun createCriRoot(name: String): Path = tempDir.newDirectoryPath(name)
         .also(BtaTestFixtureSupport::copyFixtureInto)

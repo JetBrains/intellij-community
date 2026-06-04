@@ -5,6 +5,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.search.refIndex.IncrementalKotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.name.FqName
@@ -37,13 +39,17 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
         val updatedCriRoots = modules.flatMapTo(mutableSetOf(), Module::getCriPaths)
         val currentCriRoots = project.getCriPaths()
 
-        val (refreshedLookupStorages, refreshedSubtypeStorages) = refreshBtaStorageMaps(
+        val refreshedLookupStorages = refreshBtaStorageMap(
             currentCriRoots = currentCriRoots,
             updatedCriRoots = updatedCriRoots,
-            lookupStoragesByRoot = lookupStoragesByRoot,
-            subtypeStoragesByRoot = subtypeStoragesByRoot,
-            createLookupStorage = { BtaLookupInMemoryStorage.create(it, projectPath) },
-            createSubtypeStorage = BtaSubtypeInMemoryStorage::create,
+            storagesByRoot = lookupStoragesByRoot,
+            createStorage = { BtaLookupInMemoryStorage.create(it, projectPath) },
+        )
+        val refreshedSubtypeStorages = refreshBtaStorageMap(
+            currentCriRoots = currentCriRoots,
+            updatedCriRoots = updatedCriRoots,
+            storagesByRoot = subtypeStoragesByRoot,
+            createStorage = BtaSubtypeInMemoryStorage::create,
         )
 
         lookupStoragesByRoot = refreshedLookupStorages
@@ -54,27 +60,9 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
     override fun close() = Unit
 }
 
-fun refreshBtaStorageMaps(
-    currentCriRoots: Collection<Path>,
-    updatedCriRoots: Collection<Path>,
-    lookupStoragesByRoot: Map<Path, BtaLookupInMemoryStorage>,
-    subtypeStoragesByRoot: Map<Path, BtaSubtypeInMemoryStorage>,
-    createLookupStorage: (Path) -> BtaLookupInMemoryStorage?,
-    createSubtypeStorage: (Path) -> BtaSubtypeInMemoryStorage?,
-): Pair<Map<Path, BtaLookupInMemoryStorage>, Map<Path, BtaSubtypeInMemoryStorage>> =
-    refreshBtaStorageMap(
-        currentCriRoots = currentCriRoots,
-        updatedCriRoots = updatedCriRoots,
-        storagesByRoot = lookupStoragesByRoot,
-        createStorage = createLookupStorage,
-    ) to refreshBtaStorageMap(
-        currentCriRoots = currentCriRoots,
-        updatedCriRoots = updatedCriRoots,
-        storagesByRoot = subtypeStoragesByRoot,
-        createStorage = createSubtypeStorage,
-    )
-
-private fun <T> refreshBtaStorageMap(
+@VisibleForTesting
+@ApiStatus.Internal
+fun <T> refreshBtaStorageMap(
     currentCriRoots: Collection<Path>,
     updatedCriRoots: Collection<Path>,
     storagesByRoot: Map<Path, T>,
