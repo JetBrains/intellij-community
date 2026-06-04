@@ -314,12 +314,6 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
 
-    LibraryLicense("Dart Analysis Server", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.dart", url = "https://github.com/dart-lang/eclipse3")
-      .eplV1("https://github.com/dart-archive/eclipse3/tree/master/docs"),
-
-    LibraryLicense("Dart VM Service drivers", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.dart", url = "https://github.com/dart-lang/vm_service_drivers")
-      .newBsd("https://github.com/dart-lang/vm_service_drivers/blob/master/LICENSE"),
-
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
@@ -765,9 +759,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("jSerialComm", libraryName = "jetbrains.intellij.deps.jSerialComm", url= "https://github.com/JetBrains/jSerialComm")
       .apache("https://github.com/JetBrains/jSerialComm/blob/master/LICENSE-APACHE-2.0")
       .forkedFrom(groupId = "com.fazecast", artifactId = "jSerialComm", version = "2.11.2", mavenRepositoryUrl = "https://repo1.maven.org/maven2/"),
-
-    LibraryLicense("JSON", libraryName = "json.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://www.json.org/")
-      .license("JSON License", "https://www.json.org/license.html"),
 
     LibraryLicense("JSON in Java", libraryName = "org.json:json", url = "https://github.com/stleary/JSON-java")
       .license("JSON License", "https://www.json.org/license.html"),
@@ -1384,10 +1375,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("VS Code Twig Language 2", version = "0.9.4", attachedTo = "intellij.textmate", url = "https://github.com/mblode/vscode-twig-language-2")
       .mit("https://github.com/mblode/vscode-twig-language-2/blob/master/LICENSE.md"),
-
-    // originally https://github.com/pelotoncycle/weberknecht
-    LibraryLicense("weberknecht", libraryName = "weberknecht-0.1.5.jar", version = "0.1.5", url = "https://github.com/pusher-community/titanium_pusher_android/blob/master/src/de/roderick/weberknecht/")
-      .apache("https://github.com/pusher-community/titanium_pusher_android/blob/master/src/de/roderick/weberknecht/WebSocket.java"),
 
     LibraryLicense(libraryName = "winp", url = "https://github.com/jenkinsci/winp")
       .mit("https://github.com/jenkinsci/winp/blob/master/LICENSE.txt")

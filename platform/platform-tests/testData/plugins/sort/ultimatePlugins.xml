@@ -832,15 +832,6 @@
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true">com.intellij.modules.coverage</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.dart/META-INF/plugin.xml">
-    <id>-Dart-</id>
-    <name>Dart</name>
-    <depends>com.intellij.modules.xml</depends>
-    <depends optional="true">-JavaScriptDebugger-</depends>
-    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
-    <depends optional="true">-com-intellij-copyright-</depends>
-    <depends optional="true">com.intellij.modules.coverage</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.vcs.svn/META-INF/plugin.xml">
     <id>-Subversion-</id>
     <name>Subversion</name>

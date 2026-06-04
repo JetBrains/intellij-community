@@ -8,7 +8,6 @@
 + -org-editorconfig-editorconfigjetbrains-
 + -com-jetbrains-plugins-ini4idea-
 + -Subversion-
-+ -Dart-
 + -com-jetbrains-php-framework-
 + -com-intellij-phing-
 + -org-jetbrains-plugins-textmate-
