@@ -46,7 +46,6 @@ import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.util.Alarm
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -196,13 +195,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     }
   }
 
-  private fun AdvancedSettingBean.isApplicable(): Boolean {
-    return when {
-      id == "project.view.do.not.autoscroll.to.libraries" -> !PlatformUtils.isDataGrip()
-      else -> true
-    }
-  }
-
   private fun updateSearch() {
     applyFilter(searchField.text, onlyShowModified)
   }
@@ -269,7 +261,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
-  override fun getId(): String = "advanced.settings"
+  override fun getId(): String = ADVANCED_SETTINGS_CONFIGURABLE_ID
 
   override fun getHelpTopic(): String = "Advanced_settings"
 

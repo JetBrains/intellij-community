@@ -1728,6 +1728,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                              bundle="messages.ApplicationBundle"
                              instance="com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable"
                              groupId="root"/>
+    <findActionSearchableOptionsFilter implementation="com.intellij.openapi.options.advanced.AdvancedSettingsFindActionOptionsFilter"/>
 
     <advancedSetting id="ide.ui.native.file.chooser" default="true" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="merge.main.menu" default="true" groupKey="group.advanced.settings.ui" service="com.intellij.ide.ui.MergeMainMenuSettingProvider" property="mergeMainMenu"/>
