@@ -62,6 +62,7 @@ jvm_library(
         "//platform/platform-impl/initial-config-import",
         "//platform/progress/shared:ide-progress",
         "//platform/eel-provider",
+        "//platform/backend/observation",
     ],
 )
 
@@ -117,6 +118,7 @@ jvm_library(
         "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/backend/observation:observation_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.configurationStore.impl` end

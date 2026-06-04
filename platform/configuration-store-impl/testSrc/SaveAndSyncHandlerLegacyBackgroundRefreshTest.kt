@@ -14,6 +14,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.ui.BalloonLayout
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,7 @@ import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.awt.Rectangle
 import java.nio.file.Files
 import javax.swing.JComponent
@@ -37,6 +39,9 @@ import kotlin.time.Duration.Companion.seconds
 @RegistryKey(key = "vfs.background.refresh.on.idle", value = "false")
 internal class SaveAndSyncHandlerLegacyBackgroundRefreshTest {
   private val ideFrame = TestIdeFrame()
+
+  @RegisterExtension
+  private val project = ProjectModelExtension()
 
   @BeforeEach
   fun `set settings`() {

@@ -3,7 +3,10 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdleTracker
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.VfsTestUtil
@@ -11,6 +14,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +25,7 @@ import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Files
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
@@ -31,6 +36,12 @@ import kotlin.time.Duration.Companion.seconds
 @RegistryKey(key = "vfs.background.refresh.interval", value = "1")
 @RegistryKey(key = "vfs.background.refresh.on.idle", value = "true")
 internal class SaveAndSyncHandlerBackgroundRefreshTest {
+
+  @RegisterExtension
+  private val projectModel = ProjectModelExtension()
+
+  private val project: Project get() = projectModel.project
+
   @BeforeEach
   fun `set settings`() {
     GeneralSettings.getInstance().apply {
@@ -64,6 +75,21 @@ internal class SaveAndSyncHandlerBackgroundRefreshTest {
     assertBackgroundRefresh(expectedRefreshCount = 0)
 
     simulatedUserActivityJob.cancelAndJoin()
+  }
+
+  @Test
+  fun `dumb mode prevents background vfs refresh`(): Unit = timeoutRunBlocking(10.seconds) {
+    val dumbModeJob = launch(CoroutineName("simulated user activity")) {
+      DumbService.getInstance(project).runInDumbMode("test enter dumb mode") {
+        while (true) {
+          delay(100.milliseconds)
+        }
+      }
+    }
+
+    assertBackgroundRefresh(expectedRefreshCount = 0)
+
+    dumbModeJob.cancelAndJoin()
   }
 
   @Test
@@ -167,7 +193,8 @@ internal class SaveAndSyncHandlerBackgroundRefreshTest {
 
     try {
       delay(1.seconds) // wait for handler to start listening
-      VfsTestUtil.syncRefresh()
+      // same as com.intellij.testFramework.VfsTestUtil.syncRefresh, but don't wait for indexing
+      writeAction { VirtualFileManager.getInstance().syncRefresh() }
       serviceAsync<IdleTracker>().restartIdleTimer()
 
       val virtualFileManager = VirtualFileManager.getInstance()

@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -40,6 +41,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshSession
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector.logBackgroundRefresh
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -647,7 +649,13 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     val queue = serviceAsync<RefreshQueue>()
     try {
       while (keepRefreshing()) {
-        if (settings.isBackgroundSync && refreshAllLocalRootsInBackground(queue)) {
+        val projects = ProjectManager.getInstanceIfCreated()?.openProjects?.filter { !it.isDisposed }.orEmpty()
+        val canTryRefresh = settings.isBackgroundSync &&
+                            projects.isNotEmpty() &&
+                            // wait for all projects to be configured. `true` if all are already configured
+                            projects.all { !Observation.awaitConfiguration(it, null) }
+
+        if (canTryRefresh && keepRefreshing() && refreshAllLocalRootsInBackground(queue)) {
           sessions.incrementAndGet()
         }
         delay(interval)
