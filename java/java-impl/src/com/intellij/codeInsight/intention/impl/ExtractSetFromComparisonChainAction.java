@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.IntStreamEx;
@@ -304,7 +305,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       if (replacement instanceof PsiMethodCallExpression && disjunction.getParent() instanceof PsiParenthesizedExpression) {
         disjunction = (PsiExpression)disjunction.getParent();
       }
-      return disjunction.replace(replacement);
+      return new CommentTracker().replaceAndRestoreComments(disjunction, replacement);
     }
   }
 
