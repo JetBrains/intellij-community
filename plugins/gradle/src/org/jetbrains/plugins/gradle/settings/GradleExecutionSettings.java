@@ -49,7 +49,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   /**
    * @deprecated use default constructor instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GradleExecutionSettings(
     @Nullable String gradleHome,
     @Nullable String serviceDirectory,
@@ -67,7 +67,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   /**
    * @deprecated use default constructor instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GradleExecutionSettings(
     @Nullable String gradleHome,
     @Nullable String serviceDirectory,

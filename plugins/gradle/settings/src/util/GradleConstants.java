@@ -42,7 +42,7 @@ public final class GradleConstants {
   /**
    * @deprecated renamed, use GradleConstants#SYSTEM_DIRECTORY_PATH_KEY instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final String SYSTEM_DIRECTORY_PATH_KEY = GRADLE_USER_HOME_ENV_KEY;
 
   public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";

@@ -22,6 +22,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type, configure::accept)
   fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Renamed, use the [test] function instead.")
   fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self = test(configure)
 

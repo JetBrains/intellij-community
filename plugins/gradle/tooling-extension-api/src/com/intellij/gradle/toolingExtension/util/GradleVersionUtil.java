@@ -40,6 +40,7 @@ public final class GradleVersionUtil {
    * Changes can be made only in the specific version and present in the future.
    * We always can identify the version where new changes were made.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isCurrentGradleNewerThan(@NotNull String version) {
@@ -59,6 +60,7 @@ public final class GradleVersionUtil {
   /**
    * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isGradleOlderOrSameAs(@NotNull GradleVersion actualVersion, @NotNull String version) {

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * @deprecated this model builder will be replaced by {@link ProjectRepositoriesModelBuilder}.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public class MavenRepositoriesModelBuilder implements ModelBuilderService {
   @Override

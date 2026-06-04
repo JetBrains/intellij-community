@@ -304,7 +304,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   /**
    * @deprecated Use {@link ExternalSystemUtil#runTask} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void appendInitScriptArgument(
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,

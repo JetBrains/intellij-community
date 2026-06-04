@@ -108,6 +108,7 @@ private fun getModuleTasks(moduleNode: DataNode<ModuleData>): ModuleTaskData {
 /**
  * Fallback method for backward compatibility with Gradle projects previously imported by IDEA 2022.3 and older
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Fallback method for backward compatibility. Use ModuleData.gradleIdentityPath instead")
 fun getGradlePath(moduleData: ModuleData): String {
   val externalProjectId = moduleData.id
