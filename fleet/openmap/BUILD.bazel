@@ -28,6 +28,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,6 +49,7 @@ jvm_library(
     kotlinc_opts = ":custom_openmap",
     module_name = "fleet.openmap",
     visibility = ["//visibility:public"],
+    exports = ["@lib//:kotlinx-collections-immutable"],
     runtime_deps = [
         # do not sort,
         ":openmap",
