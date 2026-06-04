@@ -108,12 +108,20 @@ public class IndexStorageLayoutBenchmark {
 
     @Param({
       "com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider",
-      //RC: for this to work add 'index.storages.plugin.mmapped' to the classpath
-      "com.intellij.index.storages.plugin.mmapped.DurableMapBasedFileIndexLayoutProvider"
+      //RC: for this to work, add 'index.storages.plugin.mmapped' to the classpath
+      //"com.intellij.index.storages.plugin.mmapped.DurableMapBasedFileIndexLayoutProvider"
     })
     private String storageLayoutProviderClassName;
 
+    @Param({"disabled", "persistent"})
+    public String walMode;
+
+    @Param({"none", "write_200us", "write_1ms_force_2ms", "write_200us_p99_50ms"})
+    public String ioDelayProfile;
+
     private FileBasedIndexLayoutProvider storageLayoutProviderToTest;
+
+    private IoLatencyProfile latencyProfile;
 
     //MAYBE configure with @Param?
     public FileBasedIndexExtension<Integer, Integer> extension;
@@ -129,9 +137,19 @@ public class IndexStorageLayoutBenchmark {
 
       extension = new SampleIndexExtension(cacheSize);
 
-      @SuppressWarnings("unchecked")
-      Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
-      storageLayoutProviderToTest = providerClass.getDeclaredConstructor().newInstance();
+      latencyProfile = IoLatencyProfile.parse(ioDelayProfile);
+      if (IndexStorageLayoutBenchmarkStorageContexts.isDefaultProvider(storageLayoutProviderClassName)) {
+        storageLayoutProviderToTest = IndexStorageLayoutBenchmarkStorageContexts.defaultProvider(
+          walMode,
+          latencyProfile,
+          /*async WAL flusher: */ true
+        );
+      }
+      else {
+        @SuppressWarnings("unchecked")
+        Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
+        storageLayoutProviderToTest = providerClass.getDeclaredConstructor().newInstance();
+      }
 
       storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     }
@@ -140,12 +158,19 @@ public class IndexStorageLayoutBenchmark {
     public void setupIteration_recreateCleanStorage() throws Exception {
       storageLayout.clearIndexData();
       indexStorage = storageLayout.openIndexStorage();
+      resetIoLatencyStatistics();
     }
 
     @TearDown(Level.Iteration)
     public void closeIteration_closeStorage() throws Exception {
-      if (indexStorage != null) {
-        indexStorage.close();
+      try {
+        if (indexStorage != null) {
+          indexStorage.close();
+          indexStorage = null;
+        }
+      }
+      finally {
+        printIoLatencyStatistics();
       }
     }
 
@@ -153,9 +178,29 @@ public class IndexStorageLayoutBenchmark {
     public void closeBenchmark() throws Exception {
       if (indexStorage != null) {
         indexStorage.close();
+        indexStorage = null;
+      }
+      if (storageLayoutProviderToTest instanceof AutoCloseable) {
+        ((AutoCloseable)storageLayoutProviderToTest).close();
       }
       if (storageLayout != null) {
         storageLayout.clearIndexData();
+        storageLayout = null;
+      }
+    }
+
+    public void resetIoLatencyStatistics() {
+      if (latencyProfile != null) {
+        latencyProfile.resetStatistics();
+      }
+    }
+
+    private void printIoLatencyStatistics() {
+      if (latencyProfile != null) {
+        String statistics = latencyProfile.drainStatistics();
+        if (!statistics.isEmpty()) {
+          System.out.println(statistics);
+        }
       }
     }
 
@@ -199,6 +244,7 @@ public class IndexStorageLayoutBenchmark {
       indexStorage.flush();
 
       allKeys = keys.toIntArray();
+      storageContext.resetIoLatencyStatistics();
     }
 
     public Integer nextKey() {
@@ -231,8 +277,8 @@ public class IndexStorageLayoutBenchmark {
 
   @Benchmark
   public boolean indexStorage_readContainer(InputContext inputContext,
-                                        StorageContext storageContext,
-                                        ReadContext readContext) throws StorageException {
+                                            StorageContext storageContext,
+                                            ReadContext readContext) throws StorageException {
     IndexStorage<Integer, Integer> indexStorage = storageContext.indexStorage;
 
     Integer key = readContext.nextKey();
@@ -273,7 +319,7 @@ public class IndexStorageLayoutBenchmark {
   }
 
 
-  public static void main(final String[] args) throws RunnerException {
+  public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
                "--add-opens=java.base/java.util=ALL-UNNAMED",
@@ -281,6 +327,8 @@ public class IndexStorageLayoutBenchmark {
                "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
                "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
+               "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+               "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
 
                //disable cache:
                //"-Didea.use.slru.for.file.based.index=false",
@@ -291,10 +339,11 @@ public class IndexStorageLayoutBenchmark {
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)
       //.measurementIterations(1000)
-      //.include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*addValuesToIndexStorage.*")
+      //.include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*addValues.*")
       .include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*")
-      .threads(1)
-      .forks(1)
+      //.threads(4)
+      //.mode(Mode.SampleTime)
+      //.forks(1)
       .build();
 
     new Runner(opt).run();
