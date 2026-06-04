@@ -31,7 +31,7 @@ class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibrar
         val usages = findUsages(privateClass, null, false, project)
         assertEquals(
             listOf(
-                "PrivateLibraryClass (class org.jetbrains.kotlin.analysis.api.impl.base.references.KaBaseSimpleNameReference)",
+                "PrivateLibraryClass (class org.jetbrains.kotlin.idea.references.impl.KaBaseSimpleNameReference)",
                 "library.PrivateLibraryClass (class com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl)",
             ),
             usages.map { it.toString() }.sorted(),

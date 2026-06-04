@@ -33,5 +33,22 @@
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoJvmNameSymbolContributor"/>
 
     <gotoByName.defaultProvider.ignoreLanguage language="kotlin"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.references.impl.ReadWriteAccessCheckerBaseImpl"
+    />
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseForLoopInReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseInvokeFunctionReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBasePropertyDelegationMethodsReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseDestructuringDeclarationReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseArrayAccessReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseConstructorDelegationReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseCollectionLiteralReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseKDocReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseSimpleNameReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseDefaultAnnotationArgumentReference$Provider"/>
   </extensions>
 </idea-plugin>
