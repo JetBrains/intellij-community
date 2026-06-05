@@ -643,6 +643,7 @@ f:com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 f:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - sf:FILE_HISTORY_MODEL:com.intellij.openapi.actionSystem.DataKey
 - sf:FILE_HISTORY_UI:com.intellij.openapi.actionSystem.DataKey
+- sf:INSTANCE:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - sf:LOG_DATA:com.intellij.openapi.actionSystem.DataKey
 - sf:LOG_DIFF_HANDLER:com.intellij.openapi.actionSystem.DataKey
 - sf:LOG_MANAGER:com.intellij.openapi.actionSystem.DataKey
@@ -651,7 +652,6 @@ f:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - sf:MAIN_UI:com.intellij.openapi.actionSystem.DataKey
 - sf:VCS_LOG_GRAPH_TABLE:com.intellij.openapi.actionSystem.DataKey
 - sf:VCS_LOG_VISIBLE_ROOTS:com.intellij.openapi.actionSystem.DataKey
-- <init>():V
 f:com.intellij.vcs.log.ui.VcsLogPanel
 - com.intellij.ui.components.JBPanel
 - com.intellij.openapi.actionSystem.UiDataProvider

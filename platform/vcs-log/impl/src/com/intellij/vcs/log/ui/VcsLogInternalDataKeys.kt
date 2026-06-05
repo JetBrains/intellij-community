@@ -1,27 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.ui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.ui
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsLogDiffHandler;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.history.FileHistoryModel;
-import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataKey.Companion.create
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogDiffHandler
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.history.FileHistoryModel
+import com.intellij.vcs.log.history.FileHistoryUi
+import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 
-import java.util.Set;
+object VcsLogInternalDataKeys {
+  @JvmField
+  val LOG_MANAGER: DataKey<VcsLogManager> = create("Vcs.Log.Manager")
 
-public final class VcsLogInternalDataKeys {
-  public static final DataKey<VcsLogManager> LOG_MANAGER = DataKey.create("Vcs.Log.Manager");
-  public static final DataKey<VcsLogUiProperties> LOG_UI_PROPERTIES = DataKey.create("Vcs.Log.Ui.Properties");
-  public static final DataKey<MainVcsLogUi> MAIN_UI = DataKey.create("Vcs.Log.Main.Ui");
-  public static final DataKey<FileHistoryUi> FILE_HISTORY_UI = DataKey.create("Vcs.FileHistory.Ui");
-  public static final DataKey<VcsLogUiEx> LOG_UI_EX = DataKey.create("Vcs.Log.UiEx");
-  public static final DataKey<VcsLogDiffHandler> LOG_DIFF_HANDLER = DataKey.create("Vcs.Log.Diff.Handler");
-  public static final DataKey<VcsLogData> LOG_DATA = DataKey.create("Vcs.Log.Data");
-  public static final DataKey<Set<VirtualFile>> VCS_LOG_VISIBLE_ROOTS = DataKey.create("Vcs.Log.Visible.Roots");
-  public static final DataKey<FileHistoryModel> FILE_HISTORY_MODEL = DataKey.create("Vcs.FileHistory.Model");
-  public static final DataKey<VcsLogGraphTable> VCS_LOG_GRAPH_TABLE = DataKey.create("Vcs.Log.Graph.Table");
+  @JvmField
+  val LOG_UI_PROPERTIES: DataKey<VcsLogUiProperties> = create("Vcs.Log.Ui.Properties")
+
+  @JvmField
+  val MAIN_UI: DataKey<MainVcsLogUi> = create("Vcs.Log.Main.Ui")
+
+  @JvmField
+  val FILE_HISTORY_UI: DataKey<FileHistoryUi> = create("Vcs.FileHistory.Ui")
+
+  @JvmField
+  val LOG_UI_EX: DataKey<VcsLogUiEx> = create("Vcs.Log.UiEx")
+
+  @JvmField
+  val LOG_DIFF_HANDLER: DataKey<VcsLogDiffHandler> = create("Vcs.Log.Diff.Handler")
+
+  @JvmField
+  val LOG_DATA: DataKey<VcsLogData> = create("Vcs.Log.Data")
+
+  @JvmField
+  val VCS_LOG_VISIBLE_ROOTS: DataKey<Set<VirtualFile>> = create("Vcs.Log.Visible.Roots")
+
+  @JvmField
+  val FILE_HISTORY_MODEL: DataKey<FileHistoryModel> = create("Vcs.FileHistory.Model")
+
+  @JvmField
+  val VCS_LOG_GRAPH_TABLE: DataKey<VcsLogGraphTable> = create("Vcs.Log.Graph.Table")
 }
