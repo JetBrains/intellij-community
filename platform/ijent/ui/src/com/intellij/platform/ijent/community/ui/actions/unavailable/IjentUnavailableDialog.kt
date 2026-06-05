@@ -3,6 +3,7 @@
 package com.intellij.platform.ijent.community.ui.actions.unavailable
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -22,18 +23,28 @@ import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
-import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.*
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainCoroutineDispatcher
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 
 private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
@@ -43,8 +54,13 @@ private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
       f()
     }
     else {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        f()
+      // computeDetached is crucial here for immediate cancellation in case EDT is not available
+      // (e.g., waiting for fsBlocking inside DiskQueryRelay)
+      @OptIn(DelicateCoroutinesApi::class)
+      computeDetached {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          f()
+        }
       }
     }
   }
@@ -74,8 +90,11 @@ internal class NotRespondingFilesystemDialogService {
 
 internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   override suspend fun showModalDialog(eelDescriptor: EelDescriptor): IjentUnavailableHandlerResult {
+    val activeProject = ProjectUtil.getActiveProject()
     val projectsToClose = ProjectManager.getInstance().openProjects.filter {
       it.getEelDescriptor() == eelDescriptor
+    }.sortedByDescending {
+      activeProject == it
     }
     if (projectsToClose.isEmpty()) {
       eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
@@ -89,11 +108,13 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   }
 
   private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, projects: List<Project>): ProjectCloseDecision {
+    val coroutineContext = currentCoroutineContext()
     val closeDecision = suspendCancellableCoroutine { cont ->
-      val builder = DialogBuilder().apply {
+      val builder = DialogBuilder(projects.first()).apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
         setCenterPanel(createCenterPanel(projects))
         addCancelAction().setText(IjentImplBundle.message("action.close.projects.text", projects.size))
+        dialogWrapper.setShouldUseWriteIntentReadAction(false)
       }
 
       cont.invokeOnCancellation {
@@ -103,7 +124,11 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         )
       }
 
-      val exitCode = builder.show()
+      // It's crucial here to pump coroutine event loop while the dialog is shown
+      // because otherwise canceling the dialog would not even be dispatched,
+      // and the dialog (created to visualize the freeze) becomes a cause of the freeze to continue.
+      val exitCode = builder.showWithPump(coroutineContext)
+
       if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
         ApplicationManager.getApplication().invokeLater {
           WriteIntentReadAction.run {
@@ -147,5 +172,35 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     return panel {
       createDefaultPanel(projects)
     }
+  }
+}
+
+private fun DialogBuilder.showWithPump(coroutineContext: CoroutineContext): Int {
+  @Suppress("INVISIBLE_REFERENCE")
+  return when (val loop = coroutineContext[ContinuationInterceptor]) {
+    is MainCoroutineDispatcher -> show()
+    is kotlinx.coroutines.EventLoop -> {
+      // Use active waiting since it's the simplest way. Listening for dispatched events is more complex.
+      val future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
+        {
+          ApplicationManager.getApplication().invokeLater(
+            {
+              @Suppress("RAW_RUN_BLOCKING")
+              runBlocking(loop) { }
+            },
+            ModalityState.any(),
+          )
+        },
+        0L, 50L, TimeUnit.MILLISECONDS,
+      )
+
+      try {
+        return show()
+      }
+      finally {
+        future.cancel(false)
+      }
+    }
+    else -> error("Unknown loop type: $loop")
   }
 }
