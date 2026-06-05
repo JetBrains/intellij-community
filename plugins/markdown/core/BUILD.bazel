@@ -80,6 +80,8 @@ jvm_library(
         "//fleet/rhizomedb",
         "//platform/util:util-ui",
         "//platform/util/text-matching",
+        "//platform/usageView-impl",
+        "//platform/usageView",
     ],
 )
 
@@ -156,6 +158,8 @@ jvm_library(
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/util/text-matching:text-matching_test_lib",
+        "//platform/usageView-impl:usageView-impl_test_lib",
+        "//platform/usageView:usageView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown` end

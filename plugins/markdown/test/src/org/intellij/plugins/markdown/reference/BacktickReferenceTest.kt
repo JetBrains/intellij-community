@@ -35,6 +35,26 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test backtick usage is reported as a dynamic usage`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+
+    val expectations = """
+      <root> (1)
+       Class
+        JavaClass
+       Dynamic usages in Project Files (1)
+        Value read (1)
+         light_idea_test_case (1)
+           (1)
+           some.md (1)
+            1There is an `JavaClass` backtick
+
+    """.trimIndent()
+    assertEquals(expectations, myFixture.getUsageViewTreeTextRepresentation(javaClass))
+  }
+
+  @Test
   fun `test short symbol references are not resolved`() {
     createFile(
       "JavaClass.java",
