@@ -553,25 +553,25 @@ class ListPluginComponent(
     return myChooseUpdateButton
   }
 
-  fun setUpdateDescriptor(descriptor: PluginUiModel?) {
+  fun setUpdateDescriptor(updateDescriptor: PluginUiModel?) {
     if (myMarketplace && myInstalledDescriptorForMarketplace == null ||
-        descriptor != null && myModelFacade.isUninstalled(descriptor.pluginId)) {
+        updateDescriptor != null && myModelFacade.isUninstalled(updateDescriptor.pluginId)) {
       return
     }
-    if (myUpdateDescriptor == null && descriptor == null) {
+    if (myUpdateDescriptor == null && updateDescriptor == null) {
       return
     }
     if (myIndicator != null || isRestartEnabled()) {
       return
     }
 
-    myUpdateDescriptor = descriptor
+    myUpdateDescriptor = updateDescriptor
 
-    val plugin = getDescriptorForActions()
+    val descriptorForActions = getDescriptorForActions()
 
-    if (myUpdateDescriptor == null) {
+    if (updateDescriptor == null) {
       if (myVersion != null) {
-        setVersionLabelState(myVersion!!, plugin.version, plugin.isBundledUpdate)
+        setVersionLabelState(myVersion!!, descriptorForActions.version, descriptorForActions.isBundledUpdate)
       }
       if (myUpdateLicensePanel != null) {
         myLayout.removeLineComponent(myUpdateLicensePanel!!)
@@ -586,11 +586,11 @@ class ListPluginComponent(
     }
     else {
       if (myVersion != null) {
-        setVersionLabelState(myVersion!!, plugin.version, plugin.isBundledUpdate)
+        setVersionLabelState(myVersion!!, descriptorForActions.version, descriptorForActions.isBundledUpdate)
       }
-      if (plugin.productCode == null && myUpdateDescriptor!!.productCode != null &&
-          !plugin.isBundled && !LicensePanel.isEA2Product(myUpdateDescriptor!!.productCode) &&
-          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(myUpdateDescriptor!!)) {
+      if (descriptorForActions.productCode == null && updateDescriptor.productCode != null &&
+          !descriptorForActions.isBundled && !LicensePanel.isEA2Product(updateDescriptor.productCode) &&
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(updateDescriptor)) {
         if (myUpdateLicensePanel == null) {
           myUpdateLicensePanel = LicensePanel(true)
           myLayout.addLineComponent(myUpdateLicensePanel!!)
@@ -605,7 +605,7 @@ class ListPluginComponent(
           IdeBundle.message("label.next.plugin.version.is"),
           true,
           false,
-          { myUpdateDescriptor },
+          { updateDescriptor },
           true,
           true,
         )
@@ -613,7 +613,7 @@ class ListPluginComponent(
       if (myUpdateButton == null) {
         myUpdateButton = UpdateButton()
         myLayout.addButtonComponent(myUpdateButton!!, 0)
-        myUpdateButton!!.addActionListener { updatePlugin(plugin) }
+        myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions) }
       }
       else if (!successfullyFinishedOnce) {
         myUpdateButton!!.isEnabled = true
@@ -755,13 +755,13 @@ class ListPluginComponent(
     }
   }
 
-  private fun updatePlugin(plugin: PluginUiModel) {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(plugin)
+  private fun updatePlugin(descriptorForActions: PluginUiModel) {
+    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(descriptorForActions)
     pluginUpdateSourceApplier.applyPluginUpdateSourceId()
     PluginModelAsyncOperationsExecutor.updatePlugin(
       myCoroutineScope,
       myModelFacade,
-      plugin,
+      descriptorForActions,
       myUpdateDescriptor,
       myCustomizer,
       ModalityState.stateForComponent(myUpdateButton!!),
