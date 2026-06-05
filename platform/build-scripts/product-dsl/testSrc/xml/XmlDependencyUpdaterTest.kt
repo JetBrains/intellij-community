@@ -276,6 +276,40 @@ class XmlDependencyUpdaterTest {
   }
 
   @Test
+  fun `preserves placeholder comment inside wrapped generated dependencies region`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <id>org.example</id>
+        <name>Example</name>
+
+        <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+        <dependencies>
+          <!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->
+          <module name="intellij.rider"/>
+        </dependencies>
+        <!-- endregion -->
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("intellij.java.ui", "intellij.rider"),
+      pluginDependencies = emptyList(),
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).contains("<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->")
+    assertThat(xml).contains("<module name=\"intellij.java.ui\"/>")
+    assertThat(xml).contains("<module name=\"intellij.rider\"/>")
+    assertThat(xml.indexOf("<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"))
+      .isLessThan(xml.indexOf("<module name=\"intellij.java.ui\"/>"))
+  }
+
+  @Test
   fun `does not duplicate or re-emit fold region markers as comments`(@TempDir tempDir: Path) {
     val content = """
       <idea-plugin>

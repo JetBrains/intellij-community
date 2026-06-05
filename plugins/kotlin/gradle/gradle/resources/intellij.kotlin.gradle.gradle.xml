@@ -5,6 +5,7 @@
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.ui"/>
   </dependencies>
   <!-- endregion -->
 

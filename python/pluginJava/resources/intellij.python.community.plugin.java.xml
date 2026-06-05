@@ -3,8 +3,11 @@
   <dependencies>
     <!-- Supports Java -->
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.ui"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.plugin.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
