@@ -6,6 +6,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.RemainingArgumentsData
@@ -27,14 +29,20 @@ sealed class SpecifyRemainingArgumentsByNameFix(
                 val remainingValueArguments = remainingArguments.allValueRemainingArguments
                 val remainingRequiredArguments = remainingArguments.remainingRequiredArguments
 
-                add(
-                    SpecifyAllRemainingArgumentsByNameFix(
-                        argumentList,
-                        remainingValueArguments,
-                        remainingArguments.allContextRemainingArguments,
-                        remainingArguments.allContextParameterNames
+                if (
+                    remainingValueArguments.isNotEmpty() ||
+                    argumentList.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)
+                ) {
+                    add(
+                        SpecifyAllRemainingArgumentsByNameFix(
+                            argumentList,
+                            remainingValueArguments,
+                            remainingArguments.allContextRemainingArguments,
+                            remainingArguments.allContextParameterNames
+                        )
                     )
-                )
+                }
+
                 if (remainingRequiredArguments.isNotEmpty() &&
                     remainingRequiredArguments != remainingValueArguments
                 ) {

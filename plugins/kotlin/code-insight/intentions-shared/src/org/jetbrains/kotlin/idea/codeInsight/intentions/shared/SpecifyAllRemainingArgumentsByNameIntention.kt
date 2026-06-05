@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.RemainingArgumentsData
@@ -12,7 +14,10 @@ internal class SpecifyAllRemainingArgumentsByNameIntention : SpecifyRemainingArg
 
     override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
 
-    override fun shouldShowFor(remainingArgumentsData: RemainingArgumentsData): Boolean = true
+    override fun shouldShowFor(element: KtElement, remainingArgumentsData: RemainingArgumentsData): Boolean {
+        return remainingArgumentsData.remainingRequiredArguments.isNotEmpty() ||
+                element.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)
+    }
 
     override fun invoke(
         actionContext: ActionContext,
