@@ -173,6 +173,10 @@ internal class DynamicPluginsSupportImpl(
     sequence: TransitionSequence,
     reporter: SequentialProgressReporter,
   ): List<DynamicReconfigurationIsNotPossibleReason> {
+    if (skipDynamicPluginReconfigurationValidation) {
+      return emptyList()
+    }
+
     return reporter.indeterminateStep(IdeBundle.message("progress.text.validating.dynamic.reconfiguration")) {
       val issuesToReport = SystemProperties.getIntProperty(REPORT_ISSUES_COUNT_PROPERTY, 1).coerceAtLeast(1)
       val issues = LinkedHashMap<String, DynamicReconfigurationIsNotPossibleReason>()
@@ -379,6 +383,9 @@ internal class DynamicPluginsSupportImpl(
 
   private val allowUnloadingWhenRunFromSources: Boolean
     get() = Registry.`is`("ide.plugins.allow.unload.from.sources", false)
+
+  private val skipDynamicPluginReconfigurationValidation: Boolean
+    get() = SystemProperties.getBooleanProperty("idea.plugins.skip.dynamic.plugin.reconfiguration.validation", false)
 
   private fun buildTransitionSequence(current: ResolvedPluginSet, target: ResolvedPluginSet): TransitionSequence {
     val currentGraph = current.runtimeModuleGroupGraph
