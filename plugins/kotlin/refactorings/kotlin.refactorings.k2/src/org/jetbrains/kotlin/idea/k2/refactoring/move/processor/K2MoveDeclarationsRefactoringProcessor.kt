@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -186,7 +188,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        val movedElements = allowAnalysisOnEdt {
+        val movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>> = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
                     preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
@@ -220,7 +222,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         listeners[original]?.elementMoved(new)
                     }
                     publisher.afterMove(moveDescriptor)
-                    oldToNewMap.values
+                    oldToNewMap.values.map { it.createSmartPointer() }
                 }
             }
         }
@@ -527,9 +529,9 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * Can be overridden to not open the files or to invoke other operations like rename.
      * Note: this is invoked in an `invokeLater` so it does not happen immediately after the move is completed.
      */
-    open fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+    open fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
         if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
-            EditorHelper.openFilesInEditor(movedElements.toTypedArray())
+            EditorHelper.openFilesInEditor(movedElements.mapNotNull { it.element }.toTypedArray())
         }
     }
 }

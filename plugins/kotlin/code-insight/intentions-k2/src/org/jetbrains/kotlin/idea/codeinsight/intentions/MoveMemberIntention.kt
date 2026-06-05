@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.DataManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.rename.RenamerFactory
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
@@ -57,7 +57,7 @@ internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName 
                 }
             }
 
-            override fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+            override fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
                 if (declarationWithAddedParameters?.isValid != true) return
                 declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
             }
