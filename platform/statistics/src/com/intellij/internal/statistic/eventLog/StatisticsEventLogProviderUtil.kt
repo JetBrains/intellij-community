@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 object StatisticsEventLogProviderUtil {
@@ -18,7 +17,6 @@ object StatisticsEventLogProviderUtil {
   }
 
   @ApiStatus.Internal
-  @IntellijInternalApi
   @JvmStatic
   fun getEventLogProvidersExt(recorderId: String): Collection<StatisticsEventLoggerProvider> {
     return ApplicationManager.getApplication().getService(StatisticsEventLogProvidersHolder::class.java).getEventLogProvidersExt(recorderId)

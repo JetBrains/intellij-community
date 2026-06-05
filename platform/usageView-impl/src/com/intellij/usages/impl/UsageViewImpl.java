@@ -52,7 +52,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -444,7 +443,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   @ApiStatus.Internal
-  @IntellijInternalApi
   public int getId() {
     return myUniqueIdentifier;
   }

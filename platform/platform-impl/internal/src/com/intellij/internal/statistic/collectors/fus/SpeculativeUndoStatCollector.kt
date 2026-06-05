@@ -6,14 +6,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Should be in RD-only module, but FUS automation does not work there
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 object SpeculativeUndoStatCollector : CounterUsagesCollector() {
 
   private val GROUP = EventLogGroup("undo.speculative", 1)

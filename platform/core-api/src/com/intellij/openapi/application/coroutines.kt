@@ -4,7 +4,6 @@ package com.intellij.openapi.application
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.EDT
@@ -74,7 +73,6 @@ suspend fun <T> constrainedReadAction(vararg constraints: ReadConstraint, action
  *
  * @see readAction
  */
-@IntellijInternalApi
 @Internal
 suspend fun <T> readActionUndispatched(action: () -> T): T {
   return constrainedReadActionUndispatched(action = action)
@@ -89,7 +87,6 @@ suspend fun <T> readActionUndispatched(action: () -> T): T {
  *
  * Use with care. This method should not be used to compute CPU-heavy stuff.
  */
-@IntellijInternalApi
 @Internal
 suspend fun <T> constrainedReadActionUndispatched(vararg constraints: ReadConstraint, action: () -> T): T {
   return readWriteActionSupport().executeReadAction(constraints.toList(), undispatched = true, action = action)

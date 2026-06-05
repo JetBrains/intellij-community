@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -236,7 +235,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   @RequiresEdt
   @ApiStatus.Internal
-  @IntellijInternalApi
   public void pauseNotifications() {
     if (myPostponedNotifications == null) {
       myPostponedNotifications = new ArrayList<>();
@@ -245,7 +243,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   @RequiresEdt
   @ApiStatus.Internal
-  @IntellijInternalApi
   public void resumeNotifications() {
     if (myPostponedNotifications != null) {
       List<Pair<Notification, @Nullable Project>> postponedNotifications = myPostponedNotifications;

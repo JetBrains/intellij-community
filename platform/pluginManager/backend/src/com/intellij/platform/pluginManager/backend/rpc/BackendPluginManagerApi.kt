@@ -20,7 +20,6 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -32,7 +31,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getPlugins(): List<PluginDto> {
     return DefaultUiPluginManagerController.getPlugins().map { PluginDto.fromModel(it) }

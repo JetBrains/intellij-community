@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @Rpc
 @ApiStatus.Internal
-@IntellijInternalApi
 interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPlugins(): List<PluginDto>
   suspend fun getPluginById(pluginId: PluginId): PluginDto?

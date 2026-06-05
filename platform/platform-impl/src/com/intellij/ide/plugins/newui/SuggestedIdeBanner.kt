@@ -11,9 +11,9 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.BoxLayout
@@ -21,7 +21,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-@IntellijInternalApi
+@ApiStatus.Internal
 internal class SuggestedIdeBanner : JPanel() {
   private var suggestedIde: SuggestedIde? = null
   private var pluginId: PluginId? = null

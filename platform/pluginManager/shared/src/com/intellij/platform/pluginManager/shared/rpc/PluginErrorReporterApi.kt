@@ -2,7 +2,6 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.PluginInitializationErrorHandler
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @Rpc
 @ApiStatus.Internal
-@IntellijInternalApi
 interface PluginErrorReporterApi : RemoteApi<Unit>, PluginInitializationErrorHandler {
   companion object {
     @JvmStatic

@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -26,7 +25,6 @@ import javax.swing.JComponent
  A controller that executes operations on plugins. There will be several implementations. It serves the same purpose as PluginModelFacade but is stateless.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface UiPluginManagerController {
   fun isEnabled(): Boolean
   fun getTarget(): PluginSource

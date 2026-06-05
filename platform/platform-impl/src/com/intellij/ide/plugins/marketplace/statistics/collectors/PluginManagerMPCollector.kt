@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.mp.MP_RECORDER_ID
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 private const val PM_MP_GROUP_ID = "mp.$PM_FUS_GROUP_ID"
@@ -25,7 +24,6 @@ private val EVENT_GROUP = EventLogGroup(
 )
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class PluginManagerMPCollector : PluginManagerFUSCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 

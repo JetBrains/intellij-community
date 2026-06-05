@@ -3,13 +3,11 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.graph.impl.ShortestPathFinder
 import org.jetbrains.annotations.ApiStatus
 
-@IntellijInternalApi
 @ApiStatus.Internal
 class UpdateStrategy @JvmOverloads constructor(
   private val currentBuild: BuildNumber,

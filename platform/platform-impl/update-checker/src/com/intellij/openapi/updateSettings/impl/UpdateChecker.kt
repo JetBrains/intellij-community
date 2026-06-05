@@ -44,7 +44,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -205,7 +204,6 @@ object UpdateChecker {
   fun updateAndShowResult(): ActionCallback = service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
 
   @ApiStatus.Internal
-  @IntellijInternalApi
   fun getUpdates(): ActionCallback = service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
 
   /**
@@ -244,7 +242,6 @@ object UpdateChecker {
   @JvmStatic
   @JvmName("getPlatformUpdates")
   @ApiStatus.Internal
-  @IntellijInternalApi
   internal fun getPlatformUpdates(
     settings: UpdateSettings = UpdateSettings.getInstance(),
     indicator: ProgressIndicator? = null,
@@ -327,7 +324,6 @@ object UpdateChecker {
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @IntellijInternalApi
   @ApiStatus.Internal
   @JvmStatic
   @JvmOverloads
@@ -460,7 +456,6 @@ object UpdateChecker {
 
   @JvmOverloads
   @JvmStatic
-  @IntellijInternalApi
   @ApiStatus.Internal
   fun getExternalPluginUpdates(
     updateSettings: UpdateSettings,
@@ -576,7 +571,6 @@ object UpdateChecker {
 
   /** A helper method for manually testing platform updates (see com.intellij.internal.ShowUpdateInfoDialogAction). */
   @ApiStatus.Internal
-  @IntellijInternalApi
   fun testPlatformUpdate(
     project: Project?,
     updateDataText: String,
@@ -639,7 +633,6 @@ object UpdateChecker {
   @Suppress("unused")
   @JvmOverloads
   @JvmStatic
-  @IntellijInternalApi
   @ApiStatus.Internal
   @Deprecated(message = "Use PluginUpdateCheckService instead", replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
   fun getInternalPluginUpdates(
@@ -659,7 +652,6 @@ object UpdateChecker {
     return result
   }
 
-  @IntellijInternalApi
   @ApiStatus.Internal
   @Deprecated("Must not be used by plugins, only IDE itself. To remove without replacement!")
   @ApiStatus.ScheduledForRemoval

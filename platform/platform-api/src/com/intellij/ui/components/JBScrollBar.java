@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
@@ -9,8 +8,9 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.ui.tabs.impl.IslandsPainterProvider;
-import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.DefaultBoundedRangeModel;
@@ -106,7 +106,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * Returns a new instance of {@link DefaultScrollBarUI}.
    * Use only to replace a more specific ScrollBarUI and release resources correctly.
    */
-  @IntellijInternalApi
+  @ApiStatus.Internal
   public static @NotNull ScrollBarUI createDefaultUI() {
     return new DefaultScrollBarUI();
   }

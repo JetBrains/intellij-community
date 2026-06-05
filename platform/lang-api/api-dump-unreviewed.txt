@@ -1089,7 +1089,6 @@ c:com.intellij.codeInspection.ui.InspectionOptionsPanel
 - addCheckboxEx(java.lang.String,java.lang.String):javax.swing.JCheckBox
 - addComponent(javax.swing.JComponent):V
 - addDependentCheckBox(java.lang.String,java.lang.String,javax.swing.JCheckBox):javax.swing.JCheckBox
-- addGlueIfNeeded():V
 - addGrowing(java.awt.Component):V
 - addGrowingX(java.awt.Component):V
 - addLabeledRow(java.lang.String,java.awt.Component):V

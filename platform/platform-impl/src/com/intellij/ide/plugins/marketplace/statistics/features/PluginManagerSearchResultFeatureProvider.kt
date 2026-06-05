@@ -6,12 +6,10 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
 @ApiStatus.Internal
-@IntellijInternalApi
 object PluginManagerSearchResultFeatureProvider {
   private val NAME_LENGTH_DATA_KEY = EventFields.Int("nameLength")
   private val DEVELOPED_BY_JETBRAINS_DATA_KEY = EventFields.Boolean("byJetBrains")

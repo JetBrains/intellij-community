@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.GridBag;
@@ -10,6 +9,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +142,7 @@ public class InspectionOptionsPanel extends JPanel {
     return checkBox;
   }
 
-  @IntellijInternalApi
+  @ApiStatus.Internal
   public void addGlueIfNeeded() {
     if (!myHasGrowing) {
       myHasGrowing = true;

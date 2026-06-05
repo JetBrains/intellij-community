@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +35,7 @@ interface UpdateCheckerFacade {
 
   fun loadProductData(indicator: ProgressIndicator?): Product?
 
-  @IntellijInternalApi
+  @ApiStatus.Internal
   fun updateDescriptorsForInstalledPlugins()
 
   /**
@@ -45,7 +44,7 @@ interface UpdateCheckerFacade {
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @IntellijInternalApi
+  @ApiStatus.Internal
   fun getPluginUpdates(
     plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
@@ -58,7 +57,7 @@ interface UpdateCheckerFacade {
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @IntellijInternalApi
+  @ApiStatus.Internal
   fun checkInstalledPluginUpdates(
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,

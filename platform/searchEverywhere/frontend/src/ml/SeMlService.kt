@@ -4,13 +4,11 @@ package com.intellij.platform.searchEverywhere.frontend.ml
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@IntellijInternalApi
 interface SeMlService {
   val isEnabled: Boolean
 

@@ -4,7 +4,6 @@ package com.intellij.platform.pluginManager.frontend
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.util.coroutines.childScope
 import fleet.rpc.client.durable
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 @ApiStatus.Internal
-@IntellijInternalApi
 open class RemotePluginUpdatesService(private val sessionId: String) : PluginUpdatesService() {
 
   internal val coroutineScope = service<BackendRpcCoroutineContext>().coroutineScope.childScope("RemotePluginUpdatesServiceScope")

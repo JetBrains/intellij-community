@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -46,7 +45,7 @@ object DynamicPlugins {
    * @param pretendDisabled plugins that should be treated as disabled
    */
   @RequiresReadLockAbsence
-  @IntellijInternalApi
+  @ApiStatus.Internal
   suspend fun checkCanReconfigureWithoutRestart(
     addNewCustomPlugins: List<PluginMainDescriptor>,
     forceRemovePlugins: List<PluginMainDescriptor>,
@@ -84,7 +83,7 @@ object DynamicPlugins {
    * @param extraStateValidator additional checks of the target state can be done there (e.g. that a certain plugin loads). See [expectPluginsState]
    */
   @RequiresReadLockAbsence
-  @IntellijInternalApi
+  @ApiStatus.Internal
   suspend fun reconfigure(
     project: Project?,
     addNewCustomPlugins: List<PluginMainDescriptor>,
@@ -405,7 +404,6 @@ object DynamicPlugins {
    * @param plugins ids of plugins from the current context that are disabled, but there is a demand to load as many of them as possible dynamically
    * @return a list of ids of plugins that can be enabled and loaded dynamically together
    */
-  @IntellijInternalApi
   @ApiStatus.Internal
   suspend fun findMaxLoadableSubsetApproximation(plugins: List<PluginId>): List<PluginId> {
     val dynamicPluginsSupport = DynamicPluginsSupport.getInstance() ?: error("new dynamic plugins support is not enabled")

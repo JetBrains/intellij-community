@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
@@ -27,7 +26,6 @@ import java.util.Locale
  * This interface contains only the subset of plugin metadata needed for display purposes.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface PluginUiModel {
   val pluginId: PluginId
 
@@ -209,7 +207,6 @@ fun PluginUiModel.presentableRating(): String? {
 
 @NlsSafe
 @ApiStatus.Internal
-@IntellijInternalApi
 fun PluginUiModel.presentableDownloads(): String? {
   val downloads = this.downloads ?: return null
   if (downloads.isBlank()) return null

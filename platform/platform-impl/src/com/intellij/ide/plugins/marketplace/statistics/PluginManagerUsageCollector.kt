@@ -2,8 +2,6 @@
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performInstalledTabSearch
-import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performMarketplaceSearch
 import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector
 import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
@@ -14,7 +12,6 @@ import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -27,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger
       both [PluginManagerMPCollector] and [PluginManagerFUSCollector] for backward compatibility.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 object PluginManagerUsageCollector {
   private val fusCollector = PluginManagerFUSCollector()
   private val mpCollector = PluginManagerMPCollector()

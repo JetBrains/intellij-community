@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
@@ -38,7 +37,6 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
   }
 }
 
-@IntellijInternalApi
 @ApiStatus.Internal
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {

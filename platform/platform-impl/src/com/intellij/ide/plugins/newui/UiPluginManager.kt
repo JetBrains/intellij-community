@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +36,6 @@ import javax.swing.JComponent
  */
 @Service
 @ApiStatus.Internal
-@IntellijInternalApi
 class UiPluginManager {
   suspend fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()

@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.NonNls
 /**
  * Don't use this directly, use [DynamicPlugins] as an API
  */
-@IntellijInternalApi
 @ApiStatus.Internal
 interface DynamicPluginsSupport {
   suspend fun validateDynamicReconfigurationPossible(targetState: PluginSet): DynamicPluginsReconfigurationResult.Invalid?
@@ -70,7 +68,6 @@ private class DynamicReconfigurationIsNotPossibleReasonImpl(
   override val problematicPlugin: PluginMainDescriptor?,
 ): DynamicReconfigurationIsNotPossibleReason
 
-@IntellijInternalApi
 @ApiStatus.Internal
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)

@@ -6,11 +6,9 @@ import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule
 import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuilder {
   private val pluginNode = PluginNode(pluginId)
   
@@ -193,7 +191,7 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
   }
 }
 
-@IntellijInternalApi
+@ApiStatus.Internal
 internal object PluginNodeModelBuilderFactory : PluginUiModelBuilderFactory {
   override fun createBuilder(id: PluginId): PluginUiModelBuilder = PluginNodeModelBuilder(id)
 }

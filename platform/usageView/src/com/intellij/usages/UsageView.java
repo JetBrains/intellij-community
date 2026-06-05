@@ -3,7 +3,6 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
@@ -152,7 +151,6 @@ public interface UsageView extends Disposable {
   default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
 
   @ApiStatus.Internal
-  @IntellijInternalApi
   default int getId() {
     return -1;
   }

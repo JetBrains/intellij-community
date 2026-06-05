@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * This class is not supposed to be used in API.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 class PluginModuleId private constructor(val name: String, val namespace: String) {
   /**
    * A human-readable form of the ID. It can be used for debugging and logging purposes only.

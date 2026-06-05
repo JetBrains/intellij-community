@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst
@@ -505,7 +504,6 @@ private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<
 }
 
 @get:Internal
-@IntellijInternalApi
 val IdeaPluginDescriptorImpl.shortLogDescription: String get() = when (this) {
   is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
   is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"

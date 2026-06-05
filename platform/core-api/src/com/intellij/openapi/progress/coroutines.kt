@@ -13,7 +13,6 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
@@ -601,7 +600,6 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   }
 }
 
-@IntellijInternalApi
 @Internal
 fun assertRunBlockingBackgroundThreadAndNoWriteAction() {
   if (!EDT.isCurrentThreadEdt()) {
@@ -627,13 +625,11 @@ fun assertRunBlockingBackgroundThreadAndNoWriteAction() {
   ))
 }
 
-@IntellijInternalApi
 @Internal
 fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, AccessToken> {
   return getLockPermitContext(currentThreadContext(), forSharing)
 }
 
-@IntellijInternalApi
 @Internal
 fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
@@ -668,7 +664,6 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pa
   }
 }
 
-@IntellijInternalApi
 @Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
   val application = ApplicationManager.getApplication()

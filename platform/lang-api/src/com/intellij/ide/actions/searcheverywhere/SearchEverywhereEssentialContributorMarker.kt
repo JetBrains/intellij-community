@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.Nullable
  * This is an internal API used within the IntelliJ platform to mark certain contributors as essential.
  * It helps in determining which contributors should be prioritized.
  */
-@IntellijInternalApi
 @ApiStatus.Internal
 interface SearchEverywhereEssentialContributorMarker {
   companion object {

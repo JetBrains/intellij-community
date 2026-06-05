@@ -37,7 +37,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -121,7 +120,6 @@ import javax.swing.text.html.ParagraphView
 import kotlin.coroutines.coroutineContext
 
 @Internal
-@IntellijInternalApi
 class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
@@ -1750,19 +1748,16 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
   return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 fun loadAllPluginDetailsSync(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
   return runBlockingCancellable { loadAllPluginDetails(existingModel, targetModel) }
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 suspend fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
   if (!existingModel.suggestedFeatures.isEmpty()) {
     targetModel.suggestedFeatures = existingModel.suggestedFeatures
@@ -1783,7 +1778,6 @@ suspend fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: Plug
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
   val reviewComments = ReviewsPageContainer(20, 0)
   val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, reviewComments.getNextPage()) ?: emptyList()
@@ -1793,7 +1787,6 @@ suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 suspend fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
   val resultNode = targetModel
   val pluginIds = resultNode.dependencies

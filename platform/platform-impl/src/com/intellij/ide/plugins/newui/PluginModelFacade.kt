@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.CoroutineName
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-@IntellijInternalApi
 open class PluginModelFacade(private val pluginModel: MyPluginModel) {
 
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {

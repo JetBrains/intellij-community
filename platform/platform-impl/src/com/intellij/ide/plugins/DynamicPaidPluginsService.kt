@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,7 +33,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
-@IntellijInternalApi
 @Service(Service.Level.APP)
 class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   internal class LoadPaidPluginsProjectActivity : ProjectActivity {

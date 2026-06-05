@@ -11,12 +11,11 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
 
-@IntellijInternalApi
+@ApiStatus.Internal
 internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -107,7 +106,6 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 @Serializable
 @ApiStatus.Internal
-@IntellijInternalApi
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,

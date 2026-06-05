@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
-@IntellijInternalApi
 public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;

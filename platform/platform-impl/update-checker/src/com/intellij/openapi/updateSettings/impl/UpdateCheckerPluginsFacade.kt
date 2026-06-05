@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -16,7 +15,6 @@ import java.nio.file.Path
  * Detaches [UpdateChecker] from a direct dependency on [PluginManagerCore].
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface UpdateCheckerPluginsFacade {
   companion object {
     fun getInstance(): UpdateCheckerPluginsFacade = service()

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.IntellijInternalApi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,6 @@ import java.util.List;
  * Globally ignored unknown features per product, e.g. plugins suggested by project dependencies.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 @State(
   name = "IgnoredPluginSuggestions",
   storages = @Storage("ignored-suggested-plugins.xml"),

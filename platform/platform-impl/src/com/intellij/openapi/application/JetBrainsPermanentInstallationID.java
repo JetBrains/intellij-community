@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.system.OS;
@@ -22,7 +21,6 @@ import java.util.prefs.Preferences;
 /**
  * UUID identifying pair user@computer, allowed only to JetBrains plugins.
  */
-@IntellijInternalApi
 @ApiStatus.Internal
 public final class JetBrainsPermanentInstallationID {
   private static final String INSTALLATION_ID_KEY = "user_id_on_machine";

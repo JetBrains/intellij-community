@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.TestOnly
  * NOTE: if you want to make changes to this class or to the actual instance that is being used in the IDEs,
  * you must get an approval from the IntelliJ Platform team (use `#ij-plugin-model` channel in slack).
  */
-@IntellijInternalApi
 @ApiStatus.Internal
 interface PluginInitContextFactory {
   /**
@@ -88,7 +86,6 @@ private object PluginInitContextFactoryHolder {
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 @TestOnly
 fun <R> PluginInitContextFactory.Companion.withCustomFactoryInUnitTests(instance: PluginInitContextFactory, body: () -> R): R {
   PluginInitContextFactoryHolder.testInstance = instance

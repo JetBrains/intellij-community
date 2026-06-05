@@ -5,14 +5,12 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Should be in RD-only module, but FUS automation does not work there
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 object PluginSyncUsageCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("ide.plugins.rd.plugin.sync", version = 2)
 

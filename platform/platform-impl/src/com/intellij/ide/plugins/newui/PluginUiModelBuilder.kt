@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule
 import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  * Needed because we will have different implementations for frontend and backend parsing, at least for the first time.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface PluginUiModelBuilder {
   fun setId(id: String): PluginUiModelBuilder
   fun setName(name: String?): PluginUiModelBuilder
@@ -55,7 +53,6 @@ interface PluginUiModelBuilder {
 }
 
 @ApiStatus.Internal
-@IntellijInternalApi
 interface PluginUiModelBuilderFactory {
 
   fun createBuilder(id: PluginId): PluginUiModelBuilder

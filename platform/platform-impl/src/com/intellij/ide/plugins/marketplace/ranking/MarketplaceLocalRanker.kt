@@ -4,11 +4,9 @@ package com.intellij.ide.plugins.marketplace.ranking
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@IntellijInternalApi
 interface MarketplaceLocalRanker {
   companion object {
     val EP_NAME: ExtensionPointName<MarketplaceLocalRanker> = ExtensionPointName.create("com.intellij.marketplaceLocalRanker")

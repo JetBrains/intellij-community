@@ -10,7 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.List
 
-class SettingDescriptor<T : Any> @IntellijInternalApi @Internal constructor(
+class SettingDescriptor<T : Any> @Internal constructor(
   /**
    * The key provided is not the final effective key. The plugin ID is automatically and implicitly prepended to it.
    */

@@ -3,7 +3,6 @@ package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.DebugAttachDetectorArgs;
 import com.intellij.util.progress.JfrCancellationEventsCallbackHolder;
@@ -24,7 +23,6 @@ public final class Cancellation {
 
   private Cancellation() { }
 
-  @IntellijInternalApi // requires opt-in in Kotlin, must not be used in applied code
   public static @Nullable Job currentJob() {
     return ThreadContext.currentThreadContext().get(Job.Key);
   }

@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -52,7 +51,6 @@ interface NavigationService {
   )
 
   @Internal // compatibility function
-  @IntellijInternalApi
   suspend fun navigate(
     navigatables: List<Navigatable>,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
@@ -60,7 +58,6 @@ interface NavigationService {
   ): Boolean
 
   @Internal // compatibility function
-  @IntellijInternalApi
   suspend fun navigate(navigatable: Navigatable, options: NavigationOptions, dataContext: DataContext? = null): Boolean {
     return navigate(listOf(navigatable), options, dataContext)
   }

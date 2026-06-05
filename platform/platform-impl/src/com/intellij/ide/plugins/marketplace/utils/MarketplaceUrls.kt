@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
 @ApiStatus.Internal
-@IntellijInternalApi
 object MarketplaceUrls {
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 

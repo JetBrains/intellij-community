@@ -3,14 +3,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class PluginSubsystemInput(
   val initContext: PluginInitializationContext,
   val discoveryResult: PluginsDiscoveryResult,

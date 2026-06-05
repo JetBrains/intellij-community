@@ -4,7 +4,6 @@
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
@@ -59,7 +58,7 @@ class RecentProjectMetaInfo : BaseState() {
   @get:Internal
   @set:Internal
   var frame: FrameInfo? by property()
-  @IntellijInternalApi
+  @get:Internal
   val windowBounds: Rectangle?
     get() = frame?.bounds
 }

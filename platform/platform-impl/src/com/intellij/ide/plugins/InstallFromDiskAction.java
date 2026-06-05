@@ -16,7 +16,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -32,7 +31,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-@IntellijInternalApi
 public class InstallFromDiskAction extends DumbAwareAction {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
