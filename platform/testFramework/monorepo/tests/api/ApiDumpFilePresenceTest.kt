@@ -4,7 +4,7 @@ package com.intellij.platform.testFramework.monorepo.api
 import com.intellij.platform.testFramework.monorepo.MonorepoProjectStructure
 import org.junit.jupiter.api.Test
 
-internal class ApiDumpFilePresenseTest {
+internal class ApiDumpFilePresenceTest {
   @Test
   fun `platform modules define API dump`() {
     checkModulesDefineApiDump(MonorepoProjectStructure.communityProject.modules)
