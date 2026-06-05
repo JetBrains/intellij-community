@@ -6,6 +6,7 @@ import com.intellij.java.terminal.backend.JavaShellCommandUtils.UIOptionInfo
 import com.intellij.java.terminal.backend.JavaShellCommandUtils.addClassPathOption
 import com.intellij.java.terminal.backend.JavaShellCommandUtils.addOptionsFromData
 import com.intellij.java.terminal.backend.JavaShellCommandUtils.classpathSuggestionsGenerator
+import com.intellij.java.terminal.shared.JavaTerminalBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec

@@ -2,6 +2,7 @@
 package com.intellij.java.terminal.backend
 
 import com.intellij.icons.AllIcons
+import com.intellij.java.terminal.shared.JavaTerminalBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service

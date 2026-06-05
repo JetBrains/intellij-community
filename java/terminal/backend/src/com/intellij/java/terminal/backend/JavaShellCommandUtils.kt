@@ -4,6 +4,7 @@ package com.intellij.java.terminal.backend
 import com.intellij.execution.vmOptions.JdkOptionsData
 import com.intellij.execution.vmOptions.VMOptionKind
 import com.intellij.execution.vmOptions.VMOptionVariant
+import com.intellij.java.terminal.shared.JavaTerminalBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
