@@ -1226,12 +1226,7 @@ public class Messages {
                        String @NotNull @NlsContexts.Button [] options,
                        int defaultOption,
                        @Nullable @DetailedDescription String comment) {
-      super(project, true);
-      myComment = comment;
-      myValidator = validator;
-      _init(title, message, options, defaultOption, -1, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
-      myField.setText(initialValue);
-      enableOkAction();
+      this(project, null, message, title, icon, initialValue, validator, options, defaultOption, -1, comment);
     }
   
     public InputDialog(@Nullable Project project,
@@ -1260,21 +1255,45 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator) {
-      super(null, parent, message, title, new String[]{getOkButton(), getCancelButton()}, -1, 0, icon, null, true);
-      myValidator = validator;
-      myComment = null;
-      myField.setText(initialValue);
-      enableOkAction();
+      this(null, parent, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, -1, 0, null);
     }
-  
+
+    public InputDialog(@Nullable Project project,
+                       @NotNull Component parent,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable @NonNls String initialValue,
+                       @Nullable InputValidator validator,
+                       String @NotNull @NlsContexts.Button [] options,
+                       int defaultOption,
+                       @Nullable @DetailedDescription String comment) {
+      this(project, parent, message, title, icon, initialValue, validator, options, defaultOption, -1, comment);
+    }
+
     public InputDialog(@DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
                        @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator) {
-      super(null, null, message, title, new String[]{getOkButton(), getCancelButton()}, 0, -1, icon, null, true);
+      this(null, null, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0, -1, null);
+    }
+
+    private InputDialog(@Nullable Project project,
+                        @Nullable Component parent,
+                        @DialogMessage String message,
+                        @DialogTitle String title,
+                        @Nullable Icon icon,
+                        @Nullable @NonNls String initialValue,
+                        @Nullable InputValidator validator,
+                        String @NotNull @NlsContexts.Button [] options,
+                        int defaultOption,
+                        int focusedOption,
+                        @Nullable @DetailedDescription String comment) {
+      super(project, parent, true);
       myValidator = validator;
-      myComment = null;
+      myComment = comment;
+      _init(title, message, options, defaultOption, focusedOption, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
       myField.setText(initialValue);
       enableOkAction();
     }
