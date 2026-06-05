@@ -110,7 +110,8 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
     descriptors: MutableList<ProblemDescriptor>,
   ) {
     val resolvedApi = resolveApiUsage(expression) ?: return
-    val expectedModuleKind = SplitModeApiRestrictionsService.getInstance().getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val expectedModuleKind =
+      SplitModeApiRestrictionsService.getInstance().getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
     val currentModuleType = currentModuleAnalysis.resolvedModuleKind
 
     if (!doesApiKindMatchExpectedModuleKind(currentModuleType, expectedModuleKind)) {
@@ -119,7 +120,17 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      val fixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind)
+      val inspectionId = SplitModeInspectionExclusions.SPLIT_MODE_API_USAGE_SHORT_NAME
+      val exclusions = SplitModeInspectionExclusions.getInstance(sourcePsi.project)
+      if (exclusions.isExcluded(sourcePsi, inspectionId)) {
+        return
+      }
+      val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, sourcePsi)
+      val fixes = SplitModeInspectionExclusions.addExclusionFixLast(
+        sourcePsi.project,
+        SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind),
+        exclusionProblem,
+      )
 
       descriptors.add(
         manager.createProblemDescriptor(

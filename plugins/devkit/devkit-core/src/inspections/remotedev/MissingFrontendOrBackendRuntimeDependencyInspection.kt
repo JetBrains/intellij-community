@@ -38,15 +38,29 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
           val requiredModuleKind = resolveDependencyKind(requiredRuntimeDependency)
                                    ?: error("Unsupported split-mode runtime dependency: $requiredRuntimeDependency")
           val reportedElement = if (dependencies.exists()) dependencies else element
+          val reportedXmlElement = reportedElement.xmlElement ?: return
+          val currentXmlFile = holder.fileElement.file
+          val inspectionId = SplitModeInspectionExclusions.MISSING_RUNTIME_DEPENDENCY_SHORT_NAME
+          val exclusions = SplitModeInspectionExclusions.getInstance(currentXmlFile.project)
+          if (exclusions.isExcluded(reportedXmlElement, inspectionId)) {
+            return
+          }
+          val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, reportedXmlElement)
           holder.createProblem(
             reportedElement,
             message(
               "inspection.remote.dev.missing.runtime.dependency.message",
               currentModuleName, moduleNameSuffix, requiredRuntimeDependency
             ),
-            SplitModeDependencyQuickFixes.createAddExplicitDependencyFix(
-              currentModuleName,
-              requiredModuleKind,
+            *SplitModeInspectionExclusions.addExclusionFixLast(
+              currentXmlFile.project,
+              arrayOf(
+                SplitModeDependencyQuickFixes.createAddExplicitDependencyFix(
+                  currentModuleName,
+                  requiredModuleKind,
+                )
+              ),
+              exclusionProblem,
             )
           )
         }

@@ -46,6 +46,7 @@
     <module name="intellij.devkit.scaffolding"/>
     <module name="intellij.devkit.modules"/>
     <module name="intellij.devkit.mcp"/>
+    <module name="intellij.devkit.qodana"/>
     <module name="intellij.devkit.threading"/>
     <module name="intellij.devkit.smartupdate"/>
 

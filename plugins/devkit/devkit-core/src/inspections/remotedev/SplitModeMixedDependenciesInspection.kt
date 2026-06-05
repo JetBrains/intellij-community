@@ -24,9 +24,20 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
 
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
+    val xmlElement = element.xmlElement ?: return
+    val inspectionId = SplitModeInspectionExclusions.SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME
+    val exclusions = SplitModeInspectionExclusions.getInstance(currentXmlFile.project)
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
     if (SplitModeInspectionUtil.shouldReportSinglePluginLevelError(currentXmlFile, moduleAnalysis)) {
-      val quickFixes = SplitModeDependencyQuickFixes.createNonNativePluginFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
+      if (exclusions.isExcluded(xmlElement, inspectionId)) {
+        return
+      }
+      val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, xmlElement)
+      val quickFixes = SplitModeInspectionExclusions.addExclusionFixLast(
+        currentXmlFile.project,
+        SplitModeDependencyQuickFixes.createNonNativePluginFixes(module, element, moduleAnalysis.resolvedModuleKind.kind),
+        exclusionProblem,
+      )
       holder.createProblem(
         element,
         ProblemHighlightType.GENERIC_ERROR,
@@ -38,13 +49,21 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     }
     if (moduleAnalysis.resolvedModuleKind.kind != SplitModeApiRestrictionsService.ModuleKind.MIXED) return
 
+    if (exclusions.isExcluded(xmlElement, inspectionId)) {
+      return
+    }
+    val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, xmlElement)
     val mixedDependenciesMessage = buildMixedModuleDependenciesMessage(moduleAnalysis.resolvedModuleKind.reasoning)
     holder.createProblem(
       element,
       ProblemHighlightType.GENERIC_ERROR,
       mixedDependenciesMessage,
       null,
-      *SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element)
+      *SplitModeInspectionExclusions.addExclusionFixLast(
+        currentXmlFile.project,
+        SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element),
+        exclusionProblem,
+      )
     )
   }
 }

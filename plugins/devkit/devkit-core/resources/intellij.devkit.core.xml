@@ -585,6 +585,7 @@
                      key="inspection.can.be.dumb.aware.name"/>
 
     <localInspection isInternal="true"
+                     shortName="MissingFrontendOrBackendRuntimeDependency"
                      language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"

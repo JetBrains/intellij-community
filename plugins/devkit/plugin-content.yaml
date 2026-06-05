@@ -34,6 +34,9 @@
 - name: lib/modules/intellij.devkit.modules.jar
   contentModules:
   - name: intellij.devkit.modules
+- name: lib/modules/intellij.devkit.qodana.jar
+  contentModules:
+  - name: intellij.devkit.qodana
 - name: lib/modules/intellij.devkit.scaffolding.jar
   contentModules:
   - name: intellij.devkit.scaffolding
