@@ -204,7 +204,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   /**
    * An arranger that is used for rendering. It's synchronized (i.e., replaced) with {@link #myArranger} during rendering.
    * See {@link #checkReused()}.
-   * Accessed on EDT only. Note though, that {@link #myArranger} is usually the same instance, but it is accessed on any thread.
+   * Accessed on EDT only. Note, {@link #myArranger} is usually the same instance, but it is accessed on any thread.
    */
   private LookupArranger myPresentableArranger;
 
@@ -1049,7 +1049,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                       @Nullable Supplier<? extends AnAction> delegateActionSupplier,
                                       @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
-    DumbAwareAction.create(e -> ActionUtil.performAction(
+    DumbAwareAction.create(_ -> ActionUtil.performAction(
       delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
     ).registerCustomShortcutSet(action.getShortcutSet(), list);
   }
