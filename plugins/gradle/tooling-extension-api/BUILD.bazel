@@ -6,10 +6,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_toolingExtension",
     jvm_target = "8",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
 )
 
 jvm_provided_library(
