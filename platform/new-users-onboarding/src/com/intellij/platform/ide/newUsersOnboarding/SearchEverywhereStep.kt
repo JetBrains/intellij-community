@@ -35,7 +35,9 @@ internal class SearchEverywhereStep : NewUiOnboardingStep {
       NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, SearchEverywhereStep::class.java.classLoader)
     }
     lottiePageData?.let { (html, size) ->
-      builder.withBrowserPage(html, size, withBorder = true)
+      NewUiOnboardingUtil.createBrowserPageComponent(html, size)?.let {
+        builder.withCustomComponentPromo(it, withBorder = true)
+      }
     }
 
     val point = Point(searchEverywhereButton.width / 2, searchEverywhereButton.height + JBUI.scale(3))

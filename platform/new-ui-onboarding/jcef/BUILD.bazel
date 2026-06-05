@@ -1,0 +1,62 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.ide.newUiOnboarding.jcef` start
+
+jvm_library(
+    name = "jcef",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.newUiOnboarding.jcef",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/platform-api:ide",
+        "//platform/new-ui-onboarding",
+        "//platform/ui.jcef",
+        "//platform/util:util-ui",
+    ],
+)
+
+jvm_library(
+    name = "jcef_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.newUiOnboarding.jcef",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jcef",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/new-ui-onboarding:new-ui-onboarding_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.newUiOnboarding.jcef` end
+
+### auto-generated section `iml intellij.platform.ide.newUiOnboarding.jcef` start
+exports_files(
+    [
+        "intellij.platform.ide.newUiOnboarding.jcef.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.newUiOnboarding.jcef` end

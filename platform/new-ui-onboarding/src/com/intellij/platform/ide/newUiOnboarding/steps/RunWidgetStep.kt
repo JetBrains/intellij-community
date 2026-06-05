@@ -57,7 +57,9 @@ open class RunWidgetStep : NewUiOnboardingStep {
       NewUiOnboardingUtil.createLottieAnimationPage(animationPath, animationClassLoader)
     }
     lottiePageData?.let { (html, size) ->
-      builder.withBrowserPage(html, size, withBorder = true)
+      NewUiOnboardingUtil.createBrowserPageComponent(html, size)?.let {
+        builder.withCustomComponentPromo(it, withBorder = true)
+      }
     }
 
     val point = NewUiOnboardingUtil.convertPointToFrame(project, runPopup.content, JBPoint(-4, 27)) ?: return null

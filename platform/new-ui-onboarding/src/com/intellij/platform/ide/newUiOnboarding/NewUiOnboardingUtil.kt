@@ -59,6 +59,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.JComponent
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
@@ -241,6 +242,9 @@ object NewUiOnboardingUtil {
     val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
     return htmlPage to size
   }
+
+  fun createBrowserPageComponent(htmlText: String, size: Dimension): JComponent? =
+    NewUiOnboardingBrowserPageRenderer.createComponent(htmlText, size)
 
   suspend fun createSettingsEntryPointPopup(project: Project, disposable: CheckedDisposable): JBPopup? {
     val settingsButton = UiComponentsSearchUtil.findUiComponent(project) { button: ActionButton ->

@@ -35,7 +35,9 @@ open class ToolWindowLayoutsStep : NewUiOnboardingStep {
       NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, ToolWindowLayoutsStep::class.java.classLoader)
     }
     lottiePageData?.let { (html, size) ->
-      builder.withBrowserPage(html, size, withBorder = true)
+      NewUiOnboardingUtil.createBrowserPageComponent(html, size)?.let {
+        builder.withCustomComponentPromo(it, withBorder = true)
+      }
     }
     return NewUiOnboardingStepData(builder, RelativePoint(ideFrame.rootPane, Point(0, 0)), position = null) // show in the center
   }
