@@ -60,7 +60,7 @@ class BtaSubtypeInMemoryStorageTest {
 
         val subtypes = storage[BtaTestFixtureSupport.animalFqName, false].toSet()
 
-        assertEquals(BtaTestFixtureSupport.animalSubtypes, subtypes)
+        assertEquals(BtaTestFixtureSupport.animalDirectSubtypes, subtypes)
     }
 
     @Test
@@ -71,7 +71,7 @@ class BtaSubtypeInMemoryStorageTest {
 
         val subtypes = storage[BtaTestFixtureSupport.animalFqName, true].toSet()
 
-        assertEquals(BtaTestFixtureSupport.animalSubtypes, subtypes)
+        assertEquals(BtaTestFixtureSupport.animalDeepSubtypes, subtypes)
     }
 
     @Test

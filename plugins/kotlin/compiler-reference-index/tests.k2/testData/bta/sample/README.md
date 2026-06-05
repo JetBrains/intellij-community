@@ -9,13 +9,15 @@ Currently built with **Kotlin 2.3.20**.
 
 ## Fixed assertions the fixture supports
 
-- `FqName("fixtures.Animal")` is referenced by all four source files
+- `FqName("fixtures.Animal")` is referenced by four source files
   (`Animal.kt`, `Dog.kt`, `Cat.kt`, `Main.kt`) — convenient multi-file lookup.
-- `FqName("fixtures.Animal")` has direct subtypes `[fixtures.Dog, fixtures.Cat]`
-  (only entry in `subtypes.table`).
+- `Car.kt` is intentionally unrelated to `fixtures.Animal`.
+- `FqName("fixtures.Animal")` has direct subtypes `[fixtures.Dog, fixtures.Cat]`,
+  while recursive subtype traversal also includes the transitive subtype
+  `fixtures.Poodle`.
 
 Other usable FqNames in `lookups.table`: `fixtures.Dog`, `fixtures.Cat`,
-`fixtures.Animal.speak`, `fixtures.main`.
+`fixtures.Poodle`, `fixtures.Car`, `fixtures.Animal.speak`, `fixtures.main`.
 
 ## Regeneration
 
@@ -26,4 +28,4 @@ Other usable FqNames in `lookups.table`: `fixtures.Dog`, `fixtures.Cat`,
 Requires Gradle 8+ on `PATH`. The script runs `gradle --no-daemon clean assemble`
 inside `source-project/` and copies the three `.table` files back here. To bump
 Kotlin, edit `source-project/build.gradle.kts`. After regenerating, verify the
-two assertions above still hold.
+the assertions above still hold.

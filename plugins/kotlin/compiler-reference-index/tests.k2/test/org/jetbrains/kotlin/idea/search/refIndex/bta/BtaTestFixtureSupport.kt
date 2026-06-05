@@ -14,7 +14,15 @@ import kotlin.io.path.div
 internal object BtaTestFixtureSupport {
     val sampleFixtureDir: Path = KotlinRoot.PATH.resolve("compiler-reference-index/tests.k2/testData/bta/sample")
     val animalFqName = FqName("fixtures.Animal")
-    val animalSubtypes = setOf(FqName("fixtures.Dog"), FqName("fixtures.Cat"))
+    val animalLookupPaths = setOf(
+        "src/main/kotlin/fixtures/Animal.kt",
+        "src/main/kotlin/fixtures/Dog.kt",
+        "src/main/kotlin/fixtures/Cat.kt",
+        "src/main/kotlin/fixtures/Main.kt",
+    )
+    val unrelatedLookupPath = "src/main/kotlin/fixtures/Car.kt"
+    val animalDirectSubtypes = setOf(FqName("fixtures.Dog"), FqName("fixtures.Cat"))
+    val animalDeepSubtypes = animalDirectSubtypes + FqName("fixtures.Poodle")
 
     fun copyFixtureInto(criRoot: Path) {
         criRoot.createDirectories()

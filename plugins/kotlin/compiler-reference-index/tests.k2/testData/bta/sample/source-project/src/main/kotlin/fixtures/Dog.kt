@@ -1,5 +1,5 @@
 package fixtures
 
-class Dog : Animal {
+open class Dog : Animal {
     override fun speak() = "woof"
 }

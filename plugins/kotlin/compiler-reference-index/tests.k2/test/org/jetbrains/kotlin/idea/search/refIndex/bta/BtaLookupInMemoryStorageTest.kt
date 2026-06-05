@@ -88,15 +88,9 @@ class BtaLookupInMemoryStorageTest {
 
         val paths = storage[BtaTestFixtureSupport.animalFqName].map { it.invariantSeparatorsPathString }.toSet()
 
-        assertEquals(
-            setOf(
-                "/proj/src/main/kotlin/fixtures/Animal.kt",
-                "/proj/src/main/kotlin/fixtures/Dog.kt",
-                "/proj/src/main/kotlin/fixtures/Cat.kt",
-                "/proj/src/main/kotlin/fixtures/Main.kt",
-            ),
-            paths,
-        )
+        val expected = BtaTestFixtureSupport.animalLookupPaths.map { "/proj/$it" }.toSet()
+        assertEquals(expected, paths)
+        assertFalse(paths.contains("/proj/${BtaTestFixtureSupport.unrelatedLookupPath}"))
     }
 
     @Test
@@ -116,15 +110,8 @@ class BtaLookupInMemoryStorageTest {
 
         val paths = storage[BtaTestFixtureSupport.animalFqName].map { it.invariantSeparatorsPathString }.toSet()
 
-        assertEquals(
-            setOf(
-                "/abs/proj/base/src/main/kotlin/fixtures/Animal.kt",
-                "/abs/proj/base/src/main/kotlin/fixtures/Dog.kt",
-                "/abs/proj/base/src/main/kotlin/fixtures/Cat.kt",
-                "/abs/proj/base/src/main/kotlin/fixtures/Main.kt",
-            ),
-            paths,
-        )
+        val expected = BtaTestFixtureSupport.animalLookupPaths.map { "/abs/proj/base/$it" }.toSet()
+        assertEquals(expected, paths)
     }
 
     private fun createStorage(criRoot: Path, projectPath: String): BtaLookupInMemoryStorage {
