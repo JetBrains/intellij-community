@@ -23,9 +23,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -46,7 +48,7 @@ public final class MakeExternalAnnotationExplicit implements ModCommandAction {
     if (!BaseIntentionAction.canModify(context.file())) return null;
     final PsiElement leaf = context.findLeaf();
     PsiFile file = context.file();
-    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf, true);
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file)) {
@@ -69,7 +71,7 @@ public final class MakeExternalAnnotationExplicit implements ModCommandAction {
     final PsiElement leaf = context.findLeaf();
     final PsiFile file = context.file();
     final Project project = context.project();
-    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf, true);
     assert owner != null;
     final PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;
@@ -80,14 +82,18 @@ public final class MakeExternalAnnotationExplicit implements ModCommandAction {
 
     PsiAnnotation[] annotations = getAnnotations(project, owner);
     return ModCommand.psiUpdate(modifierList, writableList -> {
+      JavaCodeStyleManager jcsm = JavaCodeStyleManager.getInstance(project);
+      CodeStyleManager csm = CodeStyleManager.getInstance(project);
       for (PsiAnnotation anno : annotations) {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(writableList.addAfter(anno, null));
+        csm.reformat(jcsm.shortenClassReferences(writableList.addAfter(anno, null)));
       }
     }).andThen(externalAnnotationsManager.deannotateModCommand(List.of(owner), ContainerUtil.map(annotations, PsiAnnotation::getQualifiedName)));
   }
 
   private static PsiAnnotation @NotNull [] getAnnotations(@NotNull Project project, PsiModifierListOwner owner) {
-    PsiAnnotation[] annotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(owner);
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
+    PsiAnnotation[] annotations =
+      ArrayUtil.mergeArrays(manager.findExternalAnnotations(owner), manager.findExternalTypeAnnotations(owner, ""));
     if (annotations.length == 0) {
       return PsiAnnotation.EMPTY_ARRAY;
     }

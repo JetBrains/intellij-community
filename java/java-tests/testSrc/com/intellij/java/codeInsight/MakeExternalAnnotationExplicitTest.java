@@ -48,9 +48,9 @@ public final class MakeExternalAnnotationExplicitTest extends LightJavaCodeInsig
   public void testMakeExplicit() {
     myFixture.configureByText("Test.java", """
         class Test {
-          public String <caret>foo() {
-            return "xyz";
-          }
+            public String <caret>foo() {
+                return "xyz";
+            }
         }
         """);
     PsiMethod method = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0];
@@ -58,10 +58,10 @@ public final class MakeExternalAnnotationExplicitTest extends LightJavaCodeInsig
     IntentionAction action = myFixture.findSingleIntention("Insert '@Override'");
     assertEquals("""
                    class Test {
-                     @Override
-                     public String foo() {
-                       return "xyz";
-                     }
+                       @Override
+                       public String foo() {
+                           return "xyz";
+                       }
                    }
                                       
                    ----------
@@ -70,10 +70,10 @@ public final class MakeExternalAnnotationExplicitTest extends LightJavaCodeInsig
     myFixture.launchAction(action);
     myFixture.checkResult("""
                             class Test {
-                              @Override
-                              public String foo() {
-                                return "xyz";
-                              }
+                                @Override
+                                public String foo() {
+                                    return "xyz";
+                                }
                             }
                             """);
   }
