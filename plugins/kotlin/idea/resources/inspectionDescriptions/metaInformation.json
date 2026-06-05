@@ -1,8 +1,0 @@
-{
-  "inspections": [
-    {
-      "id": "UnusedDataClassCopyResult",
-      "codeQualityCategory": "Reliability"
-    }
-  ]
-}

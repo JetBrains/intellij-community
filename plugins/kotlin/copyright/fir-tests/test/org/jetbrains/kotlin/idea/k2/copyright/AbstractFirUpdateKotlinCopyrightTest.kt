@@ -1,6 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.copyright
 
-import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
+import com.maddyhome.idea.copyright.CopyrightProfile
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import java.io.File
 
-abstract class AbstractFirUpdateKotlinCopyrightTest : AbstractUpdateKotlinCopyrightTest()
+abstract class AbstractFirUpdateKotlinCopyrightTest : KotlinLightCodeInsightFixtureTestCase() {
+    fun doTest(path: String) {
+        val testName = File(path).name
+        myFixture.configureByFile(testName)
+        configureCopyright()
+        myFixture.checkResultByFile("$testName.after")
+    }
+
+    private fun configureCopyright() {
+        val profile = CopyrightProfile().apply {
+            notice = "Copyright notice\nOver multiple lines"
+        }
+        UpdateCopyrightFactory.createUpdateCopyright(project, module, myFixture.file, profile)!!.apply {
+            prepare()
+            complete()
+        }
+    }
+}

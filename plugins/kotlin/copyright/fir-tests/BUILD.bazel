@@ -13,10 +13,14 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/copyright/tests",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/test-framework",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//plugins/copyright",
     ],
 )
 
@@ -40,8 +44,6 @@ jvm_library(
         "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//plugins/kotlin/copyright/tests",
-        "//plugins/kotlin/copyright/tests:tests_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "@lib//:kotlin-stdlib",
@@ -54,6 +56,15 @@ jvm_library(
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//plugins/copyright",
+        "//plugins/copyright:copyright_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.copyright.tests` end

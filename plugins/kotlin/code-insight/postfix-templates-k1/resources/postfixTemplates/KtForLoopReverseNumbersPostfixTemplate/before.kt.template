@@ -1,3 +1,0 @@
-fun foo() {
-    <spot>10</spot>$key
-}

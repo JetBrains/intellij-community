@@ -1283,7 +1283,6 @@ plugins/kotlin/completion/impl-shared
 plugins/kotlin/completion/tests-shared
 plugins/kotlin/copyright
 plugins/kotlin/copyright/fir-tests
-plugins/kotlin/copyright/tests
 plugins/kotlin/coverage
 plugins/kotlin/coverage/tests
 plugins/kotlin/features-trainer

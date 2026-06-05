@@ -72,8 +72,6 @@ jvm_library(
         "//jps/jps-builders:build_test_lib",
         "//plugins/kotlin/coverage/tests",
         "//plugins/kotlin/coverage/tests:tests_test_lib",
-        "//plugins/kotlin/copyright/tests",
-        "//plugins/kotlin/copyright/tests:tests_test_lib",
         "//plugins/kotlin/code-insight/intentions-shared/tests/k2",
         "//plugins/kotlin/code-insight/intentions-shared/tests/k2:k2_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2/tests",

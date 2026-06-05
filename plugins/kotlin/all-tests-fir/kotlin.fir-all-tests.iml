@@ -118,7 +118,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.uast.base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
