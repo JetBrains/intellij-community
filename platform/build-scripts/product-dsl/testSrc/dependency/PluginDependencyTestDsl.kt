@@ -463,6 +463,7 @@ class TestProductBuilder(private val name: String) {
   private val moduleSets = mutableListOf<TestModuleSetSpec>()
   private val bundledPlugins = LinkedHashSet<String>()
   private val testPlugins = LinkedHashSet<String>()
+  private val contentModules = LinkedHashMap<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue>()
 
   fun moduleSet(name: String, block: TestModuleSetBuilder.() -> Unit = {}) {
     val builder = TestModuleSetBuilder(name)
@@ -474,7 +475,11 @@ class TestProductBuilder(private val name: String) {
     bundledPlugins.add(pluginName)
   }
 
-  internal fun build() = TestProductSpec(name, moduleSets.toList(), bundledPlugins.toSet(), testPlugins.toSet())
+  fun content(moduleName: String, loading: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue = com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED) {
+    contentModules.put(moduleName, loading)
+  }
+
+  internal fun build() = TestProductSpec(name, moduleSets.toList(), bundledPlugins.toSet(), testPlugins.toSet(), contentModules.toMap())
 }
 
 @JpsTestDsl
@@ -507,6 +512,7 @@ internal data class TestProductSpec(
   @JvmField val moduleSets: List<TestModuleSetSpec>,
   @JvmField val bundledPlugins: Set<String>,
   @JvmField val testPlugins: Set<String>,
+  @JvmField val contentModules: Map<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue> = emptyMap(),
 )
 
 internal data class TestModuleSetSpec(
@@ -579,6 +585,9 @@ internal fun buildPluginGraphFromTestSetup(
         }
         for (moduleSetSpec in product.moduleSets) {
           includesModuleSet(moduleSetSpec.name)
+        }
+        for ((moduleName, loading) in product.contentModules) {
+          content(moduleName, loading)
         }
       }
     }

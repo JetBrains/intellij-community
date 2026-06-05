@@ -293,6 +293,22 @@ internal class GraphProductBuilder(
   }
 
   /**
+   * Include a content module directly in this product.
+   */
+  fun content(name: String, loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.REQUIRED) {
+    val moduleId = builder.getOrCreateModule(ContentModuleName(name))
+    builder.addEdgeWithLoadingMode(productId, moduleId, EDGE_CONTAINS_CONTENT, loading)
+    builder.addEdgeWithLoadingMode(
+      productId,
+      builder.getOrCreateModule(PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE)),
+      EDGE_CONTAINS_CONTENT_WITH_NAMESPACE,
+      loading,
+    )
+    val targetId = builder.getOrCreateTarget(TargetName(name))
+    builder.addEdge(moduleId, targetId, EDGE_BACKED_BY)
+  }
+
+  /**
    * Allow a module to be missing in validation.
    */
   fun allowsMissing(moduleName: String) {

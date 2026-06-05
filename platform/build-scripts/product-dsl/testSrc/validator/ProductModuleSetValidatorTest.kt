@@ -148,6 +148,25 @@ class ProductModuleSetValidatorTest {
     }
 
     @Test
+    fun `no error when product content dependency is in bundled plugin`(): Unit = runBlocking(Dispatchers.Default) {
+      val graph = pluginGraph {
+          product("IDEA") {
+              bundlesPlugin("my.plugin")
+              content("product.module", ModuleLoadingRuleValue.REQUIRED)
+          }
+          plugin("my.plugin") {
+              content("plugin.module", loading = ModuleLoadingRuleValue.OPTIONAL)
+          }
+          linkContentModuleDeps("product.module", "plugin.module")
+      }
+
+      val model = testGenerationModel(graph)
+      val errors = runValidationRule(ProductModuleSetValidator, model)
+
+      Assertions.assertThat(errors).isEmpty()
+    }
+
+    @Test
     fun `no error for non-critical module with globally available dep`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a (OPTIONAL) -> global.module (declared as content in another plugin, not bundled by IDEA)
       val graph = pluginGraph {
