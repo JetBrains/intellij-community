@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Test run" tests="5" failures="1" errors="1" skipped="1" time="10.0" timestamp="2026-06-05T10:00:00">
+  <testsuite name="Tests.Registration" tests="5" failures="1" errors="1" skipped="1" time="10.0" file="tests/registration.code">
+    <properties>
+      <property name="version" value="1.774"/>
+      <property name="commit" value="ef7bebf"/>
+    </properties>
+    <testcase name="testCase4" classname="Tests.Registration" time="0" file="tests/registration.code" line="164">
+      <skipped message="Test was skipped."/>
+    </testcase>
+    <testcase name="testCase5" classname="Tests.Registration" time="2.902412" file="tests/registration.code" line="202">
+      <failure message="Expected value did not match." type="AssertionError">
+        AssertionError: Expected value did not match.
+        at Tests.Registration.testCase5(RegistrationTest.java:202)
+      </failure>
+    </testcase>
+    <testcase name="testCase6" classname="Tests.Registration" time="3.819" file="tests/registration.code" line="235">
+      <error message="Division by zero." type="ArithmeticError">
+        ArithmeticError: Division by zero.
+        at Tests.Registration.testCase6(RegistrationTest.java:235)
+      </error>
+    </testcase>
+    <testcase name="testCase7" classname="Tests.Registration" time="2.944" file="tests/registration.code" line="287">
+      <system-out>Data written to standard out.
+[[ATTACHMENT|screenshots/dashboard.png]]
+</system-out>
+      <system-err>Data written to standard error.</system-err>
+    </testcase>
+    <testcase name="testCase8" classname="Tests.Registration" time="1.625275" file="tests/registration.code" line="302">
+      <properties>
+        <property name="priority" value="high"/>
+        <property name="attachment" value="screenshots/dashboard.png"/>
+        <property name="description">This text describes the purpose of this test case.</property>
+      </properties>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RetryingTest" tests="2" skipped="0" failures="1" errors="0" time="0.200">
+  <testcase name="flakyPassesOnRerun" classname="RetryingTest" time="0.100">
+    <flakyFailure message="first attempt failed" type="java.lang.AssertionError">
+      first attempt stack trace
+      at RetryingTest.flakyPassesOnRerun(RetryingTest.java:12)
+    </flakyFailure>
+  </testcase>
+  <testcase name="failsAfterRerun" classname="RetryingTest" time="0.100">
+    <rerunFailure message="rerun failed" type="java.lang.AssertionError">
+      rerun stack trace
+      at RetryingTest.failsAfterRerun(RetryingTest.java:25)
+    </rerunFailure>
+    <failure message="final failure" type="java.lang.AssertionError">
+      final stack trace
+      at RetryingTest.failsAfterRerun(RetryingTest.java:25)
+    </failure>
+  </testcase>
+</testsuite>
