@@ -37,20 +37,19 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
     val currentlyOpenedDescriptor = DescriptorUtil.getIdeaPlugin(holder.fileElement.file)
     val hint = SplitModeApiRestrictionsService.getInstance().getExtensionPointHint(extensionPointName)
     val xmlElement = element.xmlElement ?: return
-    val inspectionId = SplitModeInspectionExclusions.SPLIT_MODE_XML_API_USAGE_SHORT_NAME
-    val exclusions = SplitModeInspectionExclusions.getInstance(currentXmlFile.project)
-    if (exclusions.isExcluded(xmlElement, inspectionId)) {
+    if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).isExcluded(xmlElement, SPLIT_MODE_XML_API_USAGE_SHORT_NAME)) {
       return
     }
-    val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, xmlElement)
+    val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, currentlyOpenedDescriptor, expectedModuleKind)
+    val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+      xmlElement,
+      SPLIT_MODE_XML_API_USAGE_SHORT_NAME,
+    )
+    val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
     holder.createProblem(
       element,
       buildModuleKindMismatchMessage(extensionPointName, expectedModuleKind, actualModuleKind, hint),
-      *SplitModeInspectionExclusions.addExclusionFixLast(
-        currentXmlFile.project,
-        SplitModeDependencyQuickFixes.createMismatchFixes(module, currentlyOpenedDescriptor, expectedModuleKind),
-        exclusionProblem,
-      )
+      *fixes
     )
   }
 

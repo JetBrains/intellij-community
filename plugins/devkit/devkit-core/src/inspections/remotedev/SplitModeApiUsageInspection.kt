@@ -120,17 +120,14 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      val inspectionId = SplitModeInspectionExclusions.SPLIT_MODE_API_USAGE_SHORT_NAME
-      val exclusions = SplitModeInspectionExclusions.getInstance(sourcePsi.project)
-      if (exclusions.isExcluded(sourcePsi, inspectionId)) {
+      if (SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).isExcluded(sourcePsi, SPLIT_MODE_API_USAGE_SHORT_NAME)) {
         return
       }
-      val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, sourcePsi)
-      val fixes = SplitModeInspectionExclusions.addExclusionFixLast(
-        sourcePsi.project,
-        SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind),
-        exclusionProblem,
-      )
+      val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind)
+      val suppressionFix =
+        SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createSuppressionFixIfApplicable(sourcePsi,
+                                                                                                             SPLIT_MODE_API_USAGE_SHORT_NAME)
+      val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
 
       descriptors.add(
         manager.createProblemDescriptor(

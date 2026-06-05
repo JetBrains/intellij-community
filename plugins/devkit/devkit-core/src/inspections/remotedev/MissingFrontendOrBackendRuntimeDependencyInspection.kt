@@ -40,28 +40,28 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
           val reportedElement = if (dependencies.exists()) dependencies else element
           val reportedXmlElement = reportedElement.xmlElement ?: return
           val currentXmlFile = holder.fileElement.file
-          val inspectionId = SplitModeInspectionExclusions.MISSING_RUNTIME_DEPENDENCY_SHORT_NAME
-          val exclusions = SplitModeInspectionExclusions.getInstance(currentXmlFile.project)
-          if (exclusions.isExcluded(reportedXmlElement, inspectionId)) {
+          if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).isExcluded(reportedXmlElement,
+                                                                                                  MISSING_RUNTIME_DEPENDENCY_SHORT_NAME)) {
             return
           }
-          val exclusionProblem = SplitModeInspectionExclusions.createProblem(inspectionId, reportedXmlElement)
+          val regularFixes = arrayOf(
+            SplitModeDependencyQuickFixes.createAddExplicitDependencyFix(
+              currentModuleName,
+              requiredModuleKind,
+            )
+          )
+          val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+            reportedXmlElement,
+            MISSING_RUNTIME_DEPENDENCY_SHORT_NAME,
+          )
+          val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
           holder.createProblem(
             reportedElement,
             message(
               "inspection.remote.dev.missing.runtime.dependency.message",
               currentModuleName, moduleNameSuffix, requiredRuntimeDependency
             ),
-            *SplitModeInspectionExclusions.addExclusionFixLast(
-              currentXmlFile.project,
-              arrayOf(
-                SplitModeDependencyQuickFixes.createAddExplicitDependencyFix(
-                  currentModuleName,
-                  requiredModuleKind,
-                )
-              ),
-              exclusionProblem,
-            )
+            *fixes
           )
         }
         return // only one module name suffix can be matched, so don't check more

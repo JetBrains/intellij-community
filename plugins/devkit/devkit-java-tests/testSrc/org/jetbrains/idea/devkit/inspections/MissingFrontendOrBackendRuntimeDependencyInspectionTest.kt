@@ -12,8 +12,8 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.inspections.remotedev.EXCLUSIONS_RELATIVE_PATH
 import org.jetbrains.idea.devkit.inspections.remotedev.MissingFrontendOrBackendRuntimeDependencyInspection
-import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionExclusions
 import org.jetbrains.idea.devkit.module.PluginModuleType
 
 internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCodeInsightFixtureTestCase() {
@@ -273,7 +273,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyFixTest : JavaCodeInsigh
     val intention = myFixture.findSingleIntention(exclusionsFixName)
     myFixture.launchAction(intention)
 
-    val exclusionsFile = myFixture.findFileInTempDir(SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH)
+    val exclusionsFile = myFixture.findFileInTempDir(EXCLUSIONS_RELATIVE_PATH)
     val exclusionsText = VfsUtilCore.loadText(exclusionsFile)
     assertTrue(exclusionsText.contains("\"inspection\": \"MissingFrontendOrBackendRuntimeDependency\""))
     assertTrue(exclusionsText.contains("\"file\": \"intellij.test.feature.frontend.xml\""))
@@ -336,7 +336,7 @@ private fun CodeInsightTestFixture.addXmlFile(relativePath: String, @Language("X
 }
 
 private fun CodeInsightTestFixture.addSplitModeExclusionsFile(@Language("JSON") fileText: String): PsiFile {
-  return addFileToProject(SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH, fileText)
+  return addFileToProject(EXCLUSIONS_RELATIVE_PATH, fileText)
 }
 
 private fun splitModeExclusionsJson(entry: String): String {

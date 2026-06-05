@@ -31,63 +31,14 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import java.io.IOException
 
-internal object SplitModeInspectionExclusions {
-  const val EXCLUSIONS_FILE_NAME: String = "DevKitSplitModeInspectionExclusions.json"
-  const val EXCLUSIONS_RELATIVE_PATH: String =
-    "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/$EXCLUSIONS_FILE_NAME"
+internal const val EXCLUSIONS_FILE_NAME: String = "DevKitSplitModeInspectionExclusions.json"
+internal const val EXCLUSIONS_RELATIVE_PATH: String =
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/$EXCLUSIONS_FILE_NAME"
 
-  const val SPLIT_MODE_API_USAGE_SHORT_NAME: String = "SplitModeApiUsage"
-  const val SPLIT_MODE_XML_API_USAGE_SHORT_NAME: String = "SplitModeXmlApiUsage"
-  const val SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME: String = "SplitModeMixedDependencies"
-  const val MISSING_RUNTIME_DEPENDENCY_SHORT_NAME: String = "MissingFrontendOrBackendRuntimeDependency"
-
-  fun getInstance(project: Project): SplitModeInspectionExclusionsService = project.service()
-
-  fun createProblem(
-    inspectionShortName: String,
-    element: PsiElement,
-  ): SplitModeInspectionExclusionProblem? {
-    val file = element.containingFile ?: return null
-    val filePath = getProjectRelativePath(file) ?: return null
-    val line = getLineNumber(file, element) ?: return null
-    return SplitModeInspectionExclusionProblem(
-      inspection = inspectionShortName,
-      file = filePath,
-      line = line,
-      reason = "",
-    )
-  }
-
-  fun addExclusionFixLast(
-    project: Project,
-    fixes: Array<LocalQuickFix>,
-    problem: SplitModeInspectionExclusionProblem?,
-  ): Array<LocalQuickFix> {
-    if (problem == null || !isExclusionFixAvailable(project)) return fixes
-    return fixes + AddToSplitModeInspectionExclusionsFix(problem)
-  }
-
-  fun isExclusionFixAvailable(project: Project): Boolean {
-    return IntelliJProjectUtil.isIntelliJPlatformProject(project) && getProjectRoot(project) != null
-  }
-
-  fun getProjectRoot(project: Project): VirtualFile? {
-    return project.guessProjectDir()
-  }
-
-  fun getProjectRelativePath(file: PsiFile): String? {
-    val virtualFile = file.originalFile.virtualFile ?: file.virtualFile ?: return null
-    val projectRoot = getProjectRoot(file.project) ?: return null
-    return VfsUtilCore.getRelativePath(virtualFile, projectRoot, '/')
-  }
-
-  private fun getLineNumber(file: PsiFile, element: PsiElement): Int? {
-    val document = PsiDocumentManager.getInstance(file.project).getDocument(file)
-                   ?: file.viewProvider.document
-                   ?: return null
-    return document.getLineNumber(element.textRange.startOffset) + 1
-  }
-}
+internal const val SPLIT_MODE_API_USAGE_SHORT_NAME: String = "SplitModeApiUsage"
+internal const val SPLIT_MODE_XML_API_USAGE_SHORT_NAME: String = "SplitModeXmlApiUsage"
+internal const val SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME: String = "SplitModeMixedDependencies"
+internal const val MISSING_RUNTIME_DEPENDENCY_SHORT_NAME: String = "MissingFrontendOrBackendRuntimeDependency"
 
 @SafeTypeForPreview
 internal data class SplitModeInspectionExclusionProblem(
@@ -99,11 +50,24 @@ internal data class SplitModeInspectionExclusionProblem(
 
 @Service(Service.Level.PROJECT)
 internal class SplitModeInspectionExclusionsService(private val project: Project) {
+  companion object {
+    fun getInstance(project: Project): SplitModeInspectionExclusionsService = project.service()
+  }
+
   @Volatile
   private var cachedSnapshot: CachedSplitModeInspectionExclusionsSnapshot? = null
 
+  fun createSuppressionFixIfApplicable(
+    element: PsiElement,
+    inspectionShortName: String,
+  ): LocalQuickFix? {
+    if (!isExclusionFixAvailable()) return null
+    val problem = createProblem(inspectionShortName, element) ?: return null
+    return AddToSplitModeInspectionExclusionsFix(problem)
+  }
+
   fun isExcluded(element: PsiElement, inspectionShortName: String): Boolean {
-    val problem = SplitModeInspectionExclusions.createProblem(inspectionShortName, element) ?: return false
+    val problem = createProblem(inspectionShortName, element) ?: return false
     return isExcluded(problem)
   }
 
@@ -126,8 +90,43 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
   }
 
   fun findExclusionsFile(): VirtualFile? {
-    return SplitModeInspectionExclusions.getProjectRoot(project)
-      ?.findFileByRelativePath(SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH)
+    return getProjectRoot()?.findFileByRelativePath(EXCLUSIONS_RELATIVE_PATH)
+  }
+
+  private fun isExclusionFixAvailable(): Boolean {
+    return IntelliJProjectUtil.isIntelliJPlatformProject(project) && getProjectRoot() != null
+  }
+
+  private fun getProjectRoot(): VirtualFile? {
+    return project.guessProjectDir()
+  }
+
+  private fun getProjectRelativePath(file: PsiFile): String? {
+    val virtualFile = file.originalFile.virtualFile ?: file.virtualFile ?: return null
+    val projectRoot = getProjectRoot() ?: return null
+    return VfsUtilCore.getRelativePath(virtualFile, projectRoot, '/')
+  }
+
+  private fun createProblem(
+    inspectionShortName: String,
+    element: PsiElement,
+  ): SplitModeInspectionExclusionProblem? {
+    val file = element.containingFile ?: return null
+    val filePath = getProjectRelativePath(file) ?: return null
+    val line = getLineNumber(file, element) ?: return null
+    return SplitModeInspectionExclusionProblem(
+      inspection = inspectionShortName,
+      file = filePath,
+      line = line,
+      reason = "",
+    )
+  }
+
+  private fun getLineNumber(file: PsiFile, element: PsiElement): Int? {
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file)
+                   ?: file.viewProvider.document
+                   ?: return null
+    return document.getLineNumber(element.textRange.startOffset) + 1
   }
 
   private fun getSnapshot(): SplitModeInspectionExclusionsSnapshot {
@@ -164,16 +163,16 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
   }
 
   private fun findOrCreateExclusionsFile(): VirtualFile? {
-    val projectRoot = SplitModeInspectionExclusions.getProjectRoot(project) ?: return null
+    val projectRoot = getProjectRoot() ?: return null
     return try {
       val parentDirectory = VfsUtil.createDirectoryIfMissing(projectRoot, EXCLUSIONS_DIRECTORY_RELATIVE_PATH)
-      parentDirectory.findChild(SplitModeInspectionExclusions.EXCLUSIONS_FILE_NAME)
-      ?: parentDirectory.createChildData(this, SplitModeInspectionExclusions.EXCLUSIONS_FILE_NAME).also { file ->
+      parentDirectory.findChild(EXCLUSIONS_FILE_NAME)
+      ?: parentDirectory.createChildData(this, EXCLUSIONS_FILE_NAME).also { file ->
         file.writeText(INITIAL_EXCLUSIONS_JSON)
       }
     }
     catch (e: IOException) {
-      LOG.warn("Cannot create ${SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH}", e)
+      LOG.warn("Cannot create $EXCLUSIONS_RELATIVE_PATH", e)
       null
     }
   }
@@ -193,11 +192,11 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
       json.decodeFromString(text)
     }
     catch (e: SerializationException) {
-      LOG.warn("Cannot parse ${SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH}", e)
+      LOG.warn("Cannot parse $EXCLUSIONS_RELATIVE_PATH", e)
       SplitModeInspectionExclusionsFile()
     }
     catch (e: IllegalArgumentException) {
-      LOG.warn("Cannot parse ${SplitModeInspectionExclusions.EXCLUSIONS_RELATIVE_PATH}", e)
+      LOG.warn("Cannot parse $EXCLUSIONS_RELATIVE_PATH", e)
       SplitModeInspectionExclusionsFile()
     }
   }
@@ -231,7 +230,6 @@ private class AddToSplitModeInspectionExclusionsFix(
 ) : LocalQuickFix, LowPriorityAction {
   override fun getName(): String = familyName
 
-  @Suppress("DialogTitleCapitalization")
   override fun getFamilyName(): String {
     return message("inspection.remote.dev.add.to.split.mode.exclusions.fix.name")
   }
@@ -242,7 +240,7 @@ private class AddToSplitModeInspectionExclusionsFix(
     val exclusionsFile = WriteCommandAction.writeCommandAction(project)
       .withName(message("inspection.remote.dev.add.to.split.mode.exclusions.command.name"))
       .compute<VirtualFile?, Throwable> {
-        SplitModeInspectionExclusions.getInstance(project).appendExclusion(problem)
+        SplitModeInspectionExclusionsService.getInstance(project).appendExclusion(problem)
       }
 
     if (exclusionsFile == null) {
