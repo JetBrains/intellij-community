@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.psi.KtClass
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 @VisibleForTesting
-@IntellijInternalApi
 @ApiStatus.Internal
 class WorkspaceEntityMutableFieldInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {

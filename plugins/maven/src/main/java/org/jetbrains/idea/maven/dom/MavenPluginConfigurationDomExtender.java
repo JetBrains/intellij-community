@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +47,6 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
                                                                    CommonClassNames.JAVA_UTIL_LINKED_LIST);
   private final Function<@NotNull MavenDomConfiguration, @Nullable MavenDomPluginModel> myRetriever;
 
-  @IntellijInternalApi
   @ApiStatus.Internal
   public MavenPluginConfigurationDomExtender(Function<@NotNull MavenDomConfiguration, @Nullable MavenDomPluginModel> modelRetriever) {
     myRetriever = modelRetriever;

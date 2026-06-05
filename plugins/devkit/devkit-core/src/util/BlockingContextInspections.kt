@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
@@ -17,21 +16,17 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 
 @Internal
-@IntellijInternalApi
 val REQUIRES_BLOCKING_CONTEXT_ANNOTATION: String = RequiresBlockingContext::class.java.canonicalName
 
 @Internal
-@IntellijInternalApi
 val REPLACE_WITH_ANNOTATION: String = ReplaceWith::class.java.canonicalName
 
 @Internal
-@IntellijInternalApi
 fun isInspectionForBlockingContextAvailable(holder: ProblemsHolder): Boolean =
   DevKitInspectionUtil.isAllowedIncludingTestSources(holder.file) &&
   DevKitInspectionUtil.isClassAvailable(holder, REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
 
 @Internal
-@IntellijInternalApi
 abstract class QuickFixWithReferenceToElement<T : PsiElement>(
   element: PsiElement, referencedElement: T
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {

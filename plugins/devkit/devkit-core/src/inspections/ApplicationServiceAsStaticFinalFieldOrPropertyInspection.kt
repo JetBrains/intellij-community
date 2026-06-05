@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -74,7 +73,6 @@ private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPr
 internal object AppServiceAsStaticFinalFieldOrPropertyVisitorProviders :
   LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyVisitorProvider>(EP_NAME.name)
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface AppServiceAsStaticFinalFieldOrPropertyVisitorProvider {
   fun getVisitor(holder: ProblemsHolder): PsiElementVisitor

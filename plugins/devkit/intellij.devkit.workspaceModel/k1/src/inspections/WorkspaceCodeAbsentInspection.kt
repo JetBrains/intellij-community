@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @VisibleForTesting
-@IntellijInternalApi
 @ApiStatus.Internal
 class WorkspaceCodeAbsentInspection : WorkspaceCodeAbsentInspectionBase() {
   override fun belongToSameModule(ktClass: KtClassOrObject, otherKtClass: KtClassOrObject): Boolean =

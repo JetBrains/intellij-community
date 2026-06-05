@@ -9,7 +9,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +19,6 @@ private val EP_NAME: ExtensionPointName<ExtensionClassShouldNotBePublicProvider>
 internal object ExtensionClassShouldNotBePublicProviders : LanguageExtension<ExtensionClassShouldNotBePublicProvider>(EP_NAME.name)
 
 @ApiStatus.Internal
-@IntellijInternalApi
 interface ExtensionClassShouldNotBePublicProvider : JvmProvider {
   fun isPublic(aClass: PsiClass): Boolean
   fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix>

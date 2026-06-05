@@ -12,7 +12,6 @@ import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiField
@@ -37,7 +36,6 @@ private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPr
 internal object AppServiceAsStaticFinalFieldOrPropertyFixProviders :
   LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyFixProvider>(EP_NAME.name)
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface AppServiceAsStaticFinalFieldOrPropertyFixProvider {
   fun getFixes(sourcePsi: PsiElement): List<LocalQuickFix>
@@ -54,7 +52,6 @@ internal class JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider : AppServic
 
 }
 
-@IntellijInternalApi
 @ApiStatus.Internal
 abstract class WrapInSupplierQuickFix<T : PsiNamedElement>(elementToWrap: T) : LocalQuickFixOnPsiElement(elementToWrap) {
 

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -392,7 +391,6 @@ private fun cancellationExceptionHandlingChecker(language: Language): Cancellati
   return CancellationExceptionHandlingCheckers.forLanguage(language)
 }
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface CancellationExceptionHandlingChecker {
   fun isSuspicious(catchParameter: PsiElement): Boolean

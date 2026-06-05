@@ -9,7 +9,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiMethodCallExpression
@@ -21,7 +20,6 @@ private val EP_NAME = ExtensionPointName.create<UseHtmlChunkToolTipFixProvider>(
 
 internal object UseHtmlChunkToolTipFixProviders : LanguageExtension<UseHtmlChunkToolTipFixProvider>(EP_NAME.name)
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface UseHtmlChunkToolTipFixProvider {
   fun createFixes(element: PsiElement): Array<LocalQuickFix>

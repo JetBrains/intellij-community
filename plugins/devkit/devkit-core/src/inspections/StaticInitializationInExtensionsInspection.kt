@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
@@ -62,7 +61,6 @@ private val EP_NAME = ExtensionPointName.create<StaticInitializationInExtensions
 internal object StaticInitializationInExtensionsVisitorProviders :
   LanguageExtension<StaticInitializationInExtensionsVisitorProvider>(EP_NAME.name)
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface StaticInitializationInExtensionsVisitorProvider {
   fun getVisitor(holder: ProblemsHolder): PsiElementVisitor

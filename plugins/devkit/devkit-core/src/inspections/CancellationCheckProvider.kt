@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiUtil
@@ -25,7 +24,6 @@ internal object CancellationCheckProviders : LanguageExtension<CancellationCheck
  * (see [com.intellij.openapi.progress.ProgressManager.checkCanceled], [com.intellij.openapi.progress.checkCanceled])
  * and checks expressions for cancellation check calls.
  */
-@IntellijInternalApi
 @ApiStatus.Internal
 interface CancellationCheckProvider {
 

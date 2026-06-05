@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiBlockStatement
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
@@ -31,7 +30,6 @@ private val EP_NAME: ExtensionPointName<CancellationCheckInLoopsFixProvider> = E
 internal object CancellationCheckInLoopsFixProviders : LanguageExtension<CancellationCheckInLoopsFixProvider>(EP_NAME.name)
 
 
-@IntellijInternalApi
 @ApiStatus.Internal
 interface CancellationCheckInLoopsFixProvider {
 

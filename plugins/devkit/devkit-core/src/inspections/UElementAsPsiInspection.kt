@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
@@ -46,7 +45,6 @@ private val ALLOWED_REDEFINITION = setOf<String?>(
 )
 
 @VisibleForTesting
-@IntellijInternalApi
 @Internal
 class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 

@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @VisibleForTesting
-@IntellijInternalApi
 @ApiStatus.Internal
 class WorkspaceImplObsoleteInspection : WorkspaceImplObsoleteInspectionBase() {
   override fun getModuleSearchScope(ktClass: KtClassOrObject): GlobalSearchScope =

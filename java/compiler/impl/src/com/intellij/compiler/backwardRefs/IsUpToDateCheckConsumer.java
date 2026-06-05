@@ -5,7 +5,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IntellijInternalApi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see IsUpToDateCheckStartupActivity
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 public interface IsUpToDateCheckConsumer {
   ExtensionPointName<IsUpToDateCheckConsumer> EP_NAME = new ExtensionPointName<>("com.intellij.compiler.isUpToDateCheckConsumer");
 

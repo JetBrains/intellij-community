@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -43,7 +42,6 @@ internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShort
  * where APIs' introduction versions are specified.
  */
 @VisibleForTesting
-@IntellijInternalApi
 @Internal
 class MissingRecentApiInspection : LocalInspectionTool() {
 

@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiClass
@@ -29,7 +28,6 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 @VisibleForTesting
-@IntellijInternalApi
 @Internal
 class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -55,7 +53,6 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
     }
   }
 
-  @IntellijInternalApi
   @Internal
   interface VisitorProvider {
     fun provideVisitorForBody(method: PsiElement, holder: ProblemsHolder): PsiElementVisitor?

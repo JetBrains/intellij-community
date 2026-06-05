@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME: ExtensionPointName<ServiceLevelExtractor> = ExtensionPointName.create("DevKit.lang.serviceLevelExtractor")
@@ -14,7 +13,6 @@ private val EP_NAME: ExtensionPointName<ServiceLevelExtractor> = ExtensionPointN
 internal object ServiceLevelExtractors : LanguageExtension<ServiceLevelExtractor>(EP_NAME.name)
 
 @ApiStatus.Internal
-@IntellijInternalApi
 interface ServiceLevelExtractor : JvmProvider {
   fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level>
 }

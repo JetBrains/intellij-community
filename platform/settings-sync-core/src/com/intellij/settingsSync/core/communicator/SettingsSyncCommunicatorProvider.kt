@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.core.communicator
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import org.jetbrains.annotations.ApiStatus
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  * You may not use this extension until it is unlocked in the platform for your plugin.
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface SettingsSyncCommunicatorProvider {
 
   /**

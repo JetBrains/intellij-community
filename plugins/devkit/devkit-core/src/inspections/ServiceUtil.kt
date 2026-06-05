@@ -10,11 +10,11 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.UAnnotation
@@ -23,7 +23,7 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.tryResolve
 
-@IntellijInternalApi
+@ApiStatus.Internal
 enum class LevelType {
   APP,
   PROJECT,
@@ -49,7 +49,7 @@ enum class LevelType {
   }
 }
 
-@IntellijInternalApi
+@ApiStatus.Internal
 fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
     is JvmAnnotationArrayValue -> {
@@ -62,7 +62,7 @@ fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   return toLevelType(levels)
 }
 
-@IntellijInternalApi
+@ApiStatus.Internal
 fun getLevelType(project: Project, uClass: UClass): LevelType {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
@@ -88,7 +88,7 @@ fun getLevelType(project: Project, uClass: UClass): LevelType {
   return toLevelType(levels)
 }
 
-@IntellijInternalApi
+@ApiStatus.Internal
 fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
@@ -131,7 +131,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   }
 }
 
-@IntellijInternalApi
+@ApiStatus.Internal
 fun toLevel(name: String): Service.Level? {
   return try {
     Service.Level.valueOf(name)

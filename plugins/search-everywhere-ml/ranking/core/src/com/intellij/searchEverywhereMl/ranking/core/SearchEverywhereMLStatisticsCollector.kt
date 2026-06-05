@@ -20,7 +20,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.VisibleForTesting
 private const val REPORTED_ITEMS_LIMIT = 50
 
 @ApiStatus.Internal
-@IntellijInternalApi
 object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP

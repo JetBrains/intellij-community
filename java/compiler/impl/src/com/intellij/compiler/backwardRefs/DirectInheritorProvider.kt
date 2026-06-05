@@ -2,14 +2,14 @@
 package com.intellij.compiler.backwardRefs
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
 
 /**
  * An interface for delivering missing parts of the class hierarchy to [JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader]
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 interface DirectInheritorProvider {
   companion object {
     @JvmField
@@ -23,7 +23,7 @@ interface DirectInheritorProvider {
  * An interface provides missing information to [JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader.getHierarchy] for finding
  * classes not involved in Java compilation
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 interface SearchIdHolder {
   val searchId: SearchId
 }
