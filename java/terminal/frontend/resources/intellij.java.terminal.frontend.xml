@@ -1,8 +1,9 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.frontend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.java.terminal.shared"/>
-    <module name="intellij.terminal.frontend"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

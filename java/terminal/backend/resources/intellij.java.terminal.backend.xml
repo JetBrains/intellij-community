@@ -1,10 +1,11 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.backend"/>
-    <module name="intellij.java.terminal.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.java.terminal.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

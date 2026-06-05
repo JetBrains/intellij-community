@@ -217,9 +217,15 @@
 - name: lib/modules/intellij.java.structureView.jar
   contentModules:
   - name: intellij.java.structureView
-- name: lib/modules/intellij.java.terminal.jar
+- name: lib/modules/intellij.java.terminal.backend.jar
   contentModules:
-  - name: intellij.java.terminal
+  - name: intellij.java.terminal.backend
+- name: lib/modules/intellij.java.terminal.frontend.jar
+  contentModules:
+  - name: intellij.java.terminal.frontend
+- name: lib/modules/intellij.java.terminal.shared.jar
+  contentModules:
+  - name: intellij.java.terminal.shared
 - name: lib/modules/intellij.java.typeMigration.jar
   contentModules:
   - name: intellij.java.typeMigration
