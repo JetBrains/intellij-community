@@ -16,13 +16,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -311,7 +311,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             )
         }
 
-        @IntellijInternalApi
+        @ApiStatus.Internal
         fun shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(version: IdeKotlinVersion): Boolean {
             check(jpsMinimumSupportedVersion < IdeKotlinVersion.get("1.7.10").kotlinVersion) {
                 "${::shouldImportKotlinJpsPluginVersionFromExternalBuildSystem.name} makes sense when minimum supported version is lower " +

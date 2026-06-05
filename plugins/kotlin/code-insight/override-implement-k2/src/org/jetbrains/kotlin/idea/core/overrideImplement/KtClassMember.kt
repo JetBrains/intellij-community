@@ -7,7 +7,6 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
@@ -29,10 +28,10 @@ import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -41,8 +40,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -64,6 +61,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwner
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -157,7 +156,7 @@ data class KaClassOrObjectSymbolChooserObject(
 ) :
     MemberChooserObjectBase(symbolText, symbolIcon)
 
-@IntellijInternalApi
+@ApiStatus.Internal
 fun createKtClassMember(
     memberInfo: KtClassMemberInfo,
     bodyType: BodyType,

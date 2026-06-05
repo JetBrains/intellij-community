@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.execution.TestStateStorage
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
  * }
  * ```
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 fun KtDeclaration.genericKotlinTestUrls(): List<String> {
     return when (this) {
         is KtClassOrObject -> listOf("java:suite://${this.fqName?.asString()}")

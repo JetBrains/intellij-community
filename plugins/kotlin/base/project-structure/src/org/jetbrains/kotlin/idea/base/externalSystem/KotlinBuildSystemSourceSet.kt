@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.externalSystem
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
  * Represents information about a Kotlin Source Set from the 'Build System'.
  * Note: Only information which can be available universally in build systems shall be added here.
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 data class KotlinBuildSystemSourceSet(
     /**
      * Name of the Source Set as known to the Build System.

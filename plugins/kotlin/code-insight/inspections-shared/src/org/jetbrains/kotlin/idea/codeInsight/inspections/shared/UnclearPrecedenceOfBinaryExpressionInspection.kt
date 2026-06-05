@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -35,7 +34,6 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenEntryGuard
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = MyVisitor(holder)
 

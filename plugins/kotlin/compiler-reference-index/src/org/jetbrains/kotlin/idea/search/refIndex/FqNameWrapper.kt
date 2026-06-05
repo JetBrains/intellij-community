@@ -2,17 +2,17 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.backwardRefs.SearchId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-@IntellijInternalApi
+@ApiStatus.Internal
 sealed class FqNameWrapper {
     abstract val fqName: FqName
     abstract val jvmFqName: String

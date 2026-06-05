@@ -14,11 +14,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -127,7 +127,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         LOG.debug("Kotlin language version configured successfully")
     }
 
-    @IntellijInternalApi
+    @ApiStatus.Internal
     fun getAndCacheLanguageLevelByDependencies(module: Module, writeActionContinuations: MutableList<() -> Unit>) {
         val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(module) ?: return
         val newLanguageLevel = getLibraryLanguageLevel(module, null, facetSettings.targetPlatform?.idePlatformKind)

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
  * when we have a more specialized context (Composable functions, for example).
  */
 @ApiStatus.Internal
-@IntellijInternalApi
 interface KotlinAutoImportCallableWeigher {
     /**
      * Calculates extra weight for the imported symbol. This weight will be added to the final calculated result.

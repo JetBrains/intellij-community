@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -36,7 +35,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class SortModifiersInspection : KotlinApplicableInspectionBase<KtModifierList, SortModifiersInspection.Context>(),
     CleanupLocalInspectionTool {
 

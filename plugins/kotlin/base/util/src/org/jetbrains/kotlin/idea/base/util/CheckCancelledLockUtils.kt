@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-@IntellijInternalApi
+@ApiStatus.Internal
 inline fun <T> ReentrantReadWriteLock.writeWithCheckCanceled(action: () -> T): T {
     val rl = readLock()
 
@@ -33,7 +33,7 @@ inline fun <T> ReentrantReadWriteLock.writeWithCheckCanceled(action: () -> T): T
  *
  * To acquire lock has to be cancellable action as read actions.
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 class CheckCanceledLock {
     val lock = ReentrantLock()
 

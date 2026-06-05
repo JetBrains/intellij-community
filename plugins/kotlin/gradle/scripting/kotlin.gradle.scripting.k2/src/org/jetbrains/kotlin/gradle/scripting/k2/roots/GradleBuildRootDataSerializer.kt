@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.roots
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.DataExternalizer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.StringsPool
@@ -16,7 +16,7 @@ class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
     }
 
     companion object {
-        @IntellijInternalApi
+        @ApiStatus.Internal
         fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
             val strings = StringsPool.writer(output)
             strings.addStrings(data.projectRoots)

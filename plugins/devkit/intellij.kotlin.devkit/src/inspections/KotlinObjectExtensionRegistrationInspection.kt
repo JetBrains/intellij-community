@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
@@ -60,7 +59,6 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
 }
 
 @VisibleForTesting
-@IntellijInternalApi
 @ApiStatus.Internal
 class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 

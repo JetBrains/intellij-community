@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.roots
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.gist.storage.GistStorage
 import com.intellij.util.io.DataExternalizer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
@@ -43,7 +43,7 @@ abstract class AbstractGradleBuildRootDataSerializer {
     }
 
     companion object {
-        @IntellijInternalApi
+        @ApiStatus.Internal
         fun readKotlinDslScriptModels(input: DataInput, buildRoot: String): GradleBuildRootData {
             val strings = StringsPool.reader(input)
 

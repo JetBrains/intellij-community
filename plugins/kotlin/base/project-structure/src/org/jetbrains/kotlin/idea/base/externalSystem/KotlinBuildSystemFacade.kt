@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.externalSystem
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 /**
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
  *
  * For example, The Gradle implementation might reach into external system 'DataNodes'
  */
-@IntellijInternalApi
+@ApiStatus.Internal
 interface KotlinBuildSystemFacade {
     fun findSourceSet(module: Module): KotlinBuildSystemSourceSet?
 

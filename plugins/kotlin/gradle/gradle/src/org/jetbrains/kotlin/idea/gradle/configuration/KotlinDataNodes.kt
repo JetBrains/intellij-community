@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
@@ -43,7 +43,7 @@ class KotlinGradleProjectData : AbstractExternalEntityData(GradleConstants.SYSTE
     }
 }
 
-@IntellijInternalApi
+@get:ApiStatus.Internal
 val DataNode<KotlinGradleProjectData>.kotlinGradleSourceSetDataNodes: Collection<DataNode<KotlinGradleSourceSetData>>
     get() = ExternalSystemApiUtil.findAll(this, KotlinGradleSourceSetData.KEY)
 

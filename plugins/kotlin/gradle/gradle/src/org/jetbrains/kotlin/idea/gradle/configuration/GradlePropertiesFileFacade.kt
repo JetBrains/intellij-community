@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.LocalFileSystem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import java.util.Properties
 import kotlin.io.path.Path
@@ -12,7 +12,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-@IntellijInternalApi
+@ApiStatus.Internal
 class GradlePropertiesFileFacade(private val baseDir: String) {
 
     fun readProperty(propertyName: String): String? {

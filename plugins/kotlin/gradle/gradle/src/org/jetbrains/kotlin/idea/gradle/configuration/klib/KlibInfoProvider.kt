@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-@IntellijInternalApi
+@ApiStatus.Internal
 interface KlibInfoProvider {
 
     fun getKlibInfo(libraryFile: File): KlibInfo?

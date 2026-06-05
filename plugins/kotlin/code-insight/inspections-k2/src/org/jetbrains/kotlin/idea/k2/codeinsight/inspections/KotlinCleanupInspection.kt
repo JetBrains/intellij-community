@@ -11,7 +11,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -44,7 +43,6 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class KotlinCleanupInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun getDisplayName(): String = KotlinBundle.message("usage.of.redundant.or.deprecated.syntax.or.deprecated.symbols")
 

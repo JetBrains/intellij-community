@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
-@IntellijInternalApi
+@ApiStatus.Internal
 interface KotlinAutoImportsFilter {
     /**
      * Even if the option to perform auto import is disabled for Kotlin but [forceAutoImportForElement] is true, auto import must happen
