@@ -132,7 +132,7 @@ public class LocalFileSystemImpl
   }
 
   public void onDisconnecting() {
-    // on VFS reconnect, we must clear roots manager
+    // upon re-establishing the VFS connection, we must clear watch roots
     myWatchRootsManager.clear();
   }
 
@@ -149,9 +149,11 @@ public class LocalFileSystemImpl
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
       var dirtyPaths = myWatcher.getDirtyPaths();
-      var marked = markPathsDirty(dirtyPaths.dirtyPaths) |
-                   markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
-                   markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
+      var marked = (
+        markPathsDirty(dirtyPaths.dirtyPaths) |
+        markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
+        markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive)
+      );
       if (marked) {
         statusRefreshed();
       }
@@ -254,15 +256,18 @@ public class LocalFileSystemImpl
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
 
     if ((recursiveRootsToAdd != null || flatRootsToAdd != null) && WATCH_ROOTS_LOG.isTraceEnabled()) {
-      WATCH_ROOTS_LOG.trace(new Exception("LocalFileSystemImpl#replaceWatchedRoots:" +
-                                          "\n  recursive: " + (recursiveRootsToAdd != null ? recursiveRootsToAdd : "[]") +
-                                          "\n  flat: " + (flatRootsToAdd != null ? flatRootsToAdd : "[]")));
+      WATCH_ROOTS_LOG.trace(new Exception(
+        "LocalFileSystemImpl#replaceWatchedRoots:" +
+        "\n  recursive: " + (recursiveRootsToAdd != null ? recursiveRootsToAdd : "[]") +
+        "\n  flat: " + (flatRootsToAdd != null ? flatRootsToAdd : "[]")
+      ));
     }
 
     return myWatchRootsManager.replaceWatchedRoots(
       nonNullWatchRequestsToRemove,
       requireNonNullElse(recursiveRootsToAdd, List.of()),
-      requireNonNullElse(flatRootsToAdd, List.of()));
+      requireNonNullElse(flatRootsToAdd, List.of())
+    );
   }
 
   @Override
@@ -315,12 +320,11 @@ public class LocalFileSystemImpl
   }
 
   @Override
-  public boolean isSymlinksSupported() {
+  public boolean areSymlinksSupported() {
     return true;
   }
 
   @Override
-  @ApiStatus.Internal
   public final void symlinkUpdated(
     int fileId,
     @Nullable VirtualFile parent,
@@ -334,7 +338,6 @@ public class LocalFileSystemImpl
   }
 
   @Override
-  @ApiStatus.Internal
   public final void symlinkRemoved(int fileId) {
     myWatchRootsManager.removeSymlink(fileId);
   }

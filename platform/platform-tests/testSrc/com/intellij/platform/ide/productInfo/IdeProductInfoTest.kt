@@ -2,9 +2,10 @@
 package com.intellij.platform.ide.productInfo
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -12,12 +13,13 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 @TestApplication
+@OptIn(LowLevelLocalMachineAccess::class)
 class IdeProductInfoTest {
   private val basePath = PathManagerEx.findFileUnderCommunityHome("platform/platform-tests/testData/productInfo").toPath()
 
   @Test
   fun `idea 2025_2_EAP`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-2025.2-EAP-Linux")
     assertEquals("2025.2", productInfo.version)
     assertEquals("EAP", productInfo.versionSuffix)
@@ -26,7 +28,7 @@ class IdeProductInfoTest {
 
   @Test
   fun `idea 2024_3_1`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-2024.3.1-Linux")
     assertEquals("2024.3.1", productInfo.version)
     assertEquals("IDEA", productInfo.envVarBaseName)
@@ -34,10 +36,10 @@ class IdeProductInfoTest {
     assertThat(productInfo.launch.single().customCommands).hasSize(2)
     assertThat(productInfo.modules).contains("com.intellij.modules.java")
   }
-  
+
   @Test
   fun `idea 2024_3_1 on macOS`() {
-    assumeTrue(SystemInfo.isMac)
+    assumeTrue(OS.CURRENT == OS.macOS)
     assertEquals("2024.3.1", loadProductInfo("idea-2024.3.1-macOS").version)
     assertEquals("2024.3.1", loadProductInfo("idea-2024.3.1-macOS/Contents").version)
   }
@@ -49,28 +51,28 @@ class IdeProductInfoTest {
 
   @Test
   fun `idea community 2022_1_4`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-ic-2022.1.4-Linux-no-jbr")
     assertEquals("2022.1.4", productInfo.version)
   }
 
   @Test
   fun `idea 2020_1_4`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-2020.1.4-Linux")
     assertEquals("2020.1.4", productInfo.version)
   }
-  
+
   @Test
   fun `idea future version with unknown property`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-2050.1-Linux")
     assertEquals("2050.1", productInfo.version)
   }
 
   @Test
   fun `idea 2025_1 with minRequiredJavaVersion`() {
-    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    assumeTrue(OS.CURRENT == OS.Linux || OS.CURRENT == OS.Windows)
     val productInfo = loadProductInfo("idea-2025.1-minRequiredJavaVersion")
     assertEquals(21, productInfo.minRequiredJavaVersion!!)
   }

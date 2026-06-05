@@ -197,7 +197,7 @@ public final class DirectoryLock {
         var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
         LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
         if (command.equals(otherCommand)) {
-          cannotActivate(command, otherPid, suppressed);
+          throw cannotActivate(command, otherPid, suppressed);
         }
       }
       catch (IOException | NumberFormatException e) {
@@ -216,7 +216,7 @@ public final class DirectoryLock {
             "competing processes:\n" +
             competition.stream().map(ph -> "  PID=" + ph.pid() + " (" + ph.info().user() + ") " + ph.info().command()).collect(Collectors.joining())
           );
-          cannotActivate(command, competition.getFirst().pid(), suppressed);
+          throw cannotActivate(command, competition.getFirst().pid(), suppressed);
         }
       }
 
@@ -233,7 +233,7 @@ public final class DirectoryLock {
         return tryListen();
       }
       catch (IOException e) {
-        suppressed.forEach(e::addSuppressed);
+        for (var exception : suppressed) e.addSuppressed(exception);
         throw e;
       }
     }
@@ -242,11 +242,11 @@ public final class DirectoryLock {
     }
   }
 
-  private static void cannotActivate(String command, long pid, List<Exception> suppressed) throws CannotActivateException {
+  private static CannotActivateException cannotActivate(String command, long pid, List<Exception> suppressed) {
     var threadDump = remoteThreadDump(pid);
     var cae = new CannotActivateException(BootstrapBundle.message("bootstrap.error.still.running", command, pid), threadDump);
-    suppressed.forEach(cae::addSuppressed);
-    throw cae;
+    for (var exception : suppressed) cae.addSuppressed(exception);
+    return cae;
   }
 
   @VisibleForTesting

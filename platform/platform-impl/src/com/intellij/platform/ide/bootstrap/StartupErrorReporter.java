@@ -97,7 +97,7 @@ public final class StartupErrorReporter {
     );
   }
 
-  /** <strong>Note:</strong> warnings should be hardcoded because it's too early to try loading localization plugins. */
+  /// **Note:** warnings should be hardcoded because it's too early to try loading localization plugins.
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public static void showWarning(@NonNls String title, @NonNls String message) {
     System.out.println();

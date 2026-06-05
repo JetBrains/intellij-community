@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -1098,7 +1098,7 @@ public final class FSRecordsImpl implements Closeable {
 
       CharSequence name = info.getName();
       VirtualFileSystem fs = parent.getFileSystem();
-      if (fs instanceof SymlinksCapableFileSystem scfs && scfs.isSymlinksSupported()) {
+      if (fs instanceof SymlinksCapableFileSystem scfs && scfs.areSymlinksSupported()) {
         String linkPath = parent.getPath() + '/' + name;
         scfs.symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
       }

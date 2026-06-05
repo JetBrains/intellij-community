@@ -223,7 +223,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   void registerLink(@NotNull VirtualFileSystem fs) {
-    if (fs instanceof SymlinksCapableFileSystem scfs && scfs.isSymlinksSupported()
+    if (fs instanceof SymlinksCapableFileSystem scfs && scfs.areSymlinksSupported()
         && isSymlink() && isValid()) {
       scfs.symlinkUpdated(id, parent, getNameSequence(), getPath(), getCanonicalPath());
     }

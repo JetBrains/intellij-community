@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.platform.ide.productInfo.IdeProductInfo
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -20,10 +21,11 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
+@OptIn(LowLevelLocalMachineAccess::class)
 internal class IdeProductInfoImpl : IdeProductInfo {
   private val json = Json { ignoreUnknownKeys = true }
 
-  override val currentProductInfo: ProductInfoData by lazy { 
+  override val currentProductInfo: ProductInfoData by lazy {
     if (PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild()) {
       createProductInfoFromApplicationInfo()
     }

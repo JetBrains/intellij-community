@@ -6,24 +6,23 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Trait for a file-system impl ({@link com.intellij.openapi.vfs.newvfs.FileSystemInterface}) that supports symlinks, and
- * needs to be notified about their changes.
- * Low-level interface: to be used mostly inside platform VFS implementation
- */
+/// Trait for a file-system impl ([com.intellij.openapi.vfs.newvfs.FileSystemInterface]) that supports symlinks
+/// and needs to be notified about their changes.
+///
+/// Low-level interface: to be used mostly inside platform VFS implementation.
 @ApiStatus.Internal
 public interface SymlinksCapableFileSystem {
-  /**
-   * @return true if symlinks are really supported, false otherwise
-   * (a file system implementation could be capable of symlinks in principle, but does not support them right now)
-   */
-  boolean isSymlinksSupported();
+  /// Returns `true` if symlinks are really supported, `false` otherwise
+  /// (a file system implementation could be capable of symlinks in principle, but does not support them right now)
+  boolean areSymlinksSupported();
 
-  void symlinkUpdated(int fileId,
-                      @Nullable VirtualFile parent,
-                      @NotNull CharSequence name,
-                      @NotNull String linkPath,
-                      @Nullable String linkTarget);
+  void symlinkUpdated(
+    int fileId,
+    @Nullable VirtualFile parent,
+    @NotNull CharSequence name,
+    @NotNull String linkPath,
+    @Nullable String linkTarget
+  );
 
   void symlinkRemoved(int fileId);
 }

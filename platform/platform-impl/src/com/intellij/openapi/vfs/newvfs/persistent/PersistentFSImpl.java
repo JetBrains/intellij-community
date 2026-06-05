@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -2733,7 +2733,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void invalidateSingleNode(@NotNull VirtualFileSystemEntry file, @NotNull Object source, @NotNull Object reason) {
     if (file.is(VFileProperty.SYMLINK)) {
       VirtualFileSystem fs = file.getFileSystem();
-      if (fs instanceof SymlinksCapableFileSystem scfs && scfs.isSymlinksSupported()) {
+      if (fs instanceof SymlinksCapableFileSystem scfs && scfs.areSymlinksSupported()) {
         scfs.symlinkRemoved(file.getId());
       }
     }
@@ -2774,7 +2774,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int id = fileId(file);
     vfsPeer.storeSymlinkTarget(id, target);
     VirtualFileSystem fs = file.getFileSystem();
-    if (fs instanceof SymlinksCapableFileSystem scfs && scfs.isSymlinksSupported()) {
+    if (fs instanceof SymlinksCapableFileSystem scfs && scfs.areSymlinksSupported()) {
       scfs.symlinkUpdated(id, file.getParent(), file.getNameSequence(), file.getPath(), target);
     }
   }

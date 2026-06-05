@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -138,7 +138,7 @@ public final class PathManager {
         result = getHomeDirFor(PathManager.class);
         if (result == null) {
           String advice = OS.CURRENT == OS.macOS ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
-          throw new RuntimeException("Could not find installation home path. Please " + advice);
+          throw new RuntimeException("Could not find the installation home path. Please " + advice);
         }
       }
 
@@ -244,8 +244,7 @@ public final class PathManager {
       return ideaHomeUpwards;
     }
 
-    // classes compiled to .jar files with Bazel
-    // but we're running not under Bazel, like with delegating compilation to Bazel
+    // classes compiled to .jar files with Bazel, but we're not running under Bazel (like with delegating compilation to Bazel)
     try {
       Path ideaHomeFromBazelOut = getIdeaHomeFromBazelExecRoot(root);
       if (ideaHomeFromBazelOut != null) {
@@ -266,11 +265,8 @@ public final class PathManager {
     return root;
   }
 
-  /**
-   * classes compiled to .jar files with Bazel,
-   * but we're running not under Bazel, like with delegating compilation to Bazel
-   * this is a temporary solution while we're still using JPS model for ultimate monorepo (old branches)
-   */
+  // classes compiled to .jar files with Bazel, but we're not running under Bazel (like with delegating compilation to Bazel)
+  // this is a temporary solution while we're still using JPS model for ultimate monorepo (old branches)
   private static @Nullable Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
     String workspacePrefix = "WORKSPACE: ";
 
@@ -412,7 +408,7 @@ public final class PathManager {
   }
 
   /**
-   * Returns the path to the directory where data common for all IntelliJ-based IDEs is stored. 
+   * Returns the path to the directory where data common for all IntelliJ-based IDEs is stored.
    */
   public static synchronized @NotNull Path getCommonDataPath() {
     Path path = ourCommonDataPath;
@@ -449,7 +445,7 @@ public final class PathManager {
     ourPathSelector = newValue;
     System.setProperty(PROPERTY_PATHS_SELECTOR, newValue);
   }
-  
+
   /**
    * Returns the path to the directory where settings are stored.
    * Usually, you don't need to access this directory directly, use {@link com.intellij.openapi.components.PersistentStateComponent} instead.
@@ -458,10 +454,11 @@ public final class PathManager {
     Path path = ourConfigPath;
     if (path == null) {
       Path explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
-      ourConfigPath = path =
+      ourConfigPath = path = (
         explicit != null ? explicit :
         ourPathSelector != null ? Paths.get(getDefaultConfigPathFor(ourPathSelector)) :
-        getHomeDir().resolve(CONFIG_DIRECTORY);
+        getHomeDir().resolve(CONFIG_DIRECTORY)
+      );
     }
     return path;
   }
@@ -497,7 +494,7 @@ public final class PathManager {
   }
 
   /**
-   * Returns the path to the directory where settings are stored by default for IDE designated by {@code selector}.
+   * Returns the path to the directory where settings are stored by default for an IDE with the given path selector.
    */
   public static @NotNull String getDefaultConfigPathFor(@NotNull String selector) {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
@@ -541,16 +538,17 @@ public final class PathManager {
     Path path = ourPluginPath;
     if (path == null) {
       Path explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
-      ourPluginPath = path =
+      ourPluginPath = path = (
         explicit != null ? explicit :
         ourPathSelector != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? Paths.get(getDefaultPluginPathFor(ourPathSelector)) :
-        getConfigDir().resolve(PLUGINS_DIRECTORY);
+        getConfigDir().resolve(PLUGINS_DIRECTORY)
+      );
     }
     return path;
   }
 
   /**
-   * Return the path to the directory where custom plugins are stored by default for IDE with the given path selector.
+   * Return the path to the directory where custom plugins are stored by default for an IDE with the given path selector.
    */
   @ApiStatus.Internal
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
@@ -566,19 +564,20 @@ public final class PathManager {
   }
 
   /**
-   * Returns the path to the directory where caches are stored. 
+   * Returns the path to the directory where caches are stored.
    * To store plugin-related caches, always use a subdirectory named after the plugin.
-   * To store caches related to a particular project, use 
+   * To store caches related to a particular project, use
    * {@link com.intellij.openapi.project.ProjectUtil#getProjectDataPath} instead.
    */
   public static @NotNull Path getSystemDir() {
     Path path = ourSystemPath;
     if (path == null) {
       Path explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
-      ourSystemPath = path =
+      ourSystemPath = path = (
         explicit != null ? explicit :
         ourPathSelector != null ? Paths.get(getDefaultSystemPathFor(ourPathSelector)) :
-        getHomeDir().resolve(SYSTEM_DIRECTORY);
+        getHomeDir().resolve(SYSTEM_DIRECTORY)
+      );
     }
     return path;
   }
@@ -673,6 +672,7 @@ public final class PathManager {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static @NotNull String getPluginTempPath() {
     return getSystemDir().resolve(PLUGINS_DIRECTORY).toString();
   }
@@ -695,7 +695,7 @@ public final class PathManager {
    *         SomeClass.java/
    * </pre>
    * <p>
-   * Calling this method with {@code SomeClass.java} as first argument and {@code resources/META-INF/some_file} as the second argument
+   * Calling this method with {@code SomeClass.java} as the first argument and {@code resources/META-INF/some_file} as the second argument
    * will return something like {@code /home/user/absolute/path/to/jar_root.jar}.
    */
   public static @Nullable String getResourceRoot(@NotNull Class<?> cls, @NotNull String path) {
@@ -713,7 +713,7 @@ public final class PathManager {
   }
 
   /**
-   * Attempts to extract classpath entry part from passed URL.
+   * Attempts to extract a classpath entry part from the passed URL.
    */
   private static @Nullable String extractRoot(URL resourceURL, String resourcePath) {
     if (resourcePath.isEmpty() || resourcePath.charAt(0) != '/' && resourcePath.charAt(0) != '\\') {
@@ -750,6 +750,7 @@ public final class PathManager {
     }
 
     if (resultPath == null) {
+      //noinspection GrazieInspection
       log("cannot extract '" + resourcePath + "' from '" + resourceURL + "'");
       return null;
     }
@@ -845,7 +846,7 @@ public final class PathManager {
       }
       catch (NoSuchFileException | AccessDeniedException ignore) { }
       catch (IOException e) {
-        log("Can't read property file '" + file + "': " + e.getMessage());
+        log("Can't read the property file '" + file + "': " + e.getMessage());
       }
     }
 
@@ -889,7 +890,7 @@ public final class PathManager {
   }
 
   /**
-   * Return original value of the config path ignoring possible customizations made by {@link PathCustomizer}. 
+   * Return the original value of the config path ignoring possible customizations made by {@link PathCustomizer}.
    */
   @ApiStatus.Internal
   public static @NotNull Path getOriginalConfigDir() {
@@ -897,7 +898,7 @@ public final class PathManager {
   }
 
   /**
-   * Return original value of the system path ignoring possible customizations made by {@link PathCustomizer}.
+   * Return the original value of the system path ignoring possible customizations made by {@link PathCustomizer}.
    */
   @ApiStatus.Internal
   public static @NotNull Path getOriginalSystemDir() {
@@ -905,7 +906,7 @@ public final class PathManager {
   }
 
   /**
-   * Return original value of the log path ignoring possible customizations made by {@link PathCustomizer}.
+   * Return the original value of the log path ignoring possible customizations made by {@link PathCustomizer}.
    */
   @ApiStatus.Internal
   public static @NotNull Path getOriginalLogDir() {
@@ -1000,7 +1001,7 @@ public final class PathManager {
   }
 
   /**
-   * Convert the given path to an absolute path substituting '~' symbol with the user home path.
+   * Converts the given path to an absolute path by substituting the '~' symbol with the user home directory.
    */
   public static @NotNull String getAbsolutePath(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
