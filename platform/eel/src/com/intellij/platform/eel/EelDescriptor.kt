@@ -29,6 +29,13 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 interface EelDescriptorWithIsolatedWorkspace : EelDescriptor
 
 /**
+ * Marker interface that indicates ssh agent forwarding by default
+ */
+@ApiStatus.OverrideOnly
+@ApiStatus.Internal
+interface EelDescriptorWithSshForwardingEnabled : EelDescriptor
+
+/**
  * Identifies a specific machine — such as a Docker container, WSL distribution, or SSH host.
  *
  * Multiple [EelDescriptor]s may map to the same machine.
