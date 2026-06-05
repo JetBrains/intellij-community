@@ -21,7 +21,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @Internal
 const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
-internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
+@Internal
+const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
 
 @Internal
 fun isCoroutineDumpHeader(line: String): Boolean {
