@@ -452,7 +452,6 @@
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
     <markdownCompatibilityChecker implementation="org.intellij.plugins.markdown.lang.DefaultMarkdownCompatibilityChecker"/>
-    <fallbackLanguageProvider implementation="org.intellij.plugins.markdown.injection.aliases.NoopFallbackLanguageProvider" order="last"/>
   </extensions>
 
   <actions>
