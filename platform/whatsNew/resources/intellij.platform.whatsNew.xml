@@ -12,6 +12,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>

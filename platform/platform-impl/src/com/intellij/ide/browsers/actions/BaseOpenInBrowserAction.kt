@@ -35,7 +35,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.ActionEvent
 
-internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction({ browser.name }, null, { browser.icon }) {
+class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction({ browser.name }, null, { browser.icon }) {
   object Handler {
     private val LOG = logger<BaseOpenInBrowserAction>()
 
@@ -92,7 +92,6 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       if (!isApplicable) {
         return
       }
-      result!!
     }
     else {
       result = Handler.doUpdate(e) ?: return
@@ -157,7 +156,7 @@ private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: B
   return null
 }
 
-internal fun chooseUrl(urls: Collection<Url>): Promise<Url> {
+fun chooseUrl(urls: Collection<Url>): Promise<Url> {
   if (urls.size == 1) {
     return resolvedPromise(urls.first())
   }

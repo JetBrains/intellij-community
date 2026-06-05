@@ -100,16 +100,11 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     require(!file.isDisposed()) {
       "html request is already disposed"
     }
-    return if (file.shouldUseMockEditor()) {
-      HTMLFileEditorMock(file)
-    }
-    else {
-      HTMLFileEditorImpl(project, file, file.htmlRequest)
-    }
+    return HTMLFileEditorMock(file)
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is HTMLVirtualFile && !file.isDisposed() && file.isJcefSupported()
+    return file is HTMLVirtualFile && !file.isDisposed() && file.shouldUseMockEditor()
   }
 
   override fun acceptRequiresReadAction(): Boolean = false
@@ -118,14 +113,19 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
-  class Request private constructor(@JvmField internal val html: String?, @JvmField internal val url: String?) {
-    internal var currentUrl: String? = url
-    internal var timeoutHtml: String? = null
+  class Request private constructor(@JvmField val html: String?, @JvmField val url: String?) {
+    @ApiStatus.Internal
+    var currentUrl: String? = url
+    @ApiStatus.Internal
+    var timeoutHtml: String? = null
       private set
-    internal var queryHandler: JsQueryHandler? = null
+    @ApiStatus.Internal
+    var queryHandler: JsQueryHandler? = null
       private set
-    internal var requestHandler: ResourceHandler? = null; private set
-    internal var onUrlChanged: (String?, String) -> Unit = { _, _ -> }
+    @ApiStatus.Internal
+    var requestHandler: ResourceHandler? = null; private set
+    @ApiStatus.Internal
+    var onUrlChanged: (String?, String) -> Unit = { _, _ -> }
       private set
 
     companion object {

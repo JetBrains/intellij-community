@@ -10,8 +10,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.containers.WeakList
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -19,12 +19,15 @@ import com.intellij.util.containers.WeakList
  *
  * The lifetime of htmlRequest should be long enough in case of opening a fileEditor in split or via Recent Files, see IJPL-194278
  */
-internal class HTMLVirtualFile private constructor(
+@ApiStatus.Internal
+class HTMLVirtualFile private constructor(
   title: @DialogTitle String,
   fileType: FileType,
-  internal var htmlRequest: Request,
+  htmlRequest: Request,
   private val ignoreJcef: Boolean,
 ) : LightVirtualFile(title, fileType, /* text = */ "") {
+  var htmlRequest: Request = htmlRequest
+    private set
 
   companion object {
     private val DISPOSED_REQUEST: Request = Request.html("DISPOSED_REQUEST")
@@ -44,10 +47,6 @@ internal class HTMLVirtualFile private constructor(
 
   fun shouldUseMockEditor(): Boolean {
     return ignoreJcef
-  }
-
-  fun isJcefSupported(): Boolean {
-    return JBCefApp.isSupported() || ignoreJcef
   }
 
   fun isDisposed(): Boolean {

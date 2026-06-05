@@ -9,6 +9,7 @@ import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
+  private static final String OPEN_HTML_IN_EMBEDDED_BROWSER_ACTION_ID = "OpenHtmlInEmbeddedBrowser";
+
   private CachedValue<AnAction[]> myChildren;
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
@@ -66,14 +68,15 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
   private AnAction @NotNull [] computeChildren() {
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
     boolean addDefaultBrowser = isPopup();
-    boolean hasLocalBrowser = hasLocalBrowser();
+    AnAction localBrowserAction = getLocalBrowserAction();
+    boolean hasLocalBrowser = localBrowserAction != null;
     int offset = 0;
     if (addDefaultBrowser) offset++;
     if (hasLocalBrowser) offset++;
     AnAction[] actions = new AnAction[browsers.size() + offset];
 
     if (hasLocalBrowser) {
-      actions[0] = new OpenHtmlInEmbeddedBrowserAction();
+      actions[0] = localBrowserAction;
     }
 
     if (addDefaultBrowser) {
@@ -95,7 +98,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
   }
 
   public static boolean hasLocalBrowser() {
-    return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled", true);
+    return getLocalBrowserAction() != null;
+  }
+
+  private static @Nullable AnAction getLocalBrowserAction() {
+    return Registry.is("ide.web.preview.enabled", true)
+           ? ActionManager.getInstance().getAction(OPEN_HTML_IN_EMBEDDED_BROWSER_ACTION_ID)
+           : null;
   }
 
   public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {

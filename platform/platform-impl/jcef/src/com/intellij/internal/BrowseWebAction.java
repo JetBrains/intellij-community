@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.notification.Notification;
@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.NotNull;
 
-final class BrowseWebAction extends AnAction implements DumbAware {
+public final class BrowseWebAction extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;

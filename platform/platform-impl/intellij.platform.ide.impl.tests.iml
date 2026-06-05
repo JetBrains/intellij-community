@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jcef.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" scope="TEST" />
@@ -146,6 +147,7 @@
     <orderEntry type="module" module-name="intellij.platform.project" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jbr" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl.jcef" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.util.core" scope="TEST" />
     <orderEntry type="module" module-name="fleet.andel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />

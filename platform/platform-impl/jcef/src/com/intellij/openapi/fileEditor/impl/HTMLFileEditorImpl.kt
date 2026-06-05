@@ -222,8 +222,9 @@ internal class HTMLFileEditorImpl(
 
     multiPanel.select(CONTENT_KEY, true)
 
-    if (request.html != null) {
-      contentPanel.loadHTML(request.html, request.url ?: "about:blank")
+    val html = request.html
+    if (html != null) {
+      contentPanel.loadHTML(html, request.url ?: "about:blank")
     }
     else {
       val timeoutText = request.timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")

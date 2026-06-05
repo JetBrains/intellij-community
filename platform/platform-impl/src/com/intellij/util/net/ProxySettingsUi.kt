@@ -3,9 +3,6 @@ package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
@@ -22,7 +19,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
@@ -420,13 +416,9 @@ internal class ProxySettingsUi(
     credentialStore.setCredentials(state.PROXY_HOST, state.PROXY_PORT, credentials, rememberProxyPasswordCheckBox.isSelected)
 
     disabledPromptsManager.enableAllPromptedAuthentications()
-    if (modified && JBCefApp.isStarted()) {
-      JBCefApp.getNotificationGroup()
-        .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"), IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
-        .addAction(NotificationAction.createSimple(IdeBundle.message("action.jcef.restart")) { ApplicationManager.getApplication().restart() })
-        .notify(null)
+    if (modified) {
+      ProxySettingsListener.notifyProxySettingsChanged()
     }
-
     lastUserConfiguration = state
     lastProxyError = ""
   }

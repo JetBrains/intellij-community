@@ -30,12 +30,16 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -267,7 +271,7 @@ internal class ShowGotItDemoAction : DumbAwareAction() {
         val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript = null,
                                                                    JBUI.CurrentTheme.GotItTooltip.animationBackground(false))
         val size = WebAnimationUtils.getLottieImageSize(lottieJson)
-        gotItBuilder.withBrowserPage(htmlPage, size, withImageBorder)
+        gotItBuilder.withCustomComponentPromo(createBrowserPageComponent(htmlPage, size), withImageBorder)
         PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
       }
       if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
@@ -291,6 +295,22 @@ internal class ShowGotItDemoAction : DumbAwareAction() {
       val gotIt = GotItTooltip(randomId, gotItBuilder, Disposer.newDisposable())
       gotIt.withPosition(position)
       return gotIt
+    }
+
+    private fun createBrowserPageComponent(htmlText: String, size: Dimension): JComponent {
+      val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
+      browser.loadHTML(htmlText)
+      return object : Wrapper(browser.component) {
+        override fun paint(g: Graphics?) {
+          super.paint(g)
+          super.paintBorder(g)
+        }
+      }.also {
+        UIUtil.setNotOpaqueRecursively(it)
+        val adjustedSize = Dimension(size.width + 2, size.height + 2)
+        it.minimumSize = adjustedSize
+        it.preferredSize = adjustedSize
+      }
     }
 
     private fun createTestImage(): Icon {

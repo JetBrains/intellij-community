@@ -4,8 +4,6 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.WhatsNewAction;
-import com.intellij.ide.actions.WhatsNewUtil;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -28,7 +26,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -165,21 +162,6 @@ public class UpdateCheckerService {
       LOG.info("The previous IDE update failed");
     }
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
-  }
-
-  static void showWhatsNew(Project project, BuildNumber current) {
-    var url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
-    if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
-      if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true),
-          project.getDisposed());
-        IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
-      }
-      else {
-        IdeUpdateUsageTriggerCollector.majorUpdateHappened(false);
-      }
-    }
   }
 
   @VisibleForTesting

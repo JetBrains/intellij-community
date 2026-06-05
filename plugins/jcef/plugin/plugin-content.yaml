@@ -1,6 +1,9 @@
 - name: lib/jcef-plugin.jar
   modules:
   - name: intellij.jcef.plugin
+- name: lib/modules/intellij.internal.jcef.jar
+  contentModules:
+  - name: intellij.internal.jcef
 - name: lib/modules/intellij.jcef.frontend.jar
   contentModules:
   - name: intellij.jcef.frontend

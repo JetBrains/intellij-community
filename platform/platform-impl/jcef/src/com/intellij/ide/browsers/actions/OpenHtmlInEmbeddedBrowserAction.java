@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
@@ -35,8 +36,8 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
 /**
  * @author Konstantin Bulenkov
  */
-final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
-  OpenHtmlInEmbeddedBrowserAction() {
+public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
+  public OpenHtmlInEmbeddedBrowserAction() {
     super(IdeBundle.messagePointer("action.open.web.preview.text"), null, new SynchronizedClearableLazy<>(() -> AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
   }
 
@@ -81,7 +82,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     Project project = e.getProject();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    boolean enabled = project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;
+    boolean enabled = JBCefApp.isSupported() && project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;
     e.getPresentation().setEnabledAndVisible(enabled);
     if (!enabled) return;
 

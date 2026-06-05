@@ -1,0 +1,15 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.platform.ui.jcef"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions>
+    <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
+    <action id="JBCefTestApp" class="com.intellij.internal.jcef.test.JBCefTestApp"/>
+    <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
+    <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
+  </actions>
+</idea-plugin>

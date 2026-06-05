@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.HelpTopicsAction
 import com.intellij.ide.actions.JetBrainsTvAction
 import com.intellij.ide.actions.OnlineDocAction
-import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -90,7 +89,7 @@ class HelpAndResourcesPanel : JPanel() {
         add(linkLabelByAction(it, presentation))
       }
 
-      if (it is WhatsNewAction) {
+      if (ActionManager.getInstance().getId(it) == "WhatsNewAction") {
         add(rigid(1, 16))
       } else {
         add(rigid(1, 6))

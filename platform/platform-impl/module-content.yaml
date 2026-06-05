@@ -28,4 +28,3 @@
   - name: intellij.platform.syntax.psi
   - name: intellij.platform.syntax.tree
   - name: intellij.platform.syntax.util
-  - name: intellij.platform.ui.jcef

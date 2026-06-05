@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.CommonBundle
@@ -25,7 +25,6 @@ import org.jetbrains.ide.BuiltInServerBundle
 import java.awt.Color
 import java.awt.Point
 import java.beans.PropertyChangeListener
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 
 @Internal
@@ -44,16 +43,9 @@ class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : U
     }
   }
 
-  companion object {
-    private val previewsOpened = AtomicInteger()
-
-    val isPreviewOpened: Boolean
-      get() = previewsOpened.get() > 0
-  }
-
   internal fun reloadPage() {
     panel.loadURL(url)
-    previewsOpened.incrementAndGet()
+    WebPreviewState.previewOpened()
     showPreviewTooltip()
   }
 
@@ -112,7 +104,7 @@ class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : U
   }
 
   override fun dispose() {
-    previewsOpened.decrementAndGet()
+    WebPreviewState.previewClosed()
     Disposer.dispose(panel)
   }
 }

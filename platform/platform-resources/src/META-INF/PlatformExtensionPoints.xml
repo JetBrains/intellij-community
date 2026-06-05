@@ -726,6 +726,8 @@
 
     <extensionPoint name="editorSkeletonPolicy" interface="com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.whatsNewPageProvider" interface="com.intellij.ide.actions.WhatsNewPageProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.frontend.splitComponentProvider" interface="com.intellij.ui.split.SplitComponentProvider"
                     dynamic="true"/>
 

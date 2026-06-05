@@ -35,7 +35,6 @@ internal class UpdateCheckerProjectActivity : ProjectActivity {
 
     val current = ApplicationInfo.getInstance().build
     UpdateCheckerService.checkIfPreviousUpdateFailed(current)
-    UpdateCheckerService.showWhatsNew(project, current)
     UpdateCheckerService.showSnapUpdateNotification(project, current)
 
     UpdateCheckerService.pruneUpdateSettings()

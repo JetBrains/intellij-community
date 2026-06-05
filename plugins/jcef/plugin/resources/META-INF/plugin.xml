@@ -13,7 +13,8 @@
     <plugin id="intellij.libraries.jcef.plugin"/>
   </dependencies>
 
-  <content>
-    <module name="intellij.jcef.frontend"/>
+  <content namespace="jetbrains">
+    <module name="intellij.jcef.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.internal.jcef"/>
   </content>
 </idea-plugin>

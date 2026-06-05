@@ -7,7 +7,7 @@ import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.browsers.ReloadMode
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.ide.browsers.WebBrowserXmlService
-import com.intellij.ide.browsers.actions.WebPreviewFileEditor
+import com.intellij.ide.browsers.actions.WebPreviewState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -199,7 +199,7 @@ class WebServerPageConnectionService {
 
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
     val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
-    if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened) return
+    if (!gotItTooltip.canShow() || WebPreviewState.isPreviewOpened) return
 
     if (WebBrowserManager.BROWSER_RELOAD_MODE_DEFAULT !== ReloadMode.RELOAD_ON_SAVE) {
       Logger.getInstance(WebServerPageConnectionService::class.java).error(

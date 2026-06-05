@@ -165,7 +165,7 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
 fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
   loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
 
-internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
   val svgUrl = if (appInfo is ApplicationInfoImpl) {

@@ -27,9 +27,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -41,7 +39,6 @@ import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -103,10 +100,6 @@ private data class GotItPromoImage(val image: Icon): GotItPromoContent {
   override val width: Int get() = image.iconWidth
 }
 
-private data class GotItPromoHtmlPage(val htmlText: String, val htmlPageSize: Dimension): GotItPromoContent {
-  override val width: Int get() = htmlPageSize.width
-}
-
 private data class GotItPromoComponent(val component: JComponent): GotItPromoContent {
   override val width: Int get() = component.preferredSize.width
 }
@@ -164,11 +157,12 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   /**
    * Add optional custom component above the header or description
    */
-  fun withCustomComponentPromo(component: JComponent): GotItComponentBuilder {
+  fun withCustomComponentPromo(component: JComponent, withBorder: Boolean = false): GotItComponentBuilder {
     if (promoContent != null) {
       error("Choose one of promo content")
     }
     promoContent = GotItPromoComponent(component)
+    withImageBorder = withBorder
     return this
   }
 
@@ -181,15 +175,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
     val arcRatio = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble() / min(image.iconWidth, image.iconHeight)
     promoContent = GotItPromoImage(RoundedIcon(image, arcRatio, false))
-    withImageBorder = withBorder
-    return this
-  }
-
-  fun withBrowserPage(htmlText: String, size: Dimension, withBorder: Boolean = true): GotItComponentBuilder {
-    if (promoContent != null) {
-      error("Choose one of promo content")
-    }
-    promoContent = GotItPromoHtmlPage(htmlText, size)
     withImageBorder = withBorder
     return this
   }
@@ -466,29 +451,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     if (promo != null) {
       val borderSize = 1  // do not scale
       val component = when(promo) {
-        is GotItPromoHtmlPage -> {
-          val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
-          browser.loadHTML(promo.htmlText)
-          val wrapper = object : Wrapper(browser.component) {
-            /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
-             *  So, it is a hack to paint the border again over the JCEF component to override it.
-             */
-            /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
-             *  So, it is a hack to paint the border again over the JCEF component to override it.
-             */
-            override fun paint(g: Graphics?) {
-              super.paint(g)
-              super.paintBorder(g)
-            }
-          }
-          wrapper.also {
-            UIUtil.setNotOpaqueRecursively(it)
-            val baseSize = promo.htmlPageSize
-            val adjustedSize = Dimension(baseSize.width + 2 * borderSize, baseSize.height + 2 * borderSize)
-            it.minimumSize = adjustedSize
-            it.preferredSize = adjustedSize
-          }
-        }
         is GotItPromoImage -> JLabel(adjustIcon(promo.image, useContrastColors))
         is GotItPromoComponent -> promo.component
       }

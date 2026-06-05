@@ -42,7 +42,6 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
@@ -54,8 +53,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
-import com.jetbrains.cef.JCefAppConfig;
-import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -226,12 +223,8 @@ public final class AboutDialog extends DialogWrapper {
     var javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     var arch = properties.getProperty("os.arch", "");
     var jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
-    var jcefVersion = getJcefVersion();
-    var jcefNativeBundleVersion = getJcefNativeBundleVersion();
-    // check JBR bundled JCEF
-    var jreJcefSuffix = jcefVersion != null && jcefNativeBundleVersion == null ? " (JCEF " + jcefVersion + ")" : "";
-    lines.add(jreInfo + jreJcefSuffix);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}{2}", javaVersion, arch, jreJcefSuffix));
+    lines.add(jreInfo);
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch));
 
     var vmVersion = properties.getProperty("java.vm.name", "unknown");
     var vmVendor = properties.getProperty("java.vendor", "unknown");
@@ -239,14 +232,6 @@ public final class AboutDialog extends DialogWrapper {
     lines.add(vmVendorInfo);
     lines.add("");
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
-
-    // check if there is a standalone JCEF bundle
-    if (jcefVersion != null && jcefNativeBundleVersion != null) {
-      var jcefVersionValue = jcefVersion.equals(jcefNativeBundleVersion) ? jcefVersion : jcefVersion + " (native " + jcefNativeBundleVersion + ")";
-      myInfo.add("JCEF version: " + jcefVersionValue);
-      lines.add(IdeBundle.message("about.box.jcef.version", jcefVersionValue));
-      lines.add("");
-    }
 
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
       var description = aboutInfoProvider.getDescription();
@@ -471,49 +456,4 @@ public final class AboutDialog extends DialogWrapper {
            : ApplicationNamesInfo.getInstance().getFullProductName();
   }
 
-  private static @Nullable String getJcefVersion() {
-    if (JBCefApp.isSupported()) {
-      try {
-        var version = JCefAppConfig.getVersionDetails();
-        return shortenJcefVersion(version.toString());
-      }
-      catch (JCefVersionDetails.VersionUnavailableException ignored) { }
-    }
-
-    return null;
-  }
-
-  private static @Nullable String getJcefNativeBundleVersion() {
-    if (JBCefApp.isSupported()) {
-      var detailedVersionString = JBCefApp.getNativeBundleVersionString();
-       if (detailedVersionString != null) {
-         return shortenJcefVersion(detailedVersionString);
-       }
-    }
-
-    return null;
-  }
-
-  private static String shortenJcefVersion(String detailedVersionString) {
-    var detailedVersionPattern = Pattern.compile(
-      "#.#.#-g([0-9a-f]{7})-chromium-#.#.#.#-api-#.#(?:-([^-]+)-([^-]+))?"
-        .replaceAll("\\.", "\\\\.")
-        .replaceAll("#", "(\\\\d+)")
-    );
-
-    var matcher = detailedVersionPattern.matcher(detailedVersionString);
-    if (!matcher.matches()) {
-      Logger.getInstance(AboutDialog.class).warn("Cannot parse JCEF version string: " + detailedVersionString);
-      return detailedVersionString;
-    }
-
-    var branch = matcher.group(11);
-    var buildNumber = matcher.group(12);
-    if (branch != null && buildNumber != null) {
-      return MessageFormat.format("{0}.{1}.{2}-{3}-{4}", matcher.group(1), matcher.group(2), matcher.group(3), branch, buildNumber);
-    }
-    else {
-      return MessageFormat.format("{0}.{1}.{2}", matcher.group(1), matcher.group(2), matcher.group(3));
-    }
-  }
 }

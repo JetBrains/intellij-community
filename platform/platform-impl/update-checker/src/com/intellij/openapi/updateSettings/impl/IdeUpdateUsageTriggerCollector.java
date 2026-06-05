@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class IdeUpdateUsageTriggerCollector extends CounterUsagesCollector {
+public final class IdeUpdateUsageTriggerCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ide.self.update", 4);
 
   private static final EventId1<String> DIALOG_SHOWN = GROUP.registerEvent(
@@ -34,7 +34,7 @@ final class IdeUpdateUsageTriggerCollector extends CounterUsagesCollector {
     DIALOG_SHOWN.log(patchesValue);
   }
 
-  static void majorUpdateHappened(boolean showInEditor) {
+  public static void majorUpdateHappened(boolean showInEditor) {
     UPDATE_WHATS_NEW.log(showInEditor);
   }
 
