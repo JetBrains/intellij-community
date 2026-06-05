@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -48,16 +49,42 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
 
     var decoratorList = func.getDecoratorList();
     if (decoratorList == null) return null;
-
     var decorators = decoratorList.getDecorators();
-    var explicitlyTypedDecorators = ContainerUtil.filter(decorators, d ->
-      !isTransparentDecorator(d, context)
-    );
-    if (explicitlyTypedDecorators.isEmpty()) return null;
 
-    var innermost = explicitlyTypedDecorators.getLast();
+    // Walk from the innermost decorator (applied directly to `func`) outward and infer from the
+    // first one that declares an explicit parameter signature. Unlike the reference type, parameter
+    // inference only needs the decorator's parameter signature, not its return type, so a decorator
+    // without a return-type hint (e.g. `def d(fn: Callable[[int], str]): ...`) is still usable.
+    // Decorators without parameter types (untyped/identity decorators) are treated as identity and
+    // skipped. Known decorators (@staticmethod, @classmethod, @property, ...) never constrain
+    // `func`'s parameters and must not override inference for parameters such as `self`, so they
+    // are skipped too.
+    for (int i = decorators.length - 1; i >= 0; i--) {
+      PyDecorator decorator = decorators[i];
+      if (!PyKnownDecoratorUtil.asKnownDecorators(decorator, context).isEmpty()) continue;
 
-    var decoratorCallableType = getDecoratorType(innermost, null, context);
+      List<PyCallableParameter> expectedParams = getExpectedFunctionParameters(decorator, context);
+      if (expectedParams == null) continue;
+
+      // Find the position of param among the function's named parameters
+      var params = ParamHelper.collectNamedParameters(func.getParameterList());
+      int paramPos = params.indexOf(param);
+      if (paramPos < 0) return null;
+
+      var type = ParamHelper.getExpectedTypeForPositionalParam(paramPos, expectedParams, context);
+      return type != null ? Ref.create(type) : null;
+    }
+    return null;
+  }
+
+  /**
+   * Returns the explicit (non-implicit) parameters of the callable type that {@code decorator}
+   * expects its decorated function to have, or {@code null} if the decorator does not declare a
+   * usable (typed) parameter signature.
+   */
+  private static @Nullable List<PyCallableParameter> getExpectedFunctionParameters(@NotNull PyDecorator decorator,
+                                                                                   @NotNull TypeEvalContext context) {
+    var decoratorCallableType = getDecoratorType(decorator, null, context);
     if (decoratorCallableType == null) return null;
 
     var decoratorParams = decoratorCallableType.getParameters(context);
@@ -71,15 +98,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
 
     // Apply implicit offset to skip self-like params in the expected callable
     int implicitOffset = Math.min(expectedCallable.getImplicitOffset(), expectedParams.size());
-    var explicitExpectedParams = expectedParams.subList(implicitOffset, expectedParams.size());
-
-    // Find the position of param among non-self named parameters of the function
-    var params = ParamHelper.collectNamedParameters(func.getParameterList());
-    int paramPos = params.indexOf(param);
-    if (paramPos < 0) return null;
-
-    var type = ParamHelper.getExpectedTypeForPositionalParam(paramPos, explicitExpectedParams, context);
-    return type != null ? Ref.create(type) : null;
+    return expectedParams.subList(implicitOffset, expectedParams.size());
   }
 
   @Override
