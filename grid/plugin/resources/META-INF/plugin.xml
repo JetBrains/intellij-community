@@ -1,12 +1,13 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
+<!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
   <id>intellij.grid.core.plugin</id>
   <name>Grid Core</name>
   <description>Provides Grid Core platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
-    <module name="intellij.grid" loading="required"/>
+    <module name="intellij.grid"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.impl"/>

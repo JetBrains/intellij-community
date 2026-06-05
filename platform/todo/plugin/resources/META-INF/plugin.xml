@@ -1,12 +1,13 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
+<!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
   <id>intellij.todo.plugin</id>
   <name>TODO View</name>
   <description>Provides TODO View platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
-    <module name="intellij.platform.todo" loading="required"/>
+    <module name="intellij.platform.todo"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.vcs.impl.lang.todo"/>
   </content>
