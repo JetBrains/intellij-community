@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -297,7 +298,12 @@ class ListPluginComponent(
         myInstallButton!!.addActionListener {
           val pluginUpdateSourceApplier = PluginUpdateSourceApplier(myPlugin)
           pluginUpdateSourceApplier.applyPluginUpdateSourceId()
-          PluginModelAsyncOperationsExecutor.performAutoInstall(myCoroutineScope, myModelFacade, myPlugin, myCustomizer, this, pluginUpdateSourceApplier)
+          PluginModelAsyncOperationsExecutor.performAutoInstall(myCoroutineScope,
+                                                                myModelFacade,
+                                                                myPlugin,
+                                                                myCustomizer,
+                                                                this,
+                                                                pluginUpdateSourceApplier)
         }
         myInstallButton!!.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"))
 
@@ -1340,6 +1346,7 @@ class ListPluginComponent(
     function: Function<ListPluginComponent, PluginUiModel?>,
   ): UninstallAction<ListPluginComponent> {
     return UninstallAction(myCoroutineScope, myModelFacade, true, this, selection, function) {
+      selection.forEach { PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.myPlugin.pluginId) }
     }
   }
 
