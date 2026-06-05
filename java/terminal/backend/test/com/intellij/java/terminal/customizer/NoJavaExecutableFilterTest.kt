@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.customizer
 
-import com.intellij.java.terminal.NoJavaExecutableFilter
+import com.intellij.java.terminal.backend.NoJavaExecutableFilter
 import org.junit.jupiter.api.Test
 
 /** Verifies the filtering of [NoJavaExecutableFilter] to avoid false positives/negative */

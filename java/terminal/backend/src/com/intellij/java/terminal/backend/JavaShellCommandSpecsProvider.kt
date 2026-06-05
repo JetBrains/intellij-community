@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.terminal
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.terminal.backend
 
 import com.intellij.execution.vmOptions.VMOptionsService
-import com.intellij.java.terminal.JavaShellCommandUtils.CLASSPATH_ARGUMENT_NAME
-import com.intellij.java.terminal.JavaShellCommandUtils.UIOptionInfo
-import com.intellij.java.terminal.JavaShellCommandUtils.addClassPathOption
-import com.intellij.java.terminal.JavaShellCommandUtils.addOptionsFromData
+import com.intellij.java.terminal.backend.JavaShellCommandUtils.CLASSPATH_ARGUMENT_NAME
+import com.intellij.java.terminal.backend.JavaShellCommandUtils.UIOptionInfo
+import com.intellij.java.terminal.backend.JavaShellCommandUtils.addClassPathOption
+import com.intellij.java.terminal.backend.JavaShellCommandUtils.addOptionsFromData
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec

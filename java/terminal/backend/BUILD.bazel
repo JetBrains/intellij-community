@@ -1,10 +1,10 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.java.terminal` start
+### auto-generated section `build intellij.java.terminal.backend` start
 
 jvm_library(
-    name = "terminal",
+    name = "backend",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.java.terminal",
+    module_name = "intellij.java.terminal.backend",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -45,17 +45,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "terminal_test_lib",
+    name = "backend_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.java.terminal",
+    module_name = "intellij.java.terminal.backend",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":terminal",
+        ":backend",
         "@lib//:kotlin-stdlib-provided",
         "//plugins/terminal:terminal_test_lib",
         "//plugins/terminal/completion:completion_test_lib",
@@ -78,21 +78,21 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
     ],
 )
-### auto-generated section `build intellij.java.terminal` end
+### auto-generated section `build intellij.java.terminal.backend` end
 
-### auto-generated section `iml intellij.java.terminal` start
+### auto-generated section `iml intellij.java.terminal.backend` start
 exports_files(
     [
-        "intellij.java.terminal.iml",
+        "intellij.java.terminal.backend.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.java.terminal` end
+### auto-generated section `iml intellij.java.terminal.backend` end
 
 ### auto-generated section `build intellij.java.terminal.tests` start
 
 jvm_library(
-    name = "terminal-tests",
+    name = "java-terminal-tests",
     srcs = glob(
         [],
         allow_empty = True,
@@ -103,7 +103,7 @@ jvm_library(
 )
 
 jvm_library(
-    name = "terminal-tests_test_lib",
+    name = "java-terminal-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -115,14 +115,14 @@ jvm_library(
     ),
     module_name = "intellij.java.terminal.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":terminal-tests"],
+    runtime_deps = [":java-terminal-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "//java/java-terminal:terminal",
-        "//java/java-terminal:terminal_test_lib",
+        "//java/terminal/backend",
+        "//java/terminal/backend:backend_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/platform-tests:tests",
@@ -157,7 +157,7 @@ exports_files(
 ### auto-generated section `test intellij.java.terminal.tests` start
 
 jps_test(
-    name = "terminal-tests_test",
-    runtime_deps = [":terminal-tests_test_lib"],
+    name = "java-terminal-tests_test",
+    runtime_deps = [":java-terminal-tests_test_lib"],
 )
 ### auto-generated section `test intellij.java.terminal.tests` end

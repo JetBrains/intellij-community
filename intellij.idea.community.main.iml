@@ -158,7 +158,7 @@
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github.json" scope="RUNTIME" />

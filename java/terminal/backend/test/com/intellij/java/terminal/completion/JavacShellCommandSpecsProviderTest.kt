@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.completion
 
-import com.intellij.java.terminal.JavaShellCommandUtils
+import com.intellij.java.terminal.backend.JavaShellCommandUtils
 import com.intellij.terminal.completion.spec.ProcessExecutionResult
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.UsefulTestCase

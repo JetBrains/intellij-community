@@ -84,7 +84,7 @@
     <module name="intellij.java.performancePlugin" loading="optional"/>
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
-    <module name="intellij.java.terminal" loading="optional"/>
+    <module name="intellij.java.terminal.backend" loading="optional"/>
     <module name="intellij.jvm.analysis.impl"/>
     <module name="intellij.java.debugger.impl.frontend"/>
     <module name="intellij.java.debugger.impl.backend"/>

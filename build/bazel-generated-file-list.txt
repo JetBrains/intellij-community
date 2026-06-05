@@ -323,7 +323,6 @@ java/java-psi-impl
 java/java-runtime
 java/java-structure-view
 java/java-syntax
-java/java-terminal
 java/java-tests
 java/jsp-base-openapi
 java/jsp-openapi
@@ -337,6 +336,7 @@ java/plugin
 java/remote-servers/api
 java/remote-servers/impl
 java/structuralsearch-java
+java/terminal/backend
 java/testFramework
 java/testFramework/backend
 java/testFramework/shared

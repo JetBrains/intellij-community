@@ -708,8 +708,8 @@
       <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/intellij.java.structuralSearch.tests.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/intellij.java.structuralSearch.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-structure-view/intellij.java.structureView.iml" filepath="$PROJECT_DIR$/java/java-structure-view/intellij.java.structureView.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-syntax/intellij.java.syntax.iml" filepath="$PROJECT_DIR$/java/java-syntax/intellij.java.syntax.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/java-terminal/intellij.java.terminal.iml" filepath="$PROJECT_DIR$/java/java-terminal/intellij.java.terminal.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/java-terminal/intellij.java.terminal.tests.iml" filepath="$PROJECT_DIR$/java/java-terminal/intellij.java.terminal.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/terminal/backend/intellij.java.terminal.backend.iml" filepath="$PROJECT_DIR$/java/terminal/backend/intellij.java.terminal.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/terminal/backend/intellij.java.terminal.tests.iml" filepath="$PROJECT_DIR$/java/terminal/backend/intellij.java.terminal.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.iml" filepath="$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/backend/intellij.java.testFramework.backend.iml" filepath="$PROJECT_DIR$/java/testFramework/backend/intellij.java.testFramework.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/shared/intellij.java.testFramework.shared.iml" filepath="$PROJECT_DIR$/java/testFramework/shared/intellij.java.testFramework.shared.iml" />

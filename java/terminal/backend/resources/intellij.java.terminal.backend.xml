@@ -1,0 +1,25 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <consoleFilterProvider implementation="com.intellij.java.terminal.backend.NoJavaExecutableFilter"/>
+    <postStartupActivity implementation="com.intellij.java.terminal.backend.JavaTerminalSettingsReloadActivity"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <shellExecOptionsCustomizer implementation="com.intellij.java.terminal.backend.JdkCustomizer"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavaShellCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavacShellCommandSpecsProvider"/>
+    <terminalSettingsProvider implementation="com.intellij.java.terminal.backend.JavaTerminalSettingsProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">
+    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.backend.ExternalJavaConfigurationDownloadInTerminalAction"/>
+  </extensions>
+</idea-plugin>
