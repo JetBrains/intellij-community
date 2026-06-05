@@ -116,12 +116,12 @@ fun CodeInsightTestFixture.checkNoDocumentationAtCaret() {
   assertNull(renderDocAtCaret())
 }
 
-fun CodeInsightTestFixture.checkDocumentationAtCaret() {
-  checkDocumentation(renderDocAtCaret())
+fun CodeInsightTestFixture.checkDocumentationAtCaret(fileSuffix: String = ".expected", directory: String = "") {
+  checkDocumentation(renderDocAtCaret(), fileSuffix = fileSuffix, directory = directory)
 }
 
-suspend fun CodeInsightTestFixture.checkDocumentationAtCaretSuspending() {
-  checkDocumentation(renderDocAtCaretSuspending())
+suspend fun CodeInsightTestFixture.checkDocumentationAtCaretSuspending(fileSuffix: String = ".expected", directory: String = "") {
+  checkDocumentation(renderDocAtCaretSuspending(), fileSuffix = fileSuffix, directory = directory)
 }
 
 fun CodeInsightTestFixture.checkLookupItems(
