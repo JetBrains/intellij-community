@@ -522,7 +522,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(descriptorForActions!!)
+    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(updateDescriptor ?: descriptorForActions!!)
     coroutineScope.launch {
       val modalityState = ModalityState.stateForComponent(updateButton!!)
       val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
