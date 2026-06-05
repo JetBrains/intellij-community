@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -51,18 +52,18 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
   }
 
   private @NotNull ModCommand processExistingExternalAnnotationsModCommand(@NotNull List<PsiModifierListOwner> listOwners,
-                                                                           @NotNull List<String> annotationFQNs,
+                                                                           @Nullable List<String> annotationFQNs,
                                                                            @NotNull Processor<? super XmlTag> annotationTagProcessor) {
     if (listOwners.isEmpty()) return ModCommand.nop();
     List<XmlTag> origTags = StreamEx.of(listOwners)
       .mapToEntry(this::findExternalAnnotationsXmlFiles)
       .removeValues(f -> f == null || f.isEmpty())
       .flatMapKeyValue((owner, fileList) -> StreamEx.of(fileList)
-        .cross(annotationFQNs)
+        .cross(annotationFQNs == null ? Collections.singletonList(null) : annotationFQNs)
         .flatMapKeyValue((file, annotationFQN) -> getTagsToProcess(file, owner, annotationFQN).stream()))
       .toList();
     if (origTags.isEmpty()) return ModCommand.nop();
-    return ModCommand.psiUpdate(origTags.get(0), (tg, updater) -> {
+    return ModCommand.psiUpdate(origTags.getFirst(), (_, updater) -> {
       List<XmlTag> tags = ContainerUtil.map(origTags, updater::getWritable);
       Set<XmlFile> files = StreamEx.of(tags).map(t -> (XmlFile)t.getContainingFile()).toSet();
       for (XmlTag tag : tags) {
@@ -92,7 +93,15 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
     throw new UnsupportedOperationException("annotateExternallyModCommand is not implemented in " + getClass().getName());
   }
 
-  protected static @NotNull List<XmlTag> getTagsToProcess(@NotNull XmlFile file, @NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+  /**
+   * @param file XML file with external annotations
+   * @param listOwner owner to look for
+   * @param annotationFQN annotation to look for (null = all annotations applicable to this owner)
+   * @return list of tags
+   */
+  private static @NotNull List<XmlTag> getTagsToProcess(@NotNull XmlFile file,
+                                                        @NotNull PsiModifierListOwner listOwner,
+                                                        @Nullable String annotationFQN) {
     final XmlDocument document = file.getDocument();
     if (document == null) return List.of();
     final XmlTag rootTag = document.getRootTag();
@@ -104,7 +113,7 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
       String className = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
       if (!Comparing.strEqual(className, externalName)) continue;
       for (XmlTag annotationTag : tag.getSubTags()) {
-        if (!Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
+        if (annotationFQN != null && !Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
           continue;
         }
         tagsToProcess.add(annotationTag);
@@ -122,6 +131,10 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
    */
   @Contract(pure = true)
   public @NotNull ModCommand deannotateModCommand(List<PsiModifierListOwner> listOwner, @NotNull List<String> annotationFQNs) {
+    return doDeannotateModCommand(listOwner, annotationFQNs);
+  }
+
+  private @NotNull ModCommand doDeannotateModCommand(List<PsiModifierListOwner> listOwner, @Nullable List<String> annotationFQNs) {
     return processExistingExternalAnnotationsModCommand(listOwner, annotationFQNs, annotationTag -> {
       PsiElement parent = annotationTag.getParent();
       annotationTag.delete();
@@ -132,6 +145,17 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
       }
       return true;
     });
+  }
+
+  /**
+   * Returns a command that removes all the external annotations from the specified owner
+   *
+   * @param listOwner      The list of PsiModifierListOwner to deannotate.
+   * @return The ModCommand that removes the specified annotations
+   */
+  @Contract(pure = true)
+  public @NotNull ModCommand deannotateModCommand(List<PsiModifierListOwner> listOwner) {
+    return doDeannotateModCommand(listOwner, null);
   }
 
   /**

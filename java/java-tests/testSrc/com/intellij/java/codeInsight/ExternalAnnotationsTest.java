@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -73,6 +74,16 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
       myFixture = null;
       super.tearDown();
     }
+  }
+  
+  public void testSafeDelete() {
+    myFixture.enableInspections(new UnusedSymbolLocalInspection());
+    myFixture.configureByFiles("src/safeDelete/Hello.java", "content/anno/safeDelete/annotations.xml");
+    IntentionAction intention = myFixture.getAvailableIntention("Safe delete 'test(List<String>)'");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("content/anno/safeDelete/annotations.xml",
+                                "content/anno/safeDelete/annotations_after.xml",
+                                true);
   }
 
   public void testAddedAnnotationInCodeWhenAlreadyPresent() {
