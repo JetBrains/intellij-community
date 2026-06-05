@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.execution.filters.ConsoleFilterProviderEx
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.InlayProvider
+import com.intellij.java.terminal.shared.JavaTerminalSettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
