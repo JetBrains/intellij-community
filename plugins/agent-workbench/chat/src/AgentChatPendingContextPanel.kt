@@ -31,32 +31,28 @@ internal class AgentChatPendingContextPanel(
   private val projectPath: String,
 ) {
   private val pendingItems = ArrayList<AgentPromptContextItem>()
-  private val chipsPanel = JPanel(WrapLayout(FlowLayout.LEFT, 0, JBUI.scale(CHIP_GAP))).apply {
-    isOpaque = false
+  private val componentDelegate = lazy(LazyThreadSafetyMode.NONE) { createComponent() }
+  private val chipsPanel by lazy(LazyThreadSafetyMode.NONE) {
+    JPanel(WrapLayout(FlowLayout.LEFT, 0, JBUI.scale(CHIP_GAP))).apply {
+      isOpaque = false
+    }
   }
-  private val contextPopupMenu = JPopupMenu().apply {
-    add(JMenuItem(AgentChatBundle.message("chat.pending.context.clear")).apply {
-      addActionListener { clear() }
-    })
+  private val contextPopupMenu by lazy(LazyThreadSafetyMode.NONE) {
+    JPopupMenu().apply {
+      add(JMenuItem(AgentChatBundle.message("chat.pending.context.clear")).apply {
+        addActionListener { clear() }
+      })
+    }
   }
-  private val contextLabel = JLabel(AgentChatBundle.message("chat.pending.context.label")).apply {
-    setToolTipText(HtmlChunk.text(AgentChatBundle.message("chat.pending.context.label.tooltip")))
-    componentPopupMenu = contextPopupMenu
+  private val contextLabel by lazy(LazyThreadSafetyMode.NONE) {
+    JLabel(AgentChatBundle.message("chat.pending.context.label")).apply {
+      setToolTipText(HtmlChunk.text(AgentChatBundle.message("chat.pending.context.label.tooltip")))
+      componentPopupMenu = contextPopupMenu
+    }
   }
 
-  val component: JPanel = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
-    isOpaque = true
-    background = UIUtil.getPanelBackground()
-    border = JBUI.Borders.compound(
-      JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
-      JBUI.Borders.empty(6, 8),
-    )
-    componentPopupMenu = contextPopupMenu
-    chipsPanel.componentPopupMenu = contextPopupMenu
-    add(contextLabel, BorderLayout.WEST)
-    add(chipsPanel, BorderLayout.CENTER)
-    isVisible = false
-  }
+  val component: JPanel
+    get() = componentDelegate.value
 
   fun addItems(items: List<AgentPromptContextItem>): Boolean {
     val uniqueItems = appendUniqueItems(currentItems = pendingItems, candidateItems = items)
@@ -65,7 +61,9 @@ internal class AgentChatPendingContextPanel(
     }
 
     pendingItems += uniqueItems
-    render()
+    if (componentDelegate.isInitialized()) {
+      render()
+    }
     return true
   }
 
@@ -103,14 +101,32 @@ internal class AgentChatPendingContextPanel(
       return
     }
     pendingItems.clear()
-    render()
+    if (componentDelegate.isInitialized()) {
+      render()
+    }
   }
 
   internal fun pendingItemsForTests(): List<AgentPromptContextItem> = pendingItems.toList()
 
   internal fun pendingItemsSnapshot(): List<AgentPromptContextItem> = pendingItems.toList()
 
-  private fun render() {
+  private fun createComponent(): JPanel {
+    return JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+      isOpaque = true
+      background = UIUtil.getPanelBackground()
+      border = JBUI.Borders.compound(
+        JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
+        JBUI.Borders.empty(6, 8),
+      )
+      componentPopupMenu = contextPopupMenu
+      chipsPanel.componentPopupMenu = contextPopupMenu
+      add(contextLabel, BorderLayout.WEST)
+      add(chipsPanel, BorderLayout.CENTER)
+      render(this)
+    }
+  }
+
+  private fun render(component: JPanel = this.component) {
     chipsPanel.removeAll()
     pendingItems.forEach { item ->
       chipsPanel.add(wrapRowComponent(createContextChip(item)))

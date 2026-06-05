@@ -309,6 +309,7 @@ class AgentChatEditorServiceTest {
           editorProject.service<AgentChatTabsService>().upsert(snapshot)
         },
       ).also { editor ->
+        editor.showComponentForTests()
         editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
       }
     }
@@ -330,7 +331,7 @@ class AgentChatEditorServiceTest {
     runInUi {
       editor.selectNotify()
     }
-    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    waitForCondition { terminalTabs.createCalls == 1 }
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
 
     openChatInModal(

@@ -584,12 +584,17 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun selectNotifyInitializesTerminalOnce() {
+  fun selectNotifyWaitsUntilEditorComponentIsShown() {
     val terminalTabs = FakeAgentChatTerminalTabs()
-    val editor = testEditor(terminalTabs = terminalTabs)
+    val editor = testEditor(terminalTabs = terminalTabs, showComponent = false)
 
     editor.selectNotify()
     editor.selectNotify()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(0)
+    assertThat(editor.preferredFocusedComponent).isSameAs(editor.component)
+
+    editor.showComponentForTests()
 
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(editor.preferredFocusedComponent).isSameAs(terminalTabs.tab.preferredFocusableComponent)
@@ -676,6 +681,7 @@ class AgentChatFileEditorLifecycleTest {
 
     assertThat(registryAcquisitions.get()).isEqualTo(0)
 
+    editor.showComponentForTests()
     editor.selectNotify()
 
     assertThat(registryAcquisitions.get()).isEqualTo(1)
@@ -2279,6 +2285,7 @@ private fun testEditor(
   snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
+  showComponent: Boolean = true,
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
     project = project,
@@ -2288,7 +2295,12 @@ private fun testEditor(
     tabSnapshotWriter = snapshotWriter,
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
-  ).also(editorsToDispose::add)
+  ).also { editor ->
+    if (showComponent) {
+      editor.showComponentForTests()
+    }
+    editorsToDispose += editor
+  }
 }
 
 private fun unconfinedTestScope(): CoroutineScope {
