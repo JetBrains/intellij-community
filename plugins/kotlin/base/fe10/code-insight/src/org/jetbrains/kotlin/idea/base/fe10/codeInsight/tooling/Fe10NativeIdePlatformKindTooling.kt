@@ -28,7 +28,6 @@ private class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
         return function.isMainFunction() && super.acceptsAsEntryPoint(function)
     }
 
-    @OptIn(IntellijInternalApi::class)
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) {
             return null

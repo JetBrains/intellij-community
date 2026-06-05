@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.inspections
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import kotlin.jvm.java
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/cleanup")
@@ -27,7 +25,6 @@ class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    @OptIn(IntellijInternalApi::class)
     private fun doTest(dir: String, result: String, vararg files: String) {
         myFixture.enableInspections(KotlinCleanupInspection::class.java)
         myFixture.enableInspections(SortModifiersInspection::class.java)
