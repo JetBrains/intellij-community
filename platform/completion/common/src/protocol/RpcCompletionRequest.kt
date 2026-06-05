@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RpcCompletionRequest(
   val id: RpcCompletionRequestId,
+  val sessionId: RpcCompletionSessionId,
   val editorId: EditorId,
   val projectId: ProjectId,
   val startingEditorVersion: Int,
@@ -20,6 +21,7 @@ data class RpcCompletionRequest(
 ) {
   override fun toString(): String = buildToString("RpcCompletionRequest") {
     field("id", id)
+    field("sessionId", sessionId)
     field("editorId", editorId)
     field("projectId", projectId)
     field("startingEditorVersion", startingEditorVersion)
