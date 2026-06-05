@@ -1578,6 +1578,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     listPopup.show(new RelativePoint(getComponent(), p));
   }
 
+  @ApiStatus.Internal
   public @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
                                                                                      boolean hideSingleValued) {
     return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
