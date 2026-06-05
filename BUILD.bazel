@@ -700,6 +700,8 @@ jvm_library(
         "//plugins/restructuredtext:restructuredtext_test_lib",
         "//plugins/markdown/test:tests",
         "//plugins/markdown/test:tests_test_lib",
+        "//plugins/mermaid",
+        "//plugins/mermaid:mermaid_test_lib",
         "//jps/jps-builders:build-tests",
         "//jps/jps-builders:build-tests_test_lib",
         "//plugins/devkit/jps-plugin:jps-tests",

@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.properties.backend" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.mermaid" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
