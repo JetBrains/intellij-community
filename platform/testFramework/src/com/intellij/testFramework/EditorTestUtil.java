@@ -50,7 +50,9 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -377,6 +379,24 @@ public final class EditorTestUtil {
       }
       return Unit.INSTANCE;
     });
+  }
+
+  /**
+   * Closes all opened file editors and clears editor history for the given {@code project}.
+   * <p>
+   * The editor history cleanup is scheduled via {@link PsiDocumentManager#performWhenAllCommitted(Runnable)}
+   * and runs after {@link FileEditorManagerEx#closeAllFiles()} finishes producing its asynchronous
+   * selection events: {@code closeAllFiles} eventually fires {@code selectionChanged}, which
+   * {@code EditorHistoryManager.MyEditorManagerListener} handles by recording the closed file into
+   * the history (postponed via {@code performWhenAllCommitted}). Calling
+   * {@code EditorHistoryManager.removeAllFiles()} synchronously here would race with that
+   * postponed history entry update, so the cleanup is queued after the same commit barrier.
+   */
+  public static void closeAllFilesAndClearEditorHistory(@NotNull Project project) {
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    psiDocumentManager.commitAllDocuments();
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
+    psiDocumentManager.performWhenAllCommitted(() -> EditorHistoryManager.getInstance(project).removeAllFiles());
   }
 
   public static void setEditorVisibleSize(@NotNull Editor editor, int widthInChars, int heightInChars) {
@@ -960,4 +980,3 @@ public final class EditorTestUtil {
     return true;
   }
 }
-

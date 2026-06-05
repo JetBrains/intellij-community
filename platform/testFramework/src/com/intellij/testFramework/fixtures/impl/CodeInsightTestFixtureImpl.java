@@ -101,8 +101,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -1631,9 +1629,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     LookupManager.hideActiveLookup(project);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
-    EditorHistoryManager.getInstance(project).removeAllFiles();
+    EditorTestUtil.closeAllFilesAndClearEditorHistory(project);
   }
 
   private PsiFile @NotNull [] configureByFilesInner(String @NotNull ... filePaths) {
