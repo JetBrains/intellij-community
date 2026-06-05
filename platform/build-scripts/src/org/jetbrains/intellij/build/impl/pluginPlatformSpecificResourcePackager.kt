@@ -23,7 +23,7 @@ internal suspend fun buildPlatformSpecificPluginResources(
   plugin: PluginLayout,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
-  isDevMode: Boolean
+  isDevMode: Boolean,
 ): List<DistributionFileEntry> {
   if (!isDevMode) {
     // Keeping old behavior: `platformResourceGenerators` were not called in dev-mode
@@ -38,13 +38,15 @@ internal suspend fun buildPlatformSpecificPluginResources(
 
   val distEntries = ArrayList<DistributionFileEntry>()
   for ((platform, pluginDir) in pluginDirs) {
-    distEntries.addAll(handleCustomPlatformSpecificAssets(
-      layout = plugin,
-      targetPlatform = platform,
-      context = context,
-      pluginDir = pluginDir,
-      isDevMode = isDevMode,
-    ))
+    distEntries.addAll(
+      handleCustomPlatformSpecificAssets(
+        layout = plugin,
+        targetPlatform = platform,
+        context = context,
+        pluginDir = pluginDir,
+        isDevMode = isDevMode,
+      )
+    )
   }
   return distEntries
 }
@@ -53,7 +55,7 @@ private suspend fun handlePlatformResourceGenerator(
   dist: SupportedDistribution,
   generators: PersistentList<ResourceGenerator>,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
-  context: BuildContext
+  context: BuildContext,
 ) {
   val pluginDir = pluginDirs.firstOrNull { it.first == dist }?.second ?: return
   val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
@@ -121,8 +123,15 @@ internal suspend fun handleCustomPlatformSpecificAssets(
           }
 
           is FileSource -> {
-            copyFile(source.file, rootDir.resolve(source.relativePath))
-            distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
+            val targetFile = rootDir.resolve(source.relativePath)
+            copyFile(source.file, targetFile)
+            distEntries.add(
+              CustomAssetEntry(
+                path = targetFile,
+                hash = lazySource.precomputedHash,
+                relativeOutputFile = resolveRelativeOutputFile(customAsset.relativePath, source.relativePath),
+              )
+            )
           }
 
           else -> throw UnsupportedOperationException("Not supported source for custom plugin platform-specific assets, got $source for $customAsset")
@@ -131,4 +140,8 @@ internal suspend fun handleCustomPlatformSpecificAssets(
     }
   }
   return distEntries
+}
+
+private fun resolveRelativeOutputFile(rootRelativePath: String?, sourceRelativePath: String): String {
+  return rootRelativePath?.let { "$it/$sourceRelativePath" } ?: sourceRelativePath
 }

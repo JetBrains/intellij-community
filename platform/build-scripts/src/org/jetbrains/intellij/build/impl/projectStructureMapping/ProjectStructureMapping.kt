@@ -28,7 +28,7 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 }
 
 private fun buildRootModuleSets(
-  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>
+  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>,
 ): Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>> {
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
   val nestedModuleSetNames = mutableSetOf<String>()
@@ -85,12 +85,20 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
     for (entry in plugin.distribution) {
-      val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
-        if (entry.path.startsWith(plugin.dir)) {
-          plugin.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
-        }
-        else {
-          shortenAndNormalizePath(it, buildPaths)
+      if (entry is CustomAssetEntry && entry.relativeOutputFile != null && !entry.path.startsWith(plugin.dir)) {
+        continue
+      }
+      val presentablePath = if (entry is CustomAssetEntry && entry.relativeOutputFile != null) {
+        entry.relativeOutputFile
+      }
+      else {
+        fileToPresentablePath.computeIfAbsent(entry.path) {
+          if (entry.path.startsWith(plugin.dir)) {
+            plugin.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
+          }
+          else {
+            shortenAndNormalizePath(it, buildPaths)
+          }
         }
       }
       fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
