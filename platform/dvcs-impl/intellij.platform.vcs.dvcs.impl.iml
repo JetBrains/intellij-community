@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="25" />
-            <stringArg name="apiVersion" arg="2.3" />
-            <stringArg name="languageVersion" arg="2.3" />
+            <stringArg name="apiVersion" arg="2.4" />
+            <stringArg name="languageVersion" arg="2.4" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">

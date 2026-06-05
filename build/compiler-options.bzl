@@ -18,8 +18,8 @@ def _normalize_legacy_jvm_default(x_jvm_default):
 def create_kotlinc_options(
         name,
         jvm_target = "25",
-        api_version = "2.3",
-        language_version = "2.3",
+        api_version = "2.4",
+        language_version = "2.4",
         opt_in = ["com.intellij.openapi.util.IntellijInternalApi"],
         plugin_options = [],
         progressive = True,
