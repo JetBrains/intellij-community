@@ -52,5 +52,11 @@ f:com.intellij.ui.jcef.JBCefPsiNavigationUtils
 c:com.intellij.ui.jcef.JCEFHtmlPanel
 - <init>(java.lang.String):V
 - setHtml(java.lang.String):V
+f:com.intellij.ui.jcef.JcefFocusedComponentProvider
+- <init>():V
+- getFocusedComponent():java.awt.Component
+f:com.intellij.ui.jcef.JcefProxySettingsListener
+- <init>():V
+- proxySettingsChanged():V
 c:com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 - org.cef.handler.CefResourceHandlerAdapter

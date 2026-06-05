@@ -1,19 +1,9 @@
 c:com.intellij.ui.jcef.HwFacadeJPanel
 - javax.swing.JPanel
 - <init>():V
-- addNotify():V
-- hide():V
-- paint(java.awt.Graphics):V
-- removeNotify():V
-- show():V
 c:com.intellij.ui.jcef.HwFacadeNonOpaquePanel
 - com.intellij.ui.components.panels.NonOpaquePanel
 - <init>():V
-- addNotify():V
-- hide():V
-- paint(java.awt.Graphics):V
-- removeNotify():V
-- show():V
 f:com.intellij.ui.jcef.JBCefApp
 - createClient():com.intellij.ui.jcef.JBCefClient
 - getCefSettings():org.cef.CefSettings

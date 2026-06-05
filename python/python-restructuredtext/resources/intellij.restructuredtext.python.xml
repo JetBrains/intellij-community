@@ -1,7 +1,11 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.python.community.execService"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

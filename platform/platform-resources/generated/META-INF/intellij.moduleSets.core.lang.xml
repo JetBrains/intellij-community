@@ -164,7 +164,6 @@
     <!-- endregion -->
 
     <!-- region nested: core.ide > libraries.ide -->
-    <module name="intellij.libraries.jcef" loading="embedded"/>
     <module name="intellij.libraries.jediterm.core" loading="embedded"/>
     <module name="intellij.libraries.jediterm.ui" loading="embedded"/>
     <module name="intellij.libraries.jgoodies.common" loading="embedded"/>

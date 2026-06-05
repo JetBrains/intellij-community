@@ -444,6 +444,7 @@ libraries/javax/annotation
 libraries/jaxen
 libraries/jbr
 libraries/jcef
+libraries/jcef/plugin
 libraries/jcip
 libraries/jediterm-core
 libraries/jediterm-ui
@@ -750,6 +751,7 @@ platform/navbar/plugin
 platform/navbar/shared
 platform/navbar/testFramework
 platform/new-ui-onboarding
+platform/new-ui-onboarding/jcef
 platform/new-users-onboarding
 platform/non-modal-welcome-screen
 platform/non-modal-welcome-screen/backend
@@ -768,6 +770,8 @@ platform/platform-impl/designer
 platform/platform-impl/eel
 platform/platform-impl/initial-config-import
 platform/platform-impl/internal
+platform/platform-impl/internal/jcef
+platform/platform-impl/jcef
 platform/platform-impl/recentProjects
 platform/platform-impl/remote
 platform/platform-impl/rpc

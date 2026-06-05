@@ -4,7 +4,6 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <module name="intellij.libraries.jcef" loading="embedded"/>
     <module name="intellij.libraries.jediterm.core" loading="embedded"/>
     <module name="intellij.libraries.jediterm.ui" loading="embedded"/>
     <module name="intellij.libraries.jgoodies.common" loading="embedded"/>

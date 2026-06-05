@@ -9723,7 +9723,6 @@ f:com.intellij.ui.BalloonImpl
 - wasFadedIn():Z
 - wasFadedOut():Z
 c:com.intellij.ui.BalloonImpl$ActionButton
-- com.intellij.ui.jcef.HwFacadeNonOpaquePanel
 - com.intellij.openapi.wm.IdeGlassPane$TopComponent
 - pf:myButton:com.intellij.util.ui.BaseButtonBehavior
 - <init>(com.intellij.ui.BalloonImpl,javax.swing.Icon,javax.swing.Icon,java.lang.String,com.intellij.util.Consumer):V

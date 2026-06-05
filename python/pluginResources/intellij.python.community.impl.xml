@@ -6,10 +6,12 @@
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.json"/>
+    <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.core.impl"/>

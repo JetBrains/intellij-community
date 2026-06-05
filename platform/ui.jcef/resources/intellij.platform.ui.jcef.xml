@@ -17,7 +17,16 @@
   </dependencies>
   <!-- endregion -->
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.cefNativeBundleProvider" interface="com.intellij.ui.jcef.JBCefNativeBundleProvider" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider" dynamic="false"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="notHeadless" os="mac"/>
+    <cachesInvalidator implementation="com.intellij.ui.jcef.JBCefAppCacheInvalidator" order="last"/>
+    <cefNativeBundleProvider implementation="com.intellij.ui.jcef.JBCefDefaultNativeBundleProvider" order="first"/>
     <hwFacadeProvider implementation="com.intellij.ui.jcef.JcefHwFacadeProvider"/>
     <focusedComponentProvider implementation="com.intellij.ui.jcef.JcefFocusedComponentProvider"/>
     <proxySettingsListener implementation="com.intellij.ui.jcef.JcefProxySettingsListener"/>

@@ -8,7 +8,9 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jcef"/>
     <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.ui.jcef"/>
     <!-- endregion -->
   </dependencies>
 

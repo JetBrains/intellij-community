@@ -46,25 +46,6 @@ public class  ContextMenuHandler extends CefContextMenuHandlerAdapter {
 
         model.addItem(MenuId.MENU_ID_NO_SPELLING_SUGGESTIONS, "Suggestions isn't implemented yet.");
         model.setEnabled(MenuId.MENU_ID_NO_SPELLING_SUGGESTIONS, false);
-
-        //NOTE: uncomment to support DictionarySuggestions
-        //Vector<String> suggestions = new Vector<>();
-        //params.getDictionarySuggestions(suggestions);
-        //
-        //// Spell checking menu
-        //model.addSeparator();
-        //if (suggestions.isEmpty()) {
-        //    model.addItem(MenuId.MENU_ID_NO_SPELLING_SUGGESTIONS, "No suggestions");
-        //    model.setEnabled(MenuId.MENU_ID_NO_SPELLING_SUGGESTIONS, false);
-        //    return;
-        //}
-        //
-        //int id = MenuId.MENU_ID_SPELLCHECK_SUGGESTION_0;
-        //for (String suggestedWord : suggestions) {
-        //    model.addItem(id, suggestedWord);
-        //    suggestions_.put(id, suggestedWord);
-        //    if (++id > MenuId.MENU_ID_SPELLCHECK_SUGGESTION_LAST) break;
-        //}
     }
 
     @Override

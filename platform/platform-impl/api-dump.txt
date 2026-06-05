@@ -492,6 +492,17 @@ f:com.intellij.ide.browsers.WebBrowserManager
 - getFirstBrowser(com.intellij.ide.browsers.BrowserFamily):com.intellij.ide.browsers.WebBrowser
 - isActive(com.intellij.ide.browsers.WebBrowser):Z
 - loadState(org.jdom.Element):V
+f:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>(com.intellij.ide.browsers.WebBrowser):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction$Handler
+- sf:INSTANCE:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction$Handler
+- sf:doUpdate(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.browsers.OpenInBrowserRequest
+f:com.intellij.ide.browsers.actions.BaseOpenInBrowserActionKt
+- sf:chooseUrl(java.util.Collection):org.jetbrains.concurrency.Promise
 f:com.intellij.ide.dnd.FileCopyPasteUtil
 - s:getFileList(java.awt.datatransfer.Transferable):java.util.List
 - s:getFileListFromAttachedObject(java.lang.Object):java.util.List
@@ -1733,6 +1744,8 @@ f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion
 com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$JsQueryHandler
 - a:query(J,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
+- f:html:java.lang.String
+- f:url:java.lang.String
 - f:withQueryHandler(com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$JsQueryHandler):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request$Companion
 - f:html(java.lang.String):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
@@ -2442,6 +2455,8 @@ a:com.intellij.ui.AppIcon
 f:com.intellij.ui.AppUIUtil
 - sf:invokeOnEdt(java.lang.Runnable):V
 - sf:saveConsents(java.util.List):V
+f:com.intellij.ui.AppUIUtilKt
+- sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I,Z):javax.swing.Icon
 f:com.intellij.ui.BadgeIconSupplier
 - <init>(javax.swing.Icon):V
 - f:getInfoIcon(Z):javax.swing.Icon
@@ -2456,6 +2471,8 @@ f:com.intellij.ui.BalloonImpl
 - setShowPointer(Z):V
 - startFadeoutTimer(I):V
 - startSmartFadeoutTimer(I):V
+c:com.intellij.ui.BalloonImpl$ActionButton
+- com.intellij.ui.components.panels.NonOpaquePanel
 com.intellij.ui.BalloonImpl$ActionProvider
 - a:createActions():java.util.List
 - a:layout(java.awt.Rectangle):V

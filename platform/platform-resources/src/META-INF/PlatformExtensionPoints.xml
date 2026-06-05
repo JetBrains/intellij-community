@@ -537,7 +537,6 @@
     <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
     <extensionPoint name="textEditorCustomizer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer" dynamic="true"/>
 
-    <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider" dynamic="false"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
     <extensionPoint name="documentationCssProvider" interface="com.intellij.codeInsight.documentation.DocumentationCssProvider" dynamic="true"/>
 
@@ -639,10 +638,6 @@
     <extensionPoint name="aiDataCollectionExternalSettings"
                     interface="com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings"
                     dynamic="true"/>
-
-    <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
-
-    <extensionPoint name="cefNativeBundleProvider" interface="com.intellij.ui.jcef.JBCefNativeBundleProvider" dynamic="false"/>
 
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
     <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>

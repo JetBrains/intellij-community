@@ -1,6 +1,10 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.libraries.assertj.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.platform.ui.jcef"/>
+    <!-- endregion -->
   </dependencies>
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"

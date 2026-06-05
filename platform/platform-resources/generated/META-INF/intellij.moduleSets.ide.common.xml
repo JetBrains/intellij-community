@@ -169,7 +169,6 @@
     <!-- endregion -->
 
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > libraries.ide -->
-    <module name="intellij.libraries.jcef" loading="embedded"/>
     <module name="intellij.libraries.jediterm.core" loading="embedded"/>
     <module name="intellij.libraries.jediterm.ui" loading="embedded"/>
     <module name="intellij.libraries.jgoodies.common" loading="embedded"/>
@@ -391,6 +390,9 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
+    <module name="intellij.platform.ui.jcef"/>
+    <module name="intellij.platform.ide.newUiOnboarding.jcef"/>
+    <module name="intellij.platform.ide.impl.jcef"/>
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>

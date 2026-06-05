@@ -1598,12 +1598,14 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.jetbrains.rider.protocol.RiderProtocolProjectSessionsManager",
   "com.jetbrains.rider.workspaceModel.RiderWorkspaceModel",
   "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
+  "com.intellij.ui.jcef.JBCefStartup",
 
   // Remote Development
   "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
   "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
   "com.intellij.cwm.plugin.following.FollowMeManagerService",
   "com.intellij.cwm.plugin.following.GuestFollowMeManager",
+  "com.intellij.cwm.plugin.ui.BackendModalityHost",
   "com.intellij.cwm.plugin.ports.CwmPortForwardingToolWindowManager",
   "com.intellij.cwm.plugin.users.BackendUserManager",
   "com.intellij.platform.vcs.backend.split.BackendLocalChangesHost",
@@ -1613,6 +1615,7 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.jetbrains.rdserver.daemon.BackendDaemonStatusHost",
   "com.jetbrains.rdserver.daemon.BackendHighlighterRegistrationsHost",
   "com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost.Settings",
+  $$"com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost$Settings",
   "com.jetbrains.rdserver.debugger.BackendBreakpointHost",
   "com.jetbrains.rdserver.debugger.BackendConsoleInfoHost",
   "com.jetbrains.rdserver.debugger.BackendDebuggerHost",

@@ -25,6 +25,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
+        "//images",
         "//plugins/webp/lib:webp-libwebp",
     ],
 )
@@ -45,6 +46,7 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//images:images_test_lib",
     ],
 )
 ### auto-generated section `build intellij.webp` end
