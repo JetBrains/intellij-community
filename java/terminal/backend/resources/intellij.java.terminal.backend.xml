@@ -16,7 +16,6 @@
     <shellExecOptionsCustomizer implementation="com.intellij.java.terminal.backend.JdkCustomizer"/>
     <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavaShellCommandSpecsProvider"/>
     <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavacShellCommandSpecsProvider"/>
-    <terminalSettingsProvider implementation="com.intellij.java.terminal.backend.JavaTerminalSettingsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">

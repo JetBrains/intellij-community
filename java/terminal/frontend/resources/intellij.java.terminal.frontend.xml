@@ -1,2 +1,11 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.java.terminal.shared"/>
+    <module name="intellij.terminal.frontend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <terminalSettingsProvider implementation="com.intellij.java.terminal.frontend.JavaTerminalSettingsProvider"/>
+  </extensions>
 </idea-plugin>

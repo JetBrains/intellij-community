@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.terminal.backend
+package com.intellij.java.terminal.frontend
 
 import com.intellij.java.terminal.shared.JavaTerminalBundle
 import com.intellij.java.terminal.shared.JavaTerminalSettings
@@ -10,13 +10,12 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 
-
 internal class JavaTerminalSettingsProvider : TerminalSettingsProvider {
   override fun createConfigurable(project: Project): UnnamedConfigurable = JavaTerminalConfigurable()
-  
+
   private class JavaTerminalConfigurable: UiDslUnnamedConfigurable.Simple() {
     override fun Panel.createContent() {
-      row { 
+      row {
         checkBox(JavaTerminalBundle.message("checkbox.override.jdk"))
           .bindSelected(JavaTerminalSettings.instance::overrideJavaHome)
       }
