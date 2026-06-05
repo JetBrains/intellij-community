@@ -1612,6 +1612,7 @@ python/python-psi-impl
 python/python-pyproject
 python/python-pytools
 python/python-pytools-ui
+python/python-pytools/tests
 python/python-requirements
 python/python-restructuredtext
 python/python-sdk

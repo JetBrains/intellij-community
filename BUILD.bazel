@@ -784,6 +784,8 @@ jvm_library(
         "//python/services/system-python:python-community-services-systemPython-tests_test_lib",
         "//python/python-pyproject:pyproject-tests",
         "//python/python-pyproject:pyproject-tests_test_lib",
+        "//python/python-pytools/tests",
+        "//python/python-pytools/tests:tests_test_lib",
         "//python/services/internal-impl:python-community-services-internal-impl-tests",
         "//python/services/internal-impl:python-community-services-internal-impl-tests_test_lib",
         "//python/python-test-env/common",
