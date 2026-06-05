@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspBundle
-import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -39,7 +38,7 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
 
   override fun canFormat(psiFile: PsiFile, vararg features: Feature): Boolean {
     val goal = LspFormattingGoal.getFormattingGoal(features) ?: return false
-    val lspServer: LspServer? = when (goal) {
+    val lspServer = when (goal) {
       LspFormattingGoal.FullFileFormatting -> findServerToFormatThisFile(psiFile, true)
       LspFormattingGoal.RangeFormatting -> findServerToFormatThisFile(psiFile, false)
       LspFormattingGoal.OptimizeImports -> findServerToOptimizeImports(psiFile)
