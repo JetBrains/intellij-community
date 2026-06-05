@@ -199,12 +199,13 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
         }
 
         private fun K2MoveTargetModel.Declarations.isValidRefactoring(): Boolean {
-            return if (destinationTargetType == MoveTargetType.FILE) {
-                isValidFileRefactoring(fileName)
-            } else {
-                val destinationClass = destinationClass ?: return false
-                // Cannot allow moving the class into itself
-                destinationClass.parentsWithSelf.none { it in source.elements }
+            return when (destinationTargetType) {
+                MoveTargetType.FILE -> isValidFileRefactoring(fileName)
+                MoveTargetType.CLASS -> {
+                    val destinationClass = destinationClass ?: return false
+                    // Cannot allow moving the class into itself
+                    destinationClass.parentsWithSelf.none { it in source.elements }
+                }
             }
         }
 

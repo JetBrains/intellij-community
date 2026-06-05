@@ -1,0 +1,9 @@
+class Target(val i: Int)
+
+fun caller(target: Target) {
+    example(target)
+}
+
+fun <spot>example</spot>(target: Target) {
+    println(target.i)
+}

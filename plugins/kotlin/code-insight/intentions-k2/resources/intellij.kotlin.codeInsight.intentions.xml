@@ -1198,5 +1198,12 @@
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MoveFunctionToClassIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
   </extensions>
 </idea-plugin>

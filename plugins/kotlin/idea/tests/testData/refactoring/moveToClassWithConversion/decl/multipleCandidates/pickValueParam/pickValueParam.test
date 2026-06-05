@@ -1,0 +1,7 @@
+{
+  "mainFile": "sample/Source.kt",
+  "enabledInK2": true,
+  "targetClassFqName": "sample.Picked",
+  "candidateKind": "VALUE_PARAMETER",
+  "candidateDisplayName": "v"
+}
