@@ -2,7 +2,10 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -10,6 +13,7 @@ import com.intellij.openapi.progress.assertJobIsChildOf
 import com.intellij.openapi.progress.blockingContextTest
 import com.intellij.openapi.progress.testExceptions
 import com.intellij.openapi.progress.testNoExceptions
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -92,7 +96,43 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   fun `throws inside non-cancellable read action when a write is requested during computation`() {
     blockingContextTest {
       runReadAction {
-        testThrowsOnWrite()
+        computeCancellable {
+          testNoExceptions()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `attempt for cancellable RA inside a blocking RA does not throw on pending write action`() = concurrencyTest {
+    runReadActionBlocking {
+      launch {
+        checkpoint(1)
+        backgroundWriteAction {
+        }
+      }
+      checkpoint(2)
+      Thread.sleep(10)
+      ReadAction.computeCancellable<Unit, Throwable> {
+        checkpoint(3)
+      }
+      checkpoint(4)
+    }
+  }
+
+  @Test
+  fun `running cancellable RA inside a blocking RA does not throw on pending write action`() = concurrencyTest {
+    runReadActionBlocking {
+      ReadAction.computeCancellable<Unit, Throwable> {
+        checkpoint(1)
+        launch {
+          checkpoint(2)
+          backgroundWriteAction {
+          }
+        }
+        Thread.sleep(10)
+        ProgressManager.checkCanceled()
+        checkpoint(3)
       }
     }
   }

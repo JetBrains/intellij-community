@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -156,12 +157,15 @@ public final class ReadAction {
 
   /**
    * Runs the specified computation in a cancellable read action with a single attempt.
-   * <p/>
-   * If there is a running or requested write action, this method throws {@link CannotReadException},
-   * otherwise the computation is executed immediately in the current thread.
-   * If a write action is requested during the computation, the computation becomes canceled
-   * (i.e., {@link ProgressManager#checkCanceled()} starts to throw inside the computation),
-   * and this method throws {@link CannotReadException}.
+   * <p>
+   * <h3>Semantics:</h3>
+   * <ul>
+   *   <li>If this function is invoked while the read or write access is allowed (see {@link ThreadingAssertions#assertReadAccess()}),
+   *    then it calls {@code computable} directly.</li>
+   *    <li>Otherwise, if there is a pending or running write action, this function throws {@link CannotReadException}.</li>
+   *    <li>Otherwise, this function starts. It can throw {@link CannotReadException} on the next {@link ProgressManager#checkCanceled()}
+   *    if there is a pending write action.
+   * </ul>
    *
    * @throws CannotReadException if the read action cannot be started,
    *                             or if it was canceled by a requested write action during its execution

@@ -94,10 +94,12 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
   }
 
   @Test
-  fun `throws inside non-cancellable read action when a write is requested during computation`() {
+  fun `does not throw inside non-cancellable read action when a write is requested during computation`() {
     indicatorTest {
       runReadAction {
-        testThrowsOnWrite()
+        computeCancellable {
+          testNoExceptions()
+        }
       }
     }
   }

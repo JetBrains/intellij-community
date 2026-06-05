@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
@@ -74,9 +75,12 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   private fun testCancellableReadAction(blockingTest: () -> Unit) {
+    val priorReadAccess = application.isReadAccessAllowed
     ReadAction.computeCancellable<Unit, Throwable> {
       assertNotNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
+      if (!priorReadAccess) {
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+      }
       blockingTest()
     }
   }
