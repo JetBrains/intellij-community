@@ -1,8 +1,8 @@
 package com.intellij.mermaid.lang.preview
 
 import com.intellij.mermaid.lang.MermaidTestingUtil.obtainTestDataPath
-import com.intellij.mermaid.preview.MermaidDiagramPreviewComponent
-import com.intellij.mermaid.preview.executeCancellableJavaScript
+import com.intellij.mermaid.markdown.preview.MermaidDiagramPreviewComponent
+import com.intellij.mermaid.markdown.preview.executeCancellableJavaScript
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project

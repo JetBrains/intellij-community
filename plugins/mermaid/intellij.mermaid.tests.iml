@@ -2,11 +2,11 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/testSrc">
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
-    </content>
     <content url="file://$MODULE_DIR$/testData">
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
+    </content>
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mermaid.markdown" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.mermaid" />
 </module>

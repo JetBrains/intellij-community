@@ -1184,6 +1184,8 @@ jvm_library(
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests_test_lib",
         "//platform/lsp-impl/tests",
         "//platform/lsp-impl/tests:tests_test_lib",
+        "//plugins/mermaid:mermaid-tests",
+        "//plugins/mermaid:mermaid-tests_test_lib",
         "//platform/discoverability:discoverability-tests",
         "//platform/discoverability:discoverability-tests_test_lib",
     ],

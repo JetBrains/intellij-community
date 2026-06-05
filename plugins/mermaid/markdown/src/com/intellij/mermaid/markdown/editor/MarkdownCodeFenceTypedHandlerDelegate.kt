@@ -1,4 +1,4 @@
-package com.intellij.mermaid.editor
+package com.intellij.mermaid.markdown.editor
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.colors.ColorKey
@@ -17,7 +17,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
 @Suppress("UnstableApiUsage")
-internal object PreviewThemeStyles {
+object PreviewThemeStyles {
   fun createStylesheet(): String {
     val scheme = obtainColorScheme()
     val linkActiveForeground = JBUI.CurrentTheme.Link.Foreground.ENABLED

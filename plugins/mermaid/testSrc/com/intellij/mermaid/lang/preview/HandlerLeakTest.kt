@@ -1,9 +1,9 @@
 package com.intellij.mermaid.lang.preview
 
-import com.intellij.mermaid.preview.WaitForLoadHandlerAdapter
-import com.intellij.mermaid.preview.createBrowser
-import com.intellij.mermaid.preview.executeCancellableJavaScript
-import com.intellij.mermaid.preview.waitForPageLoad
+import com.intellij.mermaid.markdown.preview.WaitForLoadHandlerAdapter
+import com.intellij.mermaid.markdown.preview.createBrowser
+import com.intellij.mermaid.markdown.preview.executeCancellableJavaScript
+import com.intellij.mermaid.markdown.preview.waitForPageLoad
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer

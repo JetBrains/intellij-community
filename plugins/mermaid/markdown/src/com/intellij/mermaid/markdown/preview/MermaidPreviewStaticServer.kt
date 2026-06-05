@@ -1,8 +1,8 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension
 import com.intellij.mermaid.markdown.jcef.MermaidCodeGeneratingProviderExtension.Companion.determineTheme
-import com.intellij.mermaid.preview.MermaidPreviewStaticServer.Companion.guessContentType
+import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.guessContentType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.Urls

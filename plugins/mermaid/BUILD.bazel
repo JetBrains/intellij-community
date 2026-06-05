@@ -199,6 +199,8 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//plugins/mermaid/markdown",
+        "//plugins/mermaid/markdown:markdown_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mermaid.tests` end

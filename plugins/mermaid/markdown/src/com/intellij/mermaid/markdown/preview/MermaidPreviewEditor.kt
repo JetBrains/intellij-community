@@ -1,4 +1,4 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener

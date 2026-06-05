@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.NonNls
 
-internal object MermaidNotifications {
+object MermaidNotifications {
   val group
     get() = requireNotNull(NotificationGroupManager.getInstance().getNotificationGroup("Mermaid"))
 

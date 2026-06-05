@@ -1,4 +1,4 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser

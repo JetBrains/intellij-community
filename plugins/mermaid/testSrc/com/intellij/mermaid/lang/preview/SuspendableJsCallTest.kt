@@ -1,9 +1,9 @@
 package com.intellij.mermaid.lang.preview
 
-import com.intellij.mermaid.preview.JsCallExecutionException
-import com.intellij.mermaid.preview.createBrowser
-import com.intellij.mermaid.preview.executeCancellableJavaScript
-import com.intellij.mermaid.preview.waitForPageLoad
+import com.intellij.mermaid.markdown.preview.JsCallExecutionException
+import com.intellij.mermaid.markdown.preview.createBrowser
+import com.intellij.mermaid.markdown.preview.executeCancellableJavaScript
+import com.intellij.mermaid.markdown.preview.waitForPageLoad
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use

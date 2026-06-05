@@ -1,9 +1,10 @@
-package com.intellij.mermaid.editor
+package com.intellij.mermaid.markdown.editor
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.mermaid.editor.MermaidLiveTemplateCompletionProvider
 import com.intellij.patterns.PlatformPatterns.not
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.util.ProcessingContext

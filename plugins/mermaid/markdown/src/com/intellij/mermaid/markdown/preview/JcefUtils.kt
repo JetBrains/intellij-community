@@ -1,4 +1,4 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -79,14 +79,14 @@ suspend fun JBCefBrowser.waitForPageLoad(url: String) {
   }
 }
 
-internal fun queryHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
+fun queryHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
   return {
     handler.invoke(it)
     JBCefJSQuery.Response("")
   }
 }
 
-internal fun JBCefJSQuery.addVoidHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
+fun JBCefJSQuery.addVoidHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
   @Suppress("NAME_SHADOWING")
   val handler = queryHandler(handler)
   addHandler(handler)

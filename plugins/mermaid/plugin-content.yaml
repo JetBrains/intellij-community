@@ -1,0 +1,5 @@
+- name: lib/mermaid.jar
+  modules:
+  - name: intellij.mermaid
+  contentModules:
+  - name: intellij.mermaid.markdown

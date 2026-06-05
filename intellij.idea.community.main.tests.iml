@@ -294,6 +294,7 @@
     <orderEntry type="module" module-name="intellij.platform.exploratory.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lsp.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mermaid.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.discoverability.tests" scope="TEST" />
   </component>
 </module>

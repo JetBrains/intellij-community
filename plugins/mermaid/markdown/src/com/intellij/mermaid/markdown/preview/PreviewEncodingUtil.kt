@@ -1,10 +1,10 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.util.Base64
 
-internal object PreviewEncodingUtil {
+object PreviewEncodingUtil {
   private val contentCharset: Charset
     get() = Charsets.UTF_8
 

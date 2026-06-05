@@ -1,4 +1,4 @@
-package com.intellij.mermaid.preview
+package com.intellij.mermaid.markdown.preview
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.mermaid.MermaidBundle
