@@ -1,11 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diff.DiffBundle;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
 
 public class BinaryDiffTool implements FrameDiffTool {
   public static final BinaryDiffTool INSTANCE = new BinaryDiffTool();
@@ -28,5 +31,10 @@ public class BinaryDiffTool implements FrameDiffTool {
   @Override
   public @NotNull String getName() {
     return DiffBundle.message("binary.file.viewer");
+  }
+
+  @Override
+  public @NotNull Icon getIcon() {
+    return AllIcons.FileTypes.BinaryData;
   }
 }
