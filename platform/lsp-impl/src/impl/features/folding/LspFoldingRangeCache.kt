@@ -1,9 +1,8 @@
 package com.intellij.platform.lsp.impl.features.folding
 
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeSupport
 import com.intellij.platform.lsp.impl.LspServerImpl
@@ -35,10 +34,15 @@ internal class LspFoldingRangeCache(private val lspServer: LspServerImpl) : LspH
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    val fileEditorManager = lspServer.project.serviceAsync<FileEditorManager>()
-    for (fileEditor in fileEditorManager.getEditors(file)) {
-      if (fileEditor is TextEditor) {
-        CodeFoldingManager.getInstance(lspServer.project).scheduleAsyncFoldingUpdate(fileEditor.editor)
+    val project = lspServer.project
+    val foldingManager = CodeFoldingManager.getInstance(project)
+    readAction {
+      // scheduleAsyncFoldingUpdate restarts daemon highlighting synchronously; daemon cancellation listeners
+      // are documented to run under read action and may read PSI/editor context.
+      for (editor in EditorFactory.getInstance().allEditors) {
+        if (editor.project == project && editor.virtualFile == file) {
+          foldingManager.scheduleAsyncFoldingUpdate(editor)
+        }
       }
     }
   }

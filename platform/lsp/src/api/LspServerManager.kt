@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Tracks started LSP servers, allows starting, restarting, and stopping LSP servers.
@@ -70,6 +71,19 @@ interface LspServerManager {
     parentDisposable: Disposable,
     sendEventsForExistingServers: Boolean = false,
   )
+
+  @ApiStatus.Internal
+  @TestOnly
+  fun addLsp4jServerWrapper(
+    wrapper: Lsp4jServerWrapper,
+    parentDisposable: Disposable,
+  )
+}
+
+@ApiStatus.Internal
+@TestOnly
+fun interface Lsp4jServerWrapper {
+  fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer
 }
 
 inline fun <reified Provider : LspServerSupportProvider> LspServerManager.getServersForProvider(): Collection<LspServer> =
