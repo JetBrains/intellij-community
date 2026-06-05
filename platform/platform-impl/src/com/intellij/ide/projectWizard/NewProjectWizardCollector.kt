@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -13,14 +13,14 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.lang.JavaVersion
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.jetbrains.annotations.ApiStatus
 import java.lang.Integer.min
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
@@ -348,12 +348,9 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   class GeneratorValidationRule : CustomValidationRule() {
     override fun getRuleId(): String = GENERATOR_VALIDATION_RULE_ID
 
-    override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      if (isThirdPartyValue(data) || NewProjectWizardConstants.OTHER == data) {
-        return ValidationResultType.ACCEPTED
-      }
-      return acceptWhenReportedByPluginFromPluginRepository(context)
-    }
+    override fun doValidate(data: String, context: IEventContext): ValidationResultType =
+      if (isThirdPartyValue(data) || NewProjectWizardConstants.OTHER == data) ValidationResultType.ACCEPTED
+      else acceptWhenReportedByPluginFromPluginRepository(context)
   }
 }
 

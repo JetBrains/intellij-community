@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
@@ -12,8 +12,6 @@ import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
@@ -29,27 +27,30 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@Internal
+@ApiStatus.Internal
 enum class CodeNavigateSource {
   ShowUsagesPopup,
   FindToolWindow
 }
 
-@Internal
+@ApiStatus.Internal
 enum class TooManyUsagesUserAction {
   Shown,
   Aborted,
   Continued
 }
 
-@Internal
+@ApiStatus.Internal
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   val GROUP: EventLogGroup = EventLogGroup("usage.view", 23)
+
   val USAGE_VIEW: PrimitiveEventField<UsageView?> = object : PrimitiveEventField<UsageView?>() {
     override val name: String = "usage_view"
 
@@ -93,29 +94,26 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   @RequiresBackgroundThread
   fun calculateElementData(psiElement: PsiElement?): ObjectEventData? {
     if (psiElement == null || !psiElement.isValid) return null
-    val containingFile = psiElement.containingFile
-    val virtualFile = containingFile?.virtualFile
-    val isInTestSources = (virtualFile == null) || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(
-      virtualFile)
-
+    val psiFile = psiElement.containingFile
+    val vFile = psiFile?.virtualFile
+    val isInTestSources = (vFile == null) || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(vFile)
     return ObjectEventData(
       REFERENCE_CLASS.with(psiElement.javaClass),
       EventFields.Language.with(psiElement.language),
-      IS_IN_INJECTED_FILE.with(
-        if (containingFile != null) InjectedLanguageManager.getInstance(psiElement.project).isInjectedFragment(containingFile)
-        else false),
+      IS_IN_INJECTED_FILE.with(psiFile != null && InjectedLanguageManager.getInstance(psiElement.project).isInjectedFragment(psiFile)),
       IS_IN_TEST_SOURCES.with(isInTestSources)
     )
   }
 
   @JvmField
-  val SELECTED_ELEMENT_DATA: ObjectEventField = ObjectEventField("selected_element", REFERENCE_CLASS, EventFields.Language,
-                                                                 IS_IN_TEST_SOURCES,
-                                                                 IS_IN_INJECTED_FILE)
+  val SELECTED_ELEMENT_DATA: ObjectEventField = ObjectEventField(
+    "selected_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES, IS_IN_INJECTED_FILE
+  )
 
   @JvmField
-  val TARGET_ELEMENT_DATA: ObjectEventField = ObjectEventField("target_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
-                                                               IS_IN_INJECTED_FILE)
+  val TARGET_ELEMENT_DATA: ObjectEventField = ObjectEventField(
+    "target_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES, IS_IN_INJECTED_FILE
+  )
 
   private val FIND_USAGES_ML_SERVICE_ENABLED: BooleanEventField = EventFields.Boolean("find_usages_ml_service_enabled")
   private val FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION: BooleanEventField = EventFields.Boolean("find_usages_ml_service_new_implementation")
@@ -130,67 +128,57 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
   private val IS_SEARCH_CANCELLED = EventFields.Boolean("search_cancelled")
 
-  private val searchStarted = GROUP.registerVarargEvent("started",
-                                                        USAGE_VIEW,
-                                                        UI_LOCATION,
-                                                        TARGET_ELEMENT_DATA,
-                                                        NUMBER_OF_TARGETS,
-                                                        FIND_USAGES_ML_SERVICE_ENABLED,
-                                                        FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION)
+  private val SEARCH_STARTED = GROUP.registerVarargEvent(
+    "started",
+    USAGE_VIEW, UI_LOCATION, TARGET_ELEMENT_DATA, NUMBER_OF_TARGETS,
+    FIND_USAGES_ML_SERVICE_ENABLED, FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION
+  )
 
-  private val searchFinished = GROUP.registerVarargEvent("finished",
-                                                         USAGE_VIEW,
-                                                         SYMBOL_CLASS,
-                                                         SEARCH_SCOPE,
-                                                         EventFields.Language,
-                                                         RESULTS_TOTAL,
-                                                         FIRST_RESULT_TS,
-                                                         EventFields.DurationMs,
-                                                         TOO_MANY_RESULTS,
-                                                         IS_SEARCH_CANCELLED,
-                                                         UI_LOCATION)
-  private val itemChosen = GROUP.registerVarargEvent("item.chosen",
-                                                     USAGE_VIEW,
-                                                     UI_LOCATION,
-                                                     IS_SIMILAR_USAGE,
-                                                     SELECTED_ROW,
-                                                     NUMBER_OF_ROWS,
-                                                     NUMBER_OF_LETTERS_TYPED,
-                                                     EventFields.Language)
+  private val SEARCH_FINISHED = GROUP.registerVarargEvent(
+    "finished",
+    USAGE_VIEW, SYMBOL_CLASS, SEARCH_SCOPE, EventFields.Language, RESULTS_TOTAL, FIRST_RESULT_TS, EventFields.DurationMs,
+    TOO_MANY_RESULTS, IS_SEARCH_CANCELLED, UI_LOCATION
+  )
 
-  private val itemChosenInPopupFeatures = GROUP.registerVarargEvent("item.chosen.in.popup.features", USAGE_VIEW,
-                                                                    TARGET_ELEMENT_DATA, SELECTED_ELEMENT_DATA, IS_FILE_ALREADY_OPENED,
-                                                                    NUMBER_OF_TARGETS, IS_THE_SAME_FILE,
-                                                                    IS_SELECTED_ELEMENT_AMONG_RECENT_FILES)
+  private val ITEM_CHOSEN = GROUP.registerVarargEvent(
+    "item.chosen",
+    USAGE_VIEW, UI_LOCATION, IS_SIMILAR_USAGE, SELECTED_ROW, NUMBER_OF_ROWS, NUMBER_OF_LETTERS_TYPED, EventFields.Language
+  )
 
-  private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
+  private val ITEM_CHOSEN_IN_POPUP_FEATURES = GROUP.registerVarargEvent(
+    "item.chosen.in.popup.features",
+    USAGE_VIEW, TARGET_ELEMENT_DATA, SELECTED_ELEMENT_DATA, IS_FILE_ALREADY_OPENED, NUMBER_OF_TARGETS,
+    IS_THE_SAME_FILE, IS_SELECTED_ELEMENT_AMONG_RECENT_FILES
+  )
+
+  private val TAB_SWITCHED = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
   private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
   private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", ScopeRuleValidator::class.java)
+  private val SCOPE_CHANGED = GROUP.registerVarargEvent("scope.changed", USAGE_VIEW, PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
 
-  private val scopeChanged = GROUP.registerVarargEvent("scope.changed", USAGE_VIEW, PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
   private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window", USAGE_VIEW)
+
+  private val ITEM_CHOSEN_FIELD = EventFields.Boolean("item_chosen")
+  private val POPUP_CLOSED = GROUP.registerVarargEvent(
+    "popup.closed",
+    USAGE_VIEW, PRESELECTED_ROW, SELECTED_ROW, ITEM_CHOSEN_FIELD, TARGET_ELEMENT_DATA, RESULTS_TOTAL, NUMBER_OF_TARGETS,
+    SELECTED_ELEMENT_DATA, IS_THE_SAME_FILE, IS_SELECTED_ELEMENT_AMONG_RECENT_FILES, EventFields.DurationMs
+  )
+
   private val USER_ACTION = EventFields.Enum("userAction", TooManyUsagesUserAction::class.java)
-  private val ITEM_CHOSEN = EventFields.Boolean("item_chosen")
-  private val popupClosed = GROUP.registerVarargEvent("popup.closed", USAGE_VIEW, PRESELECTED_ROW, SELECTED_ROW, ITEM_CHOSEN,
-                                                      TARGET_ELEMENT_DATA,
-                                                      RESULTS_TOTAL,
-                                                      NUMBER_OF_TARGETS, SELECTED_ELEMENT_DATA, IS_THE_SAME_FILE,
-                                                      IS_SELECTED_ELEMENT_AMONG_RECENT_FILES,
-                                                      EventFields.DurationMs)
-  private val tooManyUsagesDialog = GROUP.registerVarargEvent("tooManyResultsDialog",
-                                                              USAGE_VIEW,
-                                                              USER_ACTION,
-                                                              SYMBOL_CLASS,
-                                                              SEARCH_SCOPE,
-                                                              EventFields.Language
+  private val TOO_MANY_USAGES_DIALOG = GROUP.registerVarargEvent(
+    "tooManyResultsDialog",
+    USAGE_VIEW, USER_ACTION, SYMBOL_CLASS, SEARCH_SCOPE, EventFields.Language
   )
 
   @JvmStatic
-  fun logSearchStarted(project: Project?,
-                       usageView: UsageView,
-                       source: CodeNavigateSource,
-                       showUsagesHandlerEventData: MutableList<EventPair<*>>) {
+  fun logSearchStarted(
+    project: Project?,
+    usageView: UsageView,
+    source: CodeNavigateSource,
+    showUsagesHandlerEventData: MutableList<EventPair<*>>,
+  ) {
     showUsagesHandlerEventData.add(USAGE_VIEW.with(usageView))
     showUsagesHandlerEventData.add(UI_LOCATION.with(source))
 
@@ -201,84 +189,84 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
     showUsagesHandlerEventData.add(FIND_USAGES_ML_SERVICE_ENABLED.with(isMlServiceEnabled))
     showUsagesHandlerEventData.add(FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION.with(isMlServiceUsingNewImplementation))
 
-    searchStarted.log(project, showUsagesHandlerEventData)
+    SEARCH_STARTED.log(project, showUsagesHandlerEventData)
   }
 
   @JvmStatic
-  fun logSearchStarted(project: Project?,
-                       usageView: UsageView,
-                       source: CodeNavigateSource,
-                       target: PsiElement?,
-                       numberOfTargets: Int) {
+  fun logSearchStarted(
+    project: Project?,
+    usageView: UsageView,
+    source: CodeNavigateSource,
+    target: PsiElement?,
+    numberOfTargets: Int,
+  ) {
     val elementData = calculateElementData(target)
     if (elementData != null) {
       val mlService = FileRankerMlService.getInstance()
       val isMlServiceEnabled: Boolean = mlService != null
       val isMlServiceUsingNewImplementation: Boolean = (isMlServiceEnabled && !(mlService.shouldUseOldImplementation())) // true if enabled and not using old implementation
-
-      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), TARGET_ELEMENT_DATA.with(elementData),
-                        NUMBER_OF_TARGETS.with(numberOfTargets), FIND_USAGES_ML_SERVICE_ENABLED.with(isMlServiceEnabled), FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION.with(isMlServiceUsingNewImplementation))
+      SEARCH_STARTED.log(
+        project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), TARGET_ELEMENT_DATA.with(elementData),
+        NUMBER_OF_TARGETS.with(numberOfTargets), FIND_USAGES_ML_SERVICE_ENABLED.with(isMlServiceEnabled),
+        FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION.with(isMlServiceUsingNewImplementation)
+      )
     }
   }
 
   @JvmStatic
   fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView: UsageView) {
-    USAGE_SHOWN.log(project, USAGE_VIEW.with(usageView), REFERENCE_CLASS.with(referenceClass), EventFields.Language.with(language),
-                    UI_LOCATION.with(
-                      if (usageView.presentation.isDetachedMode) CodeNavigateSource.ShowUsagesPopup else CodeNavigateSource.FindToolWindow))
+    USAGE_SHOWN.log(
+      project, USAGE_VIEW.with(usageView), REFERENCE_CLASS.with(referenceClass), EventFields.Language.with(language),
+      UI_LOCATION.with(if (usageView.presentation.isDetachedMode) CodeNavigateSource.ShowUsagesPopup else CodeNavigateSource.FindToolWindow)
+    )
   }
 
   @JvmStatic
   fun logUsageNavigate(project: Project?, usage: Usage) {
     UsageReferenceClassProvider.getReferenceClass(usage)?.let {
-      USAGE_NAVIGATE.log(
-        project,
-        it,
-        (usage as? PsiElementUsage)?.element?.language,
-      )
+      USAGE_NAVIGATE.log(project, it, (usage as? PsiElementUsage)?.element?.language)
     }
   }
 
   @JvmStatic
   fun logUsageNavigate(project: Project?, usage: UsageInfo) {
     usage.referenceClass?.let {
-      USAGE_NAVIGATE.log(
-        project,
-        it,
-        usage.element?.language,
-      )
+      USAGE_NAVIGATE.log(project, it, usage.element?.language)
     }
   }
 
   @JvmStatic
   fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language, isSimilarUsage: Boolean) {
-    logItemChosen(project, usageView, source, null, null, null, language, isSimilarUsage)
+    logItemChosen(project, usageView, source, selectedRow = null, numberOfRows = null, numberOfLettersTyped = null, language, isSimilarUsage)
   }
 
   @JvmStatic
-  fun logItemChosen(project: Project?,
-                    usageView: UsageView,
-                    source: CodeNavigateSource,
-                    selectedRow: Int?,
-                    numberOfRows: Int?,
-                    numberOfLettersTyped: Int?,
-                    language: Language,
-                    isSimilarUsage: Boolean) {
-    val data = mutableListOf(USAGE_VIEW.with(usageView),
-                             UI_LOCATION.with(source),
-                             IS_SIMILAR_USAGE.with(isSimilarUsage),
-                             EventFields.Language.with(language))
+  fun logItemChosen(
+    project: Project?,
+    usageView: UsageView,
+    source: CodeNavigateSource,
+    selectedRow: Int?,
+    numberOfRows: Int?,
+    numberOfLettersTyped: Int?,
+    language: Language,
+    isSimilarUsage: Boolean,
+  ) {
+    val data = mutableListOf(
+      USAGE_VIEW.with(usageView), UI_LOCATION.with(source), IS_SIMILAR_USAGE.with(isSimilarUsage), EventFields.Language.with(language)
+    )
     selectedRow?.let { data.add(SELECTED_ROW.with(it)) }
     numberOfRows?.let { data.add(NUMBER_OF_ROWS.with(it)) }
     numberOfLettersTyped?.let { data.add(NUMBER_OF_LETTERS_TYPED.with(it)) }
-    itemChosen.log(project, data)
+    ITEM_CHOSEN.log(project, data)
   }
 
   @JvmStatic
-  fun logItemChosenInPopupFeatures(project: Project?,
-                                   usageView: UsageView,
-                                   selectedElement: PsiElement,
-                                   showUsagesHandlerData: MutableList<EventPair<*>>) {
+  fun logItemChosenInPopupFeatures(
+    project: Project?,
+    usageView: UsageView,
+    selectedElement: PsiElement,
+    showUsagesHandlerData: MutableList<EventPair<*>>,
+  ) {
     showUsagesHandlerData.add(USAGE_VIEW.with(usageView))
     if (selectedElement.isValid) {
       val containingFile = selectedElement.containingFile
@@ -291,7 +279,7 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
         }
       }
     }
-    itemChosenInPopupFeatures.log(project, showUsagesHandlerData)
+    ITEM_CHOSEN_IN_POPUP_FEATURES.log(project, showUsagesHandlerData)
   }
 
 
@@ -309,21 +297,17 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
     isCancelled: Boolean,
     source: CodeNavigateSource
   ) {
-    searchFinished.log(project,
-                       USAGE_VIEW.with(usageView),
-                       SYMBOL_CLASS.with(targetClass),
-                       SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
-                       EventFields.Language.with(language),
-                       RESULTS_TOTAL.with(results),
-                       FIRST_RESULT_TS.with(durationFirstResults),
-                       EventFields.DurationMs.with(duration),
-                       TOO_MANY_RESULTS.with(tooManyResult),
-                       IS_SEARCH_CANCELLED.with(isCancelled),
-                       UI_LOCATION.with(source))
+    SEARCH_FINISHED.log(
+      project, USAGE_VIEW.with(usageView), SYMBOL_CLASS.with(targetClass),
+      SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
+      EventFields.Language.with(language), RESULTS_TOTAL.with(results), FIRST_RESULT_TS.with(durationFirstResults),
+      EventFields.DurationMs.with(duration), TOO_MANY_RESULTS.with(tooManyResult), IS_SEARCH_CANCELLED.with(isCancelled),
+      UI_LOCATION.with(source)
+    )
   }
 
   @JvmStatic
-  fun logTabSwitched(project: Project?, usageView: UsageView): Unit = tabSwitched.log(project, usageView)
+  fun logTabSwitched(project: Project?, usageView: UsageView): Unit = TAB_SWITCHED.log(project, usageView)
 
   @JvmStatic
   fun logScopeChanged(
@@ -334,10 +318,10 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
     symbolClass: Class<*>,
   ) {
     val scopeIdMapper = ScopeIdMapper.instance
-    scopeChanged.log(project, USAGE_VIEW.with(usageView),
-                     PREVIOUS_SCOPE.with(previousScope?.let { scopeIdMapper.getScopeSerializationId(it.displayName) }),
-                     NEW_SCOPE.with(newScope?.let { scopeIdMapper.getScopeSerializationId(it.displayName) }),
-                     SYMBOL_CLASS.with(symbolClass))
+    SCOPE_CHANGED.log(
+      project, USAGE_VIEW.with(usageView), PREVIOUS_SCOPE.with(previousScope?.let { scopeIdMapper.getScopeSerializationId(it.displayName) }),
+      NEW_SCOPE.with(newScope?.let { scopeIdMapper.getScopeSerializationId(it.displayName) }), SYMBOL_CLASS.with(symbolClass)
+    )
   }
 
   @JvmStatic
@@ -349,40 +333,39 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
     @Nls scope: String,
     language: Language?,
   ) {
-    tooManyUsagesDialog.log(project,
-                            USAGE_VIEW.with(usageView),
-                            USER_ACTION.with(action),
-                            SYMBOL_CLASS.with(targetClass ?: String::class.java),
-                            SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)),
-                            EventFields.Language.with(language))
+    TOO_MANY_USAGES_DIALOG.log(
+      project, USAGE_VIEW.with(usageView), USER_ACTION.with(action), SYMBOL_CLASS.with(targetClass ?: String::class.java),
+      SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)), EventFields.Language.with(language)
+    )
   }
 
   @JvmStatic
-  fun logOpenInFindToolWindow(project: Project?, usageView: UsageView): Unit =
-    OPEN_IN_FIND_TOOL_WINDOW.log(project, usageView)
+  fun logOpenInFindToolWindow(project: Project?, usageView: UsageView): Unit = OPEN_IN_FIND_TOOL_WINDOW.log(project, usageView)
 
   @JvmStatic
-  fun logPopupClosed(project: Project?,
-                     usageView: UsageView,
-                     itemChosen: Boolean,
-                     preselectRow: Int,
-                     selectedRow: Int?,
-                     results: Int,
-                     durationTime: Long?,
-                     showUsagesHandlerEventData: MutableList<EventPair<*>>) {
+  fun logPopupClosed(
+    project: Project?,
+    usageView: UsageView,
+    itemChosen: Boolean,
+    preselectRow: Int,
+    selectedRow: Int?,
+    results: Int,
+    durationTime: Long?,
+    showUsagesHandlerEventData: MutableList<EventPair<*>>,
+  ) {
     showUsagesHandlerEventData.add(USAGE_VIEW.with(usageView))
-    showUsagesHandlerEventData.add(ITEM_CHOSEN.with(itemChosen))
+    showUsagesHandlerEventData.add(ITEM_CHOSEN_FIELD.with(itemChosen))
     showUsagesHandlerEventData.add(PRESELECTED_ROW.with(preselectRow))
     showUsagesHandlerEventData.add(RESULTS_TOTAL.with(results))
-    if (selectedRow != null) showUsagesHandlerEventData.add(SELECTED_ROW.with(selectedRow))
-    if (durationTime != null) showUsagesHandlerEventData.add(EventFields.DurationMs.with(durationTime))
-    popupClosed.log(project, showUsagesHandlerEventData)
+    selectedRow?.let { showUsagesHandlerEventData.add(SELECTED_ROW.with(it)) }
+    durationTime?.let { showUsagesHandlerEventData.add(EventFields.DurationMs.with(it)) }
+    POPUP_CLOSED.log(project, showUsagesHandlerEventData)
   }
 }
 
-@Internal
+@ApiStatus.Internal
 class ScopeRuleValidator : CustomValidationRule() {
-  override fun doValidate(data: String, context: EventContext): ValidationResultType =
+  override fun doValidate(data: String, context: IEventContext): ValidationResultType =
     if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
 
   override fun getRuleId(): String = UsageViewStatisticsCollector.SCOPE_RULE_ID

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.build.BuildContentManager;
@@ -8,8 +8,6 @@ import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -23,6 +21,8 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.jetbrains.fus.reporting.api.IEventContext;
+import com.jetbrains.fus.reporting.api.ValidationResultType;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -210,13 +210,14 @@ public final class ToolWindowCollector {
     }
 
     @Override
-    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       if (hasPluginField(context)) {
         return acceptWhenReportedByJetBrainsPlugin(context);
       }
-      PluginInfo info = getToolWindowInfo(data);
+
+      var info = getToolWindowInfo(data);
       return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }

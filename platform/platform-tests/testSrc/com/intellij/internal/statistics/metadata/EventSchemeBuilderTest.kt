@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -13,14 +13,15 @@ import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilde
 import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 
+@Suppress("EventLogDescription")
 class EventSchemeBuilderTest : BasePlatformTestCase() {
   fun `test generate string field validated by regexp`() {
     doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
@@ -158,8 +159,8 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
    */
   fun `test generate registered descriptions`() {
     val groupDescription = "Test group description5"
-    val eventDescription = "Description of test event"
-    val fieldDescription = "Number of elements in event"
+    val eventDescription = "Description of the test event"
+    val fieldDescription = "Number of elements in the event"
     val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS").apply {
       registerEvent("test_event", EventFields.Int("count", fieldDescription))
     }
@@ -259,6 +260,6 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   class TestCustomValidationRule(private val ruleId: String) : CustomValidationRule() {
     override fun getRuleId(): String = ruleId
-    override fun doValidate(data: String, context: EventContext): ValidationResultType = ValidationResultType.ACCEPTED
+    override fun doValidate(data: String, context: IEventContext): ValidationResultType = ValidationResultType.ACCEPTED
   }
 }

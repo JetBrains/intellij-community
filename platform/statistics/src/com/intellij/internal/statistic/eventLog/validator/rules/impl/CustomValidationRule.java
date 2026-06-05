@@ -1,12 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
-import com.jetbrains.fus.reporting.api.IEventContext;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.jetbrains.fus.reporting.api.FUSRule;
-import com.jetbrains.fus.reporting.api.PayloadKey;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -14,35 +10,31 @@ import com.intellij.internal.statistic.utils.PluginType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.Strings;
+import com.jetbrains.fus.reporting.api.FUSRule;
+import com.jetbrains.fus.reporting.api.IEventContext;
+import com.jetbrains.fus.reporting.api.PayloadKey;
+import com.jetbrains.fus.reporting.api.ValidationResultType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Optional;
-
-/**
- * <p>
- *   Base class for custom validation rules.
- *   If your data cannot be validated with enumerated values or by a regexp,
- *   inherit the class and implement {@link CustomValidationRule#doValidate(String, EventContext)}.
- *   For more information see {@link IntellijSensitiveDataValidator}.
- * </p>
- *
- * <p><i>Example:</i>
- * {@link com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator},
- * {@link com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator}, etc.</p>
- *
- * @see IntellijSensitiveDataValidator
- */
+/// Base class for custom validation rules.
+/// If your data cannot be validated with enumerated values or by a regexp,
+/// inherit the class and implement [CustomValidationRule#doValidate(String, IEventContext)].
+/// For more information see [IntellijSensitiveDataValidator].
+///
+/// _Example:_
+/// [com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator],
+/// [com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator], etc.
+///
+/// @see IntellijSensitiveDataValidator
 public abstract class CustomValidationRule extends PerformanceCareRule implements FUSRule, UtilValidationRule {
   public static final ExtensionPointName<CustomValidationRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customValidationRule");
 
   public static final PayloadKey<PluginInfo> PLUGIN_INFO = new PayloadKey<>("plugin_info");
 
-  public boolean acceptRuleId(@Nullable @NonNls String ruleId) {
+  public boolean acceptRuleId(@Nullable String ruleId) {
     return getRuleId().equals(ruleId);
   }
 
@@ -51,29 +43,28 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
   }
 
   public static String getRuleId(Class<?> clazz) {
-    Optional<String> optionalCustomValidationRule = EP_NAME.getExtensionList()
-      .stream()
+    var optionalCustomValidationRule = EP_NAME.getExtensionList().stream()
       .filter(customValidationRule -> customValidationRule.getClass() == clazz)
       .map(rule -> rule.getRuleId())
       .findFirst();
 
     if (optionalCustomValidationRule.isEmpty()) {
-      optionalCustomValidationRule = Arrays.stream(CustomValidationRuleFactory.EP_NAME.getExtensions())
+      optionalCustomValidationRule = CustomValidationRuleFactory.EP_NAME.getExtensionList().stream()
         .filter(factory -> factory.getRuleClass() == clazz)
         .map(factory -> factory.getRuleId())
         .findFirst();
+    }
 
-      if (optionalCustomValidationRule.isEmpty()) {
-        throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
-      }
+    if (optionalCustomValidationRule.isEmpty()) {
+      throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
     }
 
     return optionalCustomValidationRule.get();
   }
 
-  protected static @NotNull ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {
-    final Object pluginType = context.eventData.get("plugin_type");
-    final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
+  protected static @NotNull ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull IEventContext context) {
+    var pluginType = context.getEventData().get("plugin_type");
+    var type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
     if (type == null || !type.isSafeToReport()) {
       return ValidationResultType.REJECTED;
     }
@@ -84,13 +75,13 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return ValidationResultType.REJECTED;
   }
 
-  protected static @NotNull ValidationResultType acceptWhenReportedByJetBrainsPlugin(@NotNull EventContext context) {
+  protected static @NotNull ValidationResultType acceptWhenReportedByJetBrainsPlugin(@NotNull IEventContext context) {
     return isReportedByJetBrainsPlugin(context) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
   }
 
-  protected static boolean isReportedByJetBrainsPlugin(@NotNull EventContext context) {
-    final Object pluginType = context.eventData.get("plugin_type");
-    final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
+  protected static boolean isReportedByJetBrainsPlugin(@NotNull IEventContext context) {
+    var pluginType = context.getEventData().get("plugin_type");
+    var type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
     if (type == null || !type.isDevelopedByJetBrains()) {
       return false;
     }
@@ -101,12 +92,8 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return false;
   }
 
-  protected static boolean hasPluginField(@NotNull EventContext context) {
-    if (context.eventData.containsKey("plugin")) {
-      final Object plugin = context.eventData.get("plugin");
-      return plugin instanceof String && StringUtil.isNotEmpty((String)plugin);
-    }
-    return false;
+  protected static boolean hasPluginField(@NotNull IEventContext context) {
+    return context.getEventData().get("plugin") instanceof String str && Strings.isNotEmpty(str);
   }
 
   protected static boolean isThirdPartyValue(@NotNull String data) {
@@ -114,34 +101,31 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
   }
 
   protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {
-    PluginId pluginId = PluginId.getId(plugin);
+    var pluginId = PluginId.getId(plugin);
     return PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
   }
 
-  protected @Nullable Language getLanguage(@NotNull EventContext context) {
-    final Object id = context.eventData.get("lang");
-    return id instanceof String ? Language.findLanguageByID((String)id) : null;
+  protected @Nullable Language getLanguage(@NotNull IEventContext context) {
+    return context.getEventData().get("lang") instanceof String str ? Language.findLanguageByID(str) : null;
   }
 
-  protected @Nullable String getEventDataField(@NotNull EventContext context, @NotNull String name) {
-    return context.eventData.containsKey(name) ? context.eventData.get(name).toString() : null;
+  protected @Nullable String getEventDataField(@NotNull IEventContext context, @NotNull String name) {
+    return context.getEventData().containsKey(name) ? context.getEventData().get(name).toString() : null;
   }
 
-  /**
-   * @deprecated This method was added for compatibility with existing custom rules.
-   * Use {@link #doValidate(String, IEventContext)} instead.
-   */
+  /// @deprecated This method was added for compatibility with existing custom rules.
+  /// Use [#doValidate(String, IEventContext)] instead.
   @Deprecated(forRemoval = true)
-  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    return ValidationResultType.REJECTED;
+  protected @NotNull com.intellij.internal.statistic.eventLog.validator.ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    return com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED;
   }
 
   @Override
-  protected @NotNull com.jetbrains.fus.reporting.api.ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
-    if (context instanceof EventContext) {
-      return ValidationResultType.toFusApiResultType(this.doValidate(data, (EventContext)context));
+  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
+    if (context instanceof EventContext eventContext) {
+      return com.intellij.internal.statistic.eventLog.validator.ValidationResultType.toFusApiResultType(this.doValidate(data, eventContext));
     } else {
-      return com.jetbrains.fus.reporting.api.ValidationResultType.REJECTED;
+      return ValidationResultType.REJECTED;
     }
   }
 }

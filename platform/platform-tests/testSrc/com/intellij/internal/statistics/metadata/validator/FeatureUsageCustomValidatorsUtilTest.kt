@@ -1,33 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata.validator
 
-import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.findPluginTypeByValue
-import org.junit.Assert
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class FeatureUsageCustomValidatorsUtilTest {
-
   @Test
   fun `test plugin type detected by value`() {
-    Assert.assertEquals(PluginType.NOT_LISTED, findPluginTypeByValue("NOT_LISTED"))
-    Assert.assertEquals(PluginType.UNKNOWN, findPluginTypeByValue("UNKNOWN"))
-    Assert.assertEquals(PluginType.LISTED, findPluginTypeByValue("LISTED"))
-    Assert.assertEquals(PluginType.JB_NOT_BUNDLED, findPluginTypeByValue("JB_NOT_BUNDLED"))
-    Assert.assertEquals(PluginType.JB_BUNDLED, findPluginTypeByValue("JB_BUNDLED"))
-    Assert.assertEquals(PluginType.PLATFORM, findPluginTypeByValue("PLATFORM"))
-    Assert.assertEquals(PluginType.JVM_CORE, findPluginTypeByValue("JVM_CORE"))
-    Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
-    Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
+    assertEquals(PluginType.NOT_LISTED, findPluginTypeByValue("NOT_LISTED"))
+    assertEquals(PluginType.UNKNOWN, findPluginTypeByValue("UNKNOWN"))
+    assertEquals(PluginType.LISTED, findPluginTypeByValue("LISTED"))
+    assertEquals(PluginType.JB_NOT_BUNDLED, findPluginTypeByValue("JB_NOT_BUNDLED"))
+    assertEquals(PluginType.JB_BUNDLED, findPluginTypeByValue("JB_BUNDLED"))
+    assertEquals(PluginType.PLATFORM, findPluginTypeByValue("PLATFORM"))
+    assertEquals(PluginType.JVM_CORE, findPluginTypeByValue("JVM_CORE"))
+    assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
+    assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
   }
 
   @Test
   fun `test rejected invalid plugin type`() {
-    Assert.assertNull(findPluginTypeByValue(""))
-    Assert.assertNull(findPluginTypeByValue("OTHER_VALUE"))
+    assertNull(findPluginTypeByValue(""))
+    assertNull(findPluginTypeByValue("OTHER_VALUE"))
   }
 
   @Test
@@ -82,7 +83,7 @@ class FeatureUsageCustomValidatorsUtilTest {
 
   private fun doAcceptTest(fromJBPlugin: Boolean, context: EventContext) {
     val rule = TestCheckPluginTypeCustomValidationRule(fromJBPlugin)
-    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("data", context))
+    assertEquals(ValidationResultType.ACCEPTED, rule.validate("data", context))
   }
 
   private fun doRejectTest(context: EventContext) {
@@ -92,7 +93,7 @@ class FeatureUsageCustomValidatorsUtilTest {
 
   private fun doRejectTest(fromJBPlugin: Boolean, context: EventContext) {
     val rule = TestCheckPluginTypeCustomValidationRule(fromJBPlugin)
-    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("data", context))
+    assertEquals(ValidationResultType.REJECTED, rule.validate("data", context))
   }
 }
 
@@ -106,7 +107,6 @@ private fun newContext(plugin_type: String?, plugin: String?): EventContext {
 class TestCheckPluginTypeCustomValidationRule(private val fromJBPlugin: Boolean) : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = true
 
-  override fun doValidate(data: String, context: EventContext): com.intellij.internal.statistic.eventLog.validator.ValidationResultType {
-    return if (fromJBPlugin) acceptWhenReportedByJetBrainsPlugin(context) else acceptWhenReportedByPluginFromPluginRepository(context)
-  }
+  override fun doValidate(data: String, context: IEventContext): ValidationResultType =
+    if (fromJBPlugin) acceptWhenReportedByJetBrainsPlugin(context) else acceptWhenReportedByPluginFromPluginRepository(context)
 }
