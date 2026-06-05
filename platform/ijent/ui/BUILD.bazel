@@ -44,7 +44,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/lang-api:lang",
         "//platform/execution",
-        "//platform/platform-frontend:frontend",
     ],
 )
 
@@ -82,7 +81,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/execution:execution_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.community.ui` end
