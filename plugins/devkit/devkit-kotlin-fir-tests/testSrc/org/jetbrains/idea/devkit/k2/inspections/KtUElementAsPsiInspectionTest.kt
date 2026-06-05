@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package org.jetbrains.idea.devkit.k2.inspections
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode

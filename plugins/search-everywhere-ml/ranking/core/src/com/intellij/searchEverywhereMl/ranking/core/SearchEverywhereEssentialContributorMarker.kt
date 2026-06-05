@@ -1,12 +1,9 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter

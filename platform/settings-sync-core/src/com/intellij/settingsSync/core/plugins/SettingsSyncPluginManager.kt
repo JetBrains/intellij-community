@@ -15,7 +15,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.settingsSync.core.RestartForPluginDisable
 import com.intellij.settingsSync.core.RestartForPluginEnable
 import com.intellij.settingsSync.core.SettingsSnapshot
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.FileVisitResult
 import java.time.Instant
 
-@OptIn(IntellijInternalApi::class)
 @Service
 internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Disposable {
   private val pluginInstallationStateListener = PluginInstallationStateListener()

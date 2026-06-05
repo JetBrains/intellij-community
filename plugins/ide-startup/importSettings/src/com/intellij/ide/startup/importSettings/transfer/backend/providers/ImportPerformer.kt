@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
-import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
@@ -73,7 +72,6 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     return ids
   }
 
-  @OptIn(IntellijInternalApi::class)
   override suspend fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator): PluginInstallationState {
     if (pluginIds.isEmpty()) {
       logger.info("No plugins to install, proceeding.")

@@ -1,11 +1,8 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core.id
 
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
 internal class ActionKeyProvider: SearchEverywhereElementKeyProvider {

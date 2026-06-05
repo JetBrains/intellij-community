@@ -1,5 +1,3 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -12,7 +10,6 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
@@ -22,12 +19,12 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatistics
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ITEM_SELECTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_INDEX_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SELECTED_RESULT_ID
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_CORRUPTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_ID
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_STARTED
-import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SELECTED_RESULT_ID
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.STATE_CHANGED
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereStateFeaturesProvider

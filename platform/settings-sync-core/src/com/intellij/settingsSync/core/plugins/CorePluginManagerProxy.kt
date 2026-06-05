@@ -1,5 +1,3 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.settingsSync.core.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState
@@ -12,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 
 internal class CorePluginManagerProxy : AbstractPluginManagerProxy() {
 

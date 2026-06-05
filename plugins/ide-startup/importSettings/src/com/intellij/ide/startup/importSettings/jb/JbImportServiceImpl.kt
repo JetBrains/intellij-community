@@ -48,7 +48,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -652,7 +651,6 @@ private fun CoroutineScope.connect(pipe: ProgressPipe, indicator: ProgressIndica
   }
 }
 
-@OptIn(IntellijInternalApi::class)
 private suspend fun calculatePluginsToInstall(alreadyInstalled: Set<PluginId>, toInstall: List<String>): List<PluginNode> {
   reportRawProgress { reporter ->
     val pluginsToAttemptInstallation = (toInstall.map(PluginId::getId) - alreadyInstalled)

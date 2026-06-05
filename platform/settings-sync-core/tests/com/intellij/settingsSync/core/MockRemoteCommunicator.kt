@@ -1,9 +1,6 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.settingsSync.core
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider

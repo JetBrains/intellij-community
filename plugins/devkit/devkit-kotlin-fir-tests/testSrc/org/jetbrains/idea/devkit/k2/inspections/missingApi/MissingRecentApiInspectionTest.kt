@@ -1,20 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package org.jetbrains.idea.devkit.k2.inspections.missingApi
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase

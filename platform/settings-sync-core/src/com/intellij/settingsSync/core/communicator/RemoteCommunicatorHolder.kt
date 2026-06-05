@@ -1,5 +1,3 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.settingsSync.core.communicator
 
 import com.intellij.icons.AllIcons
@@ -20,7 +18,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress

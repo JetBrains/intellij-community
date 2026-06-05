@@ -1,31 +1,35 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.isLoggingEnabled
 import com.intellij.searchEverywhereMl.isTabWithMlRanking
+import com.intellij.searchEverywhereMl.ranking.core.adapters.LegacyContributorAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.MlProbability
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
-import com.intellij.searchEverywhereMl.ranking.core.adapters.LegacyContributorAdapter
-import com.intellij.searchEverywhereMl.ranking.core.adapters.SessionWideId
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SessionWideId
 import com.intellij.searchEverywhereMl.ranking.core.adapters.StateLocalId
-import com.intellij.searchEverywhereMl.ranking.core.features.*
+import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCacheDataProvider
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.increaseProvidersUseCount
 import com.intellij.searchEverywhereMl.ranking.core.id.MissingKeyProviderCollector
@@ -37,8 +41,6 @@ import com.intellij.searchEverywhereMl.ranking.core.utils.convertNameToNaturalLa
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.Collections
-import java.util.HashMap
-import java.util.LinkedHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 

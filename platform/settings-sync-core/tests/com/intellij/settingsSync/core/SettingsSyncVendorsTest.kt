@@ -1,5 +1,3 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.settingsSync.core
 
 import com.intellij.ide.plugins.PluginManagerCore.VENDOR_JETBRAINS
@@ -7,7 +5,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorBean
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.core.communicator.getAvailableSyncProviders

@@ -5,7 +5,6 @@ import com.intellij.execution.filters.FileHyperlinkInfoBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -56,7 +55,6 @@ private class SyncFailingFileHyperlinkInfo(project: Project, override val virtua
   }
 }
 
-@OptIn(IntellijInternalApi::class)
 private class RecordingNavigationService : NavigationService {
   var requestCalls: Int = 0
     private set

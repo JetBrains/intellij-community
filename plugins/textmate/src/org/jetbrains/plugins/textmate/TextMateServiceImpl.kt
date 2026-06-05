@@ -13,7 +13,6 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.progress.lockMaybeCancellable
@@ -83,7 +82,6 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     registerBundles(fireEvents = true)
   }
 
-  @OptIn(IntellijInternalApi::class)
   private fun registerBundles(fireEvents: Boolean) {
     registrationLock.lock()
     try {

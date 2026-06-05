@@ -1,9 +1,6 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core.id
 
 import com.intellij.ide.actions.searcheverywhere.EvaluationResult
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
 internal class CalculatorKeyProvider: SearchEverywhereElementKeyProvider {
