@@ -122,9 +122,7 @@ class AgentChatOpenTopLevelDispatchTest {
         .filterIsInstance<AgentChatFileEditor>()
         .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
     }
-    runInUi {
-      editor.selectNotify()
-    }
+    activateEditorForTests(editor, terminalTabs)
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
 
     val dispatched = service<AgentOpenTopLevelThreadDispatchService>().dispatchIfPresent(
@@ -177,9 +175,7 @@ class AgentChatOpenTopLevelDispatchTest {
         .filterIsInstance<AgentChatFileEditor>()
         .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
     }
-    runInUi {
-      editor.selectNotify()
-    }
+    activateEditorForTests(editor, terminalTabs)
 
     val firstAdded = addContextToOpenTopLevelAgentChat(
       projectPath = projectPath,
@@ -216,6 +212,7 @@ class AgentChatOpenTopLevelDispatchTest {
       }
     }
     val editor = openInitializedChatEditor(
+      terminalTabs = terminalTabs,
       threadId = "thread-context-duplicate",
       threadTitle = "Context duplicate thread",
     )
@@ -283,9 +280,7 @@ class AgentChatOpenTopLevelDispatchTest {
         .filterIsInstance<AgentChatFileEditor>()
         .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
     }
-    runInUi {
-      editor.selectNotify()
-    }
+    activateEditorForTests(editor, terminalTabs)
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
                                                  AgentSessionProvider.CODEX,
@@ -324,6 +319,7 @@ class AgentChatOpenTopLevelDispatchTest {
       }
     }
     val editor = openInitializedChatEditor(
+      terminalTabs = terminalTabs,
       threadId = "thread-context-unavailable",
       threadTitle = "Context unavailable thread",
     )
@@ -356,6 +352,7 @@ class AgentChatOpenTopLevelDispatchTest {
       }
     }
     val editor = openInitializedChatEditor(
+      terminalTabs = terminalTabs,
       threadId = "thread-context-send-full",
       threadTitle = "Context send full thread",
     )
@@ -393,6 +390,7 @@ class AgentChatOpenTopLevelDispatchTest {
       }
     }
     val editor = openInitializedChatEditor(
+      terminalTabs = terminalTabs,
       threadId = "thread-context-auto-trim",
       threadTitle = "Context auto-trim thread",
     )
@@ -430,6 +428,7 @@ class AgentChatOpenTopLevelDispatchTest {
       }
     }
     val editor = openInitializedChatEditor(
+      terminalTabs = terminalTabs,
       threadId = "thread-context-cancel",
       threadTitle = "Context cancel thread",
     )
@@ -519,6 +518,7 @@ class AgentChatOpenTopLevelDispatchTest {
   }
 
   private suspend fun openInitializedChatEditor(
+    terminalTabs: OpenTabDispatchFakeAgentChatTerminalTabs,
     threadId: String,
     threadTitle: String,
   ): AgentChatFileEditor {
@@ -535,10 +535,21 @@ class AgentChatOpenTopLevelDispatchTest {
         .filterIsInstance<AgentChatFileEditor>()
         .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
     }
+    activateEditorForTests(editor, terminalTabs)
+    return editor
+  }
+
+  private suspend fun activateEditorForTests(
+    editor: AgentChatFileEditor,
+    terminalTabs: OpenTabDispatchFakeAgentChatTerminalTabs,
+  ) {
     runInUi {
       editor.selectNotify()
+      editor.showComponentForTests()
     }
-    return editor
+    waitForCondition(timeoutMs = 10_000) {
+      terminalTabs.tab.hasInputInterceptorsForTests()
+    }
   }
 
   private class OpenTabDispatchChatFileEditorProvider : FileEditorProvider, DumbAware {
@@ -637,6 +648,8 @@ private class OpenTabDispatchFakeAgentChatTerminalTab : AgentChatTerminalTab {
     inputInterceptors += interceptor
     return true
   }
+
+  fun hasInputInterceptorsForTests(): Boolean = inputInterceptors.isNotEmpty()
 
   fun pressPlainEnter(): Boolean {
     val event = KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ENTER, KeyEvent.CHAR_UNDEFINED)

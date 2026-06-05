@@ -101,21 +101,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleParserExtractsFullThreadId() {
-    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
-
-    assertThat(extractCodexThreadIdFromTerminalTitle("Codex · $threadId · /work/project-a"))
-      .isEqualTo(threadId)
-    assertThat(extractCodexThreadIdFromTerminalTitle("CODEX · 018F4B30-F1B2-7000-9B4D-ABCDEF123456"))
-      .isEqualTo(threadId)
-    assertThat(extractCodexThreadIdFromTerminalTitle("$threadId | Fix indexing bug | /work/project-a"))
-      .isEqualTo(threadId)
-    assertThat(extractCodexThreadIdFromTerminalTitle("Codex · Fix indexing bug · /work/project-a"))
-      .isNull()
-  }
-
-  @Test
-  fun codexTerminalTitleRebindsPendingTabToObservedThreadId() {
+  fun terminalTitleRebindsPendingTabToObservedThreadId() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = pendingTestFile()
     val title = TerminalTitle()
@@ -123,8 +109,9 @@ class AgentChatFileEditorLifecycleTest {
     val requests = mutableListOf<AgentChatPendingTabRebindRequest>()
     val refreshThreadIds = mutableListOf<String?>()
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { provider, requestsByPath ->
         assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
@@ -151,7 +138,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       assertThat(requests).hasSize(1)
       val request = requests.single()
@@ -165,7 +152,7 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(refreshThreadIds).containsExactly(threadId)
 
-      title.change { applicationTitle = "Codex · $threadId" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       assertThat(requests).hasSize(1)
     }
@@ -176,7 +163,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleRebindRetriesPendingTabWhenFirstAttemptDoesNotRebind() {
+  fun terminalTitleRebindRetriesPendingTabWhenFirstAttemptDoesNotRebind() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = pendingTestFile()
     val snapshotWriter = RecordingSnapshotWriter()
@@ -184,8 +171,9 @@ class AgentChatFileEditorLifecycleTest {
     val refreshThreadIds = mutableListOf<String?>()
     var attempts = 0
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -210,14 +198,14 @@ class AgentChatFileEditorLifecycleTest {
     )
 
     try {
-      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+      assertThat(controller.bindFromApplicationTitle(terminalTitle(threadId), controllerScope)).isTrue()
 
       assertThat(requests).hasSize(1)
       assertThat(file.isPendingThread).isTrue()
       assertThat(snapshotWriter.snapshots).isEmpty()
       assertThat(refreshThreadIds).containsExactly(threadId)
 
-      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+      assertThat(controller.bindFromApplicationTitle(terminalTitle(threadId), controllerScope)).isTrue()
 
       assertThat(requests).hasSize(2)
       assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
@@ -233,7 +221,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleRebindKeepsPendingPostStartInitialMessageDispatch() {
+  fun terminalTitleRebindKeepsPendingPostStartInitialMessageDispatch() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val initialMessage = "Refactor selected code"
     val file = pendingTestFile()
@@ -256,8 +244,9 @@ class AgentChatFileEditorLifecycleTest {
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -279,7 +268,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(file.hasPendingInitialMessageForDispatch()).isTrue()
@@ -360,7 +349,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleRebindDoesNotPersistClearedStartupCommandFallback() {
+  fun terminalTitleRebindDoesNotPersistClearedStartupCommandFallback() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = pendingTestFile()
     file.updateInitialMessageMetadata(
@@ -378,8 +367,9 @@ class AgentChatFileEditorLifecycleTest {
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -401,7 +391,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       val snapshot = snapshotWriter.snapshots.single()
       assertThat(snapshot.identity.threadIdentity).isEqualTo("codex:$threadId")
@@ -416,7 +406,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleRebindsConcreteTabAfterNewThreadCommand() {
+  fun terminalTitleRebindsConcreteTabAfterNewThreadCommand() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
@@ -425,8 +415,9 @@ class AgentChatFileEditorLifecycleTest {
     val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
     val refreshThreadIds = mutableListOf<String?>()
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { provider, requestsByPath ->
         assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
@@ -454,7 +445,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       assertThat(requests).hasSize(1)
       val request = requests.single()
@@ -475,7 +466,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleRebindRetriesConcreteTabAfterNewThreadCommandWhenFirstAttemptDoesNotRebind() {
+  fun terminalTitleRebindRetriesConcreteTabAfterNewThreadCommandWhenFirstAttemptDoesNotRebind() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
@@ -484,8 +475,9 @@ class AgentChatFileEditorLifecycleTest {
     val refreshThreadIds = mutableListOf<String?>()
     var attempts = 0
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -511,7 +503,7 @@ class AgentChatFileEditorLifecycleTest {
     )
 
     try {
-      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+      assertThat(controller.bindFromApplicationTitle(terminalTitle(threadId), controllerScope)).isTrue()
 
       assertThat(requests).hasSize(1)
       assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
@@ -520,7 +512,7 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(snapshotWriter.snapshots).isEmpty()
       assertThat(refreshThreadIds).containsExactly(threadId)
 
-      assertThat(controller.bindFromApplicationTitle("Codex · $threadId", controllerScope)).isTrue()
+      assertThat(controller.bindFromApplicationTitle(terminalTitle(threadId), controllerScope)).isTrue()
 
       assertThat(requests).hasSize(2)
       assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
@@ -536,7 +528,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalTitleDoesNotRebindConcreteTabAfterNewThreadCommandAnchorExpires() {
+  fun terminalTitleDoesNotRebindConcreteTabAfterNewThreadCommandAnchorExpires() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
@@ -544,11 +536,12 @@ class AgentChatFileEditorLifecycleTest {
     val snapshotWriter = RecordingSnapshotWriter()
     val refreshThreadIds = mutableListOf<String?>()
     val controllerScope = unconfinedTestScope()
-    val controller = CodexTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, _ ->
-        error("Expired /new anchor must not rebind a concrete Codex tab")
+        error("Expired /new anchor must not rebind a concrete chat tab")
       },
       notifyRefresh = { _, _, refreshedThreadId, _ ->
         refreshThreadIds += refreshedThreadId
@@ -558,7 +551,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+      title.change { applicationTitle = terminalTitle(threadId) }
 
       assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
       assertThat(file.threadId).isEqualTo("thread-1")
@@ -2306,6 +2299,20 @@ private fun testEditor(
 private fun unconfinedTestScope(): CoroutineScope {
   return object : CoroutineScope {
     override val coroutineContext: CoroutineContext = Job() + Dispatchers.Unconfined
+  }
+}
+
+@Suppress("SameParameterValue")
+private fun terminalTitle(threadId: String): String = "thread:$threadId"
+
+private fun terminalTitleThreadRebindContributor(providerId: AgentSessionProvider): AgentChatTerminalTitleThreadRebindContributor {
+  return object : AgentChatTerminalTitleThreadRebindContributor {
+    override val provider: AgentSessionProvider
+      get() = providerId
+
+    override fun extractThreadId(applicationTitle: String?): String? {
+      return applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
+    }
   }
 }
 

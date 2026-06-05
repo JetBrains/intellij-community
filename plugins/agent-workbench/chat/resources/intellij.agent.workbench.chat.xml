@@ -11,6 +11,13 @@
   <!-- endregion -->
   <resource-bundle>messages.AgentChatBundle</resource-bundle>
 
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.chatTerminalTitleThreadRebindContributor"
+      interface="com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor"
+      dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService"
                         serviceImplementation="com.intellij.agent.workbench.chat.AgentChatOpenTopLevelThreadDispatchService"/>

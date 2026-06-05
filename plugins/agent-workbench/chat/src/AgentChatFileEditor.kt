@@ -107,7 +107,7 @@ internal class AgentChatFileEditor(
   private var initializationJob: Job? = null
   private var disposed: Boolean = false
   private var pendingThreadRefreshController: AgentChatPendingThreadRefreshController? = null
-  private var codexTerminalTitleThreadRebindController: AgentChatDisposableController? = null
+  private var terminalTitleThreadRebindController: AgentChatDisposableController? = null
   private var concreteThreadRebindController: AgentChatConcreteThreadRebindController? = null
   private var initialMessageDispatcher: AgentChatInitialMessageDispatcher? = null
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
@@ -195,8 +195,8 @@ internal class AgentChatFileEditor(
     initialMessageDispatcher = null
     pendingThreadRefreshController?.dispose()
     pendingThreadRefreshController = null
-    codexTerminalTitleThreadRebindController?.dispose()
-    codexTerminalTitleThreadRebindController = null
+    terminalTitleThreadRebindController?.dispose()
+    terminalTitleThreadRebindController = null
     concreteThreadRebindController?.dispose()
     concreteThreadRebindController = null
     scopedTerminalRefreshController?.dispose()
@@ -390,7 +390,7 @@ internal class AgentChatFileEditor(
     )
     terminalRestoreContextController = restoreContextController
     restoreContextController.attach(createdTab)
-    codexTerminalTitleThreadRebindController = createCodexTerminalTitleThreadRebindController(
+    terminalTitleThreadRebindController = createAgentChatTerminalTitleThreadRebindController(
       file = file,
       tab = createdTab,
       tabSnapshotWriter = tabSnapshotWriter,

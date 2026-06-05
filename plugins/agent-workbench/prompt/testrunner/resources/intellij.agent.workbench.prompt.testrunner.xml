@@ -12,4 +12,10 @@
     <agent.workbench.promptContextContributor id="agentWorkbenchPromptTestRunnerContext" implementation="com.intellij.agent.workbench.prompt.testrunner.context.AgentPromptTestSelectionContextContributor" order="before agentWorkbenchPromptEditorContext"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.prompt.testrunner.render.AgentPromptTestFailuresContextRendererBridge"/>
   </extensions>
+
+  <actions>
+    <reference ref="AgentWorkbenchPrompt.AddToAgentContext">
+      <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
+    </reference>
+  </actions>
 </idea-plugin>

@@ -20,6 +20,8 @@
       id="agentWorkbenchCodex"
       order="before agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptor"/>
+    <agent.workbench.chatTerminalTitleThreadRebindContributor
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexTerminalTitleThreadRebindContributor"/>
     <agent.workbench.mcpConfigProviderContributor
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAwbMcpConfigProviderContributor"/>
     <advancedSetting
