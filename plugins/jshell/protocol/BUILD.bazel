@@ -32,7 +32,8 @@ jvm_library(
         # do not sort,
         ":protocol",
         "@lib//:junit4",
-        "@lib//:hamcrest",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.jshell.protocol` end
@@ -78,7 +79,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:junit4",
-        "@lib//:hamcrest",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.jshell.protocol.tests` end

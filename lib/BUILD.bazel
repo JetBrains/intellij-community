@@ -5947,31 +5947,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.google.code.gson/gson-2.13.2.jar_copy",
-    src = "@com_google_code_gson-gson-2_13_2_http//file",
-    out = "com.google.code.gson/gson-2.13.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "gson",
-    jar = "@com_google_code_gson-gson-2_13_2_http//file",
-    source_jar = "@com_google_code_gson-gson-2_13_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "guava",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_google_guava-guava-33_5_0-jre_http_import",
-        ":com_google_guava-failureaccess-1_0_3_http_import",
-    ],
-)
-
-copy_file(
     name = "com.google.guava/guava-testlib-33.0.0-jre.jar_copy",
     src = "@com_google_guava-guava-testlib-33_0_0-jre_http//file",
     out = "com.google.guava/guava-testlib-33.0.0-jre.jar",
@@ -5983,21 +5958,6 @@ jvm_import(
     name = "guava-testlib",
     jar = "@com_google_guava-guava-testlib-33_0_0-jre_http//file",
     source_jar = "@com_google_guava-guava-testlib-33_0_0-jre-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.hamcrest/hamcrest-2.2.jar_copy",
-    src = "@org_hamcrest-hamcrest-2_2_http//file",
-    out = "org.hamcrest/hamcrest-2.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "hamcrest",
-    jar = "@org_hamcrest-hamcrest-2_2_http//file",
-    source_jar = "@org_hamcrest-hamcrest-2_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -11438,6 +11398,46 @@ jvm_import(
     name = "libraries-groovy-xml-groovy-xml",
     jar = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
     source_jar = "@org_codehaus_groovy-groovy-xml-3_0_25-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.google.code.gson/gson-2.13.2.jar_copy",
+    src = "@com_google_code_gson-gson-2_13_2_http//file",
+    out = "com.google.code.gson/gson-2.13.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-gson-gson",
+    jar = "@com_google_code_gson-gson-2_13_2_http//file",
+    source_jar = "@com_google_code_gson-gson-2_13_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-guava-_guava",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_google_guava-guava-33_5_0-jre_http_import",
+        ":com_google_guava-failureaccess-1_0_3_http_import",
+    ],
+)
+
+copy_file(
+    name = "org.hamcrest/hamcrest-2.2.jar_copy",
+    src = "@org_hamcrest-hamcrest-2_2_http//file",
+    out = "org.hamcrest/hamcrest-2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-hamcrest-hamcrest",
+    jar = "@org_hamcrest-hamcrest-2_2_http//file",
+    source_jar = "@org_hamcrest-hamcrest-2_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

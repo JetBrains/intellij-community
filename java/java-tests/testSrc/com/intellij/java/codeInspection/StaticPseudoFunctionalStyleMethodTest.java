@@ -22,7 +22,7 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibrary("guava", ArrayUtilRt.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Guava")));
+    moduleBuilder.addLibrary("guava", ArrayUtilRt.toStringArray(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.guava", "Guava").getClassesPaths()));
     moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
   }
 

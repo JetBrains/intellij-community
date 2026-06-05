@@ -83,7 +83,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.testEntities" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.objenesis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />

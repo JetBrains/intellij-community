@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
   </component>
 </module>

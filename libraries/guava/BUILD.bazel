@@ -14,8 +14,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:guava"],
-    runtime_deps = ["@lib//:guava"],
+    exports = ["@lib//:libraries-guava-_guava"],
+    runtime_deps = ["@lib//:libraries-guava-_guava"],
 )
 
 jvm_library(
@@ -28,7 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.guava",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:guava"],
+    exports = ["@lib//:libraries-guava-_guava"],
     runtime_deps = [":guava"],
 )
 ### auto-generated section `build intellij.libraries.guava` end

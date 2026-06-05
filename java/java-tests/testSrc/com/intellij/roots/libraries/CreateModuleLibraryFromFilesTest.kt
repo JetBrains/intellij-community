@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.classpath.CreateModuleLibraryChooser
 import com.intellij.project.IntelliJProjectConfiguration
-import com.intellij.project.IntelliJProjectConfiguration.Companion.getProjectLibrary
 import com.intellij.roots.ModuleRootManagerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -57,7 +56,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
 
   fun testJarAndSources() {
     // classesUrls of gson is used as sources JAR because sources maybe not downloaded in test mode
-    val gsonJar = getProjectLibrary("gson")
+    val gsonJar = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.gson", "gson")
 
     val library = createLibraries(
       OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
@@ -77,7 +76,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
   }
 
   fun testTwoJarAndSources() {
-    val gsonLib = getProjectLibrary("gson")
+    val gsonLib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.gson", "gson")
 
     val fastUtilJar = getFastUtilJar()
     val libraries = createLibraries(

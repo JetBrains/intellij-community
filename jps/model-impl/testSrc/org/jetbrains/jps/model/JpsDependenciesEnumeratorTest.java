@@ -65,7 +65,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   }
 
   private static String getSampleLibJar() {
-    return assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("byte-buddy"));
+    return assertOneElement(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.byte.buddy", "byte-buddy").getClassesUrls());
   }
 
   private static String getRtJarJdk17() {

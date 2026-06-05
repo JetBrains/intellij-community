@@ -50,9 +50,6 @@ kotlin {
     api(jps.org.junit.jupiter.junit.jupiter.engine1404327319.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
-    api(jps.org.hamcrest.hamcrest1545074716.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
     api(jps.org.jetbrains.kotlin.kotlin.test.junit5960045374.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
@@ -64,6 +61,9 @@ kotlin {
       exclude(group = "org.apiguardian", module = "apiguardian-api")
       exclude(group = "org.opentest4j", module = "opentest4j")
       exclude(group = "org.junit.platform", module = "junit-platform-commons")
+    }
+    api(jps.org.hamcrest.hamcrest1545074716.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
     }
   }
   // KOTLIN__MARKER_END

@@ -38,7 +38,7 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:slf4j-api",
-        "@lib//:guava",
+        "//libraries/guava",
     ],
 )
 
@@ -54,6 +54,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":selfContainedProjects",
+        "//libraries/guava:guava_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/build-scripts/downloader",
@@ -112,7 +113,8 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:slf4j-api",
-        "@lib//:guava",
+        "//libraries/guava",
+        "//libraries/guava:guava_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/build-scripts/downloader",

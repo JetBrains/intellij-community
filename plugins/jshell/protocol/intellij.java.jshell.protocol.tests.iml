@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.jshell.protocol" />

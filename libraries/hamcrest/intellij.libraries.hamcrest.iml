@@ -7,6 +7,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="hamcrest" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="hamcrest" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.hamcrest:hamcrest:2.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar">
+              <sha256sum>5e62846a89f05cd78cd9c1a553f340d002458380c320455dd1f8fc5497a8a1c1</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

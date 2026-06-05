@@ -14,8 +14,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:gson"],
-    runtime_deps = ["@lib//:gson"],
+    exports = ["@lib//:libraries-gson-gson"],
+    runtime_deps = ["@lib//:libraries-gson-gson"],
 )
 
 jvm_library(
@@ -28,7 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.gson",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:gson"],
+    exports = ["@lib//:libraries-gson-gson"],
     runtime_deps = [":gson"],
 )
 ### auto-generated section `build intellij.libraries.gson` end

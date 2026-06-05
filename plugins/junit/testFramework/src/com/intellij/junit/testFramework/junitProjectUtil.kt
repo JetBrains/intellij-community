@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import com.intellij.util.PathUtil
 import junit.framework.TestCase
 import java.io.File
+import java.nio.file.Path
 
 fun ModifiableRootModel.addJUnit3Library() {
   val jar = File(PathUtil.getJarPathForClass(TestCase::class.java))
@@ -22,8 +23,8 @@ fun ModifiableRootModel.addJUnit4Library() {
 fun ModifiableRootModel.addHamcrestLibrary() {
   val jar = File(PathUtil.getJarPathForClass(org.hamcrest.MatcherAssert::class.java))
   PsiTestUtil.addLibrary(this, "hamcrest-core", jar.parent, jar.name)
-  val libraryJar = File(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("hamcrest").first())
-  PsiTestUtil.addLibrary(this, "hamcrest-library", libraryJar.parent, libraryJar.name)
+  val libraryJar = Path.of(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.hamcrest", "hamcrest").classesPaths.single())
+  PsiTestUtil.addLibrary(this, "hamcrest-library", libraryJar.parent.toString(), libraryJar.fileName.toString())
 }
 
 fun ModifiableRootModel.addJUnitPioneerLibrary(version: String = "2.3.0") {

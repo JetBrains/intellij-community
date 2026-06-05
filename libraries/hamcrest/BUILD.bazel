@@ -14,8 +14,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:hamcrest"],
-    runtime_deps = ["@lib//:hamcrest"],
+    exports = ["@lib//:libraries-hamcrest-hamcrest"],
+    runtime_deps = ["@lib//:libraries-hamcrest-hamcrest"],
 )
 
 jvm_library(
@@ -28,7 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.hamcrest",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:hamcrest"],
+    exports = ["@lib//:libraries-hamcrest-hamcrest"],
     runtime_deps = [":hamcrest"],
 )
 ### auto-generated section `build intellij.libraries.hamcrest` end
