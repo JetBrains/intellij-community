@@ -41,6 +41,7 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/remote-topics/shared:rpc-topics",
         "//libraries/kotlinx/serialization/core",
+        "//java/terminal/shared",
     ],
 )
 
@@ -76,6 +77,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//java/terminal/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.terminal.backend` end
