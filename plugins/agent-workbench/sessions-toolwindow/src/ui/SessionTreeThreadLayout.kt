@@ -3,11 +3,13 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.icons.AllIcons
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.tree.ui.PlainSelectionTree
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.FontMetrics
@@ -63,12 +65,28 @@ internal fun sessionTreeActionGap(): Int = JBUI.scale(SESSION_TREE_ACTION_GAP)
 
 internal fun sessionTreeActionRightGap(): Int = JBUI.scale(SESSION_TREE_ACTION_RIGHT_GAP)
 
-internal fun sessionTreeRowActionRightPadding(actionSlots: Int): Int {
-  if (actionSlots == 0) return 0
-  val slot = sessionTreeActionSlotSize()
-  val gap = sessionTreeActionGap()
-  val rightGap = sessionTreeActionRightGap()
-  return rightGap + (actionSlots * slot) + (if (actionSlots > 1) (actionSlots - 1) * gap else 0)
+internal fun sessionTreeNewThreadActionWidth(): Int {
+  return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + AllIcons.General.ButtonDropTriangle.iconWidth + JBUI.scale(7)
+}
+
+internal fun sessionTreeNewThreadActionHeight(): Int {
+  return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
+}
+
+internal fun sessionTreeRowActionRightPadding(
+  showLoadingAction: Boolean,
+  showNewThreadAction: Boolean,
+): Int {
+  if (!showLoadingAction && !showNewThreadAction) return 0
+  var width = sessionTreeActionRightGap()
+  if (showNewThreadAction) {
+    width += sessionTreeNewThreadActionWidth()
+  }
+  if (showLoadingAction) {
+    width += if (showNewThreadAction) sessionTreeActionGap() else 0
+    width += sessionTreeActionSlotSize()
+  }
+  return width
 }
 
 internal fun sessionTreeRowActionsRightBoundary(
@@ -231,7 +249,7 @@ internal fun resolveSessionTreeThreadTimePaintX(
     selectionRightInset -
     JBUI.scale(SESSION_TREE_THREAD_META_RIGHT_GAP) -
     timeTextWidth
-  ).coerceAtLeast(0)
+                    ).coerceAtLeast(0)
   return preferredX.coerceAtMost(maxVisibleX)
 }
 

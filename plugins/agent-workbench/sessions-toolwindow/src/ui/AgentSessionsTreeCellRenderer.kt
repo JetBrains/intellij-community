@@ -85,8 +85,7 @@ internal class SessionTreeCellRenderer(
     val treeId = extractSessionTreeId(value) ?: return
     val treeNode = nodeResolver(treeId) ?: return
     val rowActions = rowActionsProvider(row, treeNode, selected)
-    val actionSlots = rowActions?.actionSlots ?: 0
-    val actionRightPadding = sessionTreeRowActionRightPadding(actionSlots)
+    val actionRightPadding = rowActions?.reservedWidth ?: 0
     var metaRightPadding = 0
 
     when (treeNode) {
@@ -194,7 +193,7 @@ internal class SessionTreeCellRenderer(
       is SessionTreeNode.MoreThreads -> {
         icon = null
         val label = treeNode.hiddenCount?.let { AgentSessionsBundle.message("toolwindow.action.more.count", it) }
-          ?: AgentSessionsBundle.message("toolwindow.action.more")
+                    ?: AgentSessionsBundle.message("toolwindow.action.more")
         append(label, SimpleTextAttributes.GRAYED_ATTRIBUTES, SESSION_TREE_MORE_ROW_FRAGMENT_TAG)
       }
     }

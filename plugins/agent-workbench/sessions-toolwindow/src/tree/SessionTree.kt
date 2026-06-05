@@ -6,13 +6,11 @@ package com.intellij.agent.workbench.sessions.toolwindow.tree
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -57,10 +55,10 @@ internal data class VisibleProjectsResult(
 )
 
 internal fun buildSessionTreeModel(
-    projects: List<AgentProjectSessions>,
-    visibleClosedProjectCount: Int,
-    visibleThreadCounts: Map<String, Int>,
-    treeUiState: SessionTreeUiState,
+  projects: List<AgentProjectSessions>,
+  visibleClosedProjectCount: Int,
+  visibleThreadCounts: Map<String, Int>,
+  treeUiState: SessionTreeUiState,
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
   val duplicateProjectNames = visibleProjectsResult.visibleProjects
@@ -95,7 +93,7 @@ internal fun diffSessionTreeModels(
       structureChangedIds += id
     }
     if (sessionTreeNodePresentation(oldEntry.node, oldModel.duplicateProjectNames)
-        != sessionTreeNodePresentation(newEntry.node, newModel.duplicateProjectNames)) {
+      != sessionTreeNodePresentation(newEntry.node, newModel.duplicateProjectNames)) {
       contentChangedIds += id
     }
   }
@@ -414,7 +412,8 @@ internal fun shouldOpenOnActivation(node: SessionTreeNode): Boolean {
   return when (node) {
     is SessionTreeNode.Project,
     is SessionTreeNode.Worktree,
-    is SessionTreeNode.SubAgent -> true
+    is SessionTreeNode.SubAgent,
+      -> true
 
     is SessionTreeNode.Thread -> !isAgentSessionNewSessionId(node.thread.id)
 
@@ -422,7 +421,8 @@ internal fun shouldOpenOnActivation(node: SessionTreeNode): Boolean {
     is SessionTreeNode.Error,
     is SessionTreeNode.Empty,
     is SessionTreeNode.MoreProjects,
-    is SessionTreeNode.MoreThreads -> false
+    is SessionTreeNode.MoreThreads,
+      -> false
   }
 }
 
@@ -430,7 +430,8 @@ internal fun shouldExpandOnDoubleClick(node: SessionTreeNode): Boolean {
   return when (node) {
     is SessionTreeNode.Project,
     is SessionTreeNode.Worktree,
-    is SessionTreeNode.SubAgent -> false
+    is SessionTreeNode.SubAgent,
+      -> false
 
     is SessionTreeNode.Thread -> isAgentSessionNewSessionId(node.thread.id)
 
@@ -438,80 +439,13 @@ internal fun shouldExpandOnDoubleClick(node: SessionTreeNode): Boolean {
     is SessionTreeNode.Error,
     is SessionTreeNode.Empty,
     is SessionTreeNode.MoreProjects,
-    is SessionTreeNode.MoreThreads -> true
+    is SessionTreeNode.MoreThreads,
+      -> true
   }
 }
 
 internal fun shouldRetargetSelectionForContextMenu(isClickedPathSelected: Boolean): Boolean {
   return !isClickedPathSelected
-}
-
-internal data class NewSessionRowActions(
-  @JvmField val path: String,
-  val quickProvider: AgentSessionProvider?,
-  val quickLaunchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
-)
-
-internal fun resolveNewSessionRowActions(
-  node: SessionTreeNode,
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
-  isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
-): NewSessionRowActions? {
-  val path = when (node) {
-    is SessionTreeNode.Project -> node.project.path
-
-    is SessionTreeNode.Worktree -> node.worktree.path
-
-    is SessionTreeNode.Thread,
-    is SessionTreeNode.SubAgent,
-    is SessionTreeNode.Warning,
-    is SessionTreeNode.Error,
-    is SessionTreeNode.Empty,
-    is SessionTreeNode.MoreProjects,
-    is SessionTreeNode.MoreThreads -> return null
-  }
-  val (quickProvider, quickLaunchMode) = resolveQuickCreateProviderAndMode(lastUsedProvider, lastUsedLaunchMode, isProviderAvailable)
-  return NewSessionRowActions(
-    path = path,
-    quickProvider = quickProvider,
-    quickLaunchMode = quickLaunchMode,
-  )
-}
-
-internal fun resolveQuickCreateProvider(lastUsedProvider: AgentSessionProvider?): AgentSessionProvider? =
-  resolveQuickCreateProviderAndMode(lastUsedProvider, null).first
-
-private fun resolveQuickCreateProviderAndMode(
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode?,
-  isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
-): Pair<AgentSessionProvider?, AgentSessionLaunchMode> {
-  val bridges = AgentSessionProviders.allProviders()
-
-  if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
-    val yoloProviders = bridges
-      .filter { bridge -> AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes }
-      .map { bridge -> bridge.provider }
-      .filter(isProviderAvailable)
-    if (lastUsedProvider != null && lastUsedProvider in yoloProviders) {
-      return lastUsedProvider to AgentSessionLaunchMode.YOLO
-    }
-  }
-
-  val standardProviders = bridges
-    .filter { bridge -> AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes }
-    .map { bridge -> bridge.provider }
-    .filter(isProviderAvailable)
-  if (standardProviders.isEmpty()) return null to AgentSessionLaunchMode.STANDARD
-
-  val provider = if (lastUsedProvider != null && lastUsedProvider in standardProviders) {
-    lastUsedProvider
-  }
-  else {
-    standardProviders.first()
-  }
-  return provider to AgentSessionLaunchMode.STANDARD
 }
 
 internal fun pathForMoreThreadsNode(id: SessionTreeId): String? {
@@ -555,12 +489,18 @@ internal fun archiveTargetFromThreadNode(
 
 internal sealed interface SessionTreeNode {
   data class Project(@JvmField val project: AgentProjectSessions) : SessionTreeNode
-  data class Thread(@JvmField val project: AgentProjectSessions, @JvmField val thread: AgentSessionThread, @JvmField val parentWorktreeBranch: String? = null) : SessionTreeNode
+  data class Thread(
+    @JvmField val project: AgentProjectSessions,
+    @JvmField val thread: AgentSessionThread,
+    @JvmField val parentWorktreeBranch: String? = null,
+  ) : SessionTreeNode
+
   data class SubAgent(
     @JvmField val project: AgentProjectSessions,
     @JvmField val thread: AgentSessionThread,
     @JvmField val subAgent: AgentSubAgent,
   ) : SessionTreeNode
+
   data class Warning(@JvmField val message: @NlsSafe String) : SessionTreeNode
   data class Error(@JvmField val project: AgentProjectSessions, @JvmField val message: @NlsSafe String) : SessionTreeNode
   data class Empty(@JvmField val project: AgentProjectSessions, @JvmField val message: @NlsSafe String) : SessionTreeNode
@@ -578,6 +518,7 @@ internal sealed interface SessionTreeId {
     @JvmField val threadId: String,
     @JvmField val subAgentId: String,
   ) : SessionTreeId
+
   data class Warning(@JvmField val projectPath: String, val provider: AgentSessionProvider) : SessionTreeId
   data class Error(@JvmField val projectPath: String) : SessionTreeId
   data class Empty(@JvmField val projectPath: String) : SessionTreeId
@@ -590,6 +531,7 @@ internal sealed interface SessionTreeId {
     val provider: AgentSessionProvider,
     @JvmField val threadId: String,
   ) : SessionTreeId
+
   data class WorktreeSubAgent(
     @JvmField val projectPath: String,
     @JvmField val worktreePath: String,
@@ -597,11 +539,13 @@ internal sealed interface SessionTreeId {
     @JvmField val threadId: String,
     @JvmField val subAgentId: String,
   ) : SessionTreeId
+
   data class WorktreeWarning(
     @JvmField val projectPath: String,
     @JvmField val worktreePath: String,
     val provider: AgentSessionProvider,
   ) : SessionTreeId
+
   data class WorktreeMoreThreads(@JvmField val projectPath: String, @JvmField val worktreePath: String) : SessionTreeId
   data class WorktreeError(@JvmField val projectPath: String, @JvmField val worktreePath: String) : SessionTreeId
 }

@@ -6,7 +6,6 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
@@ -15,19 +14,15 @@ import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaCliSupport
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
-import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityListener
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
@@ -60,28 +55,6 @@ import javax.swing.JPanel
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
 
-internal fun dispatchTreeRowOverlayQuickCreate(
-  project: Project,
-  path: String,
-  provider: AgentSessionProvider,
-  mode: AgentSessionLaunchMode,
-  createNewSession: (
-    path: String,
-    provider: AgentSessionProvider,
-    mode: AgentSessionLaunchMode,
-    entryPoint: AgentWorkbenchEntryPoint,
-    currentProject: Project,
-  ) -> Unit,
-) {
-  createNewSession(
-    path,
-    provider,
-    mode,
-    AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
-    project,
-  )
-}
-
 internal fun createAgentSessionsNorthComponents(
   project: Project,
   parentDisposable: Disposable,
@@ -104,10 +77,8 @@ internal class AgentSessionsToolWindowPanel(
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
   private val costHydrationVisibilityToken = "${project.locationHash}:${System.identityHashCode(this)}"
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
-  private var lastUsedProvider: AgentSessionProvider? = null
   private var initialRefreshRequested = false
   private val providerAvailabilityService = project.service<AgentSessionProviderAvailabilityService>()
-  private val providerSettingsService = service<AgentSessionProviderSettingsService>()
 
   private val treeStructure = AgentSessionsTreeStructure { sessionTreeModel }
   private val structureTreeModel = StructureTreeModel(treeStructure, this)
@@ -146,7 +117,7 @@ internal class AgentSessionsToolWindowPanel(
       else {
         null
       }
-      val actionRightPadding = sessionTreeRowActionRightPadding(rowActions?.actionSlots ?: 0)
+      val actionRightPadding = rowActions?.reservedWidth ?: 0
 
       val viewportLayout = resolveSessionTreeViewportLayout(this)
       val rowOverflowClipped = isSessionTreeRowClipped(
@@ -204,8 +175,7 @@ internal class AgentSessionsToolWindowPanel(
         service<AgentSessionCostHintStateService>().markEligible()
       }
     },
-    onLastUsedProviderChanged = { provider ->
-      lastUsedProvider = provider
+    onLastUsedProviderChanged = {
       if (isModelUpdateVisible()) {
         tree.repaint()
       }
@@ -240,33 +210,9 @@ internal class AgentSessionsToolWindowPanel(
     )
 
     rowActionsOverlay = AgentSessionsTreeRowActionsOverlay(
+      project = project,
       tree = tree,
       nodeResolver = ::sessionTreeNode,
-      lastUsedProvider = { lastUsedProvider },
-      lastUsedLaunchMode = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
-      onQuickCreate = { path, provider, mode ->
-        dispatchTreeRowOverlayQuickCreate(
-          project = project,
-          path = path,
-          provider = provider,
-          mode = mode,
-          createNewSession = { quickPath, quickProvider, mode, entryPoint, currentProject ->
-            service<AgentSessionLaunchService>().createNewSession(
-              path = quickPath,
-              provider = quickProvider,
-              mode = mode,
-              entryPoint = entryPoint,
-              currentProject = currentProject,
-            )
-          },
-        )
-      },
-      onShowPopup = { nodeId, node, anchorRect, row ->
-        interactionController.showNewSessionActionPopup(nodeId, node, anchorRect, row)
-      },
-      isProviderAvailable = { provider ->
-        providerSettingsService.isProviderEnabled(provider) && providerAvailabilityService.isProviderAvailable(provider)
-      },
     )
 
     installProviderAvailabilityRefresh()

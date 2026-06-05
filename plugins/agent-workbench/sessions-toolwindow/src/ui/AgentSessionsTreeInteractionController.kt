@@ -25,7 +25,6 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.ui.tree.TreeUtil
-import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -57,40 +56,6 @@ internal class AgentSessionsTreeInteractionController(
     installTreeExpansionListener()
   }
 
-  fun showNewSessionActionPopup(
-    nodeId: SessionTreeId,
-    node: SessionTreeNode,
-    anchorRect: Rectangle,
-    row: Int,
-  ) {
-    val actionGroup = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.TreePopup.NEW_THREAD) as? ActionGroup
-                      ?: return
-    popupActionContext = createAgentSessionsTreePopupActionContext(
-      project = project,
-      nodeId = nodeId,
-      node = node,
-      archiveTargets = selectedArchiveTargets(),
-      unarchiveTargets = selectedUnarchiveTargets(),
-    ) ?: return
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
-    popupMenu.setTargetComponent(tree)
-    rowActionsOverlayProvider().pinPopupRow(row)
-    popupMenu.component.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
-      override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) = Unit
-
-      override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) {
-        rowActionsOverlayProvider().clearPopupPinnedRow(row)
-        clearPopupActionContext()
-      }
-
-      override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {
-        rowActionsOverlayProvider().clearPopupPinnedRow(row)
-        clearPopupActionContext()
-      }
-    })
-    popupMenu.component.show(tree, anchorRect.x, anchorRect.y + anchorRect.height)
-  }
-
   private fun installEnterKeyActivation() {
     val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
     val fallbackListener = tree.getActionForKeyStroke(enter)
@@ -106,10 +71,6 @@ internal class AgentSessionsTreeInteractionController(
     val mouseHandler = object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (!SwingUtilities.isLeftMouseButton(e) || e.clickCount != 1) return
-        if (rowActionsOverlayProvider().handleClick(e.point)) {
-          e.consume()
-          return
-        }
         val path = tree.getPathForLocation(e.x, e.y) ?: return
         val id = idFromPath(path) ?: return
         val treeNode = nodeResolver(id) ?: return

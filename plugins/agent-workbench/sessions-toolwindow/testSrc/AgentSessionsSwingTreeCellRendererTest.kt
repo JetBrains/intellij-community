@@ -393,10 +393,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       rowActionsProvider = { _, _, _ ->
         SessionTreeRowActionPresentation(
           showLoadingAction = true,
-          quickIcon = AllIcons.General.Add,
-          showQuickAction = true,
-          showPopupAction = true,
-          hoveredKind = null,
+          showNewThreadAction = true,
         )
       },
       nodeResolver = { id ->
@@ -409,7 +406,7 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     assertThat(renderer.getCharSequence(true).toString()).doesNotContain(AgentSessionsBundle.message("toolwindow.loading"))
     assertThat(renderer.icon).isEqualTo(AllIcons.Vcs.BranchNode)
-    assertThat(renderer.ipad.right).isEqualTo(sessionTreeRowActionRightPadding(actionSlots = 3))
+    assertThat(renderer.ipad.right).isEqualTo(sessionTreeRowActionRightPadding(showLoadingAction = true, showNewThreadAction = true))
     assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.loading"))
   }
 

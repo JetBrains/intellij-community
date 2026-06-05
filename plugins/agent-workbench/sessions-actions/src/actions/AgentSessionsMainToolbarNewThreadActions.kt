@@ -128,6 +128,159 @@ internal class AgentSessionsEditorTabNewThreadAction private constructor(
   )
 }
 
+class AgentSessionsDirectPathNewThreadAction private constructor(
+  private val project: Project,
+  private val targetPath: () -> String?,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor>,
+  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val lastUsedProvider: () -> AgentSessionProvider?,
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  quickStartEntryPoint: AgentWorkbenchEntryPoint,
+  beforeAction: () -> Unit,
+  pickerGroup: DirectPathPickerActionGroup,
+) : SplitButtonAction(pickerGroup), DumbAware {
+
+  @JvmOverloads
+  constructor(
+    project: Project,
+    targetPath: () -> String?,
+    quickStartEntryPoint: AgentWorkbenchEntryPoint,
+    popupEntryPoint: AgentWorkbenchEntryPoint,
+    allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
+    createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
+    lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+    lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
+    beforeAction: () -> Unit = {},
+  ) : this(
+    project = project,
+    targetPath = targetPath,
+    allBridges = allBridges,
+    createNewSession = createNewSession,
+    lastUsedProvider = lastUsedProvider,
+    lastUsedLaunchMode = lastUsedLaunchMode,
+    quickStartEntryPoint = quickStartEntryPoint,
+    beforeAction = beforeAction,
+    pickerGroup = DirectPathPickerActionGroup(
+      project = project,
+      targetPath = targetPath,
+      allBridges = allBridges,
+      createNewSession = createNewSession,
+      lastUsedProvider = lastUsedProvider,
+      lastUsedLaunchMode = lastUsedLaunchMode,
+      popupEntryPoint = popupEntryPoint,
+      beforeAction = beforeAction,
+    ),
+  )
+
+  private val quickStartAction = DirectPathQuickStartAction(
+    project = project,
+    targetPath = targetPath,
+    allBridges = allBridges,
+    createNewSession = createNewSession,
+    lastUsedProvider = lastUsedProvider,
+    lastUsedLaunchMode = lastUsedLaunchMode,
+    entryPoint = quickStartEntryPoint,
+    beforeAction = beforeAction,
+  )
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  public override fun getMainAction(e: AnActionEvent): AnAction? {
+    if (targetPath() == null) return null
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
+    if (!actionModel.menuModel.hasEntries()) return null
+    return if (actionModel.quickStartItem == null) null else quickStartAction
+  }
+
+  override fun update(e: AnActionEvent) {
+    val path = targetPath()
+    if (path == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
+    if (!actionModel.menuModel.hasEntries()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    if (e.updateSession !== UpdateSession.EMPTY) {
+      super.update(e)
+    }
+    val quickStartItem = actionModel.quickStartItem
+    e.presentation.icon = quickStartItem?.let(::providerItemIconWithMode) ?: AllIcons.General.Add
+    e.presentation.text = quickStartItem
+                            ?.let(::quickStartActionText)
+                          ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
+    e.presentation.description = quickStartItem
+                                   ?.let(::quickStartActionDescription)
+                                 ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.empty.description")
+    e.presentation.isEnabledAndVisible = true
+  }
+}
+
+private class DirectPathPickerActionGroup(
+  private val project: Project,
+  private val targetPath: () -> String?,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor>,
+  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val lastUsedProvider: () -> AgentSessionProvider?,
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val popupEntryPoint: AgentWorkbenchEntryPoint,
+  private val beforeAction: () -> Unit,
+) : ActionGroup(), DumbAware {
+  init {
+    templatePresentation.icon = AllIcons.General.Add
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val path = targetPath() ?: return emptyArray()
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
+    return buildNewThreadMenuActions(
+      path = path,
+      project = project,
+      menuModel = actionModel.menuModel,
+      entryPoint = popupEntryPoint,
+    ) { targetPath, provider, mode, currentProject, entryPoint ->
+      beforeAction()
+      createNewSession(targetPath, provider, mode, currentProject, entryPoint)
+    }
+  }
+}
+
+private class DirectPathQuickStartAction(
+  private val project: Project,
+  private val targetPath: () -> String?,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor>,
+  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val lastUsedProvider: () -> AgentSessionProvider?,
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val entryPoint: AgentWorkbenchEntryPoint,
+  private val beforeAction: () -> Unit,
+) : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project).quickStartItem
+    if (targetPath() == null || quickStartItem == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.text = quickStartActionText(quickStartItem)
+    e.presentation.description = quickStartActionDescription(quickStartItem)
+    e.presentation.icon = providerItemIconWithMode(quickStartItem)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val path = targetPath() ?: return
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project).quickStartItem ?: return
+    beforeAction()
+    launchQuickStartThread(path, project, quickStartItem, entryPoint, createNewSession)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
 internal abstract class AgentSessionsNewThreadSplitButtonAction(
   private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
@@ -192,7 +345,10 @@ internal abstract class AgentSessionsNewThreadSplitButtonAction(
     e.presentation.isEnabledAndVisible = true
   }
 
-  private fun resolveSplitButtonQuickStartItem(bridges: List<AgentSessionProviderDescriptor>, project: Project): AgentSessionProviderMenuItem? {
+  private fun resolveSplitButtonQuickStartItem(
+    bridges: List<AgentSessionProviderDescriptor>,
+    project: Project,
+  ): AgentSessionProviderMenuItem? {
     return resolveSplitButtonQuickStartItem(buildNewThreadMenuModel(bridges, project))
   }
 

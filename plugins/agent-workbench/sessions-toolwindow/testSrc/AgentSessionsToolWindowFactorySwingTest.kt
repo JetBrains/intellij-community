@@ -8,9 +8,7 @@ import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
@@ -28,7 +26,6 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWind
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsNorthComponents
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsTitleActions
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createArchivedRangeHeaderPopupGroup
-import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverlayQuickCreate
 import com.intellij.agent.workbench.sessions.waitForCondition
 import com.intellij.agent.workbench.sessions.withRegisteredTestService
 import com.intellij.icons.AllIcons
@@ -380,36 +377,6 @@ class AgentSessionsToolWindowFactorySwingTest {
       .isNotNull
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread")?.templatePresentation?.icon)
       .isEqualTo(AllIcons.General.Add)
-  }
-
-  @Test
-  fun treeRowOverlayQuickCreateUsesOverlayEntryPoint() {
-    val project = ProjectManager.getInstance().defaultProject
-    var capturedPath: String? = null
-    var capturedProvider: AgentSessionProvider? = null
-    var capturedMode: AgentSessionLaunchMode? = null
-    var capturedEntryPoint: AgentWorkbenchEntryPoint? = null
-    var capturedProject = false
-
-    dispatchTreeRowOverlayQuickCreate(
-      project = project,
-      path = "/work/project",
-      provider = AgentSessionProvider.CODEX,
-      mode = AgentSessionLaunchMode.STANDARD,
-      createNewSession = { path, provider, mode, entryPoint, currentProject ->
-        capturedPath = path
-        capturedProvider = provider
-        capturedMode = mode
-        capturedEntryPoint = entryPoint
-        capturedProject = currentProject === project
-      },
-    )
-
-    assertThat(capturedPath).isEqualTo("/work/project")
-    assertThat(capturedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(capturedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(capturedEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY)
-    assertThat(capturedProject).isTrue()
   }
 
   private fun ActionManager.childActionEntries(groupId: String): List<String> {

@@ -1,172 +1,104 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
-import com.intellij.agent.workbench.sessions.toolwindow.tree.NewSessionRowActions
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsDirectPathNewThreadAction
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
-import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveNewSessionRowActions
-import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.JBColor
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
-import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
-import javax.swing.Icon
-
-private const val SESSION_TREE_ACTION_ICON_SIZE = 14
-
-internal enum class RowActionKind {
-  QuickCreate,
-  ShowPopup,
-}
+import javax.swing.JComponent
 
 internal data class SessionTreeRowActionPresentation(
   @JvmField val showLoadingAction: Boolean,
-  @JvmField val quickIcon: Icon?,
-  @JvmField val showQuickAction: Boolean,
-  @JvmField val showPopupAction: Boolean,
-  @JvmField val hoveredKind: RowActionKind?,
+  @JvmField val showNewThreadAction: Boolean,
 ) {
-  val actionSlots: Int
-    get() =
-      (if (showLoadingAction) 1 else 0) +
-      (if (showQuickAction) 1 else 0) +
-      (if (showPopupAction) 1 else 0)
+  val reservedWidth: Int
+    get() = sessionTreeRowActionRightPadding(
+      showLoadingAction = showLoadingAction,
+      showNewThreadAction = showNewThreadAction,
+    )
 }
 
 private data class RowActionRects(
   @JvmField val loadingRect: Rectangle?,
-  @JvmField val quickRect: Rectangle?,
-  @JvmField val popupRect: Rectangle?,
+  @JvmField val newThreadRect: Rectangle?,
 )
 
-private data class RowActionHit(
-  @JvmField val row: Int,
-  @JvmField val nodeId: SessionTreeId,
-  @JvmField val node: SessionTreeNode,
-  @JvmField val kind: RowActionKind,
-  @JvmField val actions: NewSessionRowActions,
-  @JvmField val rects: RowActionRects,
+private data class RowActionComponent(
+  @JvmField val toolbar: ActionToolbar,
+  @JvmField val component: JComponent,
 )
 
 internal class AgentSessionsTreeRowActionsOverlay(
+  private val project: Project,
   private val tree: Tree,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
-  private val lastUsedProvider: () -> AgentSessionProvider?,
-  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
-  private val onQuickCreate: (path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode) -> Unit,
-  private val onShowPopup: (nodeId: SessionTreeId, node: SessionTreeNode, anchorRect: Rectangle, row: Int) -> Unit,
-  private val isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
 ) {
-  private var hoveredRowAction: RowActionHit? = null
-  private var popupPinnedRow: Int? = null
+  private var hoveredRow: Int? = null
+  private val rowActionComponents = LinkedHashMap<SessionTreeId, RowActionComponent>()
 
   fun rowActionPresentation(
     row: Int,
     treeNode: SessionTreeNode,
     selected: Boolean,
   ): SessionTreeRowActionPresentation? {
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode(), isProviderAvailable) ?: return null
-    val isHovered = TreeHoverListener.getHoveredRow(tree) == row
-    val isPinned = popupPinnedRow == row
-    val showInteractiveActions = selected || isHovered || isPinned
-    val showLoadingAction = when (treeNode) {
-      is SessionTreeNode.Project -> treeNode.project.isLoading
-      is SessionTreeNode.Worktree -> treeNode.worktree.isLoading
-      else -> false
-    }
-    if (!showInteractiveActions && !showLoadingAction) return null
-
-    val quickIcon = rowActions.quickProvider?.let { provider ->
-      val baseIcon = providerIcon(provider) ?: AllIcons.General.Add
-      if (rowActions.quickLaunchMode == AgentSessionLaunchMode.YOLO) {
-        withYoloModeBadge(baseIcon)
-      } else baseIcon
-    }
-    val hoveredKind = hoveredRowAction?.takeIf { it.row == row }?.kind
+    val showLoadingAction = isLoadingNode(treeNode)
+    val showInteractiveAction = selected || TreeHoverListener.getHoveredRow(tree) == row || hoveredRow == row
+    val showNewThreadAction = showInteractiveAction && newThreadPath(treeNode) != null
+    if (!showLoadingAction && !showNewThreadAction) return null
     return SessionTreeRowActionPresentation(
       showLoadingAction = showLoadingAction,
-      quickIcon = quickIcon,
-      showQuickAction = showInteractiveActions && rowActions.quickProvider != null,
-      showPopupAction = showInteractiveActions,
-      hoveredKind = hoveredKind,
+      showNewThreadAction = showNewThreadAction,
     )
   }
 
-  fun handleClick(point: Point): Boolean {
-    val hit = rowActionAtPoint(point) ?: return false
-    if (!tree.selectionModel.isRowSelected(hit.row)) {
-      tree.setSelectionRow(hit.row)
-    }
-
-    when (hit.kind) {
-      RowActionKind.QuickCreate -> {
-        val provider = hit.actions.quickProvider ?: return false
-        onQuickCreate(hit.actions.path, provider, hit.actions.quickLaunchMode)
-      }
-
-      RowActionKind.ShowPopup -> {
-        val popupRect = hit.rects.popupRect ?: return false
-        onShowPopup(hit.nodeId, hit.node, popupRect, hit.row)
-      }
-    }
-    return true
-  }
-
   fun updateHover(point: Point) {
-    val previous = hoveredRowAction
-    val next = rowActionAtPoint(point)
+    val previous = hoveredRow
+    val next = hoveredActionRow(point)
     if (previous == next) return
 
-    hoveredRowAction = next
-    previous?.let { TreeUtil.repaintRow(tree, it.row) }
-    next?.let { TreeUtil.repaintRow(tree, it.row) }
-    tree.cursor = if (next != null) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+    hoveredRow = next
+    previous?.let { TreeUtil.repaintRow(tree, it) }
+    next?.let { TreeUtil.repaintRow(tree, it) }
   }
 
   fun clearHover() {
-    val previous = hoveredRowAction
-    hoveredRowAction = null
-    previous?.let { TreeUtil.repaintRow(tree, it.row) }
-    tree.cursor = Cursor.getDefaultCursor()
-  }
-
-  fun pinPopupRow(row: Int) {
-    popupPinnedRow = row
-    TreeUtil.repaintRow(tree, row)
-  }
-
-  fun clearPopupPinnedRow(row: Int) {
-    if (popupPinnedRow != row) return
-    popupPinnedRow = null
-    TreeUtil.repaintRow(tree, row)
+    val previous = hoveredRow
+    hoveredRow = null
+    previous?.let { TreeUtil.repaintRow(tree, it) }
   }
 
   fun clearTransientState() {
-    popupPinnedRow = null
-    clearHover()
+    hoveredRow = null
+    removeAllRowActionComponents()
   }
 
   fun paint(graphics: Graphics) {
     val g2 = graphics.create() as? Graphics2D ?: return
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      val visibleRows = visibleRowRange() ?: return
+      val visibleRows = visibleRowRange() ?: run {
+        removeAllRowActionComponents()
+        return
+      }
+      val activeComponentIds = LinkedHashSet<SessionTreeId>()
       for (row in visibleRows) {
         val path = tree.getPathForRow(row) ?: continue
-        val treeNode = path.lastPathComponent?.let(::extractSessionTreeId)?.let(nodeResolver) ?: continue
+        val treeId = path.lastPathComponent?.let(::extractSessionTreeId) ?: continue
+        val treeNode = nodeResolver(treeId) ?: continue
         val presentation = rowActionPresentation(
           row = row,
           treeNode = treeNode,
@@ -176,25 +108,33 @@ internal class AgentSessionsTreeRowActionsOverlay(
 
         val loadingRect = rects.loadingRect
         if (loadingRect != null) {
-          paintIconCentered(AnimatedIcon.Default.INSTANCE, loadingRect, g2)
+          paintLoadingIconCentered(loadingRect, g2)
         }
 
-        val quickRect = rects.quickRect
-        if (quickRect != null && presentation.quickIcon != null) {
-          paintRowActionSlot(g2, quickRect, hover = presentation.hoveredKind == RowActionKind.QuickCreate)
-          paintIconCentered(presentation.quickIcon, quickRect, g2)
-        }
-
-        val popupRect = rects.popupRect
-        if (popupRect != null) {
-          paintRowActionSlot(g2, popupRect, hover = presentation.hoveredKind == RowActionKind.ShowPopup)
-          paintIconCentered(LayeredIcon.ADD_WITH_DROPDOWN, popupRect, g2)
+        val newThreadRect = rects.newThreadRect
+        val newThreadPath = newThreadPath(treeNode)
+        if (newThreadRect != null && newThreadPath != null) {
+          activeComponentIds += treeId
+          val rowActionComponent = rowActionComponent(treeId = treeId, path = newThreadPath)
+          rowActionComponent.component.bounds = newThreadRect
+          rowActionComponent.component.isVisible = true
+          rowActionComponent.toolbar.updateActionsAsync()
         }
       }
+      removeInactiveRowActionComponents(activeComponentIds)
     }
     finally {
       g2.dispose()
     }
+  }
+
+  private fun hoveredActionRow(point: Point): Int? {
+    val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+    if (row < 0) return null
+    val path = tree.getPathForRow(row) ?: return null
+    val treeId = path.lastPathComponent?.let(::extractSessionTreeId) ?: return null
+    val treeNode = nodeResolver(treeId) ?: return null
+    return row.takeIf { newThreadPath(treeNode) != null || isLoadingNode(treeNode) }
   }
 
   private fun rowActionRects(row: Int, presentation: SessionTreeRowActionPresentation): RowActionRects? {
@@ -205,7 +145,10 @@ internal class AgentSessionsTreeRowActionsOverlay(
     val slot = sessionTreeActionSlotSize()
     val rightGap = sessionTreeActionRightGap()
     val gap = sessionTreeActionGap()
-    val y = bounds.y + (bounds.height - slot) / 2
+    val loadingY = bounds.y + (bounds.height - slot) / 2
+    val buttonWidth = sessionTreeNewThreadActionWidth()
+    val buttonHeight = sessionTreeNewThreadActionHeight()
+    val buttonY = bounds.y + (bounds.height - buttonHeight) / 2
 
     var right = sessionTreeRowActionsRightBoundary(
       helperX = viewportLayout.x,
@@ -215,48 +158,78 @@ internal class AgentSessionsTreeRowActionsOverlay(
       selectionRightInset = viewportLayout.selectionRightInset,
     )
 
-    fun consumeSlot(show: Boolean): Rectangle? {
-      if (!show) return null
-      val rect = Rectangle(right - slot, y, slot, slot)
-      right = rect.x - gap
-      return rect
+    val newThreadRect = if (presentation.showNewThreadAction) {
+      Rectangle(right - buttonWidth, buttonY, buttonWidth, buttonHeight).also { rect ->
+        right = rect.x - gap
+      }
+    }
+    else {
+      null
     }
 
-    val popupRect = consumeSlot(show = presentation.showPopupAction)
-    val quickRect = consumeSlot(show = presentation.showQuickAction)
-    val loadingRect = consumeSlot(show = presentation.showLoadingAction)
+    val loadingRect = if (presentation.showLoadingAction) {
+      Rectangle(right - slot, loadingY, slot, slot)
+    }
+    else {
+      null
+    }
+
     return RowActionRects(
       loadingRect = loadingRect,
-      quickRect = quickRect,
-      popupRect = popupRect,
+      newThreadRect = newThreadRect,
     )
   }
 
-  private fun rowActionAtPoint(point: Point): RowActionHit? {
-    val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
-    if (row < 0) return null
-    val canShowActions = tree.selectionModel.isRowSelected(row) || TreeHoverListener.getHoveredRow(tree) == row || popupPinnedRow == row
-    if (!canShowActions) return null
+  private fun rowActionComponent(treeId: SessionTreeId, path: String): RowActionComponent {
+    rowActionComponents[treeId]?.let { return it }
 
-    val path = tree.getPathForRow(row) ?: return null
-    val treeId = path.lastPathComponent?.let(::extractSessionTreeId) ?: return null
-    val treeNode = nodeResolver(treeId) ?: return null
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode(), isProviderAvailable) ?: return null
-    val presentation = rowActionPresentation(
-      row = row,
-      treeNode = treeNode,
-      selected = tree.selectionModel.isRowSelected(row),
-    ) ?: return null
-    val rects = rowActionRects(row = row, presentation = presentation) ?: return null
-    val quickRect = rects.quickRect
-    if (quickRect != null && quickRect.contains(point)) {
-      return RowActionHit(row = row, nodeId = treeId, node = treeNode, kind = RowActionKind.QuickCreate, actions = rowActions, rects = rects)
+    val action = AgentSessionsDirectPathNewThreadAction(
+      project = project,
+      targetPath = { path },
+      quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
+      popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      beforeAction = { selectRow(treeId) },
+    )
+    val toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      DefaultActionGroup(action),
+      true,
+    )
+    toolbar.setTargetComponent(tree)
+    toolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    toolbar.setReservePlaceAutoPopupIcon(false)
+    val component = toolbar.component
+    component.isOpaque = false
+    component.isVisible = false
+    tree.add(component)
+    val rowActionComponent = RowActionComponent(toolbar = toolbar, component = component)
+    rowActionComponents[treeId] = rowActionComponent
+    return rowActionComponent
+  }
+
+  private fun selectRow(treeId: SessionTreeId) {
+    for (row in 0 until tree.rowCount) {
+      val path = tree.getPathForRow(row) ?: continue
+      if (path.lastPathComponent?.let(::extractSessionTreeId) == treeId) {
+        tree.setSelectionRow(row)
+        return
+      }
     }
-    val popupRect = rects.popupRect
-    if (popupRect != null && popupRect.contains(point)) {
-      return RowActionHit(row = row, nodeId = treeId, node = treeNode, kind = RowActionKind.ShowPopup, actions = rowActions, rects = rects)
+  }
+
+  private fun removeInactiveRowActionComponents(activeIds: Set<SessionTreeId>) {
+    val iterator = rowActionComponents.iterator()
+    while (iterator.hasNext()) {
+      val (treeId, rowActionComponent) = iterator.next()
+      if (treeId in activeIds) continue
+      tree.remove(rowActionComponent.component)
+      iterator.remove()
     }
-    return null
+  }
+
+  private fun removeAllRowActionComponents() {
+    rowActionComponents.values.forEach { tree.remove(it.component) }
+    rowActionComponents.clear()
   }
 
   private fun visibleRowRange(): IntRange? {
@@ -269,18 +242,33 @@ internal class AgentSessionsTreeRowActionsOverlay(
     return first..last
   }
 
-  private fun paintRowActionSlot(graphics: Graphics2D, rect: Rectangle, hover: Boolean) {
-    if (!hover) return
-    val arc = JBUI.scale(8)
-    graphics.color = JBColor.namedColor("ActionButton.hoverBackground", JBColor(0xE6EEF7, 0x4F5B66))
-    graphics.fillRoundRect(rect.x, rect.y, rect.width, rect.height, arc, arc)
+  private fun paintLoadingIconCentered(rect: Rectangle, graphics: Graphics2D) {
+    val icon = AnimatedIcon.Default.INSTANCE
+    val x = rect.x + (rect.width - icon.iconWidth) / 2
+    val y = rect.y + (rect.height - icon.iconHeight) / 2
+    icon.paintIcon(tree, graphics, x, y)
   }
+}
 
-  private fun paintIconCentered(icon: Icon, rect: Rectangle, graphics: Graphics2D) {
-    val size = JBUI.scale(SESSION_TREE_ACTION_ICON_SIZE)
-    val scaledIcon = IconUtil.toSize(icon, size, size)
-    val x = rect.x + (rect.width - scaledIcon.iconWidth) / 2
-    val y = rect.y + (rect.height - scaledIcon.iconHeight) / 2
-    scaledIcon.paintIcon(tree, graphics, x, y)
+private fun isLoadingNode(node: SessionTreeNode): Boolean {
+  return when (node) {
+    is SessionTreeNode.Project -> node.project.isLoading
+    is SessionTreeNode.Worktree -> node.worktree.isLoading
+    else -> false
+  }
+}
+
+private fun newThreadPath(node: SessionTreeNode): String? {
+  return when (node) {
+    is SessionTreeNode.Project -> node.project.path
+    is SessionTreeNode.Worktree -> node.worktree.path
+    is SessionTreeNode.Thread,
+    is SessionTreeNode.SubAgent,
+    is SessionTreeNode.Warning,
+    is SessionTreeNode.Error,
+    is SessionTreeNode.Empty,
+    is SessionTreeNode.MoreProjects,
+    is SessionTreeNode.MoreThreads,
+      -> null
   }
 }
