@@ -613,7 +613,7 @@ class ListPluginComponent(
       if (myUpdateButton == null) {
         myUpdateButton = UpdateButton()
         myLayout.addButtonComponent(myUpdateButton!!, 0)
-        myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions) }
+        myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions, updateDescriptor) }
       }
       else if (!successfullyFinishedOnce) {
         myUpdateButton!!.isEnabled = true
@@ -755,14 +755,14 @@ class ListPluginComponent(
     }
   }
 
-  private fun updatePlugin(descriptorForActions: PluginUiModel) {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(descriptorForActions)
+  private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
+    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(updateDescriptor)
     pluginUpdateSourceApplier.applyPluginUpdateSourceId()
     PluginModelAsyncOperationsExecutor.updatePlugin(
       myCoroutineScope,
       myModelFacade,
       descriptorForActions,
-      myUpdateDescriptor,
+      updateDescriptor,
       myCustomizer,
       ModalityState.stateForComponent(myUpdateButton!!),
       this,
