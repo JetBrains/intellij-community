@@ -64,6 +64,7 @@ class LspServerImpl internal constructor(
   override val providerClass: Class<out LspServerSupportProvider>,
   override val descriptor: LspServerDescriptor,
   private val eventBroadcaster: LspServerManagerListener,
+  private val lsp4jServerWrapper: (LspServer, Lsp4jServer) -> Lsp4jServer,
 ) : LspServer {
   override val project: Project = descriptor.project
 
@@ -104,6 +105,8 @@ class LspServerImpl internal constructor(
 
   internal val lsp4jServer: Lsp4jServer
     get() = lsp4jServerConnector.lsp4jServer
+
+  internal fun wrapLsp4jServer(lsp4jServer: Lsp4jServer): Lsp4jServer = lsp4jServerWrapper(this, lsp4jServer)
 
   internal val serverCapabilities: ServerCapabilities?
     get() = if (state == Running) initializeResult?.capabilities else null

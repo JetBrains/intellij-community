@@ -126,7 +126,10 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
     fileToCachedHighlightingsSnapshot.clear()
     fileToPendingEdits.clear()
     fileToPsiModCountWhenRequestSent.clear()
+    clearAdditionalCache()
   }
+
+  protected open fun clearAdditionalCache() {}
 
 
   private class CachedHighlightingsSnapshot<T>(

@@ -23,9 +23,13 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.lsp.api.Lsp4jServer
+import com.intellij.platform.lsp.api.Lsp4jServerWrapper
+import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerManager.Companion.getInstance
@@ -70,6 +74,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   }
 
   private val lspServers: MutableCollection<LspServerImpl> = ContainerUtil.createLockFreeCopyOnWriteList()
+  private val lsp4jServerWrappers = ContainerUtil.createLockFreeCopyOnWriteList<Lsp4jServerWrapper>()
 
   private val eventDispatcher = EventDispatcher.create(LspServerManagerListener::class.java)
 
@@ -146,7 +151,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
         }
 
         writeAction {
-          val server = LspServerImpl(providerClass, descriptor, eventDispatcher.multicaster)
+          val server = LspServerImpl(providerClass, descriptor, eventDispatcher.multicaster, ::wrapLsp4jServer)
           server.start()
           lspServers.add(server)
           Unit
@@ -216,6 +221,18 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     stopServers(providerClass)
     startServersIfNeeded(providerClass)
   }
+
+  override fun addLsp4jServerWrapper(wrapper: Lsp4jServerWrapper, parentDisposable: Disposable) {
+    lsp4jServerWrappers.add(wrapper)
+    Disposer.register(parentDisposable) {
+      lsp4jServerWrappers.remove(wrapper)
+    }
+  }
+
+  private fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer =
+    lsp4jServerWrappers.fold(lsp4jServer) { wrappedServer, wrapper ->
+      wrapper.wrapLsp4jServer(lspServer, wrappedServer)
+    }
 
   @ApiStatus.Internal
   override fun addLspServerManagerListener(
