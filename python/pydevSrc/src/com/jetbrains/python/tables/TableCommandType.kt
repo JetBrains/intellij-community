@@ -1,8 +1,8 @@
 package com.jetbrains.python.tables
 
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 
-@IntellijInternalApi
+@ApiStatus.Internal
 enum class TableCommandType {
   DF_INFO,
   SLICE,

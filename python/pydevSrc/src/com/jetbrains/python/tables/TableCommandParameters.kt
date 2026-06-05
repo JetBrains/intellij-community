@@ -1,6 +1,6 @@
 package com.jetbrains.python.tables
 
-import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 
-@IntellijInternalApi
+@ApiStatus.Internal
 interface TableCommandParameters

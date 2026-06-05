@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
@@ -29,7 +28,6 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class PyCondaEnvProvider(
   refreshInterval: Duration,
   ttlAfterWrite: Duration,
