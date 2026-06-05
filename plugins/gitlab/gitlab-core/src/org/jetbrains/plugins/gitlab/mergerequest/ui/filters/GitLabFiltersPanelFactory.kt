@@ -6,12 +6,12 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.LabelFilterValue
@@ -93,9 +93,9 @@ internal class GitLabFiltersPanelFactory(
     filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
     valuePresenter = { labelFilterValue -> labelFilterValue.title },
     chooseValue = { point ->
-      ChooserPopupUtil.showAsyncChooserPopup(
+      ChooserPopupUtil.showChooserPopupWithIncrementalLoading(
         point,
-        itemsLoader = vm.labels,
+        listState = vm.labels,
         presenter = GitLabMergeRequestChoosersUtil.getLabelPresenter()
       )?.let {
         LabelFilterValue(it.title)
@@ -113,15 +113,15 @@ internal class GitLabFiltersPanelFactory(
     filterName,
     valuePresenter = { participant -> participant.fullname },
     chooseValue = { point ->
-      val selectedAuthor = showParticipantChooser(point, participantsLoader = vm.mergeRequestMembers)
+      val selectedAuthor = showParticipantChooser(point, participantsLoadingState = vm.mergeRequestMembers)
       selectedAuthor?.let { user -> participantCreator(user) }
     })
 
   private suspend fun showParticipantChooser(
     point: RelativePoint,
-    participantsLoader: Flow<Result<List<GitLabUserDTO>>>
-  ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
-    point, itemsLoader = participantsLoader,
+    participantsLoadingState: StateFlow<IncrementallyComputedValue<List<GitLabUserDTO>>>,
+  ): GitLabUserDTO? = ChooserPopupUtil.showChooserPopupWithIncrementalLoading(
+    point, listState = participantsLoadingState,
     presenter = GitLabMergeRequestChoosersUtil.getUserPresenter(vm.avatarIconsProvider),
     popupConfig = PopupConfig(errorPresenter = ErrorStatusPresenter.simple(
       GitLabBundle.message("merge.request.list.filter.error"),
