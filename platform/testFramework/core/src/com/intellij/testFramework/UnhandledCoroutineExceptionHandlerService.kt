@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.CoroutineContext
 
@@ -11,6 +12,22 @@ import kotlin.coroutines.CoroutineContext
  * Instead, we choose to report them as standalone exceptions.
  */
 internal class UnhandledCoroutineExceptionHandlerService : CoroutineExceptionHandler {
+  private companion object {
+    private val LOG = logger<UnhandledCoroutineExceptionHandlerService>()
+
+    init {
+      try {
+        Class.forName("kotlinx.coroutines.test.TestScopeKt")
+          .getDeclaredMethod("setCatchNonTestRelatedExceptions", Boolean::class.java)
+          .invoke(null, false)
+      } catch (e: ClassNotFoundException) {
+        LOG.debug(e)
+      } catch (e: ReflectiveOperationException) {
+        LOG.warn("Failed to disable catching non-test related exceptions", e)
+      }
+    }
+  }
+
   override fun handleException(context: CoroutineContext, exception: Throwable) {
     // if errorLog is installed, then the exceptions will be caught by the corresponding `runTest` which is currently active
     if (errorLog != null) {
