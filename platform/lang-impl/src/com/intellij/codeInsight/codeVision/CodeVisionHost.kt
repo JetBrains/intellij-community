@@ -22,7 +22,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -73,6 +72,7 @@ import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -210,27 +210,28 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     return getPriorityForId(entry.providerId)
   }
 
+  /**
+   * In particular tests, consider using
+   * `CodeVisionTestCase.waitForCodeVisionSync`
+   */
   @TestOnly
-  fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
+  fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable): CompletableFuture<Unit> {
+    val future = CompletableFuture<Unit>()
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
       if (EDT.isCurrentThreadEdt()) {
         runReadActionBlocking {
           editor.lensContext?.setResults(lenses)
+          future.complete(Unit)
         }
       }
       else {
-        // This code runs under modal progress
-        // We have no guarantees whether the scheduled event will be completed inside or outside the modal progress
-        // So here we forcibly wait for its completion
-        // This is a test method anyway, so it is acceptable to hold the read lock
-        val future = CompletableFuture<Unit>()
         ApplicationManager.getApplication().invokeLater {
           editor.lensContext?.setResults(lenses)
           future.complete(Unit)
         }
-        future.join()
       }
     }
+    return future
   }
 
   protected open fun subscribeForDocumentChanges(editor: Editor, editorLifetime: Lifetime, onDocumentChanged: () -> Unit) {
@@ -617,7 +618,11 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       }
     }
     else {
-      ActionUtil.underModalProgress(project, "") { runnable() }
+      coroutineScope.launch {
+        readAction {
+          runnable()
+        }
+      }
     }
 
     return indicator

@@ -13,6 +13,7 @@ class CodeVisionVisualVerticalPositionKeeper(vararg editors: Editor) {
 
   init {
     for (editor in editors) {
+      if (editor.isDisposed) continue
       map[editor] = keep(editor)
     }
   }
