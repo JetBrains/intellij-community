@@ -74,6 +74,10 @@ public final class Prefs {
     getPreferences(key).flush();
   }
 
+  public static void sync(String key) throws BackingStoreException {
+    getPreferences(key).sync();
+  }
+
   private static String getNodeKey(String key) {
     int dotIndex = key.lastIndexOf('.');
     return (dotIndex >= 0 ? key.substring(dotIndex + 1) : key).toLowerCase(Locale.ENGLISH);

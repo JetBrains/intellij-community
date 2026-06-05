@@ -632,6 +632,7 @@ f:com.intellij.ide.Prefs
 - s:putInt(java.lang.String,I):V
 - s:putLong(java.lang.String,J):V
 - s:remove(java.lang.String):V
+- s:sync(java.lang.String):V
 a:com.intellij.ide.RemoteDesktopService
 - <init>():V
 - s:getInstance():com.intellij.ide.RemoteDesktopService
