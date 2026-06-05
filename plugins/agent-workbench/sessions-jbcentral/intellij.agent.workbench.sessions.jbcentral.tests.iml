@@ -29,7 +29,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
     </content>
     <content url="file://$MODULE_DIR$/testSrc">
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="com.intellij.agent.workbench.sessions" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="com.intellij.agent.workbench.sessions.jbcentral" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
