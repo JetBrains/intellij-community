@@ -676,17 +676,20 @@ public class ProjectBytecodeAnalysis {
   }
 
   abstract static class EquationProvider<T extends MemberDescriptor> {
-    final Map<T, List<Equations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
     final Project myProject;
 
     EquationProvider(Project project) {
       myProject = project;
-      project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, myEquationCache::clear);
     }
 
     abstract EKey adaptKey(@NotNull EKey key);
 
     abstract List<Equations> getEquations(MemberDescriptor method);
+
+    Map<T, List<Equations>> getCache() {
+      return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
+        CachedValueProvider.Result.create(ContainerUtil.createConcurrentSoftValueMap(), PsiModificationTracker.MODIFICATION_COUNT));
+    }
   }
 
   /**
@@ -708,7 +711,7 @@ public class ProjectBytecodeAnalysis {
     public List<Equations> getEquations(MemberDescriptor memberDescriptor) {
       assert memberDescriptor instanceof Member;
       Member method = (Member)memberDescriptor;
-      List<Equations> equations = myEquationCache.get(method);
+      List<Equations> equations = getCache().get(method);
       return equations == null ? loadEquations(method) : equations;
     }
 
@@ -744,7 +747,7 @@ public class ProjectBytecodeAnalysis {
         Map<EKey, Equations> map =
           ClassDataIndexer.processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
         Map<Member, List<Equations>> groups = EntryStream.of(map).mapKeys(key -> (Member)key.member).grouping();
-        myEquationCache.putAll(groups);
+        getCache().putAll(groups);
         return groups.getOrDefault(method, Collections.emptyList());
       }
       catch (IOException e) {
@@ -770,7 +773,7 @@ public class ProjectBytecodeAnalysis {
     @Override
     public List<Equations> getEquations(MemberDescriptor method) {
       HMember key = method.hashed();
-      return myEquationCache.computeIfAbsent(key, m -> ClassDataIndexer.getEquations(ProjectScope.getLibrariesScope(myProject), m));
+      return getCache().computeIfAbsent(key, m -> ClassDataIndexer.getEquations(ProjectScope.getLibrariesScope(myProject), m));
     }
   }
 }
