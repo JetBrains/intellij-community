@@ -1,0 +1,75 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.java.terminal.tests` start
+
+jvm_library(
+    name = "terminal-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.terminal.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
+)
+
+jvm_library(
+    name = "terminal-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.terminal.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":terminal-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//java/terminal/backend",
+        "//java/terminal/backend:backend_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-tests:tests",
+        "//platform/platform-tests:tests_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//java/execution/impl",
+        "//java/execution/impl:impl_test_lib",
+        "//plugins/terminal/completion",
+        "//plugins/terminal/completion:completion_test_lib",
+        "//plugins/terminal",
+        "//plugins/terminal:terminal_test_lib",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.terminal.tests` end
+
+### auto-generated section `iml intellij.java.terminal.tests` start
+exports_files(
+    [
+        "intellij.java.terminal.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.terminal.tests` end
+
+### auto-generated section `test intellij.java.terminal.tests` start
+
+jps_test(
+    name = "terminal-tests_test",
+    runtime_deps = [":terminal-tests_test_lib"],
+)
+### auto-generated section `test intellij.java.terminal.tests` end
