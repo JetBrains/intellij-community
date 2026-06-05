@@ -254,6 +254,63 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     }, frameDisposable)
   }
 
+  // ── Unsaved-changes resolution ────────────────────────────────────────────────
+
+  /** Outcome of [resolveUnsavedChanges]. */
+  private enum class UnsavedChangesResult {
+    /** No unsaved changes at all (includes plugin-only modifications, which are cleaned up internally). */
+    NOT_MODIFIED,
+    /** The user chose Apply and changes were saved successfully. */
+    APPLIED,
+    /** The user chose Don't Save; changes were discarded via [SettingsEditor.cancel]. */
+    DISCARDED,
+    /** Apply was requested but failed (e.g., validation error). */
+    APPLY_FAILED,
+    /** The user chose Cancel — the caller should abort. */
+    CANCELED,
+  }
+
+  /**
+   * Checks for unsaved changes and, when meaningful changes exist, shows an
+   * Apply / Don't Save / Cancel dialog. Plugin-only modifications are considered
+   * not meaningful because plugin state is managed by its own session.
+   *
+   * @return the user's choice as an [UnsavedChangesResult].
+   */
+  private fun resolveUnsavedChanges(@NlsContexts.DialogMessage message: String): UnsavedChangesResult {
+    if (!editor.isModified) return UnsavedChangesResult.NOT_MODIFIED
+
+    val hasNonPluginChanges = editor.modifiedConfigurables.any {
+      ConfigurableWrapper.cast(PluginManagerConfigurable::class.java, it) == null
+    }
+    if (!hasNonPluginChanges) {
+      LOG.info("resolveUnsavedChanges: only PluginManagerConfigurable modified, skipping prompt")
+      editor.cancel(null)
+      return UnsavedChangesResult.NOT_MODIFIED
+    }
+
+    return when (Messages.showYesNoCancelDialog(
+      activeWindow,
+      message,
+      ApplicationBundle.message("settings.switch.project.unsaved.title"),
+      ApplicationBundle.message("settings.switch.project.button.apply"),
+      ApplicationBundle.message("settings.switch.project.button.dont.save"),
+      CommonBundle.getCancelButtonText(),
+      Messages.getWarningIcon(),
+    )) {
+      Messages.YES -> {
+        if (!editor.apply()) return UnsavedChangesResult.APPLY_FAILED
+        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
+        UnsavedChangesResult.APPLIED
+      }
+      Messages.NO -> {
+        editor.cancel(null)
+        UnsavedChangesResult.DISCARDED
+      }
+      else -> UnsavedChangesResult.CANCELED
+    }
+  }
+
   // ── Different-project handling ────────────────────────────────────────────────
 
   /**
@@ -261,25 +318,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
    * opening a new window for [newProject] via [SettingsNonModalDialogFactory].
    */
   private fun handleDifferentProject(newProject: Project, toSelect: Configurable?, filter: String?) {
-    if (editor.isModified) {
-      val choice = Messages.showYesNoCancelDialog(
-        activeWindow,
-        ApplicationBundle.message("settings.switch.project.unsaved.message", project.name, newProject.name),
-        ApplicationBundle.message("settings.switch.project.unsaved.title"),
-        ApplicationBundle.message("settings.switch.project.button.apply"),
-        ApplicationBundle.message("settings.switch.project.button.dont.save"),
-        CommonBundle.getCancelButtonText(),
-        Messages.getWarningIcon(),
-      )
-      if (choice == Messages.CANCEL) return
-      if (choice == Messages.YES) {
-        if (!editor.apply()) return
-        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
-      }
-      // Messages.NO → discard, fall through
-    }
-    // Clear the singleton now so dispose() doesn't race with the invokeLater below.
-    ourInstance = null
+    val result = resolveUnsavedChanges(
+      ApplicationBundle.message("settings.switch.project.unsaved.message", project.name, newProject.name))
+    if (result == UnsavedChangesResult.CANCELED || result == UnsavedChangesResult.APPLY_FAILED) return
+
     close()
     EventQueue.invokeLater {
       val newGroups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(newProject, true))
@@ -294,35 +336,12 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
    * Returns true if safe to proceed (changes applied or discarded), false if the user canceled.
    */
   private fun promptUnsavedChangesOrCancel(@NlsContexts.DialogMessage message: String): Boolean {
-    if (!editor.isModified) return true
-    val modified = editor.modifiedConfigurables
-    // If only the Plugins page is "modified", skip the prompt — plugin installs are
-    // committed by MyPluginModel via its own apply path, and the editor's "modified"
-    // state is an artifact of MyPluginModel.needRestart. There's no meaningful
-    // Apply/Don't Save action for plugin-only state
-    val hasNonPluginChanges = modified.any {
-      ConfigurableWrapper.cast(PluginManagerConfigurable::class.java, it) == null
-    }
-    if (!hasNonPluginChanges) {
-      LOG.info("promptUnsavedChangesOrCancel: only PluginManagerConfigurable modified, skipping prompt")
-      return true
-    }
-    return when (Messages.showYesNoCancelDialog(
-      activeWindow,
-      message,
-      ApplicationBundle.message("settings.switch.project.unsaved.title"),
-      ApplicationBundle.message("settings.switch.project.button.apply"),
-      ApplicationBundle.message("settings.switch.project.button.dont.save"),
-      CommonBundle.getCancelButtonText(),
-      Messages.getWarningIcon(),
-    )) {
-      Messages.YES -> {
-        editor.apply()
-        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
-        true
-      }
-      Messages.NO -> { editor.cancel(null); true }
-      else -> {
+    return when (resolveUnsavedChanges(message)) {
+      UnsavedChangesResult.NOT_MODIFIED,
+      UnsavedChangesResult.APPLIED,
+      UnsavedChangesResult.DISCARDED -> true
+      UnsavedChangesResult.APPLY_FAILED,
+      UnsavedChangesResult.CANCELED -> {
         // After Cancel the IDE-close veto returns; on Windows the IDE main frame reclaims
         // focus, hiding the independent Settings JFrame (Window mode). Restore it on top.
         EventQueue.invokeLater {
