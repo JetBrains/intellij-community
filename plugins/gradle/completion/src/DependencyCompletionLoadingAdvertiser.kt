@@ -2,6 +2,8 @@
 package com.intellij.gradle.completion
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -132,6 +134,8 @@ class DependencyCompletionLoadingAdvertiser(
     }
     val placeholder = LookupElementBuilder.create("")
       .withPresentableText(GradleBundle.message(key))
+    placeholder.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+    placeholder.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
     resultSet.withPrefixMatcher(PlainPrefixMatcher.ALWAYS_TRUE).addElement(placeholder)
   }
 
