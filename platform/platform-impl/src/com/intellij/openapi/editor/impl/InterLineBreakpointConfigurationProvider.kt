@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -165,7 +166,7 @@ sealed class BreakpointArea(open val line: Int, val keyModifier: Int) {
     override val isBetweenLines: Boolean get() = false
 
     companion object {
-      internal const val MODIFIER = InputEvent.META_DOWN_MASK
+      internal val MODIFIER = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
     }
   }
 
