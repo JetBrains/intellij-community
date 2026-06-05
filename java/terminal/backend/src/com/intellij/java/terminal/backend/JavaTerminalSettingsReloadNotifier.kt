@@ -29,8 +29,8 @@ internal class JavaTerminalSettingsReloadNotifier(
   companion object {
     fun getInstance(project: Project): JavaTerminalSettingsReloadNotifier = project.service<JavaTerminalSettingsReloadNotifier>()
   }
-  
-  private val listener = JavaTerminalSettingsListener { _, _ ->
+
+  private val listener = JavaTerminalSettingsListener {
     notifyTopic()
   }
 

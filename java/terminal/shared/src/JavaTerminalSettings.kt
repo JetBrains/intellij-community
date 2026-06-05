@@ -1,19 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.shared
 
-import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 @State(name = JavaTerminalSettings.COMPONENT_NAME, storages = [Storage(value = "terminal.xml")])
-class JavaTerminalSettings : SerializablePersistentStateComponent<JavaTerminalSettings.State>(State()) {
+class JavaTerminalSettings : PersistentStateComponent<JavaTerminalSettings.State> {
   private val listeners = CopyOnWriteArrayList<JavaTerminalSettingsListener>()
 
   companion object {
@@ -31,28 +30,33 @@ class JavaTerminalSettings : SerializablePersistentStateComponent<JavaTerminalSe
     listeners.remove(listener)
   }
 
-  private fun fireSettingsChanged(oldState: State, newState: State) {
+  private fun fireSettingsChanged() {
     for (listener in listeners) {
-      listener.settingsChanged(oldState, newState)
+      listener.settingsChanged()
     }
   }
+
+  private var state: State = State()
 
   var overrideJavaHome: Boolean
     get() = state.overrideJavaHome
     set(value) {
-      val oldState = state
-      val newState = updateState { it.copy(overrideJavaHome = value) }
-      if (oldState != newState) {
-        fireSettingsChanged(oldState, newState)
+      if (value != state.overrideJavaHome) {
+        state.overrideJavaHome = value
+        fireSettingsChanged()
       }
     }
 
+  override fun getState(): JavaTerminalSettings.State {
+    return state
+  }
+
   override fun loadState(state: JavaTerminalSettings.State) {
     val oldState = this.state
-    super.loadState(state)
+    this.state = state
     // Fire listeners in loadState as well because it is used by the platform logic to deliver remote changes.
-    if (state != oldState) {
-      fireSettingsChanged(oldState, state)
+    if (state.overrideJavaHome != oldState.overrideJavaHome) {
+      fireSettingsChanged()
     }
   }
 
@@ -61,13 +65,12 @@ class JavaTerminalSettings : SerializablePersistentStateComponent<JavaTerminalSe
     loadState(State())
   }
 
-  @Serializable
-  data class State(
-    @JvmField val overrideJavaHome: Boolean = true,
-  )
+  class State {
+    var overrideJavaHome: Boolean = true
+  }
 }
 
 @ApiStatus.Internal
 fun interface JavaTerminalSettingsListener {
-  fun settingsChanged(oldState: JavaTerminalSettings.State, newState: JavaTerminalSettings.State)
+  fun settingsChanged()
 }
