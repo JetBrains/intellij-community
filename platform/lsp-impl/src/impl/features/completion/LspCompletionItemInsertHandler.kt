@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.customization.LspCommandsSupport
+import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import org.eclipse.lsp4j.CompletionItem
@@ -212,5 +212,5 @@ private val LookupElement.lsp4jCompletionItem: CompletionItem?
   get() = (this.`object` as? LspCompletionObject)?.completionItem
           ?: this.`object` as? CompletionItem // for SnippetParsingTest
 
-private val LookupElement.lspServer: LspServer?
+private val LookupElement.lspServer: LspServerImpl?
   get() = (this.`object` as? LspCompletionObject)?.lspServer
