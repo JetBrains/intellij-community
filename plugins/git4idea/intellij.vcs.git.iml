@@ -30,7 +30,6 @@
       <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="intellij.vcs.git.backend" exported="" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
