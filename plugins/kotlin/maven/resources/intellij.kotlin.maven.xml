@@ -8,7 +8,10 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator id="kotlinJavaMavenConfigurator" implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
-    <projectPostConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KaptMavenProjectPostConfigurator"/>
+    <projectPostConfigurator
+            id="KaptCompilerPluginPostConfigurator"
+            order="before LombokCompilerPluginPostConfigurator"
+            implementation="org.jetbrains.kotlin.idea.maven.configuration.KaptMavenProjectPostConfigurator"/>
     <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KaptMavenKotlinCompilerPluginProjectConfigurator"/>
     <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.SpringMavenKotlinCompilerPluginProjectConfigurator"/>
     <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.LombokMavenKotlinCompilerPluginProjectConfigurator"/>

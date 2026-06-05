@@ -18,6 +18,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <projectPostConfigurator implementation="org.jetbrains.kotlin.idea.lombok.configuration.LombokCompilerPluginProjectPostConfigurator"/>
+    <projectPostConfigurator
+            id="LombokCompilerPluginPostConfigurator"
+            implementation="org.jetbrains.kotlin.idea.lombok.configuration.LombokCompilerPluginProjectPostConfigurator"/>
   </extensions>
 </idea-plugin>
