@@ -15,7 +15,6 @@ import com.intellij.agent.workbench.sessions.actions.QuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -79,7 +78,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun updateFallsBackToAddIconAndEmptyDescriptionWhenNoLastUsedProvider() {
+  fun updateUsesDefaultProviderIconWhenNoLastUsedProvider() {
     val context = newThreadContext()
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -98,9 +97,13 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.icon).isEqualTo(AllIcons.General.Add)
+    assertThat(event.presentation.icon).isEqualTo(codexBridge.icon)
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message(codexBridge.quickStartLabelKey),
+    ))
     assertThat(event.presentation.description)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.empty.description"))
+      .contains(AgentSessionsBundle.message(codexBridge.quickStartLabelKey))
   }
 
   @Test
@@ -247,8 +250,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun getMainActionReturnsNullWhenNoLastUsedProviderSoClickFallsThroughToPicker() {
+  fun getMainActionUsesDefaultProviderWhenNoLastUsedProvider() {
     val context = newThreadContext()
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -257,12 +262,19 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
+      createNewSession = { _, provider, mode, _, _ ->
+        launchedProvider = provider
+        launchedMode = mode
+      },
       lastUsedProvider = { null },
       lastUsedLaunchMode = { null },
     )
+    val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action)))
 
-    assertThat(action.getMainAction(TestActionEvent.createTestEvent(action))).isNull()
+    mainAction.actionPerformed(TestActionEvent.createTestEvent(mainAction))
+
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 
   @Test

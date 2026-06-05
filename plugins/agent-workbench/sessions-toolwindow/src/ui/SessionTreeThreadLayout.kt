@@ -9,9 +9,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.tree.ui.PlainSelectionTree
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBUI
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.FontMetrics
 import javax.swing.JTree
 
@@ -65,12 +65,16 @@ internal fun sessionTreeActionGap(): Int = JBUI.scale(SESSION_TREE_ACTION_GAP)
 
 internal fun sessionTreeActionRightGap(): Int = JBUI.scale(SESSION_TREE_ACTION_RIGHT_GAP)
 
+internal fun sessionTreeNewThreadActionButtonSize(): Dimension {
+  return JBUI.size(SESSION_TREE_ACTION_SLOT_SIZE, SESSION_TREE_ACTION_SLOT_SIZE)
+}
+
 internal fun sessionTreeNewThreadActionWidth(): Int {
-  return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + AllIcons.General.ButtonDropTriangle.iconWidth + JBUI.scale(7)
+  return sessionTreeNewThreadActionButtonSize().width + AllIcons.General.ButtonDropTriangle.iconWidth + JBUI.scale(7)
 }
 
 internal fun sessionTreeNewThreadActionHeight(): Int {
-  return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
+  return sessionTreeNewThreadActionButtonSize().height
 }
 
 internal fun sessionTreeRowActionRightPadding(

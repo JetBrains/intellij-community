@@ -188,6 +188,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
       targetPath = { path },
       quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
       popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      minimumButtonSize = ::sessionTreeNewThreadActionButtonSize,
       beforeAction = { selectRow(treeId) },
     )
     val toolbar = ActionManager.getInstance().createActionToolbar(
@@ -196,7 +197,8 @@ internal class AgentSessionsTreeRowActionsOverlay(
       true,
     )
     toolbar.setTargetComponent(tree)
-    toolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    toolbar.setMiniMode(true)
+    toolbar.setMinimumButtonSize(sessionTreeNewThreadActionButtonSize())
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
     component.isOpaque = false

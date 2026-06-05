@@ -19,14 +19,18 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import com.intellij.openapi.actionSystem.UpdateSession
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.annotations.Nls
+import java.awt.Dimension
+import javax.swing.JComponent
 
 /**
  * Single split-button entry on `MainToolbarRight` that exposes "New Thread":
@@ -135,6 +139,7 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
   createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val lastUsedProvider: () -> AgentSessionProvider?,
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val minimumButtonSize: (() -> Dimension)?,
   quickStartEntryPoint: AgentWorkbenchEntryPoint,
   beforeAction: () -> Unit,
   pickerGroup: DirectPathPickerActionGroup,
@@ -150,6 +155,7 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
     createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
     lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
     lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
+    minimumButtonSize: (() -> Dimension)? = null,
     beforeAction: () -> Unit = {},
   ) : this(
     project = project,
@@ -158,6 +164,7 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
     createNewSession = createNewSession,
     lastUsedProvider = lastUsedProvider,
     lastUsedLaunchMode = lastUsedLaunchMode,
+    minimumButtonSize = minimumButtonSize,
     quickStartEntryPoint = quickStartEntryPoint,
     beforeAction = beforeAction,
     pickerGroup = DirectPathPickerActionGroup(
@@ -184,6 +191,15 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
   )
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val component = super.createCustomComponent(presentation, place)
+    val minimumButtonSize = minimumButtonSize
+    if (minimumButtonSize != null && component is ActionButton) {
+      component.setMinimumButtonSize { minimumButtonSize() }
+    }
+    return component
+  }
 
   public override fun getMainAction(e: AnActionEvent): AnAction? {
     if (targetPath() == null) return null
@@ -353,8 +369,7 @@ internal abstract class AgentSessionsNewThreadSplitButtonAction(
   }
 
   private fun resolveSplitButtonQuickStartItem(menuModel: AgentSessionProviderMenuModel): AgentSessionProviderMenuItem? {
-    val provider = lastUsedProvider() ?: return null
-    return resolveSplitButtonQuickStartItem(menuModel, provider, lastUsedLaunchMode(), allowProviderFallback)
+    return resolveSplitButtonQuickStartItem(menuModel, lastUsedProvider(), lastUsedLaunchMode(), allowProviderFallback)
   }
 
   private fun describeTooltip(
@@ -499,10 +514,9 @@ internal class QuickStartAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun resolveReadyQuickStartItem(bridges: List<AgentSessionProviderDescriptor>, project: Project): AgentSessionProviderMenuItem? {
-    val provider = lastUsedProvider() ?: return null
     return resolveSplitButtonQuickStartItem(
       menuModel = buildNewThreadMenuModel(bridges, project),
-      lastUsedProvider = provider,
+      lastUsedProvider = lastUsedProvider(),
       lastUsedLaunchMode = lastUsedLaunchMode(),
       allowProviderFallback = allowProviderFallback,
     )?.takeIf { item -> item.isEnabled }
@@ -515,15 +529,19 @@ internal class QuickStartAction(
 
 private fun resolveSplitButtonQuickStartItem(
   menuModel: AgentSessionProviderMenuModel,
-  lastUsedProvider: AgentSessionProvider,
+  lastUsedProvider: AgentSessionProvider?,
   lastUsedLaunchMode: AgentSessionLaunchMode?,
   allowProviderFallback: Boolean,
 ): AgentSessionProviderMenuItem? {
   if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
-    val preferredYoloItem = menuModel.yoloItems.firstOrNull { item -> item.bridge.provider == lastUsedProvider }
+    val preferredYoloItem = lastUsedProvider?.let { provider ->
+      menuModel.yoloItems.firstOrNull { item -> item.bridge.provider == provider }
+    }
     if (preferredYoloItem != null) return preferredYoloItem
   }
-  val preferredStandardItem = menuModel.standardItems.firstOrNull { item -> item.bridge.provider == lastUsedProvider }
+  val preferredStandardItem = lastUsedProvider?.let { provider ->
+    menuModel.standardItems.firstOrNull { item -> item.bridge.provider == provider }
+  }
   return preferredStandardItem ?: menuModel.standardItems.firstOrNull().takeIf { allowProviderFallback }
 }
 
