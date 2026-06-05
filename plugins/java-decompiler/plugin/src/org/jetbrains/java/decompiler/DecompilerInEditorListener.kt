@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -30,6 +30,7 @@ internal class DecompilerInEditorListener : EditorFactoryListener {
     val virtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
     if (virtualFile.fileType != JavaClassFileType.INSTANCE) return
     if (virtualFile.name == "module-info.class") return
+    if (!editor.document.text.contains(IDEA_DECOMPILER_BANNER)) return
     setupModeToggles(editor)
   }
 
