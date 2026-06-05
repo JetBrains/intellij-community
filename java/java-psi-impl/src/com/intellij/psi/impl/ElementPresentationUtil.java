@@ -160,7 +160,13 @@ public final class ElementPresentationUtil {
   }
 
   public static @NotNull Icon getClassIconOfKind(@NotNull PsiClass aClass, int classKind) {
-    final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    // Use explicit modifier only.
+    // The 'abstract' modifier is implicit for interfaces, but they are always abstract,
+    // and we don't have to process them separately to get the icon.
+    // hasModifierProperty() could be slow if modifiers are augmented.
+    // Here, we assume that no augmenter makes a non-abstract class abstract, so we can trust explicit modifiers.
+    PsiModifierList modifierList = aClass.getModifierList();
+    final boolean isAbstract = modifierList != null && modifierList.hasExplicitModifier(PsiModifier.ABSTRACT);
     Icon result = BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
     if (result == null) {
       if (isAbstract) {
