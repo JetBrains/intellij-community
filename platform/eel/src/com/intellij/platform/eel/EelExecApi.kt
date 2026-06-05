@@ -215,7 +215,7 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   class EnvironmentVariablesDeferred @ApiStatus.Internal constructor(
     @ApiStatus.Experimental
-    val deferred: Deferred<Map<String, String>>
+    val deferred: Deferred<Map<String, String>>,
   ) {
     @ApiStatus.Experimental
     @ThrowsChecked(EnvironmentVariablesException::class)
@@ -545,6 +545,15 @@ suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
     }
   }
   return Pair(EelPath.parse(shell, descriptor), cmdArg)
+}
+
+/**
+ * Prepare execution of [commands] in shell [getShell].
+ */
+@ApiStatus.Internal
+suspend fun EelExecApi.execInShell(vararg commands: String): EelExecApiHelpers.SpawnProcess {
+  val (shell, arg) = getShell()
+  return spawnProcess(shell, arg, *commands)
 }
 
 /** Hopefully, it's a temporary workaround. */
