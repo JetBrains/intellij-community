@@ -6,10 +6,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
     x_context_parameters = True,
 )
 
@@ -88,10 +85,7 @@ exports_files(
 
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates-tests",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
     x_context_parameters = True,
 )
 

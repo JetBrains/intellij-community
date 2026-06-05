@@ -7,7 +7,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_kotlin-code-insight-live-templates-shared",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
@@ -111,7 +110,6 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-code-insight-live-templates-shared-tests",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],

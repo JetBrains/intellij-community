@@ -7,7 +7,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_kotlin-refactorings-rename",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -103,7 +102,6 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-refactorings-rename-tests",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",

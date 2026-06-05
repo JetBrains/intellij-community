@@ -7,7 +7,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_kotlin-highlighting",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
@@ -132,7 +131,6 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-highlighting-tests",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",

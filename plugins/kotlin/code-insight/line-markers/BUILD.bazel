@@ -6,10 +6,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_line-markers",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
     x_context_parameters = True,
 )
 
@@ -120,10 +117,7 @@ exports_files(
 
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-lineMarkers-tests",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
     x_context_parameters = True,
 )
 

@@ -7,7 +7,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_project-structure",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
         "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
@@ -149,7 +148,6 @@ exports_files(
 create_kotlinc_options(
     name = "custom_kotlin-base-projectStructure-tests",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
         "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",

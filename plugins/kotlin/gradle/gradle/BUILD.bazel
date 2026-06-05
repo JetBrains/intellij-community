@@ -5,10 +5,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_gradle",
-    opt_in = [
-        "org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi",
-        "com.intellij.openapi.util.IntellijInternalApi",
-    ],
+    opt_in = ["org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi"],
 )
 
 resourcegroup(
