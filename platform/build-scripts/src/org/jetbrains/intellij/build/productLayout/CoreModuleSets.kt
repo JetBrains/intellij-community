@@ -184,7 +184,6 @@ object CoreModuleSets {
    * **Note:** Image libraries (imgscalr, jsvg) are in `librariesPlatform()` as they're needed by `platform.util.ui`
    */
   fun librariesIde(): ModuleSet = moduleSet("libraries.ide") {
-    embeddedModule("intellij.libraries.jcef")
     embeddedModule("intellij.libraries.jediterm.core")
     embeddedModule("intellij.libraries.jediterm.ui")
     embeddedModule("intellij.libraries.jgoodies.common")

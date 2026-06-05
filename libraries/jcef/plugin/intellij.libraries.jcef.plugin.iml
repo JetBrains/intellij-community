@@ -6,8 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.jcef.plugin" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

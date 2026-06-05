@@ -10,6 +10,7 @@
   <dependencies>
     <!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->
     <plugin id="com.intellij.modules.platform"/>
+    <plugin id="intellij.libraries.jcef.plugin"/>
   </dependencies>
 
   <content>
