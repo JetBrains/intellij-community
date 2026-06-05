@@ -144,7 +144,7 @@ internal class CommandCompletionService : Disposable.Default {
     val startOffset = lookup.lookupOriginalStart - index
     val endOffset = topLevelEditor.caretModel.offset
     if (endOffset - startOffset != 1) return
-    if (lookup.items.none { it.`as`(CommandCompletionLookupElement::class.java) != null }) return
+    if (lookup.items.none { it.isCommand() }) return
     if (topLevelEditor.inlayModel.getInlineElementsInRange(startOffset, endOffset).isNotEmpty()) return
     val applicationCommandCompletionService = ApplicationCommandCompletionService.getInstance()
     val state = applicationCommandCompletionService.state
@@ -288,6 +288,8 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun updateItem(item: LookupElement?) {
+    // TODO new rd completion: support this
+    //      CommandCompletionLookupElement is missing on FE, currently, see RemDevCommandCompletionHelpers.isCommand
     val element = item?.`as`(CommandCompletionLookupElement::class.java) ?: run {
       clear()
       return
@@ -423,16 +425,16 @@ internal class CommandCompletionCharFilter : CharFilter() {
     if (c == ' ' &&
         findCommandCompletionType(completionFactory, false, offset, editor) is InvocationCommandType.FullLine &&
         !lookup.isFocused &&
-        lookup.items.any { it.`as`(CommandCompletionLookupElement::class.java) != null }
+        lookup.items.any { it.isCommand() }
     ) {
       return Result.ADD_TO_PREFIX
     }
 
-    if (element.`as`(CommandCompletionLookupElement::class.java) == null) {
-      return null
+    if (element.isCommand()) {
+      return Result.ADD_TO_PREFIX
     }
 
-    return Result.ADD_TO_PREFIX
+    return null
   }
 }
 
