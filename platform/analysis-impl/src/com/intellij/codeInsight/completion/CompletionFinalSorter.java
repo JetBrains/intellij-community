@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,15 +33,24 @@ public abstract class CompletionFinalSorter {
 
   @ApiStatus.Internal
   public interface Factory {
-    @NotNull
-    CompletionFinalSorter newSorter();
+    /**
+     * @param arranger nullable for compatibility, in this case it will be taken from the active lookup
+     */
+    @NotNull CompletionFinalSorter newSorter(@Nullable LookupArranger arranger);
   }
 
+  /**
+   * @deprecated Use {@link #newSorter(LookupArranger)}
+   */
+  @Deprecated
   public static @NotNull CompletionFinalSorter newSorter() {
-    Factory factory = ApplicationManager.getApplication().getService(Factory.class);
-    return factory != null ? factory.newSorter() : EMPTY_SORTER;
+    return newSorter(null);
   }
 
+  public static @NotNull CompletionFinalSorter newSorter(@Nullable LookupArranger arranger) {
+    Factory factory = ApplicationManager.getApplication().getService(Factory.class);
+    return factory != null ? factory.newSorter(arranger) : EMPTY_SORTER;
+  }
 
   private static final CompletionFinalSorter EMPTY_SORTER = new CompletionFinalSorter() {
     @Override

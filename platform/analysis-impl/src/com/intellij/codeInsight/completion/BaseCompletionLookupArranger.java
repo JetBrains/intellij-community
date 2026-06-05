@@ -78,7 +78,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   protected final @NotNull CompletionProcessEx myProcess;
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = Collections.synchronizedMap(new LinkedHashMap<>());
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
-  private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
+  private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter(this);
   private volatile int myPrefixChanges;
 
   private @Nullable String myLastLookupPrefix;

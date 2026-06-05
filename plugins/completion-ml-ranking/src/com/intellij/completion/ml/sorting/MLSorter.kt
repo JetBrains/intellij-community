@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupManager
@@ -30,16 +31,18 @@ import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 
 /** Creates the [MLSorter] registered as the completion final sorter. */
-class MLSorterFactory : CompletionFinalSorter.Factory {
-  override fun newSorter(): CompletionFinalSorter = MLSorter()
+internal class MLSorterFactory : CompletionFinalSorter.Factory {
+  override fun newSorter(arranger: LookupArranger?): CompletionFinalSorter =
+    MLSorter(arranger)
 }
-
 
 /**
  * [CompletionFinalSorter] that reorders the top completion items using scores from the language's
  * ML ranking model. Runs last in the pipeline; per-item scores are cached by element identity.
  */
-private class MLSorter : CompletionFinalSorter() {
+private class MLSorter(
+  private val arranger: LookupArranger?
+) : CompletionFinalSorter() {
   private companion object {
     private val LOG = logger<MLSorter>()
     private const val REORDER_ONLY_TOP_K = 5
@@ -140,7 +143,7 @@ private class MLSorter : CompletionFinalSorter() {
       lookupStorage.initUserFactors(lookup.project)
     }
     val meaningfulRelevanceExtractor = MeaningfulFeaturesExtractor()
-    val relevanceObjects = lookup.getRelevanceObjects(items, false)
+    val relevanceObjects = getRelevanceObjects(lookup, items)
     val calculatedElementFeatures = mutableListOf<ElementFeatures>()
     for (element in items) {
       val position = positionsBefore.getValue(element)
@@ -180,6 +183,14 @@ private class MLSorter : CompletionFinalSorter() {
     }
 
     tracker.finished(lookupStorage.performanceTracker)
+  }
+
+  private fun getRelevanceObjects(lookup : LookupImpl, items: List<LookupElement>): Map<LookupElement, List<Pair<String, in Any>>> {
+    if (arranger == null) {
+      // for compatibility, arranger can be null
+      return lookup.getRelevanceObjects(items, false)
+    }
+    return arranger.getRelevanceObjects(items, false)
   }
 
   private fun overrideElementFeaturesIfNeeded(elementFeatures: ElementFeatures, language: Language): ElementFeatures {
