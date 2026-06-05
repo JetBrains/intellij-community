@@ -152,7 +152,10 @@ internal class DynamicPluginsSupportImpl(
     if (issues.isEmpty()) return null
     return buildString {
       append("Dynamic plugins reconfiguration is not possible")
-      if (System.getProperty(REPORT_ISSUES_COUNT_PROPERTY) == null) {
+      val count = System.getProperty(REPORT_ISSUES_COUNT_PROPERTY)
+      if (count != null) {
+        append(" ($REPORT_ISSUES_COUNT_PROPERTY=$count)")
+      } else {
         append(" (use -D$REPORT_ISSUES_COUNT_PROPERTY=100 to see more issues right away)")
       }
       appendLine(":")
