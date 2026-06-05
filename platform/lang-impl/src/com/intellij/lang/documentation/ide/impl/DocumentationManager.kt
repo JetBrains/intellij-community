@@ -43,7 +43,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -60,7 +59,7 @@ import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
+class DocumentationManager(private val project: Project, private val coroutineScope: CoroutineScope) {
   companion object {
     fun getInstance(project: Project): DocumentationManager = project.service()
 
@@ -68,11 +67,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 
   // separate scope is needed for the ability to cancel its children
-  private val popupScope: CoroutineScope = cs.childScope("${javaClass}::popupScope")
-
-  override fun dispose() {
-    cs.cancel()
-  }
+  private val popupScope: CoroutineScope = coroutineScope.childScope("${javaClass}::popupScope")
 
   fun actionPerformed(
     dataContext: DataContext,
@@ -257,7 +252,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   private fun autoShowDocumentationOnItemChange(lookup: LookupEx, delay: Long): Job {
     val elements: Flow<LookupElement> = lookup.elementFlow()
     val mapper = lookupElementToRequestMapper(lookup)
-    return cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+    return coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       elements.collectLatest {
         handleElementChange(lookup, it, delay, mapper)
       }
@@ -299,7 +294,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     targetSupplier: () -> DocumentationTarget?,
   ) {
     EDT.assertIsEdt()
-    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val result = withContext(Dispatchers.IO + ClientId.current.asContextElement()) {
         resolveLink(targetSupplier, url, DocumentationTarget::navigatable)
       }
@@ -319,7 +314,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     popupPosition: Point,
   ) {
     EDT.assertIsEdt()
-    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       activateInlineLinkS(targetSupplier, url, editor, popupPosition)
     }
   }
