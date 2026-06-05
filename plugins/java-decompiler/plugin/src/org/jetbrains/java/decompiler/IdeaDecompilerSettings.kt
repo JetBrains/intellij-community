@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -19,9 +19,7 @@ internal class IdeaDecompilerSettings : PersistentStateComponent<IdeaDecompilerS
     fun getInstance(): IdeaDecompilerSettings = application.service()
   }
 
-  override fun getState(): State {
-    return state
-  }
+  override fun getState(): State = state
 
   override fun loadState(state: State) {
     this.state = state
@@ -33,10 +31,8 @@ internal class IdeaDecompilerSettings : PersistentStateComponent<IdeaDecompilerS
 
     companion object {
       @JvmStatic
-      fun fromPreset(preset: DecompilerPreset): State {
-        val newState = State()
-        newState.preset = preset
-        return newState
+      fun fromPreset(preset: DecompilerPreset): State = State().apply {
+        this.preset = preset
       }
     }
   }

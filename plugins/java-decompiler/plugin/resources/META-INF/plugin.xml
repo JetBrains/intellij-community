@@ -16,7 +16,6 @@
     <module name="intellij.java.psi.impl"/>
   </dependencies>
   <!-- endregion -->
-  <depends>com.intellij.java</depends>
 
   <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
 
@@ -57,15 +56,17 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
+    <listener
+      class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
+      topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"
+      activeInHeadlessMode="false"
+      activeInTestMode="false"
+    />
   </applicationListeners>
 
   <actions>
     <group id="idea.java.decompiler.action.group">
-      <action 
+      <action
         id="ByteCodeDecompiler"
         class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"
         icon="AllIcons.FileTypes.JavaClass"

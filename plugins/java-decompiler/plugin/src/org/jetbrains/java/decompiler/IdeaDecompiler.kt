@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,13 +25,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
@@ -91,13 +94,12 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           val id = PluginId.getId("org.jetbrains.java.decompiler")
           PluginManagerCore.disablePlugin(id)
 
-          @OptIn(DelicateCoroutinesApi::class)
-          GlobalScope.launch {
-            val plugin = PluginManagerCore.getPlugin(id) as? PluginMainDescriptor
-                         ?: return@launch
-            if (DynamicPlugins.checkCanUnloadWithoutRestart(plugin)) {
-              ApplicationManager.getApplication().invokeLater {
-                DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
+          (PluginManagerCore.getPlugin(id) as? PluginMainDescriptor)?.let { plugin ->
+            service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+              if (DynamicPlugins.checkCanUnloadWithoutRestart(plugin)) {
+                withContext(Dispatchers.EDT) {
+                  DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
+                }
               }
             }
           }
@@ -109,8 +111,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       }
     }
   }
-
-  private val myLogger = lazy { IdeaLogger() }
 
   override fun accepts(file: VirtualFile): Boolean = true
 
@@ -130,8 +130,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       }
     }
 
-    val indicator = ProgressManager.getInstance().progressIndicator
-    if (indicator != null) {
+    ProgressManager.getInstance().progressIndicator?.let { indicator ->
       indicator.text = IdeaDecompilerBundle.message("decompiling.progress", file.name)
     }
 
@@ -153,7 +152,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val saver = MyResultSaver()
 
       val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
-      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value, IdeaCancellationManager(maxSecProcessingMethod))
+      val decompiler = BaseDecompiler(provider, saver, options, IdeaLogger(), IdeaCancellationManager(maxSecProcessingMethod))
       files.forEach { decompiler.addSource(java.io.File(it.path)) }
       try {
         decompiler.decompileContext()
