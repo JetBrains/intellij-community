@@ -35,6 +35,8 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.Act
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.serviceContainer.proxiedServicesList
+import com.intellij.serviceContainer.useProxiesForOpenServices
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.TransferredWriteActionService
@@ -700,6 +702,10 @@ private object DynamicPluginsValidators {
     validateInAllScopes(descriptor) { container ->
       for (service in container.services) {
         if (service.overrides) {
+          if (useProxiesForOpenServices && proxiedServicesList.contains(service.serviceInterface)) {
+            continue
+          }
+
           reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
             "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares service override: ${service}",
             descriptor.getMainDescriptor()

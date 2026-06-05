@@ -82,7 +82,6 @@ import com.intellij.platform.instanceContainer.internal.initializedInstances
 import com.intellij.platform.instanceContainer.internal.isStatic
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IntelliJCoroutinesFacade
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -1484,8 +1483,7 @@ abstract class ComponentManagerImpl(
     return intersectionScope
   }
 
-  internal open val useProxiesForOpenServices: Boolean =
-    SystemProperties.getBooleanProperty("intellij.platform.use.proxies.for.open.services", false)
+  internal open val useProxiesForOpenServices: Boolean = com.intellij.serviceContainer.useProxiesForOpenServices
 }
 
 private class PluginServicesStore {

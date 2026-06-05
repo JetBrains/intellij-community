@@ -38,8 +38,8 @@ private const val FIELD_NAME_ORIGINAL_DELEGATE = "originalDelegate"
  *   [ServiceProxyInstrumentation.setForwarding]
  *
  * Generated proxies are intended to be used as service instances when dynamic
- * service overrides are enabled (i.e., the service is open and the JVM flags
- * allows overrides).
+ * plugin loading is allowed for plugins that override services (i.e., the service
+ * is open and the JVM flags allow service overrides).
  *
  * The primary purpose of these proxies is to tolerate leaked service references.
  * When a service is overridden, an existing (“old”) instance can be updated so
@@ -49,6 +49,13 @@ private const val FIELD_NAME_ORIGINAL_DELEGATE = "originalDelegate"
  * Additionally, the forwarding mechanism (`forwardTo: Lazy<Any>?`) can be instrumented
  * to log stack traces when the old instance is accessed,
  * helping identify and fix the underlying reference leak.
+ *
+ * In the ideal world, we should create the proxy for any "open=true" service.
+ * Unfortunately, at the moment "open" services are not truly open: they are cast to "impl" classes in different places.
+ * Unchecked casts throw exceptions. Checked casts silently disable some functionality.
+ * To work around the problem, we introduce the "allowlist" of services that are allowed to be proxied.
+ *
+ * @see com.intellij.serviceContainer.isProxiedOpenService
  */
 internal object ServiceProxyGenerator {
   fun <T> createInstance(

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -61,4 +62,21 @@ internal suspend fun initializeComponentOrLightService(component: Any, pluginId:
 
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = pluginId)
   }
+}
+
+/**
+ * @see com.intellij.serviceContainer.ServiceProxyGenerator
+ */
+@get:Internal
+val useProxiesForOpenServices: Boolean by lazy {
+  SystemProperties.getBooleanProperty("intellij.platform.use.proxies.for.open.services", false)
+}
+
+/**
+ * @see com.intellij.serviceContainer.ServiceProxyGenerator
+ */
+@get:Internal
+val proxiedServicesList: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+  val classLoader = ComponentManagerImpl::class.java.classLoader
+  classLoader.getResourceAsStream("proxied-services.list")?.bufferedReader()?.useLines { it.toSet() } ?: emptySet()
 }
