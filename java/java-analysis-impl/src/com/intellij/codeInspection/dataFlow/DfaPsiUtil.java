@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -34,6 +34,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,6 +131,29 @@ import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class DfaPsiUtil {
   private static final Logger LOG = Logger.getInstance(DfaPsiUtil.class);
+
+  private static final Key<Boolean> ANALYZE_NON_PHYSICAL_AS_PHYSICAL = Key.create("DFA_ANALYZE_NON_PHYSICAL_AS_PHYSICAL");
+
+  /**
+   * @return {@code true} if {@code element} is physical, or belongs to a file marked with
+   * {@link #ANALYZE_NON_PHYSICAL_AS_PHYSICAL}.
+   */
+  public static boolean isPhysicalOrAnalyzableCopy(@NotNull PsiElement element) {
+    if (element.isPhysical()) return true;
+    PsiFile file = element.getContainingFile();
+    return file != null && Boolean.TRUE.equals(file.getUserData(ANALYZE_NON_PHYSICAL_AS_PHYSICAL));
+  }
+
+  /**
+   * Marks the specified PSI file as analyzable by treating it as a physical file
+   * even if it is non-physical. This allows analysis tools to process the file
+   * as though it exists on disk.
+   *
+   * @param psiFile the PSI file to be marked as analyzable; must not be null
+   */
+  public static void markFileAsAnalyzableCopy(@NotNull PsiFile psiFile) {
+    psiFile.putUserData(ANALYZE_NON_PHYSICAL_AS_PHYSICAL, Boolean.TRUE);
+  }
 
   private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
     staticCall(JAVA_UTIL_LIST, "of"),

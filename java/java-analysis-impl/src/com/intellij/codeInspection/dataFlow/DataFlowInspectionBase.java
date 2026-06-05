@@ -138,6 +138,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
   public boolean REPORT_UNSOUND_WARNINGS = true;
   public boolean REPORT_MATCHED_EXCEPTION = true;
+  public boolean REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = false;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -167,6 +168,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
+
+      private final ParametricNullableReturnChecker myParametricNullableReturnChecker = new ParametricNullableReturnChecker(DataFlowInspectionBase.this, holder);
+
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         if (aClass instanceof PsiTypeParameter) return;
@@ -208,6 +212,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
         analyzeDfaWithNestedClosures(scope, holder, runner, initialStates);
         analyzeNullLiteralMethodArguments(method, holder);
+        myParametricNullableReturnChecker.analyzeParametricNullableReturn(method);
       }
 
       @Override
@@ -568,7 +573,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                  createMethodReferenceNPEFixes(methodRef, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY)));
       NullabilityProblemKind.callNPE.ifMyProblem(problem, call ->
         reportCallMayProduceNpe(reporter, problem.getMessage(IGNORE_ASSERT_STATEMENTS), call, alwaysNull));
-      NullabilityProblemKind.passingToNotNullParameter.ifMyProblem(problem, expr -> {
+      NullabilityProblemKind.passingToNotNullParameter.ifMyProblem(problem, _ -> {
         List<LocalQuickFix> fixes = createNPEFixes(expression, expression, reporter.isOnTheFly(), alwaysNull);
         reporter.registerProblem(expression, problem.getMessage(IGNORE_ASSERT_STATEMENTS), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       });
@@ -609,7 +614,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       });
       NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(
         problem, expr -> reporter.registerProblem(expression == null ? expr : expression, problem.getMessage(IGNORE_ASSERT_STATEMENTS)));
-      Consumer<PsiExpression> reportNullability = expr -> reportNullabilityProblem(reporter, problem, expression);
+      Consumer<PsiExpression> reportNullability = _ -> reportNullabilityProblem(reporter, problem, expression);
       NullabilityProblemKind.assigningToNotNull.ifMyProblem(problem, reportNullability);
       NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, reportNullability);
       if (REPORT_MATCHED_EXCEPTION) {
@@ -882,10 +887,19 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
     PsiType returnType = method.getReturnType();
     if (nullability == Nullability.NULLABLE) {
+      // A type variable with a @Nullable upper bound (parametric nullness) is handled separately by
+      // ParametricNullableReturnChecker; do not report it through the regular nullable-return path to avoid duplicates.
       if (!info.isInferred() || DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) return;
     }
     // In rare cases, inference may produce different result (e.g. if nullable method overrides non-null method)
     if (nullability == Nullability.NOT_NULL && info.isInferred()) return;
+
+    // When the dedicated parametric checker will report this nullable return (option on, type-variable return type),
+    // skip the generic suggest-@Nullable path to avoid a duplicate warning on the same return
+    if (nullability != Nullability.NOT_NULL && REPORT_UNSPECIFIED_PARAMETRIC_RETURNS
+        && PsiUtil.resolveClassInClassTypeOnly(returnType) instanceof PsiTypeParameter) {
+      return;
+    }
 
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
@@ -895,25 +909,38 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
 
-    reportNullableReturnsProblems(reporter, problems, nullability, anno, manager);
+    reportNullableReturnsProblems(reporter, problems, nullability, false, anno, manager);
   }
 
   protected void reportNullableReturnsProblems(ProblemReporter reporter,
-                         List<NullabilityProblem<?>> problems,
-                         Nullability nullability,
-                         PsiAnnotation anno,
-                         NullableNotNullManager manager) {
-    for (NullabilityProblem<PsiExpression> problem : StreamEx.of(problems).map(NullabilityProblemKind.nullableReturn::asMyProblem).nonNull()) {
+                                               List<NullabilityProblem<?>> problems,
+                                               Nullability nullability,
+                                               boolean parametricReturn,
+                                               PsiAnnotation anno,
+                                               NullableNotNullManager manager) {
+    for (NullabilityProblem<PsiExpression> problem : StreamEx.of(problems).map(NullabilityProblemKind.nullableReturn::asMyProblem)
+      .nonNull()) {
+      if (problem == null) continue;
       final PsiExpression anchor = problem.getAnchor();
       PsiExpression expr = problem.getDereferencedExpression();
 
       boolean exactlyNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
       if (!REPORT_UNSOUND_WARNINGS && !exactlyNull) continue;
       if (nullability == Nullability.NOT_NULL) {
-        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
-        final String text = exactlyNull
-                            ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)
-                            : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
+        final String text;
+        if (parametricReturn) {
+          // The return type is a (parametric) type variable that may be instantiated as non-null:
+          // a @Nullable upper bound, an unspecified bound, or a plain unannotated type parameter.
+          text = exactlyNull
+                 ? JavaAnalysisBundle.message("dataflow.message.return.null.from.parametric")
+                 : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.parametric");
+        }
+        else {
+          String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
+          text = exactlyNull
+                 ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)
+                 : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
+        }
         List<LocalQuickFix> fixes = createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
         if (surroundingMethod != null) {

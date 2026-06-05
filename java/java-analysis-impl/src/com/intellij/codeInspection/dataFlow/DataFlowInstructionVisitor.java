@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -120,7 +120,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (assignment == null) return;
     PsiExpression left = assignment.getLExpression();
     if (!Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
-      if (!left.isPhysical()) {
+      if (!DfaPsiUtil.isPhysicalOrAnalyzableCopy(left)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
         }
@@ -225,7 +225,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   EntryStream<PsiElement, Boolean> streamConsumed() {
     return EntryStream.of(myStreamConsumed).filterValues(StateInfo::shouldReport).mapToValue(
-      (element, info) -> info.alwaysFails());
+      (_, info) -> info.alwaysFails());
   }
 
   StreamEx<PsiExpression> alwaysFailingCalls() {
@@ -313,7 +313,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
                                    @NotNull DfaMemoryState memState) {
-    if (myDebug && !expression.isPhysical()) {
+    if (myDebug && !DfaPsiUtil.isPhysicalOrAnalyzableCopy(expression)) {
       throw new IllegalStateException("Non-physical expression is passed");
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
@@ -348,7 +348,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       myOutOfBoundsArrayAccesses.merge(indexProblem.getAnchor(), failed, ThreeState::merge);
     }
     else if (problem instanceof ClassCastProblem castProblem) {
-      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), e -> new StateInfo())
+      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), _ -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
     else if (problem instanceof ArrayStoreProblem storeProblem && failed == ThreeState.YES) {
@@ -365,11 +365,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
       boolean unknown = myStrictMode && nullability == DfaNullability.UNKNOWN;
       ThreeState ok = notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
-      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, k -> new StateInfo());
+      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, _ -> new StateInfo());
       info.update(state, ok);
     }
     else if (problem instanceof ConsumedStreamProblem consumedStreamProblem) {
-      myStreamConsumed.computeIfAbsent(consumedStreamProblem.getAnchor(), e -> new StateInfo())
+      myStreamConsumed.computeIfAbsent(consumedStreamProblem.getAnchor(), _ -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
   }
@@ -381,7 +381,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private static boolean hasTrivialFailContract(@NotNull PsiExpression call) {
     List<? extends MethodContract> contracts = getContracts(call);
-    return contracts != null && contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
+    return contracts != null && contracts.size() == 1 && contracts.getFirst().isTrivial() && contracts.getFirst().getReturnValue().isFail();
   }
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {

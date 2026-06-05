@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -108,31 +108,12 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                    33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
 
-        new Pair<>("NullLiteralToTypeVariable.java", 58), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 78), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 88), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 98), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 103), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 108), // see: IDEA-377691
-        new Pair<>("NullLiteralToTypeVariable.java", 118), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToParent.java", 88), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToParent.java", 98), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 58), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 78), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 88), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 103), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 108), // see: IDEA-377691
-        new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
-        new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
-
         new Pair<>("UninitializedField.java", 29), // see: IDEA-377695
 
         new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696
         new Pair<>("ContainmentSuper.java", 36),  // see: IDEA-377696
         new Pair<>("ContainmentSuperVsExtends.java", 22),  // see: IDEA-377696
         new Pair<>("ContainmentSuperVsExtendsSameType.java", 21),  // see: IDEA-377696
-
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 62), // see: IDEA-377697
 
         new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24) ,// see: IDEA-377699
 
@@ -154,23 +135,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     ),
     new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
       Set.of(
-        new Pair<>("NullLiteralToTypeVariable.java", 53), //IDEA-380143
-        new Pair<>("NullLiteralToTypeVariable.java", 73), //IDEA-380143
-        new Pair<>("NullLiteralToTypeVariable.java", 83), //IDEA-380143
-        new Pair<>("NullLiteralToTypeVariable.java", 93), //IDEA-380143
-        new Pair<>("NullLiteralToTypeVariable.java", 113), //IDEA-380143
         new Pair<>("TypeVariableToObject.java", 109), //IDEA-380143
-        new Pair<>("TypeVariableToParent.java", 80), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToParent.java", 73), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToParent.java", 78), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToParent.java", 83), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToParent.java", 93), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 53), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 73), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 83), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 93), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 98), //IDEA-380143
-        new Pair<>("TypeVariableUnionNullToSelf.java", 113), //IDEA-380143
         new Pair<>("TypeVariableUnspecToObject.java", 58), //IDEA-380143
         new Pair<>("TypeVariableUnspecToObject.java", 78), //IDEA-380143
         new Pair<>("TypeVariableUnspecToObject.java", 98), //IDEA-380143
@@ -188,9 +153,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("MultiBoundTypeVariableToObject.java", 52),
         new Pair<>("MultiBoundTypeVariableToOther.java", 43),
         new Pair<>("MultiBoundTypeVariableToOther.java", 52),
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 42),
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 47),
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57),
         new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
         new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
         new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
@@ -271,6 +233,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       Map<PsiElement, String> actual = new LinkedHashMap<>();
       var dfaInspection = new JSpecifyDataFlowInspection(actual);
       dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
+      dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
@@ -614,9 +577,18 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     protected void reportNullableReturnsProblems(ProblemReporter reporter,
                                                  List<NullabilityProblemKind.NullabilityProblem<?>> problems,
                                                  Nullability nullability,
+                                                 boolean parametricReturn,
                                                  PsiAnnotation anno,
                                                  NullableNotNullManager manager) {
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
+        if (parametricReturn) {
+          // Returning a nullable value from a parametric type-variable return type is a mismatch.
+          PsiExpression expression = problem.getDereferencedExpression();
+          if (expression != null) {
+            warnings.put(expression, "jspecify_nullness_mismatch");
+          }
+          continue;
+        }
         String warning = getJSpecifyWarning(problem);
         if (warning != null) {
           warnings.put(problem.getDereferencedExpression(), warning);

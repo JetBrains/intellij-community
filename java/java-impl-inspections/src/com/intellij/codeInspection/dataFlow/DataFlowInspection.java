@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
@@ -62,6 +62,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public final class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
@@ -71,12 +72,12 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+  protected @NotNull LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
     return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
   @Override
-  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
+  protected @NotNull LocalQuickFix createUnwrapSwitchLabelFix() {
     return new UnwrapSwitchLabelFix();
   }
 
@@ -86,7 +87,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+  protected @NotNull LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
     return LocalQuickFix.from(new DeleteSwitchLabelFix(label, true));
   }
 
@@ -248,6 +249,8 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
                message("inspection.data.flow.report.match.exception.problem")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
+      checkbox("REPORT_UNSPECIFIED_PARAMETRIC_RETURNS",
+               message("inspection.data.flow.report.unspecified.parametric.returns")),
       JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()
     );
   }

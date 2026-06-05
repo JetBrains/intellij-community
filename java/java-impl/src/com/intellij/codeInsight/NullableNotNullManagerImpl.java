@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
@@ -552,6 +552,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     if (qualifiedName == null) return false;
     AnnotationPackageSupport support = AnnotationPackageSupport.EP_NAME.findFirstSafe(e -> e.getNullabilityAnnotations(Nullability.NOT_NULL).contains(qualifiedName));
     return support != null && support.isNonNullUsedForInstrumentation();
+  }
+
+  @Override
+  public @Nullable String getNullabilityAnnotationInSameFramework(@NotNull String annotationFqn, @NotNull Nullability nullability) {
+    AnnotationPackageSupport support = AnnotationPackageSupport.EP_NAME.findFirstSafe(
+      e -> e.getNullabilityAnnotations(Nullability.NOT_NULL).contains(annotationFqn) ||
+           e.getNullabilityAnnotations(Nullability.NULLABLE).contains(annotationFqn) ||
+           e.getNullabilityAnnotations(Nullability.UNKNOWN).contains(annotationFqn));
+    if (support == null) return null;
+    List<String> annotations = support.getNullabilityAnnotations(nullability);
+    return annotations.isEmpty() ? null : annotations.getFirst();
   }
 
   @Override
