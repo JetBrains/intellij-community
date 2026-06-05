@@ -15,25 +15,25 @@ object RemDevCommandCompletionHelpers {
 
   private val COMMAND_FLAG: Key<CommandState> = Key("COMMAND_FLAG")
 
-  fun isPostfix(element: LookupElement): Boolean =
-    element.`as`(PostfixTemplateLookupElement::class.java) != null ||
-    element.getUserData(COMMAND_FLAG) == CommandState.Postfix
+  fun LookupElement.isPostfix(): Boolean =
+    `as`(PostfixTemplateLookupElement::class.java) != null ||
+    getUserData(COMMAND_FLAG) == CommandState.Postfix
 
-  fun isCommand(element: LookupElement): Boolean =
-    element.`as`(CommandCompletionLookupElement::class.java) != null ||
-    element.getUserData(COMMAND_FLAG) == CommandState.Command
+  fun LookupElement.isCommand(): Boolean =
+    `as`(CommandCompletionLookupElement::class.java) != null ||
+    getUserData(COMMAND_FLAG) == CommandState.Command
 
-  fun getCommandState(element: LookupElement): CommandState? {
-    val flag = element.getUserData(COMMAND_FLAG)
+  fun LookupElement.getCommandState(): CommandState? {
+    val flag = getUserData(COMMAND_FLAG)
     return when {
-        flag != null -> flag
-        isCommand(element) -> CommandState.Command
-        isPostfix(element) -> CommandState.Postfix
-        else -> null
+      flag != null -> flag
+      isCommand() -> CommandState.Command
+      isPostfix() -> CommandState.Postfix
+      else -> null
     }
   }
 
-  fun installCommandState(element: LookupElement, commandState: CommandState?) {
-    element.putUserData(COMMAND_FLAG, commandState)
+  fun LookupElement.installCommandState(commandState: CommandState?) {
+    putUserData(COMMAND_FLAG, commandState)
   }
 }

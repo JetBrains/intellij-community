@@ -179,13 +179,13 @@ internal class CommandCompletionService : Disposable.Default {
 
   private class CommandCompletionLookupItemMatcher(private val showPostfixAsSeparateGroup: Boolean) : Condition<LookupElement> {
     override fun value(element: LookupElement): Boolean =
-      isCommand(element) ||
-      (showPostfixAsSeparateGroup && isPostfix(element))
+      element.isCommand() ||
+      (showPostfixAsSeparateGroup && element.isPostfix())
   }
 
   private object NotPostfixCompletionLookupItemMatcher : Condition<LookupElement> {
     override fun value(element: LookupElement): Boolean =
-      !isPostfix(element)
+      !element.isPostfix()
   }
 }
 
