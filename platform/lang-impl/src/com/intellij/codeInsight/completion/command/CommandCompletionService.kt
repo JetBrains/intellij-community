@@ -384,44 +384,54 @@ private class CommandCompletionHighlightingListener(
   }
 }
 
-/**
- * A custom implementation of [CharFilter] that provides specific behavior for handling character inputs
- * during completion, particularly for commands.
- * This implementation works in conjunction with the `CommandCompletionService`.
- * This filter evaluates whether a given character should modify the current completion prefix,
- * select an item, or hide the lookup based on various conditions, such as the presence of
- * specific data in the current lookup or the state of the caret/editor.
- */
 internal class CommandCompletionCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return null
     if (lookup !is LookupImpl) return null
-    val completionService = lookup.project.service<CommandCompletionService>()
+
     val installedHint = lookup.removeUserData(INSTALLED_HINT)
     if (installedHint != null) {
       Disposer.dispose(installedHint)
     }
+
     val originalEditor = lookup.editor.getUserData(ORIGINAL_EDITOR)
-    if (originalEditor != null) return Result.ADD_TO_PREFIX
+    if (originalEditor != null) {
+      // we are in command inlay, accept all chars
+      return Result.ADD_TO_PREFIX
+    }
+
     val psiFile = lookup.psiFile ?: return null
+    val completionService = lookup.project.service<CommandCompletionService>()
     val completionFactory = completionService.getFactory(psiFile.language) ?: return null
+
     val editor = InjectedLanguageEditorUtil.getTopLevelEditor(lookup.editor)
     val offset = editor.caretModel.offset
     if (completionService.filterLookupAfterChar(c, editor, psiFile, lookup)) {
+      // filter suffix is typed (see CommandCompletionFactory.filterSuffix), accepting
       completionService.addFiltersAndRefreshAfterChar(lookup)
       return Result.ADD_TO_PREFIX
     }
+
     if (offset > 0 && completionFactory.filterSuffix() == c &&
         editor.document.immutableCharSequence[offset - 1] == completionFactory.suffix() &&
-        lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused) return Result.ADD_TO_PREFIX
+        lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused
+    ) {
+      return Result.ADD_TO_PREFIX
+    }
+
     val element = lookup.currentItem ?: return null
     if (c == ' ' &&
         findCommandCompletionType(completionFactory, false, offset, editor) is InvocationCommandType.FullLine &&
         !lookup.isFocused &&
-        lookup.items.any { it.`as`(CommandCompletionLookupElement::class.java) != null }) {
+        lookup.items.any { it.`as`(CommandCompletionLookupElement::class.java) != null }
+    ) {
       return Result.ADD_TO_PREFIX
     }
-    element.`as`(CommandCompletionLookupElement::class.java) ?: return null
+
+    if (element.`as`(CommandCompletionLookupElement::class.java) == null) {
+      return null
+    }
+
     return Result.ADD_TO_PREFIX
   }
 }
