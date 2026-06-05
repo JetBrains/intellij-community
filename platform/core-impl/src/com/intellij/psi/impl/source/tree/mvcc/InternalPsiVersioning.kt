@@ -32,6 +32,8 @@ object InternalPsiVersioning {
   private const val NESTED_LOCKS_THREADING_SUPPORT_CLASS_NAME = "com.intellij.platform.locking.impl.NestedLocksThreadingSupport"
   private const val SUSPENDING_WRITE_ACTION_METHOD_NAME = "executeSuspendingWriteAction"
 
+  private const val LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE = "Lock usage is forbidden by `PsiVersioningService#freezePsiVersion`. It is not allowed to use locks while PSI snapshot is frozen"
+
   // a reading operation with the available psi version
   fun <T> freezePsiVersion(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
@@ -39,8 +41,10 @@ object InternalPsiVersioning {
     }
     val registry = PsiVersionRegistry.instance
     val latestVersion = registry.latestPublishedVersion
-    return initFreezePsiVersionSection(false, latestVersion).use {
-      action()
+    return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE) {
+      initFreezePsiVersionSection(false, latestVersion).use {
+        action()
+      }
     }
   }
 
