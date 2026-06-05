@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object IntelliJThreadDumpMetadata {
   const val CONTAINER_TYPE: String = "container"
+  const val COROUTINE_TYPE: String = "coroutine"
+  const val COROUTINE_ROOT_TYPE: String = "coroutineRoot"
 }
 
 @ApiStatus.Internal

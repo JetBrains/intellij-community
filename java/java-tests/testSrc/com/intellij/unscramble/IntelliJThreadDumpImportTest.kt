@@ -4,6 +4,7 @@ package com.intellij.unscramble
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.threadDumpParser.ThreadState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,7 +14,7 @@ import kotlin.io.path.Path
 
 @TestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
-internal class IntelliJThreadDumpImportTest {
+internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
   @Test
   fun `parser restores hierarchy and containers`() {
     val dumpText = loadThreadDump("nestedContainers.txt")
@@ -189,18 +190,22 @@ internal class IntelliJThreadDumpImportTest {
     assertThat(thread1.deadlockedThreads).contains(thread2)
     assertThat(thread2.deadlockedThreads).contains(thread1)
   }
+}
 
-  private fun loadThreadDump(path: String): String {
+@TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
+internal abstract class AbstractThreadDumpImportTest {
+
+  protected fun loadThreadDump(path: String): String {
     return Files.readString(Path(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/threadDump").resolve(path)).trim()
   }
 
-  private fun assertDumpItem(
+  protected fun assertDumpItem(
     threadDumpState: ThreadDumpState,
     name: String,
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
-    isVirtual: Boolean
+    isVirtual: Boolean,
   ) {
     assertDumpItem(threadDumpState.dumpItems(), name, treeId, parentTreeId, isContainer, isVirtual)
   }
@@ -211,7 +216,7 @@ internal class IntelliJThreadDumpImportTest {
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
-    isVirtual: Boolean
+    isVirtual: Boolean,
   ) {
     val dumpItem = findDumpItem(dumpItems, name)
     assertEquals(treeId, dumpItem.treeId)
@@ -220,12 +225,34 @@ internal class IntelliJThreadDumpImportTest {
     assertEquals(isVirtual, dumpItem.stackTrace.contains("virtual"))
   }
 
-  private fun findDumpItem(dumpItems: List<DumpItem>, name: String): DumpItem {
+  protected fun findDumpItem(dumpItems: List<DumpItem>, name: String): DumpItem {
     for (dumpItem in dumpItems) {
       if (name == dumpItem.name) {
         return dumpItem
       }
     }
     error("Dump item not found: $name")
+  }
+
+  protected fun printThreadStateTree(states: List<ThreadState>): String {
+    val byParent: Map<Long?, List<ThreadState>> = states.groupBy { it.threadContainerUniqueId }
+    val allIds = states.mapNotNullTo(HashSet()) { it.uniqueId }
+    val roots = states.filter { state ->
+      state.threadContainerUniqueId == null || state.threadContainerUniqueId !in allIds
+    }
+
+    fun StringBuilder.printNode(state: ThreadState, indent: Int) {
+      appendLine("${"  ".repeat(indent)}-[x${state.similarThreadsCount} of] ${state.name}")
+      val children = state.uniqueId?.let { byParent[it] } ?: emptyList()
+      for (child in children) {
+        printNode(child, indent + 1)
+      }
+    }
+
+    return buildString {
+      for (root in roots) {
+        printNode(root, 0)
+      }
+    }
   }
 }
