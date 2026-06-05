@@ -6,7 +6,9 @@ import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtilCore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +39,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.EnumSet
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
@@ -218,6 +221,35 @@ object KotlinArtifactsDownloader {
     suspend fun downloadArtifactForIdeFromSources(version: String): Path? =
         downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)
 
+    fun resolveProjectCompilerPluginArtifact(
+        project: Project,
+        groupId: String,
+        artifactId: String,
+        version: String,
+    ): Path? {
+        return try {
+            val descriptor = JpsMavenRepositoryLibraryDescriptor(
+                groupId,
+                artifactId,
+                version,
+                false,
+                emptyList(),
+            )
+            val repos = getMavenRepos(project)
+            val roots = JarRepositoryManager.loadDependenciesSync(
+                project, descriptor, EnumSet.of(ArtifactKind.ARTIFACT), repos, /* copyTo = */ null
+            ) ?: return null
+            roots.firstOrNull()?.let { VfsUtilCore.virtualToIoFile(it.file).canonicalFile.toPath() }
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            COMPILER_PLUGIN_RESOLVE_LOG.warn(
+                "Failed to resolve $groupId:$artifactId:$version from project Maven repositories", e,
+            )
+            null
+        }
+    }
+
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
         if (isAllInOneOldFormatDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
 
@@ -259,6 +291,8 @@ object KotlinArtifactsDownloader {
         ) + "\n\n" + suggestion
     }
 }
+
+private val COMPILER_PLUGIN_RESOLVE_LOG = logger<KotlinArtifactsDownloader>()
 
 // downloads and atomically replaces downloaded file with temp file
 // do one additional try in 5 seconds after fail

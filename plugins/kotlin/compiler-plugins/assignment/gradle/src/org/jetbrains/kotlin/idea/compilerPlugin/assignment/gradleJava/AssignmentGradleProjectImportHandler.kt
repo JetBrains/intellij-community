@@ -6,16 +6,25 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment.gradleJava
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.MavenCoordinates
 import java.nio.file.Path
 
 class AssignmentGradleProjectImportHandler : AbstractGradleImportHandler() {
 
-    override val pluginJarsRegex: List<Regex> = listOf("$ASSIGNMENT_COMPILER_PLUGIN_JAR_NAME-.*\\.jar".toRegex())
-    override val replacedJar: Path = KotlinArtifacts.assignmentCompilerPluginPath
+    override val pluginJarsToReplaceRegex: List<Regex> = listOf("$ASSIGNMENT_COMPILER_PLUGIN_EMBEDDABLE_JAR_NAME-.*\\.jar".toRegex())
+
+    override val replacementArtifactCoordinates: MavenCoordinates = MavenCoordinates(
+        groupId = KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
+        artifactId = ASSIGNMENT_COMPILER_PLUGIN_ARTIFACT_ID,
+    )
+
+    override val replacementJarFromPluginBundle: Path = KotlinArtifacts.assignmentCompilerPluginPath
 
     companion object {
-        private const val ASSIGNMENT_COMPILER_PLUGIN_JAR_NAME = "kotlin-assignment-compiler-plugin-embeddable"
+        private const val ASSIGNMENT_COMPILER_PLUGIN_EMBEDDABLE_JAR_NAME = "kotlin-assignment-compiler-plugin-embeddable"
+        private const val ASSIGNMENT_COMPILER_PLUGIN_ARTIFACT_ID = "kotlin-assignment-compiler-plugin"
     }
 
 }
