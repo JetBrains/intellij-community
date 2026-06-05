@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
@@ -149,27 +150,75 @@ interface InterLineBreakpointConfigurationProvider {
  *
  * Used by [EditorUtil.yToLogicalLineWithInterLineDetection] to distinguish between
  * clicks/hovers on a line vs between lines (for features like interline breakpoints).
+ *
+ * @param line the logical line number
+ * @param keyModifier a modifier key that is used to toggle the breakpoint on/off. When pressed,
+ *  the IDE only suggests placement/removal of a breakpoint of that type.
  */
 @ApiStatus.Internal
-sealed class BreakpointArea(open val line: Int) {
+sealed class BreakpointArea(open val line: Int, val keyModifier: Int) {
 
   abstract val isBetweenLines: Boolean
 
   @ApiStatus.Internal
-  data class OnLine(override val line: Int) : BreakpointArea(line) {
+  data class OnLine(override val line: Int) : BreakpointArea(line, MODIFIER) {
     override val isBetweenLines: Boolean get() = false
+
+    companion object {
+      internal const val MODIFIER = InputEvent.META_DOWN_MASK
+    }
   }
 
   @ApiStatus.Internal
   data class InterLine(
     override val line: Int,
     val configuration: InterLineBreakpointConfiguration,
-  ) : BreakpointArea(line) {
+  ) : BreakpointArea(line, MODIFIER) {
     override val isBetweenLines: Boolean get() = true
+
+    companion object {
+      internal const val MODIFIER = InputEvent.SHIFT_DOWN_MASK
+    }
+  }
+
+  @ApiStatus.Internal
+  enum class CursorSuggestion {
+    ON_LINE,
+    ABOVE_LINE,
+    BELOW_LINE,
   }
 
   companion object {
     @JvmField
     val INVALID: BreakpointArea = OnLine(-1)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun from(logicalLine: Int,
+             nextLogicalLine: Int,
+             documentLineCount: Int,
+             keyModifiers: Int,
+             cursorSuggestion: CursorSuggestion,
+             configuration: InterLineBreakpointConfiguration): BreakpointArea {
+      // intentional: if both keys are pressed for some reason, suggest the regular breakpoint
+      val onlyInterLine: Boolean = keyModifiers == InterLine.MODIFIER
+      val onlyOnLine: Boolean = (keyModifiers and OnLine.MODIFIER) != 0
+      if (onlyOnLine || !onlyInterLine && cursorSuggestion == CursorSuggestion.ON_LINE) {
+        return OnLine(logicalLine)
+      }
+
+      if ((onlyInterLine || cursorSuggestion == CursorSuggestion.ABOVE_LINE) && logicalLine > 0) {
+        return InterLine(logicalLine, configuration)
+      }
+
+      if (onlyInterLine || cursorSuggestion == CursorSuggestion.BELOW_LINE) {
+        if (nextLogicalLine >= documentLineCount) {
+          return INVALID
+        }
+        return InterLine(nextLogicalLine, configuration)
+      }
+
+      return INVALID
+    }
   }
 }

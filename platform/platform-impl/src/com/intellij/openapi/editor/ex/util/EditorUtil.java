@@ -955,7 +955,8 @@ public final class EditorUtil {
       int nextLogicalLine = logicalLine + (hitAboveLineNumber ? 0 : 1);
       int configurationLine = !hitAboveLineNumber && nextLogicalLine >= documentLineCount ? logicalLine : nextLogicalLine;
 
-      InterLineBreakpointConfiguration configuration = InterLineBreakpointConfigurationProvider.findConfigurationForLine(editor, configurationLine);
+      InterLineBreakpointConfiguration configuration =
+        InterLineBreakpointConfigurationProvider.findConfigurationForLine(editor, configurationLine);
       if (configuration == null) {
         // no interline configuration -- proceed with the standard logic
         if (y < visualLineStartY || y >= visualLineStartY + lineHeight) {
@@ -975,24 +976,22 @@ public final class EditorUtil {
       // (i.e., inter-line hits don't take more space than on-line hits)
       int totalPadding = Math.min(padding, lineHeight / 4);
 
-      boolean onlyInterLine = event.isShiftDown();
-      boolean onlyOnLine = event.isMetaDown();
-      if (onlyOnLine || !onlyInterLine && y >= visualLineStartY + totalPadding && y <= visualLineStartY + lineHeight - totalPadding) {
-        return new BreakpointArea.OnLine(logicalLine);
+      BreakpointArea.CursorSuggestion cursorSuggestion;
+      if (y >= visualLineStartY + totalPadding && y <= visualLineStartY + lineHeight - totalPadding) {
+        cursorSuggestion = BreakpointArea.CursorSuggestion.ON_LINE;
+      }
+      else {
+        cursorSuggestion = hitAboveLineNumber ? BreakpointArea.CursorSuggestion.ABOVE_LINE : BreakpointArea.CursorSuggestion.BELOW_LINE;
       }
 
-      if ((onlyInterLine || hitAboveLineNumber) && logicalLine > 0) {
-        return new BreakpointArea.InterLine(logicalLine, configuration);
-      }
-
-      if (onlyInterLine || !hitAboveLineNumber) {
-        if (nextLogicalLine >= documentLineCount) {
-          return BreakpointArea.INVALID;
-        }
-        return new BreakpointArea.InterLine(nextLogicalLine, configuration);
-      }
-
-      return BreakpointArea.INVALID;
+      return BreakpointArea.from(
+        logicalLine,
+        nextLogicalLine,
+        documentLineCount,
+        event.getModifiersEx(),
+        cursorSuggestion,
+        configuration
+      );
     });
   }
 

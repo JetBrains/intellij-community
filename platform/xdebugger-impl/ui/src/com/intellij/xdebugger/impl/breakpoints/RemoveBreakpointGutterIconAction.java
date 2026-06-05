@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.xdebugger.XDebuggerBundle;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,21 @@ class RemoveBreakpointGutterIconAction extends DumbAwareAction {
     performDebuggerAction(e.getProject(), e.getDataContext(), () -> {
       InputEvent event = e.getInputEvent();
       // for mouse events check that no modifiers applied
-      if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
+      if (!(event instanceof MouseEvent) || keyModifiersAreApplicable(event, myBreakpoint) || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
         XBreakpointUIUtil.removeBreakpointWithConfirmation(myBreakpoint);
       }
       return Unit.INSTANCE;
     });
+  }
+
+  private static boolean keyModifiersAreApplicable(@NotNull InputEvent event, XBreakpointProxy breakpoint) {
+    int modifiers = event.getModifiersEx();
+    if (modifiers == 0) {
+      return true;
+    }
+    if (breakpoint instanceof XLineBreakpointProxy lineBreakpoint) {
+      return (modifiers & lineBreakpoint.getPlacement().getKeyModifier()) != 0;
+    }
+    return true;
   }
 }
