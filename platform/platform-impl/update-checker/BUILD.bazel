@@ -5,10 +5,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_update-checker",
-    opt_in = [
-        "kotlin.ExperimentalStdlibApi",
-        "com.intellij.openapi.util.IntellijInternalApi",
-    ],
+    opt_in = ["kotlin.ExperimentalStdlibApi"],
 )
 
 jvm_library(

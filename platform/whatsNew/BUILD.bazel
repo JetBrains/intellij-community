@@ -6,10 +6,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_whatsNew",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
 )
 
 jvm_library(
@@ -106,10 +103,7 @@ exports_files(
 
 create_kotlinc_options(
     name = "custom_whatsNew-tests",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-    ],
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
 )
 
 jvm_library(

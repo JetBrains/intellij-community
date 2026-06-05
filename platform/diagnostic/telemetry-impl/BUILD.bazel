@@ -5,10 +5,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(
     name = "custom_telemetry-impl",
-    opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
-        "kotlinx.serialization.ExperimentalSerializationApi",
-    ],
+    opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],
 )
 
 jvm_library(

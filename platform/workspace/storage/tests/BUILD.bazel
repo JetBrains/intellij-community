@@ -7,7 +7,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_tests",
     opt_in = [
-        "com.intellij.openapi.util.IntellijInternalApi",
         "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
         "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
     ],
