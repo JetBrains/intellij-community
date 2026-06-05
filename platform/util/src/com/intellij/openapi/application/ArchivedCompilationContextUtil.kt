@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
 
 @Internal
 object ArchivedCompilationContextUtil {
@@ -73,6 +74,7 @@ object ArchivedCompilationContextUtil {
 
 private fun getArchivedCompiledClassesLocationIfIsRunningFromBazelOut(): String? {
   val utilJar = PathManager.getJarPathForClass(PathManager::class.java)
+    ?.let{ Paths.get(it).toRealPath().absolutePathString() }
   val bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString()
   val index = utilJar?.indexOf(bazelOutPattern) ?: -1
   val isRunningFromBazelOut = index != -1 && utilJar!!.endsWith(".jar")
