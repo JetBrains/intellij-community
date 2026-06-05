@@ -1059,9 +1059,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.eventLog.LogSystemCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="com.intellij.help.impl.HelpUsageCollector"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.help.impl.HelpTopicCustomValidationRule"/>
+      implementationClass="com.intellij.help.impl.JupyterHelpUsageCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileNamePatternCustomValidationRule"/>
     <statistics.validation.customValidationRule

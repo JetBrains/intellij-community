@@ -7,13 +7,14 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object HelpUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("jupyter.help.usage", 3)
+object JupyterHelpUsageCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("jupyter.help.usage", 1)
   private val JUPYTER_HELP_TOPICS = listOf(
     "jupyter.settings.page",
     "reference.settings.jupyter",
     "tool_window.jupyter_server_log",
     "reference.jupyter.vcs",
+    "how.to.work.with.tables"
   )
   private val HELP_ID_FIELD = EventFields.String("help_id", JUPYTER_HELP_TOPICS)
   private val HELP_OPENED_EVENT = GROUP.registerEvent("opened", HELP_ID_FIELD)
