@@ -24,11 +24,7 @@ import java.util.regex.Pattern;
  * @author Vladislav.Soroka
  */
 public class GradleConsoleFilter implements Filter {
-  public static final Pattern LINE_AND_COLUMN_PATTERN = Pattern.compile("line (\\d+), column (\\d+)\\.");
-
   private final @Nullable Project myProject;
-  private static final TextAttributes HYPERLINK_ATTRIBUTES =
-    EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
   private String myFilteredFileName;
   private int myFilteredLineNumber;
 
@@ -36,8 +32,12 @@ public class GradleConsoleFilter implements Filter {
     myProject = project;
   }
 
+  public static class Holder {
+    public static final Pattern LINE_AND_COLUMN_PATTERN = Pattern.compile("line (\\d+), column (\\d+)\\.");
+  }
   @Override
   public @Nullable Result applyFilter(final @NotNull String line, final int entireLength) {
+    final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
     String[] filePrefixes =
       new String[]{"Build file '", "build file '", "Settings file '", "settings file '", "Initialization script '", "Script '"};
     String[] linePrefixes = new String[]{"' line: ", "': ", "' line: ", "': ", "' line: ", "' line: "};
@@ -104,7 +104,7 @@ public class GradleConsoleFilter implements Filter {
       int columnNumber = 0;
       String lineAndColumn = StringUtil.substringAfterLast(line, " @ ");
       if (lineAndColumn != null) {
-        Matcher matcher = LINE_AND_COLUMN_PATTERN.matcher(lineAndColumn);
+        Matcher matcher = Holder.LINE_AND_COLUMN_PATTERN.matcher(lineAndColumn);
         if (matcher.find()) {
           columnNumber = Integer.parseInt(matcher.group(2));
         }

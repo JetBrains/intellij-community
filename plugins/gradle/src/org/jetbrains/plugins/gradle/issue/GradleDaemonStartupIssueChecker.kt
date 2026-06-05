@@ -97,7 +97,7 @@ internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file?.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
-      val matchResult = GradleConsoleFilter.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
+      val matchResult = GradleConsoleFilter.Holder.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
       val values = matchResult?.groupValues?.drop(1)?.map { it.toInt() } ?: listOf(location.startLine + 1, 0)
       val line = values[0] - 1
       val column = values[1]
