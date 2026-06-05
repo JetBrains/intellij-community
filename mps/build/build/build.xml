@@ -49,9 +49,6 @@
       <arg value="--"/>
       <arg value="${platform.root}"/>
     </exec>
-    <jar destfile="${target.root}/dist.all/lib/jps/jps-build-test.jar" duplicate="preserve">
-      <fileset dir="${target.root}/classes/test/intellij.platform.jps.build.tests" />
-    </jar>
   </target>
 
   <!-- Post-compile customizations required for final platform artifacts used by MPS -->
