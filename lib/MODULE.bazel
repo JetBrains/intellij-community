@@ -10682,59 +10682,59 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_2_1_http",
-    downloaded_file_path = "rd-core-2026.2.1.jar",
-    sha256 = "c4130062110d76c8c36a2880973559ad88a58947ed69cf3336c3f5c3998b8dc3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2026.2.1/rd-core-2026.2.1.jar",
+    name = "com_jetbrains_rd-rd-core-2026_2_2_http",
+    downloaded_file_path = "rd-core-2026.2.2.jar",
+    sha256 = "d6107d5698cb3513c87635f2ff9342192e5ac9fa62ddc81be035c8956c67f39b",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.2/rd-core-2026.2.2.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_2_1-sources_http",
-    downloaded_file_path = "rd-core-2026.2.1-sources.jar",
-    sha256 = "bcf26359e255bc6f156357d6ba3ded3bb105c42fc4fb077408f8b574f07a0608",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2026.2.1/rd-core-2026.2.1-sources.jar",
+    name = "com_jetbrains_rd-rd-core-2026_2_2-sources_http",
+    downloaded_file_path = "rd-core-2026.2.2-sources.jar",
+    sha256 = "0f40dab326d711f5b5a50f1777cc2a244434de28f2c264c6583d3014e3e5b616",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.2/rd-core-2026.2.2-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_2_1_http",
-    downloaded_file_path = "rd-framework-2026.2.1.jar",
-    sha256 = "c67bad9295f3df129d180b3e7f5201354061bb3befee4f9f64569e49f83e7a38",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2026.2.1/rd-framework-2026.2.1.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_2_2_http",
+    downloaded_file_path = "rd-framework-2026.2.2.jar",
+    sha256 = "b5f42d2e159fe74f4aa8de196c4468ee43fab71dcfb1834aa8b8befa8aa8dd9f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.2/rd-framework-2026.2.2.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_2_1-sources_http",
-    downloaded_file_path = "rd-framework-2026.2.1-sources.jar",
-    sha256 = "aa757338388a84414465ee087bfa12fd096a3ffdab5ca03a445462a68662daac",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2026.2.1/rd-framework-2026.2.1-sources.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_2_2-sources_http",
+    downloaded_file_path = "rd-framework-2026.2.2-sources.jar",
+    sha256 = "30e51c82409b80dd8c4ee7ed9893ef0957b87ce9c731e1c5dfa0ed819f3b52aa",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.2/rd-framework-2026.2.2-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_2_1_http",
-    downloaded_file_path = "rd-swing-2026.2.1.jar",
-    sha256 = "c7c2969f9a67f526ff6f925bb81d695f107741efc73459716fed01cbb5212775",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2026.2.1/rd-swing-2026.2.1.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_2_2_http",
+    downloaded_file_path = "rd-swing-2026.2.2.jar",
+    sha256 = "d7289b059a96e34864f15ab8277c1b56a15dff44a770654e7c97168bfd160b6e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.2/rd-swing-2026.2.2.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_2_1-sources_http",
-    downloaded_file_path = "rd-swing-2026.2.1-sources.jar",
-    sha256 = "3fd6ac65c118dd7d06f889802b78df2c3affdb757c86a35073a2aefe7a9a5d06",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2026.2.1/rd-swing-2026.2.1-sources.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_2_2-sources_http",
+    downloaded_file_path = "rd-swing-2026.2.2-sources.jar",
+    sha256 = "bc48b838feb22799006d203585a216fedccb15104d6f6bb62362766e84034d49",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.2/rd-swing-2026.2.2-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_2_1_http",
-    downloaded_file_path = "rd-text-2026.2.1.jar",
-    sha256 = "52491271f4cd7568b16108d4568f4c35f6025637fb983a145c2d7adec9ea3fdd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2026.2.1/rd-text-2026.2.1.jar",
+    name = "com_jetbrains_rd-rd-text-2026_2_2_http",
+    downloaded_file_path = "rd-text-2026.2.2.jar",
+    sha256 = "ba485e32136043f30679923e69c19c6aae512e27e400791fe6c1ddf333973981",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.2/rd-text-2026.2.2.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_2_1-sources_http",
-    downloaded_file_path = "rd-text-2026.2.1-sources.jar",
-    sha256 = "69da3e3aa07766b8e5183e65901bafef6704ba5da376ca53954f5ecfb2f9f3e2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2026.2.1/rd-text-2026.2.1-sources.jar",
+    name = "com_jetbrains_rd-rd-text-2026_2_2-sources_http",
+    downloaded_file_path = "rd-text-2026.2.2-sources.jar",
+    sha256 = "ad0da6439c727089b22bea2343f18abb00e6f963546fbfec89d5886ac6979af0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.2/rd-text-2026.2.2-sources.jar",
 )
 
 http_file(
@@ -15638,17 +15638,17 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_2_1_http",
-    downloaded_file_path = "rd-gen-2026.2.1.jar",
-    sha256 = "e12ac3251db882641a70ea05e88149acef417e59f6292815582966d14122ffd7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2026.2.1/rd-gen-2026.2.1.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_2_2_http",
+    downloaded_file_path = "rd-gen-2026.2.2.jar",
+    sha256 = "6e623d74ea2424c2934e3e75423a96f1c2582406b99a7948599ebeb76c79b3b7",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.2/rd-gen-2026.2.2.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_2_1-sources_http",
-    downloaded_file_path = "rd-gen-2026.2.1-sources.jar",
-    sha256 = "4d0986b549cc636ebda9abbe5f4a7fc9585dd5996a23c425b83bcccf28ed893d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2026.2.1/rd-gen-2026.2.1-sources.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_2_2-sources_http",
+    downloaded_file_path = "rd-gen-2026.2.2-sources.jar",
+    sha256 = "51d5ceac9fb546132502d49ad473c5da2d7855c060a3a702cf38f0ef0ba70964",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.2/rd-gen-2026.2.2-sources.jar",
 )
 
 http_file(
