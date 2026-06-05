@@ -16,5 +16,7 @@
                     interface="com.intellij.platform.eel.provider.portAccessibleLocally.EelPortAccessibleLocally"/>
     <extensionPoint qualifiedName="com.intellij.eelMachineResolver"
                     interface="com.intellij.platform.eel.provider.EelMachineResolver" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.eelEnvironment"
+                    interface="com.intellij.platform.eel.impl.base.EelEnvironmentHousekeepingService" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
