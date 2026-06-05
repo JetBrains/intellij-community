@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
-import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
@@ -39,25 +37,25 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               valuePresenter = Companion::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
-        ChooserPopupUtil.showAsyncChooserPopup(
+        ChooserPopupUtil.showChooserPopupWithIncrementalLoading(
           point,
-          itemsLoader = flow { emit(runCatching { vm.getAuthors() }) },
+          listState = vm.authors,
           presenter = GHUIUtil.SelectionPresenters.Users(avatarIconsProvider)
         )?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point ->
-        ChooserPopupUtil.showAsyncChooserPopup(
+        ChooserPopupUtil.showChooserPopupWithIncrementalLoading(
           point,
-          itemsLoader = flow { emit(runCatching { vm.getLabels() }) },
+          listState = vm.labels,
           presenter = GHUIUtil.SelectionPresenters.Labels()
         )?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
-        ChooserPopupUtil.showAsyncChooserPopup(
+        ChooserPopupUtil.showChooserPopupWithIncrementalLoading(
           point,
-          itemsLoader = flow { emit(runCatching { vm.getAssignees() }) },
+          listState = vm.assignees,
           presenter = GHUIUtil.SelectionPresenters.Users(avatarIconsProvider)
         )?.login
       },

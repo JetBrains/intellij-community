@@ -2,13 +2,23 @@
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
+import com.intellij.collaboration.util.IncrementallyComputedValue
+import com.intellij.collaboration.util.collectIncrementallyTo
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
@@ -78,14 +88,37 @@ class GHPRSearchPanelViewModel internal constructor(
     }
   }
 
-  suspend fun getAuthors(): List<GHUser> = if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) {
-    repositoryDataService.loadCollaborators()
+  val authors: StateFlow<IncrementallyComputedValue<List<GHUser>>> = createIncrementalDataState(scope) {
+    if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) {
+      repositoryDataService.loadBatchedCollaborators().map {
+        it.map { user ->
+          GHUser(user.nodeId, user.login, user.htmlUrl, user.avatarUrl ?: "", null)
+        }
+      }
+    }
+    else { // users without push access cannot query the collaborators API, so we fall back to fetching contributors
+      repositoryDataService.loadBatchedContributors()
+    }
   }
-  else { // users without push access cannot query the collaborators API, so we fall back to fetching contributors
-    repositoryDataService.loadContributors()
+
+  val assignees: StateFlow<IncrementallyComputedValue<List<GHUser>>> = createIncrementalDataState(scope) {
+    repositoryDataService.loadBatchedPotentialIssuesAssignees()
   }
-  suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadPotentialIssuesAssignees()
-  suspend fun getLabels(): List<GHLabel> = repositoryDataService.loadLabels()
+
+  val labels: StateFlow<IncrementallyComputedValue<List<GHLabel>>> = createIncrementalDataState(scope) {
+    repositoryDataService.loadBatchedLabels()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun <T> createIncrementalDataState(
+    cs: CoroutineScope,
+    loader: () -> Flow<List<T>>,
+  ): StateFlow<IncrementallyComputedValue<List<T>>> =
+    repositoryDataService.dataReloadSignal.withInitial(Unit)
+      .transformLatest {
+        loader().collectIncrementallyTo(this)
+      }
+      .stateIn(cs, SharingStarted.Lazily, IncrementallyComputedValue.loading())
 }
 
 @ApiStatus.Experimental
