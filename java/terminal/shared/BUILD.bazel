@@ -27,6 +27,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "@lib//:jetbrains-annotations",
         "//platform/util",
+        "//platform/platform-impl:ide-impl",
     ],
 )
 
@@ -48,6 +49,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/util:util_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.terminal.shared` end

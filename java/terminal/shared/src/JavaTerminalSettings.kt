@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.shared
 
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -13,13 +12,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-@State(name = "JavaTerminalSettings", storages = [Storage(value = "other.xml", roamingType = RoamingType.DISABLED)])
+@State(name = JavaTerminalSettings.COMPONENT_NAME, storages = [Storage(value = "terminal.xml")])
 class JavaTerminalSettings : SerializablePersistentStateComponent<JavaTerminalSettings.State>(State()) {
   private val listeners = CopyOnWriteArrayList<JavaTerminalSettingsListener>()
 
   companion object {
     val instance: JavaTerminalSettings
       get() = service<JavaTerminalSettings>()
+
+    const val COMPONENT_NAME: String = "JavaTerminalSettings"
   }
 
   fun addListener(listener: JavaTerminalSettingsListener) {
@@ -45,6 +46,20 @@ class JavaTerminalSettings : SerializablePersistentStateComponent<JavaTerminalSe
         fireSettingsChanged(oldState, newState)
       }
     }
+
+  override fun loadState(state: JavaTerminalSettings.State) {
+    val oldState = this.state
+    super.loadState(state)
+    // Fire listeners in loadState as well because it is used by the platform logic to deliver remote changes.
+    if (state != oldState) {
+      fireSettingsChanged(oldState, state)
+    }
+  }
+
+  override fun noStateLoaded() {
+    // Required for the RemDev case: when remote settings are changed to the defaults, platform calls `noStateLoaded` instead of `loadState`.
+    loadState(State())
+  }
 
   @Serializable
   data class State(

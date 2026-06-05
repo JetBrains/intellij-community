@@ -1,2 +1,6 @@
 <idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <rdct.remoteSettingProvider implementation="com.intellij.java.terminal.shared.JavaTerminalRemoteSettingInfoProvider"/>
+    <applicationSettings service="com.intellij.java.terminal.shared.JavaTerminalSettings"/>
+  </extensions>
 </idea-plugin>
