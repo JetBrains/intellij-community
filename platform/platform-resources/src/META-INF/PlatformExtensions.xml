@@ -841,7 +841,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                         preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState" preload="true"/>
 
-    <requiredForSmartModeStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckProjectRequiredPluginsActivity"/>
     <projectConfigurable groupId="appearance" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
                          id="preferences.externalDependencies"
                          bundle="messages.IdeBundle"

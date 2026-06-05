@@ -78,7 +78,7 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
       // may be executed immediately if start-up activities are already passed, but must be not performed in loadState
       NonUrgentExecutor.getInstance().execute(() -> {
         try {
-          StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsActivity.runCheck(myProject, this));
+          StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsWorker.runCheck(myProject, this));
         }
         catch (AlreadyDisposedException ignored) {
         }

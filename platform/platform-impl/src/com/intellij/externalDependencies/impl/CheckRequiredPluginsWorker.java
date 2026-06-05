@@ -5,10 +5,8 @@ import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabler;
-import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginModuleDescriptor;
@@ -22,11 +20,9 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
@@ -42,20 +38,14 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForSmartMode {
-  private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
+final class CheckRequiredPluginsWorker {
+  private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsWorker.class);
   private static final String NOTIFICATION_GROUP_ID = "Required Plugins";
 
-  CheckRequiredPluginsActivity() {
+  CheckRequiredPluginsWorker() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw ExtensionNotApplicableException.create();
     }
-  }
-
-  @Override
-  public void runActivity(@NotNull Project project) {
-    // will trigger 'loadState' and run check if required plugins are specified
-    ExternalDependenciesManager.getInstance(project);
   }
 
   private static List<DependencyOnPlugin> getRequiredPlugins(ExternalDependenciesManager dependencyManager) {
@@ -90,8 +80,6 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     var notInstalled = new HashSet<PluginId>();
     var hasVersionConflicts = false;
 
-    var pluginsToEnableWithoutRestart = new ArrayList<IdeaPluginDescriptor>();
-
     var applicationInfo = ApplicationInfo.getInstance();
     var pluginEnabler = PluginEnabler.getInstance();
 
@@ -106,18 +94,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
       var pluginName = descriptor.getName();
       if (pluginEnabler.isDisabled(pluginId)) {
-        var canEnableWithoutRestart = (
-          Registry.is("ide.plugins.load.automatically") &&
-          descriptor instanceof PluginMainDescriptor mainDescriptor &&
-          DynamicPlugins.INSTANCE.checkCanLoadWithoutRestart(mainDescriptor)
-        );
-        if (canEnableWithoutRestart) {
-          pluginsToEnableWithoutRestart.add(descriptor);
-        }
-        else {
-          errorMessages.add(IdeBundle.message("error.plugin.required.for.project.disabled", pluginName, projectName));
-          disabled.add(descriptor);
-        }
+        errorMessages.add(IdeBundle.message("error.plugin.required.for.project.disabled", pluginName, projectName));
+        disabled.add(descriptor);
         continue;
       }
 
@@ -155,12 +133,6 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
           hasVersionConflicts = true;
         }
       }
-    }
-
-    if (!pluginsToEnableWithoutRestart.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        enablePlugins(pluginsToEnableWithoutRestart, pluginEnabler);
-      });
     }
 
     if (errorMessages.isEmpty()) {
