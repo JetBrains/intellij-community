@@ -23,11 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertEquals
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -76,7 +78,7 @@ class CodeVisionTestFixture(
         }
         val newFile = requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(document, context))
         doHighlighting(newFile)
-        codeVisionHost.calculateCodeVisionSync(editor, disposable)
+        CodeVisionTestCase.waitForCodeVisionSync(editor, codeVisionHost, disposable)
       }
     }
     assertText(expectedText)

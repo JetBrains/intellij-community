@@ -7,14 +7,24 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.util.ui.EDT
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   companion object {
     const val AUTHOR_HINT: String = "John Smith +2"
+
+    @JvmStatic
+    fun waitForCodeVisionSync(editor: Editor, host: CodeVisionHost, disposable: Disposable) {
+      val done = host.calculateCodeVisionSync(editor, disposable)
+      PlatformTestUtil.waitForFuture(done)
+    }
   }
 
   protected open val onlyCodeVisionHintsAllowed: Boolean
@@ -63,7 +73,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     }
     myFixture.doHighlighting()
 
-    codeVisionHost.calculateCodeVisionSync(editor, testRootDisposable)
+    waitForCodeVisionSync(editor, codeVisionHost, testRootDisposable)
 
     val actualText = dumpCodeVisionHints(sourceText)
     assertEquals(expectedText, actualText)

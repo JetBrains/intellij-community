@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 
 class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
 
@@ -604,7 +605,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     executeEditingActions(editingActions)
     myFixture.availableIntentions
 
-    project.service<CodeVisionHost>().calculateCodeVisionSync(editor, testRootDisposable)
+    CodeVisionTestCase.waitForCodeVisionSync(editor,  project.service<CodeVisionHost>(), testRootDisposable)
 
     val actualText = InlayDumpUtil.dumpInlays(
       file.text,
