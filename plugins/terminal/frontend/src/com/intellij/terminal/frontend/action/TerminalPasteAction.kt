@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalClipboard
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.jediterm.terminal.TerminalOutputStream
@@ -85,10 +86,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   }
 
   private fun pasteIntoTerminalView(view: TerminalView) {
-    val text = getClipboardText() ?: return
-    view.createSendTextBuilder()
-      .useBracketedPasteMode()
-      .send(text)
+    TerminalClipboard.pasteClipboardContent(view)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

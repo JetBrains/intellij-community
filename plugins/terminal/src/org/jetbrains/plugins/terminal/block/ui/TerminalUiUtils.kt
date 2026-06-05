@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.ui
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
@@ -674,8 +674,8 @@ fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
 }
 
 @ApiStatus.Internal
-fun getClipboardText(useSystemSelectionClipboardIfAvailable: Boolean = false): String? {
-  if (useSystemSelectionClipboardIfAvailable) {
+fun getClipboardText(preferSystemSelection: Boolean = false): String? {
+  if (preferSystemSelection) {
     val text = getTextContent(CopyPasteManager.getInstance().systemSelectionContents)
     if (text != null) {
       return text
