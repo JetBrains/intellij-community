@@ -28,7 +28,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.util.PlatformUtils
@@ -93,7 +92,7 @@ private val objectMapper: ObjectMapper by lazy {
     .build()
 }
 
-@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Internal
 class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginInfoProvider {
   companion object {

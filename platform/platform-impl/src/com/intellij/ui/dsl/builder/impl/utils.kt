@@ -9,7 +9,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -239,7 +238,6 @@ internal fun warn(message: String) {
   }
 }
 
-@OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
   if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+@file:OptIn(DelicateCoroutinesApi::class)
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.SystemProperties

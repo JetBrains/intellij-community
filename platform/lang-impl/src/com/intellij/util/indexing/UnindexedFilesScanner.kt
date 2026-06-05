@@ -19,7 +19,6 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
@@ -562,7 +561,6 @@ class UnindexedFilesScanner (
       }
     }
 
-    @OptIn(IntellijInternalApi::class)
     private suspend fun scanFiles(
       provider: IndexableFilesIterator,
       scanningStatistics: ScanningStatistics,

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class, ExperimentalStdlibApi::class)
+@file:OptIn(ExperimentalStdlibApi::class)
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -69,7 +69,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -106,7 +105,6 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope

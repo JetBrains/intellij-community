@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -104,7 +103,7 @@ internal fun cancelAndJoinBlocking(
 
   LOG.trace("$debugString: waiting for scope completion")
   @OptIn(DelicateCoroutinesApi::class)
-  val dumpJob = GlobalScope.launch(@OptIn(IntellijInternalApi::class) blockingDispatcher) {
+  val dumpJob = GlobalScope.launch(blockingDispatcher) {
     delay(delayUntilCoroutineDump)
     LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope, stripDump = false)}")
   }
@@ -147,7 +146,7 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
   }
   // TODO install and use currentThreadCoroutineScope instead OR make this function suspending
   val applicationScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
-  applicationScope.launch(@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class) blockingDispatcher) {
+  applicationScope.launch(@OptIn(DelicateCoroutinesApi::class) blockingDispatcher) {
     val dumpJob = launch {
       delay(delayUntilCoroutineDump)
       val attachments = listOfNotNull(

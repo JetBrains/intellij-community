@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -108,7 +107,6 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     }
   }
 
-  @OptIn(IntellijInternalApi::class)
   private fun buildClassLoadingMap(className: String): Map<PluginModuleDescriptor, Class<*>?> {
     val pluginSet = PluginManagerCore.getPluginSet()
     val loadingResults = mutableMapOf<PluginModuleDescriptor, Class<*>?>()

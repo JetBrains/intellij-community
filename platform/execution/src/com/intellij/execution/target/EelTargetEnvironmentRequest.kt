@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
@@ -231,7 +230,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       }
       acceptors.add(acceptor)
 
-      @OptIn(DelicateCoroutinesApi::class, IntellijInternalApi::class)
+      @OptIn(DelicateCoroutinesApi::class)
       forwardingScope.launch(blockingDispatcher) {
         try {
           for (connection in acceptor.incomingConnections) {

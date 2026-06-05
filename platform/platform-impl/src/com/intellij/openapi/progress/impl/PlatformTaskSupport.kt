@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
@@ -366,7 +365,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  @OptIn(IntellijInternalApi::class)
   private fun <T> CoroutineScope.runWithModalProgressBlockingInternal(
     dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,

@@ -5,12 +5,10 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
-@OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
 class DefaultPluginUpdateHandler : PluginUpdateHandler {
   private val downloaders = ConcurrentHashMap<String, PluginDownloaders>()

@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.isInCancellableContext
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.CancellableComputation.Companion.computeCancellable
 import com.intellij.util.NotNullizer
@@ -72,7 +71,7 @@ import java.util.function.Function
  */
 @ApiStatus.Experimental
 fun <In, Out> wrapCancellable(computation: suspend (In) -> Out): suspend (In) -> Out {
-  @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+  @OptIn(DelicateCoroutinesApi::class)
   @Suppress("SSBasedInspection")
   val coalescingAsyncComputation = CoroutineScope(blockingDispatcher + CoroutineName("detachedComputation: $computation"))
     .coalescing<In, Out> {
@@ -141,7 +140,7 @@ private constructor(private val computation: Function<in Param, out Result>) : F
       return runBlockingCancellable {
         try {
           @Suppress("SSBasedInspection")
-          @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+          @OptIn(DelicateCoroutinesApi::class)
           CoroutineScope(blockingDispatcher + CoroutineName("detachedComputation: $task")).async {
             task.compute()
           }.await()

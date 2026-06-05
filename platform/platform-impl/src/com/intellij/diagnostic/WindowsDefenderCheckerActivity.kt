@@ -17,7 +17,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.utils.JEelUtils
@@ -94,7 +93,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+    @OptIn(DelicateCoroutinesApi::class)
     computeDetached {
       checkDefenderStatus(project, checker)
     }

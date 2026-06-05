@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -17,7 +15,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataKeys

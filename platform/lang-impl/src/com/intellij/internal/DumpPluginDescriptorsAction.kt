@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.internal
 
 import com.intellij.ide.ApplicationActivity
@@ -22,7 +20,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.createGenerator

@@ -4,7 +4,6 @@ package com.intellij.platform.icons.impl.intellij.rendering.images
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
@@ -22,7 +21,6 @@ class ModuleImageResourceLoader: ImageResourceLoader<ModuleImageResourceLocation
     return IntelliJImageResource(DataLoaderImageResourceHolder(dataLoader), imageModifiers)
   }
 
-  @OptIn(IntellijInternalApi::class)
   private fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? {
     val plugin = PluginManagerCore.findPlugin(PluginId.getId(pluginId)) ?: return null
     if (moduleId == null) {

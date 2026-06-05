@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.serialization.xml
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.JsonElementSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingTag

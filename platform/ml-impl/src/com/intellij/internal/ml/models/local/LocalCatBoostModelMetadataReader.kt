@@ -3,11 +3,9 @@ package com.intellij.internal.ml.models.local
 
 import com.intellij.internal.ml.catboost.CatBoostModelMetadataReader
 import com.intellij.internal.ml.catboost.NaiveCatBoostModel
-import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-@OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
 class LocalCatBoostModelMetadataReader(private val modelDirectory: String,
                                        private val featuresDirectory: String) : CatBoostModelMetadataReader {

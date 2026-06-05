@@ -28,7 +28,6 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
@@ -70,7 +69,6 @@ open class IdeStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean
     get() = false
 
-  @OptIn(IntellijInternalApi::class)
   override suspend fun start(args: List<String>) {
     coroutineScope {
       if (ApplicationManager.getApplication().isInternal) {

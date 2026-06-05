@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-@file:OptIn(IntellijInternalApi::class, SettingsInternalApi::class)
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.platform.settings.local
 
@@ -12,7 +12,6 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.JsonElementSettingSerializerDescriptor
 import com.intellij.platform.settings.SetResult
 import com.intellij.platform.settings.SettingDescriptor

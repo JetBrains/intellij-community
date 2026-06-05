@@ -3,7 +3,6 @@ package com.intellij.profile.codeInspection.ui
 
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
@@ -16,7 +15,6 @@ internal fun getBordersForOptions(optionsPanel: JComponent): Border {
   else JBUI.Borders.empty(10, 17, 0, 0)
 }
 
-@OptIn(IntellijInternalApi::class)
 fun addScrollPaneIfNecessary(optionsPanel: JComponent): JComponent {
   return when (optionsPanel) {
     is JScrollPane -> optionsPanel

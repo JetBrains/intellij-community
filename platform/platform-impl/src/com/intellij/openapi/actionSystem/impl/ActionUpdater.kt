@@ -1,7 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ActionUpdaterKt")
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -44,7 +42,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil

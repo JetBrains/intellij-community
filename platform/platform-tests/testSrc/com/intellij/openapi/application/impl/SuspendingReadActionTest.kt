@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.openapi.application.impl
 
 import com.intellij.idea.IJIgnore
@@ -28,7 +26,6 @@ import com.intellij.openapi.progress.testExceptions
 import com.intellij.openapi.progress.testNoExceptions
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
 import com.intellij.util.concurrency.Semaphore
