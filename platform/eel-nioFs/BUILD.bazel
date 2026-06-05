@@ -18,6 +18,7 @@ jvm_library(
     exports = ["//platform/eel"],
     deps = [
         # do not sort,
+        "//libraries/fastutil",
         "//platform/eel",
         "//platform/util-rt",
         "//libraries/kotlinx/coroutines/core",
@@ -44,6 +45,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel-nioFs",
+        "//libraries/fastutil:fastutil_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

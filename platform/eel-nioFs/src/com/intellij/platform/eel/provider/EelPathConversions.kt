@@ -7,6 +7,8 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
@@ -115,6 +117,7 @@ fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
     }
   }
   return rest.fold(EelPath.parse(eelRoot, descriptor)) { path, part ->
-    part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
+    @OptIn(EelDelicateApi::class)
+    localToIjent(part.toString()).takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
   }
 }

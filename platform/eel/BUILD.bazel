@@ -214,6 +214,8 @@ jvm_library(
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/eel-nioFs",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.tests` end

@@ -9,6 +9,9 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
@@ -187,11 +190,13 @@ class IjentEphemeralRootAwarePath(
     return result
   }
 
+  @OptIn(EelDelicateApi::class)
   override fun toString(): String {
     return if (isAbsolute) {
       when (fileSystem.eelDescriptor.osFamily) {
         EelOsFamily.Posix -> {
-          rootPath.resolve(originalPath.pathString.removePrefix("/").replace("\\", fileSystem.separator)).pathString
+          val other = ijentToLocal(originalPath.pathString.removePrefix("/").replace("\\", fileSystem.separator))
+          rootPath.resolve(other).pathString
         }
         EelOsFamily.Windows -> {
           WindowsPathUtils.resolveEelPathOntoRoot(rootPath, (originalPath as AbsoluteIjentNioPath).eelPath).pathString
@@ -200,7 +205,7 @@ class IjentEphemeralRootAwarePath(
 
     }
     else {
-      originalPath.toString()
+      ijentToLocal(originalPath.toString())
     }
   }
 }
@@ -372,7 +377,7 @@ class IjentEphemeralRootAwareFileSystem(
     if (isPathUnderRoot(first)) {
       val parts = more.flatMap { it.split(root.fileSystem.separator) }.filter(String::isNotEmpty).toTypedArray()
       val relativized = relativizeToRoot(first, parts, eelDescriptor)
-      val ijentNioPath = ijentFs.getPath(relativized.first(), *relativized.drop(1).toTypedArray()) as IjentNioPath
+      val ijentNioPath = ijentFs.getPath(localToIjent(relativized.first ()), *relativized.drop(1).map { localToIjent(it) }.toTypedArray()) as IjentNioPath
       return IjentEphemeralRootAwarePath(this, root, ijentNioPath)
     }
 

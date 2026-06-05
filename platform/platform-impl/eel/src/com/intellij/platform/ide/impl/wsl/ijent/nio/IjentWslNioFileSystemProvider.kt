@@ -7,12 +7,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.fs.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.platform.ijent.community.impl.nio.fs.getFileAttributeViewUsingDosAttributesAdapter
 import com.intellij.platform.ijent.community.impl.nio.fs.readAttributesUsingDosAttributesAdapter
-import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
@@ -82,11 +83,15 @@ internal class IjentWslNioFileSystemProvider(
       this is IjentWslNioPath -> presentablePath.toIjentPath()
 
       isAbsolute ->
-        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
+        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart ->
+          @OptIn(EelDelicateApi::class)
+          nioPath.resolve(localToIjent(newPart.toString ()))
+        })
 
       else -> {
         val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
-        ijentNioFs.getPath(toString().replace("\\", ijentNioFs.separator)) as IjentNioPath
+        @OptIn(EelDelicateApi::class)
+        ijentNioFs.getPath(localToIjent(toString().replace("\\", ijentNioFs.separator))) as IjentNioPath
       }
     }
 
@@ -220,7 +225,7 @@ internal class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
-            val originalPath = dir.resolve(sanitizeFileName(ijentPath.fileName.toString()))
+            val originalPath = dir.resolve(ijentPath.fileName.toString())
 
             return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPathWithSameNotation(), ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
           }
