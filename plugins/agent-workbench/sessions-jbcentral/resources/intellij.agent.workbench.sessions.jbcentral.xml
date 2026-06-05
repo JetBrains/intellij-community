@@ -18,7 +18,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
-    <settingsContributor implementation="com.intellij.agent.workbench.sessions.settings.JbCentralQuotaSettingsContributor"/>
+    <settingsContributor implementation="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaSettingsContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">

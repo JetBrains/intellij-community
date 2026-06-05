@@ -890,6 +890,8 @@ jvm_library(
         "//plugins/agent-workbench/prompt/vcs:agent-workbench-prompt-vcs-tests_test_lib",
         "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions-tests",
         "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions-tests_test_lib",
+        "//plugins/agent-workbench/sessions-jbcentral:agent-workbench-sessions-jbcentral-tests",
+        "//plugins/agent-workbench/sessions-jbcentral:agent-workbench-sessions-jbcentral-tests_test_lib",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests_test_lib",
         "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests",
