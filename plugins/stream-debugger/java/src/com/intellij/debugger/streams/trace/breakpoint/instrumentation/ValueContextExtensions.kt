@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
-import com.intellij.java.debugger.streams.rt.StreamDebuggerUtils
+import com.intellij.debugger.streams.java.rt.StreamDebuggerUtils
 import com.intellij.psi.CommonClassNames
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference

@@ -41,6 +41,6 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams.rt" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.java.rt" />
   </component>
 </module>

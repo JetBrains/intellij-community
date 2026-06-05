@@ -8,7 +8,7 @@
     <module name="intellij.debugger.streams.shared" loading="required"/>
     <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.debugger.streams.java" loading="optional"/>
-    <module name="intellij.java.debugger.streams.rt" loading="embedded"/>
+    <module name="intellij.debugger.streams.java.rt" loading="embedded"/>
   </content>
 
   <description><![CDATA[

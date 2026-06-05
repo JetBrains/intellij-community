@@ -434,6 +434,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.debugger.streams.java.rt.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.debugger.streams.java.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/shared/intellij.debugger.streams.shared.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/shared/intellij.debugger.streams.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/testFramework/intellij.debugger.streams.testFramework.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/testFramework/intellij.debugger.streams.testFramework.iml" />
@@ -651,7 +652,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/debugger/frontend/intellij.java.debugger.impl.frontend.iml" filepath="$PROJECT_DIR$/java/debugger/frontend/intellij.java.debugger.impl.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/shared/intellij.java.debugger.impl.shared.iml" filepath="$PROJECT_DIR$/java/debugger/shared/intellij.java.debugger.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" filepath="$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.java.debugger.streams.rt.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.java.debugger.streams.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.tests.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" />

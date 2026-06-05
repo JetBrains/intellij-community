@@ -4,14 +4,7 @@ package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 import com.intellij.debugger.streams.trace.breakpoint.ex.BreakpointTracingException
 import com.intellij.psi.CommonClassNames
 
-internal const val UNIVERSAL_COLLECTOR_CLASS_NAME = "com.intellij.debugger.streams.rt.UniversalCollector"
 internal const val UNIVERSAL_COLLECTOR_CONSTRUCTOR_SIGNATURE = "(Ljava/util/Map;Ljava/util/concurrent/atomic/AtomicInteger;Z)V"
-
-// Matcher class names
-internal const val INT_MATCHER_CLASS_NAME     = "com.intellij.debugger.streams.rt.IntMatcher"
-internal const val LONG_MATCHER_CLASS_NAME    = "com.intellij.debugger.streams.rt.LongMatcher"
-internal const val DOUBLE_MATCHER_CLASS_NAME  = "com.intellij.debugger.streams.rt.DoubleMatcher"
-internal const val OBJECT_MATCHER_CLASS_NAME  = "com.intellij.debugger.streams.rt.ObjectMatcher"
 
 // Matcher constructor signatures: (Map beforeMap, Map afterMap, AtomicInteger time, <Predicate>) -> void
 internal const val INT_MATCHER_CONSTRUCTOR_SIGNATURE    = "(Ljava/util/Map;Ljava/util/Map;Ljava/util/concurrent/atomic/AtomicInteger;Ljava/util/function/IntPredicate;)V"

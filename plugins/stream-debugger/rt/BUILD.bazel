@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-### auto-generated section `build intellij.java.debugger.streams.rt` start
+### auto-generated section `build intellij.debugger.streams.java.rt` start
 
 jvm_library(
     name = "rt",
@@ -13,7 +13,7 @@ jvm_library(
         allow_empty = True,
     ),
     kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.debugger.streams.rt",
+    module_name = "intellij.debugger.streams.java.rt",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -29,17 +29,17 @@ jvm_library(
         allow_empty = True,
     ),
     kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.debugger.streams.rt",
+    module_name = "intellij.debugger.streams.java.rt",
     visibility = ["//visibility:public"],
     runtime_deps = [":rt"],
 )
-### auto-generated section `build intellij.java.debugger.streams.rt` end
+### auto-generated section `build intellij.debugger.streams.java.rt` end
 
-### auto-generated section `iml intellij.java.debugger.streams.rt` start
+### auto-generated section `iml intellij.debugger.streams.java.rt` start
 exports_files(
     [
-        "intellij.java.debugger.streams.rt.iml",
+        "intellij.debugger.streams.java.rt.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.java.debugger.streams.rt` end
+### auto-generated section `iml intellij.debugger.streams.java.rt` end

@@ -6,10 +6,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
-import com.intellij.java.debugger.streams.rt.KeyRecorder
-import com.intellij.java.debugger.streams.rt.EntryKeyCapturingWrapper
-import com.intellij.java.debugger.streams.rt.StreamDebuggerUtils
-import com.intellij.java.debugger.streams.rt.collectors.UniversalCollector
+import com.intellij.debugger.streams.java.rt.KeyRecorder
+import com.intellij.debugger.streams.java.rt.EntryKeyCapturingWrapper
+import com.intellij.debugger.streams.java.rt.StreamDebuggerUtils
+import com.intellij.debugger.streams.java.rt.collectors.UniversalCollector
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ClassType
 import com.sun.jdi.Method
@@ -135,7 +135,7 @@ internal class DistinctByMapEntryCallHandler(
       val entryWrapperClass = clazz(EntryKeyCapturingWrapper::class.java)
       val factoryMethod = entryWrapperClass.method(
         if (byKey) "keys" else "values",
-        "()Lcom/intellij/java/debugger/streams/rt/EntryKeyCapturingWrapper;"
+        "()Lcom/intellij/debugger/streams/java/rt/EntryKeyCapturingWrapper;"
       )
       val factoryInstance = factoryMethod.invoke(entryWrapperClass, emptyList()) as ObjectReference
       factory = factoryInstance

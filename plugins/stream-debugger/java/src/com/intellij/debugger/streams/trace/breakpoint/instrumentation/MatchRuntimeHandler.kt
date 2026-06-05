@@ -6,10 +6,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
-import com.intellij.java.debugger.streams.rt.matchers.DoubleMatcher
-import com.intellij.java.debugger.streams.rt.matchers.IntMatcher
-import com.intellij.java.debugger.streams.rt.matchers.LongMatcher
-import com.intellij.java.debugger.streams.rt.matchers.ObjectMatcher
+import com.intellij.debugger.streams.java.rt.matchers.DoubleMatcher
+import com.intellij.debugger.streams.java.rt.matchers.IntMatcher
+import com.intellij.debugger.streams.java.rt.matchers.LongMatcher
+import com.intellij.debugger.streams.java.rt.matchers.ObjectMatcher
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
