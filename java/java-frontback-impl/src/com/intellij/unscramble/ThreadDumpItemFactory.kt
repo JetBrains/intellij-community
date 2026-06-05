@@ -12,12 +12,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface ThreadDumpItemFactory {
-  fun createDumpItem(threadState: ThreadState): MergeableDumpItem?
+  fun createDumpItem(threadState: ThreadState): DumpItem?
 
   companion object {
     private val EP_NAME: ExtensionPointName<ThreadDumpItemFactory> = ExtensionPointName("com.intellij.threadDumpItemFactory")
 
-    fun createDumpItem(threadState: ThreadState): MergeableDumpItem {
+    fun createDumpItem(threadState: ThreadState): DumpItem {
       // TODO: extract JavaThreadDumpItem to factory as well
       return EP_NAME.computeSafeIfAny { it.createDumpItem(threadState) } ?: JavaThreadDumpItem(threadState)
     }

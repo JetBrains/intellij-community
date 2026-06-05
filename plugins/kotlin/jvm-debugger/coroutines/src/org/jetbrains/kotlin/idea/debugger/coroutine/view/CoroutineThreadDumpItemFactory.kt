@@ -2,38 +2,40 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.threadDumpParser.ThreadState
-import com.intellij.unscramble.MergeableDumpItem
+import com.intellij.unscramble.CompoundDumpItem
+import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.IntelliJThreadDumpMetadata
 import com.intellij.unscramble.ThreadDumpItemFactory
 import com.intellij.unscramble.splitFirstLineAndBody
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 
-internal const val COROUTINE_THREAD_DUMP_TYPE: String = "coroutine"
-internal const val COROUTINE_ROOT_THREAD_DUMP_TYPE: String = "coroutineRoot"
-
-@ApiStatus.Internal
 internal class CoroutineThreadDumpItemFactory : ThreadDumpItemFactory {
-    override fun createDumpItem(threadState: ThreadState): MergeableDumpItem? = when (threadState.type) {
-        COROUTINE_THREAD_DUMP_TYPE -> createCoroutineDumpItem(threadState)
-        COROUTINE_ROOT_THREAD_DUMP_TYPE -> CoroutineRootDumpItem
+    override fun createDumpItem(threadState: ThreadState): DumpItem? = when (threadState.type) {
+        IntelliJThreadDumpMetadata.COROUTINE_TYPE -> createCoroutineDumpItem(threadState)
+        IntelliJThreadDumpMetadata.COROUTINE_ROOT_TYPE -> CoroutineRootDumpItem
         else -> null
     }
 }
 
-private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem? {
-    if (threadState.type != COROUTINE_THREAD_DUMP_TYPE) {
+private fun createCoroutineDumpItem(threadState: ThreadState): DumpItem? {
+    if (threadState.type != IntelliJThreadDumpMetadata.COROUTINE_TYPE) {
         return null
     }
     val stackTrace = threadState.stackTrace?.trimEnd() ?: return null
     val stackTraceBody = splitFirstLineAndBody(stackTrace).body
-    return CoroutineDumpItem(
+    val item = CoroutineDumpItem(
         name = restoreCoroutineName(threadState),
         treeId = threadState.uniqueId,
         parentTreeId = threadState.threadContainerUniqueId ?: CoroutineRootDumpItem.treeId,
         coroutineState = State.fromString(threadState.state),
         coroutineContextInfo = DumpItemCoroutineContextInfo.fromMetadata(threadState.metadata),
-        stackTraceBody = stackTraceBody,
+        stackTraceBody = stackTraceBody
     )
+    return if (threadState.similarThreadsCount > 1) {
+        CompoundDumpItem(item, threadState.similarThreadsCount)
+    } else {
+        item
+    }
 }
 
 private fun restoreCoroutineName(threadState: ThreadState): String {

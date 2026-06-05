@@ -95,7 +95,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
   }
 
   @ApiStatus.Internal
-  public static ThreadDumpPanel createFromDumpItems(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<MergeableDumpItem> dumpItems) {
+  public static ThreadDumpPanel createFromDumpItems(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems) {
     return new ThreadDumpPanel(project, consoleView, toolbarActions, dumpItems, true);
   }
 
@@ -111,7 +111,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     sortAndUpdateThreadDumpItemList();
   }
 
-  private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<MergeableDumpItem> dumpItems, boolean fromDumpItems) {
+  private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
     super(new BorderLayout());
     myThreadDump = new ArrayList<>(dumpItems);
     myMergedThreadDump = CompoundDumpItem.mergeThreadDumpItems(dumpItems);

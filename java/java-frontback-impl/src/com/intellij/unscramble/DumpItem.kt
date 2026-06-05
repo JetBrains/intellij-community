@@ -128,8 +128,8 @@ class CompoundDumpItem<T : DumpItem>(
 
   companion object {
     @JvmStatic
-    fun mergeThreadDumpItems(originalItems: List<MergeableDumpItem>): List<DumpItem> {
-      val groups = originalItems.groupBy { it.mergeableToken }
+    fun mergeThreadDumpItems(originalItems: List<DumpItem>): List<DumpItem> {
+      val groups = originalItems.groupBy { if (it is MergeableDumpItem) it.mergeableToken else MergeableToken.Unique(it) }
       // Map every original treeId to the treeId of the representative of the merge group
       val idToCompoundId = hashMapOf<Long, Long?>()
       for ((token, items) in groups) {
@@ -148,11 +148,11 @@ class CompoundDumpItem<T : DumpItem>(
 }
 
 @ApiStatus.Internal
-fun toDumpItems(threadStates: List<ThreadState>): List<MergeableDumpItem> =
+fun toDumpItems(threadStates: List<ThreadState>): List<DumpItem> =
   toDumpItems(threadStates, emptyList())
 
 @ApiStatus.Internal
-fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<MergeableDumpItem> {
+fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<DumpItem> {
   val threadDumpItems = threadStates.map { ThreadDumpItemFactory.createDumpItem(it) }
 
   val statesToItems = threadStates.zip(threadDumpItems).toMap()

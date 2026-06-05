@@ -42,7 +42,7 @@ public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFa
 
   @Override
   public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
-    List<MergeableDumpItem> dumpItems = new ArrayList<>(IntelliJThreadDumpParserKt.dumpItems(myThreadDump));
+    List<DumpItem> dumpItems = new ArrayList<>(IntelliJThreadDumpParserKt.dumpItems(myThreadDump));
     dumpItems.sort(DumpItem.BY_INTEREST);
     return ThreadDumpPanel.createFromDumpItems(myProject, consoleView, toolbarActions, dumpItems);
   }

@@ -314,7 +314,7 @@ internal class JcmdJsonThreadDumpParserTest {
     }
   }
 
-  private fun parseThreadDump(dumpFileName: String): List<MergeableDumpItem> {
+  private fun parseThreadDump(dumpFileName: String): List<DumpItem> {
     val dumpText = loadThreadDump(dumpFileName)
 
     val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))
