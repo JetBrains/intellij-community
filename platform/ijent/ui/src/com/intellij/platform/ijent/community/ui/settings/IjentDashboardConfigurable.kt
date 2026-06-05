@@ -6,14 +6,13 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.isPosix
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard
@@ -25,14 +24,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import javax.swing.JComponent
 
-internal class IjentDashboardConfigurable(val project: Project) : SearchableConfigurable, Configurable.NoScroll {
+internal class IjentDashboardConfigurable(val eelDescriptor: EelDescriptor) : SearchableConfigurable, Configurable.NoScroll {
   override fun getId(): String = "ijent.settings.dashboard"
   override fun getDisplayName(): String = IjentImplBundle.message("configurable.ijent.dashboard.display.name")
 
   val modeProperty = AtomicProperty(AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java))
 
   override fun createComponent(): JComponent {
-    val eelDescriptor = project.getEelDescriptor()
     val envVarsTab: DialogPanel = panel {
       if (eelDescriptor.osFamily.isPosix) {
         row(IjentImplBundle.message("advanced.setting.container.environments.env.var.shell.mode")) {

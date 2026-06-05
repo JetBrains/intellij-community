@@ -49,6 +49,6 @@
       id="ijent.dashboard"
       key="configurable.ijent.dashboard.display.name"
       bundle="messages.IjentImplBundle"
-      instance="com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable"/>
+      provider="com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurableProvider"/>
   </extensions>
 </idea-plugin>
