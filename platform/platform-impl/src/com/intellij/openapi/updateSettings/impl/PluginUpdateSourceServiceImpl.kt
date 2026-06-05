@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -41,7 +42,11 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
     }
   }
 
-  override fun setPluginUpdateSourceId(pluginId: PluginId, host: String?) {
+  override fun setPluginUpdateSourceId(plugin: PluginUiModel) {
+    setPluginUpdateSourceId(plugin.pluginId, plugin.repositoryName)
+  }
+
+  private fun setPluginUpdateSourceId(pluginId: PluginId, host: String?) {
     if (!isFunctionalitySupported()) {
       return
     }

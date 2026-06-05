@@ -10,7 +10,7 @@ internal class PluginUpdateSourceApplier(private val pluginModel: PluginUiModel)
     PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginModel.pluginId)
 
   fun applyPluginUpdateSourceId() {
-    PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginModel.pluginId, pluginModel.repositoryName)
+    PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginModel)
   }
 
   private fun revertApplyingPluginUpdateSourceId() {
