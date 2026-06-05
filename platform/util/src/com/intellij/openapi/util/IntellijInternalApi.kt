@@ -6,8 +6,8 @@ package com.intellij.openapi.util
  * only for IntelliJ platform and plugins which sources are located in intellij Git repository.
  * Such declarations may be renamed, changed or removed in any future release without prior notice.
  *
- * The annotation should be used together with [org.jetbrains.annotations.ApiStatus.Internal] to ensure that usages of the declaration are
- * also reported by the Plugin Verifier, and highlighted in Java code.
+ * This annotation is deprecated now. Since using APIs annotated with it requires explicit opt-in even inside the intellij project, it
+ * doesn't make sense to use it. Use [org.jetbrains.annotations.ApiStatus.Internal] instead.
  */
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 @Target(
@@ -18,4 +18,5 @@ package com.intellij.openapi.util
   AnnotationTarget.FIELD,
   AnnotationTarget.CONSTRUCTOR
 )
+@Deprecated("Use @ApiStatus.Internal instead", ReplaceWith("org.jetbrains.annotations.ApiStatus.Internal"))
 annotation class IntellijInternalApi
