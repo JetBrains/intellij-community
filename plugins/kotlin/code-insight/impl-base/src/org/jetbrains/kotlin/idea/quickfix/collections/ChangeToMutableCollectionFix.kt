@@ -26,7 +26,7 @@ class ChangeToMutableCollectionFix(
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("fix.change.to.mutable.type.family")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallableDeclaration,
     ): Presentation {

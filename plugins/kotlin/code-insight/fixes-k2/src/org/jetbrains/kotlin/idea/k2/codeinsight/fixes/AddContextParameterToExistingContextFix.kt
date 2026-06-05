@@ -4,15 +4,15 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 internal class AddContextParameterToExistingContextFix(
     surroundingCall: KtCallExpression,
-) : PsiUpdateModCommandAction<KtCallExpression>(surroundingCall) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallExpression>(surroundingCall) {
 
     override fun invoke(context: ActionContext, element: KtCallExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(context.project)

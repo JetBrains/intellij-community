@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class ReplaceCallWithUnaryOperatorIntention : KotlinApplicableModCommandAction<KtDotQualifiedExpression, Unit>(KtDotQualifiedExpression::class) {
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtDotQualifiedExpression
     ): Presentation? {

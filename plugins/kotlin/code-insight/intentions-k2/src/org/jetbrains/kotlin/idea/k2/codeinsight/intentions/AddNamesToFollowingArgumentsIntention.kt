@@ -32,7 +32,7 @@ class AddNamesToFollowingArgumentsIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.this.argument.and.following.arguments")
-    override fun getPresentation(context: ActionContext, element: KtValueArgument): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtValueArgument): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =

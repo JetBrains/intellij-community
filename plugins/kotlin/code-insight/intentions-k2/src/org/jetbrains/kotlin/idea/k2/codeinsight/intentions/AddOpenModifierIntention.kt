@@ -21,7 +21,7 @@ internal class AddOpenModifierIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("make.open")
 
-    override fun getPresentation(context: ActionContext, element: KtCallableDeclaration): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtCallableDeclaration): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =

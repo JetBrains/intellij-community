@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.Contextless<KtExpression>(KtExpression::class) {
+internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.ClassContextless<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("remove.braces.from.all.branches")
 
@@ -32,7 +32,7 @@ internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommand
         return targetIfOrWhenExpression is KtIfExpression || targetIfOrWhenExpression is KtWhenExpression
     }
 
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation? {
         val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return null
 
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()

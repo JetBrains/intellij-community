@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -28,7 +28,7 @@ class ReplaceInfixOrOperatorCallFix(
     element: KtExpression,
     private val notNullNeeded: Boolean,
     private val binaryOperatorName: String = ""
-) : PsiUpdateModCommandAction<KtExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.safe.call")
 

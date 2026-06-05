@@ -147,7 +147,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             }
         }
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtClassOrObject,
         ): Presentation {

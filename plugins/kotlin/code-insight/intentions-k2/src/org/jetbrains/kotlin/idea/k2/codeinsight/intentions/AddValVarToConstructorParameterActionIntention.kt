@@ -22,7 +22,7 @@ class AddValVarToConstructorParameterActionIntention : KotlinApplicableModComman
 
     override fun getFamilyName(): String = KotlinBundle.message("add.val.var.to.primary.constructor.parameter")
 
-    override fun getPresentation(context: ActionContext, element: KtParameter): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtParameter): Presentation {
         val actionName = KotlinBundle.message("add.val.var.to.parameter.0", element.name ?: "")
         return Presentation.of(actionName)
     }

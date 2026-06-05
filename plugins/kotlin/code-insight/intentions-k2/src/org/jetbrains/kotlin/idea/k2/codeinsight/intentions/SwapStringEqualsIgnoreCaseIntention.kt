@@ -24,7 +24,7 @@ internal class SwapStringEqualsIgnoreCaseIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("flip.equals")
 
-    override fun getPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =

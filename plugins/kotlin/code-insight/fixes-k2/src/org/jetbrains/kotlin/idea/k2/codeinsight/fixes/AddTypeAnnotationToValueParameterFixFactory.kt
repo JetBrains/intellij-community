@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -12,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -64,20 +64,20 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     private class AddTypeAnnotationToValueParameterFix(
         element: KtParameter,
         private val typeName: String,
-    ) : PsiUpdateModCommandAction<KtParameter>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtParameter>(element) {
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtParameter,
             updater: ModPsiUpdater,
         ) {
-            element.typeReference = KtPsiFactory(actionContext.project).createType(typeName)
+            element.typeReference = KtPsiFactory(context.project).createType(typeName)
         }
 
         override fun getFamilyName(): String =
             KotlinBundle.message("fix.add.type.annotation.family")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtParameter,
         ): Presentation {

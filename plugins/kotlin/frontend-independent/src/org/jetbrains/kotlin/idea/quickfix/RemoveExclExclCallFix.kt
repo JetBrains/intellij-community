@@ -8,9 +8,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -19,10 +19,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class RemoveExclExclCallFix(
     element: PsiElement,
-) : PsiUpdateModCommandAction<PsiElement>(element), CleanupFix.ModCommand {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element), CleanupFix.ModCommand {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.remove.non.null.assertion")
 
-    override fun getPresentation(context: ActionContext, element: PsiElement): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: PsiElement): Presentation =
         Presentation.of(familyName)
             .withPriority(PriorityAction.Priority.HIGH)
             .withFixAllOption(this)

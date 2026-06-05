@@ -31,7 +31,7 @@ class EvaluateCompileTimeExpressionIntention : KotlinApplicableModCommandAction<
         element.replace(KtPsiFactory(element.project).createExpression(elementContext))
     }
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtBinaryExpression
     ): Presentation? {

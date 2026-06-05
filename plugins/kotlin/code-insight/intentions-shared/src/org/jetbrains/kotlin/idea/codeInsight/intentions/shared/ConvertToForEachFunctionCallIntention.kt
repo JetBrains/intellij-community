@@ -48,7 +48,7 @@ internal class ConvertToForEachFunctionCallIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtForExpression,
     ): Presentation {

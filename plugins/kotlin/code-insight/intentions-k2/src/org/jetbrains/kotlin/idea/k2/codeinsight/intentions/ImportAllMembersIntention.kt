@@ -63,7 +63,7 @@ internal class ImportAllMembersIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("import.members.with")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtElement,
     ): Presentation? {

@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
@@ -87,7 +86,7 @@ internal abstract class AbstractAddAccessorIntention(
 }
 
 internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true) {
-    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtProperty): Presentation {
         return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
     }
 }

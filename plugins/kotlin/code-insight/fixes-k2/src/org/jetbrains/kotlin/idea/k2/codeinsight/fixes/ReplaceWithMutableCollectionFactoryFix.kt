@@ -6,9 +6,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -24,12 +24,12 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 internal class ReplaceWithMutableCollectionFactoryFix(
     element: KtCallExpression,
     private val replacementFunctionName: String,
-) : PsiUpdateModCommandAction<KtCallExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallExpression>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("replace.with.mutable.collection")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallExpression,
     ): Presentation? {
@@ -44,7 +44,7 @@ internal class ReplaceWithMutableCollectionFactoryFix(
     }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtCallExpression,
         updater: ModPsiUpdater,
     ) {

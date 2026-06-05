@@ -32,7 +32,7 @@ class UnfoldAssignmentToWhenIntention :
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.assignment.with.when.expression")
 
-    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? =
+    override fun getActionPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? =
         if (isElementApplicable(element, context)) {
             Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
         } else {

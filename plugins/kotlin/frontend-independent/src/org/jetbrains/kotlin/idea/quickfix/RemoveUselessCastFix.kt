@@ -6,11 +6,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.dropEnclosingParenthesesIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class RemoveUselessCastFix(element: KtBinaryExpressionWithTypeRHS) : PsiUpdateModCommandAction<KtBinaryExpressionWithTypeRHS>(element),
+class RemoveUselessCastFix(element: KtBinaryExpressionWithTypeRHS) : KotlinPsiUpdateModCommandAction.ElementContextless<KtBinaryExpressionWithTypeRHS>(element),
                                                                      CleanupFix.ModCommand {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.cast")
 

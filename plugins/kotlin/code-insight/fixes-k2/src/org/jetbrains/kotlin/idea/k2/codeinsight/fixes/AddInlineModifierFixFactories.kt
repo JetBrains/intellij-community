@@ -58,7 +58,7 @@ internal object AddInlineModifierFixFactories {
             }
         }
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtParameter,
         ): Presentation {

@@ -29,7 +29,7 @@ internal class ChangeType(
     private val elementContext: ChangeTypeRequest,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtCallableDeclaration, ChangeTypeRequest>(element, elementContext) {
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallableDeclaration,
     ): Presentation? = Presentation.of(familyName).takeIf { elementContext.isValid }

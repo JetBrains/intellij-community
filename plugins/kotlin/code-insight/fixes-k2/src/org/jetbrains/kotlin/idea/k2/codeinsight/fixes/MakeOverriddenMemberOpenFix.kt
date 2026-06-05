@@ -49,7 +49,7 @@ internal object MakeOverriddenMemberOpenFixFactory {
             MakeOverriddenMemberOpenFixUtils.invoke(writableMembers)
         }
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtDeclaration,
         ): Presentation {

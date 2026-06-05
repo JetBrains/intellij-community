@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
@@ -38,7 +38,7 @@ internal object AddAccessorsFactories {
         element: KtProperty,
         private val addGetter: Boolean,
         private val addSetter: Boolean,
-    ) : PsiUpdateModCommandAction<KtProperty>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtProperty>(element) {
         override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
 
         override fun invoke(

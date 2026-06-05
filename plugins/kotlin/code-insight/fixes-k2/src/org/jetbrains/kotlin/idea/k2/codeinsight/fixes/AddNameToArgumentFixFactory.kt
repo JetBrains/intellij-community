@@ -46,7 +46,7 @@ internal object AddNameToArgumentFixFactory {
         override fun getFamilyName(): @IntentionFamilyName String =
             KotlinBundle.message("fix.add.argument.name.family")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtValueArgument,
         ): Presentation {

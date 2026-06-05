@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralUtils
 import org.jetbrains.kotlin.psi.KtExpression
@@ -59,12 +59,12 @@ internal object ConvertStringToCharLiteralFixFactory {
     private class ConvertStringToCharLiteralFix(
         element: KtStringTemplateExpression,
         private val charLiteral: KtExpression, // No need for `SmartPsiElementPointer` since the expression is created by `KtPsiFactory`
-    ) : PsiUpdateModCommandAction<KtStringTemplateExpression>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtStringTemplateExpression>(element) {
 
         override fun getFamilyName(): String = KotlinBundle.message("convert.string.to.character.literal")
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtStringTemplateExpression,
             updater: ModPsiUpdater,
         ) {

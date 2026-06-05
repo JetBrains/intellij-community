@@ -6,9 +6,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtExpression
@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-class ReplaceWithArrayCallInAnnotationFix(element: KtExpression) : PsiUpdateModCommandAction<KtExpression>(element) {
+class ReplaceWithArrayCallInAnnotationFix(element: KtExpression) :
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.array.call")
 
     override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {

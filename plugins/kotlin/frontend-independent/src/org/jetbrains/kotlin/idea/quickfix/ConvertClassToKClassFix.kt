@@ -5,15 +5,15 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 class ConvertClassToKClassFix(
     element: KtDotQualifiedExpression,
-) : PsiUpdateModCommandAction<KtDotQualifiedExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtDotQualifiedExpression>(element) {
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtDotQualifiedExpression,
     ): Presentation {

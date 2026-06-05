@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Contextless<KtModifierListOwner>(KtModifierListOwner::class) {
+internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.ClassContextless<KtModifierListOwner>(KtModifierListOwner::class) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.jvmoverloads.annotation")
@@ -32,7 +32,7 @@ internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Contex
         return getPresentation(context, element) != null
     }
 
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
         val caretOffset = context.offset
         val (targetName, parameters) = when (element) {
             is KtNamedFunction -> {

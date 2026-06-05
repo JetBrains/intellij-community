@@ -6,10 +6,10 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtDeclarationModifierList
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
 class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnnotationEntry) :
-    PsiUpdateModCommandAction<KtAnnotationEntry>(annotationEntry) {
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(annotationEntry) {
 
     override fun getFamilyName(): @IntentionFamilyName String = text
 

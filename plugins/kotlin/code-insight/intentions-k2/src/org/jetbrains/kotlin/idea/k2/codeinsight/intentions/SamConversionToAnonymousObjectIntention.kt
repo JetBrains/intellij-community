@@ -31,7 +31,7 @@ internal class SamConversionToAnonymousObjectIntention :
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.to.anonymous.object")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallExpression,
     ): Presentation = Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)

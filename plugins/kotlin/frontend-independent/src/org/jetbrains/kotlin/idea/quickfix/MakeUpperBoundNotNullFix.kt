@@ -6,16 +6,18 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.renderer.render
 
-class MakeUpperBoundNotNullFix(typeParameter: KtTypeParameter,
-                               private val kind: Kind) : PsiUpdateModCommandAction<KtTypeParameter>(typeParameter) {
+class MakeUpperBoundNotNullFix(
+    typeParameter: KtTypeParameter,
+    private val kind: Kind
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeParameter>(typeParameter) {
 
     sealed class Kind {
         abstract val renderedUpperBound: String
@@ -49,7 +51,7 @@ class MakeUpperBoundNotNullFix(typeParameter: KtTypeParameter,
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.make.upperbound.not.nullable.family")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtTypeParameter,
     ): Presentation? {

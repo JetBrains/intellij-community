@@ -31,7 +31,7 @@ class AddToStringFix(
     override fun getFamilyName(): String =
         KotlinBundle.message("fix.add.tostring.call.family")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtExpression,
     ): Presentation {

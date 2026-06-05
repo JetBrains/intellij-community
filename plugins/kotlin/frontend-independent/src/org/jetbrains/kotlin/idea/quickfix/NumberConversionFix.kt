@@ -57,7 +57,7 @@ class NumberConversionFix(
     override fun getFamilyName(): String =
         KotlinBundle.message("insert.number.conversion")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtExpression,
     ): Presentation {

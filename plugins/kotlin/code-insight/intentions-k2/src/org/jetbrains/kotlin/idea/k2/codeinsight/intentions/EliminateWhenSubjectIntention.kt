@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.buildExpression
 
 class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExpression, Boolean>(KtWhenExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("inline.when.argument")
-    override fun getPresentation(context: ActionContext, element: KtWhenExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtWhenExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun KaSession.prepareContext(element: KtWhenExpression): Boolean? {

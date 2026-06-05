@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeParameter
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class MakeTypeParameterReifiedAndFunctionInlineFix(
     element: KtTypeParameter,
-) : PsiUpdateModCommandAction<KtTypeParameter>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeParameter>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("make.type.parameter.reified.and.function.inline")

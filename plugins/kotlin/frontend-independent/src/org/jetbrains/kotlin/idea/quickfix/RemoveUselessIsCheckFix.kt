@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 class RemoveUselessIsCheckFix(
     element: KtIsExpression,
     val result: Boolean? = null,
-) : PsiUpdateModCommandAction<KtIsExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtIsExpression>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.is.check")
 
     override fun invoke(

@@ -6,9 +6,9 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix.Kind
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -25,7 +25,7 @@ class OptInFixes {
      * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
      * containing classes, or constructors.
      *
-     * This class reuses the parent's [invoke] method but overrides the [getPresentation] method to provide
+     * This class reuses the parent's [invoke] method but overrides [getActionPresentation] to provide
      * more descriptive opt-in-specific messages.
      *
      * @param element a declaration to annotate
@@ -43,7 +43,7 @@ class OptInFixes {
         private val priority: PriorityAction.Priority,
     ) : AddAnnotationFix(element, optInClassId, Kind.Self, argumentClassFqName.asClassLiteral()) {
 
-        public override fun getPresentation(context: ActionContext, element: KtElement): Presentation =
+        public override fun getActionPresentation(context: ActionContext, element: KtElement): Presentation =
             getOptInAnnotationFixPresentation(element, kind, argumentClassFqName).withPriority(priority)
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
@@ -54,9 +54,9 @@ class OptInFixes {
         private val kind: Kind,
         private val argumentClassFqName: FqName,
         private val priority: PriorityAction.Priority
-    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(element) {
 
-        public override fun getPresentation(context: ActionContext, element: KtAnnotationEntry): Presentation =
+        public override fun getActionPresentation(context: ActionContext, element: KtAnnotationEntry): Presentation =
             getOptInAnnotationFixPresentation(element, kind, argumentClassFqName).withPriority(priority)
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
@@ -74,7 +74,7 @@ class OptInFixes {
      * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
      * to declarations, containing classes, or constructors.
      *
-     * This class reuses the parent's [invoke] method but overrides the [getPresentation] method to provide
+     * This class reuses the parent's [invoke] method but overrides [getActionPresentation] to provide
      * more descriptive opt-in-specific messages.
      *
      * @param element a declaration to annotate
@@ -92,7 +92,7 @@ class OptInFixes {
         private val priority: PriorityAction.Priority = PriorityAction.Priority.NORMAL,
     ) : AddAnnotationFix(element, annotationClassId, Kind.Self, argumentClassFqName?.asClassLiteral()) {
 
-        override fun getPresentation(context: ActionContext, element: KtElement): Presentation {
+        override fun getActionPresentation(context: ActionContext, element: KtElement): Presentation {
             val annotationName = annotationClassId.shortClassName.asString()
             val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
             val argumentText = annotationName + annotationEntry

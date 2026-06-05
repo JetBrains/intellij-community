@@ -27,7 +27,7 @@ internal class SplitPropertyDeclarationIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("split.property.declaration")
-    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtProperty): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtProperty): List<TextRange> =

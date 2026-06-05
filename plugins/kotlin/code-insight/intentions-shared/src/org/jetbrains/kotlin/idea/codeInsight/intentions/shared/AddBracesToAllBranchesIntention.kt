@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.util.match
 
-internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtExpression>(KtExpression::class) {
+internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.ClassContextless<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces.to.all.branches")
 
@@ -41,7 +41,7 @@ internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction
         return targetIfOrWhenExpression is KtIfExpression || targetIfOrWhenExpression is KtWhenExpression
     }
 
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation? {
         val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return null
 
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()

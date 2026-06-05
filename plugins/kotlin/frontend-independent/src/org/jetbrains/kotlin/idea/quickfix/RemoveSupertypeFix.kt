@@ -3,17 +3,18 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RemoveSupertypeFix(element: KtSuperTypeListEntry) : PsiUpdateModCommandAction<KtSuperTypeListEntry>(element) {
+class RemoveSupertypeFix(element: KtSuperTypeListEntry) :
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtSuperTypeListEntry>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("remove.supertype")
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtSuperTypeListEntry,
         updater: ModPsiUpdater,
     ) {

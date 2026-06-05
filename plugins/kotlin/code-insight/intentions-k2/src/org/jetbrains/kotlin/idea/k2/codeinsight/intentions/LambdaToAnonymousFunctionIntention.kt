@@ -39,7 +39,7 @@ internal class LambdaToAnonymousFunctionIntention :
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtLambdaExpression,
     ): Presentation = Presentation.of(

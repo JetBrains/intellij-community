@@ -6,12 +6,12 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -29,9 +29,9 @@ abstract class ReplaceCallFix(
     element: KtQualifiedExpression,
     private val operation: String,
     private val notNullNeeded: Boolean = false
-) : PsiUpdateModCommandAction<KtQualifiedExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtQualifiedExpression>(element) {
 
-    override fun getPresentation(context: ActionContext, element: KtQualifiedExpression): Presentation? =
+    override fun getActionPresentation(context: ActionContext, element: KtQualifiedExpression): Presentation? =
         Presentation.of(familyName).takeIf { element.selectorExpression != null }
 
     override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
@@ -68,7 +68,7 @@ abstract class ReplaceCallFix(
 class ReplaceImplicitReceiverCallFix(
     element: KtExpression,
     private val notNullNeeded: Boolean
-) : PsiUpdateModCommandAction<KtExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.safe.this.call")
 
@@ -84,11 +84,11 @@ class ReplaceImplicitReceiverCallFix(
 
 class RemoveRedundantCallsOfConversionMethodsFix(
     element: KtQualifiedExpression
-) : PsiUpdateModCommandAction<KtQualifiedExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtQualifiedExpression>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtQualifiedExpression,
     ): Presentation = Presentation.of(familyName).withFixAllOption(this)

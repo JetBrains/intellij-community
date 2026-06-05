@@ -38,7 +38,7 @@ class AddNameToArgumentIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("add.name.to.argument")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtValueArgument,
     ): Presentation? =

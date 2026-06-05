@@ -4,23 +4,23 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeElement
 
-class ChangeToStarProjectionFix(element: KtTypeElement) : PsiUpdateModCommandAction<KtTypeElement>(element) {
+class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeElement>(element) {
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtTypeElement,
         updater: ModPsiUpdater,
     ) {
-        val star = KtPsiFactory(actionContext.project).createStar()
+        val star = KtPsiFactory(context.project).createStar()
         element.typeArgumentsAsTypes.forEach { it?.replace(star) }
     }
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtTypeElement,
     ): Presentation {

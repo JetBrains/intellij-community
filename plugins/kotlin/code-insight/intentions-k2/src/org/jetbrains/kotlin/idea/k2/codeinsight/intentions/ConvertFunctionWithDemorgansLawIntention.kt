@@ -65,7 +65,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         val parentNotCall: Boolean,
     )
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext, element: KtCallExpression
     ): Presentation? {
         val (fromFunctionName, toFunctionName, _, _) = conversions[element.calleeExpression?.text] ?: return null

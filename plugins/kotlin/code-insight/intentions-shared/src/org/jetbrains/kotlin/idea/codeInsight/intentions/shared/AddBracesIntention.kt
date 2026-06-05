@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @Internal
-class AddBracesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtElement>(KtElement::class) {
+class AddBracesIntention : KotlinPsiUpdateModCommandAction.ClassContextless<KtElement>(KtElement::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces")
 
@@ -37,7 +37,7 @@ class AddBracesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtElement
         }
     }
 
-    override fun getPresentation(context: ActionContext, element: KtElement): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtElement): Presentation? {
         val expression = element.getTargetExpression(context.offset) ?: return null
         if (expression is KtBlockExpression) return null
 

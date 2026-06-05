@@ -7,9 +7,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -20,11 +20,11 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 class AddExclExclCallFix(
     element: PsiElement,
     private val fixImplicitReceiver: Boolean = false,
-) : PsiUpdateModCommandAction<PsiElement>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.introduce.non.null.assertion.family")
 
-    override fun getPresentation(context: ActionContext, element: PsiElement): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: PsiElement): Presentation =
         Presentation.of(KotlinBundle.message("fix.introduce.non.null.assertion.text", element.text))
             .withPriority(PriorityAction.Priority.LOW)
 

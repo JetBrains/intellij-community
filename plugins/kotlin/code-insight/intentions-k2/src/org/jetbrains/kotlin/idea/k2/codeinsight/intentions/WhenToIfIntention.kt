@@ -167,7 +167,7 @@ internal class WhenToIfIntention :
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.when.with.if")
-    override fun getPresentation(context: ActionContext, element: KtWhenExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtWhenExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean {

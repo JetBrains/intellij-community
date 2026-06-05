@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -16,11 +16,11 @@ class ChangeAccessorTypeFix(
     element: KtPropertyAccessor,
     private val typePresentation: String,
     private val typeSourceCode: String,
-) : PsiUpdateModCommandAction<KtPropertyAccessor>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtPropertyAccessor>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.change.accessor.family")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtPropertyAccessor,
     ): Presentation {
@@ -33,11 +33,11 @@ class ChangeAccessorTypeFix(
     }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtPropertyAccessor,
         updater: ModPsiUpdater,
     ) {
-        val newTypeReference = KtPsiFactory(actionContext.project).createType(typeSourceCode)
+        val newTypeReference = KtPsiFactory(context.project).createType(typeSourceCode)
         val typeReference = if (element.isGetter) element.typeReference else element.parameter!!.typeReference
 
         val insertedTypeRef = typeReference!!.replaced(newTypeReference)

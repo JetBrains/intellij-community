@@ -92,7 +92,7 @@ sealed class ChangeVisibilityModifierIntention(
         override fun isApplicableByPsi(element: KtDeclaration): Boolean = element.canBeInternal() && super.isApplicableByPsi(element)
     }
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtDeclaration,
     ): Presentation = Presentation.of(modifier.value)

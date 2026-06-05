@@ -34,11 +34,11 @@ class AddForLoopIndicesIntention :
         sequenceOf("collections", "sequences", "text", "ranges").map { FqName("kotlin.$it.$WITH_INDEX_NAME") }.toSet()
     }
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtForExpression
     ): Presentation? {
-        return super.getPresentation(context, element)?.withPriority(PriorityAction.Priority.LOW)
+        return super.getActionPresentation(context, element)?.withPriority(PriorityAction.Priority.LOW)
     }
 
     data class Context(val loopParameter: KtParameter)

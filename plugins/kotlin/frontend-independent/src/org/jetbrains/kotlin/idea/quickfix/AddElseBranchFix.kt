@@ -4,17 +4,17 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -26,16 +26,19 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-sealed class AddElseBranchFix<T : KtExpression>(element: T) : PsiUpdateModCommandAction<T>(element) {
+sealed class AddElseBranchFix<T : KtExpression>(element: T) : KotlinPsiUpdateModCommandAction.ElementContextless<T>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.else.branch.when")
 
-    abstract override fun getPresentation(context: ActionContext, element: T): Presentation?
+    abstract override fun getActionPresentation(context: ActionContext, element: T): Presentation?
     abstract override fun invoke(context: ActionContext, element: T, updater: ModPsiUpdater)
 }
 
-class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenExpression>(element), LowPriorityAction {
-    override fun getPresentation(context: ActionContext, element: KtWhenExpression): Presentation? =
-        Presentation.of(familyName).takeIf { element.closeBrace != null }
+class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenExpression>(element) {
+    override fun getActionPresentation(context: ActionContext, element: KtWhenExpression): Presentation? {
+        return Presentation.of(familyName)
+            .withPriority(PriorityAction.Priority.LOW)
+            .takeIf { element.closeBrace != null }
+    }
 
     override fun invoke(
         context: ActionContext,
@@ -57,7 +60,7 @@ class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenE
 }
 
 class AddIfElseBranchFix(element: KtIfExpression) : AddElseBranchFix<KtIfExpression>(element) {
-    override fun getPresentation(context: ActionContext, element: KtIfExpression): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtIfExpression): Presentation? {
         return Presentation.of(familyName).takeIf {
             element.`else` == null &&
                     element.condition != null &&

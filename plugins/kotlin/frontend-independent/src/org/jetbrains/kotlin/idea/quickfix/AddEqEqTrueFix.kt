@@ -4,21 +4,21 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-class AddEqEqTrueFix(expression: KtExpression) : PsiUpdateModCommandAction<KtExpression>(expression) {
+class AddEqEqTrueFix(expression: KtExpression) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(expression) {
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.eq.eq.true")
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtExpression,
         updater: ModPsiUpdater,
     ) {
-        element.replace(KtPsiFactory(actionContext.project).createExpressionByPattern("$0 == true", element))
+        element.replace(KtPsiFactory(context.project).createExpressionByPattern("$0 == true", element))
     }
 }

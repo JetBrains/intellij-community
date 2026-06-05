@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 class AddContextParameterFix(
     element: KtElement,
     private val contextTypes: List<String>
-) : PsiUpdateModCommandAction<KtElement>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
     override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
         val containingFunction = element.getStrictParentOfType<KtNamedFunction>() ?: return
 

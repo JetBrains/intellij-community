@@ -59,7 +59,7 @@ class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTe
     override fun getFamilyName(): String =
         KotlinBundle.message("specify.type.explicitly")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallableDeclaration,
     ): Presentation {

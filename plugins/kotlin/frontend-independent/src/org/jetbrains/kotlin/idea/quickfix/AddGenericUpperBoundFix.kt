@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
@@ -14,9 +14,9 @@ class AddGenericUpperBoundFix(
     element: KtTypeParameter,
     private val fqName: String,
     private val shortName: String,
-) : PsiUpdateModCommandAction<KtTypeParameter>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeParameter>(element) {
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtTypeParameter,
     ): Presentation {

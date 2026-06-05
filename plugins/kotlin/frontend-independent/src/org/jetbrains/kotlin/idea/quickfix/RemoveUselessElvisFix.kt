@@ -8,17 +8,18 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.dropEnclosingParenthesesIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
-class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAction<KtBinaryExpression>(element), CleanupFix.ModCommand {
+class RemoveUselessElvisFix(element: KtBinaryExpression) : KotlinPsiUpdateModCommandAction.ElementContextless<KtBinaryExpression>(element),
+    CleanupFix.ModCommand {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.elvis.operator")
 
     override fun invoke(context: ActionContext, element: KtBinaryExpression, updater: ModPsiUpdater) {
@@ -34,7 +35,7 @@ class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAc
         }
     }
 
-    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtBinaryExpression): Presentation {
         return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
     }
 }

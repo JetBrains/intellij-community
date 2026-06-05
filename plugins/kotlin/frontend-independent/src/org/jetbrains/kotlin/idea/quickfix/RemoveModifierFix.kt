@@ -6,12 +6,12 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.coMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
@@ -34,9 +34,9 @@ open class RemoveModifierFixBase(
     element: KtModifierListOwner,
     private val modifier: KtModifierKeywordToken,
     private val isRedundant: Boolean
-) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtModifierListOwner>(element) {
 
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
         if (!element.hasModifier(modifier)) return null
         val modifierText = modifier.value
         val actionName = when {

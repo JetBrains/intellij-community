@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
@@ -187,11 +187,11 @@ internal sealed class AddMemberToSupertypeFix(
   private inner class AddSelectedMemberToSupertypeFix(
     element: KtCallableDeclaration,
     private val memberData: MemberData,
-  ) : PsiUpdateModCommandAction<KtCallableDeclaration>(element) {
+  ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallableDeclaration>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.member.supertype.family", kind)
 
-    override fun getPresentation(
+    override fun getActionPresentation(
       context: ActionContext,
       element: KtCallableDeclaration,
     ): Presentation = Presentation.of(actionName(memberData)).withIcon(icon)

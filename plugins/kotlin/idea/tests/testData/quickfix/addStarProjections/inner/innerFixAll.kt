@@ -1,0 +1,12 @@
+// "Apply all 'Add star projections' fixes in file" "true"
+// K2_ERROR: One type argument expected. Use 'A.B<*>' if you do not intend to pass type arguments.
+// K2_ERROR: One type argument expected. Use 'A.B<*>' if you do not intend to pass type arguments.
+
+class A {
+    inner class B<T>
+
+    fun test(x: Any) = x is B<caret>
+    fun other(y: Any) = y is B
+}
+
+// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

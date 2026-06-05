@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtWhenEntryGuard
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtWhenEntryGuard
 class ReplaceAndWithWhenGuardFix(
     element: PsiErrorElement,
     private val newGuard: KtWhenEntryGuard
-) : PsiUpdateModCommandAction<PsiErrorElement>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiErrorElement>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.and.with.when.guard")
 
     override fun invoke(

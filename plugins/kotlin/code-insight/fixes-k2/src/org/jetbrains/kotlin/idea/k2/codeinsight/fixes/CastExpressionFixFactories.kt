@@ -41,7 +41,7 @@ internal object CastExpressionFixFactories {
         override fun getFamilyName(): String =
             KotlinBundle.message("fix.cast.expression.family")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: PsiElement
         ): Presentation {

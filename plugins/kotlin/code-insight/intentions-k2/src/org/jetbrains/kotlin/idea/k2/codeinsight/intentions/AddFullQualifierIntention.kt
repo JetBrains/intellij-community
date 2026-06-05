@@ -21,7 +21,7 @@ internal class AddFullQualifierIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.full.qualifier")
-    override fun getPresentation(context: ActionContext, element: KtNameReferenceExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtNameReferenceExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {

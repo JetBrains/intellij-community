@@ -8,6 +8,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModNothing
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -24,10 +25,10 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
 ) : PsiBasedModCommandAction<E>(element, elementClass?.java) {
 
     init {
-      check(this !is LowPriorityAction && this !is HighPriorityAction) {
-          "${javaClass.name}: neither LowPriorityAction nor HighPriorityAction have an effect on the modcommand action. " +
-                  "Specify the priority explicitly in `getPresentation` method."
-      }
+        check(this !is LowPriorityAction && this !is HighPriorityAction) {
+            "${javaClass.name}: neither LowPriorityAction nor HighPriorityAction have an effect on the modcommand action. " +
+                    "Specify the priority explicitly in `getActionPresentation` method."
+        }
     }
 
     /**
@@ -70,6 +71,38 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         element: E,
     ): C?
 
+    /**
+     * Returns `true` by default, adding the "Fix All" option to the presentation.
+     * Override and return `false` to disable it.
+     */
+    protected open fun addFixAllOption(
+        context: ActionContext,
+        element: E,
+    ): Boolean = true
+
+    /**
+     * Override to customize the presentation of the quick fix.
+     */
+    protected open fun getActionPresentation(
+        context: ActionContext,
+        element: E,
+    ): Presentation? = Presentation.of(getFamilyName())
+
+    /**
+     * Override [getActionPresentation] instead of this method to customize the presentation of the quick fix.
+     */
+    final override fun getPresentation(
+        actionContext: ActionContext,
+        element: E,
+    ): Presentation? {
+        val presentation = getActionPresentation(actionContext, element) ?: return null
+        return if (addFixAllOption(actionContext, element)) {
+            presentation.withFixAllOption(this)
+        } else {
+            presentation
+        }
+    }
+
     abstract class ElementBased<E : PsiElement, C : Any>(
         element: E,
         @FileModifier.SafeFieldForPreview private val elementContext: C,
@@ -78,7 +111,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         init {
             require(elementContext !is Unit) {
                 """
-                Use [PsiUpdateModCommandAction] if you don't need an elementContext.
+                Use [ElementContextless] if you don't need an elementContext.
                 See more in plugins/kotlin/docs/fir-ide/architecture/code-insights.md.
                 """.trimIndent()
             }
@@ -88,6 +121,28 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
             actionContext: ActionContext,
             element: E,
         ): C = elementContext
+    }
+
+    abstract class ElementContextless<E : PsiElement>(
+        element: E,
+    ) : KotlinPsiUpdateModCommandAction<E, Unit>(element, null) {
+        final override fun getElementContext(actionContext: ActionContext, element: E) {}
+
+        final override fun invoke(
+            actionContext: ActionContext,
+            element: E,
+            elementContext: Unit,
+            updater: ModPsiUpdater,
+        ) {
+            invoke(actionContext, element, updater)
+        }
+
+        @RequiresBackgroundThread
+        abstract fun invoke(
+            context: ActionContext,
+            element: E,
+            updater: ModPsiUpdater,
+        )
     }
 
     abstract class ClassBased<E : KtElement, C : Any>(
@@ -101,7 +156,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         ): C? = getElementContext(element)
     }
 
-    abstract class Contextless<E : KtElement>(
+    abstract class ClassContextless<E : KtElement>(
         elementClass: KClass<E>,
     ) : KotlinPsiUpdateModCommandAction<E, Unit>(null, elementClass) {
         final override fun getElementContext(actionContext: ActionContext, element: E) {}

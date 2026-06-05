@@ -4,15 +4,16 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class TooLongCharLiteralToStringFix(element: KtConstantExpression) : PsiUpdateModCommandAction<KtConstantExpression>(element) {
+class TooLongCharLiteralToStringFix(element: KtConstantExpression) :
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtConstantExpression>(element) {
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtConstantExpression,
         updater: ModPsiUpdater,
     ) {
@@ -25,7 +26,7 @@ class TooLongCharLiteralToStringFix(element: KtConstantExpression) : PsiUpdateMo
             .slice(1..text.length - 2)
             .replace("\\\"", "\"")
             .replace("\"", "\\\"")
-        val newElement = KtPsiFactory(actionContext.project).createStringTemplate(newStringContent)
+        val newElement = KtPsiFactory(context.project).createStringTemplate(newStringContent)
 
         element.replace(newElement)
     }

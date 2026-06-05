@@ -22,7 +22,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("demorgan.law")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtBinaryExpression,
     ): Presentation {

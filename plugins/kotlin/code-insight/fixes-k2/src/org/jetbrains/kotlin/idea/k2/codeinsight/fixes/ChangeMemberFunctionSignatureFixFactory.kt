@@ -284,7 +284,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     private class ChangeMemberFunctionSignatureFix(function: KtNamedFunction, signature: Signature, @param:Nls val text: String) :
         KotlinPsiUpdateModCommandAction.ElementBased<KtNamedFunction, Signature>(function, signature) {
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext, element: KtNamedFunction
         ): Presentation {
             return Presentation.of(text)

@@ -30,7 +30,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
 ) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.ordinary.assignment")
-    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtBinaryExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =

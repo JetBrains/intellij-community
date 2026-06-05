@@ -122,6 +122,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/abstract/abstractPropertyWithSetter.kt");
         }
 
+        @TestMetadata("addFunctionBodyFixAll.kt")
+        public void testAddFunctionBodyFixAll() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/abstract/addFunctionBodyFixAll.kt");
+        }
+
         @TestMetadata("makeEnumEntryAbstract.kt")
         public void testMakeEnumEntryAbstract() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/abstract/makeEnumEntryAbstract.kt");
@@ -2400,6 +2405,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionMultipleParameters.kt");
             }
 
+            @TestMetadata("changeToStarProjectionMultipleParametersFixAll.kt")
+            public void testChangeToStarProjectionMultipleParametersFixAll() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionMultipleParametersFixAll.kt");
+            }
+
             @TestMetadata("changeToStarProjectionNullable.kt")
             public void testChangeToStarProjectionNullable() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionNullable.kt");
@@ -2408,6 +2418,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("changeToStarProjectionSingleParameter.kt")
             public void testChangeToStarProjectionSingleParameter() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionSingleParameter.kt");
+            }
+
+            @TestMetadata("changeToStarProjectionSingleParameterFixAll.kt")
+            public void testChangeToStarProjectionSingleParameterFixAll() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionSingleParameterFixAll.kt");
             }
         }
 
@@ -2462,6 +2477,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("inner8.kt")
             public void testInner8() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner8.kt");
+            }
+
+            @TestMetadata("innerFixAll.kt")
+            public void testInnerFixAll() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/innerFixAll.kt");
             }
         }
 
@@ -10302,9 +10322,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/makeConstructorParameterProperty/val.kt");
         }
 
+        @TestMetadata("valFixAll.kt")
+        public void testValFixAll() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/makeConstructorParameterProperty/valFixAll.kt");
+        }
+
         @TestMetadata("var.kt")
         public void testVar() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/makeConstructorParameterProperty/var.kt");
+        }
+
+        @TestMetadata("varFixAll.kt")
+        public void testVarFixAll() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/makeConstructorParameterProperty/varFixAll.kt");
         }
 
         @TestMetadata("vararg.kt")

@@ -58,6 +58,6 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction.Simp
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.return.with.if.expression")
 
-    override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 }

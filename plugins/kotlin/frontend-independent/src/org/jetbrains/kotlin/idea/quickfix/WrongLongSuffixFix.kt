@@ -4,15 +4,16 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class WrongLongSuffixFix(element: KtConstantExpression) : PsiUpdateModCommandAction<KtConstantExpression>(element) {
+class WrongLongSuffixFix(element: KtConstantExpression) :
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtConstantExpression>(element) {
     private val corrected = element.text.trimEnd('l') + 'L'
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtConstantExpression,
     ): Presentation {
@@ -22,10 +23,10 @@ class WrongLongSuffixFix(element: KtConstantExpression) : PsiUpdateModCommandAct
     override fun getFamilyName(): String = KotlinBundle.message("change.to.correct.long.suffix.l")
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtConstantExpression,
         updater: ModPsiUpdater,
     ) {
-        element.replace(KtPsiFactory(actionContext.project).createExpression(corrected))
+        element.replace(KtPsiFactory(context.project).createExpression(corrected))
     }
 }

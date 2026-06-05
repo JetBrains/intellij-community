@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddStarProjectionsFix
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils
@@ -39,14 +39,14 @@ internal object AddStarProjectionsFixFactory {
     private class AddStartProjectionsForInnerClass(
         element: KtTypeReference,
         val replaceString: String,
-    ) : PsiUpdateModCommandAction<KtTypeReference>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeReference>(element) {
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtTypeReference,
             updater: ModPsiUpdater,
         ) {
-            val psiFactory = KtPsiFactory(actionContext.project)
+            val psiFactory = KtPsiFactory(context.project)
             val replacement = psiFactory.createType(replaceString)
             element.replace(replacement)
         }

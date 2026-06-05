@@ -7,12 +7,12 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommand.chooseAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiBasedModCommandAction
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.getApplicableUseSiteTargets
@@ -86,7 +86,7 @@ internal object WrongAnnotationTargetFixFactories {
     private class AddAnnotationUseSiteTargetFix(
         element: KtAnnotationEntry,
         private val useSiteTarget: AnnotationUseSiteTarget,
-    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(element) {
 
         override fun getFamilyName(): String {
             return KotlinBundle.message("text.add.use.site.target.0", useSiteTarget.renderName)
@@ -104,7 +104,7 @@ internal object WrongAnnotationTargetFixFactories {
     private class ChangeConstructorParameterUseSiteTargetFix(
         annotationEntry: KtAnnotationEntry,
         private val useSiteTarget: AnnotationUseSiteTarget,
-    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(annotationEntry) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(annotationEntry) {
         override fun invoke(
             context: ActionContext,
             element: KtAnnotationEntry,

@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -54,7 +54,7 @@ internal object NoReturnValueFactory {
     private class UnderscoreValueFix(
         element: KtElement,
         private val parentPointer: SmartPsiElementPointer<PsiElement>,
-    ) : PsiUpdateModCommandAction<KtElement>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
         override fun getFamilyName(): String = KotlinBundle.message("explicitly.ignore.return.value")
 
         override fun invoke(

@@ -46,7 +46,7 @@ internal class RemoveBracesIntention: KotlinApplicableModCommandAction.Simple<Kt
         }
     }
 
-    override fun getPresentation(context: ActionContext, element: KtElement): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtElement): Presentation? {
         val block = element.findChildBlock() ?: return null
         if (!Holder.isApplicableTo(block)) return null
 

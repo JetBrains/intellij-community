@@ -36,7 +36,7 @@ internal class MoveLambdaInsideParenthesesIntention :
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("move.lambda.argument.into.parentheses")
 
-    override fun getPresentation(context: ActionContext, element: KtLambdaArgument): Presentation? =
+    override fun getActionPresentation(context: ActionContext, element: KtLambdaArgument): Presentation? =
         if (isElementApplicable(element, context)) {
             Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
         } else {

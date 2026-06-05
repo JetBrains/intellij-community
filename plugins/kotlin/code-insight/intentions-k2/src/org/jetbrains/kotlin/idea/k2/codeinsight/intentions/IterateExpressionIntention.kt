@@ -99,7 +99,7 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("iterate.over.collection")
 
     @OptIn(KaExperimentalApi::class)
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtExpression,
     ): Presentation? {

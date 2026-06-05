@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -70,9 +70,9 @@ object OverrideAccessorFunctionFixFactory {
 
 
     private class PropertyToAccessors(element: KtProperty, private val propertyTypeWithFqNames: String) :
-        PsiUpdateModCommandAction<KtProperty>(element) {
+        KotlinPsiUpdateModCommandAction.ElementContextless<KtProperty>(element) {
 
-        override fun getPresentation(context: ActionContext, element: KtProperty): Presentation =
+        override fun getActionPresentation(context: ActionContext, element: KtProperty): Presentation =
             Presentation.of(KotlinBundle.message("make.override.accessor.function.0", element.name.toString()))
 
         override fun getFamilyName(): String = KotlinBundle.message("override.accessor.functions.instead")

@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -19,7 +19,7 @@ private val sourceRetentionAnnotation = "@${StandardNames.FqNames.retention.asSt
 
 class AddSourceRetentionFix(
     element: KtClass,
-) : PsiUpdateModCommandAction<KtClass>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtClass>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("add.source.retention")
 
@@ -35,7 +35,7 @@ class AddSourceRetentionFix(
 
 class ChangeRetentionToSourceFix(
     element: KtAnnotationEntry,
-) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("change.existent.retention.to.source")
 
@@ -61,7 +61,7 @@ class ChangeRetentionToSourceFix(
 
 class RemoveExpressionTargetFix(
     element: KtValueArgument,
-) : PsiUpdateModCommandAction<KtValueArgument>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtValueArgument>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.expression.target")
 

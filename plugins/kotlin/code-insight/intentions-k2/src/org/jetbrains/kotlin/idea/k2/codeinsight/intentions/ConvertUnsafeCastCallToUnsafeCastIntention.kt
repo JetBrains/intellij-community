@@ -28,7 +28,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : KotlinApplicableModCommandAct
 
   override fun getFamilyName(): String = KotlinBundle.message("convert.to.unsafe.cast")
 
-  override fun getPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation? {
+  override fun getActionPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation? {
     val elementContext = getElementContext(context, element) ?: return null
     return Presentation.of(KotlinBundle.message("convert.to.0.as.1", elementContext.receiverText, elementContext.typeText))
   }

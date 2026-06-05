@@ -31,7 +31,7 @@ internal class ConvertArrayParameterToVarargIntention :
     override fun isApplicableByPsi(element: KtParameter): Boolean =
         !element.isLambdaParameter && !element.isVarArg && !element.isFunctionTypeParameter
 
-    override fun getPresentation(context: ActionContext, element: KtParameter): Presentation? = analyze(element) {
+    override fun getActionPresentation(context: ActionContext, element: KtParameter): Presentation? = analyze(element) {
         val typeReference = element.typeReference ?: return null
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val type = symbol.returnType as? KaClassType? ?: return null

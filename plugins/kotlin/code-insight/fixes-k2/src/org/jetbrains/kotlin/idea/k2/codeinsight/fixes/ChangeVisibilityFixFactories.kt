@@ -72,7 +72,7 @@ internal object ChangeVisibilityFixFactories {
             visibilityModifier,
         )
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtDeclaration,
         ): Presentation {
@@ -109,8 +109,8 @@ internal object ChangeVisibilityFixFactories {
 
     private class ChangeToPrivateModCommandAction(element: KtDeclaration, elementName: String) :
         ChangeVisibilityModCommandAction(element, ElementContext(elementName), false, KtTokens.PRIVATE_KEYWORD) {
-            override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation =
-                super.getPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
+            override fun getActionPresentation(context: ActionContext, element: KtDeclaration): Presentation =
+                super.getActionPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
         }
 
     private class ChangeToInternalModCommandAction(element: KtDeclaration, elementName: String):
@@ -121,8 +121,8 @@ internal object ChangeVisibilityFixFactories {
 
     private class ChangeToPublicModCommandAction(element: KtDeclaration, elementName: String, forceUsingExplicitModifier: Boolean = true) :
         ChangeVisibilityModCommandAction(element, ElementContext(elementName), forceUsingExplicitModifier, KtTokens.PUBLIC_KEYWORD) {
-            override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation =
-                super.getPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
+            override fun getActionPresentation(context: ActionContext, element: KtDeclaration): Presentation =
+                super.getActionPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
         }
 
     val noExplicitVisibilityInApiMode =
@@ -425,4 +425,3 @@ internal object ChangeVisibilityFixFactories {
         }
     }
 }
-

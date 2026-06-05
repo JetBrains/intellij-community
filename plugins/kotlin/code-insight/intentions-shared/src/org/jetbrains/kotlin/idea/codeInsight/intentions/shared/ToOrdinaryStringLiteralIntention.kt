@@ -45,7 +45,7 @@ internal class ToOrdinaryStringLiteralIntention :
 
     override fun KaSession.prepareContext(element: KtStringTemplateExpression): Unit = Unit
 
-    override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun invoke(

@@ -6,16 +6,16 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 
-class RemoveRedundantSpreadOperatorFix(element: PsiElement) : PsiUpdateModCommandAction<PsiElement>(element) {
+class RemoveRedundantSpreadOperatorFix(element: PsiElement) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.remove.redundant.star.text")
 
     override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {

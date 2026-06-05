@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.checkers.OptInDescription
 
 class RemoveWrongOptInAnnotationTargetFix(element: KtAnnotationEntry) :
-    PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.opt_in.remove.all.forbidden.targets")
 

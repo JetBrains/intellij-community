@@ -26,7 +26,7 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with1")
 
-    override fun getPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtDotQualifiedExpression): Presentation? {
         val calleeName = element.calleeName ?: return null
         return Presentation.of(KotlinBundle.message("replace.0.with", calleeName))
     }

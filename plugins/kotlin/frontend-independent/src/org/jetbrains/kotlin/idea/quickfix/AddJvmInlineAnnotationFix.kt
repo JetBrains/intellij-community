@@ -3,17 +3,17 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 
-class AddJvmInlineAnnotationFix(klass: KtClass) : PsiUpdateModCommandAction<KtClass>(klass) {
+class AddJvmInlineAnnotationFix(klass: KtClass) : KotlinPsiUpdateModCommandAction.ElementContextless<KtClass>(klass) {
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtClass,
         updater: ModPsiUpdater,
     ) {

@@ -7,11 +7,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 open class AddModifierFix(
     element: KtModifierListOwner,
     protected val modifier: KtModifierKeywordToken,
-) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? =
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtModifierListOwner>(element) {
+    override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? =
         getPresentationImpl(element)
 
     fun getPresentationImpl(element: KtModifierListOwner): Presentation? {

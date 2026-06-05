@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,8 +30,8 @@ open class AddFileAnnotationFix(
     private val annotationFqName: FqName,
     private val argumentClassFqName: FqName? = null,
     private val annotationFinder: (KtFile, FqName) -> KtAnnotationEntry? = { _, _ -> null },
-) : PsiUpdateModCommandAction<KtFile>(element) {
-    override fun getPresentation(context: ActionContext, element: KtFile): Presentation {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtFile>(element) {
+    override fun getActionPresentation(context: ActionContext, element: KtFile): Presentation {
         val annotationName = annotationFqName.shortName().asString()
         val innerText = argumentClassFqName?.shortName()?.asString()?.let { "$it::class" } ?: ""
         val annotationText = "$annotationName($innerText)"
@@ -101,7 +101,7 @@ open class AddFileAnnotationFix(
 /**
  * A specialized version of [AddFileAnnotationFix] that adds @OptIn(...) annotations to the containing file.
  *
- * This class reuses the parent's [invoke] method, but overrides the [getPresentation] method to provide
+ * This class reuses the parent's [invoke] method, but overrides [getActionPresentation] to provide
  * more descriptive opt-in related messages.
  *
  * TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
@@ -118,7 +118,7 @@ class UseOptInFileAnnotationFix(
     private val argumentClassFqName: FqName
 ) : AddFileAnnotationFix(element, optInFqName, argumentClassFqName, annotationFinder) {
 
-    override fun getPresentation(context: ActionContext, element: KtFile): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtFile): Presentation {
         val argumentText = argumentClassFqName.shortName().asString()
         val actionName = KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, element.name)
         return Presentation.of(actionName)

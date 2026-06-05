@@ -34,7 +34,7 @@ class AddModifierFixMpp(
 ) : ModCommandAction {
 
     private val addModifierFix = object : AddModifierFix(element, modifier) {
-        override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation =
+        override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation =
             Presentation.of(KotlinBundle.message("action.text.continue"))
 
         override fun invoke(context: ActionContext, element: KtModifierListOwner, updater: ModPsiUpdater) {

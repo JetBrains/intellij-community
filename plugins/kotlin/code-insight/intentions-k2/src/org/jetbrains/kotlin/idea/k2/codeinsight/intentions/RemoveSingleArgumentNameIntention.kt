@@ -37,7 +37,7 @@ internal class RemoveSingleArgumentNameIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.argument.name")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtValueArgument,
     ): Presentation? = element.getArgumentName()?.let {

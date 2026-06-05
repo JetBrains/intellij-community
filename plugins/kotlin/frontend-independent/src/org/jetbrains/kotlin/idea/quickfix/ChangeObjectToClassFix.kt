@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 class ChangeObjectToClassFix(
     element: KtObjectDeclaration,
     private val addModifier: KtModifierKeywordToken? = null
-) : PsiUpdateModCommandAction<KtObjectDeclaration>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtObjectDeclaration>(element) {
 
     override fun getFamilyName(): String =
         if (addModifier != null) {
@@ -22,11 +22,11 @@ class ChangeObjectToClassFix(
         }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtObjectDeclaration,
         updater: ModPsiUpdater,
     ) {
-        val psiFactory = KtPsiFactory(actionContext.project)
+        val psiFactory = KtPsiFactory(context.project)
         element.getObjectKeyword()?.replace(psiFactory.createClassKeyword())
         addModifier?.let(element::addModifier)
     }

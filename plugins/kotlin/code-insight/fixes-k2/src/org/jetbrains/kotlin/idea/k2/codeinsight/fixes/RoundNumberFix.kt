@@ -6,17 +6,17 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
-internal class RoundNumberFix : PsiUpdateModCommandAction<KtExpression> {
+internal class RoundNumberFix : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression> {
     private val roundFunction: String
 
     constructor(element: KtExpression, expectedType: String) : super(element) {
@@ -24,7 +24,7 @@ internal class RoundNumberFix : PsiUpdateModCommandAction<KtExpression> {
     }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("round.using.0", roundFunction)
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun invoke(

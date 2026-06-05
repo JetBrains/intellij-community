@@ -30,7 +30,7 @@ internal class ReconstructTypeInCastOrIsIntention :
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.by.reconstructed.type")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtTypeReference,
     ): Presentation? {

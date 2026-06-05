@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class ReplacePrimitiveCastWithNumberConversionFix(
     element: KtBinaryExpressionWithTypeRHS,
     private val targetShortType: String,
-) : PsiUpdateModCommandAction<KtBinaryExpressionWithTypeRHS>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtBinaryExpressionWithTypeRHS>(element) {
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtBinaryExpressionWithTypeRHS,
     ): Presentation = Presentation.of(
@@ -28,11 +28,11 @@ class ReplacePrimitiveCastWithNumberConversionFix(
         KotlinBundle.message("replace.cast.with.primitive.conversion.method")
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtBinaryExpressionWithTypeRHS,
         updater: ModPsiUpdater,
     ) {
-        val psiFactory = KtPsiFactory(actionContext.project)
+        val psiFactory = KtPsiFactory(context.project)
         val replaced = element.replaced(psiFactory.createExpressionByPattern("$0.to$1()", element.left, targetShortType))
         updater.moveCaretTo(replaced.endOffset)
     }

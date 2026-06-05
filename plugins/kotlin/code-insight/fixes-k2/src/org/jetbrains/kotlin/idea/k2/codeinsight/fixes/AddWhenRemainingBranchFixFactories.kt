@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
@@ -46,7 +46,7 @@ internal object AddWhenRemainingBranchFixFactories {
     private class AddRemainingWhenBranchesQuickFix(
         element: KtWhenExpression,
         private val elementContext: AddRemainingWhenBranchesUtils.ElementContext,
-    ) : PsiUpdateModCommandAction<KtWhenExpression>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtWhenExpression>(element) {
         override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(elementContext.enumToStarImport != null)
         override fun invoke(
             context: ActionContext,

@@ -41,7 +41,7 @@ internal class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<Kt
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.return.with.when.expression")
 
-    override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation? =
+    override fun getActionPresentation(context: ActionContext, element: KtReturnExpression): Presentation? =
         if (isElementApplicable(element, context)) {
             Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
         } else {

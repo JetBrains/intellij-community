@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -81,7 +81,7 @@ private fun toLong(constValue: Any?): Long? = when (constValue) {
 class WrongPrimitiveLiteralFix private constructor(
     element: KtExpression,
     private val primitiveLiteral: PrimitiveLiteralData,
-) : PsiUpdateModCommandAction<KtExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     companion object {
         internal fun createIfAvailable(
@@ -109,7 +109,7 @@ class WrongPrimitiveLiteralFix private constructor(
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("change.to.correct.primitive.type")
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation =
         Presentation.of(KotlinBundle.message("change.to.0", primitiveLiteral.fixedExpression))
 
     override fun invoke(

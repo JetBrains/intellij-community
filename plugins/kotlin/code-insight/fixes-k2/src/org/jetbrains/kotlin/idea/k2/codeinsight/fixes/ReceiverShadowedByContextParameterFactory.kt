@@ -5,13 +5,13 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -50,7 +50,7 @@ internal object ReceiverShadowedByContextParameterFactory {
 private class AddExplicitThisFix(
     expression: KtExpression,
     private val isDispatchOfMemberExtension: Boolean
-) : PsiUpdateModCommandAction<KtExpression>(expression) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(expression) {
     override fun invoke(
         context: ActionContext,
         element: KtExpression,
@@ -68,7 +68,7 @@ private class AddExplicitThisFix(
         )
     }
 
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation {
         return Presentation.of(
             KotlinBundle.message(
                 if (isDispatchOfMemberExtension) {
@@ -88,7 +88,7 @@ private class AddContextParameterReceiverFix(
     expression: KtExpression,
     private val isDispatchOfMemberExtension: Boolean,
     private val nameOrContextOfCall: String
-) : PsiUpdateModCommandAction<KtExpression>(expression) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(expression) {
     override fun invoke(
         context: ActionContext,
         element: KtExpression,
@@ -106,7 +106,7 @@ private class AddContextParameterReceiverFix(
         )
     }
 
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation {
+    override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation {
         return Presentation.of(
             KotlinBundle.message(
                 if (isDispatchOfMemberExtension) {

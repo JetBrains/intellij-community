@@ -5,8 +5,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix.Companion.modalityModifiers
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase.Companion.getElementName
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -18,9 +18,9 @@ class ChangeModifiersFix(
     private val removeModifier: KtModifierKeywordToken? = null,
     private val isRemovedModifierRedundant: Boolean = false,
     private val addModifier: KtModifierKeywordToken? = null,
-) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtModifierListOwner>(element) {
 
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
         val actionName = when {
             addModifier != null && removeModifier != null -> {
                 KotlinBundle.message(
@@ -85,10 +85,15 @@ class ChangeModifiersFix(
     }
 
     companion object {
-        fun removeModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken, isRedundant: Boolean = false): PsiUpdateModCommandAction<KtModifierListOwner> =
-            ChangeModifiersFix(element, removeModifier = modifier, isRemovedModifierRedundant = isRedundant)
+        fun removeModifierFix(
+            element: KtModifierListOwner,
+            modifier: KtModifierKeywordToken,
+            isRedundant: Boolean = false,
+        ): ChangeModifiersFix = ChangeModifiersFix(element, removeModifier = modifier, isRemovedModifierRedundant = isRedundant)
 
-        fun addModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): PsiUpdateModCommandAction<KtModifierListOwner> =
-            ChangeModifiersFix(element, addModifier = modifier)
+        fun addModifierFix(
+            element: KtModifierListOwner,
+            modifier: KtModifierKeywordToken,
+        ): ChangeModifiersFix = ChangeModifiersFix(element, addModifier = modifier)
     }
 }

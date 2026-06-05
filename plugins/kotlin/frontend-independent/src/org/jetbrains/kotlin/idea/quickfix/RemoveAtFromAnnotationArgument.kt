@@ -3,17 +3,17 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.util.firstLeaf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
 private val LOG = Logger.getInstance(RemoveAtFromAnnotationArgument::class.java)
 
 class RemoveAtFromAnnotationArgument(
     element: KtAnnotationEntry,
-) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtAnnotationEntry>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.from.annotation.argument")
 

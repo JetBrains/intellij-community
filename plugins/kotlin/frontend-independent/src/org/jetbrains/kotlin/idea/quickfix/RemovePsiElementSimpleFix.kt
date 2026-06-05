@@ -7,10 +7,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
@@ -27,10 +27,10 @@ import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @Nls private val text: String) :
-    PsiUpdateModCommandAction<PsiElement>(element) {
+    KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.element")
 
-    override fun getPresentation(context: ActionContext, element: PsiElement): Presentation = Presentation.of(text)
+    override fun getActionPresentation(context: ActionContext, element: PsiElement): Presentation = Presentation.of(text)
 
     override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater): Unit = element.delete()
 

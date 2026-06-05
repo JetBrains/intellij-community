@@ -3,20 +3,20 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ChangeToFunctionInvocationFix(element: KtExpression) : PsiUpdateModCommandAction<KtExpression>(element) {
+class ChangeToFunctionInvocationFix(element: KtExpression) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtExpression,
         updater: ModPsiUpdater,
     ) {
-        val psiFactory = KtPsiFactory(actionContext.project)
+        val psiFactory = KtPsiFactory(context.project)
         val nextLiteralStringEntry = element.parent.nextSibling as? KtLiteralStringTemplateEntry
         val nextText = nextLiteralStringEntry?.text
         if (nextText != null && nextText.startsWith("(") && nextText.contains(")")) {

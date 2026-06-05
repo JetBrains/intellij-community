@@ -90,7 +90,7 @@ internal class ConvertLambdaToReferenceIntention :
     override fun getFamilyName(): String =
         KotlinBundle.message("convert.lambda.to.reference.before.text")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtLambdaExpression,
     ): Presentation = Presentation.of(

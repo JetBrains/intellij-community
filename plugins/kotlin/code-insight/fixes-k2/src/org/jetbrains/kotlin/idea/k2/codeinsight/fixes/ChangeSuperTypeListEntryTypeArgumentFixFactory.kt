@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.PropertyTypeMismatchOnOverride
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
@@ -109,36 +109,36 @@ internal object ChangeSuperTypeListEntryTypeArgumentFixFactory {
         private val shortTypeName: String,
         private val fqTypeName: String,
         private val typeArgumentIndex: Int
-    ) : PsiUpdateModCommandAction<KtSuperTypeListEntry>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtSuperTypeListEntry>(element) {
 
         override fun getFamilyName() = KotlinBundle.message("fix.change.type.argument", shortTypeName)
 
         override fun invoke(
             context: ActionContext,
-            superTypeListEntry: KtSuperTypeListEntry,
+            element: KtSuperTypeListEntry,
             updater: ModPsiUpdater
         ) {
-            val typeArgumentList = superTypeListEntry.typeAsUserType?.typeArgumentList?.arguments?.mapIndexed { index, typeProjection ->
+            val typeArgumentList = element.typeAsUserType?.typeArgumentList?.arguments?.mapIndexed { index, typeProjection ->
                 if (index == typeArgumentIndex) fqTypeName else typeProjection.text
             }?.joinToString(prefix = "<", postfix = ">", separator = ", ") { it } ?: return
 
             val psiFactory = KtPsiFactory(context.project)
-            val newElement = when (superTypeListEntry) {
+            val newElement = when (element) {
                 is KtSuperTypeEntry -> {
-                    val classReference = superTypeListEntry.typeAsUserType?.referenceExpression?.text ?: return
+                    val classReference = element.typeAsUserType?.referenceExpression?.text ?: return
                     psiFactory.createSuperTypeEntry("$classReference$typeArgumentList")
                 }
 
                 is KtSuperTypeCallEntry -> {
-                    val classReference = superTypeListEntry.calleeExpression.constructorReferenceExpression?.text ?: return
-                    val valueArgumentList = superTypeListEntry.valueArgumentList?.text ?: return
+                    val classReference = element.calleeExpression.constructorReferenceExpression?.text ?: return
+                    val valueArgumentList = element.valueArgumentList?.text ?: return
                     psiFactory.createSuperTypeCallEntry("$classReference$typeArgumentList$valueArgumentList")
                 }
 
                 else -> return
             }
 
-            shortenReferences(superTypeListEntry.replace(newElement) as KtElement)
+            shortenReferences(element.replace(newElement) as KtElement)
         }
     }
 }

@@ -38,7 +38,7 @@ internal class SwapBinaryExpressionIntention : KotlinApplicableModCommandAction.
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         listOf(element.operationReference.textRangeInParent)
 
-    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
         if (leftSubject(element) == null || rightSubject(element) == null) {
             return null
         }

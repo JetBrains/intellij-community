@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
@@ -19,7 +19,7 @@ private val LOG = Logger.getInstance(AddInterpolationPrefixFix::class.java)
  * The fix adds an interpolation prefix to the string without updating entries
  */
 class AddInterpolationPrefixFix(element: KtStringTemplateExpression, val prefixLength: Int) :
-    PsiUpdateModCommandAction<KtStringTemplateExpression>(element) {
+    KotlinPsiUpdateModCommandAction.ElementContextless<KtStringTemplateExpression>(element) {
     override fun invoke(
         context: ActionContext,
         element: KtStringTemplateExpression,

@@ -29,7 +29,7 @@ internal class RemoveAllArgumentNamesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.all.argument.names")
 
-    override fun getPresentation(context: ActionContext, element: KtCallElement): Presentation? {
+    override fun getActionPresentation(context: ActionContext, element: KtCallElement): Presentation? {
         val elementContext = getElementContext(context, element) ?: return null
         val messageKey = if (elementContext.removeAll) {
             "remove.all.argument.names"

@@ -70,7 +70,7 @@ internal class ConvertToIndexedFunctionCallIntention :
         return Context(callee.text, newFunctionName, functionLiteral)
     }
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtCallExpression,
     ): Presentation? {

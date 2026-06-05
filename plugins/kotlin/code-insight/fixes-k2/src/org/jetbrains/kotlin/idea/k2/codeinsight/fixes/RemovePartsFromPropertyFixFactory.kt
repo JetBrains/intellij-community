@@ -83,7 +83,7 @@ internal object RemovePartsFromPropertyFixFactory {
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.parts.from.property")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtProperty,
         ): Presentation {

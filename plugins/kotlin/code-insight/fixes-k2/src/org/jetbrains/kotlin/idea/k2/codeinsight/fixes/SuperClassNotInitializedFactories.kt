@@ -118,7 +118,7 @@ internal object SuperClassNotInitializedFactories {
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("change.to.constructor.invocation")
-        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation =
+        override fun getActionPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation =
             Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
     }
 
@@ -182,7 +182,7 @@ internal object SuperClassNotInitializedFactories {
             return KotlinBundle.message("add.constructor.parameters.from.superclass")
         }
 
-        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation {
+        override fun getActionPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation {
             return Presentation.of(
                 KotlinBundle.message("add.constructor.parameters.from.0.1", superClassName, renderedTypesForName)
             )

@@ -5,17 +5,17 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ChangeToUseSpreadOperatorFix(element: KtExpression) : PsiUpdateModCommandAction<KtExpression>(element) {
+class ChangeToUseSpreadOperatorFix(element: KtExpression) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     override fun getFamilyName(): String =
         KotlinBundle.message("fix.change.to.use.spread.operator.family")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtExpression,
     ): Presentation = Presentation.of(
@@ -23,11 +23,11 @@ class ChangeToUseSpreadOperatorFix(element: KtExpression) : PsiUpdateModCommandA
     )
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtExpression,
         updater: ModPsiUpdater,
     ) {
-        val star = KtPsiFactory(actionContext.project).createStar()
+        val star = KtPsiFactory(context.project).createStar()
         element.parent.addBefore(star, element)
     }
 }

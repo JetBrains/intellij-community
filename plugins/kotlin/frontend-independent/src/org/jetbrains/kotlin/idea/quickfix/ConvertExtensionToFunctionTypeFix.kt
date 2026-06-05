@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
 
@@ -15,8 +15,8 @@ class ConvertExtensionToFunctionTypeFix(
     element: KtTypeReference,
     private val targetTypeStringShort: String,
     private val targetTypeStringLong: String
-) : PsiUpdateModCommandAction<KtTypeReference>(element)  {
-    override fun getPresentation(context: ActionContext, element: KtTypeReference): Presentation {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeReference>(element)  {
+    override fun getActionPresentation(context: ActionContext, element: KtTypeReference): Presentation {
         return Presentation.of(KotlinBundle.message("convert.supertype.to.0", targetTypeStringShort))
     }
 

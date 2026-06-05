@@ -5,9 +5,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -33,11 +33,11 @@ internal object ReplaceArrayEqualityOpWithContentEqualsFixFactory {
     private class ReplaceWithContentEqualsFix(
         element: KtBinaryExpression,
         private val operatorContext: ElementContext,
-    ) : PsiUpdateModCommandAction<KtBinaryExpression>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtBinaryExpression>(element) {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.content.equals")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtBinaryExpression,
         ): Presentation {
@@ -50,7 +50,7 @@ internal object ReplaceArrayEqualityOpWithContentEqualsFixFactory {
         }
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtBinaryExpression,
             updater: ModPsiUpdater,
         ) {

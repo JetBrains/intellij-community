@@ -6,7 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.PropertyKey
@@ -153,10 +152,10 @@ private class UpdateToCorrectMethodFix(
 private class SpecifySuperTypeExplicitlyFix(
     element: KtSuperExpression,
     private val superType: FqName,
-) : PsiUpdateModCommandAction<KtSuperExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtSuperExpression>(element) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("action.generate.super.type")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtSuperExpression,
     ): Presentation {

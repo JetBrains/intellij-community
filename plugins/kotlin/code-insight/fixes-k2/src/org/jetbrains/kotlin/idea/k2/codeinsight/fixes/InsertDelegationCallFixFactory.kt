@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -56,10 +56,10 @@ internal object InsertDelegationCallFixFactory {
     private class InsertDelegationCallFix(
         element: KtSecondaryConstructor,
         private val isThis: Boolean,
-    ) : PsiUpdateModCommandAction<KtSecondaryConstructor>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtSecondaryConstructor>(element) {
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtSecondaryConstructor,
             updater: ModPsiUpdater,
         ) {
@@ -76,7 +76,7 @@ internal object InsertDelegationCallFixFactory {
             updater.moveCaretTo(leftParOffset + 1)
         }
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtSecondaryConstructor,
         ): Presentation {

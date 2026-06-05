@@ -25,7 +25,7 @@ internal class AddLabeledReturnInLambdaIntention : KotlinApplicableModCommandAct
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.labeled.return.to.last.expression.in.a.lambda")
 
-    override fun getPresentation(
+    override fun getActionPresentation(
         context: ActionContext,
         element: KtBlockExpression,
     ): Presentation? {

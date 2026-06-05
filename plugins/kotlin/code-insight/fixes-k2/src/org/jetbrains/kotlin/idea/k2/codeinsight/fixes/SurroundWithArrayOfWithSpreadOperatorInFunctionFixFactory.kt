@@ -36,7 +36,7 @@ internal object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
         override fun getFamilyName(): String =
             KotlinBundle.message("surround.with.array.of")
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtExpression,
         ): Presentation {

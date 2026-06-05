@@ -162,7 +162,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val elementContext: String,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtAnnotationEntry, String>(element, elementContext) {
 
-        override fun getPresentation(
+        override fun getActionPresentation(
             context: ActionContext,
             element: KtAnnotationEntry,
         ): Presentation {

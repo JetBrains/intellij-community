@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,7 +22,7 @@ internal class UnfoldPropertyToIfIntention :
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("replace.property.initializer.with.if.expression")
 
-    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation =
+    override fun getActionPresentation(context: ActionContext, element: KtProperty): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtProperty): Boolean =

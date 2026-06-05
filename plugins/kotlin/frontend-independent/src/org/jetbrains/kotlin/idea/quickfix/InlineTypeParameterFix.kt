@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.psi.KtElement
@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 class InlineTypeParameterFix(
     element: KtTypeReference,
     private val typeReferencesToInline: List<SmartPsiElementPointer<KtTypeReference>>,
-) : PsiUpdateModCommandAction<KtTypeReference>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtTypeReference>(element) {
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtTypeReference,
         updater: ModPsiUpdater,
     ) {

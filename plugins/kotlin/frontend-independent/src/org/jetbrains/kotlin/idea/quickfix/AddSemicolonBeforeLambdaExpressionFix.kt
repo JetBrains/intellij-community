@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddSemicolonBeforeLambdaExpressionFix(
     element: KtLambdaExpression
-) : PsiUpdateModCommandAction<KtLambdaExpression>(element) {
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtLambdaExpression>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.semicolon.lambda.expression")
 
