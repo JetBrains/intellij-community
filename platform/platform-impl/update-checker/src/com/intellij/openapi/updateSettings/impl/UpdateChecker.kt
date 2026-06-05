@@ -938,6 +938,9 @@ private fun showUpdatePluginsNotification(
       NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatesForPlugins.size)) { e, _ ->
         coroutineScope.launch {
           val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?
+          updatesForPlugins.forEach {
+            PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(it.pluginId, it.repositoryName)
+          }
           PluginUpdateHandler.getInstance().installUpdates(sessionId, updatesForPlugins, component, null)
         }
       },
