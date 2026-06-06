@@ -42,13 +42,15 @@ class OutdatedGradleVersionIssue(
     ))
 
     addGradleVersionQuickFix(projectPath, latestVersion)
+
+    setNavigatable(::gradleWrapperPropertiesNavigatable)
   }
 
   /**
    * Try to navigate to the 'gradle-wrapper.properties' file
    * and place the caret after the current Gradle version in the 'distributionUrl' property.
    */
-  override fun getNavigatable(project: Project): Navigatable? {
+  private fun gradleWrapperPropertiesNavigatable(project: Project): Navigatable? {
     val basePath = project.basePath ?: return null
 
     return ReadAction.nonBlocking<Navigatable?> {
