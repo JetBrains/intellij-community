@@ -28,6 +28,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -122,7 +123,17 @@ internal class CodexSessionSource internal constructor(
       return emptyMap()
     }
 
-    val requestedThreads = threads.map(AgentSessionThread::toRequestedCostThread)
+    val requestedThreads = threads.asSequence()
+      .map(AgentSessionThread::toRequestedCostThread)
+      .mapNotNull { thread ->
+        val concreteThreadId = normalizeConcreteAgentSessionThreadId(thread.threadId) ?: return@mapNotNull null
+        if (concreteThreadId == thread.threadId) thread else thread.copy(threadId = concreteThreadId)
+      }
+      .toList()
+    if (requestedThreads.isEmpty()) {
+      return emptyMap()
+    }
+
     val costsByThreadId = LinkedHashMap<String, AgentSessionCost?>()
     val unresolvedThreads = ArrayList<RequestedCodexThreadCost>(requestedThreads.size)
     for (thread in requestedThreads) {
@@ -142,6 +153,7 @@ internal class CodexSessionSource internal constructor(
     val threadsWithoutExactRollout = unresolvedThreads.filter { thread -> thread.threadId !in exactRolloutThreadsById }
     val requestedThreadIds = threadsWithoutExactRollout.asSequence()
       .map(RequestedCodexThreadCost::threadId)
+      .mapNotNull(::normalizeConcreteAgentSessionThreadId)
       .toCollection(LinkedHashSet())
     val backendThreadsById = loadBackendThreads(path = path, threadIds = requestedThreadIds)
     val threadsWithoutExactCost = threadsWithoutExactRollout.filter { thread ->

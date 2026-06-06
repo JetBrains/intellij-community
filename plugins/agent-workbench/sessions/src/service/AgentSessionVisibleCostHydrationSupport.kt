@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.isWorking
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
@@ -13,13 +16,16 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionVisibleCostHydrationSupport>()
+private val VISIBLE_COST_HYDRATION_DELAY = 750.milliseconds
 
 internal class AgentSessionVisibleCostHydrationSupport(
   private val serviceScope: CoroutineScope,
@@ -44,6 +50,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
         if (!snapshot.toolWindowVisible || !snapshot.costEnabled) {
           return@collectLatest
         }
+        delay(VISIBLE_COST_HYDRATION_DELAY)
         hydrateVisibleThreadCosts(snapshot.state)
       }
     }
@@ -61,6 +68,13 @@ internal class AgentSessionVisibleCostHydrationSupport(
     val loadRequests = LinkedHashMap<Pair<AgentSessionSource, String>, MutableList<VisibleThreadSnapshot>>()
 
     for (visibleThread in visibleThreads) {
+      if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {
+        continue
+      }
+      if (visibleThread.activity.isWorking) {
+        continue
+      }
+
       val cacheKey = visibleThread.cacheKey
       val cacheEntry = costCache[cacheKey]
 
@@ -210,6 +224,9 @@ private data class VisibleThreadSnapshot(
 
   val cost: AgentSessionCost?
     get() = thread.cost
+
+  val activity: AgentThreadActivity
+    get() = thread.activity
 
   val cacheKey: ThreadCacheKey
     get() = ThreadCacheKey(path = path, provider = provider, threadId = threadId)

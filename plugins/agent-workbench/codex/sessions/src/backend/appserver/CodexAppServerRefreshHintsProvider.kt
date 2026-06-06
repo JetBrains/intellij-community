@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshT
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.Job
@@ -129,7 +130,7 @@ internal class CodexAppServerRefreshHintsProvider(
       val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
       for (refreshThreadSeed in refreshThreadSeedsForPath) {
         val threadId = refreshThreadSeed.threadId
-        if (isPendingThreadId(threadId)) {
+        if (isAgentSessionPendingThreadId(threadId)) {
           continue
         }
 
@@ -555,7 +556,7 @@ private fun collectCandidateThreadIds(
       .orEmpty()
       .asSequence()
       .filter { refreshThreadSeed ->
-        !isPendingThreadId(refreshThreadSeed.threadId) && !hasCachedActivityHint(refreshThreadSeed)
+        !isAgentSessionPendingThreadId(refreshThreadSeed.threadId) && !hasCachedActivityHint(refreshThreadSeed)
       }
       .map { refreshThreadSeed -> refreshThreadSeed.threadId }
       .forEach(candidateThreadIds::add)
@@ -644,8 +645,4 @@ private fun CodexAppServerNotification.toRefreshActivityHintOrNull(receivedAtMs:
     responseRequired = resolvedActiveFlags.isResponseRequired(),
     hasSummaryActivityHint = false,
   )
-}
-
-private fun isPendingThreadId(threadId: String): Boolean {
-  return threadId.startsWith("new-")
 }

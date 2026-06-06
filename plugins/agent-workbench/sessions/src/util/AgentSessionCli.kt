@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.util
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import java.util.UUID
 
@@ -35,7 +36,7 @@ internal fun isAgentSessionNewIdentity(identity: String): Boolean {
 }
 
 fun isAgentSessionNewSessionId(sessionId: String): Boolean {
-  return sessionId.startsWith("new-")
+  return isAgentSessionPendingThreadId(sessionId)
 }
 
 internal fun resolveAgentSessionId(identity: String): String {

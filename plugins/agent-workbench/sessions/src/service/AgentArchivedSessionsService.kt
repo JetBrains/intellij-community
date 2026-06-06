@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
@@ -272,6 +273,10 @@ class AgentArchivedSessionsService internal constructor(
     val loadRequests = LinkedHashMap<Pair<AgentSessionSource, String>, MutableList<ArchivedVisibleThreadSnapshot>>()
 
     for (visibleThread in visibleThreads) {
+      if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {
+        continue
+      }
+
       val cacheKey = visibleThread.cacheKey
       val cacheEntry = costCache[cacheKey]
       if (visibleThread.cost != null && (cacheEntry == null || cacheEntry.updatedAt != visibleThread.updatedAt)) {

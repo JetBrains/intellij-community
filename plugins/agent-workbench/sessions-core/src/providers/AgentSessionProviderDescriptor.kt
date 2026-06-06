@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.sessions.core.providers
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
@@ -277,7 +278,7 @@ interface AgentSessionProviderDescriptor {
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentPendingSessionMetadata? {
     val parsed = parseAgentThreadIdentity(identity) ?: return null
-    if (!parsed.threadId.startsWith("new-")) return null
+    if (!isAgentSessionPendingThreadId(parsed.threadId)) return null
     if (parsed.providerId != provider.value) return null
     val yoloMarker = pendingSessionLaunchYoloMarker
     val launchMode = if (yoloMarker != null && yoloMarker in launchSpec.command) "yolo" else "standard"

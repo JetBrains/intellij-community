@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutS
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -34,6 +36,43 @@ import org.junit.jupiter.api.io.TempDir
 class CodexSessionSourceTest {
   @TempDir
   lateinit var tempDir: Path
+
+  @Test
+  fun loadThreadCostsSkipsPendingThreadIdsBeforeBackendRefresh() {
+    val refreshRequests = ArrayList<Set<String>>()
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          error("Pending thread ids should not trigger list fallback")
+        }
+
+        override suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult {
+          refreshRequests += threadIds
+          return CodexBackendThreadRefreshResult()
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val costs = source.loadThreadCosts(
+        path = PROJECT_PATH,
+        threads = listOf(
+          AgentSessionThread(
+            id = "new-cost",
+            title = "Pending Codex thread",
+            updatedAt = 100L,
+            archived = false,
+            provider = AgentSessionProvider.CODEX,
+          )
+        ),
+      )
+
+      assertThat(costs).isEmpty()
+      assertThat(refreshRequests).isEmpty()
+    }
+  }
 
   @Test
   fun frozenVisibleCodexCostIsReusedAcrossSourceInstancesUntilUpdatedAtChanges() {

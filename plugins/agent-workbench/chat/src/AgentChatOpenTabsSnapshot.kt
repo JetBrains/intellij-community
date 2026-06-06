@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -475,12 +476,12 @@ private fun replaceConcreteThreadIdentity(
 
 internal fun isPendingThreadIdentityForProvider(threadIdentity: String, provider: AgentSessionProvider): Boolean {
   val identity = splitAgentThreadIdentity(threadIdentity) ?: return false
-  return provider.value.equals(identity.first, ignoreCase = true) && identity.second.startsWith("new-")
+  return provider.value.equals(identity.first, ignoreCase = true) && isAgentSessionPendingThreadId(identity.second)
 }
 
 internal fun pendingProviderForThreadIdentity(threadIdentity: String): AgentSessionProvider? {
   val identity = splitAgentThreadIdentity(threadIdentity) ?: return null
-  if (!identity.second.startsWith("new-")) {
+  if (!isAgentSessionPendingThreadId(identity.second)) {
     return null
   }
   return AgentSessionProvider.fromOrNull(identity.first.lowercase(Locale.ROOT))

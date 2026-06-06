@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -375,7 +376,7 @@ private fun isPersistedPendingThreadIdentity(threadIdentity: String): Boolean {
   if (separator <= 0 || separator == threadIdentity.lastIndex) {
     return false
   }
-  return threadIdentity.substring(separator + 1).startsWith("new-")
+  return isAgentSessionPendingThreadId(threadIdentity.substring(separator + 1))
 }
 
 private fun parseThreadActivity(value: String): AgentThreadActivity {

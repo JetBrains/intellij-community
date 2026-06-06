@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
@@ -46,6 +48,16 @@ class AgentSessionCliTest {
   fun resolveSessionIdReturnsBlankForPendingIdentity() {
     assertThat(resolveAgentSessionId("codex:new-123")).isEqualTo("")
     assertThat(isAgentSessionNewIdentity("codex:new-123")).isTrue()
+  }
+
+  @Test
+  fun normalizeConcreteThreadIdRejectsBlankAndPendingIds() {
+    assertThat(isAgentSessionPendingThreadId("new-123")).isTrue()
+    assertThat(isAgentSessionPendingThreadId(" new-123 ")).isTrue()
+    assertThat(isAgentSessionPendingThreadId("thread-1")).isFalse()
+    assertThat(normalizeConcreteAgentSessionThreadId(" thread-1 ")).isEqualTo("thread-1")
+    assertThat(normalizeConcreteAgentSessionThreadId("")).isNull()
+    assertThat(normalizeConcreteAgentSessionThreadId(" new-123 ")).isNull()
   }
 
   @Test

@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -785,6 +786,7 @@ private fun collectLoadedProviderThreadIdsByPath(
         .asSequence()
         .filter { it.provider == provider }
         .map { it.id }
+        .mapNotNull(::normalizeConcreteAgentSessionThreadId)
         .toCollection(LinkedHashSet())
     }
     for (worktree in project.worktrees) {
@@ -795,6 +797,7 @@ private fun collectLoadedProviderThreadIdsByPath(
         .asSequence()
         .filter { it.provider == provider }
         .map { it.id }
+        .mapNotNull(::normalizeConcreteAgentSessionThreadId)
         .toCollection(LinkedHashSet())
     }
   }
@@ -900,7 +903,9 @@ private fun buildRefreshThreadSeedsByPath(
     return emptyMap()
   }
 
-  val forcedThreadIds = forcedThreadIds.orEmpty()
+  val forcedThreadIds = forcedThreadIds.orEmpty().asSequence()
+    .mapNotNull(::normalizeConcreteAgentSessionThreadId)
+    .toCollection(LinkedHashSet())
   val result = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>(hintThreadIdsByPath.size)
   for ((path, threadIds) in hintThreadIdsByPath) {
     val updatedAtByThreadId = Object2LongOpenHashMap<String>()
@@ -916,11 +921,12 @@ private fun buildRefreshThreadSeedsByPath(
 
     val seeds = LinkedHashSet<AgentSessionRefreshThreadSeed>(threadIds.size)
     threadIds.forEach { threadId ->
+      val concreteThreadId = normalizeConcreteAgentSessionThreadId(threadId) ?: return@forEach
       seeds.add(
         AgentSessionRefreshThreadSeed(
-          threadId = threadId,
-          updatedAt = updatedAtByThreadId.getLong(threadId),
-          forceRefresh = threadId in forcedThreadIds,
+          threadId = concreteThreadId,
+          updatedAt = updatedAtByThreadId.getLong(concreteThreadId),
+          forceRefresh = concreteThreadId in forcedThreadIds,
         )
       )
     }

@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -84,7 +85,8 @@ internal class CodexAppServerSessionBackend(
     val fetchedThreadsById = LinkedHashMap<String, CodexThread>(threadIds.size)
     val parentThreadIdsToFetch = LinkedHashSet<String>()
     for (threadId in threadIds) {
-      val thread = readThreadIfLoaded(threadId) ?: continue
+      val concreteThreadId = normalizeConcreteAgentSessionThreadId(threadId) ?: continue
+      val thread = readThreadIfLoaded(concreteThreadId) ?: continue
       if (thread.cwd != cwdFilter) {
         continue
       }
@@ -97,10 +99,11 @@ internal class CodexAppServerSessionBackend(
       fetchedThreadsById[thread.id] = thread
     }
     for (parentThreadId in parentThreadIdsToFetch) {
-      if (parentThreadId in fetchedThreadsById) {
+      val concreteParentThreadId = normalizeConcreteAgentSessionThreadId(parentThreadId) ?: continue
+      if (concreteParentThreadId in fetchedThreadsById) {
         continue
       }
-      val parentThread = readThreadIfLoaded(parentThreadId) ?: continue
+      val parentThread = readThreadIfLoaded(concreteParentThreadId) ?: continue
       if (parentThread.cwd == cwdFilter) {
         rememberThreadMetadata(listOf(parentThread))
         fetchedThreadsById[parentThread.id] = parentThread

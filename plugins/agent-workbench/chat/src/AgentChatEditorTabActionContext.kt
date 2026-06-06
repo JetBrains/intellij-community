@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
@@ -42,7 +43,7 @@ internal fun resolveAgentChatThreadCoordinates(threadIdentity: String): AgentCha
   return AgentChatThreadCoordinates(
     provider = provider,
     sessionId = sessionId,
-    isPending = sessionId.startsWith("new-"),
+    isPending = isAgentSessionPendingThreadId(sessionId),
   )
 }
 

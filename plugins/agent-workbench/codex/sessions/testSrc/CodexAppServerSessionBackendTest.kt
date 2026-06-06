@@ -139,6 +139,37 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun refreshThreadsSkipsPendingThreadIds() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-pending-refresh")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val realThreadId = "00000000-0000-0000-0000-000000000001"
+      val threadsById = mapOf(realThreadId to parentThread(id = realThreadId, cwd = cwd, updatedAt = 200L))
+      val readCalls = ArrayList<String>()
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = { emptyList() },
+        readThread = { threadId ->
+          readCalls.add(threadId)
+          if (threadId.startsWith("new-")) {
+            throw CodexAppServerException("invalid thread id: $threadId")
+          }
+          threadsById[threadId]
+        },
+        archiveThread = {},
+      )
+
+      val result = backend.refreshThreads(path = projectDir.toString(), threadIds = setOf("new-123", realThreadId), openProject = null)
+
+      assertThat(readCalls).containsExactly(realThreadId)
+      assertThat(result).isNotNull
+      assertThat(result?.isComplete).isFalse()
+      val thread = result?.threads.orEmpty().single()
+      assertThat(thread.thread.id).isEqualTo(realThreadId)
+    }
+  }
+
+  @Test
   fun refreshThreadsSkipsTransientThreadNotLoadedError() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-thread-loading")

@@ -290,6 +290,128 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
+  fun costHydrationWaitsForWorkingThreadToSettle() = runBlocking(Dispatchers.Default) {
+    val costLoadRequests = CopyOnWriteArrayList<List<String>>()
+    var activity = AgentThreadActivity.PROCESSING
+    var updatedAt = 100L
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromOpenProject = { _, _ ->
+              listOf(
+                thread(
+                  id = "codex-1",
+                  updatedAt = updatedAt,
+                  provider = AgentSessionProvider.CODEX,
+                  activity = activity,
+                )
+              )
+            },
+            loadThreadCostsProvider = { _, requestedThreads ->
+              costLoadRequests += requestedThreads.map { thread -> thread.id }
+              requestedThreads.associate { thread ->
+                thread.id to AgentSessionCost(
+                  amountUsd = BigDecimal.ONE,
+                  kind = AgentSessionCostKind.ESTIMATED,
+                )
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+    ) { service ->
+      service.refresh()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.activity == AgentThreadActivity.PROCESSING
+      }
+      delay(1_000.milliseconds)
+
+      assertThat(costLoadRequests).isEmpty()
+
+      activity = AgentThreadActivity.READY
+      updatedAt = 200L
+      service.refresh()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.cost
+          ?.amountUsd == BigDecimal.ONE
+      }
+
+      assertThat(costLoadRequests).containsExactly(listOf("codex-1"))
+    }
+  }
+
+  @Test
+  fun costHydrationSkipsPendingThreadIds() = runBlocking(Dispatchers.Default) {
+    val codexUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val costLoadCount = AtomicInteger(0)
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            supportsUpdates = true,
+            updateEvents = codexUpdates,
+            listFromOpenProject = { _, _ -> emptyList() },
+            loadThreadCostsProvider = { _, _ ->
+              costLoadCount.incrementAndGet()
+              emptyMap()
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            AgentChatPendingTabSnapshot(
+              projectPath = PROJECT_PATH,
+              pendingTabKey = "pending-codex:new-cost",
+              pendingThreadIdentity = "codex:new-cost",
+              pendingCreatedAtMs = 200L,
+              pendingFirstInputAtMs = null,
+              pendingLaunchMode = null,
+            )
+          )
+        )
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+      }
+
+      codexUpdates.emit(threadsChangedEvent())
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.id == "new-cost"
+      }
+      delay(300.milliseconds)
+
+      assertThat(costLoadCount.get()).isZero()
+    }
+  }
+
+  @Test
   fun refreshShowsWarmSnapshotThreadsBeforeProviderLoadCompletes() = runBlocking(Dispatchers.Default) {
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
