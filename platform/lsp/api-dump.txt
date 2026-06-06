@@ -510,6 +510,6 @@ f:com.intellij.platform.lsp.util.Lsp4jUtilKt
 - sf:getOffsetInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Position):java.lang.Integer
 - sf:getRangeInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Range):com.intellij.openapi.util.TextRange
 f:com.intellij.platform.lsp.util.LspNavigationUtilsKt
-- sf:navigateOrShowPopup(com.intellij.platform.lsp.api.LspServer,java.util.List,java.lang.String,java.awt.event.MouseEvent):V
-- sf:navigateToLocation(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.Location):V
-- sf:showLspNavigationPopup(com.intellij.platform.lsp.api.LspServer,java.util.List,java.lang.String,java.awt.event.MouseEvent):V
+- sf:navigateOrShowPopup(com.intellij.platform.lsp.api.LspClient,java.util.List,java.lang.String,java.awt.event.MouseEvent):V
+- sf:navigateToLocation(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.Location):V
+- sf:showLspNavigationPopup(com.intellij.platform.lsp.api.LspClient,java.util.List,java.lang.String,java.awt.event.MouseEvent):V

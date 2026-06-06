@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.awt.RelativePoint
@@ -19,23 +19,23 @@ import javax.swing.JList
 /**
  * Navigates to a single LSP location or shows a popup if there are multiple locations.
  *
- * @param server The LSP server instance
+ * @param client The LSP server instance
  * @param locations The list of locations to navigate to
  * @param title The title for the popup if multiple locations exist (e.g., "References", "Implementations")
  * @param mouseEvent Mouse event for popup positioning
  */
-fun navigateOrShowPopup(server: LspServer, locations: List<Location>, @Nls title: String, mouseEvent: MouseEvent?) {
+fun navigateOrShowPopup(client: LspClient, locations: List<Location>, @Nls title: String, mouseEvent: MouseEvent?) {
   when {
     locations.isEmpty() -> return
-    locations.size == 1 -> navigateToLocation(server, locations.first())
-    else -> showLspNavigationPopup(server, locations, title, mouseEvent)
+    locations.size == 1 -> navigateToLocation(client, locations.first())
+    else -> showLspNavigationPopup(client, locations, title, mouseEvent)
   }
 }
 
-fun navigateToLocation(server: LspServer, location: Location) {
-  val file = server.descriptor.findFileByUri(location.uri) ?: return
-  val descriptor = OpenFileDescriptor(server.project, file, location.range.start.line, location.range.start.character)
-  FileEditorManager.getInstance(server.project).openTextEditor(descriptor, true)
+fun navigateToLocation(client: LspClient, location: Location) {
+  val file = client.descriptor.findFileByUri(location.uri) ?: return
+  val descriptor = OpenFileDescriptor(client.project, file, location.range.start.line, location.range.start.character)
+  FileEditorManager.getInstance(client.project).openTextEditor(descriptor, true)
 }
 
 /**
@@ -44,10 +44,10 @@ fun navigateToLocation(server: LspServer, location: Location) {
  *
  * Consider using [navigateOrShowPopup] instead if you want to navigate directly when there's only one location.
  */
-fun showLspNavigationPopup(server: LspServer, locations: List<Location>, @Nls title: String, mouseEvent: MouseEvent?) {
+fun showLspNavigationPopup(client: LspClient, locations: List<Location>, @Nls title: String, mouseEvent: MouseEvent?) {
   if (locations.isEmpty()) return
 
-  val project = server.project
+  val project = client.project
   val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
 
   JBPopupFactory.getInstance().createPopupChooserBuilder(locations)
@@ -61,7 +61,7 @@ fun showLspNavigationPopup(server: LspServer, locations: List<Location>, @Nls ti
         selected: Boolean,
         hasFocus: Boolean,
       ) {
-        val file = server.descriptor.findFileByUri(value.uri)
+        val file = client.descriptor.findFileByUri(value.uri)
         if (file == null) {
           append(value.uri, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           return
@@ -106,7 +106,7 @@ fun showLspNavigationPopup(server: LspServer, locations: List<Location>, @Nls ti
         append(" ${file.name}:${range.start.line + 1}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     })
-    .setItemChosenCallback { location: Location -> navigateToLocation(server, location) }
+    .setItemChosenCallback { location: Location -> navigateToLocation(client, location) }
     .createPopup()
     .apply {
       if (mouseEvent != null) {
