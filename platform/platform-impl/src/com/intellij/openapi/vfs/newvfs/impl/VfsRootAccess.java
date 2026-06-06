@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -134,9 +134,9 @@ public final class VfsRootAccess {
     Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
-    File userSettingsFile = JpsMavenSettings.getUserMavenSettingsXml();
-    File settingsFile = userSettingsFile.exists() ? userSettingsFile : JpsMavenSettings.getGlobalMavenSettingsXml();
-    if (settingsFile != null && settingsFile.exists()) allowed.add(settingsFile.getAbsolutePath());
+    allowed.add(FileUtil.toSystemIndependentName(JpsMavenSettings.getUserMavenSettingsXml().getAbsolutePath()));
+    var globalSettingsFile = JpsMavenSettings.getGlobalMavenSettingsXml();
+    if (globalSettingsFile != null) allowed.add(FileUtil.toSystemIndependentName(globalSettingsFile.getAbsolutePath()));
     allowed.add(JpsMavenSettings.getMavenRepositoryPath());
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
