@@ -3590,7 +3590,84 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/convertToAnonymousObject")
+    public static class ConvertToAnonymousObject extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hasConcreateMember.kt")
+        public void testHasConcreateMember() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/hasConcreateMember.kt");
+        }
+
+        @TestMetadata("hasConcreateMember2.kt")
+        public void testHasConcreateMember2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/hasConcreateMember2.kt");
+        }
+
+        @TestMetadata("hasTypeParameter.kt")
+        public void testHasTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/hasTypeParameter.kt");
+        }
+
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/labeledReturn.kt");
+        }
+
+        @TestMetadata("lambdaInParentheses.kt")
+        public void testLambdaInParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/lambdaInParentheses.kt");
+        }
+
+        @TestMetadata("multiMethod.kt")
+        public void testMultiMethod() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/multiMethod.kt");
+        }
+
+        @TestMetadata("noLambda.kt")
+        public void testNoLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/noLambda.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/parameter.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/simple.kt");
+        }
+
+        @TestMetadata("testNoConvertOnSpuriousRecursion.kt")
+        public void testTestNoConvertOnSpuriousRecursion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/testNoConvertOnSpuriousRecursion.kt");
+        }
+
+        @TestMetadata("typeArgument.kt")
+        public void testTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/typeArgument.kt");
+        }
+
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/typeArgument2.kt");
+        }
+
+        @TestMetadata("unit.kt")
+        public void testUnit() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/unit.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/convertToBlockBody")
