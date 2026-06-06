@@ -11,7 +11,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.array
 import tools.jackson.core.JsonGenerator
 
-private val BUILTIN_DISCOVERY_ENABLED: Boolean = SystemProperties.getBooleanProperty("jetbrains.ide.builtin.descovery.enabled", false)
+private val BUILTIN_DISCOVERY_ENABLED: Boolean = SystemProperties.getBooleanProperty("jetbrains.ide.builtin.descovery.enabled", true)
 
 internal class OpenedProjectRootsContributor : DiscoveryInfoContributor, ProjectActivity {
   override fun contribute(generator: JsonGenerator) {
