@@ -1,6 +1,5 @@
 package com.intellij.mermaid.lang.intention
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -50,7 +49,7 @@ class ClassDiagramAnnotator : Annotator {
       .create()
   }
 
-  private class CreateClassDeclarationIntention(@SafeFieldForPreview private val className: String, isQuoted: Boolean) :
+  private class CreateClassDeclarationIntention(private val className: String, isQuoted: Boolean) :
     AbstractCreateDeclarationIntention(className, isQuoted, "`") {
     override fun getText(): String = MermaidBundle.message("fix.create.class.declaration", className)
     override fun createDeclarationPsiElement(project: Project, name: String) =

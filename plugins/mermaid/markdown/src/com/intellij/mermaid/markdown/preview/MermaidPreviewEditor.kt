@@ -2,6 +2,7 @@ package com.intellij.mermaid.markdown.preview
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.MermaidPlugin
 import com.intellij.mermaid.settings.MermaidSettingsConfigurable
 import com.intellij.openapi.Disposable
@@ -136,7 +137,7 @@ internal class MermaidPreviewEditor(
   }
 
   override fun getName(): String {
-    return "Mermaid Diagram Editor"
+    return MermaidBundle.message("mermaid.diagram.editor")
   }
 
   override fun setState(state: FileEditorState) = Unit

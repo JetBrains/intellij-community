@@ -19,7 +19,6 @@ import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
@@ -96,7 +95,7 @@ class IdentifierSymbolUsageSearcher : UsageSearcher {
       symbol: MermaidSymbol,
       leafOccurrence: LeafOccurrence
     ): Collection<MermaidPsiSymbolReference> {
-      val service = service<PsiSymbolReferenceService>()
+      val service = PsiSymbolReferenceService.getService()
       val (scope, psiElement, offset) = leafOccurrence
       val elements =
         walkUp(psiElement, offset, scope).asSequence().filter { (element, _) -> element is PsiExternalReferenceHost }
