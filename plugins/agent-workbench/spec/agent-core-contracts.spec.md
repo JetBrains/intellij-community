@@ -51,12 +51,13 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
-- Prompt launch handoff carries one optional startup launch override plus ordered post-start dispatch steps and token. Startup prompt commands are transient and must not replace persisted chat resume commands.
+- Prompt launch handoff carries one optional startup launch override plus ordered post-start dispatch steps and token. Dispatch steps carry an explicit action; legacy text-only steps are interpreted as text dispatch. Startup prompt commands are transient and must not replace persisted chat resume commands.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch sends `/plan` before the prompt body and retries the `/plan` step while Codex reports busy.
+- Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch first ensures the TUI is visibly in Plan mode via the BackTab terminal sequence, then sends the plain prompt body; if Plan mode cannot be confirmed, the prompt body is not submitted.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+  [@test] ../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - Claude recognized menu commands remain post-start dispatch and are sent as executable terminal input without prompt context packaging.

@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -228,7 +229,7 @@ class AgentChatFileEditorLifecycleTest {
     file.updateInitialMessageMetadata(
       initialMessageDispatchSteps = listOf(
         AgentInitialMessageDispatchStep(
-          text = "/plan",
+          action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
           timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
           completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
         ),
@@ -273,10 +274,14 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(file.hasPendingInitialMessageForDispatch()).isTrue()
       assertThat(file.initialMessageToken).isEqualTo("token-1")
-      assertThat(file.initialComposedMessage).isEqualTo("/plan")
+      assertThat(file.initialComposedMessage).isEqualTo(initialMessage)
       val snapshot = snapshotWriter.snapshots.single()
       assertThat(snapshot.identity.threadIdentity).isEqualTo("codex:$threadId")
-      assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.text }).containsExactly("/plan", initialMessage)
+      assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.action }).containsExactly(
+        AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+        AgentInitialMessageDispatchAction.SEND_TEXT,
+      )
+      assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.text }).containsExactly("", initialMessage)
       assertThat(snapshot.runtime.initialMessageToken).isEqualTo("token-1")
       assertThat(snapshot.runtime.initialMessageSent).isFalse()
     }

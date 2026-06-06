@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.isBusyForExistingThreadPlanMode
@@ -47,6 +48,11 @@ internal interface AgentChatProviderBehavior {
     dispatch: AgentChatInitialMessageDispatch,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.PROCEED
+
+  suspend fun isInitialMessageDispatchAlreadySatisfied(
+    tab: AgentChatTerminalTab,
+    dispatch: AgentChatInitialMessageDispatch,
+  ): Boolean = false
 
   fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatch): Boolean = false
 
@@ -154,8 +160,16 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     }
   }
 
+  override suspend fun isInitialMessageDispatchAlreadySatisfied(
+    tab: AgentChatTerminalTab,
+    dispatch: AgentChatInitialMessageDispatch,
+  ): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE && isCodexPlanModeVisible(tab.readRecentOutputTail())
+  }
+
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatch): Boolean {
-    return dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE ||
+           dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
   }
 
   override fun afterInitialMessageSendObservation(
@@ -164,6 +178,14 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     outputText: String,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
+    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE) {
+      return if (isCodexPlanModeVisible(outputText)) {
+        AgentChatInitialMessageRetryDecision.PROCEED
+      }
+      else {
+        AgentChatInitialMessageRetryDecision.Stop
+      }
+    }
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
@@ -223,6 +245,10 @@ private fun sanitizeJunieTerminalText(text: String): String {
 
 private fun isCodexPlanModeBusyOutput(text: String): Boolean {
   return normalizeCodexTerminalOutput(text).contains(CODEX_PLAN_MODE_BUSY_MESSAGE, ignoreCase = true)
+}
+
+internal fun isCodexPlanModeVisible(text: String): Boolean {
+  return normalizeCodexTerminalOutput(text).contains(CODEX_PLAN_MODE_VISIBLE_MARKER, ignoreCase = true)
 }
 
 private fun isCodexPlanModeUnsafeTerminalTail(text: String): Boolean {
@@ -290,6 +316,7 @@ private const val CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE: String = "Booting 
 private const val CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE: String = "Starting MCP servers"
 private const val CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE: String = "tab to queue"
 private const val CODEX_PLAN_MODE_WORKING_STATUS_MARKER: String = "Working ("
+private const val CODEX_PLAN_MODE_VISIBLE_MARKER: String = "Plan mode"
 private val CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX: Regex = Regex("(?:^| )Running .+ hook(?::|$)", RegexOption.IGNORE_CASE)
 private val CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX: Regex = Regex(
   "(?:^| ).+ hook \\((?:completed|failed|blocked|stopped)\\)",

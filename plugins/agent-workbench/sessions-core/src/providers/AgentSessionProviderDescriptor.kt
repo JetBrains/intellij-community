@@ -33,6 +33,11 @@ enum class AgentInitialMessageDispatchCompletionPolicy {
   RETRY_ON_CODEX_PLAN_BUSY,
 }
 
+enum class AgentInitialMessageDispatchAction {
+  SEND_TEXT,
+  ENSURE_CODEX_PLAN_MODE,
+}
+
 enum class AgentThreadRenameContext {
   TREE_POPUP,
   EDITOR_TAB,
@@ -81,10 +86,15 @@ data class AgentInitialMessageDispatchPlan(
 }
 
 data class AgentInitialMessageDispatchStep(
-  @JvmField val text: String,
+  @JvmField val text: String = "",
   @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   @JvmField val completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
-)
+  @JvmField val action: AgentInitialMessageDispatchAction = AgentInitialMessageDispatchAction.SEND_TEXT,
+) {
+  fun isDispatchable(): Boolean {
+    return action != AgentInitialMessageDispatchAction.SEND_TEXT || text.isNotBlank()
+  }
+}
 
 data class AgentPendingSessionMetadata(
   @JvmField val createdAtMs: Long,

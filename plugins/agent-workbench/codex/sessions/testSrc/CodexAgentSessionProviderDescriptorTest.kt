@@ -10,10 +10,11 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
@@ -181,7 +182,7 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun planModeBuildsAtomicPostStartDispatchStep() {
+  fun planModeBuildsPlanModeEnsureAndPromptPostStartDispatchSteps() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "Refactor this",
@@ -191,16 +192,20 @@ class CodexAgentSessionProviderDescriptorTest {
     )
 
     assertThat(steps).containsExactly(
-      com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
-        text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor this",
+      AgentInitialMessageDispatchStep(
+        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+      ),
+      AgentInitialMessageDispatchStep(
+        text = "Refactor this",
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       ),
     )
   }
 
   @Test
-  fun emptyPlanModeBuildsPlanCommandOnlyPostStartDispatchStep() {
+  fun emptyPlanModeBuildsPlanModeEnsureOnlyPostStartDispatchStep() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "",
@@ -210,8 +215,8 @@ class CodexAgentSessionProviderDescriptorTest {
     )
 
     assertThat(steps).containsExactly(
-      com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
-        text = AGENT_PROMPT_PLAN_MODE_COMMAND,
+      AgentInitialMessageDispatchStep(
+        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
@@ -250,8 +255,12 @@ class CodexAgentSessionProviderDescriptorTest {
     assertThat(manualPlanCommand.message).isEqualTo("from manual input")
     assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
     assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
-    assertThat(bridge.buildPostStartDispatchSteps(manualPlanCommand).single().text)
-      .isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND from manual input")
+    val manualPlanCommandSteps = bridge.buildPostStartDispatchSteps(manualPlanCommand)
+    assertThat(manualPlanCommandSteps.map { it.action }).containsExactly(
+      AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+      AgentInitialMessageDispatchAction.SEND_TEXT,
+    )
+    assertThat(manualPlanCommandSteps.map { it.text }).containsExactly("", "from manual input")
   }
 
   @Test

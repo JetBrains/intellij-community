@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -86,11 +87,12 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   writeStartupIntent(state.startupIntent, targetElement)
   if (runtime.initialMessageDispatchSteps.isNotEmpty()) {
     targetElement.addContent(Element(ELEMENT_INITIAL_MESSAGE_DISPATCH_STEPS).also { stepsElement ->
-      for (step in runtime.initialMessageDispatchSteps) {
+      for ((text, timeoutPolicy, completionPolicy, action) in runtime.initialMessageDispatchSteps) {
         stepsElement.addContent(Element(ELEMENT_INITIAL_MESSAGE_DISPATCH_STEP).also { stepElement ->
-          stepElement.setAttribute(ATTR_TIMEOUT_POLICY, step.timeoutPolicy.name)
-          stepElement.setAttribute(ATTR_COMPLETION_POLICY, step.completionPolicy.name)
-          stepElement.setText(step.text)
+          stepElement.setAttribute(ATTR_TIMEOUT_POLICY, timeoutPolicy.name)
+          stepElement.setAttribute(ATTR_COMPLETION_POLICY, completionPolicy.name)
+          stepElement.setAttribute(ATTR_ACTION, action.name)
+          stepElement.setText(text)
         })
       }
     })
@@ -127,13 +129,18 @@ private fun readInitialMessageDispatchSteps(sourceElement: Element): List<AgentI
   return sourceElement.getChild(ELEMENT_INITIAL_MESSAGE_DISPATCH_STEPS)
     ?.getChildren(ELEMENT_INITIAL_MESSAGE_DISPATCH_STEP)
     ?.mapNotNull { stepElement ->
-      val text = stepElement.textTrim.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+      val action = parseEnum(stepElement.getAttributeValue(ATTR_ACTION), AgentInitialMessageDispatchAction.SEND_TEXT)
+      val text = stepElement.textTrim
+      if (action == AgentInitialMessageDispatchAction.SEND_TEXT && text.isEmpty()) {
+        return@mapNotNull null
+      }
       AgentInitialMessageDispatchStep(
         text = text,
         timeoutPolicy = parseEnum(stepElement.getAttributeValue(ATTR_TIMEOUT_POLICY),
                                   AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK),
         completionPolicy = parseEnum(stepElement.getAttributeValue(ATTR_COMPLETION_POLICY),
-                                     AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE),
+                                      AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE),
+        action = action,
       )
     }
     .orEmpty()
@@ -153,7 +160,7 @@ private fun Element.setNullableAttribute(name: String, value: String?) {
   }
 }
 
-private const val STATE_VERSION = 2
+private const val STATE_VERSION = 3
 private const val ATTR_VERSION = "version"
 private const val ATTR_PROJECT_HASH = "projectHash"
 private const val ATTR_PROJECT_PATH = "projectPath"
@@ -175,6 +182,7 @@ private const val ATTR_STARTUP_PROVIDER = "startupProvider"
 private const val ATTR_STARTUP_LAUNCH_MODE = "startupLaunchMode"
 private const val ATTR_TIMEOUT_POLICY = "timeoutPolicy"
 private const val ATTR_COMPLETION_POLICY = "completionPolicy"
+private const val ATTR_ACTION = "action"
 private const val ELEMENT_INITIAL_MESSAGE_DISPATCH_STEPS = "initialMessageDispatchSteps"
 private const val ELEMENT_INITIAL_MESSAGE_DISPATCH_STEP = "step"
 private const val STARTUP_KIND_NEW_SESSION = "newSession"

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -16,10 +18,16 @@ internal sealed interface AgentChatInitialMessageRetryDecision {
 
   data class RetryWithoutReadiness(@JvmField val backoffMs: Long) : AgentChatInitialMessageRetryDecision
 
+  data object Stop : AgentChatInitialMessageRetryDecision
+
   companion object {
     val PROCEED: AgentChatInitialMessageRetryDecision = Proceed
   }
 }
+
+private class AgentChatInitialMessageDispatcherLog
+
+private val LOG = logger<AgentChatInitialMessageDispatcherLog>()
 
 internal class AgentChatInitialMessageDispatcher(
   private val file: AgentChatVirtualFile,
@@ -66,6 +74,9 @@ internal class AgentChatInitialMessageDispatcher(
         }
 
         val sendResult = sendInitialMessageIfReady(tab, retryAttempt)
+        if (sendResult.stopDispatching) {
+          return@launch
+        }
         if (sendResult.nextReadinessCheckpoint != null) {
           readinessCheckpoint = sendResult.nextReadinessCheckpoint
         }
@@ -107,6 +118,9 @@ internal class AgentChatInitialMessageDispatcher(
     val dispatch = file.acquireInitialMessageDispatch() ?: return AgentChatInitialMessageSendResult.NO_PROGRESS
     when (val decision = behavior.beforeInitialMessageSend(file, tab, dispatch, retryAttempt)) {
       AgentChatInitialMessageRetryDecision.Proceed -> Unit
+      AgentChatInitialMessageRetryDecision.Stop -> {
+        return stopInitialMessageDispatch(dispatch)
+      }
       is AgentChatInitialMessageRetryDecision.RetryWithoutReadiness -> {
         file.cancelInitialMessageDispatch(dispatch)
         delay(decision.backoffMs.milliseconds)
@@ -116,13 +130,15 @@ internal class AgentChatInitialMessageDispatcher(
         )
       }
     }
+    if (behavior.isInitialMessageDispatchAlreadySatisfied(tab, dispatch)) {
+      return completeInitialMessageDispatch(dispatch, readinessCheckpoint = null)
+    }
     val readinessCheckpoint = tab.captureOutputCheckpoint()
     try {
-      tab.sendText(
-        dispatch.message,
-        shouldExecute = true,
-        useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message),
-      )
+      if (!sendInitialMessageDispatchAction(tab, dispatch)) {
+        file.cancelInitialMessageDispatch(dispatch)
+        return AgentChatInitialMessageSendResult.NO_PROGRESS
+      }
     }
     catch (e: CancellationException) {
       file.cancelInitialMessageDispatch(dispatch)
@@ -142,8 +158,12 @@ internal class AgentChatInitialMessageDispatcher(
         file.cancelInitialMessageDispatch(dispatch)
         return AgentChatInitialMessageSendResult.NO_PROGRESS
       }
-      when (val decision = behavior.afterInitialMessageSendObservation(file, dispatch, observation.text, retryAttempt)) {
+      val observedText = observation.text + "\n" + tab.readRecentOutputTail()
+      when (val decision = behavior.afterInitialMessageSendObservation(file, dispatch, observedText, retryAttempt)) {
         AgentChatInitialMessageRetryDecision.Proceed -> Unit
+        AgentChatInitialMessageRetryDecision.Stop -> {
+          return stopInitialMessageDispatch(dispatch)
+        }
         is AgentChatInitialMessageRetryDecision.RetryWithoutReadiness -> {
           file.cancelInitialMessageDispatch(dispatch)
           delay(decision.backoffMs.milliseconds)
@@ -154,6 +174,43 @@ internal class AgentChatInitialMessageDispatcher(
         }
       }
     }
+    return completeInitialMessageDispatch(dispatch, readinessCheckpoint)
+  }
+
+  private fun sendInitialMessageDispatchAction(
+    tab: AgentChatTerminalTab,
+    dispatch: AgentChatInitialMessageDispatch,
+  ): Boolean {
+    return when (dispatch.action) {
+      AgentInitialMessageDispatchAction.SEND_TEXT -> {
+        if (dispatch.message.isEmpty()) {
+          false
+        }
+        else {
+          tab.sendText(
+            dispatch.message,
+            shouldExecute = true,
+            useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message),
+          )
+          true
+        }
+      }
+
+      AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE -> tab.sendBackTab()
+    }
+  }
+
+  private suspend fun stopInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): AgentChatInitialMessageSendResult {
+    LOG.debug("Stopped initial message dispatch at step ${dispatch.stepIndex}, action=${dispatch.action}")
+    file.clearInitialMessageDispatchMetadata()
+    tabSnapshotWriter.upsert(file.toSnapshot())
+    return AgentChatInitialMessageSendResult(progressed = false, stopDispatching = true)
+  }
+
+  private suspend fun completeInitialMessageDispatch(
+    dispatch: AgentChatInitialMessageDispatch,
+    readinessCheckpoint: AgentChatTerminalOutputCheckpoint?,
+  ): AgentChatInitialMessageSendResult {
     if (!file.completeInitialMessageDispatch(dispatch)) {
       return AgentChatInitialMessageSendResult(
         progressed = false,
@@ -172,6 +229,7 @@ private data class AgentChatInitialMessageSendResult(
   @JvmField val progressed: Boolean,
   @JvmField val nextReadinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null,
   @JvmField val retryCurrentStepWithoutReadiness: Boolean = false,
+  @JvmField val stopDispatching: Boolean = false,
 ) {
   companion object {
     val NO_PROGRESS: AgentChatInitialMessageSendResult = AgentChatInitialMessageSendResult(progressed = false)

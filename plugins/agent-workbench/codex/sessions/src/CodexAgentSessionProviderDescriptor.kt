@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -194,13 +194,18 @@ internal class CodexAgentSessionProviderDescriptor(
     }
 
     val message = initialMessagePlan.message ?: return emptyList()
-    val planCommand = if (message.isEmpty()) AGENT_PROMPT_PLAN_MODE_COMMAND else "$AGENT_PROMPT_PLAN_MODE_COMMAND $message"
-    return listOf(
+    return listOfNotNull(
       AgentInitialMessageDispatchStep(
-        text = planCommand,
+        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-      )
+      ),
+      message.takeIf(String::isNotEmpty)?.let { prompt ->
+        AgentInitialMessageDispatchStep(
+          text = prompt,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        )
+      },
     )
   }
 

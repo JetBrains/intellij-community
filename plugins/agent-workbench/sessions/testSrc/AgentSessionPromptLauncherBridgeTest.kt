@@ -21,7 +21,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -975,9 +975,13 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
+              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+            ),
+            AgentInitialMessageDispatchStep(
+              text = "Refactor selected code",
+              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -987,7 +991,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun launchRespectsExplicitPlanStartupOverrideWhenProviderRequestsIt() {
+  fun launchIgnoresExplicitPlanStartupOverrideWhenPlanModeRequiresPostStartDispatch() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -1021,29 +1025,25 @@ class AgentSessionPromptLauncherBridgeTest {
 
           assertThat(providerBridge.createCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command)
-            .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
-          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("Refactor selected code")
+          assertThat(providerBridge.startupCommandCalls.get()).isZero()
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
+          assertThat(providerBridge.lastStartupPrompt.get()).isNull()
           assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.launchSpec.command)
             .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
-          assertThat(openRequest.startupLaunchSpecOverride?.command)
-            .containsExactly(
-              "test",
-              "new",
-              AgentSessionLaunchMode.STANDARD.name,
-              "--",
-              "Refactor selected code",
-            )
-          assertThat(openRequest.initialComposedMessage).isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code")
+          assertThat(openRequest.startupLaunchSpecOverride).isNull()
+          assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
+              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+            ),
+            AgentInitialMessageDispatchStep(
+              text = "Refactor selected code",
+              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -1187,12 +1187,16 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
-          assertThat(openRequest.initialComposedMessage).isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code")
+          assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor selected code",
+              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+            ),
+            AgentInitialMessageDispatchStep(
+              text = "Refactor selected code",
+              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
             ),
           )
           assertThat(openRequest.initialMessageToken).isNotNull()
@@ -2335,13 +2339,18 @@ private class RecordingPromptLaunchProviderBridge(
     }
 
     val message = initialMessagePlan.message.orEmpty()
-    val planCommand = if (message.isEmpty()) AGENT_PROMPT_PLAN_MODE_COMMAND else "$AGENT_PROMPT_PLAN_MODE_COMMAND $message"
-    return listOf(
+    return listOfNotNull(
       AgentInitialMessageDispatchStep(
-        text = planCommand,
+        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-      )
+      ),
+      message.takeIf(String::isNotEmpty)?.let { prompt ->
+        AgentInitialMessageDispatchStep(
+          text = prompt,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        )
+      },
     )
   }
 

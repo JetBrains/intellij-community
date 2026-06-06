@@ -92,7 +92,7 @@ private fun normalizeInitialMessageDispatchSteps(
   initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy,
 ): List<AgentInitialMessageDispatchStep> {
   if (initialMessageDispatchSteps.isNotEmpty()) {
-    return initialMessageDispatchSteps.filter { step -> step.text.isNotBlank() }
+    return initialMessageDispatchSteps.filter(AgentInitialMessageDispatchStep::isDispatchable)
   }
   val normalizedMessage = initialComposedMessage?.trim().orEmpty()
   if (normalizedMessage.isEmpty()) {

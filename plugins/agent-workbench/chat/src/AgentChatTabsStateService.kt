@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 7
+private const val AGENT_CHAT_TABS_STATE_VERSION = 8
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -227,9 +228,10 @@ internal data class PersistedAgentChatTabState(
 
 @Serializable
 internal data class PersistedAgentChatInitialMessageDispatchStep(
-  @JvmField val text: String,
+  @JvmField val text: String = "",
   @JvmField val timeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
   @JvmField val completionPolicy: String = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE.name,
+  @JvmField val action: String = AgentInitialMessageDispatchAction.SEND_TEXT.name,
 )
 
 private fun deleteLegacyMetadataDirectory() {
@@ -319,6 +321,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
   val legacySingleStep = runtime.initialMessageDispatchSteps.singleOrNull()
     ?.takeIf { step ->
       runtime.initialMessageDispatchStepIndex == 0 &&
+      step.action == AgentInitialMessageDispatchAction.SEND_TEXT &&
       step.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE
     }
   return PersistedAgentChatTabState(
@@ -345,14 +348,16 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
 }
 
 private fun PersistedAgentChatInitialMessageDispatchStep.toRuntime(): AgentInitialMessageDispatchStep? {
+  val parsedAction = parseInitialMessageDispatchAction(action)
   val normalizedText = text.trim()
-  if (normalizedText.isEmpty()) {
+  if (parsedAction == AgentInitialMessageDispatchAction.SEND_TEXT && normalizedText.isEmpty()) {
     return null
   }
   return AgentInitialMessageDispatchStep(
     text = normalizedText,
     timeoutPolicy = parseInitialMessageTimeoutPolicy(timeoutPolicy),
     completionPolicy = parseInitialMessageDispatchCompletionPolicy(completionPolicy),
+    action = parsedAction,
   )
 }
 
@@ -361,6 +366,7 @@ private fun AgentInitialMessageDispatchStep.toPersisted(): PersistedAgentChatIni
     text = text,
     timeoutPolicy = timeoutPolicy.name,
     completionPolicy = completionPolicy.name,
+    action = action.name,
   )
 }
 
@@ -385,4 +391,9 @@ private fun parseInitialMessageTimeoutPolicy(value: String): AgentInitialMessage
 private fun parseInitialMessageDispatchCompletionPolicy(value: String): AgentInitialMessageDispatchCompletionPolicy {
   return runCatching { AgentInitialMessageDispatchCompletionPolicy.valueOf(value) }
     .getOrDefault(AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE)
+}
+
+private fun parseInitialMessageDispatchAction(value: String): AgentInitialMessageDispatchAction {
+  return runCatching { AgentInitialMessageDispatchAction.valueOf(value) }
+    .getOrDefault(AgentInitialMessageDispatchAction.SEND_TEXT)
 }

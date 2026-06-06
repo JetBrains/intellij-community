@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -42,7 +43,9 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.launchSpec.command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan Plan this refactor")
+    assertThat(observation.postStartDispatchSteps.map { it.action })
+      .containsExactly(AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE, AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", "Plan this refactor")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -68,7 +71,9 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.launchSpec.command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan Refactor selected code")
+    assertThat(observation.postStartDispatchSteps.map { it.action })
+      .containsExactly(AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE, AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", "Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 

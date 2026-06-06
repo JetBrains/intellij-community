@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -114,7 +115,11 @@ internal class AgentChatVirtualFile internal constructor(
     private set
 
   val initialComposedMessage: String?
-    get() = currentPendingInitialMessageStep()?.text
+    get() = initialMessageDispatchSteps
+      .asSequence()
+      .drop(initialMessageDispatchStepIndex)
+      .firstOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
+      ?.text
 
   var initialMessageToken: String? = null
     private set
@@ -319,7 +324,7 @@ internal class AgentChatVirtualFile internal constructor(
     initialMessageToken: String?,
     initialMessageSent: Boolean,
   ): Boolean {
-    val normalizedSteps = initialMessageDispatchSteps.filter { step -> step.text.isNotBlank() }
+    val normalizedSteps = initialMessageDispatchSteps.filter(AgentInitialMessageDispatchStep::isDispatchable)
     val normalizedStepIndex = initialMessageDispatchStepIndex.coerceIn(0, normalizedSteps.size)
     if (
       this.initialMessageDispatchSteps == normalizedSteps &&
@@ -383,15 +388,22 @@ internal class AgentChatVirtualFile internal constructor(
     val stepIndex = initialMessageDispatchStepIndex
     val currentStep = currentPendingInitialMessageStep() ?: return null
     val message = currentStep.text.trim()
-    if (message.isEmpty()) {
+    if (currentStep.action == AgentInitialMessageDispatchAction.SEND_TEXT && message.isEmpty()) {
       return null
     }
     val token = initialMessageToken
     val inFlight = initialMessageDispatchInFlight
-    if (inFlight != null && inFlight.message == message && inFlight.token == token && inFlight.stepIndex == stepIndex) {
+    if (
+      inFlight != null &&
+      inFlight.action == currentStep.action &&
+      inFlight.message == message &&
+      inFlight.token == token &&
+      inFlight.stepIndex == stepIndex
+    ) {
       return null
     }
     return AgentChatInitialMessageDispatch(
+      action = currentStep.action,
       message = message,
       token = token,
       stepIndex = stepIndex,
@@ -409,8 +421,9 @@ internal class AgentChatVirtualFile internal constructor(
     val currentStep = currentPendingInitialMessageStep()
     val currentMessage = currentStep?.text?.trim().orEmpty()
     if (
-      currentMessage.isEmpty() ||
+      currentStep == null ||
       initialMessageSent ||
+      currentStep.action != dispatch.action ||
       initialMessageToken != dispatch.token ||
       currentMessage != dispatch.message ||
       initialMessageDispatchStepIndex != dispatch.stepIndex
@@ -609,6 +622,7 @@ internal class AgentChatVirtualFile internal constructor(
 }
 
 internal class AgentChatInitialMessageDispatch internal constructor(
+  val action: AgentInitialMessageDispatchAction,
   val message: String,
   val token: String?,
   val stepIndex: Int,

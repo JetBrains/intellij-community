@@ -35,6 +35,7 @@ import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContr
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -1077,6 +1078,9 @@ private fun buildStartupLaunchSpecOverride(
 ): AgentSessionTerminalLaunchSpec? {
   // Existing-thread launches intentionally deliver the prompt after the chat opens.
   if (!allowStartupPromptOverride) {
+    return null
+  }
+  if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
     return null
   }
   if (initialMessagePlan.startupPolicy != AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
