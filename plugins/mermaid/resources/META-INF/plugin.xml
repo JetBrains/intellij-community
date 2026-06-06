@@ -95,6 +95,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     cleanupTool="true"
                      implementationClass="com.intellij.mermaid.lang.intention.UnusedAttributesInspection"/>
 
     <localInspection language="Mermaid" shortName="UndeclaredGeneric"
@@ -122,6 +123,7 @@
                      enabledByDefault="true"
                      level="ERROR"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     cleanupTool="true"
                      implementationClass="com.intellij.mermaid.lang.intention.UnsupportedDirectiveInspection"/>
 
     <localInspection language="Mermaid" shortName="GitGraph"
