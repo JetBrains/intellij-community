@@ -6,21 +6,16 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -32,22 +27,25 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
+import kotlin.io.path.PathsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public final class VfsRootAccess {
   // we don't want test subclasses to accidentally remove allowed files added by base classes
@@ -79,37 +77,39 @@ public final class VfsRootAccess {
 
   @TestOnly
   static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null &&
-        System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null &&
-        app.isUnitTestMode() &&
-        app.isComponentCreated() &&
-        !ApplicationManagerEx.isInStressTest()) {
+    var app = ApplicationManagerEx.getApplicationEx();
+    if (
+      System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null &&
+      System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null &&
+      app.isUnitTestMode() &&
+      app.isComponentCreated() &&
+      !ApplicationManagerEx.isInStressTest()
+    ) {
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
       }
 
-      // root' children are loaded always
+      // root's children are loaded always
       if (child.getParent() == null || child.getParent().getParent() == null) {
         return;
       }
 
-      Set<String> allowed = allowedRoots();
-      boolean isUnder = allowed == null || allowed.isEmpty();
+      var allowed = allowedRoots();
+      var isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
-        VirtualFile local = child;
+        var local = child;
         if (delegate == JarFileSystem.getInstance()) {
           local = JarFileSystem.getInstance().getVirtualFileForJar(child);
           assert local != null : child;
         }
-        for (String root : allowed) {
+        for (var root : allowed) {
           if (VfsUtilCore.isAncestorOrSelf(root, local)) {
             isUnder = true;
             break;
           }
           if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
-            String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
+            var rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
             isUnder = VfsUtilCore.isAncestorOrSelf(rootLocalPath, local);
             if (isUnder) break;
           }
@@ -125,15 +125,16 @@ public final class VfsRootAccess {
   }
 
   // null means we were unable to get roots, so do not check access
+  @SuppressWarnings("TestOnlyProblems")
   private static @Nullable Set<String> allowedRoots() {
     if (insideGettingRoots) return null;
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    var openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = CollectionFactory.createFilePathSet();
-    allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
-    allowed.add(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+    var allowed = CollectionFactory.createFilePathSet();
+    allowed.add(PathsKt.getInvariantSeparatorsPathString(PathManager.getHomeDir()));
+    allowed.add(PathsKt.getInvariantSeparatorsPathString(PathManager.getConfigDir()));
     allowed.add(FileUtil.toSystemIndependentName(JpsMavenSettings.getUserMavenSettingsXml().getAbsolutePath()));
     var globalSettingsFile = JpsMavenSettings.getGlobalMavenSettingsXml();
     if (globalSettingsFile != null) allowed.add(FileUtil.toSystemIndependentName(globalSettingsFile.getAbsolutePath()));
@@ -141,41 +142,45 @@ public final class VfsRootAccess {
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"
-    String homePath2 = PathManager.getHomePathFor(Application.class);
+    var homePath2 = PathManager.getHomePathFor(Application.class);
     if (homePath2 != null) {
       allowed.add(FileUtil.toSystemIndependentName(homePath2));
     }
 
     try {
-      URL outUrl = Application.class.getResource("/");
+      var outUrl = Application.class.getResource("/");
       if (outUrl != null) {
-        String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
-        allowed.add(FileUtil.toSystemIndependentName(output));
+        var outUri = outUrl.toURI();
+        if ("jar".equals(outUrl.getProtocol())) {
+          outUri = URI.create(StringUtil.trimEnd(outUri.getRawSchemeSpecificPart(), "!/"));
+        }
+        var output = Path.of(outUri).getParent().getParent();
+        allowed.add(PathsKt.getInvariantSeparatorsPathString(output));
       }
     }
-    catch (URISyntaxException | IllegalArgumentException ignored) {
-    }
+    catch (URISyntaxException | IllegalArgumentException _) { }
 
     // We need to allow bazel-out for file like C:\ProgramData\_bazel\6dodgvqr\execroot\_main\bazel-out\local_windows-fastbuild\bin\external\lib+\org.jetbrains.kotlin\kotlin-stdlib-2.3.20.jar
     // ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation() will return C:\ProgramData\_bazel\6dodgvqr\execroot\_main\bazel-out\jvm-fastbuild
-    if (ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation() != null) {
-      allowed.add(FileUtil.toSystemIndependentName(
-        new File(ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()).getParentFile().getPath()));
+    var compiledClassesLocation = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+    if (compiledClassesLocation != null) {
+      allowed.add(FileUtil.toSystemIndependentName(Path.of(compiledClassesLocation).getParent().toString()));
     }
 
     try {
-      allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
+      allowed.add(PathsKt.getInvariantSeparatorsPathString(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
-      Arrays.stream(System.getProperty("vfs.additional-allowed-roots", "").split(File.pathSeparator))
+      //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
+      Stream.of(System.getProperty("vfs.additional-allowed-roots", "").split(java.io.File.pathSeparator))
         .filter(Predicate.not(String::isBlank))
         .map(FileUtil::toSystemIndependentName)
         .forEach(allowed::add);
 
-      String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
+      var userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
       allowed.add(userHome);
 
-      String mavenHome = resolvedPath(userHome + "/.m2");
+      var mavenHome = resolvedPath(userHome + "/.m2");
       if (!mavenHome.startsWith(userHome + '/')) {
         allowed.add(mavenHome);
       }
@@ -184,7 +189,7 @@ public final class VfsRootAccess {
         allowed.add(mavenHome);
       }
 
-      String gradleHome = resolvedPath(userHome + "/.gradle");
+      var gradleHome = resolvedPath(userHome + "/.gradle");
       if (gradleHome.startsWith(userHome + '/')) {
         allowed.add(gradleHome);
       }
@@ -193,8 +198,8 @@ public final class VfsRootAccess {
         allowed.add(FileUtil.toSystemIndependentName(gradleHome));
       }
 
-      if (SystemInfo.isWindows) {
-        String wslName = System.getProperty("wsl.distribution.name");
+      if (OS.CURRENT == OS.Windows) {
+        var wslName = System.getProperty("wsl.distribution.name");
         if (wslName != null) {
           allowed.add(FileUtil.toSystemIndependentName("\\\\wsl$\\" + wslName));
           allowed.add(FileUtil.toSystemIndependentName("\\\\wsl.localhost\\" + wslName));
@@ -213,40 +218,40 @@ public final class VfsRootAccess {
       // > execution environment which are specifically intended to make input files available.
       // see https://bazel.build/reference/test-encyclopedia#initial-conditions
       // and general overview at https://bazel.build/reference/test-encyclopedia#test-interaction-filesystem
-      String testSrcDir = System.getenv("TEST_SRCDIR");
+      var testSrcDir = System.getenv("TEST_SRCDIR");
       if (testSrcDir != null && !testSrcDir.isBlank()) {
-        Path testSrcDirPath = Path.of(testSrcDir).toAbsolutePath();
+        var testSrcDirPath = Path.of(testSrcDir).toAbsolutePath();
         allowed.add(FileUtil.toSystemIndependentName(testSrcDirPath.toString()));
       }
 
-      for (final Project project : openProjects) {
+      for (final var project : openProjects) {
         if (!project.isInitialized()) {
           return null; // all is allowed
         }
         ReadAction.runBlocking(() -> {
-          for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+          for (var root : ProjectRootManager.getInstance(project).getContentRoots()) {
             allowed.add(root.getPath());
             allowed.add(root.getCanonicalPath());
           }
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+          for (var module : ModuleManager.getInstance(project).getModules()) {
+            var moduleSdk = ModuleRootManager.getInstance(module).getSdk();
             if (moduleSdk != null) {
-              String homePath = moduleSdk.getHomePath();
+              var homePath = moduleSdk.getHomePath();
               if (homePath != null) {
                 allowed.add(homePath);
               }
             }
           }
-          for (String url : getAllRootUrls(project)) {
+          for (var url : getAllRootUrls(project)) {
             allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
           }
-          String location = project.getBasePath();
+          var location = project.getBasePath();
           assert location != null : project;
           allowed.add(FileUtil.toSystemIndependentName(location));
         });
       }
     }
-    catch (Error ignored) {
+    catch (Error _) {
       // sometimes `library.getRoots()` may crash if called during library modification
     }
 
@@ -254,15 +259,15 @@ public final class VfsRootAccess {
       allowed.addAll(ourAdditionalRoots);
     }
 
-    assert !allowed.contains("/") : "Allowed roots should not contain '/'. " +
-                                    "You can disable roots access check explicitly if you don't need it.";
+    assert !allowed.contains("/") : "Allowed roots should not contain '/'. You can disable the root access check explicitly if you don't need it.";
+
     return allowed;
   }
 
-  private static String getJavaHome() {
-    String javaHome = SystemProperties.getJavaHome();
+  private static Path getJavaHome() {
+    var javaHome = Path.of(SystemProperties.getJavaHome());
     if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
-      String javaHomeParent = PathUtil.getParentPath(javaHome);
+      var javaHomeParent = javaHome.getParent();
       if (JdkUtil.checkForJre(javaHomeParent) && JdkUtil.checkForJdk(javaHomeParent)) {
         javaHome = javaHomeParent;
       }
@@ -282,8 +287,8 @@ public final class VfsRootAccess {
   private static Collection<String> getAllRootUrls(Project project) {
     insideGettingRoots = true;
     try {
-      Set<String> roots = CollectionFactory.createSmallMemoryFootprintSet();
-      OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
+      var roots = CollectionFactory.<String>createSmallMemoryFootprintSet();
+      var enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
       ContainerUtil.addAll(roots, enumerator.classes().getUrls());
       ContainerUtil.addAll(roots, enumerator.sources().getUrls());
       ContainerUtil.addAll(roots, enumerator.roots(AnnotationOrderRootType.getInstance()).getUrls());
@@ -295,7 +300,7 @@ public final class VfsRootAccess {
   }
 
   @TestOnly
-  public static void allowRootAccess(@NotNull Disposable disposable, @NotNull String @NotNull ... roots) {
+  public static void allowRootAccess(@NotNull Disposable disposable, @SuppressWarnings("SSBasedInspection") @NotNull String @NotNull ... roots) {
     if (roots.length == 0) return;
     doAllow(roots);
     Disposer.register(disposable, () -> disallowRootAccess(roots));
@@ -303,8 +308,8 @@ public final class VfsRootAccess {
 
   private static void doAllow(String... roots) {
     synchronized (ourAdditionalRoots) {
-      for (String root : roots) {
-        String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+      for (var root : roots) {
+        var path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
         if (path.isEmpty()) {
           throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
         }
@@ -315,7 +320,7 @@ public final class VfsRootAccess {
 
   private static void disallowRootAccess(String... roots) {
     synchronized (ourAdditionalRoots) {
-      for (String root : roots) {
+      for (var root : roots) {
         ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
       }
     }
@@ -323,8 +328,8 @@ public final class VfsRootAccess {
 
   @ApiStatus.Internal
   public static class VfsRootAccessNotAllowedError extends AssertionError {
-    public VfsRootAccessNotAllowedError(@NotNull VirtualFile child, @NotNull ArrayList<String> allowed) {
-      super("File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed));
+    private VfsRootAccessNotAllowedError(VirtualFile child, List<String> allowed) {
+      super("File accessed outside allowed roots: " + child + ";\nAllowed roots: " + allowed);
     }
   }
 }
