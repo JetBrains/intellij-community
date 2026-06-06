@@ -36,7 +36,7 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    *
    * By default, this function returns `true`, which triggers a code completion session.
    * All applicable code completion contributors will be invoked to provide their completion items.
-   * LSP server-based code completion is controlled by the [shouldRunCodeCompletion] function and other functions in this class.
+   * LSP-based code completion is controlled by the [shouldRunCodeCompletion] function and other functions in this class.
    *
    * Implementations may override this function and return `false` to ignore the presence of the typed character
    * in the server's `CompletionOptions.triggerCharacters`.

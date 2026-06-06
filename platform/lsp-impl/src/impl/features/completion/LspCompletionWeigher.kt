@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 
 /**
- * Sorts LSP server-based completion items by
+ * Sorts LSP-based completion items by
  * [CompletionItem.sortText](https://microsoft.github.io/language-server-protocol/specification/#completionItem)
  *
  * ### Test coverage
@@ -24,9 +24,8 @@ import com.intellij.codeInsight.lookup.LookupElement
  * processCompletionItemsImpl(server, document, offset, sortingResultSet, completionList.items) {...}
  * ```
  * but that doesn't work, unfortunately.
- * That way, the higher priority set
- * in com.intellij.tailwind.lsp.TailwindLspServerDescriptor.COMPLETION_SUPPORT.createLookupElement()
- * doesn't help to bubble up the Tailwind items in the completion list.
+ * That way, the PrioritizedLookupElement returned from LspCompletionSupport.createLookupElement
+ * doesn't help to bubble up the items in the completion list.
  */
 internal class LspCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<ReverseComparableString>? {

@@ -24,7 +24,7 @@ open class LspWorkspaceSymbolSupport : LspWorkspaceSymbolCustomizer() {
    *
    * Important: If you override this method and return a custom NavigationItem, make sure the platform can correctly de-duplicate results.
    * Provide a corresponding [com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider] for your items, or reuse an
-   * existing one. See [com.intellij.platform.lsp.impl.workspaceSymbol.LspWorkspaceSymbolEqualityProvider] for the default equality
+   * existing one. See [com.intellij.platform.lsp.impl.features.workspaceSymbol.LspWorkspaceSymbolEqualityProvider] for the default equality
    * implementation used with LSP workspace symbols.
    *
    * @return a NavigationItem to show in Search Everywhere / Go To Class / Go To Symbol, or null to skip this symbol

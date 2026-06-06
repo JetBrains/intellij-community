@@ -6,14 +6,14 @@ package com.intellij.platform.lsp.api
  */
 enum class LspServerState {
   /**
-   * The [LspServer] has the [Initializing] state initially.
+   * Initial state.
    * The state changes to [Running] when the IDE receives a response to the
    * [initialize](https://microsoft.github.io/language-server-protocol/specification/#initialize) request.
    */
   Initializing,
 
   /**
-   * The [LspServer] has the [Running] state when it is ready to handle requests and notifications from the IDE.
+   * Ready to handle requests and notifications from the IDE.
    * Technically, it means that the IDE has already received a response to the very first
    * [initialize](https://microsoft.github.io/language-server-protocol/specification/#initialize) request.
    */

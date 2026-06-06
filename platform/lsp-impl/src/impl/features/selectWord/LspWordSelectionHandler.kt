@@ -22,7 +22,7 @@ internal class LspWordSelectionHandler : ExtendWordSelectionHandler {
     // The IntelliJ Platform collects all `ExtendWordSelectionHandlers` that return `true` from `canSelect()`
     // and then calls `select()` for all of them.
     // So, not to duplicate the first 6 lines of the `select()` implementation, it's safe to return `true` from here
-    // and then return `null` from `select()` if there is no LSP server-based info for this feature.
+    // and then return `null` from `select()` if there is no LSP-based info for this feature.
     return true
   }
 
