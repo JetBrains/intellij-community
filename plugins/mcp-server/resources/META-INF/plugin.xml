@@ -3,8 +3,8 @@
   <id>com.intellij.mcpServer</id>
   <category>AI-Powered</category>
   <description><![CDATA[
-    MCP (Model Context Protocol) Server for IntelliJ IDEs
-    This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between Large Language Models (LLMs)
+    MCP (Model Context Protocol) Server for JetBrains IDEs
+    This plugin integrates the MCP server into JetBrains IDEs, enabling seamless communication between LLMsc
     and your development environment. It provides tools for interacting with the IDE, including:
     <ul>
       <li>Reading the current file</li>
