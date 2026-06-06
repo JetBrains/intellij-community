@@ -1557,6 +1557,7 @@ class CodexRolloutSessionBackendTest {
         val initial = backend.listThreads(path = projectDir.toString(), openProject = null)
         assertThat(initial).hasSize(1)
         assertThat(initial.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
+        assertThat(backend.resolveActiveThreadFilePaths(projectDir.toString(), "session-plan-mode")).containsExactly(rollout)
 
         drainUpdateChannel(updates)
         // Codex appends a plan item via its long-lived fd; FSEvents stays silent so no path-scoped

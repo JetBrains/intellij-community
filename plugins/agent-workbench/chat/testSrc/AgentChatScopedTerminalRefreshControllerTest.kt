@@ -224,6 +224,40 @@ class AgentChatScopedTerminalRefreshControllerTest {
 
       fileChangesByThreadId["thread-b"]!!.emit(Unit)
       assertThat(withTimeout(5.seconds) { signals.take() })
+        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-b", null))
+    }
+  }
+
+  @Test
+  fun activeThreadFileWatchStartsAfterActiveThreadIdAppears() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val activeThreadId = AtomicReference<String?>(null)
+    val fileChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val watchRequests = LinkedBlockingQueue<String>()
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      inputChanges = inputChanges,
+      sessionState = MutableStateFlow(TerminalViewSessionState.Running),
+      parentScope = this,
+      emitInitialRefresh = false,
+      activeThreadIdProvider = { activeThreadId.get() },
+      activeThreadFileChangeEvents = { threadId ->
+        watchRequests.add(threadId)
+        fileChanges
+      },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      assertThat(watchRequests.poll(300, TimeUnit.MILLISECONDS)).isNull()
+
+      activeThreadId.set("thread-a")
+      inputChanges.emit(Unit)
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+
+      fileChanges.emit(Unit)
+      assertThat(withTimeout(5.seconds) { signals.take() })
         .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
     }
   }

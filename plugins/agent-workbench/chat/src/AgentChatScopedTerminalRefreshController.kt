@@ -117,14 +117,23 @@ internal class AgentChatScopedTerminalRefreshController(
 
       suspend fun stopActiveWatch() {
         val job = watchJob
+        val threadId = watchedThreadId
         watchJob = null
         watchedThreadId = null
+        if (threadId != null) {
+          LOG.debug {
+            "Stopping ${provider.value} active session file watch from agent chat terminal (path=$projectPath, threadId=$threadId)"
+          }
+        }
         job?.cancelAndJoin()
       }
 
       watchRequests.collect {
         val activeThreadId = activeThreadIdProvider()?.takeIf(String::isNotBlank)
         if (activeThreadId == null) {
+          LOG.debug {
+            "Skipping ${provider.value} active session file watch from agent chat terminal: no active thread id (path=$projectPath)"
+          }
           stopActiveWatch()
           return@collect
         }
@@ -133,11 +142,19 @@ internal class AgentChatScopedTerminalRefreshController(
           return@collect
         }
 
-        currentJob?.cancelAndJoin()
+        if (currentJob != null) {
+          stopActiveWatch()
+        }
         watchedThreadId = activeThreadId
+        LOG.debug {
+          "Starting ${provider.value} active session file watch from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+        }
         watchJob = this@watchScope.launch {
           activeThreadFileChangeEvents(activeThreadId).collect {
-            emitScopedRefresh("active session file")
+            LOG.debug {
+              "Received ${provider.value} active session file change from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+            }
+            emitScopedRefresh("active session file", threadId = activeThreadId)
           }
         }
       }
@@ -145,7 +162,7 @@ internal class AgentChatScopedTerminalRefreshController(
     }
   }
 
-  private fun emitScopedRefresh(reason: String, activityHint: AgentThreadActivity? = null) {
+  private fun emitScopedRefresh(reason: String, threadId: String? = this.threadId, activityHint: AgentThreadActivity? = null) {
     if (projectPath.isBlank()) {
       return
     }

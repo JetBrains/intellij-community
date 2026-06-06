@@ -63,6 +63,9 @@ internal class CodexRolloutSessionBackend(
       val files = withContext(Dispatchers.IO) {
         resolveActiveThreadFilePaths(path = path, threadId = threadId)
       }
+      LOG.debug {
+        "Resolved Codex active rollout files for immediate watch (path=$path, threadId=$threadId, files=${files.size})"
+      }
       emitAll(agentWorkbenchImmediateFileChangeFlow(files).map {})
     }
   }
