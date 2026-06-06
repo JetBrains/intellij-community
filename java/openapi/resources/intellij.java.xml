@@ -7,6 +7,7 @@
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
   <!-- endregion -->

@@ -1,15 +1,17 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.regexp"/>
-    <module name="intellij.platform.backend"/>
-
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
-    <module name="intellij.java.indexing"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
     <module name="intellij.java.langInjection.jps"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.langInjection"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="JAVA" shortName="UnknownLanguage" groupKey="inspections.language.injection.group.name" enabledByDefault="true"

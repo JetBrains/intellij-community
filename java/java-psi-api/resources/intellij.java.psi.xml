@@ -1,4 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.syntax"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="java.highest.language.level" defaultValue="26" description="Highest released language level" restartRequired="false"/>
   </extensions>

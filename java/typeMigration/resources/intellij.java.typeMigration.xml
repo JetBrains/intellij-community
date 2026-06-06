@@ -8,6 +8,7 @@
     <module name="intellij.java.codeserver.highlighting"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.platform.structuralSearch"/>
   </dependencies>
   <!-- endregion -->

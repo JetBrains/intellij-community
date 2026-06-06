@@ -1,16 +1,17 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="training"/>
     <module name="intellij.java"/>
     <module name="intellij.java.debugger"/>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.java.ui"/>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution.impl"/>
-    <module name="intellij.java.debugger.impl.shared"/>
-
-    <module name="intellij.platform.backend"/>
-
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="training">
     <ift.language.extension language="JAVA" defaultProductName="IDEA,Aqua" implementationClass="com.intellij.java.ift.JavaLangSupport"/>

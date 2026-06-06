@@ -8,6 +8,11 @@
     Provides the "Convert Raw Types to Generics", "Remove Middle Man", "Replace Temp with Query" and "Wrap Method Return Value" refactorings
   </description>
   <vendor>JetBrains</vendor>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.syntax"/>
+  </dependencies>
+  <!-- endregion -->
   <actions>
     <group id="AdditionalRefactoringsMenu">
       <add-to-group group-id="RefactoringMenu" anchor="last"/>

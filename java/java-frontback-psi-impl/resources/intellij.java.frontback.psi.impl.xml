@@ -1,4 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.syntax"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
     <projectCustomDataSynchronizer implementation="com.intellij.java.frontback.psi.impl.JavaLangLevelProjectCustomDataSynchronizer"/>

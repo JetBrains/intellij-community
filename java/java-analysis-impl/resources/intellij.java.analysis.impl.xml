@@ -1,21 +1,22 @@
 <idea-plugin  visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/intellij.java.analysis.impl.analyzer.xml"/>
   
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.impl"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.codeserver.highlighting"/>
-    <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
-    <module name="intellij.java.psi.impl"/>
-    <!-- endregion -->
+    <module name="intellij.java.syntax"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.deadCode"

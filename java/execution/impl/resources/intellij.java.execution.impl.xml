@@ -12,6 +12,7 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.vcs.impl"/>

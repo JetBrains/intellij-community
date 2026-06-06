@@ -8,6 +8,7 @@
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.execution"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
