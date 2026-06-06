@@ -1,7 +1,7 @@
 package com.intellij.mermaid.lang.highlighting
 
 import com.intellij.mermaid.MermaidBundle.message
-import com.intellij.mermaid.MermaidIcons
+import com.intellij.mermaid.icons.MermaidIcons
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
@@ -47,7 +47,7 @@ class MermaidColorSettingsPage : ColorSettingsPage {
 
     override fun getDisplayName() = message("mermaid.colors.name")
 
-    override fun getIcon() = MermaidIcons.FileType
+    override fun getIcon() = MermaidIcons.MermaidFileType
 
     override fun getHighlighter() = MermaidHighlighter()
 
