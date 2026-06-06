@@ -1,9 +1,14 @@
 <idea-plugin visibility="public">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.acp.agentsCatalogProvider"
+                    interface="com.intellij.platform.acp.AcpAgentsCatalogProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
         serviceInterface="com.intellij.platform.acp.AcpAgentsCatalog"
-        serviceImplementation="com.intellij.platform.acp.DefaultAcpAgentsCatalog"
-        open="true"/>
+        serviceImplementation="com.intellij.platform.acp.impl.AcpAgentsCatalogImpl"/>
     <projectService
         serviceInterface="com.intellij.platform.acp.AcpProcessLauncher"
         serviceImplementation="com.intellij.platform.acp.DefaultAcpProcessLauncher"

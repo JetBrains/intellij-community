@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.acp
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Read-only view of process-launchable ACP agents currently known to the IDE.
@@ -35,6 +36,16 @@ interface AcpAgentsCatalog {
   companion object {
     fun getInstance(): AcpAgentsCatalog = service<AcpAgentsCatalog>()
   }
+}
+
+@ApiStatus.Internal
+interface AcpAgentsCatalogProvider {
+  companion object {
+    val EP_NAME: ExtensionPointName<AcpAgentsCatalogProvider> =
+      ExtensionPointName.create("com.intellij.platform.acp.agentsCatalogProvider")
+  }
+
+  val agentsFlow: StateFlow<List<AcpCatalogEntry>>
 }
 
 /**
