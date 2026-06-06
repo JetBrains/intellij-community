@@ -7,6 +7,7 @@
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.requirements"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.libraries.tuweni.toml"/>
     <module name="intellij.toml.core"/>
     <!-- endregion -->
   </dependencies>

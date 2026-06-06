@@ -21,7 +21,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:tuweni-toml"],
+    exports = ["//libraries/tuweni/toml"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -31,7 +31,7 @@ jvm_library(
         "//python/python-sdk:sdk",
         "//platform/util",
         "//plugins/toml/core",
-        "@lib//:tuweni-toml",
+        "//libraries/tuweni/toml",
         "//platform/external-system-api:externalSystem",
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
@@ -66,7 +66,11 @@ jvm_library(
     ),
     module_name = "intellij.python.pyproject",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:tuweni-toml"],
+    exports = [
+        # do not sort,
+        "//libraries/tuweni/toml",
+        "//libraries/tuweni/toml:toml_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":pyproject",
@@ -76,6 +80,7 @@ jvm_library(
         "//python/python-sdk:sdk_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/toml/core:core_test_lib",
+        "//libraries/tuweni/toml:toml_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
@@ -121,7 +126,7 @@ jvm_library(
     ),
     module_name = "intellij.python.pyproject.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:tuweni-toml"],
+    exports = ["//libraries/tuweni/toml"],
 )
 
 jvm_library(
@@ -144,7 +149,11 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:tuweni-toml"],
+    exports = [
+        # do not sort,
+        "//libraries/tuweni/toml",
+        "//libraries/tuweni/toml:toml_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":pyproject-tests",
@@ -171,7 +180,8 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//plugins/toml/core",
         "//plugins/toml/core:core_test_lib",
-        "@lib//:tuweni-toml",
+        "//libraries/tuweni/toml",
+        "//libraries/tuweni/toml:toml_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",

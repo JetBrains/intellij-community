@@ -13918,6 +13918,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "io.consensys.tuweni/tuweni-toml-2.7.1.jar_copy",
+    src = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
+    out = "io.consensys.tuweni/tuweni-toml-2.7.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.antlr/antlr4-runtime-4.13.0.jar_copy",
+    src = "@org_antlr-antlr4-runtime-4_13_0_http//file",
+    out = "org.antlr/antlr4-runtime-4.13.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-tuweni-toml-tuweni-toml",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
+        ":org_antlr-antlr4-runtime-4_13_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
+    jar = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
+    source_jar = "@io_consensys_tuweni-tuweni-toml-2_7_1-sources_http//file",
+)
+
+jvm_import(
+    name = "org_antlr-antlr4-runtime-4_13_0_http_import",
+    jar = "@org_antlr-antlr4-runtime-4_13_0_http//file",
+    source_jar = "@org_antlr-antlr4-runtime-4_13_0-sources_http//file",
+)
+
+copy_file(
     name = "org.apache.velocity/velocity-engine-core-2.3.jar_copy",
     src = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
     out = "org.apache.velocity/velocity-engine-core-2.3.jar",
@@ -20904,44 +20942,6 @@ jvm_import(
     name = "com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
     jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file",
     source_jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0-sources_http//file",
-)
-
-copy_file(
-    name = "io.consensys.tuweni/tuweni-toml-2.7.1.jar_copy",
-    src = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
-    out = "io.consensys.tuweni/tuweni-toml-2.7.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.antlr/antlr4-runtime-4.13.0.jar_copy",
-    src = "@org_antlr-antlr4-runtime-4_13_0_http//file",
-    out = "org.antlr/antlr4-runtime-4.13.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "tuweni-toml",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
-        ":org_antlr-antlr4-runtime-4_13_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_consensys_tuweni-tuweni-toml-2_7_1_http_import",
-    jar = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
-    source_jar = "@io_consensys_tuweni-tuweni-toml-2_7_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_antlr-antlr4-runtime-4_13_0_http_import",
-    jar = "@org_antlr-antlr4-runtime-4_13_0_http//file",
-    source_jar = "@org_antlr-antlr4-runtime-4_13_0-sources_http//file",
 )
 
 copy_file(

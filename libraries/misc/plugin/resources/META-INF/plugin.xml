@@ -13,5 +13,6 @@
     <module name="intellij.libraries.jettison"/>
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.libraries.commons.text" loading="required"/>
+    <module name="intellij.libraries.tuweni.toml" loading="required"/>
   </content>
 </idea-plugin>

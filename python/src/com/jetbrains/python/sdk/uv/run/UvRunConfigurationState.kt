@@ -63,6 +63,7 @@ fun canRun(
   options: UvRunConfigurationOptions,
   syncWarningFactory: UvSyncWarningDialogFactory,
   logger: Logger,
+  syncCheck: suspend (Path, UvRunConfigurationOptions, Logger) -> Result<Boolean, Unit> = ::checkRequiresSync,
 ): Boolean {
   // force save to make sure that commands read the most up-to-date pyproject.toml
   FileDocumentManager.getInstance().saveAllDocuments()
@@ -77,12 +78,8 @@ fun canRun(
   var isError = false
   var isUnsynced = false
   runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
-    val uvExecutable = getUvExecutableLocal()
-
-    if (workingDirectory != null && uvExecutable != null) {
-      val uv = createUvCliLocal(uvExecutable).mapSuccess { createUvLowLevelLocal(workingDirectory, it) }.getOrNull()
-
-      when (uv?.let { requiresSync(it, options, logger) }?.getOrNull()) {
+    if (workingDirectory != null) {
+      when (syncCheck(workingDirectory, options, logger).getOrNull()) {
         true -> isUnsynced = true
         false -> {}
         null -> isError = true
@@ -93,11 +90,17 @@ fun canRun(
     }
   }
 
-  if (isError || isUnsynced) {
-    return syncWarningFactory.showAndGet(isError, options)
-  }
+  return !isError && !isUnsynced || syncWarningFactory.showAndGet(isError, options)
+}
 
-  return true
+private suspend fun checkRequiresSync(
+  workingDirectory: Path,
+  options: UvRunConfigurationOptions,
+  logger: Logger,
+): Result<Boolean, Unit> {
+  val uvExecutable = getUvExecutableLocal() ?: return Result.failure(Unit)
+  val uv = createUvCliLocal(uvExecutable).mapSuccess { createUvLowLevelLocal(workingDirectory, it) }.getOrNull()
+  return uv?.let { requiresSync(it, options, logger) } ?: Result.failure(Unit)
 }
 
 @ApiStatus.Internal

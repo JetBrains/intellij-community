@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.tuweni.toml"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.libraries.assertj.core"/>
