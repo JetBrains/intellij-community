@@ -1,4 +1,6 @@
 // "Change all usages of 'java.lang.Comparable<T>' in this file to 'kotlin.Comparable<T>'" "true"
+// K2_ERROR: Conflicting import: imported name 'Comparable' is ambiguous.
+// K2_ERROR: Conflicting import: imported name 'Comparable' is ambiguous.
 import java.lang.*
 import java.lang.Comparable
 import java.lang.Comparable
@@ -25,3 +27,4 @@ fun e() : Comparable<String>? {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MapPlatformClassToKotlinFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MapPlatformClassToKotlinFix

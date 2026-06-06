@@ -639,6 +639,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddReflectionQuickFixFactory.addReflectionQuickFixFactory)
 
         registerFactory(ConvertToAnonymousObjectFixFactories.fixFactory)
+        registerFactory(MapPlatformClassToKotlinFixFactories.fixFactory)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {
