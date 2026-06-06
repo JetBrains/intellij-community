@@ -251,12 +251,6 @@ internal class LspDiagnosticsTest {
       checkHighlightingByPolling()
     }
 
-    /**
-     * Guards [LspHighlightingCache.aggregatePerDocumentResults]: an empty pull response must
-     * clear the cached highlightings. The cache treats `sendRequest` returning null as
-     * "no update, keep cache", so an explicit "no diagnostics" reply must surface as an empty
-     * list, not null.
-     */
     @Test
     fun `empty pull response clears previously reported errors`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
