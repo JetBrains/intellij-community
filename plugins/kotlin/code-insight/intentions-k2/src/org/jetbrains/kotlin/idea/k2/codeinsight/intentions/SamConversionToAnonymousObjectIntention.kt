@@ -9,39 +9,24 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.k2.codeinsight.SamConversionToAnonymousObjectContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.applySamConversionToAnonymousObject
+import org.jetbrains.kotlin.idea.k2.codeinsight.getLambdaExpressionForSamConversion
+import org.jetbrains.kotlin.idea.k2.codeinsight.hasRecursiveSamCall
+import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVariance
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.types.Variance
 
 internal class SamConversionToAnonymousObjectIntention :
-    KotlinApplicableModCommandAction<KtCallExpression, SamConversionToAnonymousObjectIntention.Context>(KtCallExpression::class) {
-
-    data class Context(
-        val interfaceName: String,
-        val typeArgumentsText: String,
-        val functionText: String,
-    )
+    KotlinApplicableModCommandAction<KtCallExpression, SamConversionToAnonymousObjectContext>(KtCallExpression::class) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.to.anonymous.object")
@@ -52,13 +37,13 @@ internal class SamConversionToAnonymousObjectIntention :
     ): Presentation = Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
-        getLambdaExpression(element) != null
+        element.getLambdaExpressionForSamConversion() != null
 
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
-        val lambda = getLambdaExpression(element) ?: return null
+    override fun KaSession.prepareContext(element: KtCallExpression): SamConversionToAnonymousObjectContext? {
+        val lambda = element.getLambdaExpressionForSamConversion() ?: return null
         val functionLiteral = lambda.functionLiteral
 
         val callType = element.expressionType as? KaClassType ?: return null
@@ -75,20 +60,10 @@ internal class SamConversionToAnonymousObjectIntention :
         if (lambdaParameters.any { it.returnType is KaErrorType }) return null
 
         val samName = samMethod.name.asString()
-        val hasRecursiveCall = functionLiteral.anyDescendantOfType<KtCallExpression> { call ->
-            if (call.calleeExpression?.text != samName) return@anyDescendantOfType false
-            val callArguments = call.valueArguments
-            if (callArguments.size != lambdaParameters.size) return@anyDescendantOfType false
-
-            callArguments.zip(lambdaParameters).all { (arg, param) ->
-                val argType = arg.getArgumentExpression()?.expressionType ?: return@all false
-                argType.isSubtypeOf(param.returnType)
-            }
-        }
-        if (hasRecursiveCall) return null
+        if (functionLiteral.hasRecursiveSamCall(samName, lambdaParameters)) return null
 
         val callee = element.calleeExpression
-        if (callee != null && callee.isAliasedWithVariance()) return null
+        if (callee != null && callee.isSamConversionAliasedWithVariance()) return null
 
         val interfaceName = callType.getInterfaceName()
         val typeArgumentsText = computeTypeArguments(element, callType, classSymbol)
@@ -101,7 +76,7 @@ internal class SamConversionToAnonymousObjectIntention :
             forceNonNullReturnType = true,
         ) ?: return null
 
-        return Context(
+        return SamConversionToAnonymousObjectContext(
             interfaceName,
             typeArgumentsText,
             functionText,
@@ -111,69 +86,12 @@ internal class SamConversionToAnonymousObjectIntention :
     override fun invoke(
         actionContext: ActionContext,
         element: KtCallExpression,
-        elementContext: Context,
+        elementContext: SamConversionToAnonymousObjectContext,
         updater: ModPsiUpdater,
     ) {
-        val psiFactory = KtPsiFactory(element.project)
-
-        val stubFunction = psiFactory.createFunction(elementContext.functionText)
-        stubFunction.addModifier(KtTokens.OVERRIDE_KEYWORD)
-
-        val objectLiteral = psiFactory.createExpression(
-            "${KtTokens.OBJECT_KEYWORD} : ${elementContext.interfaceName}${elementContext.typeArgumentsText} { ${stubFunction.text} }"
-        )
-
-        val parentOfCall = element.getQualifiedExpressionForSelector() ?: element
-        val replaced = parentOfCall.replaced(objectLiteral)
-
-        shortenReferences(replaced)
+        applySamConversionToAnonymousObject(element, elementContext)
     }
 }
-
-private fun getLambdaExpression(element: KtCallExpression): KtLambdaExpression? =
-    element.lambdaArguments.firstOrNull()?.getLambdaExpression()
-        ?: element.valueArguments.firstOrNull()?.getArgumentExpression() as? KtLambdaExpression
-
-/**
- * Returns `true` if the callee resolves to a type alias whose expanded
- * type contains a variance projection (`in`, `out`, or `*`).
- *
- * Converting such a SAM lambda to an anonymous object is invalid: the projected
- * type cannot legally appear as a supertype, whether through the alias or with it
- * inlined. The SAM constructor call form is accepted by the compiler even when the
- * alias expands to a projected type, but neither `object : IInA<Int>` nor
- * `object : I<in Int>` compiles.
- *
- * ```kotlin
- * fun interface I<A> { fun foo(a: A): Int }
- * typealias IInA<A> = I<in A>
- *
- * IInA<Int> { x -> x }       // OK: the projection is hidden inside the type alias — writing
- *                             //     I<in Int> { x -> x } directly would be a compile error
- *                             //     (PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT)
- *
- * object : IInA<Int> { ... }  // ERROR: CONSTRUCTOR_OR_SUPERTYPE_ON_TYPEALIAS_WITH_TYPE_PROJECTION_ERROR
- * object : I<in Int> { ... }  // ERROR: PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE
- *                             //     (rejected at type-checking: `in Int` means "some supertype of Int",
- *                             //     so the type of the override parameter would be unknowable)
- * ```
- * @see: [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.SamConversionToAnonymousObject.testTypeArgument7]
- */
-context(_: KaSession)
-private fun KtExpression.isAliasedWithVariance(): Boolean {
-    val resolvedSymbol = mainReference?.resolveToSymbol() as? KaSamConstructorSymbol ?: return false
-    return resolvedSymbol.returnType
-        .takeIf { it.abbreviation?.symbol is KaTypeAliasSymbol }
-        ?.hasVariance()
-        ?: false
-}
-
-private fun KaType.hasVariance(): Boolean =
-    (this as? KaClassType)
-        ?.typeArguments
-        ?.filterIsInstance<KaTypeArgumentWithVariance>()
-        ?.any { it.variance != Variance.INVARIANT || it.type.hasVariance() }
-        ?: false
 
 private fun KaClassType.getInterfaceName(): String =
     (abbreviation ?: this).classId.asFqNameString()
