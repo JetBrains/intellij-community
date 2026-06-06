@@ -82,17 +82,6 @@ sealed interface RpcCompletionResponseEvent {
   }
 
   /**
-   * This event is sent when the backend decides to abort completion.
-   * Can be sent only before [NewItems] event.
-   */
-  @Serializable
-  class SkipCompletion(
-    override val requestId: RpcCompletionRequestId,
-  ) : RpcCompletionResponseEvent {
-    override fun debugToString(): String = "SkipCompletion"
-  }
-
-  /**
    * This event is sent when the completion session registers a new advertisement.
    */
   @Serializable
@@ -122,13 +111,21 @@ sealed interface RpcCompletionResponseEvent {
   }
 
   /**
-   * The last event of the completion session.
+   * The last event of a completion request's stream. Exactly one is sent per request, always last, and it states
+   * the terminal [reason] explicitly so consumers don't have to reverse-engineer the outcome (a cancelled or failed
+   * request must not have its partial results reused).
    */
   @Serializable
-  class CompletionFinished(
+  data class CompletionFinished(
     override val requestId: RpcCompletionRequestId,
+    val reason: RpcCompletionFinishReason,
   ) : RpcCompletionResponseEvent {
-    override fun debugToString(): String = "CompletionFinished"
+    override fun toString(): String = buildToString("CompletionFinished") {
+      field("requestId", requestId)
+      field("reason", reason)
+    }
+
+    override fun debugToString(): String = "CompletionFinished(reason=$reason)"
   }
 
   @Serializable
@@ -152,5 +149,4 @@ fun Logger.logRpcCompletionResponseEvent(event: RpcCompletionResponseEvent) {
     debug(event.debugToString())
   }
 }
-
 
