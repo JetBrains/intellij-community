@@ -43,6 +43,8 @@
     <extensionPoint name="ijent.dashboard.tab" interface="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTab" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabStat"/>
+    <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabInfo"/>
     <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabEnvVars"/>
     <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
     <advancedSetting

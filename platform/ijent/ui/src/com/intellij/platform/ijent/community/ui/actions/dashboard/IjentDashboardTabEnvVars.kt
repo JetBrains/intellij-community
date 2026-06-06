@@ -10,7 +10,7 @@ import javax.swing.JComponent
 
 internal class IjentDashboardTabEnvVars : IjentDashboardTab {
   override val name: String
-    get() = IjentImplBundle.message("tab.title.environment.variables")
+    get() = IjentImplBundle.message("tab.title.ijent.dashboard.environment.variables")
 
   override fun createComponent(projects: List<Project>, ijentApi: IjentApi, ijentSession: IjentSession, parentComponent: JComponent?): JComponent {
     return EnvironmentVariablesDashboard(flowOf(

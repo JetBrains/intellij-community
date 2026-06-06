@@ -16,16 +16,21 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentEventBus
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
+import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatCounter
+import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -34,10 +39,14 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -112,7 +121,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     val closeDecision = suspendCancellableCoroutine { cont ->
       val builder = DialogBuilder(projects.first()).apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
-        setCenterPanel(createCenterPanel(projects))
+        setCenterPanel(createCenterPanel(eelDescriptor, projects))
         addCancelAction().setText(IjentImplBundle.message("action.close.projects.text", projects.size))
         dialogWrapper.setShouldUseWriteIntentReadAction(false)
       }
@@ -168,10 +177,36 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private fun createCenterPanel(projects: List<Project>): JComponent {
+  private fun createCenterPanel(eelDescriptor: EelDescriptor, projects: List<Project>): JComponent {
     return panel {
       createDefaultPanel(projects)
+      val session = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
+      if (session != null) {
+        createStatPanel(session.eventBus, session.getIjentInstance(eelDescriptor))
+      }
     }
+      .withBorder(JBUI.Borders.empty(16, 12, 8, 12))
+      .withPreferredWidth(480)
+      .withMinimumWidth(480)
+      .withMaximumWidth(480)
+  }
+
+  private fun Panel.createStatPanel(eventBus: IjentEventBus, eelApi: EelApi) {
+    val stat = IjentStatCounter()
+    val statTab = IjentStatDashboard(stat).launchOnShow()
+    statTab.launchOnShow("ijent stats") {
+      stat.process(eventBus) {
+        launch { makePingRequest(eelApi) }
+        awaitCancellation()
+      }
+    }
+    row {
+      cell(statTab)
+    }
+  }
+
+  private suspend fun makePingRequest(eelApi: EelApi) {
+    eelApi.fs.stat(eelApi.userInfo.home).eelIt()
   }
 }
 
