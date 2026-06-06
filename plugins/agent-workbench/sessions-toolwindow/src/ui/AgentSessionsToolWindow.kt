@@ -54,6 +54,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
+import org.jetbrains.annotations.TestOnly
 
 internal fun createAgentSessionsNorthComponents(
   project: Project,
@@ -456,6 +457,11 @@ internal class AgentSessionsToolWindowPanel(
     else {
       service<AgentSessionsStateStore>().ensureThreadVisible(path, provider, threadId)
     }
+  }
+
+  @TestOnly
+  internal fun containsSessionTreeIdForTest(id: SessionTreeId): Boolean {
+    return id in sessionTreeModel.entriesById
   }
 
   override fun dispose() {

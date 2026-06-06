@@ -11,18 +11,19 @@ import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
 import com.intellij.agent.workbench.sessions.openTestProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.thread
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.toolwindow.ui.extractSessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedContextHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedRangeHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsShowActiveThreadsHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowPanel
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsNorthComponents
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsTitleActions
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createArchivedRangeHeaderPopupGroup
@@ -52,14 +53,11 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
-import com.intellij.ui.tree.AsyncTreeModel
-import com.intellij.ui.treeStructure.Tree
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.awt.Component
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.math.BigDecimal
@@ -201,14 +199,13 @@ class AgentSessionsToolWindowFactorySwingTest {
           }
 
           val threadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")
-          waitForCondition {
-            refreshCount.get() >= 1 && service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-              ?.threads
-              ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
-          }
-          waitForCondition {
-            manager.toolWindow.containsSessionTreeIdWhenTreeModelIdle(threadId)
-          }
+          waitForColdStartThreadModel(
+            stateProvider = { service.state.value },
+            toolWindow = manager.toolWindow,
+            threadId = threadId,
+            refreshCount = refreshCount,
+            visibilityService = visibilityService,
+          )
           assertThat(refreshCount.get()).isEqualTo(1)
           assertThat(visibilityService.visibleFlow.value).isFalse()
           delay(300.milliseconds)
@@ -216,13 +213,11 @@ class AgentSessionsToolWindowFactorySwingTest {
 
           runInEdtAndWait { manager.setVisible(true) }
 
-          waitForCondition {
-            service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-              ?.threads
-              ?.singleOrNull { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" }
-              ?.cost
-              ?.amountUsd == BigDecimal.ONE
-          }
+          waitForColdStartCostHydration(
+            stateProvider = { service.state.value },
+            costLoadCount = costLoadCount,
+            visibilityService = visibilityService,
+          )
           assertThat(refreshCount.get()).isEqualTo(1)
           assertThat(costLoadCount.get()).isEqualTo(1)
           assertThat(visibilityService.visibleFlow.value).isTrue()
@@ -464,46 +459,82 @@ private class ColdStartToolWindowManager(project: Project) :
   }
 }
 
-private fun ToolWindow.containsSessionTreeIdWhenTreeModelIdle(id: SessionTreeId): Boolean {
+private suspend fun waitForColdStartThreadModel(
+  stateProvider: () -> AgentSessionsState,
+  toolWindow: ToolWindow,
+  threadId: SessionTreeId,
+  refreshCount: AtomicInteger,
+  visibilityService: AgentSessionsToolWindowVisibilityService,
+) {
+  try {
+    waitForCondition {
+      refreshCount.get() >= 1 &&
+      stateProvider().hasClaudeThread() &&
+      toolWindow.containsSessionTreeIdInAppliedModel(threadId)
+    }
+  }
+  catch (e: AssertionError) {
+    val state = stateProvider()
+    throw AssertionError(
+      "Cold tool window content did not apply loaded session model in time: " +
+      "refreshCount=${refreshCount.get()}, " +
+      "stateHasThread=${state.hasClaudeThread()}, " +
+      "appliedModelHasThread=${toolWindow.containsSessionTreeIdInAppliedModel(threadId)}, " +
+      "visible=${visibilityService.visibleFlow.value}, " +
+      "state=$state",
+      e,
+    )
+  }
+}
+
+private suspend fun waitForColdStartCostHydration(
+  stateProvider: () -> AgentSessionsState,
+  costLoadCount: AtomicInteger,
+  visibilityService: AgentSessionsToolWindowVisibilityService,
+) {
+  try {
+    waitForCondition {
+      stateProvider().claudeThreadCostAmount() == BigDecimal.ONE
+    }
+  }
+  catch (e: AssertionError) {
+    val state = stateProvider()
+    throw AssertionError(
+      "Cold tool window content did not hydrate visible session costs in time: " +
+      "costLoadCount=${costLoadCount.get()}, " +
+      "visible=${visibilityService.visibleFlow.value}, " +
+      "claudeThreadCost=${state.claudeThreadCostAmount()}, " +
+      "state=$state",
+      e,
+    )
+  }
+}
+
+private fun ToolWindow.containsSessionTreeIdInAppliedModel(id: SessionTreeId): Boolean {
   var contains = false
   runInEdtAndWait {
-    val tree = contentManager.contents.singleOrNull()
-      ?.component
-      ?.findSessionTree()
-      ?: return@runInEdtAndWait
-    val model = tree.model
-    if (model is AsyncTreeModel && model.isProcessing) {
-      return@runInEdtAndWait
-    }
-    contains = tree.containsSessionTreeId(id)
+    contains = (contentManager.contents.singleOrNull()?.component as? AgentSessionsToolWindowPanel)
+      ?.containsSessionTreeIdForTest(id) == true
   }
   return contains
 }
 
-private fun Component.findSessionTree(): Tree? {
-  if (this is Tree) return this
-  if (this !is java.awt.Container) return null
-  for (child in components) {
-    child.findSessionTree()?.let { return it }
-  }
-  return null
-}
-
-private fun Tree.containsSessionTreeId(id: SessionTreeId): Boolean {
-  return model.containsSessionTreeId(model.root, id)
-}
-
-private fun javax.swing.tree.TreeModel.containsSessionTreeId(node: Any?, id: SessionTreeId): Boolean {
-  if (extractSessionTreeId(node) == id) return true
-  val childCount = getChildCount(node)
-  for (index in 0 until childCount) {
-    if (containsSessionTreeId(getChild(node, index), id)) return true
-  }
-  return false
-}
-
 private const val PROJECT_PATH = "/work/project-a"
 private const val AGENT_SESSIONS_TOOL_WINDOW_ID = "agent.workbench.sessions"
+
+private fun AgentSessionsState.hasClaudeThread(): Boolean {
+  return projects.firstOrNull { it.path == PROJECT_PATH }
+    ?.threads
+    ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
+}
+
+private fun AgentSessionsState.claudeThreadCostAmount(): BigDecimal? {
+  return projects.firstOrNull { it.path == PROJECT_PATH }
+    ?.threads
+    ?.singleOrNull { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" }
+    ?.cost
+    ?.amountUsd
+}
 
 private fun jbCentralExecutableName(): String {
   return if (SystemInfoRt.isWindows) "jbcentral.exe" else "jbcentral"
