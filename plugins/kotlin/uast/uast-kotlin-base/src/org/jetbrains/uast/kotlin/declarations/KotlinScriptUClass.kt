@@ -69,7 +69,7 @@ class KotlinScriptUClass(
         return if (method.isConstructor) {
             KotlinScriptConstructorUMethod(psi.script, method as KtLightMethod, this)
         } else {
-            languagePlugin?.convertOpt(method, this) ?: reportConvertFailure(method)
+            languagePlugin?.convertOpt<UMethod>(method, this) ?: reportConvertFailure(method)
         }
     }
 

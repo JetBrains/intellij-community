@@ -35,7 +35,7 @@ class KotlinLazyUBlockExpression(
             val languagePlugin = UastFacade.findPlugin(uastParent.lang)
             return KotlinLazyUBlockExpression(uastParent) { expressionParent ->
                 initializers.map {
-                    languagePlugin?.convertOpt(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
+                    languagePlugin?.convertOpt<UExpression>(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
                 }
             }
         }
