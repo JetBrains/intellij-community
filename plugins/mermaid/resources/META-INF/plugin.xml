@@ -2,6 +2,10 @@
   <id>com.intellij.mermaid</id>
   <name>Mermaid</name>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Provides editing support and diagram preview for
+    <a href="https://mermaid.js.org/">Mermaid</a> diagramming and charting language.
+  ]]></description>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
