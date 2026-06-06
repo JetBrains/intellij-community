@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -167,6 +168,35 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun promptSelectorHidesUnavailableDiscoverableProviders() {
+    runInEdtAndWait {
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val piProvider = testProviderBridge(
+        provider = AgentSessionProvider.PI,
+        promptOptions = emptyList(),
+        cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
+      )
+      val fixture = createSelectorFixture(
+        providers = listOf(codexProvider, piProvider),
+        availabilityByProvider = mapOf(
+          AgentSessionProvider.CODEX to true,
+          AgentSessionProvider.PI to false,
+        ),
+      )
+
+      fixture.selector.refresh()
+
+      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.CODEX)
+      val actions = checkNotNull(fixture.selector.buildChooserActionGroup { error("should not select provider during filtering test") })
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(actions.map { action -> action.templatePresentation.text }).containsExactly("Codex")
+    }
+  }
+
+  @Test
   @Suppress("RAW_SCOPE_CREATION")
   fun asyncRefreshAppliesResolvedProviderAvailabilityFromUiScope() = timeoutRunBlocking {
     val provider = testProviderBridge(
@@ -239,9 +269,11 @@ class AgentPromptProviderSelectorTest {
     promptOptions: List<AgentPromptProviderOption>,
     cliAvailable: Boolean = true,
     supportsPromptLaunch: Boolean = true,
+    cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.PROMINENT,
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
+      override val cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy = cliVisibilityPolicy
       override val displayNameKey: String = "provider.${provider.value}"
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions

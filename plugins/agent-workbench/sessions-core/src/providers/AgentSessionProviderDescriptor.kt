@@ -44,6 +44,14 @@ enum class AgentThreadRenameContext {
   EDITOR_TAB,
 }
 
+/**
+ * Controls how synchronous provider pickers behave before CLI availability is known.
+ */
+enum class AgentSessionProviderCliVisibilityPolicy {
+  PROMINENT,
+  DISCOVER_WHEN_AVAILABLE,
+}
+
 sealed interface AgentThreadRenameHandler {
   val supportedContexts: Set<AgentThreadRenameContext>
 
@@ -169,6 +177,9 @@ interface AgentSessionProviderDescriptor {
 
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String
+
+  val cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy
+    get() = AgentSessionProviderCliVisibilityPolicy.PROMINENT
 
   /**
    * Terminal-agent identifier used by `TerminalAgentResolver` to locate this provider's CLI binary.

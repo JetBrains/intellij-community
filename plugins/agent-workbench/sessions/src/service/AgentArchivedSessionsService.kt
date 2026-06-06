@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -240,22 +241,26 @@ class AgentArchivedSessionsService internal constructor(
   private suspend fun resolveArchivedCliAvailabilityByProvider(
     sources: List<AgentSessionSource>,
   ): Map<AgentSessionProvider, Boolean> {
-    return coroutineScope {
-      sources.map { source ->
-        async {
-          val descriptor = AgentSessionProviders.find(source.provider) ?: return@async source.provider to true
-          source.provider to try {
-            descriptor.isCliAvailable()
+    return withContext(Dispatchers.IO) {
+      coroutineScope {
+        sources.map { source ->
+          async {
+            val descriptor = AgentSessionProviders.find(source.provider) ?: return@async source.provider to true
+            source.provider to try {
+              AgentSessionProviderCliAvailabilityCache.resolveAvailability(descriptor, force = false) {
+                descriptor.isCliAvailable()
+              }
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (throwable: Throwable) {
+              ARCHIVED_LOG.warn("Failed to resolve CLI availability for ${source.provider.value}", throwable)
+              false
+            }
           }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (throwable: Throwable) {
-            ARCHIVED_LOG.warn("Failed to resolve CLI availability for ${source.provider.value}", throwable)
-            false
-          }
-        }
-      }.awaitAll().toMap()
+        }.awaitAll().toMap()
+      }
     }
   }
 

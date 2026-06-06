@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
@@ -84,7 +85,9 @@ internal class AgentProviderCliStatusBanner(
   private fun missingEnabledProviders(): List<AgentSessionProviderDescriptor> {
     val providers = providerSettingsService.enabledProviders(AgentSessionProviders.allProviders())
     val availability = providerAvailabilityService.availabilitySnapshot(providers)
-    return providers.filter { provider -> availability[provider.provider] == false }
+    return providers.filter { provider ->
+      provider.cliVisibilityPolicy == AgentSessionProviderCliVisibilityPolicy.PROMINENT && availability[provider.provider] == false
+    }
   }
 
   private fun textPanel(missingProviders: List<AgentSessionProviderDescriptor>): JPanel {

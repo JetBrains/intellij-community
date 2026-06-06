@@ -54,6 +54,10 @@ private fun appendMenuItems(
   standardItems: MutableList<AgentSessionProviderMenuItem>,
   yoloItems: MutableList<AgentSessionProviderMenuItem>,
 ) {
+  if (!cliAvailable && bridge.cliVisibilityPolicy == AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE) {
+    return
+  }
+
   val disabledReasonKey = if (cliAvailable) null else bridge.cliMissingMessageKey
 
   if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {

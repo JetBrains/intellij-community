@@ -38,6 +38,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -377,22 +378,26 @@ internal class AgentSessionRefreshCoordinator(
   private suspend fun resolveCliAvailabilityByProvider(
     sessionSources: List<AgentSessionSource>,
   ): Map<AgentSessionProvider, Boolean> {
-    return coroutineScope {
-      sessionSources.map { source ->
-        async {
-          val descriptor = providerDescriptorProvider(source.provider) ?: return@async source.provider to true
-          source.provider to try {
-            descriptor.isCliAvailable()
+    return kotlinx.coroutines.withContext(Dispatchers.IO) {
+      coroutineScope {
+        sessionSources.map { source ->
+          async {
+            val descriptor = providerDescriptorProvider(source.provider) ?: return@async source.provider to true
+            source.provider to try {
+              AgentSessionProviderCliAvailabilityCache.resolveAvailability(descriptor, force = false) {
+                descriptor.isCliAvailable()
+              }
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (t: Throwable) {
+              LOG.warn("Failed to resolve CLI availability for ${source.provider.value}", t)
+              false
+            }
           }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (t: Throwable) {
-            LOG.warn("Failed to resolve CLI availability for ${source.provider.value}", t)
-            false
-          }
-        }
-      }.awaitAll().toMap()
+        }.awaitAll().toMap()
+      }
     }
   }
 

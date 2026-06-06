@@ -59,8 +59,9 @@ fun buildNewThreadActionModel(
 /**
  * Synchronous action updates and tree renderers cannot call [AgentSessionProviderDescriptor.isCliAvailable]
  * directly. They read the project-level availability cache instead and request a background refresh when
- * the cache has not been populated yet. Unknown availability is treated as enabled so first paint does not
- * disable every provider while startup prewarm is still running.
+ * the cache has not been populated yet. Prominent providers are treated as enabled so first paint does not
+ * disable every provider while startup prewarm is still running; discoverable providers stay hidden until
+ * a background probe resolves them as available.
  */
 fun providerAvailabilitySnapshot(
   bridges: List<AgentSessionProviderDescriptor>,

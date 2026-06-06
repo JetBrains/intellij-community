@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
@@ -45,6 +46,7 @@ class AgentProviderCliStatusBannerTest {
     providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
     providerSettings.setProviderEnabled(AgentSessionProvider.CLAUDE, true)
     providerSettings.setProviderEnabled(AgentSessionProvider.JUNIE, true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.PI, true)
     availabilityService.clearAvailabilityForTest()
   }
 
@@ -118,6 +120,26 @@ class AgentProviderCliStatusBannerTest {
             AgentSessionsBundle.message("toolwindow.provider.cli.banner.settings"),
             AgentSessionsBundle.message("toolwindow.provider.cli.banner.retry"),
           )
+      }
+    }
+  }
+
+  @Test
+  fun bannerDoesNotShowMissingDiscoverableProvider(@TestDisposable disposable: Disposable) {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.PI,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+      cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
+    )
+    providerSettings.setProviderEnabled(AgentSessionProvider.PI, true)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.PI to false))
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runInEdtAndWait {
+        val banner = AgentProviderCliStatusBanner(project = project, parentDisposable = disposable, refreshSessions = {})
+
+        assertThat(banner.isVisible).isFalse()
       }
     }
   }

@@ -79,7 +79,7 @@ internal class AgentPromptProviderSelector(
    * cached paint already on screen.
    */
   private suspend fun refreshProviderAvailability(bridges: List<AgentSessionProviderDescriptor>) {
-    val availabilityByProvider = providerAvailabilityService.refreshNow(bridges)
+    val availabilityByProvider = providerAvailabilityService.refreshNow(bridges, force = false)
     val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, availabilityByProvider)
     withContext(Dispatchers.EDT) {
       if (resolvedEntries == providerEntries && resolvedMenuModel == providerMenuModel) return@withContext
@@ -92,7 +92,9 @@ internal class AgentPromptProviderSelector(
     availabilityByProvider: Map<AgentSessionProvider, Boolean>,
   ): Pair<AgentSessionProviderMenuModel, List<ProviderEntry>> {
     val resolvedMenuModel = buildAgentSessionProviderMenuModel(bridges, availabilityByProvider)
-    val resolvedEntries = bridges.map { bridge ->
+    val visibleProviders = (resolvedMenuModel.standardItems + resolvedMenuModel.yoloItems)
+      .mapTo(LinkedHashSet()) { item -> item.bridge.provider }
+    val resolvedEntries = bridges.filter { bridge -> bridge.provider in visibleProviders }.map { bridge ->
       ProviderEntry(
         bridge = bridge,
         displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: bridge.displayNameFallback,

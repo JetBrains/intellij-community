@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
@@ -38,6 +39,7 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(descriptor.displayNameKey).isEqualTo("toolwindow.provider.pi")
     assertThat(descriptor.newSessionLabelKey).isEqualTo("toolwindow.action.new.session.pi")
     assertThat(descriptor.cliMissingMessageKey).isEqualTo("toolwindow.error.pi.cli")
+    assertThat(descriptor.cliVisibilityPolicy).isEqualTo(AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE)
     assertThat(descriptor.terminalAgentKey).isEqualTo("pi")
     assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD)
     assertThat(descriptor.promptOptions).isEmpty()

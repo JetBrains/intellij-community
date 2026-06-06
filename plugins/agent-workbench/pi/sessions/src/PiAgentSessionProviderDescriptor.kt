@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -41,6 +42,9 @@ internal class PiAgentSessionProviderDescriptor(
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.pi.cli"
+
+  override val cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy
+    get() = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE
 
   override val terminalAgentKey: String
     get() = PiCliSupport.PI_TERMINAL_AGENT_KEY

@@ -22,13 +22,13 @@ Date: 2026-05-09
 Agent Workbench custom telemetry records semantic workflow outcomes that platform action telemetry cannot infer. It must stay content-free, allowlisted, and centralized behind the shared telemetry facade.
 
 ## Requirements
-- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions-core` with FUS group `agent.workbench` version `3`.
+- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions-core` with FUS group `agent.workbench` version `5`.
 
 - Custom events must not duplicate ordinary `AnAction` invocation counting already covered by the platform `actions` group.
 
 - The schema uses only stable enum or allowlisted fields: `entry_point`, `provider`, `launch_mode`, `target_kind`, `blocked_reason`, and `launch_result`.
 
-- Provider values are normalized to `CODEX`, `CLAUDE`, or `OTHER`; raw provider ids, prompt text, paths, thread ids, session ids, clipboard contents, VCS hashes, and context payloads must not be logged.
+- Provider values are normalized to `CODEX`, `CLAUDE`, `JUNIE`, `PI`, `TERMINAL`, or `OTHER`; raw provider ids, prompt text, paths, thread ids, session ids, clipboard contents, VCS hashes, and context payloads must not be logged.
   [@test] ../prompt/ui/testSrc/AgentPromptSubmitValidationDecisionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 

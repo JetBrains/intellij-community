@@ -2,9 +2,12 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Disposer
@@ -62,8 +65,10 @@ class AgentSessionProvidersTest {
 
     val disposable = Disposer.newDisposable()
     disposable.use {
-      val firstDescriptor = TestAgentSessionProviderDescriptor(provider = provider, sourceId = "first", supportedModes = emptySet(), cliAvailable = true)
-      val secondDescriptor = TestAgentSessionProviderDescriptor(provider = provider, sourceId = "second", supportedModes = emptySet(), cliAvailable = true)
+      val firstDescriptor =
+        TestAgentSessionProviderDescriptor(provider = provider, sourceId = "first", supportedModes = emptySet(), cliAvailable = true)
+      val secondDescriptor =
+        TestAgentSessionProviderDescriptor(provider = provider, sourceId = "second", supportedModes = emptySet(), cliAvailable = true)
       extensionPoint.point.registerExtension(firstDescriptor, disposable)
       extensionPoint.point.registerExtension(secondDescriptor, disposable)
 
@@ -153,6 +158,32 @@ class AgentSessionProvidersTest {
     }
 
     assertThat(AgentSessionProviders.find(AgentSessionProvider.CLAUDE)).isSameAs(baselineClaude)
+  }
+
+  @Test
+  fun menuModelOmitsUnavailableDiscoverableProviders() {
+    val prominentProvider = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+    )
+    val discoverableProvider = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.PI,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+      cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
+    )
+
+    val menuModel = buildAgentSessionProviderMenuModel(
+      bridges = listOf(prominentProvider, discoverableProvider),
+      availabilityByProvider = mapOf(
+        AgentSessionProvider.CODEX to false,
+        AgentSessionProvider.PI to false,
+      ),
+    )
+
+    assertThat(menuModel.standardItems.map { item -> item.bridge.provider }).containsExactly(AgentSessionProvider.CODEX)
+    assertThat(menuModel.standardItems.single().isEnabled).isFalse()
   }
 
   @Test
