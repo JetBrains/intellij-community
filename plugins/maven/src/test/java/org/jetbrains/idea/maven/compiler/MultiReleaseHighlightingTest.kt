@@ -1,25 +1,43 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.compiler
 
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assumeVersionAtLeast
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.getSourceLanguageLevelForModule
+import org.jetbrains.idea.maven.fixtures.getTargetLanguageLevelForModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MultiReleaseHighlightingTest : MavenDomWithIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MultiReleaseHighlightingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(withIndices = true, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
+
   @Test
   fun testDoNotHighlightVersionRanges() = runBlocking {
-    assumeVersionAtLeast("3.9.0")
-    createProjectSubFile("src/main/java/org/example/A.java", """
+    maven.assumeVersionAtLeast("3.9.0")
+    maven.createProjectSubFile("src/main/java/org/example/A.java", """
       package org.example;
       class A {}
       """.trimIndent())
-    val moduleInfo = createProjectSubFile("src/main/java-additional/module-info.java", """
+    val moduleInfo = maven.createProjectSubFile("src/main/java-additional/module-info.java", """
       module project {
         exports org.example;
       }""".trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -48,14 +66,14 @@ class MultiReleaseHighlightingTest : MavenDomWithIndicesTestCase() {
       </build>
       """.trimIndent())
 
-    assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+    maven.assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
 
-    assertEquals(LanguageLevel.JDK_1_8, getSourceLanguageLevelForModule("project.main"))
-    assertEquals(LanguageLevel.JDK_1_8, getTargetLanguageLevelForModule("project.main"))
+    assertEquals(LanguageLevel.JDK_1_8, maven.getSourceLanguageLevelForModule("project.main"))
+    assertEquals(LanguageLevel.JDK_1_8, maven.getTargetLanguageLevelForModule("project.main"))
 
-    assertEquals(LanguageLevel.JDK_1_9, getSourceLanguageLevelForModule("project.additionalSourceRoot"))
-    assertEquals(LanguageLevel.JDK_1_9, getTargetLanguageLevelForModule("project.additionalSourceRoot"))
+    assertEquals(LanguageLevel.JDK_1_9, maven.getSourceLanguageLevelForModule("project.additionalSourceRoot"))
+    assertEquals(LanguageLevel.JDK_1_9, maven.getTargetLanguageLevelForModule("project.additionalSourceRoot"))
 
-    checkHighlighting(moduleInfo)
+    maven.checkHighlighting(moduleInfo)
   }
 }

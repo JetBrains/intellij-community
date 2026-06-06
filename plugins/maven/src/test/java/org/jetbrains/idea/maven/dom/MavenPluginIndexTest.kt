@@ -1,22 +1,36 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.runAndExpectArtifactDownloadEvents
+import org.jetbrains.idea.maven.fixtures.runAndExpectPluginIndexEvents
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
 
-class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPluginIndexTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(withIndices = true, initialPom = null, skipPluginResolution = false,
+                                       mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDefaultPluginsDownloadedAndIndexed() = runBlocking {
-    runAndExpectPluginIndexEvents(DEFAULT_PLUGIN_ARTIFACT_IDS) {
-      runAndExpectArtifactDownloadEvents(DEFAULT_PLUGIN_GROUP_ID, DEFAULT_PLUGIN_ARTIFACT_IDS) {
-        importProjectAsync("""
+    maven.runAndExpectPluginIndexEvents(DEFAULT_PLUGIN_ARTIFACT_IDS) {
+      maven.runAndExpectArtifactDownloadEvents(DEFAULT_PLUGIN_GROUP_ID, DEFAULT_PLUGIN_ARTIFACT_IDS) {
+        maven.importProjectAsync("""
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
                         <version>1</version>
@@ -29,7 +43,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun checkDownloadedPlugins() {
-    val basePath = Path.of(dir.toString(), "testData", "local1").toString()
+    val basePath = Path.of(maven.dir.toString(), "testData", "local1").toString()
     val basePluginsPath = Path.of(basePath, *DEFAULT_PLUGIN_GROUP_ID.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
     try {
 
@@ -39,7 +53,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
 
       val notDownloadedPlugins = HashSet(DEFAULT_PLUGIN_ARTIFACT_IDS)
       notDownloadedPlugins.removeAll(pluginFolders)
-      assertTrue("Maven plugins are not downloaded: " + java.lang.String.join(", ", notDownloadedPlugins), notDownloadedPlugins.isEmpty())
+      assertTrue(notDownloadedPlugins.isEmpty(), "Maven plugins are not downloaded: " + java.lang.String.join(", ", notDownloadedPlugins))
     }
     catch (e: IOException) {
       throw RuntimeException(e)
@@ -47,7 +61,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun checkIndexedPlugins() {
-    val indicesManager = MavenIndicesManager.getInstance(project)
+    val indicesManager = MavenIndicesManager.getInstance(maven.project)
     val notIndexedPlugins = HashSet<String?>()
     for (artifactId in DEFAULT_PLUGIN_ARTIFACT_IDS) {
       val pluginIndexed = indicesManager.hasLocalArtifactId(DEFAULT_PLUGIN_GROUP_ID, artifactId)
@@ -55,7 +69,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
         notIndexedPlugins.add(artifactId)
       }
     }
-    assertTrue("Maven plugins are not indexed: " + java.lang.String.join(", ", notIndexedPlugins), notIndexedPlugins.isEmpty())
+    assertTrue(notIndexedPlugins.isEmpty(), "Maven plugins are not indexed: " + java.lang.String.join(", ", notIndexedPlugins))
   }
 
   companion object {

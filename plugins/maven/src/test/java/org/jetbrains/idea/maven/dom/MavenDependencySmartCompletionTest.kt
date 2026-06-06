@@ -1,16 +1,36 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
+import org.jetbrains.idea.maven.fixtures.configTest
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.refreshFiles
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: String) {
 
-  override fun importProjectOnSetup() = true
+  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+
   @Test
   fun testCompletion() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -21,14 +41,14 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "junit:junit")
+    maven.assertCompletionVariantsInclude(maven.projectPom, maven.RENDERING_TEXT, "junit:junit")
   }
 
 
 
   @Test
   fun testInsertDependency() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -37,15 +57,17 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(projectPom)
-    val elements = fixture.completeBasic()
-    assertCompletionVariants(fixture, RENDERING_TEXT, "junit:junit")
+    maven.configTest(maven.projectPom)
+    val elements = maven.fixture.completeBasic()
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit")
     UsefulTestCase.assertSize(1, elements)
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                          <version>1</version>
@@ -62,7 +84,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testInsertManagedDependency() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -80,12 +102,14 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(projectPom)
-    fixture.complete(CompletionType.BASIC)
-    assertCompletionVariants(fixture, RENDERING_TEXT, "junit:junit")
-    fixture.type('\n')
+    maven.configTest(maven.projectPom)
+    maven.fixture.complete(CompletionType.BASIC)
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit")
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                          <version>1</version>
@@ -110,7 +134,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testInsertManagedDependencyWithTypeAndClassifier() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -134,15 +158,17 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(projectPom)
+    maven.configTest(maven.projectPom)
 
-    val elements = fixture.completeBasic()
+    val elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                          <version>1</version>
@@ -175,7 +201,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdThenVersion() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
                          <dependency>
@@ -184,20 +210,24 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    var elements = fixture.completeBasic()
+    var elements = maven.fixture.completeBasic()
     assertTrue(elements.size > 0)
     //assertEquals("junit:junit:3.8.1", elements[0].getLookupString())
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    elements = fixture.completeBasic()
+    elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                          <dependencies>
                                            <dependency>
@@ -210,13 +240,13 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                                          """.trimIndent()))
 
     assertTrue(
-      fixture.getLookupElementStrings()!!.containsAll(mutableListOf("3.8.1", "4.0")))
+      maven.fixture.getLookupElementStrings()!!.containsAll(mutableListOf("3.8.1", "4.0")))
   }
 
   @Test
   fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
                          <dependency>
@@ -225,20 +255,24 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    val elements = fixture.completeBasic()
+    val elements = maven.fixture.completeBasic()
 
-    assertCompletionVariants(fixture, RENDERING_TEXT, "intellijartifactanother", "intellijartifact")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "intellijartifactanother", "intellijartifact")
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    assertCompletionVariants(fixture, RENDERING_TEXT, "org.intellijgroup")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "org.intellijgroup")
 
-    fixture.type("\n")
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                          <dependencies>
                                            <dependency>
@@ -253,7 +287,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testCompletionArtifactIdNonExactmatch() = runBlocking {
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
                          <dependency>
@@ -262,20 +296,22 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
-    val elements = fixture.completeBasic()
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
+    val elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    assertCompletionVariants(fixture, RENDERING_TEXT, "org.example")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "org.example")
   }
 
   @Test
   fun testCompletionArtifactIdInsideManagedDependency() = runBlocking {
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencyManagement>
                            <dependencies>
@@ -286,22 +322,28 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencyManagement>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    val elements = fixture.completeBasic()
+    val elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    assertCompletionVariants(fixture, RENDERING_TEXT, "org.example")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "org.example")
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    assertCompletionVariants(fixture, RENDERING_TEXT, "1.0", "2.0")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "1.0", "2.0")
 
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                          <dependencyManagement>
                                              <dependencies>
@@ -318,7 +360,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testCompletionArtifactIdWithManagedDependency() = runBlocking {
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                          <dependencyManagement>
                            <dependencies>
@@ -336,18 +378,22 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    var elements = fixture.completeBasic()
+    var elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements!!)
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    elements = fixture.completeBasic()
+    elements = maven.fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                            <dependencyManagement>
                                              <dependencies>
@@ -371,7 +417,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() = runBlocking {
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencyManagement>
                          <dependencies>
@@ -392,14 +438,16 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
-    fixture.configureFromExistingVirtualFile(projectPom)
+    maven.refreshFiles(listOf(maven.projectPom))
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    val elements = fixture.complete(CompletionType.BASIC)
+    val elements = maven.fixture.complete(CompletionType.BASIC)
     UsefulTestCase.assertSize(1, elements)
-    fixture.type('\n')
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                          <dependencyManagement>
                                            <dependencies>

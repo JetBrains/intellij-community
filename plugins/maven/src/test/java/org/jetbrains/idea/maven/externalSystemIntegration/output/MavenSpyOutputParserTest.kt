@@ -1,12 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
-import kotlinx.coroutines.runBlocking
+import com.intellij.testFramework.UsefulTestCase.assertSameLines
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import org.junit.jupiter.api.Test
 
-class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
+@TestApplication
+@RunInEdt
+class MavenSpyOutputParserTest {
+  companion object {
+    private val tempDir = tempPathFixture()
+    private val project = projectFixture(tempDir, openAfterCreation = true)
+  }
 
-  fun testSuccessfullBuildWithTwoSubmodules() = runBlocking {
-    failOnWarns {
+  private fun testCase(vararg lines: String): MavenBuildToolLogTester {
+    return MavenBuildToolLogTester.forProject(project.get()).withLines(*lines)
+  }
+
+  @Test
+  fun testSuccessfullBuildWithTwoSubmodules() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("" +
                       " test:project:pom:1\n" +
                       "  install\n" +
@@ -26,22 +42,24 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  test\n" +
                       "  jar\n" +
                       "  install",
-                      testCase(*fromFile("org/jetbrains/maven/buildlogs/Project2Modules.log"))
+                      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/Project2Modules.log"))
                         .withSkippedOutput()
                         .runAndFormatToString())
     }
   }
 
-  fun testArchetypeRun() = runBlocking {
-    failOnWarns {
-      testCase(*fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
+  @Test
+  fun testArchetypeRun() {
+    MavenBuildToolLogTestUtils.failOnWarns {
+      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
         .withSkippedOutput()
         .runAndFormatToString()
     }
   }
 
-  fun testdependencyInSinleMojoFailed() = runBlocking {
-    failOnWarns {
+  @Test
+  fun testdependencyInSinleMojoFailed() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
                       "  resources\n" +
                       "  compile\n" +
@@ -55,14 +73,15 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "    error:Could not find artifact io.testproject:example-addon-proxy:pom:0.0.1-SNAPSHOT\n" +
                       "  install",
 
-      testCase(*fromFile("org/jetbrains/maven/buildlogs/single-io.testproject.log"))
+      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/single-io.testproject.log"))
         .withSkippedOutput()
         .runAndFormatToString())
     }
   }
 
-  fun testSuccessfullBuildWithOutputTwoSubmodules() = runBlocking {
-    failOnWarns {
+  @Test
+  fun testSuccessfullBuildWithOutputTwoSubmodules() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("test:project:pom:1\n" +
                       "  [INFO]\n" +
                       "  [INFO] ------------------------------------------------------------------------\n" +
@@ -189,26 +208,28 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "   [INFO] Installing C:\\dev\\idea\\testprojects\\maven-2-err\\m2\\target\\m2-1.jar to C:\\Users\\alexandr.bubenchikov\\.m2\\repositoryTest\\test\\m2\\1\\m2-1.jar\n" +
                       "  [INFO] Installing C:\\dev\\idea\\testprojects\\maven-2-err\\m2\\pom.xml to C:\\Users\\alexandr.bubenchikov\\.m2\\repositoryTest\\test\\m2\\1\\m2-1.pom\n" +
                       "   [INFO] Installing C:\\dev\\idea\\testprojects\\maven-2-err\\m2\\pom.xml to C:\\Users\\alexandr.bubenchikov\\.m2\\repositoryTest\\test\\m2\\1\\m2-1.pom",
-                      testCase(*fromFile("org/jetbrains/maven/buildlogs/Project2Modules.log"))
+                      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/Project2Modules.log"))
                         .runAndFormatToString())
     }
   }
 
-  fun `test parse build log with -q failed`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse build log with -q failed`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("error:Maven Run\n" +
                       " org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
                       " org.example:child1:jar:1.0-SNAPSHOT\n" +
                       "  resources\n" +
                       "  compile",
-        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-quiet-failed.log"))
+        testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-quiet-failed.log"))
           .withSkippedOutput()
           .runAndFormatToString())
     }
   }
 
-  fun `test parse build log with -q`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse build log with -q`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
                       " org.example:child1:jar:1.0-SNAPSHOT\n" +
                       "  resources\n" +
@@ -217,46 +238,50 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  testCompile\n" +
                       "  test\n" +
                       "  jar",
-        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-quiet-success.log"))
+        testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-quiet-success.log"))
           .withSkippedOutput()
           .runAndFormatToString())
     }
   }
 
-  fun `test parse build log no goal failed`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse build log no goal failed`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("error:",
-        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-goal-failed.log"))
+        testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-no-goal-failed.log"))
           .withSkippedOutput()
           .runAndFormatToString())
     }
   }
 
-  fun `test parse build log no pom failed`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse build log no pom failed`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("error:",
-        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-pom-failed.log"))
+        testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-no-pom-failed.log"))
           .withSkippedOutput()
           .runAndFormatToString())
     }
   }
 
-  fun `test parse maven4 log pom success`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse maven4 log pom success`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT\n" +
                       " org.example:module:jar:1.0-SNAPSHOT\n" +
                       "  kapt\n" +
                       "  resources\n" +
                       "  compile\n" +
                       "  compile",
-                      testCase(*fromFile("org/jetbrains/maven/buildlogs/build-compile-maven4.log"))
+                      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-compile-maven4.log"))
                         .withSkippedOutput()
                         .runAndFormatToString())
     }
   }
 
-  fun `test parse maven4 log pom error`() = runBlocking {
-    failOnWarns {
+  @Test
+  fun `test parse maven4 log pom error`() {
+    MavenBuildToolLogTestUtils.failOnWarns {
       assertSameLines("error:Maven Run\n" +
                       " org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT\n" +
                       " org.example:module:jar:1.0-SNAPSHOT\n" +
@@ -264,7 +289,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  resources\n" +
                       "  compile\n" +
                       "  compile",
-                      testCase(*fromFile("org/jetbrains/maven/buildlogs/build-compile-maven4-error.log"))
+                      testCase(*MavenBuildToolLogTestUtils.fromFile("org/jetbrains/maven/buildlogs/build-compile-maven4-error.log"))
                         .withSkippedOutput()
                         .runAndFormatToString())
     }

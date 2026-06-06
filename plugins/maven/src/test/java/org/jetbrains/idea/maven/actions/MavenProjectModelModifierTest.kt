@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.actions
 
 import com.intellij.openapi.application.readAction
@@ -13,48 +13,68 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
+import org.jetbrains.idea.maven.fixtures.awaitConfiguration
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.defaultLanguageLevel
+import org.jetbrains.idea.maven.fixtures.findTag
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.regex.Pattern
 
-class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(withIndices = true, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testAddExternalLibraryDependency() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    addExternalLibraryDependency(listOf(getModule("project")),
+    addExternalLibraryDependency(listOf(maven.getModule("project")),
                                                   ExternalLibraryDescriptor("junit", "junit"),
                                                   DependencyScope.COMPILE)
 
-    assertHasDependency(projectPom, "junit", "junit")
+    assertHasDependency(maven.projectPom, "junit", "junit")
   }
 
 
   @Test
   fun testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+    addExternalLibraryDependency(listOf(maven.getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
 
-    assertHasDependency(projectPom, "commons-io", "commons-io")
+    assertHasDependency(maven.projectPom, "commons-io", "commons-io")
   }
 
   @Test
   fun testAddManagedLibraryDependency() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
                         <dependencies>
                             <dependency>
@@ -66,15 +86,15 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     </dependencyManagement>
                     """.trimIndent())
 
-    addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+    addExternalLibraryDependency(listOf(maven.getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
 
-    assertHasManagedDependency(projectPom, "commons-io", "commons-io")
+    assertHasManagedDependency(maven.projectPom, "commons-io", "commons-io")
   }
 
   @Test
   fun testAddManagedLibraryDependencyWithDifferentScope() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
                         <dependencies>
                             <dependency>
@@ -87,41 +107,41 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     </dependencyManagement>
                     """.trimIndent())
 
-    addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+    addExternalLibraryDependency(listOf(maven.getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
   }
 
   @Test
   fun testAddLibraryDependencyReleaseVersion() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
     addExternalLibraryDependency(
-      listOf(getModule("project")), ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
+      listOf(maven.getModule("project")), ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
       DependencyScope.COMPILE)
 
-    assertHasDependency(projectPom, "commons-io", "commons-io", "RELEASE")
+    assertHasDependency(maven.projectPom, "commons-io", "commons-io", "RELEASE")
   }
 
   @Test
   fun testAddModuleDependency() = runBlocking {
     createTwoModulesPom("m1", "m2")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false)
+    addModuleDependency(maven.getModule("m1"), maven.getModule("m2"), DependencyScope.COMPILE, false)
 
     LocalFileSystem.getInstance().refreshFiles(listOf(m1))
     assertHasDependency(m1, "test", "m2")
@@ -130,12 +150,12 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testAddLibraryDependency() = runBlocking {
     createTwoModulesPom("m1", "m2")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -148,13 +168,13 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
         </dependency>
       </dependencies>
       """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val libName = "Maven: junit:junit:4.0"
-    assertModuleLibDep("m2", libName)
-    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libName)
+    maven.assertModuleLibDep("m2", libName)
+    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(maven.project).getLibraryByName(libName)
     assertNotNull(library)
-    addLibraryDependency(getModule("m1"), library!!, DependencyScope.COMPILE, false)
+    addLibraryDependency(maven.getModule("m1"), library!!, DependencyScope.COMPILE, false)
 
     LocalFileSystem.getInstance().refreshFiles(listOf(m1))
     assertHasDependency(m1, "junit", "junit")
@@ -162,18 +182,18 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testChangeLanguageLevel() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val module = getModule("project")
+    val module = maven.getModule("project")
     readAction {
-      assertEquals(defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+      assertEquals(maven.defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.JDK_1_8)
-    val tag = findTag("project.build.plugins.plugin")
+    val tag = maven.findTag("project.build.plugins.plugin")
     assertNotNull(tag)
     readAction {
       assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"))
@@ -186,17 +206,17 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testChangeLanguageLevelPreview() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    val module = getModule("project")
+    val module = maven.getModule("project")
     readAction {
-      assertEquals(defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+      assertEquals(maven.defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
-    val tag = findTag("project.build.plugins.plugin")
+    val tag = maven.findTag("project.build.plugins.plugin")
     readAction {
       assertEquals("--enable-preview",
                    tag.findFirstSubTag("configuration")!!
@@ -205,7 +225,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun createTwoModulesPom(m1: String, m2: String) {
-    createProjectPom("""<groupId>test</groupId>
+    maven.createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <packaging>pom</packaging>
 <version>1</version>
@@ -217,7 +237,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String) = readAction {
-    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(maven.project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
                                   artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*<scope>(.*)</scope>\\s*</dependency>.*")
     val matcher = pattern.matcher(pomText)
@@ -227,7 +247,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String, version: String) = readAction {
-    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(maven.project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" +
                                   groupId +
                                   "</groupId>\\s*<artifactId>" +
@@ -242,7 +262,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   private suspend fun assertHasManagedDependency(pom: VirtualFile, groupId: String, artifactId: String) = readAction {
-    val pomText = PsiManager.getInstance(project).findFile(pom)!!.getText()
+    val pomText = PsiManager.getInstance(maven.project).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
                                   artifactId + "</artifactId>\\s*</dependency>.*")
     val matcher = pattern.matcher(pomText)
@@ -253,26 +273,26 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                                                    descriptor: ExternalLibraryDescriptor,
                                                    scope: DependencyScope) {
     extension.addExternalLibraryDependency(modules, descriptor, scope)
-    awaitConfiguration()
+    maven.awaitConfiguration()
   }
 
   private suspend fun addLibraryDependency(from: Module, library: Library, scope: DependencyScope, exported: Boolean) {
     extension.addLibraryDependency(from, library, scope, exported)
-    awaitConfiguration()
+    maven.awaitConfiguration()
   }
 
   private suspend fun addModuleDependency(from: Module, to: Module, scope: DependencyScope, exported: Boolean) {
     extension.addModuleDependency(from, to, scope, exported)
-    awaitConfiguration()
+    maven.awaitConfiguration()
   }
 
   private suspend fun changeLanguageLevel(module: Module, level: LanguageLevel) {
     extension.changeLanguageLevel(module, level)
-    awaitConfiguration()
+    maven.awaitConfiguration()
   }
 
   private val extension: MavenProjectModelModifier
-    get() = ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(project), MavenProjectModelModifier::class.java)
+    get() = ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(maven.project), MavenProjectModelModifier::class.java)
 
   companion object {
     private val COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 = ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4")

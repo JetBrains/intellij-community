@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.readAction
@@ -8,20 +8,54 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsDoNotInclude
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
+import org.jetbrains.idea.maven.fixtures.assertNoReferences
+import org.jetbrains.idea.maven.fixtures.assertResolved
+import org.jetbrains.idea.maven.fixtures.assertSearchResultsInclude
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.doInlineRename
+import org.jetbrains.idea.maven.fixtures.doRename
+import org.jetbrains.idea.maven.fixtures.findPsiFileAndGetText
+import org.jetbrains.idea.maven.fixtures.findTag
+import org.jetbrains.idea.maven.fixtures.getReference
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.importProjectWithProfiles
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.refreshFiles
+import org.jetbrains.idea.maven.fixtures.resolveReference
+import org.jetbrains.idea.maven.fixtures.updateProjectSubFile
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.concurrent.atomic.AtomicReference
 
-class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenFilteredPropertiesCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(withIndices = true, initialPom = null, skipPluginResolution = false,
+                                       mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testBasic() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -35,16 +69,16 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-    assertResolved(f, findTag("project.version"))
+    maven.assertResolved(f, maven.findTag("project.version"))
   }
 
   @Test
   fun testTestResourceProperties() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -58,16 +92,16 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-    assertResolved(f, findTag("project.version"))
+    maven.assertResolved(f, maven.findTag("project.version"))
   }
 
   @Test
   fun testBasicAt() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -81,17 +115,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc@project<caret>.version@abc")
 
-    assertResolved(f, findTag("project.version"))
+    maven.assertResolved(f, maven.findTag("project.version"))
   }
 
   @Test
   fun testCorrectlyCalculatingBaseDir() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -105,18 +139,18 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${basedir<caret>}abc")
 
-    val baseDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent()) }
-    assertResolved(f, baseDir!!)
+    val baseDir = readAction { PsiManager.getInstance(maven.project).findDirectory(maven.projectPom.getParent()) }
+    maven.assertResolved(f, baseDir!!)
   }
 
   @Test
   fun testResolvingToNonManagedParentProperties() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -136,7 +170,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                        </build>
                        """.trimIndent())
 
-    val parent = createModulePom("parent",
+    val parent = maven.createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
@@ -147,19 +181,19 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            </properties>
                                            """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=\${parentProp<caret>}")
 
-    assertResolved(f, findTag(parent, "project.properties.parentProp"))
+    maven.assertResolved(f, maven.findTag(parent, "project.properties.parentProp"))
   }
 
   @Test
   fun testResolvingToProfileProperties() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -181,19 +215,19 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                        </build>
                        """.trimIndent())
 
-    importProjectWithProfiles("one")
+    maven.importProjectWithProfiles("one")
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=@profileProp<caret>@")
-    val tag = findTag(projectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java)
-    assertResolved(f, tag)
+    val tag = maven.findTag(maven.projectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java)
+    maven.assertResolved(f, tag)
   }
 
   @Test
   fun testDoNotResolveOutsideResources() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -207,16 +241,16 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("foo.properties",
+    val f = maven.createProjectSubFile("foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-    assertNoReferences(f, MavenPropertyPsiReference::class.java)
+    maven.assertNoReferences(f, MavenPropertyPsiReference::class.java)
   }
 
   @Test
   fun testDoNotResolveNonFilteredResources() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -230,17 +264,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
 
-    assertNoReferences(f, MavenPropertyPsiReference::class.java)
+    maven.assertNoReferences(f, MavenPropertyPsiReference::class.java)
   }
 
   @Test
   fun testUsingFilters() = runBlocking {
-    val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
+    val filter = maven.createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -257,25 +291,25 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${xx<caret>x}abc")
     val psiElement = findPropertyPsiElement(filter, "xxx")!!
-    assertResolved(f, psiElement)
+    maven.assertResolved(f, psiElement)
   }
 
   private suspend fun findPropertyPsiElement(filter: VirtualFile, propName: String): PsiElement? {
     return readAction {
-      val property = MavenDomUtil.findProperty(project, filter, propName)
+      val property = MavenDomUtil.findProperty(maven.project, filter, propName)
       property?.getPsiElement()
     }
   }
 
   @Test
   fun testCompletionFromFilters() = runBlocking {
-    createProjectSubFile("filters/filter1.properties", "xxx=1")
-    createProjectSubFile("filters/filter2.properties", "yyy=1")
+    maven.createProjectSubFile("filters/filter1.properties", "xxx=1")
+    maven.createProjectSubFile("filters/filter2.properties", "yyy=1")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -293,18 +327,18 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    var f = createProjectSubFile("res/foo.properties", "foo=abc\${<caret>}abc")
-    assertCompletionVariantsInclude(f, "xxx", "yyy")
+    var f = maven.createProjectSubFile("res/foo.properties", "foo=abc\${<caret>}abc")
+    maven.assertCompletionVariantsInclude(f, "xxx", "yyy")
 
-    f = createProjectSubFile("res/foo2.properties", "foo=abc@<caret>@abc")
-    assertCompletionVariantsInclude(f, "xxx", "yyy")
+    f = maven.createProjectSubFile("res/foo2.properties", "foo=abc@<caret>@abc")
+    maven.assertCompletionVariantsInclude(f, "xxx", "yyy")
   }
 
   @Test
   fun testSearchingFromFilters() = runBlocking {
-    createProjectSubFile("filters/filter.properties", "xxx=1")
+    maven.createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -321,25 +355,25 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  """
                                         foo=${"$"}{xxx}
                                         foo2=@xxx@
                                         """.trimIndent())
-    val filter = updateProjectSubFile("filters/filter.properties", "xx<caret>x=1")
+    val filter = maven.updateProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
-    val foo = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
+    val foo = readAction { MavenDomUtil.findPropertyValue(maven.project, f, "foo") }
     assertNotNull(foo)
-    val foo2 = readAction { MavenDomUtil.findPropertyValue(project, f, "foo2") }
+    val foo2 = readAction { MavenDomUtil.findPropertyValue(maven.project, f, "foo2") }
     assertNotNull(foo2)
-    assertSearchResultsInclude(filter, foo, foo2)
+    maven.assertSearchResultsInclude(filter, foo, foo2)
   }
 
   @Test
   fun testCompletionAfterOpenBrace() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -353,17 +387,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version")
+    maven.assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
   fun testCompletionAfterOpenBraceInTheBeginningOfFile() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -377,17 +411,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.txt",
+    val f = maven.createProjectSubFile("res/foo.txt",
                                  "\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version")
+    maven.assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
   fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -401,17 +435,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version")
+    maven.assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
   fun testCompletionInEmptyFile() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -425,17 +459,17 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "<caret>\n")
 
-    assertCompletionVariantsDoNotInclude(f, "project.version")
+    maven.assertCompletionVariantsDoNotInclude(f, "project.version")
   }
 
   @Test
   fun testRenaming() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -452,14 +486,14 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${f<caret>oo}abc")
 
-    assertResolved(f, findTag("project.properties.foo"))
+    maven.assertResolved(f, maven.findTag("project.properties.foo"))
 
-    doRename(f, "bar")
+    maven.doRename(f, "bar")
 
-    assertEquals(createPomXml("""
+    assertEquals(maven.createPomXml("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
                               <version>1</version>
@@ -475,18 +509,18 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                 </resources>
                               </build>
                               """.trimIndent()),
-                 findPsiFileAndGetText(projectPom))
+                 maven.findPsiFileAndGetText(maven.projectPom))
 
-    assertEquals("foo=abc\${bar}abc", findPsiFileAndGetText(f))
+    assertEquals("foo=abc\${bar}abc", maven.findPsiFileAndGetText(f))
   }
 
   @Test
   fun testRenamingFilteredProperty() = runBlocking {
-    val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
-    refreshFiles(listOf(filter))
-    createProjectSubDir("res")
+    val filter = maven.createProjectSubFile("filters/filter.properties", "xxx=1")
+    maven.refreshFiles(listOf(filter))
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -503,25 +537,25 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${x<caret>xx}abc")
-    refreshFiles(listOf(f))
+    maven.refreshFiles(listOf(f))
 
-    assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+    maven.assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
 
-    fixture.configureFromExistingVirtualFile(filter)
+    maven.fixture.configureFromExistingVirtualFile(filter)
 
-    doInlineRename(f, "bar")
+    maven.doInlineRename(f, "bar")
 
-    assertEquals("foo=abc\${bar}abc", findPsiFileAndGetText(f))
-    assertEquals("bar=1", findPsiFileAndGetText(filter))
+    assertEquals("foo=abc\${bar}abc", maven.findPsiFileAndGetText(f))
+    assertEquals("bar=1", maven.findPsiFileAndGetText(filter))
   }
 
   @Test
   fun testCustomDelimiters() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -547,24 +581,24 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo1.properties",
+    val f = maven.createProjectSubFile("res/foo1.properties",
                                  """
                                            foo1=${'$'}{basedir}
                                            foo2=|pom.baseUri|
                                            foo3=a(ve|rsion]
                                            """.trimIndent())
-    assertNotNull(resolveReference(f, "basedir"))
-    assertNotNull(resolveReference(f, "pom.baseUri"))
-    val ref = getReference(f, "ve|rsion")
+    assertNotNull(maven.resolveReference(f, "basedir"))
+    assertNotNull(maven.resolveReference(f, "pom.baseUri"))
+    val ref = maven.getReference(f, "ve|rsion")
     assertNotNull(ref)
     assertTrue(ref!!.isSoft())
   }
 
   @Test
   fun testDontUseDefaultDelimiter1() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -591,19 +625,19 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo1.properties",
+    val f = maven.createProjectSubFile("res/foo1.properties",
                                  """
                                         foo1=${"$"}{basedir}
                                         foo2=|pom.baseUri|
                                         """.trimIndent())
 
-    assert(getReference(f, "basedir") !is MavenPropertyPsiReference)
-    assertNotNull(resolveReference(f, "pom.baseUri"))
+    assert(maven.getReference(f, "basedir") !is MavenPropertyPsiReference)
+    assertNotNull(maven.resolveReference(f, "pom.baseUri"))
   }
 
   @Test
   fun testDoNotAddReferenceToDelimiterDefinition() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -624,7 +658,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -643,14 +677,14 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                        </build>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testReferencesInXml() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -664,19 +698,19 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                     </build>
                     """.trimIndent())
 
-    val f = createProjectSubFile("res/foo.xml",
+    val f = maven.createProjectSubFile("res/foo.xml",
                                  """
                                            <root attr='${'$'}{based<caret>ir}'>
                                            </root>
                                            """.trimIndent())
 
-    refreshFiles(listOf(f))
-    fixture.configureFromExistingVirtualFile(f)
+    maven.refreshFiles(listOf(f))
+    maven.fixture.configureFromExistingVirtualFile(f)
 
     val added = AtomicReference(false)
 
     readAction {
-      val attribute = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()), XmlAttribute::class.java)
+      val attribute = PsiTreeUtil.getParentOfType(maven.fixture.getFile().findElementAt(maven.fixture.getCaretOffset()), XmlAttribute::class.java)
       val references = attribute!!.getReferences()
       for (ref in references) {
         if (ref.resolve() is PsiDirectory) {
@@ -686,6 +720,6 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
       }
     }
 
-    assertTrue("Maven filter reference was not added", added.get())
+    assertTrue(added.get(), "Maven filter reference was not added")
   }
 }

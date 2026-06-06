@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -21,18 +7,33 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.refreshFiles
+import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog
 import org.jetbrains.idea.maven.model.MavenId
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
-  
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class AddMavenDependencyQuickFixTest(mavenVersion: String, private val modelVersion: String) {
+
+  private val maven by mavenDomFixture(withIndices = true, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
+
   private fun findAddMavenIntention(): IntentionAction {
-    for (intention in fixture.getAvailableIntentions()) {
+    for (intention in maven.fixture.getAvailableIntentions()) {
       if (intention.getText().contains("Add Maven")) {
         return intention
       }
@@ -43,7 +44,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddDependency() = runBlocking {
-    val f = createProjectSubFile("src/main/java/A.java", """
+    val f = maven.createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -55,27 +56,27 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
       }
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    refreshFiles(listOf(f))
-    fixture.configureFromExistingVirtualFile(f)
+    maven.refreshFiles(listOf(f))
+    maven.fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
 
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+          intentionAction.invoke(maven.project, maven.fixture.getEditor(), maven.fixture.getFile())
         }
       }
     }
-    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(maven.project).findFile(maven.projectPom)!!.getText() }
     assertTrue(pomText.matches(
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*".toRegex()))
 
@@ -83,7 +84,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddDependencyTwice() = runBlocking {
-    val f = createProjectSubFile("src/main/java/A.java", """
+    val f = maven.createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -95,35 +96,35 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
       }
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    refreshFiles(listOf(f))
-    fixture.configureFromExistingVirtualFile(f)
+    maven.refreshFiles(listOf(f))
+    maven.fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+          intentionAction.invoke(maven.project, maven.fixture.getEditor(), maven.fixture.getFile())
         }
       }
     }
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(maven.project)
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+          intentionAction.invoke(maven.project, maven.fixture.getEditor(), maven.fixture.getFile())
         }
       }
     }
-    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(maven.project).findFile(maven.projectPom)!!.getText() }
     assertEquals("""
                     <?xml version="1.0"?>
                     <project xmlns="http://maven.apache.org/POM/$modelVersion"
@@ -146,7 +147,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testChangeDependencyScopeIfWasInTest() = runBlocking {
-    val f = createProjectSubFile("src/main/java/A.java", """
+    val f = maven.createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -158,7 +159,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
       }
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <dependencies>
                       <dependency>
@@ -170,20 +171,20 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    refreshFiles(listOf(f))
-    fixture.configureFromExistingVirtualFile(f)
+    maven.refreshFiles(listOf(f))
+    maven.fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+          intentionAction.invoke(maven.project, maven.fixture.getEditor(), maven.fixture.getFile())
         }
       }
     }
-    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(maven.project).findFile(maven.projectPom)!!.getText() }
     assertEquals("""
                    <?xml version="1.0"?>
                    <project xmlns="http://maven.apache.org/POM/$modelVersion"
@@ -203,7 +204,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddDependencyInTest() = runBlocking {
-    val f = createProjectSubFile("src/test/java/A.java", """
+    val f = maven.createProjectSubFile("src/test/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -215,27 +216,27 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
       }
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    refreshFiles(listOf(f))
-    fixture.configureFromExistingVirtualFile(f)
+    maven.refreshFiles(listOf(f))
+    maven.fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
 
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+          intentionAction.invoke(maven.project, maven.fixture.getEditor(), maven.fixture.getFile())
         }
       }
     }
-    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(maven.project).findFile(maven.projectPom)!!.getText() }
     assertTrue(pomText.matches(
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*".toRegex()))
   }

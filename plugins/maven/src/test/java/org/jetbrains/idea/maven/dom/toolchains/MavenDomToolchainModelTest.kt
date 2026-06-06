@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.toolchains
 
 import com.intellij.openapi.application.edtWriteAction
@@ -9,37 +9,46 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
-import com.intellij.testFramework.LightPlatform4TestCase
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.toolchains.addIntoToolchainsFile
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
-class MavenDomToolchainModelTest : LightPlatform4TestCase() {
+@TestApplication
+class MavenDomToolchainModelTest {
 
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
+  private val tempDir = tempPathFixture()
+  private val projectFixture = projectFixture(tempDir, openAfterCreation = true)
 
   @Test
   fun testEmptyFile() = runBlocking {
-    val path = createTempDirectory(getTestName(true)).resolve("toolchains.xml")
+    val project = projectFixture.get()
+    val path = createTempDirectory("toolchains").resolve("toolchains.xml")
     write(path, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><toolchains></toolchains>")
     val vFile = VfsUtil.findFile(path, true)!!
     val toolchainsModel = readAction { MavenDomUtil.getMavenDomModel(project, vFile, MavenDomToolchainsModel::class.java) }
-    assertNotNull("Toolchain model should not be null", toolchainsModel)
+    assertNotNull(toolchainsModel, "Toolchain model should not be null")
     assertEmpty(readAction { toolchainsModel!!.toolchains })
-
   }
 
   @Test
   fun testReadToolchains() = runBlocking {
-    val path = createTempDirectory(getTestName(true)).resolve("toolchains.xml")
+    val project = projectFixture.get()
+    val path = createTempDirectory("toolchains").resolve("toolchains.xml")
     write(path, """<?xml version="1.0" encoding="UTF-8"?>
       <toolchains>
         <toolchain>
@@ -56,7 +65,7 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
       </toolchains>""")
     val vFile = VfsUtil.findFile(path, true)!!
     val toolchainsModel = readAction { MavenDomUtil.getMavenDomModel(project, vFile, MavenDomToolchainsModel::class.java) }
-    assertNotNull("Toolchain model should not be null", toolchainsModel)
+    assertNotNull(toolchainsModel, "Toolchain model should not be null")
     readAction {
       assertSize(1, toolchainsModel!!.toolchains)
       val toolchain = toolchainsModel.toolchains[0]
@@ -68,7 +77,8 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
 
   @Test
   fun testWriteToolchainsToExistingFile() = runBlocking {
-    val path = createTempDirectory(getTestName(true)).resolve("toolchains.xml")
+    val project = projectFixture.get()
+    val path = createTempDirectory("toolchains").resolve("toolchains.xml")
     write(path, """<?xml version="1.0" encoding="UTF-8"?>
       <toolchains>
         <toolchain>
@@ -89,7 +99,7 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
     edtWriteAction { FileDocumentManager.getInstance().saveAllDocuments() }
     readAction {
       val toolchainsModel = MavenDomUtil.getMavenDomModel(project, vFile, MavenDomToolchainsModel::class.java)
-      assertNotNull("Toolchain model should not be null", toolchainsModel)
+      assertNotNull(toolchainsModel, "Toolchain model should not be null")
       assertSize(2, toolchainsModel!!.toolchains)
 
       assertEquals("jdk", toolchainsModel.toolchains[1].type.value)
@@ -100,7 +110,8 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
 
   @Test
   fun testWriteToolchainsToExistingEmptyFile() = runBlocking {
-    val path = createTempDirectory(getTestName(true)).resolve("toolchains.xml")
+    val project = projectFixture.get()
+    val path = createTempDirectory("toolchains").resolve("toolchains.xml")
     write(path, """<?xml version="1.0" encoding="UTF-8"?>
       <toolchains>
       </toolchains>""")
@@ -110,7 +121,7 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
     edtWriteAction { FileDocumentManager.getInstance().saveAllDocuments() }
     readAction {
       val toolchainsModel = MavenDomUtil.getMavenDomModel(project, vFile, MavenDomToolchainsModel::class.java)
-      assertNotNull("Toolchain model should not be null", toolchainsModel)
+      assertNotNull(toolchainsModel, "Toolchain model should not be null")
       assertSize(1, toolchainsModel!!.toolchains)
 
       assertEquals("jdk", toolchainsModel.toolchains[0].type.value)
@@ -121,16 +132,17 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
 
   @Test
   fun testWriteToolchainsToNonExisting() = runBlocking {
-    val path = createTempDirectory(getTestName(true)).resolve("toolchains.xml")
-    assertFalse("File should not exists create toolchains file", path.exists())
+    val project = projectFixture.get()
+    val path = createTempDirectory("toolchains").resolve("toolchains.xml")
+    assertFalse(path.exists(), "File should not exists create toolchains file")
     val testSdk = createTestSdk(path.parent, "12.123")
     addIntoToolchainsFile(project, path, testSdk)
     edtWriteAction { FileDocumentManager.getInstance().saveAllDocuments() }
-    assertTrue("Should create toolchains file", path.isRegularFile())
+    assertTrue(path.isRegularFile(), "Should create toolchains file")
     val vFile = VfsUtil.findFile(path, true)!!
     readAction {
       val toolchainsModel = MavenDomUtil.getMavenDomModel(project, vFile, MavenDomToolchainsModel::class.java)
-      assertNotNull("Toolchain model should not be null", toolchainsModel)
+      assertNotNull(toolchainsModel, "Toolchain model should not be null")
       assertSize(1, toolchainsModel!!.toolchains)
 
       assertEquals("jdk", toolchainsModel.toolchains[0].type.value)
@@ -139,8 +151,8 @@ class MavenDomToolchainModelTest : LightPlatform4TestCase() {
     }
   }
 
-  private suspend fun createTestSdk(path: Path, version: String): Sdk {
-    return ProjectJdkImpl(name, JavaSdk.getInstance(), path.toString(), version, InternalEnvironmentName.Local)
+  private fun createTestSdk(path: Path, version: String): Sdk {
+    return ProjectJdkImpl("Maven Test JDK", JavaSdk.getInstance(), path.toString(), version, InternalEnvironmentName.Local)
   }
 
   private fun write(myTestFile: Path, data: String) {

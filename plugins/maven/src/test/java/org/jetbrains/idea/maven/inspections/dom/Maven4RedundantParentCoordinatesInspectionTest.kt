@@ -1,22 +1,38 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.inspections.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.Maven4RedundantParentCoordinatesInspection
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assumeMaven3
+import org.jetbrains.idea.maven.fixtures.assumeMaven4
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class Maven4RedundantParentCoordinatesInspectionTest(mavenVersion: String, modelVersion: String) {
 
-    fixture.enableInspections(Maven4RedundantParentCoordinatesInspection::class.java)
-  }
+  private val maven by mavenDomFixture(withIndices = false, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDoNotFireHighlightInMaven3() = runBlocking {
-    assumeMaven3()
-    val moduleFile = createModulePom("m1", """
+    maven.assumeMaven3()
+    maven.fixture.enableInspections(Maven4RedundantParentCoordinatesInspection::class.java)
+    val moduleFile = maven.createModulePom("m1", """
       <parent>
         <groupId>test</groupId>
         <artifactId>test</artifactId>
@@ -25,7 +41,7 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
       <artifactId>m1</artifactId>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -34,14 +50,15 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
         <module>m1</module>
       </modules>  
 """)
-    checkHighlighting(moduleFile)
+    maven.checkHighlighting(moduleFile)
   }
 
 
   @Test
   fun testFireHighlightInMaven4() = runBlocking {
-    assumeMaven4()
-    val moduleFile = createModulePom("m1", """
+    maven.assumeMaven4()
+    maven.fixture.enableInspections(Maven4RedundantParentCoordinatesInspection::class.java)
+    val moduleFile = maven.createModulePom("m1", """
      <parent>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><groupId>test</groupId></warning>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><artifactId>test</artifactId></warning>
@@ -50,7 +67,7 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
       <artifactId>m1</artifactId>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -59,13 +76,14 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
         <module>m1</module>
       </modules>  
 """)
-    checkHighlighting(moduleFile)
+    maven.checkHighlighting(moduleFile)
   }
 
   @Test
   fun testDoQuickFixForParent() = runBlocking {
-    assumeMaven4()
-    val moduleFile = createModulePom("m1", """
+    maven.assumeMaven4()
+    maven.fixture.enableInspections(Maven4RedundantParentCoordinatesInspection::class.java)
+    val moduleFile = maven.createModulePom("m1", """
      <parent>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><groupId>test</groupId></warning>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><artifactId>test</artifactId></warning>
@@ -74,7 +92,7 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
       <artifactId>m1</artifactId>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -83,29 +101,34 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
         <module>m1</module>
       </modules>  
 """)
-    checkHighlighting(moduleFile)
+    maven.checkHighlighting(moduleFile)
 
-    val intention =  fixture.availableIntentions.singleOrNull{it.text == "Remove unnecessary tags"}
-    assertNotNull("Cannot find intention", intention)
-    fixture.launchAction(intention!!)
-
-    fixture.checkResult(createPomXml("""
+    val intention = maven.fixture.availableIntentions.singleOrNull { it.text == "Remove unnecessary tags" }
+    assertNotNull(intention, "Cannot find intention")
+    val expected = maven.createPomXml("""
      <parent/>
       <artifactId>m1</artifactId>
-"""), true)
+""")
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        maven.fixture.launchAction(intention!!)
+        maven.fixture.checkResult(expected, true)
+      }
+    }
   }
 
   @Test
   fun testDoQuickFixForParentWithRelativePath() = runBlocking {
-    assumeMaven4()
-    val module1File = createModulePom("m1", """
+    maven.assumeMaven4()
+    maven.fixture.enableInspections(Maven4RedundantParentCoordinatesInspection::class.java)
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <version>1</version>
       <packaging>pom</packaging>
       <artifactId>m1</artifactId>
 """)
 
-    val module2File = createModulePom("m2", """
+    val module2File = maven.createModulePom("m2", """
       <parent>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><groupId>test</groupId></warning>
         <warning descr="The parent coordinates are redundant and not required in Maven 4"><artifactId>m1</artifactId></warning>
@@ -115,7 +138,7 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
       <artifactId>m2</artifactId>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -125,19 +148,21 @@ class Maven4RedundantParentCoordinatesInspectionTest : MavenDomTestCase() {
         <module>m2</module>
       </modules>  
 """)
-    checkHighlighting(module2File)
+    maven.checkHighlighting(module2File)
 
-    val intention =  fixture.availableIntentions.singleOrNull{it.text == "Remove unnecessary tags"}
-    assertNotNull("Cannot find intention", intention)
-    fixture.launchAction(intention!!)
-
-    fixture.checkResult(createPomXml("""
+    val intention = maven.fixture.availableIntentions.singleOrNull { it.text == "Remove unnecessary tags" }
+    assertNotNull(intention, "Cannot find intention")
+    val expected = maven.createPomXml("""
       <parent>
           <relativePath>../m1/pom.xml</relativePath>
       </parent>
       <artifactId>m2</artifactId>
-"""), true)
+""")
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        maven.fixture.launchAction(intention!!)
+        maven.fixture.checkResult(expected, true)
+      }
+    }
   }
-
-
 }
