@@ -2,8 +2,10 @@
 package com.intellij.platform.acp
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -64,4 +66,18 @@ interface AcpProcessLauncher {
   companion object {
     fun getInstance(project: Project): AcpProcessLauncher = project.service()
   }
+}
+
+@ApiStatus.Internal
+interface AcpProcessLauncherProvider {
+  companion object {
+    val EP_NAME: ExtensionPointName<AcpProcessLauncherProvider> =
+      ExtensionPointName.create("com.intellij.platform.acp.processLauncherProvider")
+  }
+
+  /**
+   * Returns a launcher for [project] if this provider can handle ACP process launches there,
+   * or `null` otherwise. Providers are queried in registration order.
+   */
+  fun createLauncher(project: Project): AcpProcessLauncher?
 }
