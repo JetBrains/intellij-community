@@ -527,6 +527,7 @@ libraries/rd/framework
 libraries/rd/swing
 libraries/rd/text
 libraries/rhino
+libraries/semver
 libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.semver.jar
+  modules:
+  - name: intellij.libraries.semver
+    libraries:
+      io.github.z4kn4fein.semver.jvm:
+      - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar

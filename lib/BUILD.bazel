@@ -6233,28 +6233,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.github.z4kn4fein/semver-jvm-2.0.0.jar_copy",
-    src = "@io_github_z4kn4fein-semver-jvm-2_0_0_http//file",
-    out = "io.github.z4kn4fein/semver-jvm-2.0.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "io-github-z4kn4fein-semver-jvm",
-    jar = "@io_github_z4kn4fein-semver-jvm-2_0_0_http//file",
-    source_jar = "@io_github_z4kn4fein-semver-jvm-2_0_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-github-z4kn4fein-semver-jvm-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":io-github-z4kn4fein-semver-jvm"],
-)
-
-copy_file(
     name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
     src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
     out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
@@ -13695,6 +13673,21 @@ jvm_import(
     name = "libraries-rhino-rhino",
     jar = "@org_mozilla-rhino-runtime-1_7_15_1_http//file",
     source_jar = "@org_mozilla-rhino-runtime-1_7_15_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.z4kn4fein/semver-jvm-2.0.0.jar_copy",
+    src = "@io_github_z4kn4fein-semver-jvm-2_0_0_http//file",
+    out = "io.github.z4kn4fein/semver-jvm-2.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-semver-io-github-z4kn4fein-semver-jvm",
+    jar = "@io_github_z4kn4fein-semver-jvm-2_0_0_http//file",
+    source_jar = "@io_github_z4kn4fein-semver-jvm-2_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -171,7 +171,7 @@
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />
-    <orderEntry type="library" scope="PROVIDED" name="io.github.z4kn4fein.semver.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.semver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.hatch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />

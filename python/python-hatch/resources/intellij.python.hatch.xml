@@ -1,14 +1,16 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.sdk.ui"/>
-    <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.common"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.ui"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="Pythonid">

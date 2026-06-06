@@ -1,9 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.python.sdk"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.sdk"/>
     <module name="intellij.python.uv.common"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

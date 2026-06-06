@@ -119,6 +119,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.protobuf")
     embeddedModule("intellij.libraries.proxy.vole")
     embeddedModule("intellij.libraries.rhino")
+    embeddedModule("intellij.libraries.semver")
     embeddedModule("intellij.libraries.snakeyaml")
     embeddedModule("intellij.libraries.snakeyaml.engine")
     embeddedModule("intellij.libraries.stream")
