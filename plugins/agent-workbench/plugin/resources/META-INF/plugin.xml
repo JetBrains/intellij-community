@@ -13,7 +13,6 @@
       <li><b>Context from UI</b> — click any IDE component (tool window, editor, panel) to screenshot it and attach the image as visual context for the agent.</li>
       <li><b>Context from Screen</b> — drag to select any screen area and capture it as a screenshot to share with the agent, even outside the IDE.</li>
     </ul>
-    <em>Experimental — features are under active development and may change without notice.</em>
   ]]></description>
   <!--suppress PluginXmlValidity -->
   <vendor>Vladimir Krivosheev</vendor>
@@ -45,7 +44,7 @@
     <module name="intellij.agent.workbench.filewatch"/>
     <module name="intellij.agent.workbench.ai.review"/>
     <module name="intellij.agent.workbench.ai.review.agents"/>
-    <module name="intellij.agent.workbench.ai.review.llm.plugin.integration" loading="optional"/>
+    <module name="intellij.agent.workbench.ai.review.llm.plugin.integration"/>
     <module name="intellij.agent.workbench.ai.review.space"/>
     <module name="intellij.agent.workbench.vcs.merge"/>
     <module name="intellij.agent.workbench.container"/>

@@ -18,9 +18,14 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
@@ -352,6 +357,56 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     childAction.actionPerformed(TestActionEvent.createTestEvent(childAction))
 
     assertThat(beforeActionCount).isEqualTo(1)
+    assertThat(launchedPath).isEqualTo("/work/project-a")
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  @Test
+  fun directPathPopupChildDispatchesWhenTransientSplitButtonIsHidden() {
+    val project = ProjectManager.getInstance().defaultProject
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsDirectPathNewThreadAction(
+      project = project,
+      targetPath = { "/work/project-a" },
+      quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
+      popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        entryPoint = capturedEntryPoint
+      },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+    )
+
+    val result = timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        val component = action.createCustomComponent(Presentation(), ActionPlaces.TOOLWINDOW_CONTENT)
+        val childAction = action.actionGroup.getChildren(TestActionEvent.createTestEvent(action))
+          .first { child -> child !is Separator }
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.PROJECT, project)
+          .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, component)
+          .build()
+
+        assertThat(component.isShowing).isFalse()
+        ActionUtil.performAction(childAction, TestActionEvent.createTestEvent(childAction, dataContext))
+      }
+    }
+
+    assertThat(result.isPerformed).isTrue()
     assertThat(launchedPath).isEqualTo("/work/project-a")
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)

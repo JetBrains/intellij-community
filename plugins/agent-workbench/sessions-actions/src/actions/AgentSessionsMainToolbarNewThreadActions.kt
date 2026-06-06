@@ -22,12 +22,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import com.intellij.openapi.actionSystem.UpdateSession
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.ClientProperty
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -194,6 +196,7 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val component = super.createCustomComponent(presentation, place)
+    ClientProperty.put(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true)
     val minimumButtonSize = minimumButtonSize
     if (minimumButtonSize != null && component is ActionButton) {
       component.setMinimumButtonSize { minimumButtonSize() }
