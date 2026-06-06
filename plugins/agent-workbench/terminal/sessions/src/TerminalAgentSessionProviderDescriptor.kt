@@ -29,7 +29,7 @@ internal class TerminalAgentSessionProviderDescriptor(
     get() = AgentSessionProvider.TERMINAL
 
   override val displayPriority: Int
-    get() = 3
+    get() = 4
 
   override val displayNameKey: String
     get() = "toolwindow.provider.terminal"

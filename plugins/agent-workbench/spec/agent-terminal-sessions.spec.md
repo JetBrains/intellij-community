@@ -24,7 +24,7 @@ Date: 2026-05-24
 Agent Workbench can start a regular IDE Terminal shell from the same new-thread affordances used for agent providers. Terminal sessions are tracked as provider-backed sessions so users can reopen, rename, archive, and unarchive them from Agent Workbench.
 
 ## Requirements
-- Terminal is a first-class `AgentSessionProvider.TERMINAL` provider shown after Codex, Claude, and Junie.
+- Terminal is a first-class `AgentSessionProvider.TERMINAL` provider shown after Codex, Claude, Junie, and Pi.
   [@test] ../terminal/sessions/testSrc/TerminalAgentSessionProviderDescriptorTest.kt
 
 - New terminal-session launches must use the IDE Terminal default shell. Agent Chat terminal setup must not force `TerminalProcessType.NON_SHELL` or pass an explicit shell command for these launches.

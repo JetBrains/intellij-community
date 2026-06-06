@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.junie.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.pi.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.terminal.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
@@ -63,6 +64,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.junie.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.pi.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.terminal.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui.tests" scope="TEST" />

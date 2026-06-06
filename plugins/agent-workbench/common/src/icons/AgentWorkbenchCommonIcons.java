@@ -17,4 +17,5 @@ public final class AgentWorkbenchCommonIcons {
   /** 14x14 */ public static final @NotNull Icon Claude_14x14 = load("icons/claude@14x14.svg", 546821582, 0);
   /** 14x14 */ public static final @NotNull Icon Codex_14x14 = load("icons/codex@14x14.svg", -534494734, 0);
   /** 14x14 */ public static final @NotNull Icon Junie_14x14 = load("icons/junie@14x14.svg", 1747766182, 0);
+  /** 14x14 */ public static final @NotNull Icon Pi_14x14 = load("icons/pi@14x14.svg", 2098084361, 0);
 }

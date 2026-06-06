@@ -21,11 +21,14 @@ class AgentWorkbenchProviderRegistrationTest {
     assertTrue(AgentSessionProvider.CODEX in registeredProviderIds)
     assertTrue(AgentSessionProvider.CLAUDE in registeredProviderIds)
     assertTrue(AgentSessionProvider.JUNIE in registeredProviderIds)
+    assertTrue(AgentSessionProvider.PI in registeredProviderIds)
+    assertTrue(AgentSessionProvider.TERMINAL in registeredProviderIds)
 
     val standardMenuProviders = buildAgentSessionProviderMenuModel(
       providers,
       providers.associate { it.provider to true },
     ).standardItems.map { it.bridge.provider }
     assertTrue(AgentSessionProvider.JUNIE in standardMenuProviders)
+    assertTrue(AgentSessionProvider.PI in standardMenuProviders)
   }
 }

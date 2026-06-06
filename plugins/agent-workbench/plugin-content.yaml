@@ -12,6 +12,7 @@
   - name: intellij.agent.workbench.filewatch
   - name: intellij.agent.workbench.codex.sessions
   - name: intellij.agent.workbench.junie.sessions
+  - name: intellij.agent.workbench.pi.sessions
   - name: intellij.agent.workbench.terminal.sessions
   - name: intellij.agent.workbench.sessions.core
   - name: intellij.agent.workbench.sessions.launch.config.backend

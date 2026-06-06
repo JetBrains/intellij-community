@@ -1,18 +1,20 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
-      id="agentWorkbenchTerminal"
-      order="after agentWorkbenchPi"
-      implementation="com.intellij.agent.workbench.terminal.sessions.TerminalAgentSessionProviderDescriptor"/>
-    <agent.workbench.sessionLaunchContributor implementation="com.intellij.agent.workbench.terminal.sessions.TerminalSessionLaunchContributor"/>
-    <applicationSettings service="com.intellij.agent.workbench.terminal.sessions.TerminalSessionStateService"/>
+      id="agentWorkbenchPi"
+      order="after agentWorkbenchJunie"
+      implementation="com.intellij.agent.workbench.pi.sessions.PiAgentSessionProviderDescriptor"/>
   </extensions>
 </idea-plugin>

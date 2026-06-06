@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->

@@ -17,6 +17,8 @@ value class AgentSessionProvider private constructor(val value: String) {
 
     val JUNIE: AgentSessionProvider = from("junie")
 
+    val PI: AgentSessionProvider = from("pi")
+
     val TERMINAL: AgentSessionProvider = from("terminal")
 
     fun from(value: String): AgentSessionProvider {

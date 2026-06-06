@@ -37,6 +37,7 @@ enum class AgentWorkbenchTelemetryProvider {
   CODEX,
   CLAUDE,
   JUNIE,
+  PI,
   TERMINAL,
   OTHER,
 }
@@ -208,6 +209,7 @@ object AgentWorkbenchTelemetry {
       AgentSessionProvider.CODEX -> AgentWorkbenchTelemetryProvider.CODEX
       AgentSessionProvider.CLAUDE -> AgentWorkbenchTelemetryProvider.CLAUDE
       AgentSessionProvider.JUNIE -> AgentWorkbenchTelemetryProvider.JUNIE
+      AgentSessionProvider.PI -> AgentWorkbenchTelemetryProvider.PI
       AgentSessionProvider.TERMINAL -> AgentWorkbenchTelemetryProvider.TERMINAL
       else -> AgentWorkbenchTelemetryProvider.OTHER
     }
