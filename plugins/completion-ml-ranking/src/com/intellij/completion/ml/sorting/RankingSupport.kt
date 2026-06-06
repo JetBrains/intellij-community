@@ -12,6 +12,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -44,7 +45,9 @@ object RankingSupport {
     try {
       return ExperimentModelProvider.findProvider(language, experimentInfo.version)
     }
-    catch (e: IllegalStateException) {
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+
       LOG.error(e)
       return null
     }
