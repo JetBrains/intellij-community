@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -26,7 +24,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -49,6 +46,7 @@ import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -87,7 +85,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     val CREATION_TIME: Key<Long> = Key.create("ProjectImpl.CREATION_TIME")
 
     @JvmField
-    val PROJECT_PATH: Key<Path> = Key.create<Path>("ProjectImpl.PROJECT_PATH")
+    val PROJECT_PATH: Key<Path> = Key.create("ProjectImpl.PROJECT_PATH")
 
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
@@ -133,11 +131,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
 
-    // Once `registerNewProjectId(this)` adds this object to `ProjectIdsStorage.idsToProject`, the
-    // partially constructed `this` is globally reachable. If anything in this init block throws
-    // afterwards, the constructor never returns and the caller has no reference to dispose, so the
-    // entry would stay in the map forever. Wrapping everything into in `try/catch` and calling `unregisterProjectId(this)`
-    // to avoid project leakage.
+    // Once `registerNewProjectId(this)` adds this object to `ProjectIdsStorage.idsToProject`,
+    // the partially constructed `this` is globally reachable. If anything in this init block throws afterward,
+    // the constructor never returns and the caller has no reference to dispose,
+    // so the entry would stay in the map forever.
+    // Wrapping everything into in `try/catch` and calling `unregisterProjectId(this)` to avoid project leakage.
     try {
       registerNewProjectId(this)
 
@@ -153,27 +151,22 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     }
   }
 
-  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
-    @Suppress("UNCHECKED_CAST")
-    // see ConfigurableEP - prefer constructor that accepts our instance
-    return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
-            ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
-            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
-            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-            ?: throw RuntimeException("Cannot find suitable constructor, " +
-                                      "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
-  }
+  @Suppress("UNCHECKED_CAST")
+  // see ConfigurableEP - prefer constructor that accepts our instance
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T = (
+    lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
+    ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
+    ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
+    ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+    ?: throw RuntimeException("Cannot find a suitable constructor, expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")
+  ) as T
 
+  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
   final override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
-    projectMethodType,
-    projectAndScopeMethodType,
-    coroutineScopeMethodType,
-    emptyConstructorMethodType,
+    projectMethodType, projectAndScopeMethodType, coroutineScopeMethodType, emptyConstructorMethodType
   )
 
-  override fun isComponentCreated(): Boolean {
-    return containerState.get() >= ContainerState.COMPONENT_CREATED
-  }
+  override fun isComponentCreated(): Boolean = containerState.get() >= ContainerState.COMPONENT_CREATED
 
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
@@ -220,11 +213,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
     StartupManager.getInstance(this).runAfterOpened {
       getCoroutineScope().launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-        val frame = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)
-                    ?: return@launch
-        val title = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)
-                    ?: return@launch
-        frame.title = title
+        (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)?.let { frame ->
+          (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)?.let { title ->
+            frame.title = title
+          }
+        }
       }
     }
   }
@@ -234,25 +227,18 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
 
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
-  final override fun getProjectFile(): VirtualFile? {
-    //MAYBE RC: cache result same way as in getWorkspaceFile()?
-    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
-  }
+  //MAYBE RC: cache result same way as in getWorkspaceFile()?
+  final override fun getProjectFile(): VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Deprecated in Java")
-  final override fun getBaseDir(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
-  }
+  final override fun getBaseDir(): VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
 
-  final override fun getBasePath(): String {
-    return componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
-  }
+  final override fun getBasePath(): String = componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
 
   final override fun getPresentableUrl(): String = componentStore.storeDescriptor.presentableUrl.invariantSeparatorsPathString
 
   override fun getLocationHash(): String = componentStore.locationHash
-
 
   /** Caches [Path] -(via [LocalFileSystem.findFileByNioFile])-> [VirtualFile]  resolution result */
   private class CachedVirtualFile(@JvmField val path: Path){
@@ -270,9 +256,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     if (cached?.path == workspacePath) {
       return cached.resolvedVirtualFile
     }
+
     val cachedVirtualFile = CachedVirtualFile(workspacePath)
     this.cachedWorkspaceFile = cachedVirtualFile
-
     return cachedVirtualFile.resolvedVirtualFile
   }
 
@@ -288,13 +274,13 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     }
 
     if (value && super.isDisposed()) {
-      throw IllegalStateException("Project was already disposed, flag temporarilyDisposed cannot be set to `true`")
+      throw IllegalStateException("Project was already disposed, the flag 'temporarilyDisposed' cannot be set to `true`")
     }
 
     if (!value) {
       val newDisposable = Disposer.newDisposable()
       if (!earlyDisposable.compareAndSet(null, newDisposable)) {
-        throw IllegalStateException("earlyDisposable must be null on second opening of light project")
+        throw IllegalStateException("'earlyDisposable' must be null on the second opening of a light project")
       }
     }
 
@@ -303,7 +289,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     // and it can lead to cache population.
     // Message bus implementation can be complicated to add "owner.isDisposed" check before getting subscribers,
     // but as the bus is a very important subsystem, it's better to not add any non-production logic.
-
     // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
     // so, we clear the subscriber cache.
     // `isDisposed` for the project returns `true` if `temporarilyDisposed`, so, handler will be not added.
@@ -315,7 +300,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
   @Internal
   final override fun getEarlyDisposable(): Disposable {
     if (isDisposed) {
-      throw AlreadyDisposedException("$this is disposed already")
+      throw AlreadyDisposedException("$this is already disposed")
     }
     return earlyDisposable.get() ?: throw createEarlyDisposableError("earlyDisposable is null for")
   }
@@ -332,25 +317,25 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     Disposer.dispose(disposable)
   }
 
-  private fun createEarlyDisposableError(error: String): RuntimeException {
-    return IllegalStateException("$error for ${toString()}\n---begin of dispose trace--" +
-                                 getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) +
-                                 "}---end of dispose trace---\n")
-  }
+  private fun createEarlyDisposableError(error: String): RuntimeException = IllegalStateException(
+    "${error} for ${toString()}\n---begin of dispose trace--${getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE)}}---end of dispose trace---\n"
+  )
 
   final override fun isDisposed(): Boolean = super.isDisposed() || isTemporarilyDisposed
 
   @Synchronized
   final override fun dispose() {
     val app = ApplicationManager.getApplication()
-    // dispose must be under a write action
-    app.assertWriteAccessAllowed()
-    val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
 
-    // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
+    // dispose must be under a write action
+    ThreadingAssertions.assertWriteAccess()
+
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    // can call `dispose` only via `com.intellij.ide.impl.ProjectUtil.closeAndDispose()`
     if (projectManager.isProjectOpened(this)) {
-      throw IllegalStateException("Must call .dispose() for a closed project only. " +
-                                  "See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
+      throw IllegalStateException(
+        "Must call .dispose() for a closed project only.  See ProjectManager.closeProject() or ProjectUtil.closeAndDispose()."
+      )
     }
 
     super.dispose()
@@ -361,7 +346,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
       @Suppress("DEPRECATION", "removal")
       app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this)
     }
-    projectManager.updateTheOnlyProjectField()
+    (projectManager as ProjectManagerImpl).updateTheOnlyProjectField()
     unregisterProjectId(this)
     TimedReference.disposeTimed()
     LaterInvocator.purgeExpiredItems()
@@ -382,11 +367,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     }
     else {
       try {
-        if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
-          store.projectBasePath.toString()
-        }
-        else {
-          store.projectFilePath
+        when (store.storageScheme) {
+          StorageScheme.DIRECTORY_BASED -> store.projectBasePath.toString()
+          else -> store.projectFilePath.toString()
         }
       }
       catch (_: ClosedFileSystemException) {
@@ -394,8 +377,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
       }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
-    val creationTrace = if (ApplicationManager.getApplication()?.isUnitTestMode != false) creationTrace?.let {"\n"+it} ?:"" else ""
-    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr$creationTrace"
+    @Suppress("TestOnlyProblems")
+    val creationTrace = if (ApplicationManager.getApplication()?.isUnitTestMode != false) creationTrace?.let { "\n" + it } ?: "" else ""
+    return "Project(name=${cachedName}, containerState=${containerState}, componentStore=${componentStore})${disposedStr}${creationTrace}"
   }
 
   override fun isOpen(): Boolean {
@@ -403,9 +387,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     return projectManager != null && projectManager.isProjectOpened(this)
   }
 
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
-    return pluginDescriptor.projectContainerDescriptor
-  }
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor =
+    pluginDescriptor.projectContainerDescriptor
 
   override fun scheduleSave() {
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))
