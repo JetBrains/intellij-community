@@ -662,7 +662,7 @@ class PluginDependencyGeneratorTest {
   }
 
   @Test
-  fun `computePluginContentFromDslSpec auto-adds resolvable private library deps in default namespace`(@TempDir tempDir: Path) {
+  fun `computePluginContentFromDslSpec skips resolvable private library JPS deps`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.consumer.module") {
@@ -712,10 +712,139 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
+      assertThat(result.contentModules.map { it.moduleId.name })
+        .describedAs("Resolvable private library deps are already provided by the product graph")
+        .contains("intellij.consumer.module")
+        .doesNotContain("intellij.libraries.private")
+    }
+  }
+
+  @Test
+  fun `computePluginContentFromDslSpec auto-adds resolvable private library descriptor deps without explicit namespace`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.consumer.module") {
+          resourceRoot()
+          moduleDep("intellij.libraries.private")
+        }
+        module("intellij.libraries.private") {
+          resourceRoot()
+        }
+      }
+
+      val consumerResourcesDir = tempDir.resolve("intellij/consumer/module/resources")
+      java.nio.file.Files.createDirectories(consumerResourcesDir)
+      java.nio.file.Files.writeString(
+        consumerResourcesDir.resolve("intellij.consumer.module.xml"),
+        """
+          <idea-plugin package="com.intellij.consumer">
+            <dependencies>
+              <module name="intellij.libraries.private"/>
+            </dependencies>
+          </idea-plugin>
+        """.trimIndent()
+      )
+
+      val libraryResourcesDir = tempDir.resolve("intellij/libraries/private/resources")
+      java.nio.file.Files.createDirectories(libraryResourcesDir)
+      java.nio.file.Files.writeString(
+        libraryResourcesDir.resolve("intellij.libraries.private.xml"),
+        """<idea-plugin/>"""
+      )
+
+      val spec = org.jetbrains.intellij.build.productLayout.TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.test.plugin"),
+        name = "Consumer Test Plugin",
+        pluginXmlPath = "consumer/testResources/META-INF/plugin.xml",
+        spec = org.jetbrains.intellij.build.productLayout.productModules {
+          requiredModule("intellij.consumer.module")
+        }
+      )
+
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val graph = pluginGraphWithDescriptors(descriptorCache) {
+        moduleWithScopedDeps("intellij.consumer.module")
+        moduleWithScopedDeps("intellij.libraries.private")
+        product("TestProduct") { }
+      }
+      val result = org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec(
+        testPluginSpec = spec,
+        projectRoot = tempDir,
+        resolvableModules = setOf(ContentModuleName("intellij.libraries.private")),
+        productName = "TestProduct",
+        pluginGraph = graph,
+        errorSink = ErrorSink(),
+        descriptorCache = descriptorCache,
+      )
+
       val privateLibrary = result.contentModules.single { it.moduleId.name == "intellij.libraries.private" }
       assertThat(privateLibrary.moduleId.namespace)
-        .describedAs("A private library copy from another plugin cannot satisfy dependencies in this test plugin")
-        .isEqualTo(PluginModuleId.DEFAULT_NAMESPACE)
+        .describedAs("Private descriptor deps need a copy in the test plugin to satisfy module visibility")
+        .isNull()
+    }
+  }
+
+  @Test
+  fun `computePluginContentFromDslSpec skips resolvable public library descriptor deps`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.consumer.module") {
+          resourceRoot()
+        }
+        module("intellij.libraries.public") {
+          resourceRoot()
+        }
+      }
+
+      val consumerResourcesDir = tempDir.resolve("intellij/consumer/module/resources")
+      java.nio.file.Files.createDirectories(consumerResourcesDir)
+      java.nio.file.Files.writeString(
+        consumerResourcesDir.resolve("intellij.consumer.module.xml"),
+        """
+          |<idea-plugin package="com.intellij.consumer">
+          |  <dependencies>
+          |    <module name="intellij.libraries.public"/>
+          |  </dependencies>
+          |</idea-plugin>
+        """.trimMargin()
+      )
+
+      val libraryResourcesDir = tempDir.resolve("intellij/libraries/public/resources")
+      java.nio.file.Files.createDirectories(libraryResourcesDir)
+      java.nio.file.Files.writeString(
+        libraryResourcesDir.resolve("intellij.libraries.public.xml"),
+        """<idea-plugin visibility="public" package="com.intellij.libraries.public"/>"""
+      )
+
+      val spec = org.jetbrains.intellij.build.productLayout.TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.test.plugin"),
+        name = "Consumer Test Plugin",
+        pluginXmlPath = "consumer/testResources/META-INF/plugin.xml",
+        spec = org.jetbrains.intellij.build.productLayout.productModules {
+          requiredModule("intellij.consumer.module")
+        }
+      )
+
+      val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+      val graph = pluginGraphWithDescriptors(descriptorCache) {
+        moduleWithScopedDeps("intellij.consumer.module")
+        moduleWithScopedDeps("intellij.libraries.public")
+        product("TestProduct") { }
+      }
+      val result = org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec(
+        testPluginSpec = spec,
+        projectRoot = tempDir,
+        resolvableModules = setOf(ContentModuleName("intellij.libraries.public")),
+        productName = "TestProduct",
+        pluginGraph = graph,
+        errorSink = ErrorSink(),
+        descriptorCache = descriptorCache,
+      )
+
+      assertThat(result.contentModules.map { it.moduleId.name })
+        .describedAs("Resolvable public descriptor deps are already provided by the product graph")
+        .contains("intellij.consumer.module")
+        .doesNotContain("intellij.libraries.public")
     }
   }
 

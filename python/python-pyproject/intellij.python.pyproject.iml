@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.toml.core" />
-    <orderEntry type="module" exported="" module-name="intellij.libraries.tuweni.toml" />
+    <orderEntry type="module" module-name="intellij.libraries.tuweni.toml" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
