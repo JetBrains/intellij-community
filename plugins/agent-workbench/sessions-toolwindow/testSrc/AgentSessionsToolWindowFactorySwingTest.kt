@@ -52,6 +52,7 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
@@ -201,10 +202,12 @@ class AgentSessionsToolWindowFactorySwingTest {
 
           val threadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")
           waitForCondition {
-            val stateHasThread = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+            refreshCount.get() >= 1 && service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
               ?.threads
               ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
-            stateHasThread && manager.toolWindow.containsSessionTreeId(threadId)
+          }
+          waitForCondition {
+            manager.toolWindow.containsSessionTreeIdWhenTreeModelIdle(threadId)
           }
           assertThat(refreshCount.get()).isEqualTo(1)
           assertThat(visibilityService.visibleFlow.value).isFalse()
@@ -461,13 +464,18 @@ private class ColdStartToolWindowManager(project: Project) :
   }
 }
 
-private fun ToolWindow.containsSessionTreeId(id: SessionTreeId): Boolean {
+private fun ToolWindow.containsSessionTreeIdWhenTreeModelIdle(id: SessionTreeId): Boolean {
   var contains = false
   runInEdtAndWait {
-    contains = contentManager.contents.singleOrNull()
+    val tree = contentManager.contents.singleOrNull()
       ?.component
       ?.findSessionTree()
-      ?.containsSessionTreeId(id) == true
+      ?: return@runInEdtAndWait
+    val model = tree.model
+    if (model is AsyncTreeModel && model.isProcessing) {
+      return@runInEdtAndWait
+    }
+    contains = tree.containsSessionTreeId(id)
   }
   return contains
 }

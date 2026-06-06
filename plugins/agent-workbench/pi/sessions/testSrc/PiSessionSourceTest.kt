@@ -1,10 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.pi.sessions
 
+import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
+import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -12,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class PiSessionSourceTest {
@@ -35,7 +44,7 @@ class PiSessionSourceTest {
         sessionId = "session-new",
         cwd = projectDir,
         piUserMessageEntry(id = "user-new", content = "First user message", timestamp = 3_000L),
-        piNamedSessionInfoEntry(),
+        piNamedSessionInfoEntry(name = "Named Pi session"),
       )
       writePiSession(
         sessionDir = sessionDir,
@@ -56,6 +65,109 @@ class PiSessionSourceTest {
       assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.PI)
       assertThat(threads[1].title).isEqualTo("Old task")
     }
+  }
+
+  @Test
+  fun `latest session info entry is used as title`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-latest-name")
+      val sessionDir = tempDir.resolve("latest-name-sessions")
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-latest-name",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-latest-name", content = "Fallback title", timestamp = 3_000L),
+        piNamedSessionInfoEntry(id = "name-old", name = "Old name"),
+        piNamedSessionInfoEntry(id = "name-new", name = "New name"),
+      )
+      val source = sourceFor(sessionDir)
+
+      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+
+      assertThat(thread.title).isEqualTo("New name")
+    }
+  }
+
+  @Test
+  fun `session jsonl changes emit scoped thread update`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-watch")
+      val sessionDir = tempDir.resolve("watch-sessions")
+      val sessionFile = writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-watch",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-watch", content = "Watch title", timestamp = 3_000L),
+      )
+      val watchEvents = MutableSharedFlow<AgentWorkbenchWatchEvent>(replay = 1)
+      val watchedRoots = CompletableDeferred<Set<Path>>()
+      val source = PiSessionSource(
+        sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }),
+        sessionWatchEventsFactory = { roots ->
+          watchedRoots.complete(roots)
+          watchEvents
+        },
+      )
+      val update = async {
+        withTimeout(5.seconds) {
+          source.updateEvents.first { event -> event.type == AgentSessionSourceUpdate.THREADS_CHANGED }
+        }
+      }
+
+      source.listThreadsFromClosedProject(projectDir.toString())
+      assertThat(watchedRoots.await()).containsExactlyInAnyOrder(
+        sessionDir.toAbsolutePath().normalize(),
+        checkNotNull(sessionDir.parent).toAbsolutePath().normalize(),
+      )
+      watchEvents.emit(
+        AgentWorkbenchWatchEvent(
+          eventType = AgentWorkbenchWatchEventType.MODIFY,
+          path = sessionFile.toAbsolutePath().normalize(),
+          rootPath = sessionDir.toAbsolutePath().normalize(),
+          isDirectory = false,
+          count = 1,
+        )
+      )
+
+      assertThat(update.await().scopedPaths).containsExactly(projectDir.toString())
+    }
+  }
+
+  @Test
+  fun `session directory creation emits scoped thread update`() {
+    val sessionDir = tempDir.resolve("created-sessions")
+    val projectDir = tempDir.resolve("project-created")
+    val updateEvent = createPiSessionSourceUpdateEventForWatchEvent(
+      event = AgentWorkbenchWatchEvent(
+        eventType = AgentWorkbenchWatchEventType.CREATE,
+        path = sessionDir,
+        rootPath = checkNotNull(sessionDir.parent),
+        isDirectory = true,
+        count = 1,
+      ),
+      projectPathsBySessionDir = mapOf(sessionDir.toAbsolutePath().normalize() to setOf(projectDir.toString())),
+    )
+
+    assertThat(updateEvent?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+    assertThat(updateEvent?.scopedPaths).containsExactly(projectDir.toString())
+  }
+
+  @Test
+  fun `session watcher ignores non jsonl files`() {
+    val sessionDir = tempDir.resolve("ignore-sessions")
+    val projectDir = tempDir.resolve("project-ignore")
+    val updateEvent = createPiSessionSourceUpdateEventForWatchEvent(
+      event = AgentWorkbenchWatchEvent(
+        eventType = AgentWorkbenchWatchEventType.MODIFY,
+        path = sessionDir.resolve("notes.txt"),
+        rootPath = sessionDir,
+        isDirectory = false,
+        count = 1,
+      ),
+      projectPathsBySessionDir = mapOf(sessionDir.toAbsolutePath().normalize() to setOf(projectDir.toString())),
+    )
+
+    assertThat(updateEvent).isNull()
   }
 
   @Test
@@ -191,7 +303,8 @@ class PiSessionSourceTest {
   private fun writePiSession(sessionDir: Path, sessionId: String, cwd: Path, vararg entries: String): Path {
     Files.createDirectories(sessionDir)
     val sessionFile = sessionDir.resolve("2026-01-01T00-00-00-000Z_$sessionId.jsonl")
-    val header = """{"type":"session","version":3,"id":"$sessionId","timestamp":"2026-01-01T00:00:01Z","cwd":"${cwd.toString().jsonEscape()}"}"""
+    val header =
+      """{"type":"session","version":3,"id":"$sessionId","timestamp":"2026-01-01T00:00:01Z","cwd":"${cwd.toString().jsonEscape()}"}"""
     Files.writeString(sessionFile, (listOf(header) + entries).joinToString(separator = "\n", postfix = "\n"))
     return sessionFile
   }
@@ -207,9 +320,9 @@ private fun piUserMessageEntry(id: String, content: String, timestamp: Long): St
   """.trimIndent()
 }
 
-private fun piNamedSessionInfoEntry(): String {
+private fun piNamedSessionInfoEntry(id: String = "name-new", name: String): String {
   return """
-    {"type":"session_info","id":"name-new","parentId":"user-new","timestamp":"2026-01-01T00:00:04Z","name":"Named Pi session"}
+    {"type":"session_info","id":"$id","parentId":"user-new","timestamp":"2026-01-01T00:00:04Z","name":"${name.jsonEscape()}"}
   """.trimIndent()
 }
 

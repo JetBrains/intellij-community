@@ -31,7 +31,7 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - Pi session loading must read JSONL files from the effective Pi session directory: `PI_CODING_AGENT_SESSION_DIR`, then project/global Pi `settings.json` `sessionDir`, then the default `~/.pi/agent/sessions/<encoded-cwd>` directory.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
-- Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` before the first user message as the title, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
+- Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` as the title, fall back to the first user message, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file. Archive and unarchive must persist Agent Workbench sidecar state keyed by normalized project path and session id.

@@ -45,6 +45,8 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(descriptor.promptOptions).isEmpty()
     assertThat(descriptor.supportsArchiveThread).isTrue()
     assertThat(descriptor.supportsUnarchiveThread).isTrue()
+    assertThat(descriptor.supportsNewThreadRebind).isTrue()
+    assertThat(descriptor.refreshPathAfterCreateNewSession).isTrue()
   }
 
   @Test

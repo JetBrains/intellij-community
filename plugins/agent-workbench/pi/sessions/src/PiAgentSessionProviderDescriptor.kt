@@ -46,6 +46,12 @@ internal class PiAgentSessionProviderDescriptor(
   override val cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy
     get() = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE
 
+  override val supportsNewThreadRebind: Boolean
+    get() = true
+
+  override val refreshPathAfterCreateNewSession: Boolean
+    get() = true
+
   override val terminalAgentKey: String
     get() = PiCliSupport.PI_TERMINAL_AGENT_KEY
 
