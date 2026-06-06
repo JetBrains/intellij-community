@@ -1,7 +1,4 @@
-/*
- * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.statistics;
 
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -69,5 +66,13 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
 
   public void testBadHashValue() {
     StatisticsManager.getInstance().getUseCount(new StatisticsInfo("MVFOFVB", ""));
+  }
+
+  public void testClearStatistics() {
+    incUseCount("b", 5);
+    assertEquals(5, getUseCount("b"));
+
+    StatisticsManager.getInstance().clearStatistics();
+    assertEquals(0, getUseCount("b"));
   }
 }

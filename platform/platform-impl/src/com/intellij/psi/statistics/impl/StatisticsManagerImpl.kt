@@ -14,6 +14,7 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.ScrambledInputStream
 import com.intellij.util.ScrambledOutputStream
 import com.intellij.util.io.outputStream
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
 import java.io.IOException
@@ -23,6 +24,7 @@ import java.util.Collections
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
 import kotlin.math.abs
 import kotlin.math.max
@@ -145,6 +147,17 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
         units.fill(null)
       }
       testingStatistics = false
+    }
+  }
+
+  @ApiStatus.Internal
+  override fun clearStatistics() {
+    lock.write {
+      units.fill(null)
+      modifiedUnits.clear()
+      for (unitNumber in 0 until UNIT_COUNT) {
+        getPathToUnit(unitNumber).deleteIfExists()
+      }
     }
   }
 }
