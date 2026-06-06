@@ -21,6 +21,7 @@ public abstract class StatisticsManager {
    */
   public static final int RECENCY_OBLIVION_THRESHOLD = 10000;
 
+  @SuppressWarnings("rawtypes")
   public static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.statistician");
 
   public static @Nullable <T, Loc> StatisticsInfo serialize(Key<? extends Statistician<T, Loc>> key, T element, Loc location) {
