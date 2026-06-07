@@ -32,7 +32,13 @@ object RefIndexUtil {
       ARRAY_ELEMENT -> "[]"
       DISPOSER_CHILD -> "(disposer-tree)"
       FIELD_OMITTED -> null
-      else -> classDefinition?.getRefField(classStore, refIndex - 1)?.name ?: "(field_$refIndex)"
+      else ->
+        try {
+          classDefinition?.getRefField(classStore, refIndex - 1)?.name
+        }
+        catch (_: IndexOutOfBoundsException) {
+          null
+        } ?: "(field_$refIndex)"
     }
   }
 
