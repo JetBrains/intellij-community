@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -92,5 +92,11 @@ public final class TimeoutUtil {
       long duration = getDurationMillis(startNanoTime);
       if (duration >= threshold) consumer.accept(duration);
     }
+  }
+
+  @ApiStatus.Internal
+  public static String time() {
+    String string = Long.toString(System.currentTimeMillis());
+    return string.substring(string.length() - 5);
   }
 }
