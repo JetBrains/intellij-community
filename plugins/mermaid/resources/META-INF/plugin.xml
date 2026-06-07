@@ -27,8 +27,6 @@
               language="Mermaid"
               extensions="mermaid;mmd"/>
 
-    <fileEditorProvider implementation="com.intellij.mermaid.markdown.preview.MermaidEditorWithPreviewProvider"/>
-
     <lang.parserDefinition language="Mermaid"
                            implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
     <lang.syntaxHighlighter language="Mermaid"
@@ -155,8 +153,6 @@
     <colorSettingsPage implementation="com.intellij.mermaid.lang.highlighting.MermaidColorSettingsPage"/>
     <additionalTextAttributes scheme="Default" file="colorSchemes/MermaidDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/MermaidDarcula.xml"/>
-
-    <editorNotificationProvider implementation="com.intellij.mermaid.markdown.preview.ExportedDiagramEditorNotificationProvider"/>
 
     <registryKey key="mermaid.export.diagram.action.enable"
                  defaultValue="false"

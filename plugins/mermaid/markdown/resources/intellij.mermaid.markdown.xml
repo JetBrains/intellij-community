@@ -16,6 +16,10 @@
     <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.jcef.AdditionalMermaidInfoStringValuesContributor" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider implementation="com.intellij.mermaid.markdown.preview.MermaidEditorWithPreviewProvider"/>
+
+    <editorNotificationProvider implementation="com.intellij.mermaid.markdown.preview.ExportedDiagramEditorNotificationProvider"/>
+
     <completion.contributor language="Markdown"
                             implementationClass="com.intellij.mermaid.markdown.editor.MarkdownCodeFenceCompletionContributor"/>
 
