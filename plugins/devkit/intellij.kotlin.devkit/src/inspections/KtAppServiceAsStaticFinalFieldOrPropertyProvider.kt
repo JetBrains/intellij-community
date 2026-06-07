@@ -63,7 +63,7 @@ abstract class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.returnType.expandedSymbol?.psi ?: return
+            property.returnType.withNullability(isMarkedNullable = false).expandedSymbol?.psi ?: return
           }
         }
 
