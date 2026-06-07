@@ -97,16 +97,38 @@ class FileChannelWithWALTest {
   }
 
   @Test
-  fun `writable channel creates missing file on opening`(@TempDir tempDir: Path) {
+  fun `writable channel initializes missing file size lazily`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("missing-storage.bin")
     val writeAheadLog = RecordingWriteAheadLog()
 
     assertFalse(Files.exists(file), "Precondition: file should not exist before channel opening")
 
-    // Whether WAL-backed channels should create files eagerly is debatable, but this is the current contract:
-    // writable FileChannelWithWAL mirrors ordinary writable FileChannel open semantics and creates a missing file on construction.
     openWritableChannel(file, writeAheadLog).use { channel ->
-      assertTrue(Files.exists(file), "Writable WAL channel must create a missing file on opening")
+      assertFalse(Files.exists(file), "Writable WAL channel must not create a missing file on opening")
+
+      assertEquals(2, channel.write(ByteBuffer.wrap(byteArrayOf(1, 2)), 0))
+      assertFalse(Files.exists(file), "WAL write must not create a missing file before underlying channel is needed")
+
+      assertEquals(2, channel.size())
+      assertTrue(Files.exists(file), "size() initializes underlying channel lazily")
+    }
+  }
+
+  @Test
+  fun `writable channel can create missing file on opening`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("missing-storage.bin")
+    val writeAheadLog = RecordingWriteAheadLog()
+
+    assertFalse(Files.exists(file), "Precondition: file should not exist before channel opening")
+
+    FileChannelWithWAL(
+      file,
+      writeAheadLog,
+      PageCacheUtils.getCachedChannelsAccessor(false),
+      readOnly = false,
+      createFileImmediately = true,
+    ).use { channel ->
+      assertTrue(Files.exists(file), "Writable WAL channel must create a missing file on opening if requested")
       assertEquals(0, channel.size())
     }
   }
@@ -121,6 +143,24 @@ class FileChannelWithWALTest {
     }
 
     assertTrue(error.message!!.contains("must match FileChannelWithWAL mode"))
+  }
+
+  @Test
+  fun `channel rejects eager file creation in read only mode`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("missing-storage.bin")
+    val writeAheadLog = RecordingWriteAheadLog()
+
+    val error = assertThrows<IllegalArgumentException> {
+      FileChannelWithWAL(
+        file,
+        writeAheadLog,
+        PageCacheUtils.getCachedChannelsAccessor(true),
+        readOnly = true,
+        createFileImmediately = true,
+      )
+    }
+
+    assertTrue(error.message!!.contains("createFileImmediately"))
   }
 
   @Test

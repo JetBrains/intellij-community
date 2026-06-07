@@ -39,25 +39,37 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   private val path: Path,
   writeAheadLog: WriteAheadLog,
   channelsAccessor: ChannelsAccessor,
-  private val readOnly: Boolean,
+  private val readOnly: Boolean = channelsAccessor.isReadOnly,
   private val closeUnderlyingChannelOnClose: Boolean = true,
   private val applyUnfinishedOnRead: Boolean = APPLY_UNFINISHED_ON_READ,
+  /** `false`: create an underlying file lazily, maybe async -- when some IO op touches it; `true`: force creation on init */
+  createFileImmediately: Boolean = false,
 ) : FileChannel(), Resilient {
 
   init {
+    //MAYBE RC: why need 2 different sources of readOnly? maybe just use channelsAccessor.isReadOnly?
     require(channelsAccessor.isReadOnly == readOnly) {
       "channelsAccessor mode (${channelsAccessor.isReadOnly}) must match FileChannelWithWAL mode ($readOnly)"
     }
+    require(!createFileImmediately || !readOnly) {
+      "createFileImmediately is not applicable for readOnly channel"
+    }
   }
 
-  /** Fix `path` argument in `channelsAccessor` so that it can't be accidentally called with any other path. */
+  /** Seal `path` argument in `channelsAccessor` so that it can't be accidentally called with any other path. */
   private val channelOpExecutor: ChannelOpExecutor = ChannelOpExecutor.partiallyApply(channelsAccessor, path)
 
   private val perFileWriter: WriteAheadLog.PerFileWriter = writeAheadLog.openFor(path)
 
-  /** Cache fileSize, so [size] always actual even without [force]. */
+  /** Cache fileSize, so [size] is always actual even without [force]. */
   @Volatile
-  private var fileSize: Long = calculateInitialFileSize()
+  private var fileSize: Long = UNINITIALIZED_FILE_SIZE
+
+  init {
+    if (createFileImmediately) { // call .size() to actually open the underlying channel => trigger file creation
+      ensureFileSizeInitialized()
+    }
+  }
 
   /** @GuardedBy(this) */
   private var position: Long = 0
@@ -65,7 +77,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   @Throws(IOException::class)
   override fun size(): Long {
     ensureOpen()
-    return fileSize
+    return ensureFileSizeInitialized()
   }
 
   @Throws(IOException::class)
@@ -89,6 +101,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
     }
 
     if (applyUnfinishedOnRead) {
+      val fileSize = ensureFileSizeInitialized()
       val bytesToRead = minOf(target.remaining().toLong(), fileSize - offset).toInt()
       if (bytesToRead <= 0) {
         return -1
@@ -191,7 +204,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   override fun truncate(size: Long): FileChannel {
     require(!readOnly) { "truncate() is not applicable for readOnly channel" }
     ensureOpen()
-    if (size > fileSize) {
+    if (size > ensureFileSizeInitialized()) {
       return this//do nothing, as per spec
     }
 
@@ -225,10 +238,33 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
 
   private fun updateSizeAfterWrite(offset: Long, bytesWritten: Int) {
     val newSize = offset + bytesWritten
-    if (newSize > fileSize) {
-      synchronized(this) {
-        fileSize = maxOf(fileSize, newSize)
+    val currentFileSize = fileSize
+    //if(FileSize == UNINITIALIZED_FILE_SIZE || newSize <= currentFileSize) return!
+    if (currentFileSize != UNINITIALIZED_FILE_SIZE && newSize <= currentFileSize) {
+      return
+    }
+
+    synchronized(this) {
+      val recheckedFileSize = fileSize
+      if (recheckedFileSize != UNINITIALIZED_FILE_SIZE) {
+        fileSize = maxOf(recheckedFileSize, newSize)
       }
+    }
+  }
+
+  private fun ensureFileSizeInitialized(): Long {
+    val currentFileSize = fileSize
+    if (currentFileSize != UNINITIALIZED_FILE_SIZE) {
+      return currentFileSize
+    }
+
+    synchronized(this) {
+      val recheckedFileSize = fileSize
+      if (recheckedFileSize != UNINITIALIZED_FILE_SIZE) {
+        return recheckedFileSize
+      }
+
+      return calculateInitialFileSize().also { fileSize = it }
     }
   }
 
@@ -301,6 +337,8 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   }
 
   companion object {
+    private const val UNINITIALIZED_FILE_SIZE = -1L
+
     private val APPLY_UNFINISHED_ON_READ = getBooleanProperty("indexes.write-ahead-log.apply-unfinished-on-read", false)
 
     /** Accumulated statistics of flush()-ed entries, split by different 'causes' */
