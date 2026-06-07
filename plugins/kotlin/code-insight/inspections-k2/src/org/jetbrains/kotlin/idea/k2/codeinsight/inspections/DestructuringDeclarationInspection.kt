@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -394,9 +395,15 @@ private fun getDataIfUsageIsApplicable(dataClassUsage: KtNameReferenceExpression
     val property = parent as? KtProperty
     if (property != null && property.isVar) return null
 
-    val selectorName = when (val selector = qualifiedExpression.selectorExpression) {
+    val selector = qualifiedExpression.selectorExpression
+    val selectorName = when (selector) {
         is KtNameReferenceExpression -> selector.getReferencedName()
-        else -> null
+        is KtCallExpression -> {
+            if (selector.valueArguments.isNotEmpty() || selector.lambdaArguments.isNotEmpty()) return null
+            (selector.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
+        }
+
+        else -> return null
     }
     return SingleUsageData(callableName = selectorName, usageToReplace = qualifiedExpression, declarationToDrop = property)
 }

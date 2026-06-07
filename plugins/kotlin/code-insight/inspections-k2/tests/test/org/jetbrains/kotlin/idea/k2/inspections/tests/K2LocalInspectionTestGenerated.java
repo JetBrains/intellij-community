@@ -1320,6 +1320,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassLast.kt");
         }
 
+        @TestMetadata("DataClassMethodCall.kt")
+        public void testDataClassMethodCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassMethodCall.kt");
+        }
+
         @TestMetadata("DataClassNameConflict.kt")
         public void testDataClassNameConflict() throws Exception {
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNameConflict.kt");
