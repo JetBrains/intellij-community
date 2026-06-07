@@ -12,7 +12,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import java.util.UUID
 import javax.swing.Icon
@@ -67,13 +66,8 @@ internal class PiAgentSessionProviderDescriptor(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      return threadMutationBackend.renameThread(path, threadId, normalizedName)
-    }
+  override val threadRenameHandler: AgentThreadRenameHandler = AgentThreadRenameHandler.backend { path, threadId, normalizedName ->
+    threadMutationBackend.renameThread(path, threadId, normalizedName)
   }
 
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()

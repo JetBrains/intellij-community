@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.openChat
+import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
@@ -56,6 +58,12 @@ class AgentSessionRenameService internal constructor(
   ) -> Unit,
   private val notifyRenameFailure: () -> Unit,
   private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
+  private val openAgentChatTabPresentationUpdater: suspend (
+    AgentSessionProvider,
+    Set<String>,
+    Map<Pair<String, String>, String>,
+    Map<Pair<String, String>, AgentThreadActivity>,
+  ) -> Int = ::updateOpenAgentChatTabPresentation,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -164,6 +172,11 @@ class AgentSessionRenameService internal constructor(
           }
 
           recordTitleOverride(target = target, normalizedRequestedName = normalizedRequestedName)
+          updateOpenTabPresentationAfterBackendRename(
+            target = target,
+            normalizedRequestedName = normalizedRequestedName,
+            context = context,
+          )
           refreshProviderForPath(target.path, target.provider)
         }
 
@@ -221,6 +234,21 @@ class AgentSessionRenameService internal constructor(
       provider = target.provider,
       threadId = target.threadId,
       title = normalizedRequestedName,
+    )
+  }
+
+  private suspend fun updateOpenTabPresentationAfterBackendRename(
+    target: SessionActionTarget.Thread,
+    normalizedRequestedName: String,
+    context: AgentChatEditorTabActionContext?,
+  ) {
+    val identityKey = target.path to buildAgentSessionIdentity(provider = target.provider, sessionId = target.threadId)
+    val activity = context?.threadActivity ?: target.thread?.activity
+    openAgentChatTabPresentationUpdater(
+      target.provider,
+      emptySet(),
+      mapOf(identityKey to normalizedRequestedName),
+      if (activity == null) emptyMap() else mapOf(identityKey to activity),
     )
   }
 }

@@ -3,9 +3,10 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
-import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -13,6 +14,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameCon
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
 import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,8 @@ class AgentSessionRenameServiceTest {
   @Test
   fun renameThreadRefreshesScopedProviderOnSuccess(): Unit = runBlocking(Dispatchers.Default) {
     val refreshedPaths = mutableListOf<Pair<String, AgentSessionProvider>>()
+    val operationOrder = mutableListOf<String>()
+    val presentationUpdates = mutableListOf<OpenTabPresentationUpdate>()
     val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
     var renamedPath: String? = null
     var renamedThreadId: String? = null
@@ -51,12 +55,25 @@ class AgentSessionRenameServiceTest {
     val scope = kotlinx.coroutines.CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val service = AgentSessionRenameService(
       serviceScope = scope,
-      refreshProviderForPath = { path, provider -> refreshedPaths += path to provider },
+      refreshProviderForPath = { path, provider ->
+        operationOrder += "refresh"
+        refreshedPaths += path to provider
+      },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
       titleOverrides = titleOverrides,
       dispatchRenameInEditorTab = { _, _, _ -> error("editor rename dispatch should not be used") },
       dispatchRenameFromTree = { _, _, _ -> error("tree rename dispatch should not be used") },
       notifyRenameFailure = { error("rename failure notification should not be shown") },
+      openAgentChatTabPresentationUpdater = { provider, refreshedPaths, titleMap, activityMap ->
+        operationOrder += "presentation"
+        presentationUpdates += OpenTabPresentationUpdate(
+          provider = provider,
+          refreshedPaths = refreshedPaths,
+          titleMap = titleMap,
+          activityMap = activityMap,
+        )
+        titleMap.size
+      },
     )
 
     try {
@@ -65,6 +82,8 @@ class AgentSessionRenameServiceTest {
         provider = AgentSessionProvider.CODEX,
         threadId = "thread-1",
         title = "Original title",
+        thread = threadModel(AgentSessionProvider.CODEX, "thread-1", "Original title")
+          .copy(activity = AgentThreadActivity.PROCESSING),
       )
 
       val job = service.renameThreadFromTree(ProjectManager.getInstance().defaultProject, target, "  Renamed\n\n  thread  ")
@@ -74,6 +93,13 @@ class AgentSessionRenameServiceTest {
       assertThat(renamedThreadId).isEqualTo("thread-1")
       assertThat(renamedName).isEqualTo("Renamed thread")
       assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isEqualTo("Renamed thread")
+      val expectedKey = "/work/project" to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "thread-1")
+      val presentationUpdate = presentationUpdates.single()
+      assertThat(presentationUpdate.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(presentationUpdate.refreshedPaths).isEmpty()
+      assertThat(presentationUpdate.titleMap).containsExactlyEntriesOf(mapOf(expectedKey to "Renamed thread"))
+      assertThat(presentationUpdate.activityMap).containsExactlyEntriesOf(mapOf(expectedKey to AgentThreadActivity.PROCESSING))
+      assertThat(operationOrder).containsExactly("presentation", "refresh")
       assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.CODEX)
     }
     finally {
@@ -127,6 +153,7 @@ class AgentSessionRenameServiceTest {
   fun renameThreadNotifiesOnFailureAndSkipsRefresh(): Unit = runBlocking(Dispatchers.Default) {
     var failureNotifications = 0
     var refreshCalls = 0
+    var presentationUpdateCalls = 0
     val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -145,6 +172,10 @@ class AgentSessionRenameServiceTest {
       dispatchRenameInEditorTab = { _, _, _ -> error("editor rename dispatch should not be used") },
       dispatchRenameFromTree = { _, _, _ -> error("tree rename dispatch should not be used") },
       notifyRenameFailure = { failureNotifications += 1 },
+      openAgentChatTabPresentationUpdater = { _, _, _, _ ->
+        presentationUpdateCalls += 1
+        0
+      },
     )
 
     try {
@@ -160,6 +191,7 @@ class AgentSessionRenameServiceTest {
 
       assertThat(failureNotifications).isEqualTo(1)
       assertThat(refreshCalls).isZero()
+      assertThat(presentationUpdateCalls).isZero()
       assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isNull()
     }
     finally {
@@ -486,14 +518,7 @@ class AgentSessionRenameServiceTest {
 }
 
 private fun backendRenameHandler(renameThread: suspend (String, String, String) -> Boolean): AgentThreadRenameHandler.Backend {
-  return object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      return renameThread(path, threadId, normalizedName)
-    }
-  }
+  return AgentThreadRenameHandler.backend(action = renameThread)
 }
 
 private fun dispatchRenameHandler(vararg renameContexts: AgentThreadRenameContext): AgentThreadRenameHandler.ChatDispatch {
@@ -518,3 +543,10 @@ private fun threadModel(provider: AgentSessionProvider, id: String, title: Strin
     provider = provider,
   )
 }
+
+private data class OpenTabPresentationUpdate(
+  val provider: AgentSessionProvider,
+  @JvmField val refreshedPaths: Set<String>,
+  @JvmField val titleMap: Map<Pair<String, String>, String>,
+  @JvmField val activityMap: Map<Pair<String, String>, AgentThreadActivity>,
+)
