@@ -80,12 +80,6 @@ interface LspServerManager {
   )
 }
 
-@ApiStatus.Internal
-@TestOnly
-fun interface Lsp4jServerWrapper {
-  fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer
-}
-
 inline fun <reified Provider : LspServerSupportProvider> LspServerManager.getServersForProvider(): Collection<LspServer> =
   getServersForProvider(Provider::class.java)
 

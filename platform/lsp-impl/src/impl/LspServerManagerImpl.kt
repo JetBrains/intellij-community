@@ -40,6 +40,7 @@ import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 private val logger = logger<LspServerManagerImpl>()
 private const val MAX_LSP_SERVERS = 10
@@ -57,6 +58,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   }
 
   private val lspServers: MutableCollection<LspServerImpl> = ContainerUtil.createLockFreeCopyOnWriteList()
+  @TestOnly
   private val lsp4jServerWrappers = ContainerUtil.createLockFreeCopyOnWriteList<Lsp4jServerWrapper>()
 
   private val eventDispatcher = EventDispatcher.create(LspServerManagerListener::class.java)
@@ -134,7 +136,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
         }
 
         writeAction {
-          val server = LspServerImpl(providerClass, descriptor, eventDispatcher.multicaster, ::wrapLsp4jServer)
+          val server = LspServerImpl(providerClass, descriptor, eventDispatcher.multicaster)
           server.start()
           lspServers.add(server)
           Unit
@@ -205,6 +207,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     startServersIfNeeded(providerClass)
   }
 
+  @TestOnly
   override fun addLsp4jServerWrapper(wrapper: Lsp4jServerWrapper, parentDisposable: Disposable) {
     lsp4jServerWrappers.add(wrapper)
     Disposer.register(parentDisposable) {
@@ -212,9 +215,10 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     }
   }
 
-  private fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer =
-    lsp4jServerWrappers.fold(lsp4jServer) { wrappedServer, wrapper ->
-      wrapper.wrapLsp4jServer(lspServer, wrappedServer)
+  @TestOnly
+  internal fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer =
+    lsp4jServerWrappers.fold(lsp4jServer) { wrappedLsp4jServer, wrapper ->
+      wrapper.wrapLsp4jServer(lspServer, wrappedLsp4jServer)
     }
 
   @ApiStatus.Internal
