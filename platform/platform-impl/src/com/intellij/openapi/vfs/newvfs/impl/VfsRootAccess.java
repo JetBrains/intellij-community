@@ -135,9 +135,9 @@ public final class VfsRootAccess {
     var allowed = CollectionFactory.createFilePathSet();
     allowed.add(PathsKt.getInvariantSeparatorsPathString(PathManager.getHomeDir()));
     allowed.add(PathsKt.getInvariantSeparatorsPathString(PathManager.getConfigDir()));
-    allowed.add(FileUtil.toSystemIndependentName(JpsMavenSettings.getUserMavenSettingsXml().getAbsolutePath()));
+    allowed.add(PathsKt.getInvariantSeparatorsPathString(JpsMavenSettings.getUserMavenSettingsXml()));
     var globalSettingsFile = JpsMavenSettings.getGlobalMavenSettingsXml();
-    if (globalSettingsFile != null) allowed.add(FileUtil.toSystemIndependentName(globalSettingsFile.getAbsolutePath()));
+    if (globalSettingsFile != null) allowed.add(PathsKt.getInvariantSeparatorsPathString(globalSettingsFile));
     allowed.add(JpsMavenSettings.getMavenRepositoryPath());
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests

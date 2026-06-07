@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -741,7 +741,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    */
   private static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context, @Nullable String remoteRepositoryId)
     throws RemoteRepositoryNotFoundException {
-    
+
     Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>> managers = MANAGERS_KEY.get(context);
     if (managers == null) {
       Map<String, JpsMavenSettings.RemoteRepositoryAuthentication> mavenSettingsXmlAuth = JpsMavenSettings.loadAuthenticationSettings(
@@ -778,7 +778,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
       final ArtifactRepositoryManager unnamedManager = new ArtifactRepositoryManager(localRepositoryRoot, repositories, progressConsumer, retry);
       // further init manager here
-      
+
       final Map<String, ArtifactRepositoryManager> namedManagers = new HashMap<>();
       for (RemoteRepository repository : repositories) {
         namedManagers.put(repository.getId(), new ArtifactRepositoryManager(localRepositoryRoot, Collections.singletonList(repository), progressConsumer, retry));
@@ -831,7 +831,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
     JpsMavenSettings.RemoteRepositoryAuthentication fromMavenSettings = mavenSettingsXmlAuth.get(description.getId());
     if (fromMavenSettings != null) {
-      return new ArtifactAuthenticationData(fromMavenSettings.getUsername(), fromMavenSettings.getPassword());
+      return new ArtifactAuthenticationData(fromMavenSettings.username, fromMavenSettings.password);
     }
     return null;
   }
