@@ -14,6 +14,7 @@
     <module name="intellij.java.codeserver.highlighting"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
   </dependencies>
   <!-- endregion -->

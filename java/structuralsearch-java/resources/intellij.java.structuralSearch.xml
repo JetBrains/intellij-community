@@ -1,14 +1,15 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.structuralsearch"/>
     <module name="intellij.platform.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder"

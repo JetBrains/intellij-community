@@ -5,6 +5,7 @@
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->

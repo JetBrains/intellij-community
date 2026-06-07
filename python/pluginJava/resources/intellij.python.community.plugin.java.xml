@@ -1,14 +1,15 @@
 <idea-plugin visibility="internal">
   <!--For IU or IC-->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <!-- Supports Java -->
     <module name="intellij.java.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.plugin.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>

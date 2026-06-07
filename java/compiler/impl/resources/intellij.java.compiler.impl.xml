@@ -13,6 +13,7 @@
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.platform.jps.build"/>

@@ -1,7 +1,10 @@
 <idea-plugin package="ru.adelf.idea.dotenv.kotlin">
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.dotenv.java"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>

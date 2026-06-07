@@ -1,6 +1,9 @@
 <idea-plugin package="ru.adelf.idea.dotenv.java">
   <dependencies>
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA" implementationClass="ru.adelf.idea.dotenv.java.JavaEnvCompletionContributor"/>

@@ -1,9 +1,12 @@
 <idea-plugin package="org.jetbrains.idea.dev.kotlin">
 
   <dependencies>
-    <module name="intellij.dev.psiViewer"/>
-    <module name="intellij.dev.codeInsight"/>
     <plugin id="org.jetbrains.kotlin"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.dev.psiViewer"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.dev">

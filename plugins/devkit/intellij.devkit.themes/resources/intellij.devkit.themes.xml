@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.json.backend"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>

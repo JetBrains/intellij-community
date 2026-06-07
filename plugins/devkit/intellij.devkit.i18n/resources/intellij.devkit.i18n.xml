@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.java-i18n"/>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.parser"/>

@@ -3,10 +3,11 @@
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
     <plugin id="org.editorconfig.editorconfigjetbrains"/>
-    <plugin id="com.intellij.copyright"/>
     <module name="intellij.java.backend"/>
+    <plugin id="com.intellij.copyright"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
   </dependencies>
   <!-- endregion -->

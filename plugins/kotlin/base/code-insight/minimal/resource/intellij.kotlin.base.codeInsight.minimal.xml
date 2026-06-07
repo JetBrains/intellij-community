@@ -1,3 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+  </dependencies>
+  <!-- endregion -->
   <xi:include href="base-codeInsight-minimal.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

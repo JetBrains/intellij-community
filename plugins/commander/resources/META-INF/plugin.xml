@@ -5,6 +5,7 @@
   <vendor>JetBrains</vendor>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->

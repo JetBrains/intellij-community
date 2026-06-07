@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.cce">

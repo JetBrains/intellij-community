@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.jvm.analysis"/>
     <module name="intellij.platform.uast"/>
   </dependencies>

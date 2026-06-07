@@ -1,7 +1,10 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.compose"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.DevkitThreadingBundle</resource-bundle>

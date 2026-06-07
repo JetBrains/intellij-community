@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.gradle"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.maven"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>

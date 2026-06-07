@@ -1,15 +1,16 @@
 <idea-plugin visibility="internal" package="com.intellij.java.dev">
   <resource-bundle>messages.JavaDevBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.debugger.impl"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.dev.codeInsight"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.java.debugger.impl"/>
-    <!-- endregion -->
+    <module name="intellij.java.psi"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.dev">
     <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerExpressionExtension"/>
