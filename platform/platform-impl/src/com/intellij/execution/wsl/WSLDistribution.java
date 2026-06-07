@@ -615,6 +615,10 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   @Override
   public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath) {
+    return getWslPath(windowsPath, this::getMntRoot);
+  }
+
+  public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath, @NotNull Supplier<String> mntRootSupplier) {
     WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath.toString());
     if (wslPath != null) {
       if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
@@ -626,7 +630,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
 
     if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath.toString())) { // absolute windows path => /mnt/disk_letter/path
-      return getMntRoot() + convertWindowsPath(windowsPath.toString());
+      return mntRootSupplier.get() + convertWindowsPath(windowsPath.toString());
     }
     return null;
   }

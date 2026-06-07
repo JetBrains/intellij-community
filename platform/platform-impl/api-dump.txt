@@ -235,6 +235,7 @@ c:com.intellij.execution.wsl.WSLDistribution
 - getWindowsPath(java.lang.String):java.lang.String
 - f:getWslPath(java.lang.String):java.lang.String
 - getWslPath(java.nio.file.Path):java.lang.String
+- getWslPath(java.nio.file.Path,java.util.function.Supplier):java.lang.String
 - resolveSymlink(java.lang.String):java.lang.String
 a:com.intellij.execution.wsl.WslDistributionManager
 - getOrCreateDistributionByMsId(java.lang.String):com.intellij.execution.wsl.WSLDistribution
