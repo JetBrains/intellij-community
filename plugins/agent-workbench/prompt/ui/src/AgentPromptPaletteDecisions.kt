@@ -3,10 +3,11 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.resolveEffectiveProviderOptionIds as resolveCoreEffectiveProviderOptionIds
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
@@ -93,22 +94,15 @@ internal fun resolveEffectiveProviderOptionIds(
   selectedProvider: AgentSessionProviderDescriptor?,
   selectedOptionIds: Set<String>,
   targetMode: PromptTargetMode,
-  selectedThreadActivity: AgentThreadActivity?,
 ): Set<String> {
-  val bridge = selectedProvider ?: return emptySet()
-  return bridge.promptOptions
-    .asSequence()
-    .filter { option -> option.id in selectedOptionIds }
-    .filter { option ->
-      when (targetMode) {
-        PromptTargetMode.NEW_TASK -> option.enabledForNewTask
-        PromptTargetMode.EXISTING_TASK -> {
-          option.enabledForExistingTask && selectedThreadActivity !in option.disabledExistingTaskActivities
-        }
-      }
-    }
-    .map { option -> option.id }
-    .toSet()
+  return resolveCoreEffectiveProviderOptionIds(
+    selectedProvider = selectedProvider,
+    selectedOptionIds = selectedOptionIds,
+    target = when (targetMode) {
+      PromptTargetMode.NEW_TASK -> AgentPromptProviderOptionTarget.NEW_TASK
+      PromptTargetMode.EXISTING_TASK -> AgentPromptProviderOptionTarget.EXISTING_TASK
+    },
+  )
 }
 
 internal fun resolveSubmitValidationErrorMessageKey(

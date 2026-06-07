@@ -163,7 +163,6 @@ internal class AgentPromptPaletteSubmitController(
       selectedProvider = providerEntry.bridge,
       selectedOptionIds = providerSelector.selectedOptionIds(providerEntry.bridge.provider),
       targetMode = targetMode,
-      selectedThreadActivity = selectedThreadActivity,
     )
     val initialMessageRequest = AgentPromptInitialMessageRequest(
       prompt = prompt,

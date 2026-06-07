@@ -203,7 +203,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun composeInitialMessageStripsManualPlanCommandPrefix() {
+  fun composeInitialMessageTreatsManualPlanCommandAsPlainText() {
     val plan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
         prompt = " /plan Refactor this ",
@@ -211,8 +211,8 @@ class ClaudeAgentSessionProviderDescriptorTest {
     )
     val message = checkNotNull(plan.message)
 
-    assertThat(message).isEqualTo("Refactor this")
-    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(message).isEqualTo("/plan Refactor this")
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
   }
 
   @Test
@@ -231,13 +231,13 @@ class ClaudeAgentSessionProviderDescriptorTest {
     assertThat(plannerPlan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
     assertThat(plannerPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
 
-    val manualPlanCommand = bridge.buildInitialMessagePlan(
+    val manualPlanText = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(prompt = "/plan follow-up")
     )
-    assertThat(manualPlanCommand.mode).isEqualTo(AgentInitialMessageMode.PLAN)
-    assertThat(manualPlanCommand.message).isEqualTo("follow-up")
-    assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
-    assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(manualPlanText.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
+    assertThat(manualPlanText.message).isEqualTo("/plan follow-up")
+    assertThat(manualPlanText.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(manualPlanText.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
   }
 
   @Test

@@ -163,15 +163,15 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun composeInitialMessageStripsManualPlanCommandPrefix() {
+  fun composeInitialMessageTreatsManualPlanCommandAsPlainText() {
     val plan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
         prompt = " /plan Refactor this ",
       )
     )
 
-    assertThat(plan.message).isEqualTo("Refactor this")
-    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(plan.message).isEqualTo("/plan Refactor this")
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
   }
 
   @Test
@@ -244,16 +244,13 @@ class CodexAgentSessionProviderDescriptorTest {
     val manualPlanCommand = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(prompt = "/plan from manual input")
     )
-    assertThat(manualPlanCommand.mode).isEqualTo(AgentInitialMessageMode.PLAN)
-    assertThat(manualPlanCommand.message).isEqualTo("from manual input")
-    assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
-    assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(manualPlanCommand.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
+    assertThat(manualPlanCommand.message).isEqualTo("/plan from manual input")
+    assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+    assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
     val manualPlanCommandSteps = bridge.buildPostStartDispatchSteps(manualPlanCommand)
-    assertThat(manualPlanCommandSteps.map { it.action }).containsExactly(
-      AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
-      AgentInitialMessageDispatchAction.SEND_TEXT,
-    )
-    assertThat(manualPlanCommandSteps.map { it.text }).containsExactly("", "from manual input")
+    assertThat(manualPlanCommandSteps.map { it.action }).containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(manualPlanCommandSteps.map { it.text }).containsExactly("/plan from manual input")
   }
 
   @Test

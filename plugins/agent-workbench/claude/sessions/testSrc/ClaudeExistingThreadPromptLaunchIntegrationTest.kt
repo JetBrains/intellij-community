@@ -4,9 +4,11 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostStartDispatch
+import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStartupOverride
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
 import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
@@ -29,8 +31,8 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
   }
 
   @Test
-  fun existingThreadPlanModePromptUsesPostStartDispatch() {
-    assertExistingThreadLaunchUsesPostStartDispatch(
+  fun existingThreadPlanModePromptUsesStartupPlanFlag() {
+    val observation = assertExistingThreadLaunchUsesStartupOverride(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
         provider = AgentSessionProvider.CLAUDE,
@@ -40,6 +42,11 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
       ),
       projectPath = PROJECT_PATH,
       threadId = EXISTING_THREAD_ID,
+    )
+    val startupLaunchSpec = checkNotNull(observation.startupLaunchSpecOverride)
+
+    assertThat(startupLaunchSpec.command).containsExactly(
+      "claude", "--resume", EXISTING_THREAD_ID, "--permission-mode", "plan", "--", observation.postStartDispatchSteps.single().text
     )
   }
 }

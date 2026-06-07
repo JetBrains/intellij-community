@@ -28,14 +28,15 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageM
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
-import com.intellij.agent.workbench.sessions.core.providers.isPlanModeCommand
 import com.intellij.agent.workbench.sessions.core.providers.isPlanModeRequested
-import com.intellij.agent.workbench.sessions.core.providers.stripPlanModePrefix
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchPromptLaunchResultKind
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTargetKind
@@ -427,7 +428,9 @@ class AgentSessionPromptLauncherBridgeTest {
             val baseRequest = promptLaunchRequest(targetThreadId = "thread-existing")
             val result = bridge.launch(
               baseRequest.copy(
-                initialMessageRequest = baseRequest.initialMessageRequest.copy(prompt = "/plan Refactor selected code"),
+                initialMessageRequest = baseRequest.initialMessageRequest.copy(
+                  providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+                ),
               )
             )
 
@@ -947,7 +950,9 @@ class AgentSessionPromptLauncherBridgeTest {
           val bridge = promptLauncherBridge(service, launchService)
           val baseRequest = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
           val request = baseRequest.copy(
-            initialMessageRequest = baseRequest.initialMessageRequest.copy(prompt = "/plan Refactor selected code"),
+            initialMessageRequest = baseRequest.initialMessageRequest.copy(
+              providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+            ),
           )
 
           val result = bridge.launch(request)
@@ -991,7 +996,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun launchIgnoresExplicitPlanStartupOverrideWhenPlanModeRequiresPostStartDispatch() {
+  fun launchUsesStartupOverrideForPlanModeWhenPlanPolicyAllowsStartupCommand() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -1012,7 +1017,9 @@ class AgentSessionPromptLauncherBridgeTest {
           val bridge = promptLauncherBridge(service, launchService)
           val baseRequest = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
           val request = baseRequest.copy(
-            initialMessageRequest = baseRequest.initialMessageRequest.copy(prompt = "/plan Refactor selected code"),
+            initialMessageRequest = baseRequest.initialMessageRequest.copy(
+              providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+            ),
           )
           val result = bridge.launch(request)
 
@@ -1025,15 +1032,18 @@ class AgentSessionPromptLauncherBridgeTest {
 
           assertThat(providerBridge.createCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-          assertThat(providerBridge.startupCommandCalls.get()).isZero()
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
-          assertThat(providerBridge.lastStartupPrompt.get()).isNull()
+          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command)
+            .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
+          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("Refactor selected code")
           assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.launchSpec.command)
             .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
-          assertThat(openRequest.startupLaunchSpecOverride).isNull()
+          assertThat(openRequest.startupLaunchSpecOverride?.command)
+            .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name, "--", "Refactor selected code")
+          assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
@@ -1122,7 +1132,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun launchRoutesManualCodexPlanPromptToExistingThreadAsPostStartDispatchWhenTryStartupCommandIsEnabled() {
+  fun launchRoutesProviderOptionPlanPromptToExistingThreadAsStartupOverrideWhenTryStartupCommandIsEnabled() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -1163,7 +1173,9 @@ class AgentSessionPromptLauncherBridgeTest {
           val bridge = promptLauncherBridge(service, launchService)
           val baseRequest = promptLaunchRequest(targetThreadId = "thread-existing")
           val request = baseRequest.copy(
-            initialMessageRequest = baseRequest.initialMessageRequest.copy(prompt = "/plan Refactor selected code"),
+            initialMessageRequest = baseRequest.initialMessageRequest.copy(
+              providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+            ),
           )
 
           val result = bridge.launch(request)
@@ -1177,16 +1189,18 @@ class AgentSessionPromptLauncherBridgeTest {
           }
 
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-          assertThat(providerBridge.startupCommandCalls.get()).isZero()
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
-          assertThat(providerBridge.lastStartupPrompt.get()).isNull()
+          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
+          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("Refactor selected code")
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
-          assertThat(openRequest.startupLaunchSpecOverride).isNull()
+          assertThat(openRequest.startupLaunchSpecOverride?.command)
+            .containsExactly("test", "resume", "thread-existing", "--", "Refactor selected code")
+          assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
@@ -1259,7 +1273,10 @@ class AgentSessionPromptLauncherBridgeTest {
               activity = AgentThreadActivity.READY,
             ),
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
-            initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "/plan Refactor selected code"),
+            initialMessageRequest = AgentPromptInitialMessageRequest(
+              prompt = "Refactor selected code",
+              providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+            ),
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
             promptLaunchResolved = promptLaunchResults::add,
           )
@@ -2269,6 +2286,7 @@ private class RecordingPromptLaunchProviderBridge(
   private val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   private val startupPromptCommandEnvVariables: Map<String, String> = emptyMap(),
   private val composedMessageBuilder: (AgentPromptInitialMessageRequest) -> String = { request -> "composed:${request.prompt.trim()}" },
+  override val promptOptions: List<AgentPromptProviderOption> = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION),
 ) : AgentSessionProviderDescriptor {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
@@ -2360,14 +2378,14 @@ private class RecordingPromptLaunchProviderBridge(
     shouldUseStartupPromptCommandCalls.incrementAndGet()
     lastShouldUseStartupPromptCommandRequest.set(request)
     val composedMessage = composedMessageBuilder(request)
-    val planMode = request.isPlanModeRequested() || composedMessage.isPlanModeCommand()
+    val planMode = request.isPlanModeRequested()
     val startupPolicy = startupPolicyOverride ?: when {
       planMode && provider == AgentSessionProvider.CODEX -> AgentInitialMessageStartupPolicy.POST_START_ONLY
       startupPromptCommandPolicyEnabled -> AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
       else -> AgentInitialMessageStartupPolicy.POST_START_ONLY
     }
     return AgentInitialMessagePlan(
-      message = if (planMode) composedMessage.stripPlanModePrefix() else composedMessage,
+      message = composedMessage,
       mode = if (planMode) AgentInitialMessageMode.PLAN else AgentInitialMessageMode.STANDARD,
       startupPolicy = startupPolicy,
       timeoutPolicy = timeoutPolicy,

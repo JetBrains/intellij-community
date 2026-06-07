@@ -61,7 +61,7 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks.
+- Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 

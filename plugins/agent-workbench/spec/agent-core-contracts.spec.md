@@ -55,10 +55,20 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Prompt plan mode is requested only through provider option ids. A user-typed `/plan` prefix is ordinary prompt text owned by the provider CLI, not Agent Workbench syntax, and must not be stripped or converted into plan mode.
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+
 - Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch first ensures the TUI is visibly in Plan mode via the BackTab terminal sequence, then sends the plain prompt body; if Plan mode cannot be confirmed, the prompt body is not submitted.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
+- Claude plan-mode prompt launch uses `--permission-mode plan` in startup commands for new sessions and resumed threads when Agent Workbench opens the process. Plain `claude --resume <id>` must not be treated as preserving plan mode by Agent Workbench, and already-open editor tabs are not mutated into plan mode by prompt launch.
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeNewThreadPromptLaunchIntegrationTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeExistingThreadPromptLaunchIntegrationTest.kt
 
 - Claude recognized menu commands remain post-start dispatch and are sent as executable terminal input without prompt context packaging.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

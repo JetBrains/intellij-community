@@ -345,7 +345,7 @@ class AgentPromptPaletteSubmitControllerTest {
   }
 
   @Test
-  fun submitBlocksManualPlanPromptForBusyExistingTask() {
+  fun submitBlocksPlanOptionForBusyExistingTask() {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
       var capturedRequest: AgentPromptLaunchRequest? = null
@@ -380,7 +380,10 @@ class AgentPromptPaletteSubmitControllerTest {
       )
       fixture.providerSelector.refresh()
       fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
-      fixture.promptArea.text = "/plan Investigate the flaky test"
+      fixture.providerSelector.restoreProviderOptionSelections(
+        mapOf(AgentSessionProvider.CODEX.value to setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE))
+      )
+      fixture.promptArea.text = "Investigate the flaky test"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
       fixture.existingTaskController.applySnapshot(
         AgentPromptExistingThreadsSnapshot(
