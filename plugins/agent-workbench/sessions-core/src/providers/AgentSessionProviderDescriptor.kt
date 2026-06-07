@@ -36,7 +36,7 @@ enum class AgentInitialMessageDispatchCompletionPolicy {
 
 enum class AgentInitialMessageDispatchAction {
   SEND_TEXT,
-  ENSURE_CODEX_PLAN_MODE,
+  ENSURE_TERMINAL_PLAN_MODE,
 }
 
 /**

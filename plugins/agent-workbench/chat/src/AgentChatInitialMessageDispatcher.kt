@@ -196,7 +196,7 @@ internal class AgentChatInitialMessageDispatcher(
         }
       }
 
-      AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE -> tab.sendBackTab()
+      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE -> tab.sendBackTab()
     }
   }
 

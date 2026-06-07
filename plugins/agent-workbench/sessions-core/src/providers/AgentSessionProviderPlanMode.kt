@@ -43,3 +43,27 @@ fun buildPlanModeInitialMessagePlan(
     },
   )
 }
+
+fun buildTerminalPlanModePostStartDispatchSteps(
+  initialMessagePlan: AgentInitialMessagePlan,
+  completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
+): List<AgentInitialMessageDispatchStep> {
+  if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
+    return emptyList()
+  }
+
+  val message = initialMessagePlan.message.orEmpty()
+  return listOfNotNull(
+    AgentInitialMessageDispatchStep(
+      action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+      timeoutPolicy = initialMessagePlan.timeoutPolicy,
+      completionPolicy = completionPolicy,
+    ),
+    message.takeIf(String::isNotEmpty)?.let { prompt ->
+      AgentInitialMessageDispatchStep(
+        text = prompt,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+      )
+    },
+  )
+}

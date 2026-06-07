@@ -53,6 +53,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -229,7 +230,7 @@ class AgentChatFileEditorLifecycleTest {
     file.updateInitialMessageMetadata(
       initialMessageDispatchSteps = listOf(
         AgentInitialMessageDispatchStep(
-          action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+          action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
           timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
           completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
         ),
@@ -278,7 +279,7 @@ class AgentChatFileEditorLifecycleTest {
       val snapshot = snapshotWriter.snapshots.single()
       assertThat(snapshot.identity.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.action }).containsExactly(
-        AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+        AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
         AgentInitialMessageDispatchAction.SEND_TEXT,
       )
       assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.text }).containsExactly("", initialMessage)
@@ -1247,6 +1248,39 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun juniePlanModeInitialMessageSwitchesModeBeforeSending() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = testFile(
+      threadIdentity = "junie:new-plan",
+      shellCommand = listOf("junie", "--skip-update-check"),
+    ).also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = juniePlanDispatchSteps("Plan the feature"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-junie-plan",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("Welcome to Junie Type your prompt...")
+    waitForCondition { terminalTabs.tab.backTabCount.get() == 1 }
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+
+    terminalTabs.tab.emitMeaningfulOutput("Junie switched to Plan Mode Type your prompt...")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(terminalTabs.tab.backTabCount.get()).isEqualTo(1)
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("Plan the feature", shouldExecute = true))
+  }
+
+  @Test
   fun codexPlanModeTimeoutReadinessWaitsWithoutSending() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
@@ -2017,6 +2051,9 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   @JvmField
   val sentTexts: CopyOnWriteArrayList<SentTerminalText> = CopyOnWriteArrayList()
 
+  @JvmField
+  val backTabCount: AtomicInteger = AtomicInteger()
+
   fun enqueuePostSendOutput(vararg outputs: String) {
     postSendOutputQueue.addAll(outputs.map { output -> PostSendOutput(text = output, delayMs = 0) })
   }
@@ -2097,6 +2134,11 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
           .start()
       }
     }
+  }
+
+  override fun sendBackTab(): Boolean {
+    backTabCount.incrementAndGet()
+    return true
   }
 
   override suspend fun awaitInitialMessageReadiness(
@@ -2338,6 +2380,20 @@ private fun codexPlanDispatchSteps(
     AgentInitialMessageDispatchStep(
       text = prompt,
       timeoutPolicy = promptTimeoutPolicy,
+    ),
+  )
+}
+
+@Suppress("SameParameterValue")
+private fun juniePlanDispatchSteps(prompt: String): List<AgentInitialMessageDispatchStep> {
+  return listOf(
+    AgentInitialMessageDispatchStep(
+      action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+    ),
+    AgentInitialMessageDispatchStep(
+      text = prompt,
+      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
     ),
   )
 }

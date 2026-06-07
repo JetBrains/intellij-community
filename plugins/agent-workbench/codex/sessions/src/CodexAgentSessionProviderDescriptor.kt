@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -24,6 +23,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
 import com.intellij.openapi.components.serviceAsync
 import java.nio.file.Path
 import javax.swing.Icon
@@ -187,19 +187,9 @@ internal class CodexAgentSessionProviderDescriptor(
       return super.buildPostStartDispatchSteps(initialMessagePlan)
     }
 
-    val message = initialMessagePlan.message ?: return emptyList()
-    return listOfNotNull(
-      AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
-        timeoutPolicy = initialMessagePlan.timeoutPolicy,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-      ),
-      message.takeIf(String::isNotEmpty)?.let { prompt ->
-        AgentInitialMessageDispatchStep(
-          text = prompt,
-          timeoutPolicy = initialMessagePlan.timeoutPolicy,
-        )
-      },
+    return buildTerminalPlanModePostStartDispatchSteps(
+      initialMessagePlan = initialMessagePlan,
+      completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
     )
   }
 
@@ -251,5 +241,6 @@ private fun buildCodexBaseCommand(executable: String): List<String> {
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
+
 // The dedicated thread-id title item is the stable UUID signal. The thread item keeps the human title/fallback visible.
 private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread-id\",\"thread\"]"

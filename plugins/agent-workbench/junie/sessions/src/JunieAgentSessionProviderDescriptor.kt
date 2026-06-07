@@ -7,11 +7,18 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.BRAVE_FLAG
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
+import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
 import javax.swing.Icon
 
 internal class JunieAgentSessionProviderDescriptor(
@@ -19,6 +26,7 @@ internal class JunieAgentSessionProviderDescriptor(
   private val threadMutationBackend: JunieSessionThreadMutationBackend =
     (sessionSource as? JunieSessionSource)?.sessionIndexStore ?: JunieSessionIndexStore(),
   private val executableResolver: suspend () -> String = JunieCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
+  private val cliAvailableProbe: suspend () -> Boolean = { JunieCliSupport.findExecutableViaTerminalResolver() != null },
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.JUNIE
@@ -40,6 +48,9 @@ internal class JunieAgentSessionProviderDescriptor(
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
+
+  override val promptOptions: List<AgentPromptProviderOption>
+    get() = listOf(JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
@@ -66,7 +77,7 @@ internal class JunieAgentSessionProviderDescriptor(
     threadMutationBackend.renameThread(path, threadId, normalizedName)
   }
 
-  override suspend fun isCliAvailable(): Boolean = JunieCliSupport.findExecutableViaTerminalResolver() != null
+  override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return buildResumeLaunchSpec(sessionId, AgentSessionLaunchMode.STANDARD)
@@ -92,7 +103,18 @@ internal class JunieAgentSessionProviderDescriptor(
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-    return AgentInitialMessagePlan.composeDefault(request)
+    return buildPlanModeInitialMessagePlan(
+      request = request,
+      startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.POST_START_ONLY,
+    )
+  }
+
+  override fun buildPostStartDispatchSteps(initialMessagePlan: AgentInitialMessagePlan): List<AgentInitialMessageDispatchStep> {
+    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
+      return super.buildPostStartDispatchSteps(initialMessagePlan)
+    }
+
+    return buildTerminalPlanModePostStartDispatchSteps(initialMessagePlan)
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
@@ -103,3 +125,5 @@ internal class JunieAgentSessionProviderDescriptor(
     return threadMutationBackend.unarchiveThread(path, threadId)
   }
 }
+
+private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption = AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)

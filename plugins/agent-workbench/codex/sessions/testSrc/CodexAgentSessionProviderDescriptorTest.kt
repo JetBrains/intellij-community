@@ -186,7 +186,7 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(steps).containsExactly(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
@@ -209,7 +209,7 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(steps).containsExactly(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),

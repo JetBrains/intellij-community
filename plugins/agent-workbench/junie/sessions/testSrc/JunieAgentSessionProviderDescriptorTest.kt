@@ -3,11 +3,15 @@ package com.intellij.agent.workbench.junie.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +34,8 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.newSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie")
     assertThat(descriptor.yoloSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie.yolo")
     assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
+    assertThat(descriptor.promptOptions.map { it.id }).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+    assertThat(descriptor.promptOptions.single().defaultSelected).isFalse()
     assertThat(descriptor.supportsArchiveThread).isTrue()
     assertThat(descriptor.supportsUnarchiveThread).isTrue()
     assertThat(descriptor.archiveRefreshDelayMs).isEqualTo(1_000L)
@@ -110,13 +116,52 @@ class JunieAgentSessionProviderDescriptorTest {
     val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
 
     val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
-      baseLaunchSpec = AgentSessionTerminalLaunchSpec(JunieCliSupport.buildNewSessionCommand(executable = "junie-test")),
+      baseLaunchSpec = AgentSessionTerminalLaunchSpec(listOf("junie-test", "--skip-update-check")),
       initialMessagePlan = initialMessagePlan,
     )
     val dispatchSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
 
     assertThat(launchSpec).isNull()
+    assertThat(dispatchSteps.map { it.action }).containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT)
     assertThat(dispatchSteps.map { it.text }).containsExactly("Implement the feature")
+  }
+
+  @Test
+  fun `plan mode initial message uses terminal plan mode dispatch`() {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+
+    val plan = descriptor.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Implement the feature",
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+      )
+    )
+    val dispatchSteps = descriptor.buildPostStartDispatchSteps(plan)
+
+    assertThat(plan.message).isEqualTo("Implement the feature")
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(dispatchSteps.map { it.action }).containsExactly(
+      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+      AgentInitialMessageDispatchAction.SEND_TEXT,
+    )
+    assertThat(dispatchSteps.map { it.text }).containsExactly("", "Implement the feature")
+  }
+
+  @Test
+  fun `manual plan command remains plain prompt text unless option is selected`() {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+
+    val plan = descriptor.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = " /plan Implement the feature ")
+    )
+    val dispatchSteps = descriptor.buildPostStartDispatchSteps(plan)
+
+    assertThat(plan.message).isEqualTo("/plan Implement the feature")
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
+    assertThat(dispatchSteps.map { it.action }).containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(dispatchSteps.map { it.text }).containsExactly("/plan Implement the feature")
   }
 
   @Test

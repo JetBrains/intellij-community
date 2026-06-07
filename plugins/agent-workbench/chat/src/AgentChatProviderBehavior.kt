@@ -111,6 +111,34 @@ private object JunieAgentChatProviderBehavior : AgentChatProviderBehavior {
       AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateJuniePromptReadinessRetryBackoffMs(retryAttempt))
     }
   }
+
+  override suspend fun isInitialMessageDispatchAlreadySatisfied(
+    tab: AgentChatTerminalTab,
+    dispatch: AgentChatInitialMessageDispatch,
+  ): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE && isJuniePlanModeVisible(tab.readRecentOutputTail())
+  }
+
+  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatch): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
+  }
+
+  override fun afterInitialMessageSendObservation(
+    file: AgentChatVirtualFile,
+    dispatch: AgentChatInitialMessageDispatch,
+    outputText: String,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
+      return AgentChatInitialMessageRetryDecision.PROCEED
+    }
+    return if (isJuniePlanModeVisible(outputText)) {
+      AgentChatInitialMessageRetryDecision.PROCEED
+    }
+    else {
+      AgentChatInitialMessageRetryDecision.Stop
+    }
+  }
 }
 
 private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
@@ -164,11 +192,11 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     tab: AgentChatTerminalTab,
     dispatch: AgentChatInitialMessageDispatch,
   ): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE && isCodexPlanModeVisible(tab.readRecentOutputTail())
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE && isCodexPlanModeVisible(tab.readRecentOutputTail())
   }
 
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatch): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE ||
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE ||
            dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
   }
 
@@ -178,7 +206,7 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     outputText: String,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
-    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE) {
+    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
       return if (isCodexPlanModeVisible(outputText)) {
         AgentChatInitialMessageRetryDecision.PROCEED
       }
@@ -227,6 +255,10 @@ private fun calculateJuniePromptReadinessRetryBackoffMs(retryAttempt: Int): Long
 private fun isJuniePromptInputReady(text: String): Boolean {
   val normalized = sanitizeJunieTerminalText(text)
   return JUNIE_PROMPT_INPUT_MARKERS.any { marker -> normalized.contains(marker, ignoreCase = true) }
+}
+
+private fun isJuniePlanModeVisible(text: String): Boolean {
+  return sanitizeJunieTerminalText(text).contains(JUNIE_PLAN_MODE_VISIBLE_MARKER, ignoreCase = true)
 }
 
 private fun sanitizeJunieTerminalText(text: String): String {
@@ -317,6 +349,7 @@ private const val CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE: String = "Starting 
 private const val CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE: String = "tab to queue"
 private const val CODEX_PLAN_MODE_WORKING_STATUS_MARKER: String = "Working ("
 private const val CODEX_PLAN_MODE_VISIBLE_MARKER: String = "Plan mode"
+private const val JUNIE_PLAN_MODE_VISIBLE_MARKER: String = "Plan Mode"
 private val CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX: Regex = Regex("(?:^| )Running .+ hook(?::|$)", RegexOption.IGNORE_CASE)
 private val CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX: Regex = Regex(
   "(?:^| ).+ hook \\((?:completed|failed|blocked|stopped)\\)",

@@ -395,6 +395,9 @@ private fun parseInitialMessageDispatchCompletionPolicy(value: String): AgentIni
 }
 
 private fun parseInitialMessageDispatchAction(value: String): AgentInitialMessageDispatchAction {
+  if (value == "ENSURE_CODEX_PLAN_MODE") {
+    return AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
+  }
   return runCatching { AgentInitialMessageDispatchAction.valueOf(value) }
     .getOrDefault(AgentInitialMessageDispatchAction.SEND_TEXT)
 }

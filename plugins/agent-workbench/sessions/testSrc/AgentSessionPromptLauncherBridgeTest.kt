@@ -982,7 +982,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
             ),
@@ -1049,7 +1049,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
             ),
@@ -1208,7 +1208,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
             ),
@@ -2372,7 +2372,7 @@ private class RecordingPromptLaunchProviderBridge(
     val message = initialMessagePlan.message.orEmpty()
     return listOfNotNull(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_CODEX_PLAN_MODE,
+        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
