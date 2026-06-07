@@ -26,10 +26,7 @@ import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerManager.Companion.getInstance
 import com.intellij.platform.lsp.api.LspServerManagerListener
-import com.intellij.platform.lsp.api.LspServerState.Initializing
-import com.intellij.platform.lsp.api.LspServerState.Running
-import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
-import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.LspServerSupportProvider.LspServerStarter
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
@@ -67,10 +64,10 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
   internal fun getServersWithThisFileOpen(file: VirtualFile): Collection<LspServerImpl> =
     lspServers.filter { it.isFileOpened(file) }
 
-  internal fun getAllRunningServers(): Collection<LspServerImpl> = lspServers.filter { it.state == Running }
+  internal fun getAllRunningServers(): Collection<LspServerImpl> = lspServers.filter { it.state == LspServerState.Running }
 
   internal fun findRunningServer(condition: (LspServerImpl) -> Boolean): LspServerImpl? =
-    lspServers.find { it.state == Running && condition(it) }
+    lspServers.find { it.state == LspServerState.Running && condition(it) }
 
   override fun startServersIfNeeded(providerClass: Class<out LspServerSupportProvider>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
@@ -164,7 +161,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
    */
   internal fun handleMaybeUnexpectedServerStop(lspServer: LspServerImpl, serverOutput: String) =
     lspServer.ensureServerStopped(explicitStop = false) {
-      if (lspServer.state != ShutdownNormally) lspServer.appendServerErrorOutput(serverOutput)
+      if (lspServer.state != LspServerState.ShutdownNormally) lspServer.appendServerErrorOutput(serverOutput)
       handleServerStop(lspServer, explicitStop = false)
     }
 
@@ -176,7 +173,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
    * It is called when the IDE detects that the server stopped working, which may be both expected and unexpected
    */
   private fun handleServerStop(lspServer: LspServerImpl, explicitStop: Boolean) {
-    if (lspServer.state in arrayOf(Initializing, Running) && !lspServers.contains(lspServer)) {
+    if (lspServer.state in arrayOf(LspServerState.Initializing, LspServerState.Running) && !lspServers.contains(lspServer)) {
       logger.error("LspServerManager doesn't know the server that it is asked to stop: $lspServer")
     }
 
@@ -195,7 +192,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
       // By the way, maybe try to auto-restart the server a couple of times if it has shutdown unexpectedly?
     }
 
-    if (lspServer.state == Running) {
+    if (lspServer.state == LspServerState.Running) {
       DaemonCodeAnalyzer.getInstance(project).restart("LspServerManagerImpl.stop")
     }
   }
@@ -228,7 +225,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     if (sendEventsForExistingServers) {
       // Listeners in LspTestUtilKt need to know about events that happened before a test managed to register a listener
       for (lspServer in lspServers) {
-        if (lspServer.state == ShutdownUnexpectedly) eventDispatcher.multicaster.serverStateChanged(lspServer)
+        if (lspServer.state == LspServerState.ShutdownUnexpectedly) eventDispatcher.multicaster.serverStateChanged(lspServer)
         lspServer.forEachOpenedFile { eventDispatcher.multicaster.fileOpened(lspServer, it) }
       }
     }
@@ -293,13 +290,13 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
     internal inline fun forEachRunningServerInEachProject(action: (LspServerImpl) -> Unit) =
       ProjectManager.getInstance().openProjects.forEach { project ->
         getInstanceImpl(project).lspServers.forEach { server ->
-          if (server.state == Running) action(server)
+          if (server.state == LspServerState.Running) action(server)
         }
       }
 
     internal fun isAnyServerRunning(): Boolean =
       ProjectManager.getInstance().openProjects.any { project ->
-        getInstanceImpl(project).lspServers.any { it.state == Running }
+        getInstanceImpl(project).lspServers.any { it.state == LspServerState.Running }
       }
   }
 }

@@ -20,10 +20,7 @@ import com.intellij.platform.lang.lsWidget.OpenSettingsAction
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerState.Initializing
-import com.intellij.platform.lsp.api.LspServerState.Running
-import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
-import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.containers.addIfNotNull
 import javax.swing.Icon
 
@@ -44,7 +41,7 @@ open class LspServerWidgetItem(
   override val statusBarTooltip: String
     get() = lspServer.descriptor.presentableName + versionPostfix
 
-  override val isError: Boolean = lspServer.state == ShutdownUnexpectedly
+  override val isError: Boolean = lspServer.state == LspServerState.ShutdownUnexpectedly
 
   override val widgetActionLocation: LanguageServicePopupSection by lazy {
     if (currentFile != null &&
@@ -59,10 +56,10 @@ open class LspServerWidgetItem(
 
   protected open val widgetActionText: @NlsActions.ActionText String
     get() = when (lspServer.state) {
-      Initializing -> LangBundle.message("language.services.widget.item.initializing", serverLabel)
-      Running -> serverLabel
-      ShutdownNormally -> LangBundle.message("language.services.widget.item.shutdown.normally", serverLabel)
-      ShutdownUnexpectedly -> LangBundle.message("language.services.widget.item.shutdown.unexpectedly", serverLabel)
+      LspServerState.Initializing -> LangBundle.message("language.services.widget.item.initializing", serverLabel)
+      LspServerState.Running -> serverLabel
+      LspServerState.ShutdownNormally -> LangBundle.message("language.services.widget.item.shutdown.normally", serverLabel)
+      LspServerState.ShutdownUnexpectedly -> LangBundle.message("language.services.widget.item.shutdown.unexpectedly", serverLabel)
     }
 
   protected open val serverLabel: @NlsSafe String
@@ -108,15 +105,15 @@ open class LspServerWidgetItem(
     }
     else {
       when (lspServer.state) {
-        Initializing, Running -> StopLspServerAction(lspServer)
-        ShutdownNormally -> null
-        ShutdownUnexpectedly -> RestartLspServerAction(lspServer)
+        LspServerState.Initializing, LspServerState.Running -> StopLspServerAction(lspServer)
+        LspServerState.ShutdownNormally -> null
+        LspServerState.ShutdownUnexpectedly -> RestartLspServerAction(lspServer)
       }
     }
   }
 
   protected open fun createAdditionalInlineActions(): List<AnAction> {
-    if (lspServer.state != ShutdownUnexpectedly) return emptyList()
+    if (lspServer.state != LspServerState.ShutdownUnexpectedly) return emptyList()
     val stderrAction = LspWidgetInternalService.getInstance().createShowErrorOutputAction(lspServer)
     return if (stderrAction != null) listOf(stderrAction) else emptyList()
   }

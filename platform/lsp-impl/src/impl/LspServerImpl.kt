@@ -19,10 +19,6 @@ import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManagerListener
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.api.LspServerState.Initializing
-import com.intellij.platform.lsp.api.LspServerState.Running
-import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
-import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorSocket
@@ -69,12 +65,12 @@ class LspServerImpl internal constructor(
 ) : LspServer {
   override val project: Project = descriptor.project
 
-  override var state: LspServerState = Initializing
+  override var state: LspServerState = LspServerState.Initializing
     private set(value) {
-      if (value == Initializing ||
-          (field != Initializing && value == Running) ||
-          field == ShutdownNormally ||
-          field == ShutdownUnexpectedly) {
+      if (value == LspServerState.Initializing ||
+          (field != LspServerState.Initializing && value == LspServerState.Running) ||
+          field == LspServerState.ShutdownNormally ||
+          field == LspServerState.ShutdownUnexpectedly) {
         logger.error("Incorrect state change: $field -> $value")
         return
       }
@@ -110,7 +106,7 @@ class LspServerImpl internal constructor(
   internal fun wrapLsp4jServer(lsp4jServer: Lsp4jServer): Lsp4jServer = lsp4jServerWrapper(this, lsp4jServer)
 
   internal val serverCapabilities: ServerCapabilities?
-    get() = if (state == Running) initializeResult?.capabilities else null
+    get() = if (state == LspServerState.Running) initializeResult?.capabilities else null
 
   internal val textDocumentSyncKind: TextDocumentSyncKind?
     @Suppress("RemoveExplicitTypeArguments")
@@ -216,7 +212,7 @@ class LspServerImpl internal constructor(
       throw IllegalStateException("Project is not trusted")
     }
 
-    if (state != Initializing) {
+    if (state != LspServerState.Initializing) {
       logError("start() cannot be called for a server twice")
       return
     }
@@ -234,7 +230,7 @@ class LspServerImpl internal constructor(
             // While waiting for the server initialization, the `state` might have already become `ShutdownNormally`
             // or `ShutdownUnexpectedly`, which means that the server is going to shut down shortly, so it must not get the Running state
             synchronized(stateLock) {
-              if (state == Initializing) state = Running
+              if (state == LspServerState.Initializing) state = LspServerState.Running
             }
 
             val message = "LSP server initialized in ${startTime.elapsedNow().toString(DurationUnit.SECONDS, 3)}"
@@ -271,10 +267,10 @@ class LspServerImpl internal constructor(
     synchronized(stateLock) {
       updateLspServerManagerState()
 
-      if (state in arrayOf(ShutdownNormally, ShutdownUnexpectedly)) return // already shut down
+      if (state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) return // already shut down
 
       logInfo("Stopping LSP server ${if (explicitStop) "normally" else "unexpectedly"}")
-      state = if (explicitStop) ShutdownNormally else ShutdownUnexpectedly
+      state = if (explicitStop) LspServerState.ShutdownNormally else LspServerState.ShutdownUnexpectedly
 
       forEachOpenedFile { file ->
         LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerState.Running
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
 import com.intellij.util.application
@@ -49,7 +49,7 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
 
   @RequiresWriteLock
   fun open(file: VirtualFile) {
-    if (server.state != Running) {
+    if (server.state != LspServerState.Running) {
       server.logError("Server is not in the Running state. Ignoring open($file)")
       return
     }
@@ -111,7 +111,7 @@ internal class LspDocumentSyncManager(private val server: LspServerImpl) {
         }
         openedAndUnsavedFiles
       }
-      .expireWhen { server.state != Running }
+      .expireWhen { server.state != LspServerState.Running }
       .finishOnUiThread(ModalityState.nonModal()) { files: Set<VirtualFile> ->
         if (files.isEmpty()) return@finishOnUiThread
         WriteAction.run<RuntimeException> {
