@@ -29,10 +29,11 @@ internal class DiagramReportingFactoryListener: EditorFactoryListener {
   override fun editorReleased(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project ?: return
+    if (project.isDisposed) return
     val document = editor.document
     val timestamp = document.getUserData(DocumentReported) ?: 0
     val time = System.currentTimeMillis()
-    if (time - timestamp < reportingTimeout.inWholeMilliseconds.also { println(it) }) {
+    if (time - timestamp < reportingTimeout.inWholeMilliseconds) {
       return
     }
     document.putUserData(DocumentReported, time)

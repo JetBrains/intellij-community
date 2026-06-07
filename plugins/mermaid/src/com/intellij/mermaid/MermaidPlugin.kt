@@ -1,17 +1,12 @@
 package com.intellij.mermaid
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 
 @Service(Service.Level.PROJECT)
-class MermaidPlugin(private val coroutineScope: CoroutineScope): Disposable {
-  override fun dispose() {
-    coroutineScope.cancel()
-  }
+class MermaidPlugin(private val coroutineScope: CoroutineScope) {
 
   fun coroutineScope(): CoroutineScope {
     return coroutineScope
