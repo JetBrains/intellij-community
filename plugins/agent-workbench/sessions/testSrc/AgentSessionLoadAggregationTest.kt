@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionSourceLoadResult
 import com.intellij.agent.workbench.sessions.service.mergeAgentSessionSourceLoadResults
 import org.assertj.core.api.Assertions.assertThat
@@ -80,8 +81,28 @@ class AgentSessionLoadAggregationTest {
 
     assertThat(result.errorMessage).isNull()
     assertThat(result.hasUnknownThreadCount).isFalse()
+    assertThat(result.providerLoadStates)
+      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
     assertThat(result.threads.map { it.id }).containsExactly("claude-1", "codex-1")
     assertThat(result.providerWarnings).isEmpty()
+  }
+
+  @Test
+  fun recordsProviderLoadStatesForSuccessesAndFailures() {
+    val codexFailure = IllegalStateException("codex failed")
+
+    val result = mergeAgentSessionSourceLoadResults(
+      sourceResults = listOf(
+        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.failure(codexFailure)),
+        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(emptyList())),
+      ),
+      resolveErrorMessage = { provider, _ -> "${provider.value} unavailable" },
+    )
+
+    assertThat(result.providerLoadStates)
+      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.FAILED)
+      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
   }
 
   @Test

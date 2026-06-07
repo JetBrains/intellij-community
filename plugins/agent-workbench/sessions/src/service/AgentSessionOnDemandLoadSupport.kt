@@ -40,6 +40,7 @@ internal class AgentSessionOnDemandLoadSupport(
             threads = result.threads,
             errorMessage = result.errorMessage,
             providerWarnings = result.providerWarnings,
+            providerLoadStates = result.providerLoadStates,
           )
         }
       }
@@ -72,6 +73,7 @@ internal class AgentSessionOnDemandLoadSupport(
             threads = result.threads,
             errorMessage = result.errorMessage,
             providerWarnings = result.providerWarnings,
+            providerLoadStates = result.providerLoadStates,
           )
         }
       }

@@ -22,6 +22,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordinator
@@ -1085,6 +1087,194 @@ class AgentSessionRefreshCoordinatorTest {
 
       assertThat(openChatSnapshotInvocations.get()).isEqualTo(1)
       assertThat(closedRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun providerRefreshAppliesScopedOutcomeToOpenProjectThatIsNotFullyLoaded() = runBlocking(Dispatchers.Default) {
+    val claudeRefreshInvocations = AtomicInteger(0)
+    val piThread = thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)
+    val claudeThread = thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          claudeRefreshInvocations.incrementAndGet()
+          listOf(claudeThread)
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = false,
+            threads = listOf(piThread),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(PROJECT_PATH))
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
+      }
+
+      val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
+      assertThat(claudeRefreshInvocations.get()).isEqualTo(1)
+      assertThat(project.hasLoaded).isFalse()
+      assertThat(project.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(project.threads.map { it.provider to it.id })
+        .containsExactlyInAnyOrder(
+          AgentSessionProvider.PI to "pi-1",
+          AgentSessionProvider.CLAUDE to "claude-1",
+        )
+    }
+  }
+
+  @Test
+  fun providerRefreshAppliesScopedOutcomeToOpenWorktreeThatIsNotFullyLoaded() = runBlocking(Dispatchers.Default) {
+    val claudeRefreshInvocations = AtomicInteger(0)
+    val piThread = thread(id = "wt-pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)
+    val claudeThread = thread(id = "wt-claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromClosedProject = { path ->
+        if (path != WORKTREE_PATH) {
+          emptyList()
+        }
+        else {
+          claudeRefreshInvocations.incrementAndGet()
+          listOf(claudeThread)
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = false,
+            hasLoaded = false,
+            worktrees = listOf(
+              AgentWorktree(
+                path = WORKTREE_PATH,
+                name = "project-feature",
+                branch = null,
+                isOpen = true,
+                hasLoaded = false,
+                threads = listOf(piThread),
+              )
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(WORKTREE_PATH))
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.worktrees
+          ?.firstOrNull { it.path == WORKTREE_PATH }
+          ?.threads
+          ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "wt-claude-1" } == true
+      }
+
+      val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
+      val worktree = project.worktrees.single { it.path == WORKTREE_PATH }
+      assertThat(claudeRefreshInvocations.get()).isEqualTo(1)
+      assertThat(project.hasLoaded).isFalse()
+      assertThat(worktree.hasLoaded).isFalse()
+      assertThat(worktree.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(worktree.threads.map { it.provider to it.id })
+        .containsExactlyInAnyOrder(
+          AgentSessionProvider.PI to "wt-pi-1",
+          AgentSessionProvider.CLAUDE to "wt-claude-1",
+        )
+    }
+  }
+
+  @Test
+  fun fullRefreshTracksProviderLoadStatesWhileOtherProviderIsStillLoading() = runBlocking(Dispatchers.Default) {
+    val claudeLoadStarted = CompletableDeferred<Unit>()
+    val releaseClaudeLoad = CompletableDeferred<Unit>()
+
+    val codexSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      listFromOpenProject = { path, _ ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+    val claudeSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromOpenProject = { path, _ ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          claudeLoadStarted.complete(Unit)
+          releaseClaudeLoad.await()
+          listOf(thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE))
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(codexSource, claudeSource) },
+      projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      coordinator.refresh()
+      claudeLoadStarted.await()
+
+      waitForCondition {
+        val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.isLoading &&
+        !project.hasLoaded &&
+        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+        project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADING &&
+        project.threads.any { it.provider == AgentSessionProvider.CODEX && it.id == "codex-1" }
+      }
+
+      releaseClaudeLoad.complete(Unit)
+
+      waitForCondition {
+        val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.hasLoaded && project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED
+      }
+
+      val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
+      assertThat(project.isLoading).isFalse()
+      assertThat(project.providerLoadStates)
+        .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
+        .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+      assertThat(project.threads.map { it.id }).containsExactly("claude-1", "codex-1")
     }
   }
 

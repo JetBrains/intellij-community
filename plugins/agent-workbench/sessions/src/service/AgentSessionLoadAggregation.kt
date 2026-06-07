@@ -3,7 +3,10 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 
 internal data class AgentSessionLoadResult(
@@ -11,6 +14,7 @@ internal data class AgentSessionLoadResult(
   @JvmField val errorMessage: String? = null,
   @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
 )
 
 internal data class AgentSessionSourceLoadResult(
@@ -39,6 +43,14 @@ internal fun mergeAgentSessionSourceLoadResults(
     }
   }
   val hasUnknownThreadCount = sourceResults.any { it.hasUnknownTotal }
+  val providerLoadStates = buildMap {
+    sourceResults.forEach { sourceResult ->
+      put(
+        sourceResult.provider,
+        if (sourceResult.result.isSuccess) AgentSessionProviderLoadState.LOADED else AgentSessionProviderLoadState.FAILED,
+      )
+    }
+  }
 
   val firstError = sourceResults.firstNotNullOfOrNull { sourceResult ->
     sourceResult.result.exceptionOrNull()?.let { throwable ->
@@ -52,5 +64,73 @@ internal fun mergeAgentSessionSourceLoadResults(
     errorMessage = errorMessage,
     hasUnknownThreadCount = hasUnknownThreadCount,
     providerWarnings = if (allSourcesFailed) emptyList() else providerWarnings,
+    providerLoadStates = providerLoadStates,
   )
+}
+
+internal fun buildLoadingProviderLoadStates(
+  providers: Collection<AgentSessionProvider>,
+): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (providers.isEmpty()) {
+    return emptyMap()
+  }
+  return buildMap {
+    providers.forEach { provider -> put(provider, AgentSessionProviderLoadState.LOADING) }
+  }
+}
+
+internal fun deriveLoadedProviderStatesFromThreads(
+  threads: List<AgentSessionThread>,
+): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (threads.isEmpty()) {
+    return emptyMap()
+  }
+  return buildMap {
+    threads.forEach { thread -> put(thread.provider, AgentSessionProviderLoadState.LOADED) }
+  }
+}
+
+internal fun mergeProviderLoadStates(
+  current: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  updates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (updates.isEmpty()) {
+    return current
+  }
+  if (current.isEmpty()) {
+    return updates
+  }
+  return current + updates
+}
+
+internal fun AgentProjectSessions.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
+  if (hasLoaded) {
+    return true
+  }
+  val providerLoadState = providerLoadStates[provider]
+  return providerLoadState == AgentSessionProviderLoadState.LOADED ||
+         providerLoadState == AgentSessionProviderLoadState.FAILED ||
+         threads.any { thread -> thread.provider == provider }
+}
+
+internal fun AgentProjectSessions.hasAnyProviderSnapshot(): Boolean {
+  return hasLoaded || providerLoadStates.values.any { state -> state.isTerminal() } || threads.isNotEmpty()
+}
+
+internal fun AgentWorktree.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
+  if (hasLoaded) {
+    return true
+  }
+  val providerLoadState = providerLoadStates[provider]
+  return providerLoadState == AgentSessionProviderLoadState.LOADED ||
+         providerLoadState == AgentSessionProviderLoadState.FAILED ||
+         threads.any { thread -> thread.provider == provider }
+}
+
+internal fun AgentWorktree.hasAnyProviderSnapshot(): Boolean {
+  return hasLoaded || providerLoadStates.values.any { state -> state.isTerminal() } || threads.isNotEmpty()
+}
+
+private fun AgentSessionProviderLoadState.isTerminal(): Boolean {
+  return this == AgentSessionProviderLoadState.LOADED || this == AgentSessionProviderLoadState.FAILED
 }

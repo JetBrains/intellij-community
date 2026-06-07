@@ -73,6 +73,12 @@ data class AgentSessionProviderWarning(
   @JvmField val message: @NlsSafe String,
 )
 
+enum class AgentSessionProviderLoadState {
+  LOADING,
+  LOADED,
+  FAILED,
+}
+
 class ProjectBuildSystemBadge(
   @JvmField val id: String,
   @JvmField val icon: Icon,
@@ -95,6 +101,7 @@ data class AgentWorktree(
   @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
 )
 
 data class AgentProjectSessions(
@@ -109,6 +116,7 @@ data class AgentProjectSessions(
   @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
   @JvmField val worktrees: List<AgentWorktree> = emptyList(),
 )
 

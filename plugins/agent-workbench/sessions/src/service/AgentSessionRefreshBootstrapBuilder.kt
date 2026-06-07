@@ -48,6 +48,12 @@ internal class AgentSessionRefreshBootstrapBuilder(
         path = normalizedEntryPath,
         threads = warmSnapshot?.threads.orEmpty(),
       )
+      val providerLoadStates = existing?.providerLoadStates?.takeIf { it.isNotEmpty() }
+                               ?: when {
+                                 existing?.hasLoaded == true -> deriveLoadedProviderStatesFromThreads(existing.threads)
+                                 warmSnapshot != null -> deriveLoadedProviderStatesFromThreads(cachedThreads)
+                                 else -> emptyMap()
+                               }
       AgentProjectSessions(
         path = normalizedEntryPath,
         name = entry.name,
@@ -60,6 +66,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
         threads = existing?.threads ?: cachedThreads,
         errorMessage = existing?.errorMessage,
         providerWarnings = existing?.providerWarnings ?: emptyList(),
+        providerLoadStates = providerLoadStates,
         worktrees = entry.worktreeEntries.map { wt ->
           val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
           knownPaths.add(normalizedWorktreePath)
@@ -83,6 +90,12 @@ internal class AgentSessionRefreshBootstrapBuilder(
             path = normalizedWorktreePath,
             threads = warmWorktreeSnapshot?.threads.orEmpty(),
           )
+          val worktreeProviderLoadStates = existingWt?.providerLoadStates?.takeIf { it.isNotEmpty() }
+                                           ?: when {
+                                             existingWt?.hasLoaded == true -> deriveLoadedProviderStatesFromThreads(existingWt.threads)
+                                             warmWorktreeSnapshot != null -> deriveLoadedProviderStatesFromThreads(cachedWorktreeThreads)
+                                             else -> emptyMap()
+                                           }
           AgentWorktree(
             path = normalizedWorktreePath,
             name = wt.name,
@@ -94,6 +107,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
             threads = existingWt?.threads ?: cachedWorktreeThreads,
             errorMessage = existingWt?.errorMessage,
             providerWarnings = existingWt?.providerWarnings ?: emptyList(),
+            providerLoadStates = worktreeProviderLoadStates,
           )
         },
       )

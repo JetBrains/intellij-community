@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.openapi.components.Service
@@ -44,8 +45,14 @@ class AgentSessionsStateStore {
             hasUnknownThreadCount = false,
             errorMessage = errorMessage,
             providerWarnings = emptyList(),
+            providerLoadStates = project.providerLoadStates.failLoadingProviders(),
             worktrees = project.worktrees.map { wt ->
-              wt.copy(isLoading = false, hasUnknownThreadCount = false, providerWarnings = emptyList())
+              wt.copy(
+                isLoading = false,
+                hasUnknownThreadCount = false,
+                providerWarnings = emptyList(),
+                providerLoadStates = wt.providerLoadStates.failLoadingProviders(),
+              )
             },
           )
         },
@@ -190,6 +197,16 @@ class AgentSessionsStateStore {
   }
 
 }
+
+private fun Map<AgentSessionProvider, AgentSessionProviderLoadState>.failLoadingProviders() =
+  if (isEmpty() || values.none { it == AgentSessionProviderLoadState.LOADING }) {
+    this
+  }
+  else {
+    mapValues { (_, state) ->
+      if (state == AgentSessionProviderLoadState.LOADING) AgentSessionProviderLoadState.FAILED else state
+    }
+  }
 
 private fun findThreadIndex(
   projects: List<AgentProjectSessions>,
