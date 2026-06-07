@@ -36,6 +36,7 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.java.unscramble"/>
+    <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.structureView"/>

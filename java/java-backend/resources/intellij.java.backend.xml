@@ -12,13 +12,10 @@
     <module name="intellij.regexp"/>
     <module name="intellij.java.typeMigration"/>
     <module name="intellij.java.manifest"/>
-    <module name="intellij.platform.jps.build"/>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.frontback.psi.impl"/>
-    <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.syntax"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.analysis.impl"/>
@@ -33,6 +30,8 @@
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.java.uast"/>
     <module name="intellij.java.uast.ide"/>
     <module name="intellij.java.ui"/>

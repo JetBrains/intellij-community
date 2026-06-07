@@ -15,6 +15,7 @@
     <module name="intellij.java.backend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.ui"/>
+    <module name="intellij.platform.jps.build"/>
     <!-- endregion -->
   </dependencies>
 
