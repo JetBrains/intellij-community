@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.components.Service
@@ -152,17 +153,17 @@ internal class ClaudeQuotaService(private val serviceScope: CoroutineScope) {
 
   private fun extractTokenFromJson(raw: String): String? {
     return try {
-      jsonFactory.createParser(raw).use { parser ->
+      jsonFactory.createJsonParser(raw).use { parser ->
         if (parser.nextToken() != JsonToken.START_OBJECT) return null
         while (parser.nextToken() != JsonToken.END_OBJECT) {
           val fieldName = parser.currentName()
           parser.nextToken()
-          if (fieldName == "claudeAiOauth" && parser.currentToken == JsonToken.START_OBJECT) {
+          if (fieldName == "claudeAiOauth" && parser.currentToken() == JsonToken.START_OBJECT) {
             while (parser.nextToken() != JsonToken.END_OBJECT) {
               val innerField = parser.currentName()
               parser.nextToken()
-              if (innerField == "accessToken" && parser.currentToken == JsonToken.VALUE_STRING) {
-                return parser.text
+              if (innerField == "accessToken" && parser.currentToken() == JsonToken.VALUE_STRING) {
+                return parser.string
               }
               parser.skipChildren()
             }
@@ -212,7 +213,7 @@ internal class ClaudeQuotaService(private val serviceScope: CoroutineScope) {
     var sevenDayPercent: Int? = null
     var sevenDayReset: Long? = null
 
-    jsonFactory.createParser(body).use { parser ->
+    jsonFactory.createJsonParser(body).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         return ClaudeQuotaState(error = ClaudeQuotaError.UNKNOWN)
       }
@@ -250,8 +251,8 @@ internal class ClaudeQuotaService(private val serviceScope: CoroutineScope) {
 }
 
 private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
-  if (parser.currentToken == JsonToken.VALUE_NULL) return null
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() == JsonToken.VALUE_NULL) return null
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -262,14 +263,14 @@ private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
     parser.nextToken()
     when (field) {
       "utilization" -> {
-        if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
+        if (parser.currentToken() == JsonToken.VALUE_NUMBER_INT || parser.currentToken() == JsonToken.VALUE_NUMBER_FLOAT) {
           utilization = parser.intValue
         }
       }
       "resets_at" -> {
-        if (parser.currentToken == JsonToken.VALUE_STRING) {
+        if (parser.currentToken() == JsonToken.VALUE_STRING) {
           resetMillis = try {
-            Instant.parse(parser.text).toEpochMilli()
+            Instant.parse(parser.string).toEpochMilli()
           }
           catch (_: Throwable) {
             null
@@ -299,17 +300,39 @@ private interface WinCredLib : StdCallLibrary {
   "Attributes", "TargetAlias", "UserName",
 )
 private class WinCredential(p: Pointer) : Structure(p) {
-  @JvmField var Flags: Int = 0
-  @JvmField var Type: Int = 0
-  @JvmField var TargetName: WString? = null
-  @JvmField var Comment: WString? = null
-  @JvmField var LastWritten: Long = 0
-  @JvmField var CredentialBlobSize: Int = 0
-  @JvmField var CredentialBlob: Pointer? = null
-  @JvmField var Persist: Int = 0
-  @JvmField var AttributeCount: Int = 0
-  @JvmField var Attributes: Pointer? = null
-  @JvmField var TargetAlias: WString? = null
-  @JvmField var UserName: WString? = null
-}
+  @JvmField
+  var Flags: Int = 0
 
+  @JvmField
+  var Type: Int = 0
+
+  @JvmField
+  var TargetName: WString? = null
+
+  @JvmField
+  var Comment: WString? = null
+
+  @JvmField
+  var LastWritten: Long = 0
+
+  @JvmField
+  var CredentialBlobSize: Int = 0
+
+  @JvmField
+  var CredentialBlob: Pointer? = null
+
+  @JvmField
+  var Persist: Int = 0
+
+  @JvmField
+  var AttributeCount: Int = 0
+
+  @JvmField
+  var Attributes: Pointer? = null
+
+  @JvmField
+  var TargetAlias: WString? = null
+
+  @JvmField
+  var UserName: WString? = null
+}

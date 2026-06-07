@@ -1,14 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.junie.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
@@ -161,14 +162,14 @@ internal class JunieSessionIndexStore(
 
   private fun buildIndexLine(entry: JunieSessionIndexEntry): String {
     val writer = StringWriter()
-    jsonFactory.createGenerator(writer).use { generator ->
+    jsonFactory.createJsonGenerator(writer).use { generator ->
       generator.writeStartObject()
-      generator.writeStringField("sessionId", entry.sessionId)
-      generator.writeNumberField("createdAt", entry.createdAt)
-      generator.writeNumberField("updatedAt", entry.updatedAt)
-      generator.writeStringField("projectDir", entry.projectDir)
-      generator.writeStringField("taskName", entry.title)
-      generator.writeBooleanField("archived", entry.archived == true)
+      generator.writeStringProperty("sessionId", entry.sessionId)
+      generator.writeNumberProperty("createdAt", entry.createdAt)
+      generator.writeNumberProperty("updatedAt", entry.updatedAt)
+      generator.writeStringProperty("projectDir", entry.projectDir)
+      generator.writeStringProperty("taskName", entry.title)
+      generator.writeBooleanProperty("archived", entry.archived == true)
       generator.writeEndObject()
     }
     return writer.toString()
@@ -176,12 +177,12 @@ internal class JunieSessionIndexStore(
 
   private fun buildArchiveStateLine(entry: JunieSessionIndexEntry): String {
     val writer = StringWriter()
-    jsonFactory.createGenerator(writer).use { generator ->
+    jsonFactory.createJsonGenerator(writer).use { generator ->
       generator.writeStartObject()
-      generator.writeStringField("sessionId", entry.sessionId)
-      generator.writeNumberField("updatedAt", entry.updatedAt)
-      generator.writeStringField("projectDir", entry.normalizedProjectDir)
-      generator.writeBooleanField("archived", entry.archived == true)
+      generator.writeStringProperty("sessionId", entry.sessionId)
+      generator.writeNumberProperty("updatedAt", entry.updatedAt)
+      generator.writeStringProperty("projectDir", entry.normalizedProjectDir)
+      generator.writeBooleanProperty("archived", entry.archived == true)
       generator.writeEndObject()
     }
     return writer.toString()
@@ -324,11 +325,11 @@ private fun parseArchiveStateEntry(parser: JsonParser): Pair<JunieSessionArchive
 }
 
 private fun readJsonBooleanOrNull(parser: JsonParser): Boolean? {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_TRUE -> true
     JsonToken.VALUE_FALSE -> false
     JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-    JsonToken.VALUE_STRING -> parser.text.equals("true", ignoreCase = true)
+    JsonToken.VALUE_STRING -> parser.string.equals("true", ignoreCase = true)
     JsonToken.VALUE_NULL -> null
     else -> {
       parser.skipChildren()

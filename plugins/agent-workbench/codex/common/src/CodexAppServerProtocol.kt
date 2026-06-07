@@ -3,10 +3,12 @@ package com.intellij.agent.workbench.codex.common
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import java.io.Writer
 
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
@@ -49,14 +51,13 @@ internal class CodexAppServerProtocol {
   private val jsonFactory = JsonFactory()
 
   fun writePayload(out: Writer, payloadWriter: (JsonGenerator) -> Unit) {
-    val generator = jsonFactory.createGenerator(out)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(out)
     payloadWriter(generator)
     generator.close()
   }
 
   fun <T> parseResponse(payload: String, resultParser: (JsonParser) -> T, defaultResult: T): T {
-    jsonFactory.createParser(payload).use { parser ->
+    jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return defaultResult
       var result: T = defaultResult
       var hasResult = false
@@ -84,7 +85,7 @@ internal class CodexAppServerProtocol {
   }
 
   fun parseMessageId(payload: String): String? {
-    jsonFactory.createParser(payload).use { parser ->
+    jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return null
       var id: String? = null
       forEachObjectField(parser) { fieldName ->
@@ -207,7 +208,7 @@ internal class CodexAppServerProtocol {
   }
 
   fun parseNotification(payload: String): ParsedCodexAppServerNotification? {
-    jsonFactory.createParser(payload).use { parser ->
+    jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return null
 
       var hasResponseId = false
@@ -616,7 +617,7 @@ private fun parseStartedThreadSession(parser: JsonParser): CodexStartedThreadSes
 
 private fun parseTurnErrorMessage(parser: JsonParser): String? {
   if (parser.currentToken == JsonToken.VALUE_STRING) {
-    return parser.text.trimToNull()
+    return parser.string.trimToNull()
   }
   if (parser.currentToken != JsonToken.START_OBJECT) {
     parser.skipChildren()
@@ -877,7 +878,7 @@ private fun parseTurnItemsActivity(
 
 private fun parseTurnInProgress(parser: JsonParser): Boolean {
   return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> normalizeToken(parser.text) == "inprogress"
+    JsonToken.VALUE_STRING -> normalizeToken(parser.string) == "inprogress"
     JsonToken.START_OBJECT -> {
       var inProgress = false
       forEachObjectField(parser) { fieldName ->
@@ -1203,7 +1204,7 @@ private fun parseActiveFlags(parser: JsonParser, target: MutableSet<CodexThreadA
       parser.skipChildren()
       continue
     }
-    when (normalizeToken(parser.text)) {
+    when (normalizeToken(parser.string)) {
       "waitingonapproval" -> target.add(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
       "waitingonuserinput" -> target.add(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
     }
@@ -1253,7 +1254,7 @@ fun normalizeRootPath(value: String): String {
 
 private fun readErrorMessage(parser: JsonParser): String? {
   return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> parser.text
+    JsonToken.VALUE_STRING -> parser.string
     JsonToken.START_OBJECT -> {
       var message: String? = null
       forEachObjectField(parser) { fieldName ->

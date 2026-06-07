@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.launch
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
@@ -152,9 +155,9 @@ object AwbMcpConfigBuilder {
     val filtered = filteredNames()
     val factory = JsonFactory()
     val out = StringWriter()
-    factory.createGenerator(out).useDefaultPrettyPrinter().use { gen ->
+    factory.createJsonGenerator(out, DefaultPrettyPrinter()).use { gen ->
       gen.writeStartObject()
-      gen.writeFieldName("mcpServers")
+      gen.writeName("mcpServers")
       gen.writeStartObject()
 
       // Copy the user's other MCP servers verbatim, skipping filtered names.
@@ -174,10 +177,10 @@ object AwbMcpConfigBuilder {
       // expects specific bridge names; declaring multiple aliases keeps every variant
       // resolvable).
       for (name in ourServerNames) {
-        gen.writeFieldName(name)
+        gen.writeName(name)
         gen.writeStartObject()
-        gen.writeStringField("type", "http")
-        gen.writeStringField("url", mcpUrl)
+        gen.writeStringProperty("type", "http")
+        gen.writeStringProperty("url", mcpUrl)
         gen.writeEndObject()
       }
 
@@ -193,23 +196,21 @@ object AwbMcpConfigBuilder {
     target: JsonGenerator,
     filtered: Set<String>,
   ) {
-    factory.createParser(Files.newBufferedReader(userMcp)).use { parser ->
+    factory.createJsonParser(Files.newBufferedReader(userMcp)).use { parser ->
       // Find the top-level "mcpServers" field.
       while (parser.nextToken() != null) {
-        @Suppress("DEPRECATION")
-        val name = parser.currentName
-        if (parser.currentToken == JsonToken.FIELD_NAME && name == "mcpServers") {
+        val name = parser.currentName()
+        if (parser.currentToken() == JsonToken.PROPERTY_NAME && name == "mcpServers") {
           if (parser.nextToken() != JsonToken.START_OBJECT) return
           while (parser.nextToken() != JsonToken.END_OBJECT) {
-            if (parser.currentToken != JsonToken.FIELD_NAME) continue
-            @Suppress("DEPRECATION")
-            val serverName = parser.currentName
+            if (parser.currentToken() != JsonToken.PROPERTY_NAME) continue
+            val serverName = parser.currentName()
             parser.nextToken() // advance to value
             if (serverName in filtered) {
               parser.skipChildren()
               continue
             }
-            target.writeFieldName(serverName)
+            target.writeName(serverName)
             target.copyCurrentStructure(parser)
           }
           return

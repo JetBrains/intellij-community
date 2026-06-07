@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.launch.config.backend
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.debug
@@ -174,13 +174,13 @@ private fun readPathList(
 
   val result = ArrayList<Path>()
   for (entry in node) {
-    if (!entry.isTextual) {
+    if (!entry.isString) {
       AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.warn(
         "Ignoring Agent Workbench config $configPath: '$fieldName' contains a non-string entry"
       )
       continue
     }
-    resolveConfiguredPath(projectRoot, entry.asText(), configPath, fieldName)?.let(result::add)
+    resolveConfiguredPath(projectRoot, entry.asString(), configPath, fieldName)?.let(result::add)
   }
   return result
 }
@@ -201,11 +201,11 @@ private fun readPathMap(
 
   val result = LinkedHashMap<String, Path>()
   for ((name, value) in node.properties()) {
-    if (!value.isTextual) {
+    if (!value.isString) {
       logInvalidStringValue(configPath, "$fieldName.$name")
       continue
     }
-    val resolvedPath = resolveConfiguredPath(projectRoot, value.asText(), configPath, "$fieldName.$name") ?: continue
+    val resolvedPath = resolveConfiguredPath(projectRoot, value.asString(), configPath, "$fieldName.$name") ?: continue
     result.putIfAbsent(name, resolvedPath)
   }
   return result

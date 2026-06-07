@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DEPRECATION")
-
 package com.intellij.agent.workbench.codex.ide
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import kotlinx.coroutines.CancellationException
 import java.io.ByteArrayOutputStream
 
@@ -18,40 +18,40 @@ internal class CodexIdeContextIpcProtocol(
     val request = try {
       parseRequest(payload)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (_: Exception) {
-      return errorResponse(requestId = "", error = "invalid-request")
-    } ?: return null
+                  catch (e: CancellationException) {
+                    throw e
+                  }
+                  catch (_: Exception) {
+                    return errorResponse(requestId = "", error = "invalid-request")
+                  } ?: return null
 
     if (request.type != REQUEST_TYPE) {
       return null
     }
 
     val requestId = request.requestId?.takeIf { it.isNotBlank() }
-      ?: return errorResponse(requestId = "", error = "invalid-request")
+                    ?: return errorResponse(requestId = "", error = "invalid-request")
     if (request.method != IDE_CONTEXT_METHOD) {
       return errorResponse(requestId = requestId, error = "no-handler-for-request")
     }
     val version = request.version
-      ?: return errorResponse(requestId = requestId, error = "invalid-request")
+                  ?: return errorResponse(requestId = requestId, error = "invalid-request")
     if (version != 0) {
       return errorResponse(requestId = requestId, error = "request-version-mismatch")
     }
 
     val workspaceRoot = request.workspaceRoot
-      ?.trim()
-      ?.takeIf { it.isNotEmpty() }
-      ?: return errorResponse(requestId = requestId, error = "invalid-request")
+                          ?.trim()
+                          ?.takeIf { it.isNotEmpty() }
+                        ?: return errorResponse(requestId = requestId, error = "invalid-request")
     val context = contextCollector(workspaceRoot)
-      ?: return errorResponse(requestId = requestId, error = "no-client-found")
+                  ?: return errorResponse(requestId = requestId, error = "no-client-found")
 
     return successResponse(requestId, context)
   }
 
   private fun parseRequest(payload: ByteArray): CodexIdeContextIpcRequest? {
-    jsonFactory.createParser(payload).use { parser ->
+    jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         return null
       }
@@ -82,7 +82,7 @@ internal class CodexIdeContextIpcProtocol(
   }
 
   private fun parseWorkspaceRootParam(parser: JsonParser): String? {
-    if (parser.currentToken != JsonToken.START_OBJECT) {
+    if (parser.currentToken() != JsonToken.START_OBJECT) {
       parser.skipChildren()
       return null
     }
@@ -102,11 +102,11 @@ internal class CodexIdeContextIpcProtocol(
   private fun successResponse(requestId: String, context: CodexIdeContext): ByteArray {
     return writeResponse { generator ->
       writeResponseBase(generator, requestId)
-      generator.writeStringField("resultType", "success")
-      generator.writeStringField("method", IDE_CONTEXT_METHOD)
-      generator.writeObjectFieldStart("result")
-      generator.writeStringField("type", "broadcast")
-      generator.writeFieldName("ideContext")
+      generator.writeStringProperty("resultType", "success")
+      generator.writeStringProperty("method", IDE_CONTEXT_METHOD)
+      generator.writeObjectPropertyStart("result")
+      generator.writeStringProperty("type", "broadcast")
+      generator.writeName("ideContext")
       writeIdeContext(generator, context)
       generator.writeEndObject()
       generator.writeEndObject()
@@ -116,15 +116,15 @@ internal class CodexIdeContextIpcProtocol(
   private fun errorResponse(requestId: String, error: String): ByteArray {
     return writeResponse { generator ->
       writeResponseBase(generator, requestId)
-      generator.writeStringField("resultType", "error")
-      generator.writeStringField("error", error)
+      generator.writeStringProperty("resultType", "error")
+      generator.writeStringProperty("error", error)
       generator.writeEndObject()
     }
   }
 
   private fun writeResponse(writeBody: (JsonGenerator) -> Unit): ByteArray {
     val out = ByteArrayOutputStream()
-    jsonFactory.createGenerator(out).use { generator ->
+    jsonFactory.createJsonGenerator(out).use { generator ->
       generator.writeStartObject()
       writeBody(generator)
     }
@@ -132,17 +132,17 @@ internal class CodexIdeContextIpcProtocol(
   }
 
   private fun writeResponseBase(generator: JsonGenerator, requestId: String) {
-    generator.writeStringField("type", "response")
-    generator.writeStringField("requestId", requestId)
+    generator.writeStringProperty("type", "response")
+    generator.writeStringProperty("requestId", requestId)
   }
 
   private fun writeIdeContext(generator: JsonGenerator, context: CodexIdeContext) {
     generator.writeStartObject()
     context.activeFile?.let { activeFile ->
-      generator.writeFieldName("activeFile")
+      generator.writeName("activeFile")
       writeActiveFile(generator, activeFile)
     }
-    generator.writeArrayFieldStart("openTabs")
+    generator.writeArrayPropertyStart("openTabs")
     for (tab in context.openTabs) {
       writeFileDescriptor(generator, tab)
     }
@@ -153,10 +153,10 @@ internal class CodexIdeContextIpcProtocol(
   private fun writeActiveFile(generator: JsonGenerator, file: CodexIdeActiveFile) {
     generator.writeStartObject()
     writeFileDescriptorFields(generator, file.label, file.path, file.fsPath)
-    generator.writeFieldName("selection")
+    generator.writeName("selection")
     writeRange(generator, file.selection)
-    generator.writeStringField("activeSelectionContent", file.activeSelectionContent)
-    generator.writeArrayFieldStart("selections")
+    generator.writeStringProperty("activeSelectionContent", file.activeSelectionContent)
+    generator.writeArrayPropertyStart("selections")
     for (selection in file.selections) {
       writeRange(generator, selection)
     }
@@ -171,24 +171,24 @@ internal class CodexIdeContextIpcProtocol(
   }
 
   private fun writeFileDescriptorFields(generator: JsonGenerator, label: String, path: String, fsPath: String) {
-    generator.writeStringField("label", label)
-    generator.writeStringField("path", path)
-    generator.writeStringField("fsPath", fsPath)
+    generator.writeStringProperty("label", label)
+    generator.writeStringProperty("path", path)
+    generator.writeStringProperty("fsPath", fsPath)
   }
 
   private fun writeRange(generator: JsonGenerator, range: CodexIdeRange) {
     generator.writeStartObject()
-    generator.writeFieldName("start")
+    generator.writeName("start")
     writePosition(generator, range.start)
-    generator.writeFieldName("end")
+    generator.writeName("end")
     writePosition(generator, range.end)
     generator.writeEndObject()
   }
 
   private fun writePosition(generator: JsonGenerator, position: CodexIdePosition) {
     generator.writeStartObject()
-    generator.writeNumberField("line", position.line)
-    generator.writeNumberField("character", position.character)
+    generator.writeNumberProperty("line", position.line)
+    generator.writeNumberProperty("character", position.character)
     generator.writeEndObject()
   }
 }
@@ -207,26 +207,26 @@ private fun readObjectFields(parser: JsonParser, handleField: (String) -> Unit) 
     if (token == JsonToken.END_OBJECT) {
       return
     }
-    if (token != JsonToken.FIELD_NAME) {
+    if (token != JsonToken.PROPERTY_NAME) {
       parser.skipChildren()
       continue
     }
-    val fieldName = parser.currentName
+    val fieldName = parser.currentName()
     parser.nextToken()
     handleField(fieldName)
   }
 }
 
 private fun readStringOrNull(parser: JsonParser): String? {
-  val result = if (parser.currentToken == JsonToken.VALUE_STRING) parser.text else null
+  val result = if (parser.currentToken() == JsonToken.VALUE_STRING) parser.string else null
   parser.skipChildren()
   return result
 }
 
 private fun readIntOrNull(parser: JsonParser): Int? {
-  val result = when (parser.currentToken) {
+  val result = when (parser.currentToken()) {
     JsonToken.VALUE_NUMBER_INT -> parser.intValue
-    JsonToken.VALUE_STRING -> parser.text.toIntOrNull()
+    JsonToken.VALUE_STRING -> parser.string.toIntOrNull()
     else -> null
   }
   parser.skipChildren()

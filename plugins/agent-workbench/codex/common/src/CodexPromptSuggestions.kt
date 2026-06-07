@@ -4,10 +4,12 @@ package com.intellij.agent.workbench.codex.common
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
 import androidx.compose.runtime.Immutable
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.openapi.util.NlsSafe
 import java.io.StringWriter
 
@@ -222,7 +224,7 @@ internal fun writePromptSuggestionOutputSchema(generator: JsonGenerator, request
 }
 
 internal fun parseCodexPromptSuggestionResult(payload: String): CodexPromptSuggestionResult? {
-  PROMPT_SUGGESTION_JSON_FACTORY.createParser(payload).use { parser ->
+  PROMPT_SUGGESTION_JSON_FACTORY.createJsonParser(payload).use { parser ->
     if (parser.nextToken() != JsonToken.START_OBJECT) {
       return null
     }
@@ -290,8 +292,7 @@ private fun parsePromptSuggestionCandidate(parser: JsonParser): CodexPromptSugge
 
 private fun renderAppServerValue(value: CodexAppServerValue): String {
   val writer = StringWriter()
-  val generator = PROMPT_SUGGESTION_JSON_FACTORY.createGenerator(writer)
-  generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+  val generator = PROMPT_SUGGESTION_JSON_FACTORY.createJsonGenerator(writer)
   writeAppServerValue(generator, value)
   generator.close()
   return writer.toString()

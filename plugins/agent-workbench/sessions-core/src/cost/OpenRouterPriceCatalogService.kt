@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.cost
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -51,9 +52,9 @@ class OpenRouterPriceCatalogService(
 
     val snapshot = state.snapshot ?: return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
     val matchedEntry = matchOpenRouterModel(usage.modelId, snapshot)
-      ?: return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+                       ?: return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
     val estimatedCost = matchedEntry.calculateCost(usage)
-      ?: return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+                        ?: return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
 
     return AgentSessionCost(
       amountUsd = estimatedCost,
@@ -76,15 +77,15 @@ object OpenRouterPriceCatalogParser {
   fun parseResponseBody(body: String, fetchedAt: Long = System.currentTimeMillis()): OpenRouterPriceSnapshot {
     val entries = mutableListOf<OpenRouterPriceEntry>()
 
-    jsonFactory.createParser(body).use { parser ->
+    jsonFactory.createParser(ObjectReadContext.empty(), body).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         return OpenRouterPriceSnapshot(fetchedAt = fetchedAt)
       }
 
       while (parser.nextToken() != JsonToken.END_OBJECT) {
-      val fieldName = parser.currentName()
+        val fieldName = parser.currentName()
         parser.nextToken()
-        if (fieldName == "data" && parser.currentToken == JsonToken.START_ARRAY) {
+        if (fieldName == "data" && parser.currentToken() == JsonToken.START_ARRAY) {
           while (parser.nextToken() != JsonToken.END_ARRAY) {
             parseEntry(parser)?.let(entries::add)
           }
@@ -109,7 +110,7 @@ object OpenRouterPriceCatalogParser {
   }
 
   private fun parseEntry(parser: JsonParser): OpenRouterPriceEntry? {
-    if (parser.currentToken != JsonToken.START_OBJECT) {
+    if (parser.currentToken() != JsonToken.START_OBJECT) {
       parser.skipChildren()
       return null
     }
@@ -123,14 +124,14 @@ object OpenRouterPriceCatalogParser {
     var cacheWriteTokenPriceUsd: String? = null
 
     while (parser.nextToken() != JsonToken.END_OBJECT) {
-        val fieldName = parser.currentName()
+      val fieldName = parser.currentName()
       parser.nextToken()
       when (fieldName) {
         "id" -> id = parser.readStringOrNull()
         "canonical_slug" -> canonicalSlug = parser.readStringOrNull()
         "name" -> displayName = parser.readStringOrNull()
         "pricing" -> {
-          if (parser.currentToken == JsonToken.START_OBJECT) {
+          if (parser.currentToken() == JsonToken.START_OBJECT) {
             while (parser.nextToken() != JsonToken.END_OBJECT) {
               val pricingField = parser.currentName()
               parser.nextToken()
@@ -165,10 +166,11 @@ object OpenRouterPriceCatalogParser {
 }
 
 private fun JsonParser.readStringOrNull(): String? {
-  return when (currentToken) {
-    JsonToken.VALUE_STRING -> text
+  return when (currentToken()) {
+    JsonToken.VALUE_STRING -> string
     JsonToken.VALUE_NUMBER_FLOAT,
-    JsonToken.VALUE_NUMBER_INT -> valueAsString
+    JsonToken.VALUE_NUMBER_INT,
+      -> numberValue.toString()
     JsonToken.VALUE_NULL -> null
     else -> {
       skipChildren()

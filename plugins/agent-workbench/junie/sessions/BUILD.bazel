@@ -33,7 +33,7 @@ jvm_library(
         "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
         "//plugins/agent-workbench/sessions",
         "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-        "//libraries/jackson/jackson",
+        "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
 
@@ -60,7 +60,7 @@ jvm_library(
         "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
         "//plugins/agent-workbench/sessions:sessions_test_lib",
         "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",

@@ -2,9 +2,9 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -293,7 +294,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
 
 private fun parseEvent(parser: JsonParser): RolloutEvent? {
   return try {
-    if (parser.currentToken != JsonToken.START_OBJECT) return null
+    if (parser.currentToken() != JsonToken.START_OBJECT) return null
 
     var topLevelType: String? = null
     var timestampMs: Long? = null
@@ -320,7 +321,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
         "timestamp" -> timestampMs = parseIsoTimestamp(readStringOrNull(parser))
         "type" -> topLevelType = readStringOrNull(parser)
         "payload" -> {
-          if (parser.currentToken == JsonToken.START_OBJECT) {
+          if (parser.currentToken() == JsonToken.START_OBJECT) {
             forEachObjectField(parser) { payloadField ->
               when (payloadField) {
                 "type" -> payloadType = readStringOrNull(parser)
@@ -659,7 +660,7 @@ private fun changedProjectFilePathsFromApplyPatchArguments(arguments: String?, c
 private fun readApplyPatchText(arguments: String?): String? {
   val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return null
   val parsedPatchText = try {
-    JsonFactory().createParser(text).use { parser ->
+    JsonFactory().createJsonParser(text).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return@use null
       var patchText: String? = null
       forEachObjectField(parser) { fieldName ->
@@ -718,7 +719,7 @@ private val PROJECT_MUTATING_FUNCTION_CALL_NAMES = setOf("execcommand", "applypa
 private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
   val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return false
   return try {
-    JsonFactory().createParser(text).use { parser ->
+    JsonFactory().createJsonParser(text).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return false
       forEachObjectField(parser) { fieldName ->
         if (fieldName == "sandbox_permissions") {
@@ -736,7 +737,7 @@ private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
 }
 
 private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): AgentSessionUsageSnapshot? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -748,7 +749,7 @@ private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): Agent
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
       "total_token_usage" -> {
-        if (parser.currentToken == JsonToken.START_OBJECT) {
+        if (parser.currentToken() == JsonToken.START_OBJECT) {
           forEachObjectField(parser) { usageField ->
             when (usageField) {
               "input_tokens" -> totalInputTokens = readLongOrNull(parser)
@@ -781,10 +782,10 @@ private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): Agent
 }
 
 private fun readLongOrNull(parser: JsonParser): Long? {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_NUMBER_INT -> parser.longValue
     JsonToken.VALUE_NUMBER_FLOAT -> parser.valueAsLong
-    JsonToken.VALUE_STRING -> parser.text.toLongOrNull()
+    JsonToken.VALUE_STRING -> parser.string.toLongOrNull()
     JsonToken.VALUE_NULL -> null
     else -> {
       parser.skipChildren()
@@ -842,7 +843,7 @@ private fun normalizeThreadTitle(value: String?): String? {
 }
 
 private fun parseBranchField(parser: JsonParser): String? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -861,7 +862,7 @@ private fun parseBranchField(parser: JsonParser): String? {
 }
 
 private fun parseRolloutItemType(parser: JsonParser): String? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -880,7 +881,7 @@ private fun parseRolloutItemType(parser: JsonParser): String? {
 }
 
 private fun parseRolloutSource(parser: JsonParser): ParsedRolloutSource {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_STRING -> ParsedRolloutSource(
       sourceKind = parseRolloutSourceKind(readStringOrNull(parser)),
       parentThreadId = null,
@@ -917,7 +918,7 @@ private fun parseRolloutSource(parser: JsonParser): ParsedRolloutSource {
 }
 
 private fun parseRolloutSubAgentSource(parser: JsonParser): ParsedRolloutSource {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_STRING -> {
       val value = readStringOrNull(parser)
       val sourceKind = when (value?.trim()?.lowercase()) {
@@ -969,7 +970,7 @@ private fun parseRolloutSubAgentSource(parser: JsonParser): ParsedRolloutSource 
 }
 
 private fun parseThreadSpawnParentId(parser: JsonParser): String? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }

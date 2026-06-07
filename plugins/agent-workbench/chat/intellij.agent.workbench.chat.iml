@@ -43,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.context" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import org.assertj.core.api.Assertions.assertThat
@@ -82,7 +84,8 @@ class ClaudeQuotaServiceE2eTest {
 
   @Test
   fun utilizationFieldParsedAsFloat() {
-    val json = """{"five_hour":{"utilization":48.0,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day":{"utilization":1.0,"resets_at":"2099-01-01T00:00:00+00:00"}}"""
+    val json =
+      """{"five_hour":{"utilization":48.0,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day":{"utilization":1.0,"resets_at":"2099-01-01T00:00:00+00:00"}}"""
     val state = parseUsageResponse(json)
 
     assertThat(state.error).isNull()
@@ -94,7 +97,8 @@ class ClaudeQuotaServiceE2eTest {
 
   @Test
   fun utilizationFieldParsedAsInt() {
-    val json = """{"five_hour":{"utilization":48,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day":{"utilization":1,"resets_at":"2099-01-01T00:00:00+00:00"}}"""
+    val json =
+      """{"five_hour":{"utilization":48,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day":{"utilization":1,"resets_at":"2099-01-01T00:00:00+00:00"}}"""
     val state = parseUsageResponse(json)
 
     assertThat(state.error).isNull()
@@ -118,7 +122,8 @@ class ClaudeQuotaServiceE2eTest {
 
   @Test
   fun unknownFieldsSkipped() {
-    val json = """{"five_hour":{"utilization":10.0,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day_opus":null,"seven_day_sonnet":{"utilization":3.0,"resets_at":"2099-01-01T00:00:00+00:00"},"iguana_necktie":null,"extra_usage":{"is_enabled":false,"monthly_limit":null}}"""
+    val json =
+      """{"five_hour":{"utilization":10.0,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day_opus":null,"seven_day_sonnet":{"utilization":3.0,"resets_at":"2099-01-01T00:00:00+00:00"},"iguana_necktie":null,"extra_usage":{"is_enabled":false,"monthly_limit":null}}"""
     val state = parseUsageResponse(json)
 
     assertThat(state.error).isNull()
@@ -159,17 +164,17 @@ class ClaudeQuotaServiceE2eTest {
 
   private fun extractTokenFromJson(raw: String): String? {
     return try {
-      jsonFactory.createParser(raw).use { parser ->
+      jsonFactory.createJsonParser(raw).use { parser ->
         if (parser.nextToken() != JsonToken.START_OBJECT) return null
         while (parser.nextToken() != JsonToken.END_OBJECT) {
           val fieldName = parser.currentName()
           parser.nextToken()
-          if (fieldName == "claudeAiOauth" && parser.currentToken == JsonToken.START_OBJECT) {
+          if (fieldName == "claudeAiOauth" && parser.currentToken() == JsonToken.START_OBJECT) {
             while (parser.nextToken() != JsonToken.END_OBJECT) {
               val innerField = parser.currentName()
               parser.nextToken()
-              if (innerField == "accessToken" && parser.currentToken == JsonToken.VALUE_STRING) {
-                return parser.text
+              if (innerField == "accessToken" && parser.currentToken() == JsonToken.VALUE_STRING) {
+                return parser.string
               }
               parser.skipChildren()
             }
@@ -192,7 +197,7 @@ class ClaudeQuotaServiceE2eTest {
     var sevenDayPercent: Int? = null
     var sevenDayReset: Long? = null
 
-    jsonFactory.createParser(body).use { parser ->
+    jsonFactory.createJsonParser(body).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         return ClaudeQuotaState(error = ClaudeQuotaError.UNKNOWN)
       }
@@ -241,9 +246,9 @@ private fun fetchUsageRaw(token: String): HttpResponse<String> {
   return client.send(request, HttpResponse.BodyHandlers.ofString())
 }
 
-private fun parseBucket(parser: com.fasterxml.jackson.core.JsonParser): Pair<Int?, Long?>? {
-  if (parser.currentToken == JsonToken.VALUE_NULL) return null
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
+  if (parser.currentToken() == JsonToken.VALUE_NULL) return null
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -254,14 +259,14 @@ private fun parseBucket(parser: com.fasterxml.jackson.core.JsonParser): Pair<Int
     parser.nextToken()
     when (field) {
       "utilization" -> {
-        if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
+        if (parser.currentToken() == JsonToken.VALUE_NUMBER_INT || parser.currentToken() == JsonToken.VALUE_NUMBER_FLOAT) {
           utilization = parser.intValue
         }
       }
       "resets_at" -> {
-        if (parser.currentToken == JsonToken.VALUE_STRING) {
+        if (parser.currentToken() == JsonToken.VALUE_STRING) {
           resetMillis = try {
-            Instant.parse(parser.text).toEpochMilli()
+            Instant.parse(parser.string).toEpochMilli()
           }
           catch (_: Throwable) {
             null

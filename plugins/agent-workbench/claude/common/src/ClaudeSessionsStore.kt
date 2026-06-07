@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.common
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonStringOrNull
@@ -177,7 +178,7 @@ class ClaudeSessionsStore(
 
     return try {
       Files.newBufferedReader(path).use { reader ->
-        jsonFactory.createParser(reader).use { parser ->
+        jsonFactory.createJsonParser(reader).use { parser ->
           if (parser.nextToken() != JsonToken.START_OBJECT) {
             emptyMap()
           }
@@ -186,7 +187,7 @@ class ClaudeSessionsStore(
             forEachJsonObjectField(parser) { fieldName ->
               when (fieldName) {
                 "entries" -> {
-                  if (parser.currentToken == JsonToken.START_ARRAY) {
+                  if (parser.currentToken() == JsonToken.START_ARRAY) {
                     parseIndexEntries(parser, entries)
                   }
                   else {
@@ -371,7 +372,7 @@ private fun deriveActivity(needsInput: Boolean, isProcessing: Boolean): ClaudeSe
 
 private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
   return try {
-    if (parser.currentToken != JsonToken.START_OBJECT) return null
+    if (parser.currentToken() != JsonToken.START_OBJECT) return null
     var sessionId: String? = null
     var requestId: String? = null
     var isSidechain = false
@@ -412,7 +413,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
         "lastPrompt" -> lastPrompt = readJsonStringOrNull(parser)
         "gitBranch" -> gitBranch = readJsonStringOrNull(parser)
         "message" -> {
-          if (parser.currentToken == JsonToken.START_OBJECT) {
+          if (parser.currentToken() == JsonToken.START_OBJECT) {
             val parsedMessage = readMessageObject(parser)
             messageRole = parsedMessage.role
             messageContent = parsedMessage.contentPreview
@@ -549,7 +550,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
 }
 
 private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -596,7 +597,7 @@ private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
 }
 
 private fun readContentWithToolUseCheck(parser: JsonParser): ParsedMessageContent {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_STRING -> ParsedMessageContent(contentPreview = readJsonStringOrNull(parser))
     JsonToken.START_ARRAY -> readFirstTextAndToolUseFromArray(parser)
     else -> {
@@ -709,7 +710,7 @@ private fun preciseProjectFilePathsForToolUse(toolName: String?, toolInputProjec
 }
 
 private fun readToolInputProjectFilePaths(parser: JsonParser): Set<String> {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return emptySet()
   }
@@ -726,7 +727,7 @@ private fun readToolInputProjectFilePaths(parser: JsonParser): Set<String> {
 }
 
 private fun readToolUseResultObject(parser: JsonParser): Boolean {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return false
   }
@@ -808,11 +809,11 @@ private fun normalizePath(path: String?): String? {
 }
 
 private fun readBooleanOrFalse(parser: JsonParser): Boolean {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_TRUE -> true
     JsonToken.VALUE_FALSE -> false
     JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-    JsonToken.VALUE_STRING -> parser.text.equals("true", ignoreCase = true)
+    JsonToken.VALUE_STRING -> parser.string.equals("true", ignoreCase = true)
     else -> {
       parser.skipChildren()
       false
@@ -821,10 +822,11 @@ private fun readBooleanOrFalse(parser: JsonParser): Boolean {
 }
 
 private fun readLongOrZero(parser: JsonParser): Long {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_NUMBER_INT,
-    JsonToken.VALUE_NUMBER_FLOAT -> parser.longValue
-    JsonToken.VALUE_STRING -> parser.text.toLongOrNull() ?: 0L
+    JsonToken.VALUE_NUMBER_FLOAT,
+      -> parser.longValue
+    JsonToken.VALUE_STRING -> parser.string.toLongOrNull() ?: 0L
     else -> {
       parser.skipChildren()
       0L

@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexThread
@@ -316,11 +318,11 @@ internal class MockResponsesServer(
 
 private fun validateStrictStructuredOutputRequest(requestBody: String): String? {
   val request = parseJsonValue(requestBody).asJsonObject()
-    ?: return "Request body must be a JSON object."
+                ?: return "Request body must be a JSON object."
   val schema = request["text"].asJsonObject()
-    ?.get("format").asJsonObject()
-    ?.get("schema").asJsonObject()
-    ?: return "Missing text.format.schema."
+                 ?.get("format").asJsonObject()
+                 ?.get("schema").asJsonObject()
+               ?: return "Missing text.format.schema."
   return validateStrictSchemaObject(schema, emptyList())
 }
 
@@ -441,12 +443,12 @@ private fun jsonEvent(type: String, body: (JsonGenerator) -> Unit): SseEvent {
 
 private fun jsonString(write: (JsonGenerator) -> Unit): String {
   val writer = StringWriter()
-  JSON_FACTORY.createGenerator(writer).use(write)
+  JSON_FACTORY.createJsonGenerator(writer).use(write)
   return writer.toString()
 }
 
 private fun parseJsonValue(json: String): Any? {
-  JSON_FACTORY.createParser(json).use { parser ->
+  JSON_FACTORY.createJsonParser(json).use { parser ->
     val token = parser.nextToken() ?: return null
     return readJsonValue(parser, token)
   }
@@ -476,11 +478,11 @@ private fun readJsonValue(parser: JsonParser, token: JsonToken): Any? {
       result
     }
 
-    JsonToken.VALUE_STRING -> parser.valueAsString
+    JsonToken.VALUE_STRING -> parser.string
     JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> parser.booleanValue
     JsonToken.VALUE_NUMBER_INT, JsonToken.VALUE_NUMBER_FLOAT -> parser.numberValue
     JsonToken.VALUE_NULL -> null
-    else -> parser.valueAsString
+    else -> parser.string
   }
 }
 
@@ -509,7 +511,7 @@ private fun daemonThreadFactory(): ThreadFactory {
 internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
   val jsonFactory = JsonFactory()
   Files.newBufferedWriter(path, StandardCharsets.UTF_8).use { writer ->
-    jsonFactory.createGenerator(writer).use { generator ->
+    jsonFactory.createJsonGenerator(writer).use { generator ->
       generator.writeStartObject()
       generator.writeFieldName("threads")
       generator.writeStartArray()

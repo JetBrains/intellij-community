@@ -3,9 +3,9 @@
 
 package com.intellij.agent.workbench.json
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.channels.Channels
@@ -91,9 +91,8 @@ object WorkbenchJsonlScanner {
       val trimmed = line.trim()
       if (trimmed.isEmpty()) return@filter false
       val remove = try {
-        jsonFactory.createParser(trimmed).use { parser ->
-          if (parser.nextToken() != JsonToken.START_OBJECT) false
-          else shouldRemove(parser)
+        jsonFactory.createJsonParser(trimmed).use { parser ->
+          parser.nextToken() == JsonToken.START_OBJECT && shouldRemove(parser)
         }
       }
       catch (_: Throwable) {
@@ -117,7 +116,7 @@ object WorkbenchJsonlScanner {
     onObject: (JsonParser, S) -> Boolean,
   ) {
     Files.newBufferedReader(path).use { reader ->
-      jsonFactory.createParser(reader).use { parser ->
+      jsonFactory.createJsonParser(reader).use { parser ->
         var parsedObjects = 0
         while (parsedObjects < maxObjects) {
           val token = parser.nextToken() ?: return
@@ -169,7 +168,7 @@ object WorkbenchJsonlScanner {
     onObject: (JsonParser, S) -> Boolean,
   ): Boolean? {
     return try {
-      jsonFactory.createParser(line).use { parser ->
+      jsonFactory.createJsonParser(line).use { parser ->
         if (parser.nextToken() != JsonToken.START_OBJECT) {
           return null
         }

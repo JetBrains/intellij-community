@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.codex.common
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger

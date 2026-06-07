@@ -22,7 +22,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/agent-workbench/json",
-        "//libraries/jackson/jackson",
+        "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
 
@@ -39,7 +39,7 @@ jvm_library(
         # do not sort,
         ":common",
         "//plugins/agent-workbench/json:json_test_lib",
-        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.claude.common` end

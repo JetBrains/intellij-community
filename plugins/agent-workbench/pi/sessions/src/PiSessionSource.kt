@@ -3,15 +3,17 @@ package com.intellij.agent.workbench.pi.sessions
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-pi.spec.md
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchDirectoryWatcher
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
+import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
@@ -211,13 +213,13 @@ internal class PiSessionStore(
 
   private fun buildSessionInfoLine(entry: PiSessionIndexEntry, normalizedName: String): String {
     val writer = StringWriter()
-    jsonFactory.createGenerator(writer).use { generator ->
+    jsonFactory.createJsonGenerator(writer).use { generator ->
       generator.writeStartObject()
-      generator.writeStringField("type", "session_info")
-      generator.writeStringField("id", generatePiEntryId(entry.entryIds))
-      if (entry.leafId == null) generator.writeNullField("parentId") else generator.writeStringField("parentId", entry.leafId)
-      generator.writeStringField("timestamp", Instant.ofEpochMilli(timeProvider()).toString())
-      generator.writeStringField("name", normalizedName)
+      generator.writeStringProperty("type", "session_info")
+      generator.writeStringProperty("id", generatePiEntryId(entry.entryIds))
+      if (entry.leafId == null) generator.writeNullProperty("parentId") else generator.writeStringProperty("parentId", entry.leafId)
+      generator.writeStringProperty("timestamp", Instant.ofEpochMilli(timeProvider()).toString())
+      generator.writeStringProperty("name", normalizedName)
       generator.writeEndObject()
     }
     return writer.toString()
@@ -225,12 +227,12 @@ internal class PiSessionStore(
 
   private fun buildArchiveStateLine(projectDir: String, sessionId: String, archived: Boolean): String {
     val writer = StringWriter()
-    jsonFactory.createGenerator(writer).use { generator ->
+    jsonFactory.createJsonGenerator(writer).use { generator ->
       generator.writeStartObject()
-      generator.writeStringField("projectDir", projectDir)
-      generator.writeStringField("sessionId", sessionId)
-      generator.writeBooleanField("archived", archived)
-      generator.writeNumberField("updatedAt", timeProvider())
+      generator.writeStringProperty("projectDir", projectDir)
+      generator.writeStringProperty("sessionId", sessionId)
+      generator.writeBooleanProperty("archived", archived)
+      generator.writeNumberProperty("updatedAt", timeProvider())
       generator.writeEndObject()
     }
     return writer.toString()
@@ -526,7 +528,7 @@ private data class PiParsedMessage(
 )
 
 private fun parsePiMessage(parser: JsonParser): PiParsedMessage {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return PiParsedMessage(role = null, text = null, timestamp = null)
   }
@@ -546,13 +548,13 @@ private fun parsePiMessage(parser: JsonParser): PiParsedMessage {
 }
 
 private fun readPiMessageContent(parser: JsonParser): String? {
-  return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> parser.text
+  return when (parser.currentToken()) {
+    JsonToken.VALUE_STRING -> parser.string
     JsonToken.START_ARRAY -> {
       val chunks = ArrayList<String>()
       while (parser.nextToken() != null) {
-        if (parser.currentToken == JsonToken.END_ARRAY) break
-        if (parser.currentToken == JsonToken.START_OBJECT) {
+        if (parser.currentToken() == JsonToken.END_ARRAY) break
+        if (parser.currentToken() == JsonToken.START_OBJECT) {
           readPiTextBlock(parser)?.let(chunks::add)
         }
         else {
@@ -612,7 +614,7 @@ private fun readPiSettingsSessionDir(settingsPath: Path): String? {
   if (!Files.isRegularFile(settingsPath)) return null
   return try {
     Files.newInputStream(settingsPath).use { input ->
-      JsonFactory().createParser(input).use { parser ->
+      JsonFactory().createJsonParser(input).use { parser ->
         if (parser.nextToken() != JsonToken.START_OBJECT) return null
         var sessionDir: String? = null
         forEachJsonObjectField(parser) { fieldName ->
@@ -630,11 +632,11 @@ private fun readPiSettingsSessionDir(settingsPath: Path): String? {
 }
 
 private fun readJsonBooleanOrNull(parser: JsonParser): Boolean? {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_TRUE -> true
     JsonToken.VALUE_FALSE -> false
     JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-    JsonToken.VALUE_STRING -> parser.text.equals("true", ignoreCase = true)
+    JsonToken.VALUE_STRING -> parser.string.equals("true", ignoreCase = true)
     JsonToken.VALUE_NULL -> null
     else -> {
       parser.skipChildren()

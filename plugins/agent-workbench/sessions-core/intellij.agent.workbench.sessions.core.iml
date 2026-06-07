@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.json" />
   </component>
 </module>

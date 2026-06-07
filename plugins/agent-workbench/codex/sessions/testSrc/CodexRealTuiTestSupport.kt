@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.util.SystemInfo
 import com.pty4j.PtyProcess
@@ -274,7 +276,9 @@ internal class RunningCodexTuiSession(
     var latestSnapshot: RolloutSnapshot? = null
     Files.walk(sessionsDir).use { paths ->
       paths
-        .filter { path -> Files.isRegularFile(path) && path.fileName.toString().startsWith("rollout-") && path.fileName.toString().endsWith(".jsonl") }
+        .filter { path ->
+          Files.isRegularFile(path) && path.fileName.toString().startsWith("rollout-") && path.fileName.toString().endsWith(".jsonl")
+        }
         .forEach { path ->
           val snapshot = readRolloutSnapshot(path) ?: return@forEach
           if (snapshot.cwd != projectDir.normalize()) {
@@ -380,7 +384,8 @@ internal class MockResponsesPlan private constructor(
 
   companion object {
     fun completedAssistantMessage(message: String): MockResponsesPlan {
-      return MockResponsesPlan(body = sse(responseCreatedEvent(), assistantMessageEvent(message), responseCompletedEvent()), holdOpen = false)
+      return MockResponsesPlan(body = sse(responseCreatedEvent(), assistantMessageEvent(message), responseCompletedEvent()),
+                               holdOpen = false)
     }
 
     fun inProgressAssistantMessage(message: String): MockResponsesPlan {
@@ -492,7 +497,7 @@ private data class SseEvent(
 )
 
 private fun parseSessionMetaLine(path: Path, line: String): RolloutSnapshot? {
-  JSON_FACTORY.createParser(line).use { parser ->
+  JSON_FACTORY.createJsonParser(line).use { parser ->
     if (parser.nextToken() != JsonToken.START_OBJECT) {
       return null
     }
@@ -504,7 +509,7 @@ private fun parseSessionMetaLine(path: Path, line: String): RolloutSnapshot? {
       val fieldName = parser.currentName()
       val valueToken = parser.nextToken()
       when (fieldName) {
-        "type" -> recordType = parser.valueAsString
+        "type" -> recordType = parser.string
         "payload" -> {
           if (valueToken != JsonToken.START_OBJECT) {
             parser.skipChildren()
@@ -515,8 +520,8 @@ private fun parseSessionMetaLine(path: Path, line: String): RolloutSnapshot? {
             val payloadField = parser.currentName()
             parser.nextToken()
             when (payloadField) {
-              "id" -> threadId = parser.valueAsString
-              "cwd" -> cwd = parser.valueAsString
+              "id" -> threadId = parser.string
+              "cwd" -> cwd = parser.string
               else -> parser.skipChildren()
             }
           }
@@ -630,8 +635,28 @@ private fun jsonEvent(type: String, body: (JsonGenerator) -> Unit): SseEvent {
 
 private fun jsonString(write: (JsonGenerator) -> Unit): String {
   val writer = StringWriter()
-  JSON_FACTORY.createGenerator(writer).use(write)
+  JSON_FACTORY.createJsonGenerator(writer).use(write)
   return writer.toString()
+}
+
+private fun JsonGenerator.writeObjectFieldStart(name: String) {
+  writeObjectPropertyStart(name)
+}
+
+private fun JsonGenerator.writeArrayFieldStart(name: String) {
+  writeArrayPropertyStart(name)
+}
+
+private fun JsonGenerator.writeStringField(name: String, value: String?) {
+  writeStringProperty(name, value)
+}
+
+private fun JsonGenerator.writeNumberField(name: String, value: Int) {
+  writeNumberProperty(name, value)
+}
+
+private fun JsonGenerator.writeNullField(name: String) {
+  writeNullProperty(name)
 }
 
 private fun tomlString(value: String): String {

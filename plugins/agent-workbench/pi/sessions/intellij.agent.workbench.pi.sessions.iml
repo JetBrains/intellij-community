@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.terminal.backend" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />

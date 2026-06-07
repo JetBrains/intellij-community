@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import com.intellij.agent.workbench.json.createJsonGenerator
+import com.intellij.agent.workbench.json.createJsonParser
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.codex.common.forEachObjectField
 import com.intellij.agent.workbench.codex.common.readLongOrNull
 import com.intellij.agent.workbench.codex.common.readStringOrNull
@@ -451,8 +453,7 @@ internal object CodexTestAppServer {
     threadId: String,
     turnId: String,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("method", "turn/started")
     generator.writeFieldName("params")
@@ -475,8 +476,7 @@ internal object CodexTestAppServer {
     threadId: String,
     turnId: String,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("method", "item/started")
     generator.writeFieldName("params")
@@ -501,8 +501,7 @@ internal object CodexTestAppServer {
     threadId: String,
     turnId: String,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("method", "item/commandExecution/outputDelta")
     generator.writeFieldName("params")
@@ -523,8 +522,7 @@ internal object CodexTestAppServer {
     turnId: String,
     promptSuggestKind: String?,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("method", "item/completed")
     generator.writeFieldName("params")
@@ -536,7 +534,7 @@ internal object CodexTestAppServer {
     generator.writeStringField("type", "agentMessage")
     generator.writeStringField("id", "item-$turnId")
     val resultWriter = StringWriter()
-    val stringGenerator = jsonFactory.createGenerator(resultWriter)
+    val stringGenerator = jsonFactory.createJsonGenerator(resultWriter)
     writePromptSuggestionResult(stringGenerator, promptSuggestKind)
     stringGenerator.close()
     generator.writeStringField("text", resultWriter.toString())
@@ -556,8 +554,7 @@ internal object CodexTestAppServer {
     status: String,
     errorMessage: String? = null,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("method", "turn/completed")
     generator.writeFieldName("params")
@@ -615,7 +612,7 @@ internal object CodexTestAppServer {
   }
 
   private fun parseRequest(payload: String): Request? {
-    jsonFactory.createParser(payload).use { parser ->
+    jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return null
       var id: String? = null
       var method: String? = null
@@ -640,7 +637,7 @@ internal object CodexTestAppServer {
           "id" -> id = readStringOrNull(parser)
           "method" -> method = readStringOrNull(parser)
           "params" -> {
-            if (parser.currentToken == JsonToken.START_OBJECT) {
+            if (parser.currentToken() == JsonToken.START_OBJECT) {
               forEachObjectField(parser) { paramName ->
                 when (paramName) {
                   "id" -> paramsId = readStringOrNull(parser)
@@ -658,7 +655,7 @@ internal object CodexTestAppServer {
                   "model" -> paramsModel = readStringOrNull(parser)
                   "effort" -> paramsEffort = readStringOrNull(parser)
                   "input" -> {
-                    if (parser.currentToken == JsonToken.START_ARRAY) {
+                    if (parser.currentToken() == JsonToken.START_ARRAY) {
                       paramsInputText = parseInputTextArray(parser)
                     }
                     else {
@@ -670,7 +667,7 @@ internal object CodexTestAppServer {
                     parser.skipChildren()
                   }
                   "sourceKinds", "source_kinds" -> {
-                    if (parser.currentToken == JsonToken.START_ARRAY) {
+                    if (parser.currentToken() == JsonToken.START_ARRAY) {
                       val kinds = paramsSourceKinds ?: LinkedHashSet<String>().also { paramsSourceKinds = it }
                       parseStringArray(parser, kinds)
                     }
@@ -749,11 +746,11 @@ internal object CodexTestAppServer {
   private fun loadThreads(path: Path): MutableList<ThreadEntry> {
     if (!Files.exists(path)) return mutableListOf()
     Files.newBufferedReader(path, StandardCharsets.UTF_8).use { reader ->
-      jsonFactory.createParser(reader).use { parser ->
+      jsonFactory.createJsonParser(reader).use { parser ->
         if (parser.nextToken() != JsonToken.START_OBJECT) return mutableListOf()
         val result = mutableListOf<ThreadEntry>()
         forEachObjectField(parser) { fieldName ->
-          if (fieldName == "threads" && parser.currentToken == JsonToken.START_ARRAY) {
+          if (fieldName == "threads" && parser.currentToken() == JsonToken.START_ARRAY) {
             parseThreadsArray(parser, result)
           }
           else {
@@ -864,7 +861,7 @@ internal object CodexTestAppServer {
           statusActiveFlagsFieldName = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: statusActiveFlagsFieldName
         }
         "activeFlags" -> {
-          if (parser.currentToken == JsonToken.START_ARRAY) {
+          if (parser.currentToken() == JsonToken.START_ARRAY) {
             parseStringArray(parser, activeFlags)
           }
           else {
@@ -872,7 +869,7 @@ internal object CodexTestAppServer {
           }
         }
         "readTurns" -> {
-          if (parser.currentToken == JsonToken.START_ARRAY) {
+          if (parser.currentToken() == JsonToken.START_ARRAY) {
             parseReadTurnsArray(parser, readTurns)
           }
           else {
@@ -935,8 +932,7 @@ internal object CodexTestAppServer {
     resultWriter: (JsonGenerator) -> Unit,
     errorMessage: String? = null,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     generator.writeStringField("id", id)
     if (errorMessage != null) {
@@ -963,8 +959,7 @@ internal object CodexTestAppServer {
     threadIdStyle: String?,
     notificationId: String?,
   ) {
-    val generator = jsonFactory.createGenerator(writer)
-    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    val generator = jsonFactory.createJsonGenerator(writer)
     generator.writeStartObject()
     if (notificationId != null) {
       generator.writeStringField("id", notificationId)
@@ -1302,7 +1297,7 @@ private fun parseReadTurnsArray(parser: JsonParser, target: MutableCollection<Tu
           statusAsObject = readBooleanOrNull(parser) ?: false
         }
         "itemTypes" -> {
-          if (parser.currentToken == JsonToken.START_ARRAY) {
+          if (parser.currentToken() == JsonToken.START_ARRAY) {
             parseStringArray(parser, itemTypes)
           }
           else {
@@ -1325,11 +1320,11 @@ private fun parseReadTurnsArray(parser: JsonParser, target: MutableCollection<Tu
 }
 
 private fun readBooleanOrNull(parser: JsonParser): Boolean? {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_TRUE -> true
     JsonToken.VALUE_FALSE -> false
     JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-    JsonToken.VALUE_STRING -> parser.text.toBoolean()
+    JsonToken.VALUE_STRING -> parser.string.toBoolean()
     JsonToken.VALUE_NULL -> null
     else -> {
       parser.skipChildren()
@@ -1343,7 +1338,7 @@ private fun parseStringArray(parser: JsonParser, target: MutableCollection<Strin
     val token = parser.nextToken() ?: return
     if (token == JsonToken.END_ARRAY) return
     if (token == JsonToken.VALUE_STRING) {
-      parser.text
+      parser.string
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
         ?.let(target::add)

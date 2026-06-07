@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.junie.sessions
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
@@ -65,7 +65,7 @@ internal class JunieSessionCostLoader(
 }
 
 private fun collectRootModelUsageCosts(parser: JsonParser, consume: (BigDecimal?) -> Unit) {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return
   }
@@ -86,7 +86,7 @@ private fun collectRootModelUsageCosts(parser: JsonParser, consume: (BigDecimal?
 }
 
 private fun collectSessionA2uxCosts(parser: JsonParser, collector: MutableList<BigDecimal?>) {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return
   }
@@ -101,7 +101,7 @@ private fun collectSessionA2uxCosts(parser: JsonParser, collector: MutableList<B
 }
 
 private fun collectAgentEventCosts(parser: JsonParser, collector: MutableList<BigDecimal?>) {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return
   }
@@ -122,7 +122,7 @@ private fun collectAgentEventCosts(parser: JsonParser, collector: MutableList<Bi
 }
 
 private fun readModelUsageCosts(parser: JsonParser): List<BigDecimal?> {
-  if (parser.currentToken != JsonToken.START_ARRAY) {
+  if (parser.currentToken() != JsonToken.START_ARRAY) {
     parser.skipChildren()
     return emptyList()
   }
@@ -135,7 +135,7 @@ private fun readModelUsageCosts(parser: JsonParser): List<BigDecimal?> {
 }
 
 private fun readModelUsageCost(parser: JsonParser): BigDecimal? {
-  if (parser.currentToken != JsonToken.START_OBJECT) {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
   }
@@ -152,9 +152,9 @@ private fun readModelUsageCost(parser: JsonParser): BigDecimal? {
 }
 
 private fun readJsonBigDecimalOrNull(parser: JsonParser): BigDecimal? {
-  return when (parser.currentToken) {
+  return when (parser.currentToken()) {
     JsonToken.VALUE_NUMBER_FLOAT, JsonToken.VALUE_NUMBER_INT -> parser.decimalValue
-    JsonToken.VALUE_STRING -> parser.text.toBigDecimalOrNull()
+    JsonToken.VALUE_STRING -> parser.string.toBigDecimalOrNull()
     JsonToken.VALUE_NULL -> null
     else -> {
       parser.skipChildren()
