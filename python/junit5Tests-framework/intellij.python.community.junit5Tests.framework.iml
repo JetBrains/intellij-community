@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="apache.sshd.osgi" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.sshd.osgi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />

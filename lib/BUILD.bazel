@@ -598,21 +598,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.apache.sshd/sshd-osgi-2.15.0.jar_copy",
-    src = "@org_apache_sshd-sshd-osgi-2_15_0_http//file",
-    out = "org.apache.sshd/sshd-osgi-2.15.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "apache-sshd-osgi",
-    jar = "@org_apache_sshd-sshd-osgi-2_15_0_http//file",
-    source_jar = "@org_apache_sshd-sshd-osgi-2_15_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "app.cash.turbine/turbine-jvm-1.0.0.jar_copy",
     src = "@app_cash_turbine-turbine-jvm-1_0_0_http//file",
     out = "app.cash.turbine/turbine-jvm-1.0.0.jar",
@@ -13748,6 +13733,21 @@ jvm_import(
     name = "libraries-snakeyaml-snakeyaml",
     jar = "@org_yaml-snakeyaml-2_4_http//file",
     source_jar = "@org_yaml-snakeyaml-2_4-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.sshd/sshd-osgi-2.15.0.jar_copy",
+    src = "@org_apache_sshd-sshd-osgi-2_15_0_http//file",
+    out = "org.apache.sshd/sshd-osgi-2.15.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-sshd-osgi-apache-sshd-osgi",
+    jar = "@org_apache_sshd-sshd-osgi-2_15_0_http//file",
+    source_jar = "@org_apache_sshd-sshd-osgi-2_15_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

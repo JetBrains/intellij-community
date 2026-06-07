@@ -147,6 +147,9 @@ object CommunityLibraryLicenses {
       .copyrightText("Copyright © 2011-2024 The Apache Software Foundation")
       .suppliedByOrganizations(Suppliers.APACHE),
 
+    LibraryLicense("Apache MINA SSHD OSGi", libraryName = "apache.sshd.osgi", url = "https://github.com/apache/mina-sshd")
+      .apache("https://github.com/apache/mina-sshd/blob/master/LICENSE.txt"),
+
     LibraryLicense("Apache Tuweni-Toml", libraryName = "tuweni-toml", url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
       .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE")
       .copyrightText("Copyright 2019-2023 The Apache Software Foundation"),

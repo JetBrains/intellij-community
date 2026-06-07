@@ -77,7 +77,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.impl" />
-    <orderEntry type="library" name="apache.sshd.osgi" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.sshd.osgi" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>

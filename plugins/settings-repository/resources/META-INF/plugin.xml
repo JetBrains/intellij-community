@@ -24,6 +24,7 @@
     <plugin id="com.intellij.modules.xml"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.libraries.sshd.osgi"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
