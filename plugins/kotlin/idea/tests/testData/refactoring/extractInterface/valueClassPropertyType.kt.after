@@ -1,0 +1,23 @@
+// NAME: UserLike
+package example
+
+@JvmInline
+value class Id(val value: String)
+
+data class ShoeSize(val value: Int)
+
+interface UserLike {
+    val id: Id
+    val name: String
+    val shoeSize: ShoeSize
+}
+
+// SIBLING:
+data class User(
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val id: Id,
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val name: String,
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val shoeSize: ShoeSize
+) : UserLike

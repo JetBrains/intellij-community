@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
@@ -131,6 +131,11 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
         public void testTypealiasAlreadyExists() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractSuperclass/typealiasAlreadyExists.kt");
         }
+
+        @TestMetadata("valueClassPropertyType.kt")
+        public void testValueClassPropertyType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractSuperclass/valueClassPropertyType.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -219,6 +224,11 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
         @TestMetadata("specialName.kt")
         public void testSpecialName() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractInterface/specialName.kt");
+        }
+
+        @TestMetadata("valueClassPropertyType.kt")
+        public void testValueClassPropertyType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractInterface/valueClassPropertyType.kt");
         }
     }
 }

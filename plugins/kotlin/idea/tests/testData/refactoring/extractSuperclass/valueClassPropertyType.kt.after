@@ -1,0 +1,23 @@
+// NAME: UserBase
+package example
+
+@JvmInline
+value class Id(val value: String)
+
+data class ShoeSize(val value: Int)
+
+abstract class UserBase {
+    abstract val id: Id
+    abstract val name: String
+    abstract val shoeSize: ShoeSize
+}
+
+// SIBLING:
+class User(
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val id: Id,
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val name: String,
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override val shoeSize: ShoeSize
+) : UserBase()
