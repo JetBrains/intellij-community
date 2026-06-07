@@ -43,12 +43,18 @@ data class ClaudeSessionThread(
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
   @JvmField val projectFilesChangedAt: Long = Long.MIN_VALUE,
+  @JvmField val projectFileChangeEvidence: List<ClaudeProjectFileChangeEvidence> = emptyList(),
   @JvmField val gitBranch: String? = null,
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
   @JvmField val awaitingAssistantTurn: Boolean = false,
   @JvmField val hasCustomTitle: Boolean = false,
   @JvmField val titleSource: ClaudeSessionTitleSource = ClaudeSessionTitleSource.DEFAULT,
   @JvmField val projectPath: String? = null,
+)
+
+data class ClaudeProjectFileChangeEvidence(
+  @JvmField val timestampMillis: Long,
+  @JvmField val changedProjectFilePaths: Set<String>?,
 )
 
 data class ClaudeSessionUsageFile(
@@ -90,11 +96,20 @@ class ClaudeSessionsStore(
     val activity = deriveActivity(activityState.needsInput, activityState.isProcessing)
     val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
     val projectPath = headState.projectPath ?: tailState.projectPath
-    val recoveredProjectFilesChangedAt = scanProjectFileChangeEvidenceForCompletedTools(
+    val recoveredProjectFileChangeEvidence = scanProjectFileChangeEvidenceForCompletedTools(
       path = path,
       completedToolUseIdsById = tailState.unmatchedCompletedToolUseIdsById,
     )
-    val projectFilesChangedAt = maxOf(headState.projectFilesChangedAt, tailState.projectFilesChangedAt, recoveredProjectFilesChangedAt)
+    val projectFileChangeEvidence = mergeProjectFileChangeEvidence(
+      headState.projectFileChangeEvidence,
+      tailState.projectFileChangeEvidence,
+      recoveredProjectFileChangeEvidence,
+    )
+    val projectFilesChangedAt = maxOf(
+      headState.projectFilesChangedAt,
+      tailState.projectFilesChangedAt,
+      projectFileChangeEvidence.maxOfOrNull { it.timestampMillis } ?: Long.MIN_VALUE,
+    )
 
     val resolvedTitle = resolveThreadTitle(
       agentName = tailState.agentName,
@@ -117,6 +132,7 @@ class ClaudeSessionsStore(
       title = resolvedTitle.title,
       updatedAt = resolvedUpdatedAt,
       projectFilesChangedAt = projectFilesChangedAt,
+      projectFileChangeEvidence = projectFileChangeEvidence,
       gitBranch = headState.gitBranch,
       activity = activity,
       awaitingAssistantTurn = activityState.awaitingAssistantTurn,
@@ -253,12 +269,15 @@ class ClaudeSessionsStore(
     }
   }
 
-  private fun scanProjectFileChangeEvidenceForCompletedTools(path: Path, completedToolUseIdsById: Map<String, Long>): Long {
+  private fun scanProjectFileChangeEvidenceForCompletedTools(
+    path: Path,
+    completedToolUseIdsById: Map<String, Long>,
+  ): List<ClaudeProjectFileChangeEvidence> {
     if (completedToolUseIdsById.isEmpty()) {
-      return Long.MIN_VALUE
+      return emptyList()
     }
     val unresolvedCompletedToolUseIds = LinkedHashMap(completedToolUseIdsById)
-    var projectFilesChangedAt = Long.MIN_VALUE
+    val projectFileChangeEvidence = ArrayList<ClaudeProjectFileChangeEvidence>()
     try {
       WorkbenchJsonlScanner.scanJsonObjects(
         path = path,
@@ -266,11 +285,15 @@ class ClaudeSessionsStore(
         newState = {},
       ) { parser, _ ->
         val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
-        for (toolUseId in lineData.projectMutatingToolUseIds) {
+        for ((toolUseId, changedProjectFilePaths) in lineData.projectMutatingToolUsesById) {
           val completedAt = unresolvedCompletedToolUseIds[toolUseId] ?: continue
           val toolUseAt = lineData.timestampMillis
           if (toolUseAt == null || completedAt == Long.MIN_VALUE || toolUseAt <= completedAt) {
-            projectFilesChangedAt = maxOf(projectFilesChangedAt, completedAt)
+            recordProjectFileChangeEvidence(
+              target = projectFileChangeEvidence,
+              timestampMillis = completedAt,
+              changedProjectFilePaths = changedProjectFilePaths,
+            )
             unresolvedCompletedToolUseIds.remove(toolUseId)
           }
         }
@@ -278,9 +301,9 @@ class ClaudeSessionsStore(
       }
     }
     catch (_: Throwable) {
-      return Long.MIN_VALUE
+      return emptyList()
     }
-    return projectFilesChangedAt
+    return projectFileChangeEvidence
   }
 
 }
@@ -366,7 +389,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var messageHasToolUse = false
     var messageNeedsInputToolUse = false
     var messageHasToolResult = false
-    var messageProjectMutatingToolUseIds: Set<String> = emptySet()
+    var messageProjectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap()
     var messageCompletedToolUseIds: Set<String> = emptySet()
     var messageStopReason: String? = null
     var messageHasStopReason = false
@@ -396,7 +419,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             messageHasToolUse = parsedMessage.hasToolUse
             messageNeedsInputToolUse = parsedMessage.needsInputToolUse
             messageHasToolResult = parsedMessage.hasToolResult
-            messageProjectMutatingToolUseIds = parsedMessage.projectMutatingToolUseIds
+            messageProjectMutatingToolUsesById = parsedMessage.projectMutatingToolUsesById
             messageCompletedToolUseIds = parsedMessage.completedToolUseIds
             messageStopReason = parsedMessage.stopReason
             messageHasStopReason = parsedMessage.hasStopReason
@@ -464,7 +487,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       gitBranch = normalizeNonBlank(gitBranch),
       activityEvent = activityEvent,
       assistantUsage = assistantUsage,
-      projectMutatingToolUseIds = messageProjectMutatingToolUseIds,
+      projectMutatingToolUsesById = messageProjectMutatingToolUsesById,
       completedToolUseIds = messageCompletedToolUseIds,
     )
   }
@@ -479,7 +502,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var hasToolUse = false
   var needsInputToolUse = false
   var hasToolResult = false
-  var projectMutatingToolUseIds: Set<String> = emptySet()
+  var projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap()
   var completedToolUseIds: Set<String> = emptySet()
   var stopReason: String? = null
   var hasStopReason = false
@@ -497,7 +520,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
         hasToolUse = result.hasToolUse
         needsInputToolUse = result.needsInputToolUse
         hasToolResult = result.hasToolResult
-        projectMutatingToolUseIds = result.projectMutatingToolUseIds
+        projectMutatingToolUsesById = result.projectMutatingToolUsesById
         completedToolUseIds = result.completedToolUseIds
       }
       "stop_reason" -> {
@@ -517,7 +540,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
     hasToolUse = hasToolUse,
     needsInputToolUse = needsInputToolUse,
     hasToolResult = hasToolResult,
-    projectMutatingToolUseIds = projectMutatingToolUseIds,
+    projectMutatingToolUsesById = projectMutatingToolUsesById,
     completedToolUseIds = completedToolUseIds,
     stopReason = stopReason,
     hasStopReason = hasStopReason,
@@ -588,7 +611,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
   var hasToolUse = false
   var needsInputToolUse = false
   var hasToolResult = false
-  val projectMutatingToolUseIds = LinkedHashSet<String>()
+  val projectMutatingToolUsesById = LinkedHashMap<String, Set<String>?>()
   val completedToolUseIds = LinkedHashSet<String>()
   while (true) {
     val token = parser.nextToken() ?: return ParsedMessageContent(
@@ -596,7 +619,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
       hasToolUse = hasToolUse,
       needsInputToolUse = needsInputToolUse,
       hasToolResult = hasToolResult,
-      projectMutatingToolUseIds = projectMutatingToolUseIds,
+      projectMutatingToolUsesById = projectMutatingToolUsesById,
       completedToolUseIds = completedToolUseIds,
     )
     if (token == JsonToken.END_ARRAY) return ParsedMessageContent(
@@ -604,7 +627,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
       hasToolUse = hasToolUse,
       needsInputToolUse = needsInputToolUse,
       hasToolResult = hasToolResult,
-      projectMutatingToolUseIds = projectMutatingToolUseIds,
+      projectMutatingToolUsesById = projectMutatingToolUsesById,
       completedToolUseIds = completedToolUseIds,
     )
     if (token != JsonToken.START_OBJECT) {
@@ -616,6 +639,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
     var itemId: String? = null
     var itemName: String? = null
     var itemToolUseId: String? = null
+    var itemChangedProjectFilePaths: Set<String> = emptySet()
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "type" -> itemType = readJsonStringOrNull(parser)
@@ -623,6 +647,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
         "name" -> itemName = readJsonStringOrNull(parser)
         "tool_use_id" -> itemToolUseId = readJsonStringOrNull(parser)
         "text" -> itemText = readJsonStringOrNull(parser)
+        "input" -> itemChangedProjectFilePaths = readToolInputProjectFilePaths(parser)
         else -> parser.skipChildren()
       }
       true
@@ -633,7 +658,12 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
         needsInputToolUse = true
       }
       if (isProjectMutatingToolName(itemName)) {
-        normalizeToolUseId(itemId)?.let(projectMutatingToolUseIds::add)
+        normalizeToolUseId(itemId)?.let { toolUseId ->
+          projectMutatingToolUsesById[toolUseId] = preciseProjectFilePathsForToolUse(
+            toolName = itemName,
+            toolInputProjectFilePaths = itemChangedProjectFilePaths,
+          )
+        }
       }
     }
     if (itemType == "tool_result") {
@@ -669,6 +699,30 @@ private fun isProjectMutatingToolName(toolName: String?): Boolean {
     "bash", "edit", "multiedit", "write", "notebookedit" -> true
     else -> false
   }
+}
+
+private fun preciseProjectFilePathsForToolUse(toolName: String?, toolInputProjectFilePaths: Set<String>): Set<String>? {
+  if (toolName?.trim()?.lowercase() == "bash") {
+    return null
+  }
+  return toolInputProjectFilePaths.takeIf { it.isNotEmpty() }
+}
+
+private fun readToolInputProjectFilePaths(parser: JsonParser): Set<String> {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return emptySet()
+  }
+
+  val paths = LinkedHashSet<String>()
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "file_path", "notebook_path" -> readJsonStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }?.let(paths::add)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return paths
 }
 
 private fun readToolUseResultObject(parser: JsonParser): Boolean {
@@ -792,7 +846,7 @@ private data class ParsedJsonlLine(
   @JvmField val gitBranch: String?,
   @JvmField val activityEvent: ClaudeActivityEvent,
   @JvmField val assistantUsage: ClaudeAssistantUsage? = null,
-  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),
 )
 
@@ -804,7 +858,7 @@ private data class ParsedMessageObject(
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
-  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),
   @JvmField val stopReason: String? = null,
   @JvmField val hasStopReason: Boolean = false,
@@ -832,7 +886,7 @@ private data class ParsedMessageContent(
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
-  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),
 )
 
@@ -862,7 +916,8 @@ private interface ActivityTrackingState {
 
 private interface ProjectFileChangeTrackingState {
   var projectFilesChangedAt: Long
-  val pendingProjectMutatingToolUseIds: LinkedHashSet<String>
+  val projectFileChangeEvidence: MutableList<ClaudeProjectFileChangeEvidence>
+  val pendingProjectMutatingToolUsesById: LinkedHashMap<String, Set<String>?>
   val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long>
 }
 
@@ -908,15 +963,47 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
 }
 
 private fun updateProjectFileChangeFields(state: ProjectFileChangeTrackingState, lineData: ParsedJsonlLine) {
-  state.pendingProjectMutatingToolUseIds.addAll(lineData.projectMutatingToolUseIds)
+  state.pendingProjectMutatingToolUsesById.putAll(lineData.projectMutatingToolUsesById)
   for (toolUseId in lineData.completedToolUseIds) {
-    if (state.pendingProjectMutatingToolUseIds.remove(toolUseId)) {
+    if (state.pendingProjectMutatingToolUsesById.containsKey(toolUseId)) {
+      val changedProjectFilePaths = state.pendingProjectMutatingToolUsesById.remove(toolUseId)
+      recordProjectFileChangeEvidence(
+        target = state.projectFileChangeEvidence,
+        timestampMillis = lineData.timestampMillis,
+        changedProjectFilePaths = changedProjectFilePaths,
+      )
       state.projectFilesChangedAt = maxOf(state.projectFilesChangedAt, lineData.timestampMillis ?: Long.MIN_VALUE)
     }
     else {
       state.unmatchedCompletedToolUseIdsById.merge(toolUseId, lineData.timestampMillis ?: Long.MIN_VALUE, ::maxOf)
     }
   }
+}
+
+private fun recordProjectFileChangeEvidence(
+  target: MutableList<ClaudeProjectFileChangeEvidence>,
+  timestampMillis: Long?,
+  changedProjectFilePaths: Set<String>?,
+) {
+  if (timestampMillis == null || timestampMillis == Long.MIN_VALUE) {
+    return
+  }
+  target += ClaudeProjectFileChangeEvidence(
+    timestampMillis = timestampMillis,
+    changedProjectFilePaths = changedProjectFilePaths,
+  )
+}
+
+private fun mergeProjectFileChangeEvidence(
+  vararg lists: List<ClaudeProjectFileChangeEvidence>,
+): List<ClaudeProjectFileChangeEvidence> {
+  if (lists.all { it.isEmpty() }) {
+    return emptyList()
+  }
+  return lists.asSequence()
+    .flatMap { it.asSequence() }
+    .sortedBy { it.timestampMillis }
+    .toList()
 }
 
 private data class JsonlTailScanState(
@@ -931,7 +1018,8 @@ private data class JsonlTailScanState(
   override var isProcessing: Boolean = false,
   override var updatedAt: Long? = null,
   override var projectFilesChangedAt: Long = Long.MIN_VALUE,
-  override val pendingProjectMutatingToolUseIds: LinkedHashSet<String> = LinkedHashSet(),
+  override val projectFileChangeEvidence: MutableList<ClaudeProjectFileChangeEvidence> = ArrayList(),
+  override val pendingProjectMutatingToolUsesById: LinkedHashMap<String, Set<String>?> = LinkedHashMap(),
   override val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long> = LinkedHashMap(),
 ) : ActivityTrackingState, ProjectFileChangeTrackingState
 
@@ -948,7 +1036,8 @@ private data class JsonlMetadataScanState(
   override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
   override var projectFilesChangedAt: Long = Long.MIN_VALUE,
-  override val pendingProjectMutatingToolUseIds: LinkedHashSet<String> = LinkedHashSet(),
+  override val projectFileChangeEvidence: MutableList<ClaudeProjectFileChangeEvidence> = ArrayList(),
+  override val pendingProjectMutatingToolUsesById: LinkedHashMap<String, Set<String>?> = LinkedHashMap(),
   override val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long> = LinkedHashMap(),
 ) : ActivityTrackingState, ProjectFileChangeTrackingState
 

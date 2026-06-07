@@ -55,6 +55,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
   @JvmField val mayHaveChangedProjectFiles: Boolean = false,
+  @JvmField val changedProjectFilePaths: Set<String>? = null,
 )
 
 data class AgentSessionSourceRefreshRequest(
@@ -80,12 +81,13 @@ fun AgentSessionSourceUpdateEvent.isUnscoped(): Boolean {
 fun AgentSessionSourceUpdateEvent.describeScope(): String {
   val scopedPaths = scopedPaths
   val threadIds = threadIds
-  return when {
+  val scope = when {
     scopedPaths == null && threadIds == null -> "scope=all"
     scopedPaths != null && threadIds != null -> "scope=paths:${scopedPaths.size},threadIds:${threadIds.size}"
     scopedPaths != null -> "scope=paths:${scopedPaths.size}"
     else -> "scope=threadIds:${threadIds?.size ?: 0}"
   }
+  return changedProjectFilePaths?.let { paths -> "$scope,changedProjectFiles:${paths.size}" } ?: scope
 }
 
 interface AgentSessionSource {

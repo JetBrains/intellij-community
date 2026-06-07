@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -47,6 +48,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.file.Files
+import java.nio.file.Path
 
 private val LOG = logger<AgentSessionRefreshCoordinator>()
 
@@ -196,8 +199,9 @@ internal class AgentSessionRefreshCoordinator(
       }
       return
     }
+    val stateSnapshot = stateStore.snapshot()
     val candidatePaths = collectVfsRefreshCandidatePaths(
-      state = stateStore.snapshot(),
+      state = stateSnapshot,
       provider = provider,
       updateEvent = updateEvent,
     )
@@ -205,6 +209,28 @@ internal class AgentSessionRefreshCoordinator(
       LOG.debug {
         "Skipped VFS refresh for ${provider.value} source update: no resolved project paths"
       }
+      return
+    }
+    updateEvent.changedProjectFilePaths?.let { changedProjectFilePaths ->
+      val exactRefreshPaths = collectExactVfsRefreshPaths(
+        ownerRootPaths = candidatePaths,
+        changedProjectFilePaths = changedProjectFilePaths,
+        isOwnerRootRefreshEnabled = isVfsRefreshOnStatusUpdatesEnabled,
+      )
+      if (exactRefreshPaths.paths.isEmpty()) {
+        LOG.debug {
+          "Skipped exact VFS refresh for ${provider.value} source update: " +
+          "changedProjectFiles=${changedProjectFilePaths.size}, skippedOutsideRoot=${exactRefreshPaths.skippedOutsideRoot}, " +
+          "disabledRoots=${exactRefreshPaths.disabledRoots}"
+        }
+        return
+      }
+      LOG.debug {
+        "Scheduling exact VFS refresh for ${provider.value} source update: " +
+        "changedProjectFiles=${changedProjectFilePaths.size}, scheduledPaths=${exactRefreshPaths.paths.size}, " +
+        "skippedOutsideRoot=${exactRefreshPaths.skippedOutsideRoot}, disabledRoots=${exactRefreshPaths.disabledRoots}"
+      }
+      scheduleVfsRefresh(exactRefreshPaths.paths)
       return
     }
     val enabledCandidatePaths = candidatePaths.filter(isVfsRefreshOnStatusUpdatesEnabled).toSet()
@@ -693,6 +719,69 @@ private fun collectVfsRefreshCandidatePaths(
   }
   return candidatePaths
 }
+
+private fun collectExactVfsRefreshPaths(
+  ownerRootPaths: Set<String>,
+  changedProjectFilePaths: Set<String>,
+  isOwnerRootRefreshEnabled: (String) -> Boolean,
+): ExactVfsRefreshPaths {
+  val ownerRoots = ownerRootPaths.mapNotNull(::toVfsRefreshOwnerRoot)
+  if (ownerRoots.isEmpty()) {
+    return ExactVfsRefreshPaths(paths = emptySet(), skippedOutsideRoot = changedProjectFilePaths.size, disabledRoots = 0)
+  }
+
+  val paths = LinkedHashSet<String>()
+  var skippedOutsideRoot = 0
+  var disabledRoots = 0
+  for (changedProjectFilePath in changedProjectFilePaths) {
+    val changedPath = parseAgentWorkbenchPathOrNull(changedProjectFilePath)?.takeIf { it.isAbsolute }?.normalize()
+    if (changedPath == null) {
+      skippedOutsideRoot++
+      continue
+    }
+    val ownerRoot = ownerRoots
+      .asSequence()
+      .filter { root -> changedPath.startsWith(root.path) }
+      .maxByOrNull { root -> root.path.nameCount }
+    if (ownerRoot == null) {
+      skippedOutsideRoot++
+      continue
+    }
+    if (!isOwnerRootRefreshEnabled(ownerRoot.originalPath)) {
+      disabledRoots++
+      continue
+    }
+    resolveExistingRefreshPath(changedPath = changedPath, ownerRootPath = ownerRoot.path)?.let(paths::add)
+  }
+  return ExactVfsRefreshPaths(paths = paths, skippedOutsideRoot = skippedOutsideRoot, disabledRoots = disabledRoots)
+}
+
+private fun toVfsRefreshOwnerRoot(path: String): VfsRefreshOwnerRoot? {
+  val parsedPath = parseAgentWorkbenchPathOrNull(path)?.takeIf { it.isAbsolute }?.normalize() ?: return null
+  return VfsRefreshOwnerRoot(originalPath = path, path = parsedPath)
+}
+
+private fun resolveExistingRefreshPath(changedPath: Path, ownerRootPath: Path): String? {
+  var current: Path? = changedPath
+  while (current != null && current.startsWith(ownerRootPath)) {
+    if (Files.exists(current)) {
+      return normalizeAgentWorkbenchPath(current.toString())
+    }
+    current = current.parent
+  }
+  return null
+}
+
+private data class VfsRefreshOwnerRoot(
+  @JvmField val originalPath: String,
+  @JvmField val path: Path,
+)
+
+private data class ExactVfsRefreshPaths(
+  @JvmField val paths: Set<String>,
+  @JvmField val skippedOutsideRoot: Int,
+  @JvmField val disabledRoots: Int,
+)
 
 private fun collectOpenOrLoadedPaths(state: AgentSessionsState): Set<String> {
   val paths = LinkedHashSet<String>()

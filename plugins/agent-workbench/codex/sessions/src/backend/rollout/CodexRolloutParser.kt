@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -93,6 +94,7 @@ internal class CodexRolloutParser(
       normalizedCwd = normalizedCwd,
       parentThreadId = state.parentThreadId,
       projectFilesChangedAt = state.projectFilesChangedAt,
+      projectFileChangeEvidence = state.projectFileChangeEvidence.sortedBy { it.timestampMillis },
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -209,11 +211,16 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
             callId = event.payloadCallId,
             turnId = event.payloadTurnId,
             projectMutating = true,
+            changedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
           )
         }
 
         in PROJECT_MUTATING_END_EVENT_TYPES -> {
-          parseState.markProjectFilesChanged(eventTimestamp)
+          parseState.markProjectFilesChangedForFinishedTool(
+            eventTimestamp = eventTimestamp,
+            callId = event.payloadCallId,
+            fallbackChangedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
+          )
           parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
         }
 
@@ -258,6 +265,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
                 callId = event.payloadCallId,
                 turnId = event.payloadTurnId,
                 projectMutating = isProjectMutatingFunctionCall(event),
+                changedProjectFilePaths = changedProjectFilePathsForProjectMutatingFunctionCall(event, parseState.sessionCwd),
               )
             }
           }
@@ -267,6 +275,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
               callId = event.payloadCallId,
               turnId = event.payloadTurnId,
               projectMutating = isProjectMutatingFunctionCall(event),
+              changedProjectFilePaths = changedProjectFilePathsForProjectMutatingFunctionCall(event, parseState.sessionCwd),
             )
           }
         }
@@ -387,7 +396,13 @@ internal data class ParsedRolloutThread(
   @JvmField val normalizedCwd: String,
   @JvmField val parentThreadId: String?,
   @JvmField val projectFilesChangedAt: Long,
+  @JvmField val projectFileChangeEvidence: List<CodexProjectFileChangeEvidence>,
   @JvmField val thread: CodexBackendThread,
+)
+
+internal data class CodexProjectFileChangeEvidence(
+  @JvmField val timestampMillis: Long,
+  @JvmField val changedProjectFilePaths: Set<String>?,
 )
 
 private data class RolloutEvent(
@@ -429,6 +444,7 @@ private data class RolloutParseState(
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
   @JvmField var usageSnapshot: AgentSessionUsageSnapshot? = null,
   @JvmField var projectFilesChangedAt: Long = Long.MIN_VALUE,
+  @JvmField val projectFileChangeEvidence: MutableList<CodexProjectFileChangeEvidence> = ArrayList(),
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
   @JvmField val pendingApprovalByCallId: LinkedHashMap<String, PendingApproval> = LinkedHashMap(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
@@ -446,6 +462,7 @@ private data class PendingFunctionCall(
   @JvmField val updatedAt: Long,
   @JvmField val turnId: String?,
   @JvmField val projectMutating: Boolean,
+  @JvmField val changedProjectFilePaths: Set<String>?,
 )
 
 private fun shouldClearProcessingTurn(parseState: RolloutParseState, completedTurnId: String?): Boolean {
@@ -472,28 +489,79 @@ private fun RolloutParseState.markPendingApproval(eventTimestamp: Long?, callId:
   }
 }
 
-private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?, projectMutating: Boolean) {
+private fun RolloutParseState.markPendingFunctionCall(
+  eventTimestamp: Long?,
+  callId: String?,
+  turnId: String?,
+  projectMutating: Boolean,
+  changedProjectFilePaths: Set<String>?,
+) {
   val resolvedTimestamp = eventTimestamp ?: updatedAt
   val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
   val previous = pendingFunctionCallByCallId[resolvedCallId]
   if (previous == null || resolvedTimestamp >= previous.updatedAt) {
+    val mergedProjectMutating = projectMutating || previous?.projectMutating == true
+    val mergedChangedProjectFilePaths = when {
+      !mergedProjectMutating -> null
+      previous == null -> changedProjectFilePaths
+      !projectMutating -> previous.changedProjectFilePaths
+      else -> mergePendingChangedProjectFilePaths(previous.changedProjectFilePaths, changedProjectFilePaths)
+    }
     pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(
       updatedAt = resolvedTimestamp,
       turnId = turnId,
-      projectMutating = projectMutating || previous?.projectMutating == true,
+      projectMutating = mergedProjectMutating,
+      changedProjectFilePaths = mergedChangedProjectFilePaths,
     )
   }
 }
 
-private fun RolloutParseState.markProjectFilesChanged(eventTimestamp: Long?) {
-  projectFilesChangedAt = maxTimestamp(projectFilesChangedAt, eventTimestamp ?: updatedAt)
+private fun RolloutParseState.markProjectFilesChanged(eventTimestamp: Long?, changedProjectFilePaths: Set<String>?) {
+  val resolvedTimestamp = eventTimestamp ?: updatedAt
+  projectFilesChangedAt = maxTimestamp(projectFilesChangedAt, resolvedTimestamp)
+  if (resolvedTimestamp != Long.MIN_VALUE) {
+    projectFileChangeEvidence += CodexProjectFileChangeEvidence(
+      timestampMillis = resolvedTimestamp,
+      changedProjectFilePaths = changedProjectFilePaths,
+    )
+  }
 }
 
 private fun RolloutParseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp: Long?, callId: String?) {
   val pendingFunctionCall = callId?.let(pendingFunctionCallByCallId::get) ?: return
   if (pendingFunctionCall.projectMutating) {
-    markProjectFilesChanged(eventTimestamp)
+    markProjectFilesChanged(eventTimestamp, pendingFunctionCall.changedProjectFilePaths)
   }
+}
+
+private fun RolloutParseState.markProjectFilesChangedForFinishedTool(
+  eventTimestamp: Long?,
+  callId: String?,
+  fallbackChangedProjectFilePaths: Set<String>?,
+) {
+  val pendingFunctionCall = callId?.let(pendingFunctionCallByCallId::get)
+  if (pendingFunctionCall?.projectMutating == true) {
+    markProjectFilesChanged(eventTimestamp, pendingFunctionCall.changedProjectFilePaths)
+  }
+  else {
+    markProjectFilesChanged(eventTimestamp, fallbackChangedProjectFilePaths)
+  }
+}
+
+private fun mergePendingChangedProjectFilePaths(existing: Set<String>?, incoming: Set<String>?): Set<String>? {
+  if (existing == null || incoming == null) {
+    return null
+  }
+  if (existing.isEmpty()) {
+    return incoming
+  }
+  if (incoming.isEmpty()) {
+    return existing
+  }
+  val merged = LinkedHashSet<String>(existing.size + incoming.size)
+  merged.addAll(existing)
+  merged.addAll(incoming)
+  return merged
 }
 
 private fun RolloutParseState.clearPendingApprovalForStartedTool(callId: String?, turnId: String?) {
@@ -558,6 +626,86 @@ private fun isToolFunctionCall(event: RolloutEvent): Boolean {
 
 private fun isProjectMutatingFunctionCall(event: RolloutEvent): Boolean {
   return normalizeToken(event.payloadName) in PROJECT_MUTATING_FUNCTION_CALL_NAMES
+}
+
+private fun changedProjectFilePathsForProjectMutatingFunctionCall(event: RolloutEvent, cwd: String?): Set<String>? {
+  return when (normalizeToken(event.payloadName)) {
+    "applypatch" -> changedProjectFilePathsFromApplyPatchArguments(event.payloadArguments, cwd)
+    else -> null
+  }
+}
+
+private fun changedProjectFilePathsForProjectMutatingEvent(event: RolloutEvent, cwd: String?): Set<String>? {
+  return when (normalizeToken(event.payloadType)) {
+    "patchapplybegin", "patchapplyend" -> changedProjectFilePathsFromApplyPatchArguments(event.payloadArguments, cwd)
+    else -> null
+  }
+}
+
+private fun changedProjectFilePathsFromApplyPatchArguments(arguments: String?, cwd: String?): Set<String>? {
+  val patchText = readApplyPatchText(arguments) ?: return null
+  val paths = LinkedHashSet<String>()
+  patchText.lineSequence().forEach { line ->
+    when {
+      line.startsWith("*** Add File: ") -> resolveChangedProjectFilePath(line.removePrefix("*** Add File: "), cwd)?.let(paths::add)
+      line.startsWith("*** Update File: ") -> resolveChangedProjectFilePath(line.removePrefix("*** Update File: "), cwd)?.let(paths::add)
+      line.startsWith("*** Delete File: ") -> resolveChangedProjectFilePath(line.removePrefix("*** Delete File: "), cwd)?.let(paths::add)
+      line.startsWith("*** Move to: ") -> resolveChangedProjectFilePath(line.removePrefix("*** Move to: "), cwd)?.let(paths::add)
+    }
+  }
+  return paths.takeIf { it.isNotEmpty() }
+}
+
+private fun readApplyPatchText(arguments: String?): String? {
+  val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val parsedPatchText = try {
+    JsonFactory().createParser(text).use { parser ->
+      if (parser.nextToken() != JsonToken.START_OBJECT) return@use null
+      var patchText: String? = null
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "patch", "input" -> {
+            val value = readStringOrNull(parser)
+            if (patchText == null && value?.contains("*** Begin Patch") == true) {
+              patchText = value
+            }
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      patchText
+    }
+  }
+  catch (_: Throwable) {
+    null
+  }
+  if (parsedPatchText != null) {
+    return parsedPatchText
+  }
+  return text.takeIf { "*** Begin Patch" in it }
+}
+
+private fun resolveChangedProjectFilePath(pathText: String, cwd: String?): String? {
+  val trimmedPath = pathText.trim().takeIf { it.isNotEmpty() } ?: return null
+  val path = pathOrNull(trimmedPath) ?: return null
+  val resolvedPath = if (path.isAbsolute) {
+    path
+  }
+  else {
+    val cwdPath = pathOrNull(cwd?.takeIf { it.isNotBlank() } ?: return null) ?: return null
+    cwdPath.resolve(path)
+  }
+  return normalizeRootPath(resolvedPath.normalize().toString())
+}
+
+private fun pathOrNull(pathText: String): Path? {
+  return try {
+    Path.of(pathText)
+  }
+  catch (_: InvalidPathException) {
+    null
+  }
 }
 
 // Centralized so renames in the Codex CLI event taxonomy break in one place rather than silently

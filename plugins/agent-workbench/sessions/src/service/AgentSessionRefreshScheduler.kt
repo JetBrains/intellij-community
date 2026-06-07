@@ -361,6 +361,7 @@ internal class AgentSessionRefreshScheduler(
       summaryActivityHintsByThreadId = normalizeSummaryActivityHints(updateEvent.summaryActivityHintsByThreadId),
       activityHintPolicy = updateEvent.activityHintPolicy,
       mayHaveChangedProjectFiles = updateEvent.mayHaveChangedProjectFiles,
+      changedProjectFilePaths = normalizePaths(updateEvent.changedProjectFilePaths),
     )
   }
 
@@ -434,6 +435,7 @@ internal class AgentSessionRefreshScheduler(
       incoming = incoming.summaryActivityHintsByThreadId,
     )
     val mergedActivityHintPolicy = mergeActivityHintPolicy(existing.activityHintPolicy, incoming.activityHintPolicy)
+    val mergedChangedProjectFilePaths = mergeChangedProjectFilePaths(existing, incoming)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
       return AgentSessionSourceUpdateEvent(
         type = mergedType,
@@ -441,6 +443,7 @@ internal class AgentSessionRefreshScheduler(
         summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
         activityHintPolicy = mergedActivityHintPolicy,
         mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
+        changedProjectFilePaths = mergedChangedProjectFilePaths,
       )
     }
 
@@ -452,7 +455,24 @@ internal class AgentSessionRefreshScheduler(
       summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
       activityHintPolicy = mergedActivityHintPolicy,
       mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
+      changedProjectFilePaths = mergedChangedProjectFilePaths,
     )
+  }
+
+  private fun mergeChangedProjectFilePaths(
+    existing: AgentSessionSourceUpdateEvent,
+    incoming: AgentSessionSourceUpdateEvent,
+  ): Set<String>? {
+    if (!existing.mayHaveChangedProjectFiles) {
+      return incoming.changedProjectFilePaths
+    }
+    if (!incoming.mayHaveChangedProjectFiles) {
+      return existing.changedProjectFilePaths
+    }
+    if (existing.changedProjectFilePaths == null || incoming.changedProjectFilePaths == null) {
+      return null
+    }
+    return mergeScopeSets(existing.changedProjectFilePaths, incoming.changedProjectFilePaths)
   }
 
   private fun mergeActivityHintPolicy(

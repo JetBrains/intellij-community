@@ -1112,6 +1112,68 @@ class CodexRolloutSessionBackendTest {
         assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
         assertThat(update.threadIds).containsExactly("session-update-mutating-tool")
         assertThat(update.mayHaveChangedProjectFiles).isTrue()
+        assertThat(update.changedProjectFilePaths).isNull()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedRolloutUpdateWithCompletedApplyPatchIncludesExactProjectFileChangePath() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-update-apply-patch")
+      val changedFile = projectDir.resolve("src").resolve("Main.kt")
+      Files.createDirectories(projectDir)
+      val patch = """*** Begin Patch
+*** Update File: src/Main.kt
+@@
++fun main() {}
+*** End Patch"""
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-update-apply-patch.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T12:30:00.000Z", id = "session-update-apply-patch", cwd = projectDir),
+          responseItemFunctionCall(
+            timestamp = "2026-02-16T12:30:01.000Z",
+            callId = "call-update-apply-patch",
+            name = "apply_patch",
+            arguments = """{"patch":"${jsonString(patch)}"}""",
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-16T12:30:02.000Z",
+            callId = "call-update-apply-patch",
+          ),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+        trailingRefreshDelayMs = 60_000L,
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactly("session-update-apply-patch")
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+        assertThat(update.changedProjectFilePaths).containsExactly(changedFile.toString())
       }
       finally {
         updatesJob.cancelAndJoin()

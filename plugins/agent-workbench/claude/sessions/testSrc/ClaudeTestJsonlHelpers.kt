@@ -31,8 +31,9 @@ internal fun claudeAssistantToolUseLine(
   content: String,
   toolUseId: String = "tu_1",
   toolName: String = "edit",
+  inputJson: String = "{}",
 ): String {
-  return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"$toolUseId","name":"$toolName","input":{}}],"stop_reason":"tool_use"}}"""
+  return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"$toolUseId","name":"$toolName","input":$inputJson}],"stop_reason":"tool_use"}}"""
 }
 
 internal fun claudeAssistantUserInteractionToolLine(timestamp: String, sessionId: String, cwd: String, toolName: String): String {

@@ -2,12 +2,15 @@
 package com.intellij.agent.workbench.claude.sessions.backend.store
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
+import com.intellij.agent.workbench.claude.common.ClaudeProjectFileChangeEvidence
 import com.intellij.agent.workbench.claude.common.ClaudeSessionThread
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
@@ -107,6 +110,7 @@ internal class ClaudeStoreSessionBackend(
     val threadIds = LinkedHashSet<String>()
     val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
     var mayHaveChangedProjectFiles = false
+    var changedProjectFilePaths: LinkedHashSet<String>? = LinkedHashSet()
     var failedParses = 0
     for (path in jsonlPaths) {
       val parsedThread = store.parseJsonlFile(path)
@@ -115,8 +119,16 @@ internal class ClaudeStoreSessionBackend(
         failedParses++
         continue
       }
-      if (consumeProjectFileChangeEvidence(path = path, parsedThread = parsedThread)) {
+      val consumedProjectFileChangeEvidence = consumeProjectFileChangeEvidence(path = path, parsedThread = parsedThread)
+      if (consumedProjectFileChangeEvidence != null) {
         mayHaveChangedProjectFiles = true
+        val evidenceChangedProjectFilePaths = consumedProjectFileChangeEvidence.changedProjectFilePaths
+        if (evidenceChangedProjectFilePaths == null) {
+          changedProjectFilePaths = null
+        }
+        else {
+          changedProjectFilePaths?.addAll(evidenceChangedProjectFilePaths)
+        }
       }
       scopedPaths += projectPath
       threadIds += parsedThread.id
@@ -128,7 +140,10 @@ internal class ClaudeStoreSessionBackend(
         "Claude sessions update falls back to unscoped refresh " +
         "(changedJsonlPaths=${jsonlPaths.size}, failedParses=$failedParses, scopedPaths=${scopedPaths.size})"
       }
-      return claudeSessionUpdate(mayHaveChangedProjectFiles = mayHaveChangedProjectFiles)
+      return claudeSessionUpdate(
+        mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+        changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
+      )
     }
 
     LOG.debug {
@@ -141,23 +156,28 @@ internal class ClaudeStoreSessionBackend(
       activityHintsByThreadId = activityHintsByThreadId,
       activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
     )
   }
 
-  private fun consumeProjectFileChangeEvidence(path: Path, parsedThread: ClaudeSessionThread): Boolean {
-    val projectFilesChangedAt = parsedThread.projectFilesChangedAt
-    if (projectFilesChangedAt == Long.MIN_VALUE) {
-      return false
-    }
+  private fun consumeProjectFileChangeEvidence(path: Path, parsedThread: ClaudeSessionThread): ConsumedProjectFileChangeEvidence? {
     val pathKey = toFileBackedSessionPathKey(path)
     return synchronized(projectFilesChangedAtLock) {
       val previousProjectFilesChangedAt = projectFilesChangedAtByPathKey[pathKey] ?: Long.MIN_VALUE
-      if (projectFilesChangedAt <= previousProjectFilesChangedAt) {
-        false
+      val newEvidence = parsedThread.projectFileChangeEvidence.filter { evidence ->
+        evidence.timestampMillis > previousProjectFilesChangedAt
+      }
+      if (newEvidence.isEmpty()) {
+        null
       }
       else {
+        val projectFilesChangedAt = newEvidence.maxOf { it.timestampMillis }
         projectFilesChangedAtByPathKey[pathKey] = projectFilesChangedAt
-        true
+        val changedProjectFilePaths = collectChangedProjectFilePaths(
+          evidence = newEvidence,
+          projectPath = parsedThread.projectPath,
+        )
+        ConsumedProjectFileChangeEvidence(changedProjectFilePaths = changedProjectFilePaths)
       }
     }
   }
@@ -227,12 +247,54 @@ internal class ClaudeStoreSessionBackend(
 
 private val UNSCOPED_CLAUDE_SESSION_UPDATE = claudeSessionUpdate()
 
-private fun claudeSessionUpdate(mayHaveChangedProjectFiles: Boolean = false): AgentSessionSourceUpdateEvent {
+private fun claudeSessionUpdate(
+  mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.THREADS_CHANGED,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+    changedProjectFilePaths = changedProjectFilePaths,
   )
 }
+
+private fun changedProjectFilePathsForUpdate(
+  mayHaveChangedProjectFiles: Boolean,
+  changedProjectFilePaths: LinkedHashSet<String>?,
+): Set<String>? {
+  if (!mayHaveChangedProjectFiles) {
+    return null
+  }
+  return changedProjectFilePaths?.takeIf { it.isNotEmpty() }
+}
+
+private fun collectChangedProjectFilePaths(evidence: List<ClaudeProjectFileChangeEvidence>, projectPath: String?): Set<String>? {
+  val changedProjectFilePaths = LinkedHashSet<String>()
+  for ((_, itemChangedProjectFilePaths) in evidence) {
+    itemChangedProjectFilePaths ?: return null
+    for (path in itemChangedProjectFilePaths) {
+      val resolvedPath = resolveChangedProjectFilePath(path = path, projectPath = projectPath) ?: return null
+      changedProjectFilePaths.add(resolvedPath)
+    }
+  }
+  return changedProjectFilePaths.takeIf { it.isNotEmpty() }
+}
+
+private fun resolveChangedProjectFilePath(path: String, projectPath: String?): String? {
+  val parsedPath = parseAgentWorkbenchPathOrNull(path)?.normalize() ?: return null
+  val resolvedPath = if (parsedPath.isAbsolute) {
+    parsedPath
+  }
+  else {
+    val parsedProjectPath = projectPath?.let(::parseAgentWorkbenchPathOrNull)?.takeIf { it.isAbsolute } ?: return null
+    parsedProjectPath.resolve(parsedPath).normalize()
+  }
+  return normalizeAgentWorkbenchPath(resolvedPath.toString())
+}
+
+private data class ConsumedProjectFileChangeEvidence(
+  @JvmField val changedProjectFilePaths: Set<String>?,
+)
 
 private fun isClaudeJsonlPath(path: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false

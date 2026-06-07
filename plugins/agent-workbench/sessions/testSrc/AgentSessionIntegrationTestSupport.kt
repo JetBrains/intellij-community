@@ -266,6 +266,7 @@ fun threadsChangedEvent(
   summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
   mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.THREADS_CHANGED,
@@ -275,6 +276,7 @@ fun threadsChangedEvent(
     summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     activityHintPolicy = activityHintPolicy,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+    changedProjectFilePaths = changedProjectFilePaths,
   )
 }
 
@@ -285,6 +287,7 @@ fun hintsChangedEvent(
   summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
   mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
@@ -294,6 +297,7 @@ fun hintsChangedEvent(
     summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     activityHintPolicy = activityHintPolicy,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+    changedProjectFilePaths = changedProjectFilePaths,
   )
 }
 

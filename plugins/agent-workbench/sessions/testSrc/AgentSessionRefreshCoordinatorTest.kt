@@ -227,6 +227,195 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun sourceUpdateWithExactProjectFileChangeEvidenceSchedulesFileVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    val changedFile = projectPath.resolve("src").resolve("Main.kt")
+    Files.createDirectories(changedFile.parent)
+    Files.writeString(changedFile, "fun main() {}")
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(
+          threadsChangedEvent(
+            scopedPaths = setOf(projectPath.toString()),
+            mayHaveChangedProjectFiles = true,
+            changedProjectFilePaths = setOf(changedFile.toString()),
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { vfsRefreshRequests.size == 1 }
+
+      assertThat(vfsRefreshRequests).containsExactly(setOf(changedFile.toString()))
+    }
+  }
+
+  @Test
+  fun sourceUpdateWithDeletedExactProjectFileSchedulesParentVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    val changedDirectory = projectPath.resolve("src")
+    val deletedFile = changedDirectory.resolve("Deleted.kt")
+    Files.createDirectories(changedDirectory)
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(
+          threadsChangedEvent(
+            scopedPaths = setOf(projectPath.toString()),
+            mayHaveChangedProjectFiles = true,
+            changedProjectFilePaths = setOf(deletedFile.toString()),
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { vfsRefreshRequests.size == 1 }
+
+      assertThat(vfsRefreshRequests).containsExactly(setOf(changedDirectory.toString()))
+    }
+  }
+
+  @Test
+  fun mergedSourceUpdateWithExactAndBroadProjectFileChangeEvidenceFallsBackToProjectVfsRefresh(
+    @TempDir tempDir: Path,
+  ) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    val changedFile = projectPath.resolve("src").resolve("Main.kt")
+    Files.createDirectories(changedFile.parent)
+    Files.writeString(changedFile, "fun main() {}")
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(
+          threadsChangedEvent(
+            scopedPaths = setOf(projectPath.toString()),
+            mayHaveChangedProjectFiles = true,
+            changedProjectFilePaths = setOf(changedFile.toString()),
+          )
+        )
+        emit(
+          threadsChangedEvent(
+            scopedPaths = setOf(projectPath.toString()),
+            mayHaveChangedProjectFiles = true,
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { vfsRefreshRequests.size == 1 }
+
+      assertThat(vfsRefreshRequests).containsExactly(setOf(projectPath.toString()))
+    }
+  }
+
+  @Test
+  fun exactProjectFileChangeEvidenceRespectsOwnerRootVfsRefreshConfig(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    val changedFile = projectPath.resolve("src").resolve("Main.kt")
+    Files.createDirectories(changedFile.parent)
+    Files.writeString(changedFile, "fun main() {}")
+    val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(
+          threadsChangedEvent(
+            scopedPaths = setOf(projectPath.toString()),
+            mayHaveChangedProjectFiles = true,
+            changedProjectFilePaths = setOf(changedFile.toString()),
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { paths -> vfsRefreshRequests.add(paths) },
+      isVfsRefreshOnStatusUpdatesEnabled = { path -> path != projectPath.toString() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      delay(700.milliseconds)
+
+      assertThat(vfsRefreshRequests).isEmpty()
+    }
+  }
+
+  @Test
   fun sourceUpdateWithoutProjectFileChangeEvidenceSkipsVfsRefresh(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
     val projectPath = tempDir.resolve("project")
     Files.createDirectories(projectPath)

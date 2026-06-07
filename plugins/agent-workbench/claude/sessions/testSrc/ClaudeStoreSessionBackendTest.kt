@@ -677,6 +677,62 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.scopedPaths).containsExactly(projectPath)
         assertThat(update.threadIds).containsExactly("session-mutating-tool-update")
         assertThat(update.mayHaveChangedProjectFiles).isTrue()
+        assertThat(update.changedProjectFilePaths).isNull()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedSessionUpdateWithCompletedWriteToolIncludesExactProjectFileChangePath() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-exact-write-tool-update"
+      val changedFile = "$projectPath/src/Main.kt"
+      val encodedPath = "-work-project-exact-write-tool-update"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-exact-write-tool-update.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-exact-write-tool-update", projectPath, "Change files"),
+          claudeAssistantToolUseLine(
+            "2026-02-10T10:00:01.000Z",
+            "session-exact-write-tool-update",
+            projectPath,
+            "writing",
+            toolUseId = "tool-write-1",
+            toolName = "Write",
+            inputJson = """{"file_path":"$changedFile","content":"fun main() {}"}""",
+          ),
+          claudeToolResultLine("2026-02-10T10:00:02.000Z", "session-exact-write-tool-update", projectPath, "tool-write-1"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-exact-write-tool-update")
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+        assertThat(update.changedProjectFilePaths).containsExactly(changedFile)
       }
       finally {
         updatesJob.cancelAndJoin()

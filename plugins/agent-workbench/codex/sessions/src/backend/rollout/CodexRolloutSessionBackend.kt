@@ -120,6 +120,7 @@ internal class CodexRolloutSessionBackend(
     val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
     val summaryActivityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity?>()
     var mayHaveChangedProjectFiles = false
+    var changedProjectFilePaths: LinkedHashSet<String>? = LinkedHashSet()
     var failedParses = 0
     for (path in rolloutPaths) {
       val parsedThread = parser.parse(path)
@@ -127,8 +128,16 @@ internal class CodexRolloutSessionBackend(
         failedParses++
         continue
       }
-      if (consumeProjectFileChangeEvidence(parsedThread)) {
+      val consumedProjectFileChangeEvidence = consumeProjectFileChangeEvidence(parsedThread)
+      if (consumedProjectFileChangeEvidence != null) {
         mayHaveChangedProjectFiles = true
+        val evidenceChangedProjectFilePaths = consumedProjectFileChangeEvidence.changedProjectFilePaths
+        if (evidenceChangedProjectFilePaths == null) {
+          changedProjectFilePaths = null
+        }
+        else {
+          changedProjectFilePaths?.addAll(evidenceChangedProjectFilePaths)
+        }
       }
       scopedPaths += parsedThread.normalizedCwd
       threadIds += parsedThread.thread.thread.id
@@ -145,7 +154,10 @@ internal class CodexRolloutSessionBackend(
         "Codex rollout update falls back to unscoped refresh " +
         "(changedRolloutPaths=${rolloutPaths.size}, failedParses=$failedParses, scopedPaths=${scopedPaths.size})"
       }
-      return rolloutSessionUpdate(mayHaveChangedProjectFiles = mayHaveChangedProjectFiles)
+      return rolloutSessionUpdate(
+        mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+        changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
+      )
     }
 
     LOG.debug {
@@ -159,23 +171,25 @@ internal class CodexRolloutSessionBackend(
       summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
     )
   }
 
-  private fun consumeProjectFileChangeEvidence(parsedThread: ParsedRolloutThread): Boolean {
-    val projectFilesChangedAt = parsedThread.projectFilesChangedAt
-    if (projectFilesChangedAt == Long.MIN_VALUE) {
-      return false
-    }
+  private fun consumeProjectFileChangeEvidence(parsedThread: ParsedRolloutThread): ConsumedProjectFileChangeEvidence? {
     val pathKey = toFileBackedSessionPathKey(parsedThread.path)
     return synchronized(projectFilesChangedAtLock) {
       val previousProjectFilesChangedAt = projectFilesChangedAtByPathKey[pathKey] ?: Long.MIN_VALUE
-      if (projectFilesChangedAt <= previousProjectFilesChangedAt) {
-        false
+      val newEvidence = parsedThread.projectFileChangeEvidence.filter { evidence ->
+        evidence.timestampMillis > previousProjectFilesChangedAt
+      }
+      if (newEvidence.isEmpty()) {
+        null
       }
       else {
+        val projectFilesChangedAt = newEvidence.maxOf { it.timestampMillis }
         projectFilesChangedAtByPathKey[pathKey] = projectFilesChangedAt
-        true
+        val changedProjectFilePaths = collectChangedProjectFilePaths(newEvidence)
+        ConsumedProjectFileChangeEvidence(changedProjectFilePaths = changedProjectFilePaths)
       }
     }
   }
@@ -264,12 +278,39 @@ private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> 
   }
 }
 
-private fun rolloutSessionUpdate(mayHaveChangedProjectFiles: Boolean = false): AgentSessionSourceUpdateEvent {
+private fun rolloutSessionUpdate(
+  mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+    changedProjectFilePaths = changedProjectFilePaths,
   )
 }
+
+private fun changedProjectFilePathsForUpdate(
+  mayHaveChangedProjectFiles: Boolean,
+  changedProjectFilePaths: LinkedHashSet<String>?,
+): Set<String>? {
+  if (!mayHaveChangedProjectFiles) {
+    return null
+  }
+  return changedProjectFilePaths?.takeIf { it.isNotEmpty() }
+}
+
+private fun collectChangedProjectFilePaths(evidence: List<CodexProjectFileChangeEvidence>): Set<String>? {
+  val changedProjectFilePaths = LinkedHashSet<String>()
+  for ((_, itemChangedProjectFilePaths) in evidence) {
+    itemChangedProjectFilePaths ?: return null
+    changedProjectFilePaths.addAll(itemChangedProjectFilePaths)
+  }
+  return changedProjectFilePaths.takeIf { it.isNotEmpty() }
+}
+
+private data class ConsumedProjectFileChangeEvidence(
+  @JvmField val changedProjectFilePaths: Set<String>?,
+)
 
 private fun isRolloutPath(path: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false
