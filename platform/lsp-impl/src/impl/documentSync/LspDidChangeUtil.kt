@@ -22,15 +22,15 @@ object LspDidChangeUtil {
     }
 
   /**
-   * At the moment of this function call the [documentEvent] must be not yet applied to the document,
-   * which effectively means that this function must be called from [com.intellij.openapi.editor.event.DocumentListener.beforeDocumentChange].
-   * This is needed to calculate line numbers in the document as they were *before* the change.
-   */
+  * At the moment of this function call the [documentEvent] must be not yet applied to the document,
+  * which effectively means that this function must be called from [com.intellij.openapi.editor.event.DocumentListener.beforeDocumentChange].
+  * This is needed to calculate line numbers in the document as they were *before* the change.
+  */
   @RequiresEdt
   fun createIncrementalDidChangeParamsBeforeDocumentChange(
-      lspServer: LspServer,
-      documentEvent: DocumentEvent,
-      virtualFile: VirtualFile,
+    lspServer: LspServer,
+    documentEvent: DocumentEvent,
+    virtualFile: VirtualFile,
   ): DidChangeTextDocumentParams {
     val versionedIdentifier = getVersionedIdentifier(lspServer, documentEvent.document, virtualFile)
     // This function is called at the moment when the `documentEvent` is not yet applied to the document,
@@ -49,22 +49,22 @@ object LspDidChangeUtil {
 
   @RequiresReadLock
   internal fun createFullDidChangeParams(
-      lspServer: LspServer,
-      document: Document,
-      virtualFile: VirtualFile,
+    lspServer: LspServer,
+    document: Document,
+    virtualFile: VirtualFile,
   ): DidChangeTextDocumentParams =
-      DidChangeTextDocumentParams(
-          getVersionedIdentifier(lspServer, document, virtualFile),
-          listOf(TextDocumentContentChangeEvent(document.text))
-      )
+    DidChangeTextDocumentParams(
+      getVersionedIdentifier(lspServer, document, virtualFile),
+      listOf(TextDocumentContentChangeEvent(document.text))
+    )
 
   private fun getVersionedIdentifier(
-      lspServer: LspServer,
-      document: Document,
-      virtualFile: VirtualFile,
+    lspServer: LspServer,
+    document: Document,
+    virtualFile: VirtualFile,
   ): VersionedTextDocumentIdentifier =
-      VersionedTextDocumentIdentifier(
-          lspServer.descriptor.getFileUri(virtualFile),
-          lspServer.getDocumentVersion(document)
-      )
+    VersionedTextDocumentIdentifier(
+      lspServer.descriptor.getFileUri(virtualFile),
+      lspServer.getDocumentVersion(document)
+    )
 }
