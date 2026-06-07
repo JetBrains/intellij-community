@@ -102,13 +102,22 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         for ((index, element) in this.withIndex()) {
             val text = element.text
 
+            if (element is PsiWhiteSpace && text.startsWith("\n")) continue
+
             if (element.isWhiteSpace()) {
                 val elementType = element.elementType
-                if (elementType == KDocTokens.CODE_BLOCK_TEXT || elementType == KDocTokens.TEXT)
-                    return text.length
+                if (elementType == KDocTokens.CODE_BLOCK_TEXT || elementType == KDocTokens.TEXT) {
+                    val length = text.length
+                    indent = indent?.let { min(it, length) } ?: length
+                    continue
+                }
 
-                if (index > 0 && this[index - 1].isWhiteSpace())
-                    return text.substringAfter("\n").length - 1
+                if (index > 0 && this[index - 1].isWhiteSpace()) {
+                    val length = text.substringAfter("\n").length - 1
+                    indent = indent?.let { min(it, length) } ?: length
+                }
+
+                if (indent == 0) return indent
 
                 continue
             }
@@ -119,7 +128,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                     break
                 }
             }
-            if (indent == 0) break
+            if (indent == 0) return indent
         }
         return indent
     }
