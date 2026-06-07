@@ -9352,73 +9352,73 @@ http_file(
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-databind-3_1_3_http",
-    downloaded_file_path = "jackson-databind-3.1.3.jar",
-    sha256 = "aeddf2462d4783a1b16f6ff1e242582a76edd9ccd69b6b6386905c65a4ec6077",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.1.3/jackson-databind-3.1.3.jar",
+    name = "tools_jackson_core-jackson-databind-3_1_4_http",
+    downloaded_file_path = "jackson-databind-3.1.4.jar",
+    sha256 = "14034bfdf392b6ebec1b4bb6c1de29d604f0aa97251259a19d5f19af8719bb20",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-databind-3_1_3-sources_http",
-    downloaded_file_path = "jackson-databind-3.1.3-sources.jar",
-    sha256 = "bfba53d9185796a2c09d2554660999624cf273c0e11fe6b4425b8c665bddfdd6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.1.3/jackson-databind-3.1.3-sources.jar",
+    name = "tools_jackson_core-jackson-databind-3_1_4-sources_http",
+    downloaded_file_path = "jackson-databind-3.1.4-sources.jar",
+    sha256 = "109baa39968ff6fdcc4389dd4249f04d2edcab7387421ea17bfb51bf18e24189",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_1_3_http",
-    downloaded_file_path = "jackson-dataformat-yaml-3.1.3.jar",
-    sha256 = "f98e74f2d7286ec4b2f7ad5dade396d40620424fd03b2f0ba02c640d29b42b48",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.3/jackson-dataformat-yaml-3.1.3.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_1_4_http",
+    downloaded_file_path = "jackson-dataformat-yaml-3.1.4.jar",
+    sha256 = "f583bd16b6d39a0ec900e37948507616bb651caea58fb882560d7e63efbe56db",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.4/jackson-dataformat-yaml-3.1.4.jar",
 )
 
 http_file(
-    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_1_3-sources_http",
-    downloaded_file_path = "jackson-dataformat-yaml-3.1.3-sources.jar",
-    sha256 = "500ad293ea80b0a3b1a5010c5e4938bf81c2ca5ba0194e60a883135639ceff18",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.3/jackson-dataformat-yaml-3.1.3-sources.jar",
+    name = "tools_jackson_dataformat-jackson-dataformat-yaml-3_1_4-sources_http",
+    downloaded_file_path = "jackson-dataformat-yaml-3.1.4-sources.jar",
+    sha256 = "af9ecf3064cea0c6977bd0fe3f1cc095d04a63e1a480fd1493fcc5cbc8c07d8f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.4/jackson-dataformat-yaml-3.1.4-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-core-3_1_3_http",
-    downloaded_file_path = "jackson-core-3.1.3.jar",
-    sha256 = "e85ded25f75d8dabef7aa09fc155ef616f0a97e96bef6615f7a7800c2a76c6ef",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.1.3/jackson-core-3.1.3.jar",
+    name = "tools_jackson_core-jackson-core-3_1_4_http",
+    downloaded_file_path = "jackson-core-3.1.4.jar",
+    sha256 = "3bda1cd6eff0a8d47bdfcaeae7c2bd5311d6c8ed494ef5f3e51029bb44aa9bdf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4.jar",
 )
 
 http_file(
-    name = "tools_jackson_core-jackson-core-3_1_3-sources_http",
-    downloaded_file_path = "jackson-core-3.1.3-sources.jar",
-    sha256 = "cdaa2f62d9b7dd01e1e7a9affa70a360b800c0e02cc17c2a86cc0694e15e9e38",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.1.3/jackson-core-3.1.3-sources.jar",
+    name = "tools_jackson_core-jackson-core-3_1_4-sources_http",
+    downloaded_file_path = "jackson-core-3.1.4-sources.jar",
+    sha256 = "5aa481c1c120505fc1d204510ec201a40c2bb0bb6bdea24560e0b5fb66484e60",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_jr-jackson-jr-objects-3_1_3_http",
-    downloaded_file_path = "jackson-jr-objects-3.1.3.jar",
-    sha256 = "9e88fd43af8d8382a2d860cb26810fdf0ca531908e95cec595d1711a8b6328fa",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.1.3/jackson-jr-objects-3.1.3.jar",
+    name = "tools_jackson_jr-jackson-jr-objects-3_1_4_http",
+    downloaded_file_path = "jackson-jr-objects-3.1.4.jar",
+    sha256 = "b7512f9b59012b19606320bdd72f73ae743b108f6b6d285113c786d0722288bc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.1.4/jackson-jr-objects-3.1.4.jar",
 )
 
 http_file(
-    name = "tools_jackson_jr-jackson-jr-objects-3_1_3-sources_http",
-    downloaded_file_path = "jackson-jr-objects-3.1.3-sources.jar",
-    sha256 = "b1ceeb06726240a12e7e35bde5310c6be74a3a478391ec7e45eb8519f6990827",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.1.3/jackson-jr-objects-3.1.3-sources.jar",
+    name = "tools_jackson_jr-jackson-jr-objects-3_1_4-sources_http",
+    downloaded_file_path = "jackson-jr-objects-3.1.4-sources.jar",
+    sha256 = "daf757fd3ca59bed34efba65a33bceeda034a0d418b81e93cda977cb315e9668",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/jr/jackson-jr-objects/3.1.4/jackson-jr-objects-3.1.4-sources.jar",
 )
 
 http_file(
-    name = "tools_jackson_module-jackson-module-kotlin-3_1_3_http",
-    downloaded_file_path = "jackson-module-kotlin-3.1.3.jar",
-    sha256 = "b7b0177712639af277a1854b5a77c9f6084e02eec1e98595ce86964bedb7a5dc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.1.3/jackson-module-kotlin-3.1.3.jar",
+    name = "tools_jackson_module-jackson-module-kotlin-3_1_4_http",
+    downloaded_file_path = "jackson-module-kotlin-3.1.4.jar",
+    sha256 = "efa7d704dadfabba9dffea17b36b946856a6c92ae349e49be8b363de9ba8f849",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.1.4/jackson-module-kotlin-3.1.4.jar",
 )
 
 http_file(
-    name = "tools_jackson_module-jackson-module-kotlin-3_1_3-sources_http",
-    downloaded_file_path = "jackson-module-kotlin-3.1.3-sources.jar",
-    sha256 = "8e3468ad6e4504b1f8e585a1048289b045931f908fea9fde39dc3d40bce5e43b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.1.3/jackson-module-kotlin-3.1.3-sources.jar",
+    name = "tools_jackson_module-jackson-module-kotlin-3_1_4-sources_http",
+    downloaded_file_path = "jackson-module-kotlin-3.1.4-sources.jar",
+    sha256 = "f809a27bfa20dd27d8ae264d754c63e54c53bed7c19e10b442b6010d12c8c641",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/module/jackson-module-kotlin/3.1.4/jackson-module-kotlin-3.1.4-sources.jar",
 )
 
 http_file(
