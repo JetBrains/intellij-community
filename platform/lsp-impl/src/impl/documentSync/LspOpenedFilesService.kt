@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerDescriptor
-import com.intellij.platform.lsp.api.LspServerState.Running
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -74,7 +74,7 @@ internal class LspOpenedFilesService(private val project: Project) {
               fileWithinServerRootsAndSupported = true
             }
 
-            if (lspServer.state == Running &&
+            if (lspServer.state == LspServerState.Running &&
                 !lspServer.isFileOpened(openedFile) &&
                 lspServer.isSupportedFile(openedFile)) {
               data.serversToSendDidOpen.putValue(lspServer, openedFile)

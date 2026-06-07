@@ -10,8 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerManagerListener
-import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
-import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -36,7 +35,7 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
     val serverShutdown = AtomicBoolean()
     LspServerManager.getInstance(project).addLspServerManagerListener(object : LspServerManagerListener {
       override fun serverStateChanged(lspServer: LspServer) {
-        if (lspServer.state in arrayOf(ShutdownNormally, ShutdownUnexpectedly)) {
+        if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
           serverShutdown.set(true)
         }
       }
@@ -185,7 +184,7 @@ private class DiagnosticsReceivedCounter(val file: VirtualFile) : LspServerManag
   val diagnosticsReceivedCount: Int get() = _diagnosticsReceivedCount.get()
 
   override fun serverStateChanged(lspServer: LspServer) {
-    if (lspServer.state in arrayOf(ShutdownNormally, ShutdownUnexpectedly)) {
+    if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
       serverShutdown = true
     }
   }

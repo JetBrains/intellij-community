@@ -9,8 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerManagerListener
-import com.intellij.platform.lsp.api.LspServerState.ShutdownNormally
-import com.intellij.platform.lsp.api.LspServerState.ShutdownUnexpectedly
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -95,7 +94,7 @@ suspend fun CodeInsightTestFixture.checkHighlightingRetrying(data: ExpectedHighl
   try {
     LspServerManager.getInstance(project).addLspServerManagerListener(object : LspServerManagerListener {
       override fun serverStateChanged(lspServer: LspServer) {
-        if (lspServer.state in arrayOf(ShutdownNormally, ShutdownUnexpectedly)) {
+        if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
           diagnosticsChannel.close(AssertionError("LSP server initialization failed"))
         }
       }
@@ -163,7 +162,7 @@ private fun LspServerManager.eventsFlow(sendEventsForExistingServers: Boolean = 
   val disposable = Disposer.newDisposable()
   addLspServerManagerListener(object : LspServerManagerListener {
     override fun serverStateChanged(lspServer: LspServer) {
-      if (lspServer.state in arrayOf(ShutdownNormally, ShutdownUnexpectedly)) {
+      if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
         trySend(LspServerManagerEvent.ServerShutdown(lspServer))
       }
     }

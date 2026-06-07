@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspServer.Companion.DEFAULT_REQUEST_TIMEOUT_MS
-import com.intellij.platform.lsp.api.LspServerState.Running
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -96,7 +96,7 @@ abstract class LspRequestExecutorBase(private val lspServer: LspServerImpl) {
   protected fun <Lsp4jResponse> doSendRequestAsync(
     lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>,
   ): CompletableFuture<Lsp4jResponse?>? {
-    if (lspServer.state != Running) {
+    if (lspServer.state != LspServerState.Running) {
       lspServer.logDebug("Server not initialized yet, skipping request ${lsp4jSender.javaClass.name}")
       return null
     }
