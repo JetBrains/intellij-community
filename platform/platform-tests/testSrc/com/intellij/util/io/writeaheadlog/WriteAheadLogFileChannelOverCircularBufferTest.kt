@@ -273,6 +273,53 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   }
 
   @Test
+  fun `new channel sees size extended by persistent pending write`(@TempDir tempDir: Path) {
+    val caseDir = tempDir.resolve("wal")
+    Files.createDirectories(caseDir)
+
+    val storageFile = caseDir.resolve("storage.bin")
+    val initialContent = byteArrayOf(1, 2, 3, 4)
+    Files.write(storageFile, initialContent)
+    val storagePath = storageFile.toRealPath()
+
+    open(storagePath, READ, WRITE).use { channel ->
+      val writableChannelsAccessor = channelsAccessor(storagePath, channel, readOnly = false)
+      val readOnlyChannelsAccessor = channelsAccessor(storagePath, channel, readOnly = true)
+
+      openPersistentWriteAheadLog(caseDir, writableChannelsAccessor).use { writeAheadLog ->
+        FileChannelWithWAL(
+          storagePath,
+          writeAheadLog,
+          writableChannelsAccessor,
+          readOnly = false,
+          applyUnfinishedOnRead = true,
+        ).use { writableChannel ->
+          writableChannel.write(ByteBuffer.wrap(byteArrayOf(5, 6)), initialContent.size.toLong())
+
+          assertEquals(6, writableChannel.size())
+          assertArrayEquals(initialContent, readDirectChannelContent(channel))
+
+          FileChannelWithWAL(
+            storagePath,
+            writeAheadLog,
+            readOnlyChannelsAccessor,
+            readOnly = true,
+            applyUnfinishedOnRead = true,
+          ).use { readOnlyChannel ->
+            assertEquals(6, readOnlyChannel.size())
+
+            val target = ByteBuffer.allocate(6)
+            assertEquals(6, readOnlyChannel.read(target, 0))
+            assertArrayEquals(byteArrayOf(1, 2, 3, 4, 5, 6), target.array())
+            assertTrue(writeAheadLog.hasUnfinished())
+            assertArrayEquals(initialContent, readDirectChannelContent(channel))
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   fun `async flusher applies records and close stops flusher thread`(@TempDir tempDir: Path) {
     val caseDir = tempDir.resolve("wal")
     Files.createDirectories(caseDir)

@@ -57,11 +57,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
 
   /** Cache fileSize, so [size] always actual even without [force]. */
   @Volatile
-  private var fileSize: Long = channelOpExecutor(object : FileChannelOperation<Long> {
-    override fun execute(channel: FileChannel): Long = channel.size()
-
-    override fun toString(): String = "size()"
-  })
+  private var fileSize: Long = calculateInitialFileSize()
 
   /** @GuardedBy(this) */
   private var position: Long = 0
@@ -234,6 +230,22 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
         fileSize = maxOf(fileSize, newSize)
       }
     }
+  }
+
+  private fun calculateInitialFileSize(): Long {
+    //Important to (read WAL) before actual channel.size(): this way fileSize is always correct even though
+    // it could be a bit outdated, but it could miss only the writes coming _in parallel_ with
+    // calculateInitialFileSize().
+    // On the other hand: first channel.size() and then (WAL read) could _miss_ some writes that have came
+    // _before_ the calculateInitialFileSize() is even started -- which is plainly incorrect.
+    val maxUnfinishedWriteOffset = perFileWriter.maxUnfinishedWriteOffset()
+    val channelSize = channelOpExecutor(object : FileChannelOperation<Long> {
+      override fun execute(channel: FileChannel): Long = channel.size()
+
+      override fun toString(): String = "size()"
+    })
+
+    return maxOf(channelSize, maxUnfinishedWriteOffset)
   }
 
   private fun ensureOpen() {

@@ -330,7 +330,23 @@ class WriteAheadLogOverCircularBuffer(
       return this@WriteAheadLogOverCircularBuffer.hasUnfinished(pathId)
     }
 
+    override fun maxUnfinishedWriteOffset(): Long {
+      return this@WriteAheadLogOverCircularBuffer.maxUnfinishedWriteOffset(pathId)
+    }
+
     override fun flush(): Int = flush(pathId)
+  }
+
+  private fun maxUnfinishedWriteOffset(pathId: Int): Long {
+    var maxOffset = -1L
+    circularBytesBuffer.read { entryData ->
+      val record = readRecord(entryData)
+      if (record.pathId == pathId) {
+        maxOffset = maxOf(maxOffset, record.offsetInFile + record.data.remaining())
+      }
+      false //do not consume
+    }
+    return maxOffset
   }
 
   private fun applyUnfinished(pathId: Int, offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) {

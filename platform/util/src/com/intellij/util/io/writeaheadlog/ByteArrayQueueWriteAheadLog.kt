@@ -25,15 +25,14 @@ class ByteArrayQueueWriteAheadLog(
 
   override fun hasUnfinished(): Boolean = pendingRecords.isNotEmpty()
 
+  @Synchronized
   override fun flush(): Int {
     var flushedEntries = 0
     while (!pendingRecords.isEmpty()) {
       val record = pendingRecords.poll() ?: return flushedEntries
       channelWriter.write(record.path, record.offsetInFile, ByteBuffer.wrap(record.data))
       flushedEntries++
-      synchronized(this) {
-        forget(record.path)
-      }
+      forget(record.path)
     }
     return flushedEntries
   }
@@ -42,6 +41,7 @@ class ByteArrayQueueWriteAheadLog(
     flush()
   }
 
+  @Synchronized
   private fun append(path: Path, fileOffset: Long, writer: ByteBufferWriter, recordSize: Int) {
     require(fileOffset >= 0) { "fileOffset must be non-negative: $fileOffset" }
     require(recordSize >= 0) { "recordSize must be non-negative: $recordSize" }
@@ -52,9 +52,7 @@ class ByteArrayQueueWriteAheadLog(
     assert(written == dataAsByteBuffer) { "writer must return the same buffer" }
 
     pendingRecords.add(Record(path, fileOffset, recordData))
-    synchronized(this) {
-      remember(path)
-    }
+    remember(path)
   }
 
   //@GuardedBy(this)
@@ -86,9 +84,28 @@ class ByteArrayQueueWriteAheadLog(
       return this@ByteArrayQueueWriteAheadLog.hasUnfinished(path)
     }
 
+    override fun maxUnfinishedWriteOffset(): Long {
+      return this@ByteArrayQueueWriteAheadLog.maxUnfinishedWriteEndOffset(path)
+    }
+
     override fun flush(): Int {
       return this@ByteArrayQueueWriteAheadLog.flush()
     }
+  }
+
+  @Synchronized
+  private fun maxUnfinishedWriteEndOffset(path: Path): Long {
+    if (!hasUnfinished(path)) {
+      return -1
+    }
+
+    var maxEndOffset = -1L
+    for (record in pendingRecords) {
+      if (record.path == path) {
+        maxEndOffset = maxOf(maxEndOffset, record.offsetInFile + record.data.size)
+      }
+    }
+    return maxEndOffset
   }
 
   @Synchronized

@@ -188,6 +188,8 @@ class PersistentWriteAheadLogStartupTest {
 
       override fun hasUnfinished(): Boolean = false
 
+      override fun maxUnfinishedWriteOffset(): Long = -1
+
       override fun flush(): Int = 0
     }
 

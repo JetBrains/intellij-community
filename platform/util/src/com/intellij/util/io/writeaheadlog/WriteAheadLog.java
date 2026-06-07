@@ -54,6 +54,13 @@ public interface WriteAheadLog extends Closeable {
     /** @return true if there are not-yet-applied writes in the buffer */
     boolean hasUnfinished();
 
+    /**
+     * @return maximum exclusive end offset (={@code fileOffset + recordSize}) among unfinished writes for this file,
+     * or {@code -1} if there are no unfinished writes.
+     * This method _does not_ consume unfinished writes.
+     */
+    long maxUnfinishedWriteOffset() throws IOException;
+
     /** @return # of writes flushed */
     int flush() throws IOException;
   }

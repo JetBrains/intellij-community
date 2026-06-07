@@ -185,6 +185,41 @@ class FileChannelWithWALTest {
     }
   }
 
+  @Test
+  fun `new channel sees size extended by pending write from existing channel`(@TempDir tempDir: Path) {
+    val file = tempDir.storageFile()
+    val initialContent = byteArrayOf(1, 2, 3, 4)
+    Files.write(file, initialContent)
+    val writeAheadLog = fileBackedWriteAheadLog()
+
+    FileChannelWithWAL(
+      file,
+      writeAheadLog,
+      PageCacheUtils.getCachedChannelsAccessor(false),
+      readOnly = false,
+      applyUnfinishedOnRead = true,
+    ).use { writeableChannel ->
+      writeableChannel.write(ByteBuffer.wrap(byteArrayOf(5, 6)), initialContent.size.toLong())
+
+      assertEquals(6, writeableChannel.size())
+      assertEquals(initialContent.size.toLong(), Files.size(file), "Write is pending: file size is unchanged")
+
+      FileChannelWithWAL(
+        file,
+        writeAheadLog,
+        PageCacheUtils.getCachedChannelsAccessor(true),
+        readOnly = true,
+        applyUnfinishedOnRead = true,
+      ).use { readOnlyChannel ->
+        assertEquals(6, readOnlyChannel.size())
+
+        val target = ByteBuffer.allocate(6)
+        assertEquals(6, readOnlyChannel.read(target, 0))
+        assertArrayEquals(byteArrayOf(1, 2, 3, 4, 5, 6), target.array())
+      }
+    }
+  }
+
   @RepeatedTest(8)
   fun `overlay read is equivalent to flush read after random writes`(@TempDir tempDir: Path, repetitionInfo: RepetitionInfo) {
     val seed = repetitionInfo.currentRepetition
@@ -324,6 +359,13 @@ class FileChannelWithWALTest {
 
         override fun hasUnfinished(): Boolean = writes.isNotEmpty()
 
+        override fun maxUnfinishedWriteOffset(): Long {
+          return writes
+            .asSequence()
+            .filter { it.file == file }
+            .maxOfOrNull { it.offset + it.data.size } ?: -1
+        }
+
         override fun applyUnfinished(offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) =
           throw UnsupportedOperationException("Intentionally not implemented")
 
@@ -352,6 +394,8 @@ class FileChannelWithWALTest {
 
         override fun hasUnfinished(): Boolean = false
 
+        override fun maxUnfinishedWriteOffset(): Long = -1
+
         override fun applyUnfinished(offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) =
           throw UnsupportedOperationException("Intentionally not implemented")
 
@@ -374,6 +418,8 @@ class FileChannelWithWALTest {
         override fun write(fileOffset: Long, writer: ByteBufferWriter, recordSize: Int) = Unit
 
         override fun hasUnfinished(): Boolean = this@CountingFlushWriteAheadLog.hasUnfinished()
+
+        override fun maxUnfinishedWriteOffset(): Long = -1
 
         override fun applyUnfinished(fileOffset: Long, length: Int, buffer: ByteBuffer, offsetInBuffer: Int) = Unit
 
