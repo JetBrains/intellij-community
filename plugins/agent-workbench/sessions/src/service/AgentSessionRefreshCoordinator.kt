@@ -24,7 +24,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
@@ -91,6 +93,7 @@ internal class AgentSessionRefreshCoordinator(
     serviceScope = serviceScope,
     stateStore = stateStore,
     threadLoadSupport = threadLoadSupport,
+    sessionSourcesProvider = sessionSourcesProvider,
   )
   private val refreshBootstrapBuilder = AgentSessionRefreshBootstrapBuilder(
     projectEntriesProvider = projectEntriesProvider,
@@ -264,14 +267,13 @@ internal class AgentSessionRefreshCoordinator(
       }
 
       coroutineScope {
-        for (entry in bootstrap.entries) {
+        for ((entryPath, _, entryProject, _, _, worktreeEntries) in bootstrap.entries) {
           launch {
-            val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
-            val entryProject = entry.project
+            val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
             val shouldLoadProject = entryProject != null && normalizedEntryPath in bootstrap.loadPaths
             if (!shouldLoadProject) {
               stateStore.updateProject(normalizedEntryPath) { project ->
-                if (project.isLoading) project.copy(isLoading = false) else project
+                project.withLoadingProvidersFailed()
               }
               return@launch
             }
@@ -280,20 +282,25 @@ internal class AgentSessionRefreshCoordinator(
               normalizedPath = normalizedEntryPath,
               project = entryProject,
               prefetchedByProvider = prefetchedByProvider,
-              originalPath = entry.path,
+              originalPath = entryPath,
               cliAvailabilityByProvider = cliAvailabilityByProvider,
-            ) { partial, isComplete ->
+            ) { partial, _ ->
               stateStore.updateProject(normalizedEntryPath) { project ->
                 val refreshedThreads = preserveThreadCosts(
                   existingThreads = project.threads,
                   newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
                 )
+                val providerLoadMetadata = mergeProviderLoadMetadata(
+                  currentProviderLoadStates = project.providerLoadStates,
+                  currentProvidersWithUnknownThreadCount = project.providersWithUnknownThreadCount,
+                  providerLoadStateUpdates = partial.providerLoadStates,
+                  updatedProvidersWithUnknownThreadCount = partial.providersWithUnknownThreadCount,
+                )
                 project.copy(
                   threads = refreshedThreads,
                   providerWarnings = partial.providerWarnings,
-                  providerLoadStates = mergeProviderLoadStates(project.providerLoadStates, partial.providerLoadStates),
-                  hasUnknownThreadCount = partial.hasUnknownThreadCount,
-                  isLoading = !isComplete,
+                  providerLoadStates = providerLoadMetadata.providerLoadStates,
+                  providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
                 )
               }
             }
@@ -303,26 +310,23 @@ internal class AgentSessionRefreshCoordinator(
                 newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
               )
               project.copy(
-                isLoading = false,
-                hasLoaded = true,
-                hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
                 threads = refreshedThreads,
                 errorMessage = finalResult.errorMessage,
                 providerWarnings = finalResult.providerWarnings,
                 providerLoadStates = finalResult.providerLoadStates,
+                providersWithUnknownThreadCount = finalResult.providersWithUnknownThreadCount,
               )
             }
             contentRepository.syncWarmSnapshotFromRuntime(normalizedEntryPath)
           }
-          for (wt in entry.worktreeEntries) {
+          for ((worktreePath, _, _, worktreeProject) in worktreeEntries) {
             launch {
-              val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
-              val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
-              val worktreeProject = wt.project
+              val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
+              val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
               val shouldLoadWorktree = worktreeProject != null && normalizedWorktreePath in bootstrap.loadPaths
               if (!shouldLoadWorktree) {
                 stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                  if (worktree.isLoading) worktree.copy(isLoading = false) else worktree
+                  worktree.withLoadingProvidersFailed()
                 }
                 return@launch
               }
@@ -331,20 +335,25 @@ internal class AgentSessionRefreshCoordinator(
                 normalizedPath = normalizedWorktreePath,
                 project = worktreeProject,
                 prefetchedByProvider = prefetchedByProvider,
-                originalPath = wt.path,
+                originalPath = worktreePath,
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
-              ) { partial, isComplete ->
+              ) { partial, _ ->
                 stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
                   val refreshedThreads = preserveThreadCosts(
                     existingThreads = worktree.threads,
                     newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
                   )
+                  val providerLoadMetadata = mergeProviderLoadMetadata(
+                    currentProviderLoadStates = worktree.providerLoadStates,
+                    currentProvidersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount,
+                    providerLoadStateUpdates = partial.providerLoadStates,
+                    updatedProvidersWithUnknownThreadCount = partial.providersWithUnknownThreadCount,
+                  )
                   worktree.copy(
                     threads = refreshedThreads,
                     providerWarnings = partial.providerWarnings,
-                    providerLoadStates = mergeProviderLoadStates(worktree.providerLoadStates, partial.providerLoadStates),
-                    hasUnknownThreadCount = partial.hasUnknownThreadCount,
-                    isLoading = !isComplete,
+                    providerLoadStates = providerLoadMetadata.providerLoadStates,
+                    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
                   )
                 }
               }
@@ -354,13 +363,11 @@ internal class AgentSessionRefreshCoordinator(
                   newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
                 )
                 worktree.copy(
-                  isLoading = false,
-                  hasLoaded = true,
-                  hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
                   threads = refreshedThreads,
                   errorMessage = finalResult.errorMessage,
                   providerWarnings = finalResult.providerWarnings,
                   providerLoadStates = finalResult.providerLoadStates,
+                  providersWithUnknownThreadCount = finalResult.providersWithUnknownThreadCount,
                 )
               }
               contentRepository.syncWarmSnapshotFromRuntime(normalizedWorktreePath)
@@ -409,8 +416,15 @@ internal class AgentSessionRefreshCoordinator(
       var changed = false
       val nextProjects = state.projects.map { project ->
         val updatedProject = if (project.path in bootstrap.loadPaths) {
+          val providerLoadMetadata = mergeProviderLoadMetadata(
+            currentProviderLoadStates = project.providerLoadStates,
+            currentProvidersWithUnknownThreadCount = project.providersWithUnknownThreadCount,
+            providerLoadStateUpdates = providerLoadStates,
+            updatedProvidersWithUnknownThreadCount = emptySet(),
+          )
           val updated = project.copy(
-            providerLoadStates = mergeProviderLoadStates(project.providerLoadStates, providerLoadStates),
+            providerLoadStates = providerLoadMetadata.providerLoadStates,
+            providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
           )
           if (updated != project) {
             changed = true
@@ -425,8 +439,15 @@ internal class AgentSessionRefreshCoordinator(
           if (worktree.path !in bootstrap.loadPaths) {
             return@map worktree
           }
+          val providerLoadMetadata = mergeProviderLoadMetadata(
+            currentProviderLoadStates = worktree.providerLoadStates,
+            currentProvidersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount,
+            providerLoadStateUpdates = providerLoadStates,
+            updatedProvidersWithUnknownThreadCount = emptySet(),
+          )
           val updated = worktree.copy(
-            providerLoadStates = mergeProviderLoadStates(worktree.providerLoadStates, providerLoadStates),
+            providerLoadStates = providerLoadMetadata.providerLoadStates,
+            providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
           )
           if (updated != worktree) {
             changed = true
@@ -465,6 +486,7 @@ internal class AgentSessionRefreshCoordinator(
           project.copy(
             providerWarnings = mergeProviderWarning(project.providerWarnings, warning),
             providerLoadStates = project.providerLoadStates + (provider to AgentSessionProviderLoadState.FAILED),
+            providersWithUnknownThreadCount = project.providersWithUnknownThreadCount - provider,
           )
         }
         else {
@@ -474,6 +496,7 @@ internal class AgentSessionRefreshCoordinator(
               worktree.copy(
                 providerWarnings = mergeProviderWarning(worktree.providerWarnings, warning),
                 providerLoadStates = worktree.providerLoadStates + (provider to AgentSessionProviderLoadState.FAILED),
+                providersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount - provider,
               )
             }
             else {
@@ -487,6 +510,36 @@ internal class AgentSessionRefreshCoordinator(
     }
   }
 
+}
+
+private fun AgentProjectSessions.withLoadingProvidersFailed(): AgentProjectSessions {
+  val providerLoadMetadata = failLoadingProviderLoadMetadata(
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
+  )
+  if (providerLoadMetadata.providerLoadStates == this.providerLoadStates &&
+      providerLoadMetadata.providersWithUnknownThreadCount == this.providersWithUnknownThreadCount) {
+    return this
+  }
+  return copy(
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
+}
+
+private fun AgentWorktree.withLoadingProvidersFailed(): AgentWorktree {
+  val providerLoadMetadata = failLoadingProviderLoadMetadata(
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
+  )
+  if (providerLoadMetadata.providerLoadStates == this.providerLoadStates &&
+      providerLoadMetadata.providersWithUnknownThreadCount == this.providersWithUnknownThreadCount) {
+    return this
+  }
+  return copy(
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
 }
 
 private data class ActivityHintStateUpdate(
@@ -643,14 +696,9 @@ private fun collectVfsRefreshCandidatePaths(
 
 private fun collectOpenOrLoadedPaths(state: AgentSessionsState): Set<String> {
   val paths = LinkedHashSet<String>()
-  for (project in state.projects) {
-    if (project.isOpen || project.hasAnyProviderSnapshot()) {
-      paths.add(project.path)
-    }
-    for (worktree in project.worktrees) {
-      if (worktree.isOpen || worktree.hasAnyProviderSnapshot()) {
-        paths.add(worktree.path)
-      }
+  state.forEachPathContent { content ->
+    if (content.isOpen || content.hasAnyProviderSnapshot) {
+      paths.add(content.path)
     }
   }
   return paths
@@ -677,14 +725,9 @@ private fun resolvePathsForVfsRefreshThreadIds(
   }
 
   val paths = LinkedHashSet<String>()
-  for (project in state.projects) {
-    if (project.threads.any { thread -> thread.matchesProviderAndThreadIds(provider, threadIds) }) {
-      paths.add(project.path)
-    }
-    for (worktree in project.worktrees) {
-      if (worktree.threads.any { thread -> thread.matchesProviderAndThreadIds(provider, threadIds) }) {
-        paths.add(worktree.path)
-      }
+  state.forEachPathContent { content ->
+    if (content.threads.any { thread -> thread.matchesProviderAndThreadIds(provider, threadIds) }) {
+      paths.add(content.path)
     }
   }
   return paths

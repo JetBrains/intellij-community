@@ -13,7 +13,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.openTestProjectEntry
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -163,7 +162,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
       path = PROJECT_PATH,
       name = "Project A",
       isOpen = true,
-      hasLoaded = true,
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
       threads = listOf(thread),
     )
     val model = buildSessionTreeModel(

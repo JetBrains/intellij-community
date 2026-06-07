@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
@@ -55,7 +54,7 @@ class AgentSessionsToolWindowPanelTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",

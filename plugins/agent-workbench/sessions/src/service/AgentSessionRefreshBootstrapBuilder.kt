@@ -2,7 +2,9 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -30,7 +32,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
       knownPaths.add(normalizedEntryPath)
       val existing = currentProjectsByPath[normalizedEntryPath]
       val entryIsOpen = entry.project != null
-      val shouldLoadProject = shouldLoadOpenPath(
+      shouldLoadOpenPath(
         isOpen = entryIsOpen,
         wasOpen = existing?.isOpen == true,
         normalizedPath = normalizedEntryPath,
@@ -48,31 +50,33 @@ internal class AgentSessionRefreshBootstrapBuilder(
         path = normalizedEntryPath,
         threads = warmSnapshot?.threads.orEmpty(),
       )
-      val providerLoadStates = existing?.providerLoadStates?.takeIf { it.isNotEmpty() }
-                               ?: when {
-                                 existing?.hasLoaded == true -> deriveLoadedProviderStatesFromThreads(existing.threads)
-                                 warmSnapshot != null -> deriveLoadedProviderStatesFromThreads(cachedThreads)
-                                 else -> emptyMap()
-                               }
+      val providerLoadStates = mergeWarmAndRuntimeProviderLoadStates(
+        warmProviderLoadStates = warmSnapshot?.providerLoadStates.orEmpty(),
+        runtimeProviderLoadStates = existing?.providerLoadStates.orEmpty(),
+      )
+      val providersWithUnknownThreadCount = mergeWarmAndRuntimeUnknownThreadCountProviders(
+        warmProvidersWithUnknownThreadCount = warmSnapshot?.providersWithUnknownThreadCount.orEmpty(),
+        runtimeProviderLoadStates = existing?.providerLoadStates.orEmpty(),
+        runtimeProvidersWithUnknownThreadCount = existing?.providersWithUnknownThreadCount.orEmpty(),
+        mergedProviderLoadStates = providerLoadStates,
+      )
       AgentProjectSessions(
         path = normalizedEntryPath,
         name = entry.name,
         branch = entry.branch,
         buildSystemBadge = entry.buildSystemBadge,
         isOpen = entryIsOpen,
-        isLoading = shouldLoadProject,
-        hasLoaded = existing?.hasLoaded ?: (warmSnapshot != null),
-        hasUnknownThreadCount = existing?.hasUnknownThreadCount ?: (warmSnapshot?.hasUnknownThreadCount ?: false),
         threads = existing?.threads ?: cachedThreads,
         errorMessage = existing?.errorMessage,
         providerWarnings = existing?.providerWarnings ?: emptyList(),
         providerLoadStates = providerLoadStates,
+        providersWithUnknownThreadCount = providersWithUnknownThreadCount,
         worktrees = entry.worktreeEntries.map { wt ->
           val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
           knownPaths.add(normalizedWorktreePath)
           val existingWt = existing?.worktrees?.firstOrNull { normalizeAgentWorkbenchPath(it.path) == normalizedWorktreePath }
           val worktreeIsOpen = wt.project != null
-          val shouldLoadWorktree = shouldLoadOpenPath(
+          shouldLoadOpenPath(
             isOpen = worktreeIsOpen,
             wasOpen = existingWt?.isOpen == true,
             normalizedPath = normalizedWorktreePath,
@@ -90,24 +94,26 @@ internal class AgentSessionRefreshBootstrapBuilder(
             path = normalizedWorktreePath,
             threads = warmWorktreeSnapshot?.threads.orEmpty(),
           )
-          val worktreeProviderLoadStates = existingWt?.providerLoadStates?.takeIf { it.isNotEmpty() }
-                                           ?: when {
-                                             existingWt?.hasLoaded == true -> deriveLoadedProviderStatesFromThreads(existingWt.threads)
-                                             warmWorktreeSnapshot != null -> deriveLoadedProviderStatesFromThreads(cachedWorktreeThreads)
-                                             else -> emptyMap()
-                                           }
+          val worktreeProviderLoadStates = mergeWarmAndRuntimeProviderLoadStates(
+            warmProviderLoadStates = warmWorktreeSnapshot?.providerLoadStates.orEmpty(),
+            runtimeProviderLoadStates = existingWt?.providerLoadStates.orEmpty(),
+          )
+          val worktreeProvidersWithUnknownThreadCount = mergeWarmAndRuntimeUnknownThreadCountProviders(
+            warmProvidersWithUnknownThreadCount = warmWorktreeSnapshot?.providersWithUnknownThreadCount.orEmpty(),
+            runtimeProviderLoadStates = existingWt?.providerLoadStates.orEmpty(),
+            runtimeProvidersWithUnknownThreadCount = existingWt?.providersWithUnknownThreadCount.orEmpty(),
+            mergedProviderLoadStates = worktreeProviderLoadStates,
+          )
           AgentWorktree(
             path = normalizedWorktreePath,
             name = wt.name,
             branch = wt.branch,
             isOpen = worktreeIsOpen,
-            isLoading = shouldLoadWorktree,
-            hasLoaded = existingWt?.hasLoaded ?: (warmWorktreeSnapshot != null),
-            hasUnknownThreadCount = existingWt?.hasUnknownThreadCount ?: (warmWorktreeSnapshot?.hasUnknownThreadCount ?: false),
             threads = existingWt?.threads ?: cachedWorktreeThreads,
             errorMessage = existingWt?.errorMessage,
             providerWarnings = existingWt?.providerWarnings ?: emptyList(),
             providerLoadStates = worktreeProviderLoadStates,
+            providersWithUnknownThreadCount = worktreeProvidersWithUnknownThreadCount,
           )
         },
       )
@@ -143,6 +149,31 @@ internal class AgentSessionRefreshBootstrapBuilder(
     }
     return shouldLoad
   }
+}
+
+private fun mergeWarmAndRuntimeProviderLoadStates(
+  warmProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  runtimeProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (warmProviderLoadStates.isEmpty()) {
+    return runtimeProviderLoadStates
+  }
+  if (runtimeProviderLoadStates.isEmpty()) {
+    return warmProviderLoadStates
+  }
+  return warmProviderLoadStates + runtimeProviderLoadStates
+}
+
+private fun mergeWarmAndRuntimeUnknownThreadCountProviders(
+  warmProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+  runtimeProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  runtimeProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+  mergedProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): Set<AgentSessionProvider> {
+  return buildSet {
+    warmProvidersWithUnknownThreadCount.filterTo(this) { provider -> provider !in runtimeProviderLoadStates }
+    addAll(runtimeProvidersWithUnknownThreadCount)
+  }.filterTo(LinkedHashSet()) { provider -> mergedProviderLoadStates[provider] == AgentSessionProviderLoadState.LOADED }
 }
 
 internal enum class RefreshLoadScope {

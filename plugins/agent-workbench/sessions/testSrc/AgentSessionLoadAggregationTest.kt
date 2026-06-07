@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionSourceLoadResult
 import com.intellij.agent.workbench.sessions.service.mergeAgentSessionSourceLoadResults
+import com.intellij.agent.workbench.sessions.service.mergeProviderLoadMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -170,5 +171,58 @@ class AgentSessionLoadAggregationTest {
     assertThat(result.errorMessage).isNull()
     assertThat(result.hasUnknownThreadCount).isTrue()
     assertThat(result.providerWarnings).isEmpty()
+  }
+
+  @Test
+  fun doesNotMarkUnknownThreadCountForFailedProvider() {
+    val result = mergeAgentSessionSourceLoadResults(
+      sourceResults = listOf(
+        AgentSessionSourceLoadResult(
+          provider = AgentSessionProvider.CODEX,
+          result = Result.failure(IllegalStateException("codex failed")),
+          hasUnknownTotal = true,
+        ),
+      ),
+      resolveErrorMessage = { _, _ -> "error" },
+    )
+
+    assertThat(result.providerLoadStates).containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.FAILED)
+    assertThat(result.hasUnknownThreadCount).isFalse()
+  }
+
+  @Test
+  fun mergesProviderLoadMetadataByReplacingUnknownCountOnlyForUpdatedProviders() {
+    val metadata = mergeProviderLoadMetadata(
+      currentProviderLoadStates = mapOf(
+        AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.CLAUDE to AgentSessionProviderLoadState.LOADED,
+      ),
+      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX, AgentSessionProvider.CLAUDE),
+      providerLoadStateUpdates = mapOf(AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED),
+      updatedProvidersWithUnknownThreadCount = emptySet(),
+    )
+
+    assertThat(metadata.providerLoadStates)
+      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.CLAUDE)
+  }
+
+  @Test
+  fun mergeProviderLoadMetadataClearsUnknownCountForLoadingProvider() {
+    val metadata = mergeProviderLoadMetadata(
+      currentProviderLoadStates = mapOf(
+        AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.CLAUDE to AgentSessionProviderLoadState.LOADED,
+      ),
+      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX, AgentSessionProvider.CLAUDE),
+      providerLoadStateUpdates = mapOf(AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADING),
+      updatedProvidersWithUnknownThreadCount = emptySet(),
+    )
+
+    assertThat(metadata.providerLoadStates)
+      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADING)
+      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.CLAUDE)
   }
 }

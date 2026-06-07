@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
@@ -166,10 +167,15 @@ class AgentArchivedSessionsService internal constructor(
     val previousProjectsByPath = previous.projects.associateBy { project -> normalizeAgentWorkbenchPath(project.path) }
     val pathRequests = buildArchivedPathRequests(entries)
     val knownPaths = pathRequests.mapTo(LinkedHashSet()) { it.path }
-    val initialProjects = buildInitialArchivedProjects(entries, previousProjectsByPath)
     val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
     val cliAvailabilityByProvider = resolveArchivedCliAvailabilityByProvider(sources)
     val availableSources = sources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
+    val loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSources.map { source -> source.provider })
+    val initialProjects = buildInitialArchivedProjects(
+      entries = entries,
+      previousProjectsByPath = previousProjectsByPath,
+      loadingProviderLoadStates = loadingProviderLoadStates,
+    )
 
     mutableState.update { state ->
       state.copy(
@@ -459,6 +465,7 @@ private fun buildArchivedPathRequests(entries: List<ProjectEntry>): List<Archive
 private fun buildInitialArchivedProjects(
   entries: List<ProjectEntry>,
   previousProjectsByPath: Map<String, AgentProjectSessions>,
+  loadingProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
 ): List<AgentProjectSessions> {
   return entries.map { entry ->
     val normalizedPath = normalizeAgentWorkbenchPath(entry.path)
@@ -470,11 +477,10 @@ private fun buildInitialArchivedProjects(
       buildSystemBadge = entry.buildSystemBadge,
       isOpen = entry.project != null,
       threads = previous?.threads.orEmpty(),
-      isLoading = true,
-      hasLoaded = previous?.hasLoaded ?: false,
-      hasUnknownThreadCount = previous?.hasUnknownThreadCount ?: false,
       errorMessage = null,
       providerWarnings = emptyList(),
+      providerLoadStates = mergeProviderLoadStates(previous?.providerLoadStates.orEmpty(), loadingProviderLoadStates),
+      providersWithUnknownThreadCount = previous?.providersWithUnknownThreadCount.orEmpty() - loadingProviderLoadStates.keys,
       worktrees = entry.worktreeEntries.map { worktree ->
         val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktree.path)
         val previousWorktree = previous?.worktrees?.firstOrNull { candidate -> candidate.path == normalizedWorktreePath }
@@ -484,11 +490,10 @@ private fun buildInitialArchivedProjects(
           branch = worktree.branch,
           isOpen = worktree.project != null,
           threads = previousWorktree?.threads.orEmpty(),
-          isLoading = true,
-          hasLoaded = previousWorktree?.hasLoaded ?: false,
-          hasUnknownThreadCount = previousWorktree?.hasUnknownThreadCount ?: false,
           errorMessage = null,
           providerWarnings = emptyList(),
+          providerLoadStates = mergeProviderLoadStates(previousWorktree?.providerLoadStates.orEmpty(), loadingProviderLoadStates),
+          providersWithUnknownThreadCount = previousWorktree?.providersWithUnknownThreadCount.orEmpty() - loadingProviderLoadStates.keys,
         )
       },
     )
@@ -503,22 +508,20 @@ private fun applyArchivedResults(
     val result = resultsByPath[project.path]
     val refreshedThreads = preserveThreadCosts(project.threads, result?.threads.orEmpty())
     project.copy(
-      isLoading = false,
-      hasLoaded = true,
-      hasUnknownThreadCount = result?.hasUnknownThreadCount ?: false,
       threads = refreshedThreads,
       errorMessage = result?.errorMessage,
       providerWarnings = result?.providerWarnings ?: emptyList(),
+      providerLoadStates = result?.providerLoadStates ?: emptyMap(),
+      providersWithUnknownThreadCount = result?.providersWithUnknownThreadCount ?: emptySet(),
       worktrees = project.worktrees.map { worktree ->
         val worktreeResult = resultsByPath[worktree.path]
         val refreshedWorktreeThreads = preserveThreadCosts(worktree.threads, worktreeResult?.threads.orEmpty())
         worktree.copy(
-          isLoading = false,
-          hasLoaded = true,
-          hasUnknownThreadCount = worktreeResult?.hasUnknownThreadCount ?: false,
           threads = refreshedWorktreeThreads,
           errorMessage = worktreeResult?.errorMessage,
           providerWarnings = worktreeResult?.providerWarnings ?: emptyList(),
+          providerLoadStates = worktreeResult?.providerLoadStates ?: emptyMap(),
+          providersWithUnknownThreadCount = worktreeResult?.providersWithUnknownThreadCount ?: emptySet(),
         )
       },
     )

@@ -5,9 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.statusColor
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
@@ -46,7 +44,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 500),
               thread("reviewing", AgentThreadActivity.REVIEWING, 400),
@@ -84,7 +82,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("done", AgentThreadActivity.UNREAD, 200),
               thread("idle", AgentThreadActivity.READY, 100),
@@ -109,7 +107,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("fresh-attention", AgentThreadActivity.NEEDS_INPUT, 10_000),
               thread("stale-running", AgentThreadActivity.PROCESSING, 9_999),
@@ -138,7 +136,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("stale-attention", AgentThreadActivity.NEEDS_INPUT, 9_999),
               thread("stale-done", AgentThreadActivity.UNREAD, 9_999),
@@ -199,7 +197,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("ready", AgentThreadActivity.READY, 100),
             ),
@@ -222,7 +220,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("sub-agent-done", AgentThreadActivity.UNREAD, 100, summaryActivity = null),
             ),
@@ -246,7 +244,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 500),
               thread("done", AgentThreadActivity.UNREAD, 400),
@@ -269,7 +267,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("done", AgentThreadActivity.UNREAD, 400),
               thread("processing", AgentThreadActivity.PROCESSING, 300),
@@ -291,7 +289,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("processing", AgentThreadActivity.PROCESSING, 300),
               thread("ready", AgentThreadActivity.READY, 200),
@@ -320,7 +318,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             worktrees = listOf(
               AgentWorktree(
                 path = "/work/project-a-feature",
@@ -525,7 +523,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           threads = listOf(
             thread("first", AgentThreadActivity.UNREAD, 100, title = "Same title"),
             thread("target", AgentThreadActivity.UNREAD, 200, title = "Same title"),
@@ -551,7 +549,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           threads = listOf(thread("existing", AgentThreadActivity.UNREAD, 100)),
         )
       ),
@@ -608,7 +606,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           threads = threads.toList(),
         )
       ),
@@ -623,7 +621,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             worktrees = listOf(
               AgentWorktree(
                 path = "/work/project-a-feature",

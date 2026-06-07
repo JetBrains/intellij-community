@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +62,8 @@ class AgentSessionRefreshConcurrencyIntegrationTest {
       }
 
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true &&
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED &&
         openInvocationCount.get() == 2
       }
 

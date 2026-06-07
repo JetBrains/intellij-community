@@ -44,7 +44,8 @@ class AgentSessionWarmStateServiceTest {
               provider = AgentSessionProvider.CODEX,
             ),
           ),
-          hasUnknownThreadCount = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX),
+          providersWithUnknownThreadCount = setOf(AgentSessionProvider.CLAUDE),
           updatedAt = 500,
         ),
       )
@@ -77,7 +78,6 @@ class AgentSessionWarmStateServiceTest {
           thread(id = "new-pending", title = "Pending", updatedAt = 100, provider = AgentSessionProvider.CODEX),
           thread(id = "blank-title-thread", title = "   \n ", updatedAt = 5, provider = AgentSessionProvider.CODEX),
         ),
-        hasUnknownThreadCount = false,
         updatedAt = 200,
       ),
     )
@@ -94,7 +94,6 @@ class AgentSessionWarmStateServiceTest {
       "/work/project-a",
       AgentSessionWarmPathSnapshot(
         threads = listOf(thread(id = "thread-a", updatedAt = 10, provider = AgentSessionProvider.CODEX)),
-        hasUnknownThreadCount = false,
         updatedAt = 10,
       ),
     )
@@ -102,7 +101,6 @@ class AgentSessionWarmStateServiceTest {
       "/work/project-b",
       AgentSessionWarmPathSnapshot(
         threads = listOf(thread(id = "thread-b", updatedAt = 20, provider = AgentSessionProvider.CLAUDE)),
-        hasUnknownThreadCount = false,
         updatedAt = 20,
       ),
     )
@@ -117,22 +115,23 @@ class AgentSessionWarmStateServiceTest {
     val original = AgentSessionWarmStateService()
     original.setPathSnapshot(
       "/work/project-a/",
-        AgentSessionWarmPathSnapshot(
-          threads = listOf(
-            thread(
-              id = "claude-thread",
-              updatedAt = 20,
-              provider = AgentSessionProvider.CLAUDE,
-              activity = AgentThreadActivity.UNREAD,
-              cost = AgentSessionCost(
-                amountUsd = BigDecimal("2.50"),
-                kind = AgentSessionCostKind.ESTIMATED,
-                matchedModelId = "openai/o3",
-              ),
+      AgentSessionWarmPathSnapshot(
+        threads = listOf(
+          thread(
+            id = "claude-thread",
+            updatedAt = 20,
+            provider = AgentSessionProvider.CLAUDE,
+            activity = AgentThreadActivity.UNREAD,
+            cost = AgentSessionCost(
+              amountUsd = BigDecimal("2.50"),
+              kind = AgentSessionCostKind.ESTIMATED,
+              matchedModelId = "openai/o3",
             ),
-            thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.CODEX),
           ),
-        hasUnknownThreadCount = true,
+          thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.CODEX),
+        ),
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX),
+        providersWithUnknownThreadCount = setOf(AgentSessionProvider.CLAUDE),
         updatedAt = 200,
       ),
     )
@@ -169,7 +168,6 @@ class AgentSessionWarmStateServiceTest {
             summaryActivity = null,
           ),
         ),
-        hasUnknownThreadCount = false,
         updatedAt = 200,
       ),
     )

@@ -8,6 +8,8 @@ import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
+import com.intellij.agent.workbench.sessions.model.isTerminal
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -31,9 +33,13 @@ internal interface SessionWarmState {
 
 internal data class AgentSessionWarmPathSnapshot(
   @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val hasUnknownThreadCount: Boolean,
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider> = emptySet(),
   @JvmField val updatedAt: Long,
-)
+) {
+  val hasUnknownThreadCount: Boolean
+    get() = providersWithUnknownThreadCount.isNotEmpty()
+}
 
 internal class InMemorySessionWarmState : SessionWarmState {
   private val snapshotsByPath = LinkedHashMap<String, AgentSessionWarmPathSnapshot>()
@@ -132,7 +138,8 @@ internal class AgentSessionWarmStateService
   @Serializable
   internal data class WarmPathSnapshotState(
     @JvmField val threads: List<WarmThreadState> = emptyList(),
-    @JvmField val hasUnknownThreadCount: Boolean = false,
+    @JvmField val providerLoadStates: Map<String, String> = emptyMap(),
+    @JvmField val providersWithUnknownThreadCount: List<String> = emptyList(),
     @JvmField val updatedAt: Long = 0,
   )
 
@@ -164,6 +171,7 @@ internal class AgentSessionWarmStateService
 }
 
 private fun normalizeWarmPathSnapshot(snapshot: AgentSessionWarmPathSnapshot): AgentSessionWarmPathSnapshot {
+  val terminalProviderLoadStates = snapshot.providerLoadStates.filterValues { state -> state.isTerminal }
   return snapshot.copy(
     threads = snapshot.threads
       .asSequence()
@@ -176,10 +184,15 @@ private fun normalizeWarmPathSnapshot(snapshot: AgentSessionWarmPathSnapshot): A
       }
       .toList()
       .let(::sortAgentSessionThreadsForDisplay),
+    providerLoadStates = terminalProviderLoadStates,
+    providersWithUnknownThreadCount = snapshot.providersWithUnknownThreadCount.filterTo(LinkedHashSet()) { provider ->
+      terminalProviderLoadStates[provider] == AgentSessionProviderLoadState.LOADED
+    },
   )
 }
 
 private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): AgentSessionWarmPathSnapshot {
+  val parsedProviderLoadStates = providerLoadStates.toProviderLoadStates()
   return AgentSessionWarmPathSnapshot(
     threads = threads.mapNotNull { thread ->
       val provider = AgentSessionProvider.fromOrNull(thread.provider) ?: return@mapNotNull null
@@ -196,7 +209,10 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
         cost = thread.cost?.toCost(),
       )
     },
-    hasUnknownThreadCount = hasUnknownThreadCount,
+    providerLoadStates = parsedProviderLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount.mapNotNullTo(LinkedHashSet()) { providerId ->
+      AgentSessionProvider.fromOrNull(providerId)
+    },
     updatedAt = updatedAt,
   )
 }
@@ -218,9 +234,21 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
         cost = thread.cost?.toState(),
       )
     },
-    hasUnknownThreadCount = hasUnknownThreadCount,
+    providerLoadStates = providerLoadStates.mapKeys { (provider, _) -> provider.value }.mapValues { (_, state) -> state.name },
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount.map { provider -> provider.value },
     updatedAt = updatedAt,
   )
+}
+
+private fun Map<String, String>.toProviderLoadStates(): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (isEmpty()) {
+    return emptyMap()
+  }
+  return entries.mapNotNull { (providerId, stateName) ->
+    val provider = AgentSessionProvider.fromOrNull(providerId) ?: return@mapNotNull null
+    val state = runCatching { AgentSessionProviderLoadState.valueOf(stateName) }.getOrNull() ?: return@mapNotNull null
+    provider to state
+  }.toMap()
 }
 
 private fun parseWarmStateThreadActivity(value: String): AgentThreadActivity {

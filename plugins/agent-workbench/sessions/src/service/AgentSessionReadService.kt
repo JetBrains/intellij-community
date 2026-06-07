@@ -7,8 +7,10 @@ import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.isTerminal
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -54,10 +56,10 @@ class AgentSessionReadService private constructor(
     val state = optionalSessionsStateProvider() ?: return null
     val normalizedPath = normalizeAgentWorkbenchPath(context.path)
     val thread = resolveThreadsForPath(state, normalizedPath)
-      .asSequence()
-      .filter { thread -> thread.isConcreteRebindTarget(provider = provider, pendingSessionId = pendingSessionId) }
-      .maxByOrNull { thread -> thread.updatedAt }
-      ?: return null
+                   .asSequence()
+                   .filter { thread -> thread.isConcreteRebindTarget(provider = provider, pendingSessionId = pendingSessionId) }
+                   .maxByOrNull { thread -> thread.updatedAt }
+                 ?: return null
 
     return AgentChatTabRebindTarget(
       projectPath = normalizedPath,
@@ -74,18 +76,24 @@ class AgentSessionReadService private constructor(
 
 internal data class AgentSessionPathState(
   @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val isLoading: Boolean,
-  @JvmField val hasLoaded: Boolean,
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
   @JvmField val errorMessage: String?,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning>,
-)
+) {
+  fun isProviderLoading(provider: AgentSessionProvider): Boolean {
+    return providerLoadStates[provider] == AgentSessionProviderLoadState.LOADING
+  }
+
+  fun hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
+    return providerLoadStates[provider]?.isTerminal == true
+  }
+}
 
 internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedPath: String): AgentSessionPathState? {
   state.projects.firstOrNull { project -> project.path == normalizedPath }?.let { project ->
     return AgentSessionPathState(
       threads = project.threads,
-      isLoading = project.isLoading,
-      hasLoaded = project.hasLoaded,
+      providerLoadStates = project.providerLoadStates,
       errorMessage = project.errorMessage,
       providerWarnings = project.providerWarnings,
     )
@@ -95,8 +103,7 @@ internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedP
     val worktree = project.worktrees.firstOrNull { candidate -> candidate.path == normalizedPath } ?: return@forEach
     return AgentSessionPathState(
       threads = worktree.threads,
-      isLoading = worktree.isLoading,
-      hasLoaded = worktree.hasLoaded,
+      providerLoadStates = worktree.providerLoadStates,
       errorMessage = worktree.errorMessage,
       providerWarnings = worktree.providerWarnings,
     )

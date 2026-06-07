@@ -4,8 +4,6 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -45,8 +43,10 @@ class AgentSessionsSwingTreeInteractionTest {
       branch = "feature",
       isOpen = false,
     )
-    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
-    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val thread =
+      AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread =
+      AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
     assertThat(shouldOpenOnActivation(SessionTreeNode.Project(project))).isTrue()
@@ -68,8 +68,10 @@ class AgentSessionsSwingTreeInteractionTest {
       branch = "feature",
       isOpen = false,
     )
-    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
-    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val thread =
+      AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread =
+      AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
     assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Project(project))).isFalse()
@@ -107,10 +109,13 @@ class AgentSessionsSwingTreeInteractionTest {
   fun archiveActionContextPrefersPopupContextAndFallsBackToSelection() {
     val project = ProjectManager.getInstance().defaultProject
     val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
-    val popupThread = AgentSessionThread(id = "popup-1", title = "Popup", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
-    val selectedThread = AgentSessionThread(id = "selected-1", title = "Selected", updatedAt = 100, archived = false, provider = AgentSessionProvider.CLAUDE)
+    val popupThread =
+      AgentSessionThread(id = "popup-1", title = "Popup", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val selectedThread =
+      AgentSessionThread(id = "selected-1", title = "Selected", updatedAt = 100, archived = false, provider = AgentSessionProvider.CLAUDE)
     val popupTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = popupThread.provider, threadId = popupThread.id)
-    val selectedTarget = ArchiveThreadTarget.Thread(path = "/work/project-b", provider = selectedThread.provider, threadId = selectedThread.id)
+    val selectedTarget =
+      ArchiveThreadTarget.Thread(path = "/work/project-b", provider = selectedThread.provider, threadId = selectedThread.id)
     val popupContext = checkNotNull(createAgentSessionsTreePopupActionContext(
       project = project,
       nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "popup-1"),

@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +15,7 @@ internal class AgentSessionOnDemandLoadSupport(
   private val serviceScope: CoroutineScope,
   private val stateStore: AgentSessionsStateStore,
   private val threadLoadSupport: AgentSessionThreadLoadSupport,
+  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
 ) {
   private val onDemandMutex = Mutex()
   private val onDemandLoading = LinkedHashSet<String>()
@@ -24,23 +27,22 @@ internal class AgentSessionOnDemandLoadSupport(
       if (!markOnDemandLoading(normalized)) return@launch
       try {
         stateStore.updateProject(normalized) { project ->
+          val loadingProviderLoadStates = buildLoadingProviderLoadStates(sessionSourcesProvider().map { source -> source.provider })
           project.copy(
-            isLoading = true,
-            hasUnknownThreadCount = false,
             errorMessage = null,
             providerWarnings = emptyList(),
+            providerLoadStates = mergeProviderLoadStates(project.providerLoadStates, loadingProviderLoadStates),
+            providersWithUnknownThreadCount = project.providersWithUnknownThreadCount - loadingProviderLoadStates.keys,
           )
         }
         val result = threadLoadSupport.loadThreadsFromClosedProject(path = normalized)
         stateStore.updateProject(normalized) { project ->
           project.copy(
-            isLoading = false,
-            hasLoaded = true,
-            hasUnknownThreadCount = result.hasUnknownThreadCount,
             threads = result.threads,
             errorMessage = result.errorMessage,
             providerWarnings = result.providerWarnings,
             providerLoadStates = result.providerLoadStates,
+            providersWithUnknownThreadCount = result.providersWithUnknownThreadCount,
           )
         }
       }
@@ -57,23 +59,22 @@ internal class AgentSessionOnDemandLoadSupport(
       if (!markWorktreeOnDemandLoading(normalizedProject, normalizedWorktree)) return@launch
       try {
         stateStore.updateWorktree(normalizedProject, normalizedWorktree) { worktree ->
+          val loadingProviderLoadStates = buildLoadingProviderLoadStates(sessionSourcesProvider().map { source -> source.provider })
           worktree.copy(
-            isLoading = true,
-            hasUnknownThreadCount = false,
             errorMessage = null,
             providerWarnings = emptyList(),
+            providerLoadStates = mergeProviderLoadStates(worktree.providerLoadStates, loadingProviderLoadStates),
+            providersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount - loadingProviderLoadStates.keys,
           )
         }
         val result = threadLoadSupport.loadThreadsFromClosedProject(path = normalizedWorktree)
         stateStore.updateWorktree(normalizedProject, normalizedWorktree) { worktree ->
           worktree.copy(
-            isLoading = false,
-            hasLoaded = true,
-            hasUnknownThreadCount = result.hasUnknownThreadCount,
             threads = result.threads,
             errorMessage = result.errorMessage,
             providerWarnings = result.providerWarnings,
             providerLoadStates = result.providerLoadStates,
+            providersWithUnknownThreadCount = result.providersWithUnknownThreadCount,
           )
         }
       }
@@ -86,7 +87,7 @@ internal class AgentSessionOnDemandLoadSupport(
   private suspend fun markOnDemandLoading(path: String): Boolean {
     return onDemandMutex.withLock {
       val project = stateStore.state.value.projects.firstOrNull { it.path == path } ?: return@withLock false
-      if (project.isOpen || project.isLoading || project.hasLoaded) return@withLock false
+      if (project.isOpen || project.isLoading || project.hasAnyProviderSnapshot()) return@withLock false
       if (!onDemandLoading.add(path)) return@withLock false
       true
     }
@@ -102,7 +103,7 @@ internal class AgentSessionOnDemandLoadSupport(
     return onDemandMutex.withLock {
       val project = stateStore.state.value.projects.firstOrNull { it.path == projectPath } ?: return@withLock false
       val worktree = project.worktrees.firstOrNull { it.path == worktreePath } ?: return@withLock false
-      if (worktree.isLoading || worktree.hasLoaded) return@withLock false
+      if (worktree.isLoading || worktree.hasAnyProviderSnapshot()) return@withLock false
       if (!onDemandWorktreeLoading.add(worktreePath)) return@withLock false
       true
     }

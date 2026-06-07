@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
@@ -107,14 +108,14 @@ internal class AgentSessionsTreeInteractionController(
           is SessionTreeId.Project -> {
             service<AgentSessionTreeUiStateService>().setProjectCollapsed(id.path, collapsed = false)
             val projectNode = nodeResolver(id) as? SessionTreeNode.Project ?: return
-            if (!projectNode.project.hasLoaded && !projectNode.project.isLoading) {
+            if (!projectNode.project.hasAnyProviderSnapshot() && !projectNode.project.isLoading) {
               service<AgentSessionRefreshService>().loadProjectThreadsOnDemand(id.path)
             }
           }
 
           is SessionTreeId.Worktree -> {
             val worktreeNode = nodeResolver(id) as? SessionTreeNode.Worktree ?: return
-            if (!worktreeNode.worktree.hasLoaded && !worktreeNode.worktree.isLoading) {
+            if (!worktreeNode.worktree.hasAnyProviderSnapshot() && !worktreeNode.worktree.isLoading) {
               service<AgentSessionRefreshService>().loadWorktreeThreadsOnDemand(id.projectPath, id.worktreePath)
             }
           }

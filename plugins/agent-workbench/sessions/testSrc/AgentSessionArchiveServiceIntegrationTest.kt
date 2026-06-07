@@ -18,6 +18,7 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelem
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryEvent
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryProvider
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveBackgroundTaskRunner
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
@@ -418,7 +419,9 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
           waitForCondition {
             val project = service.state.value.projects.firstOrNull()
-            project?.isLoading == true && project.threads.map { it.id } == listOf("codex-1", "codex-2")
+            project?.providerLoadStates?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED &&
+            project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADING &&
+            project.threads.map { it.id } == listOf("codex-1", "codex-2")
           }
 
           archiveService.archiveThreadsForTest(
@@ -432,7 +435,9 @@ class AgentSessionArchiveServiceIntegrationTest {
           releaseClaudeSource.complete(Unit)
           waitForCondition {
             val project = service.state.value.projects.firstOrNull()
-            project?.isLoading == false && project.hasLoaded && project.threads.map { it.id } == listOf("codex-2")
+            project?.providerLoadStates?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED &&
+            project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.map { it.id } == listOf("codex-2")
           }
 
           backgroundRunner.resume()
@@ -524,7 +529,6 @@ class AgentSessionArchiveServiceIntegrationTest {
       PROJECT_PATH,
       AgentSessionWarmPathSnapshot(
         threads = staleSourceThreads,
-        hasUnknownThreadCount = false,
         updatedAt = 100,
       ),
     )

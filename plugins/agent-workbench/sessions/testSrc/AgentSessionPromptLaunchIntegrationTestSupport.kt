@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -106,7 +107,8 @@ fun assertExistingThreadLaunchUsesPostStartDispatch(
         service.refresh()
         waitForCondition {
           val project = service.state.value.projects.firstOrNull { it.path == projectPath } ?: return@waitForCondition false
-          project.hasLoaded && project.threads.any { thread -> thread.id == threadId }
+          project.providerLoadStates[provider] == AgentSessionProviderLoadState.LOADED &&
+          project.threads.any { thread -> thread.id == threadId }
         }
 
         val result = launchService.launchPromptRequest(request)
@@ -160,7 +162,8 @@ fun assertExistingThreadLaunchUsesStartupOverride(
         service.refresh()
         waitForCondition {
           val project = service.state.value.projects.firstOrNull { it.path == projectPath } ?: return@waitForCondition false
-          project.hasLoaded && project.threads.any { thread -> thread.id == threadId }
+          project.providerLoadStates[provider] == AgentSessionProviderLoadState.LOADED &&
+          project.threads.any { thread -> thread.id == threadId }
         }
 
         val result = launchService.launchPromptRequest(request)
@@ -219,7 +222,9 @@ fun assertNewThreadPromptLaunchOpensNewChat(
       ) { service, launchService ->
         service.refresh()
         waitForCondition {
-          service.state.value.projects.firstOrNull { project -> project.path == request.projectPath }?.hasLoaded == true
+          val project = service.state.value.projects.firstOrNull { project -> project.path == request.projectPath }
+                        ?: return@waitForCondition false
+          project.providerLoadStates[descriptor.provider] == AgentSessionProviderLoadState.LOADED
         }
 
         val result = launchService.launchPromptRequest(request)

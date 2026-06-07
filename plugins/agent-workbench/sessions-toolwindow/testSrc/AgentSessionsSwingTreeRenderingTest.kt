@@ -4,10 +4,8 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -33,7 +31,7 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           errorMessage = "Failed to load sessions",
           providerWarnings = listOf(
             AgentSessionProviderWarning(
@@ -61,7 +59,7 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           providerWarnings = listOf(
             AgentSessionProviderWarning(
               provider = AgentSessionProvider.CLAUDE,
@@ -89,8 +87,8 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          hasLoaded = true,
-          hasUnknownThreadCount = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX),
           threads = listOf(
             AgentSessionThread(id = "thread-1",
                                title = "Thread 1",
@@ -152,8 +150,7 @@ class AgentSessionsSwingTreeRenderingTest {
             path = "/work/project-loading",
             name = "Loading Project",
             isOpen = false,
-            isLoading = true,
-          ),
+            providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),),
         ),
         lastUpdatedAt = nowMs,
         visibleClosedProjectCount = 7,

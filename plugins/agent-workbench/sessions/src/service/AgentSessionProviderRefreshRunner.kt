@@ -25,6 +25,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.hasProviderSnapshot
 import com.intellij.agent.workbench.sessions.model.mergeAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
@@ -704,17 +705,9 @@ private fun resolvePathsForThreadIds(
   }
 
   val resolvedPaths = LinkedHashSet<String>()
-  for (project in state.projects) {
-    if (project.hasProviderSnapshot(provider) && project.threads.any { thread -> thread.matchesProviderThreadIds(provider, threadIds) }) {
-      resolvedPaths.add(project.path)
-    }
-    for (worktree in project.worktrees) {
-      if (worktree.hasProviderSnapshot(provider) && worktree.threads.any { thread ->
-          thread.matchesProviderThreadIds(provider,
-                                          threadIds)
-        }) {
-        resolvedPaths.add(worktree.path)
-      }
+  state.forEachPathContent { content ->
+    if (content.hasProviderSnapshot(provider) && content.threads.any { thread -> thread.matchesProviderThreadIds(provider, threadIds) }) {
+      resolvedPaths.add(content.path)
     }
   }
 
@@ -753,14 +746,9 @@ internal data class ProviderRefreshOutcome(
 
 private fun collectOpenOrLoadedPaths(state: AgentSessionsState): List<String> {
   val paths = LinkedHashSet<String>()
-  for (project in state.projects) {
-    if (project.isOpen || project.hasAnyProviderSnapshot()) {
-      paths.add(project.path)
-    }
-    for (worktree in project.worktrees) {
-      if (worktree.isOpen || worktree.hasAnyProviderSnapshot()) {
-        paths.add(worktree.path)
-      }
+  state.forEachPathContent { content ->
+    if (content.isOpen || content.hasAnyProviderSnapshot) {
+      paths.add(content.path)
     }
   }
   return ArrayList(paths)
@@ -771,25 +759,9 @@ private fun collectLoadedProviderThreadIdsByPath(
   provider: AgentSessionProvider,
 ): Map<String, Set<String>> {
   val result = LinkedHashMap<String, Set<String>>()
-  for (project in state.projects) {
-    if (project.hasProviderSnapshot(provider)) {
-      result[project.path] = project.threads
-        .asSequence()
-        .filter { it.provider == provider }
-        .map { it.id }
-        .mapNotNull(::normalizeConcreteAgentSessionThreadId)
-        .toCollection(LinkedHashSet())
-    }
-    for (worktree in project.worktrees) {
-      if (!worktree.hasProviderSnapshot(provider)) {
-        continue
-      }
-      result[worktree.path] = worktree.threads
-        .asSequence()
-        .filter { it.provider == provider }
-        .map { it.id }
-        .mapNotNull(::normalizeConcreteAgentSessionThreadId)
-        .toCollection(LinkedHashSet())
+  state.forEachPathContent { content ->
+    if (content.hasProviderSnapshot(provider)) {
+      result[content.path] = content.threads.normalizedProviderThreadIds(provider)
     }
   }
   return result
@@ -801,24 +773,23 @@ private fun collectCurrentProviderOutcomes(
   provider: AgentSessionProvider,
 ): MutableMap<String, ProviderRefreshOutcome> {
   val outcomes = LinkedHashMap<String, ProviderRefreshOutcome>()
-  for (project in state.projects) {
-    if (project.path in targetPaths && project.hasProviderSnapshot(provider)) {
-      outcomes[project.path] = ProviderRefreshOutcome(
-        threads = project.threads.filter { thread -> thread.provider == provider },
-        isComplete = false,
-      )
-    }
-    for (worktree in project.worktrees) {
-      if (worktree.path !in targetPaths || !worktree.hasProviderSnapshot(provider)) {
-        continue
-      }
-      outcomes[worktree.path] = ProviderRefreshOutcome(
-        threads = worktree.threads.filter { thread -> thread.provider == provider },
+  state.forEachPathContent { content ->
+    if (content.path in targetPaths && content.hasProviderSnapshot(provider)) {
+      outcomes[content.path] = ProviderRefreshOutcome(
+        threads = content.threads.filter { thread -> thread.provider == provider },
         isComplete = false,
       )
     }
   }
   return outcomes
+}
+
+private fun List<AgentSessionThread>.normalizedProviderThreadIds(provider: AgentSessionProvider): Set<String> {
+  return asSequence()
+    .filter { thread -> thread.provider == provider }
+    .map { thread -> thread.id }
+    .mapNotNull(::normalizeConcreteAgentSessionThreadId)
+    .toCollection(LinkedHashSet())
 }
 
 private fun collectMissingProviderThreadPaths(
@@ -938,10 +909,18 @@ private fun AgentProjectSessions.withProviderRefreshOutcome(
       mergeThreadUpdatesForProvider(this.threads, provider, threads, outcome.removedThreadIds)
     }
   } ?: this.threads
+  val providerLoadMetadata = updateProviderLoadMetadata(
+    currentProviderLoadStates = this.providerLoadStates,
+    currentProvidersWithUnknownThreadCount = this.providersWithUnknownThreadCount,
+    provider = provider,
+    providerLoadState = outcome.providerLoadState,
+    providerHasUnknownThreadCount = if (outcome.warningMessage == null) null else false,
+  )
   return copy(
     threads = mergedThreads,
     providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
-    providerLoadStates = updateProviderLoadState(this.providerLoadStates, provider, outcome, this.hasLoaded),
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
   )
 }
 
@@ -957,32 +936,27 @@ private fun AgentWorktree.withProviderRefreshOutcome(
       mergeThreadUpdatesForProvider(this.threads, provider, threads, outcome.removedThreadIds)
     }
   } ?: this.threads
+  val providerLoadMetadata = updateProviderLoadMetadata(
+    currentProviderLoadStates = this.providerLoadStates,
+    currentProvidersWithUnknownThreadCount = this.providersWithUnknownThreadCount,
+    provider = provider,
+    providerLoadState = outcome.providerLoadState,
+    providerHasUnknownThreadCount = if (outcome.warningMessage == null) null else false,
+  )
   return copy(
     threads = mergedThreads,
     providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
-    providerLoadStates = updateProviderLoadState(this.providerLoadStates, provider, outcome, this.hasLoaded),
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
   )
 }
 
-private fun updateProviderLoadState(
-  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
-  provider: AgentSessionProvider,
-  outcome: ProviderRefreshOutcome,
-  pathHasLoaded: Boolean,
-): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
-  val nextState = when {
-    outcome.warningMessage != null -> AgentSessionProviderLoadState.FAILED
-    outcome.threads != null && outcome.isComplete -> AgentSessionProviderLoadState.LOADED
-    else -> return providerLoadStates
+private val ProviderRefreshOutcome.providerLoadState: AgentSessionProviderLoadState?
+  get() = when {
+    warningMessage != null -> AgentSessionProviderLoadState.FAILED
+    threads != null && isComplete -> AgentSessionProviderLoadState.LOADED
+    else -> null
   }
-  if (providerLoadStates[provider] == nextState) {
-    return providerLoadStates
-  }
-  if (pathHasLoaded && providerLoadStates.isEmpty() && nextState == AgentSessionProviderLoadState.LOADED) {
-    return providerLoadStates
-  }
-  return providerLoadStates + (provider to nextState)
-}
 
 private fun replaceProviderWarning(
   warnings: List<AgentSessionProviderWarning>,

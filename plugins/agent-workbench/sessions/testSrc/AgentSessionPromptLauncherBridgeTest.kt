@@ -43,6 +43,7 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTarge
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryEvent
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryProvider
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
@@ -417,7 +418,8 @@ class AgentSessionPromptLauncherBridgeTest {
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
           val bridge = promptLauncherBridge(service, launchService)
@@ -1095,7 +1097,8 @@ class AgentSessionPromptLauncherBridgeTest {
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
           val bridge = promptLauncherBridge(service, launchService)
@@ -1167,7 +1170,8 @@ class AgentSessionPromptLauncherBridgeTest {
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
           val bridge = promptLauncherBridge(service, launchService)
@@ -1260,7 +1264,8 @@ class AgentSessionPromptLauncherBridgeTest {
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
           val promptLaunchResults = CopyOnWriteArrayList<AgentPromptLaunchResult>()
@@ -1336,7 +1341,8 @@ class AgentSessionPromptLauncherBridgeTest {
             waitForCondition {
               val project =
                 service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-              project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+              project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+              project.threads.any { thread -> thread.id == "thread-existing" }
             }
 
             val existingThread = checkNotNull(
@@ -1439,7 +1445,8 @@ class AgentSessionPromptLauncherBridgeTest {
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
           val bridge = promptLauncherBridge(service, launchService)
@@ -1507,7 +1514,8 @@ class AgentSessionPromptLauncherBridgeTest {
         ) { service, launchService ->
           service.refresh()
           waitForCondition {
-            service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+            val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
           }
 
           val bridge = promptLauncherBridge(service, launchService)
@@ -1651,7 +1659,8 @@ class AgentSessionPromptLauncherBridgeTest {
       ) { service, launchService ->
         service.refresh()
         waitForCondition {
-          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+          val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+          project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED
         }
 
         val bridge = promptLauncherBridge(service, launchService)
@@ -1695,7 +1704,8 @@ class AgentSessionPromptLauncherBridgeTest {
       ) { service, launchService ->
         service.refresh()
         waitForCondition {
-          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+          val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+          project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
         }
 
         val bridge = promptLauncherBridge(service, launchService)
@@ -1742,7 +1752,8 @@ class AgentSessionPromptLauncherBridgeTest {
 
         waitForCondition {
           val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-          project.hasLoaded && project.threads.map { thread -> thread.id } == listOf("claude-1")
+          project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED &&
+          project.threads.map { thread -> thread.id } == listOf("claude-1")
         }
 
         assertThat(openLoads.get()).isEqualTo(1)
@@ -1863,7 +1874,9 @@ class AgentSessionPromptLauncherBridgeTest {
       ) { service, launchService ->
         service.refresh()
         waitForCondition {
-          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+          val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+          project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+          project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.FAILED
         }
 
         val bridge = promptLauncherBridge(service, launchService)

@@ -79,6 +79,9 @@ enum class AgentSessionProviderLoadState {
   FAILED,
 }
 
+val AgentSessionProviderLoadState.isTerminal: Boolean
+  get() = this == AgentSessionProviderLoadState.LOADED || this == AgentSessionProviderLoadState.FAILED
+
 class ProjectBuildSystemBadge(
   @JvmField val id: String,
   @JvmField val icon: Icon,
@@ -96,13 +99,17 @@ data class AgentWorktree(
   @JvmField val branch: @NlsSafe String?,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread> = emptyList(),
-  @JvmField val isLoading: Boolean = false,
-  @JvmField val hasLoaded: Boolean = false,
-  @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
   @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
-)
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider> = emptySet(),
+) {
+  val isLoading: Boolean
+    get() = providerLoadStates.values.any { state -> state == AgentSessionProviderLoadState.LOADING }
+
+  val hasUnknownThreadCount: Boolean
+    get() = providersWithUnknownThreadCount.isNotEmpty()
+}
 
 data class AgentProjectSessions(
   @JvmField val path: String,
@@ -111,14 +118,34 @@ data class AgentProjectSessions(
   @JvmField val buildSystemBadge: ProjectBuildSystemBadge? = null,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread> = emptyList(),
-  @JvmField val isLoading: Boolean = false,
-  @JvmField val hasLoaded: Boolean = false,
-  @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
   @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider> = emptySet(),
   @JvmField val worktrees: List<AgentWorktree> = emptyList(),
-)
+) {
+  val isLoading: Boolean
+    get() = providerLoadStates.values.any { state -> state == AgentSessionProviderLoadState.LOADING }
+
+  val hasUnknownThreadCount: Boolean
+    get() = providersWithUnknownThreadCount.isNotEmpty()
+}
+
+fun AgentProjectSessions.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
+  return providerLoadStates[provider]?.isTerminal == true
+}
+
+fun AgentProjectSessions.hasAnyProviderSnapshot(): Boolean {
+  return providerLoadStates.values.any { state -> state.isTerminal }
+}
+
+fun AgentWorktree.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
+  return providerLoadStates[provider]?.isTerminal == true
+}
+
+fun AgentWorktree.hasAnyProviderSnapshot(): Boolean {
+  return providerLoadStates.values.any { state -> state.isTerminal }
+}
 
 data class AgentSessionsState(
   @JvmField val projects: List<AgentProjectSessions> = emptyList(),

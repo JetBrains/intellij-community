@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
@@ -154,13 +155,13 @@ class AgentSessionRefreshService internal constructor(
   private suspend fun isSourceRefreshGateActive(): Boolean = withContext(Dispatchers.UI) {
     val stateSnapshot = stateStore.snapshot()
     val hasLoadedPaths = stateSnapshot.projects.any { project ->
-      project.hasLoaded || project.worktrees.any { it.hasLoaded }
+      project.hasAnyProviderSnapshot() || project.worktrees.any { it.hasAnyProviderSnapshot() }
     }
 
     val openProjects = ProjectManager.getInstance().openProjects
     if (openProjects.isEmpty()) {
       val decision = stateSnapshot.projects.any { project ->
-        project.isOpen || project.hasLoaded || project.worktrees.any { it.isOpen || it.hasLoaded }
+        project.isOpen || project.hasAnyProviderSnapshot() || project.worktrees.any { it.isOpen || it.hasAnyProviderSnapshot() }
       }
       LOG.debug {
         "Source refresh gate decision=$decision (openProjects=0, stateProjects=${stateSnapshot.projects.size}, hasLoadedPaths=$hasLoadedPaths)"

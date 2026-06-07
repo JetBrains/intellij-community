@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.testFramework.junit5.TestApplication
@@ -54,7 +55,8 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
       }
 
       service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-5")
@@ -105,7 +107,8 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
       }
 
       service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-sub-1")
@@ -208,7 +211,8 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
       }
 
       service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
@@ -258,7 +262,8 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       release.complete(Unit)
 
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
       }
 
       val project = service.state.value.projects.single { it.path == PROJECT_PATH }
@@ -321,10 +326,11 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       release.complete(Unit)
 
       waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+        val worktree = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.worktrees
           ?.firstOrNull { it.path == WORKTREE_PATH }
-          ?.hasLoaded == true
+          ?: return@waitForCondition false
+        worktree.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
       }
 
       val worktree = service.state.value.projects

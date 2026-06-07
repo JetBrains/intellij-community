@@ -3,18 +3,24 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 
 internal data class AgentSessionLoadResult(
   @JvmField val threads: List<AgentSessionThread>,
   @JvmField val errorMessage: String? = null,
-  @JvmField val hasUnknownThreadCount: Boolean = false,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
   @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState> = emptyMap(),
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider> = emptySet(),
+) {
+  val hasUnknownThreadCount: Boolean
+    get() = providersWithUnknownThreadCount.isNotEmpty()
+}
+
+internal data class AgentSessionProviderLoadMetadata(
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider>,
 )
 
 internal data class AgentSessionSourceLoadResult(
@@ -42,7 +48,6 @@ internal fun mergeAgentSessionSourceLoadResults(
       )
     }
   }
-  val hasUnknownThreadCount = sourceResults.any { it.hasUnknownTotal }
   val providerLoadStates = buildMap {
     sourceResults.forEach { sourceResult ->
       put(
@@ -51,6 +56,12 @@ internal fun mergeAgentSessionSourceLoadResults(
       )
     }
   }
+  val providersWithUnknownThreadCount = sourceResults
+    .asSequence()
+    .filter { sourceResult -> sourceResult.hasUnknownTotal }
+    .map { sourceResult -> sourceResult.provider }
+    .toSet()
+    .retainLoadedProviders(providerLoadStates)
 
   val firstError = sourceResults.firstNotNullOfOrNull { sourceResult ->
     sourceResult.result.exceptionOrNull()?.let { throwable ->
@@ -62,9 +73,9 @@ internal fun mergeAgentSessionSourceLoadResults(
   return AgentSessionLoadResult(
     threads = mergedThreads,
     errorMessage = errorMessage,
-    hasUnknownThreadCount = hasUnknownThreadCount,
     providerWarnings = if (allSourcesFailed) emptyList() else providerWarnings,
     providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
   )
 }
 
@@ -76,17 +87,6 @@ internal fun buildLoadingProviderLoadStates(
   }
   return buildMap {
     providers.forEach { provider -> put(provider, AgentSessionProviderLoadState.LOADING) }
-  }
-}
-
-internal fun deriveLoadedProviderStatesFromThreads(
-  threads: List<AgentSessionThread>,
-): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
-  if (threads.isEmpty()) {
-    return emptyMap()
-  }
-  return buildMap {
-    threads.forEach { thread -> put(thread.provider, AgentSessionProviderLoadState.LOADED) }
   }
 }
 
@@ -103,34 +103,109 @@ internal fun mergeProviderLoadStates(
   return current + updates
 }
 
-internal fun AgentProjectSessions.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
-  if (hasLoaded) {
-    return true
+internal fun mergeProviderLoadMetadata(
+  currentProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  currentProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+  providerLoadStateUpdates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  updatedProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+): AgentSessionProviderLoadMetadata {
+  val providerLoadStates = mergeProviderLoadStates(currentProviderLoadStates, providerLoadStateUpdates)
+  val providersWithUnknownThreadCount = mergeUpdatedProvidersWithUnknownThreadCount(
+    current = currentProvidersWithUnknownThreadCount,
+    providerLoadStateUpdates = providerLoadStateUpdates,
+    updatedProvidersWithUnknownThreadCount = updatedProvidersWithUnknownThreadCount,
+  ).retainLoadedProviders(providerLoadStates)
+  return AgentSessionProviderLoadMetadata(
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
+  )
+}
+
+internal fun updateProviderLoadMetadata(
+  currentProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  currentProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+  provider: AgentSessionProvider,
+  providerLoadState: AgentSessionProviderLoadState?,
+  providerHasUnknownThreadCount: Boolean? = null,
+): AgentSessionProviderLoadMetadata {
+  if (providerLoadState == null && providerHasUnknownThreadCount == null) {
+    return AgentSessionProviderLoadMetadata(
+      providerLoadStates = currentProviderLoadStates,
+      providersWithUnknownThreadCount = currentProvidersWithUnknownThreadCount.retainLoadedProviders(currentProviderLoadStates),
+    )
   }
-  val providerLoadState = providerLoadStates[provider]
-  return providerLoadState == AgentSessionProviderLoadState.LOADED ||
-         providerLoadState == AgentSessionProviderLoadState.FAILED ||
-         threads.any { thread -> thread.provider == provider }
-}
-
-internal fun AgentProjectSessions.hasAnyProviderSnapshot(): Boolean {
-  return hasLoaded || providerLoadStates.values.any { state -> state.isTerminal() } || threads.isNotEmpty()
-}
-
-internal fun AgentWorktree.hasProviderSnapshot(provider: AgentSessionProvider): Boolean {
-  if (hasLoaded) {
-    return true
+  if (providerLoadState == null) {
+    val updatedProvidersWithUnknownThreadCount = if (providerHasUnknownThreadCount == true) {
+      currentProvidersWithUnknownThreadCount + provider
+    }
+    else {
+      currentProvidersWithUnknownThreadCount - provider
+    }
+    val providersWithUnknownThreadCount = updatedProvidersWithUnknownThreadCount.retainLoadedProviders(currentProviderLoadStates)
+    return AgentSessionProviderLoadMetadata(
+      providerLoadStates = currentProviderLoadStates,
+      providersWithUnknownThreadCount = providersWithUnknownThreadCount,
+    )
   }
-  val providerLoadState = providerLoadStates[provider]
-  return providerLoadState == AgentSessionProviderLoadState.LOADED ||
-         providerLoadState == AgentSessionProviderLoadState.FAILED ||
-         threads.any { thread -> thread.provider == provider }
+  val providerLoadStateUpdates = mapOf(provider to providerLoadState)
+  val updatedProvidersWithUnknownThreadCount = when (providerHasUnknownThreadCount) {
+    true -> setOf(provider)
+    false -> emptySet()
+    null -> if (provider in currentProvidersWithUnknownThreadCount) setOf(provider) else emptySet()
+  }
+  return mergeProviderLoadMetadata(
+    currentProviderLoadStates = currentProviderLoadStates,
+    currentProvidersWithUnknownThreadCount = currentProvidersWithUnknownThreadCount,
+    providerLoadStateUpdates = providerLoadStateUpdates,
+    updatedProvidersWithUnknownThreadCount = updatedProvidersWithUnknownThreadCount,
+  )
 }
 
-internal fun AgentWorktree.hasAnyProviderSnapshot(): Boolean {
-  return hasLoaded || providerLoadStates.values.any { state -> state.isTerminal() } || threads.isNotEmpty()
+internal fun failLoadingProviderLoadStates(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): Map<AgentSessionProvider, AgentSessionProviderLoadState> {
+  if (providerLoadStates.isEmpty() || providerLoadStates.values.none { state -> state == AgentSessionProviderLoadState.LOADING }) {
+    return providerLoadStates
+  }
+  return providerLoadStates.mapValues { (_, state) ->
+    if (state == AgentSessionProviderLoadState.LOADING) AgentSessionProviderLoadState.FAILED else state
+  }
 }
 
-private fun AgentSessionProviderLoadState.isTerminal(): Boolean {
-  return this == AgentSessionProviderLoadState.LOADED || this == AgentSessionProviderLoadState.FAILED
+internal fun failLoadingProviderLoadMetadata(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  providersWithUnknownThreadCount: Set<AgentSessionProvider>,
+): AgentSessionProviderLoadMetadata {
+  val failedProviderLoadStates = failLoadingProviderLoadStates(providerLoadStates)
+  return AgentSessionProviderLoadMetadata(
+    providerLoadStates = failedProviderLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount.retainLoadedProviders(failedProviderLoadStates),
+  )
+}
+
+private fun mergeUpdatedProvidersWithUnknownThreadCount(
+  current: Set<AgentSessionProvider>,
+  providerLoadStateUpdates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  updatedProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+): Set<AgentSessionProvider> {
+  if (providerLoadStateUpdates.isEmpty()) {
+    return current
+  }
+  if (current.isEmpty()) {
+    return updatedProvidersWithUnknownThreadCount
+  }
+  val updatedProviders = providerLoadStateUpdates.keys
+  return buildSet {
+    current.filterTo(this) { provider -> provider !in updatedProviders }
+    addAll(updatedProvidersWithUnknownThreadCount)
+  }
+}
+
+private fun Set<AgentSessionProvider>.retainLoadedProviders(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): Set<AgentSessionProvider> {
+  if (isEmpty()) {
+    return this
+  }
+  return filterTo(LinkedHashSet()) { provider -> providerLoadStates[provider] == AgentSessionProviderLoadState.LOADED }
 }

@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -255,7 +254,7 @@ private fun stateWithThread(
         path = PROJECT_PATH,
         name = "Project A",
         isOpen = true,
-        hasLoaded = true,
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
         threads = listOf(
           AgentSessionThread(
             id = threadId,

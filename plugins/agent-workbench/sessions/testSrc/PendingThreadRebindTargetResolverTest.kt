@@ -30,7 +30,7 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
               threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
             )
           )
@@ -70,7 +70,7 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
               threads = listOf(
                 thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CODEX, title = "New thread"),
                 thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered"),
@@ -111,7 +111,7 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
               threads = listOf(
                 thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CODEX, title = "New thread"),
               ),
@@ -147,7 +147,7 @@ class PendingThreadRebindTargetResolverTest {
                 path = PROJECT_PATH,
                 name = "Project A",
                 isOpen = true,
-                hasLoaded = true,
+                providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
                 threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
               )
             )
@@ -189,8 +189,15 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
-              threads = listOf(thread(id = "claude-42", updatedAt = 700L, provider = AgentSessionProvider.CLAUDE, title = "Recovered Claude")),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
+              threads = listOf(
+                thread(
+                  id = "claude-42",
+                  updatedAt = 700L,
+                  provider = AgentSessionProvider.CLAUDE,
+                  title = "Recovered Claude",
+                )
+              ),
             )
           )
         )
@@ -228,7 +235,7 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
               threads = listOf(
                 thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CLAUDE, title = "New thread"),
                 thread(id = "claude-42", updatedAt = 700L, provider = AgentSessionProvider.CLAUDE, title = "Recovered Claude"),
@@ -269,7 +276,7 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              hasLoaded = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
               threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
             )
           )

@@ -12,8 +12,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.core.providers.clearAgentSessionThreadStatusIconCacheForTests
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -373,7 +371,7 @@ class AgentSessionsSwingTreeCellRendererTest {
 
   @Test
   fun loadingProjectRowsUseProjectIconAndNoLoadingText() {
-    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX))
     val projectId = SessionTreeId.Project(project.path)
     val renderer = SessionTreeCellRenderer(
       nowProvider = { 0L },
@@ -400,8 +398,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       name = "project-a-feature",
       branch = "feature",
       isOpen = false,
-      isLoading = true,
-    )
+      providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),)
     val worktreeId = SessionTreeId.Worktree(project.path, worktree.path)
     val renderer = SessionTreeCellRenderer(
       nowProvider = { 0L },

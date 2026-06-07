@@ -322,7 +322,7 @@ private fun sessionsState(
         path = PROJECT_PATH,
         name = "Project A",
         isOpen = true,
-        hasLoaded = true,
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
         threads = projectThreads,
         worktrees = listOf(
           AgentWorktree(
@@ -330,7 +330,7 @@ private fun sessionsState(
             name = "feature/worktree",
             branch = "feature/worktree",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = worktreeThreads,
           ),
         ),

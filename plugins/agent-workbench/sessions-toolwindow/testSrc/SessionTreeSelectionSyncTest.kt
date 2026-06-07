@@ -5,8 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions as ModelAgentProjectSessions
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
@@ -305,7 +304,7 @@ class SessionTreeSelectionSyncTest {
   }
 }
 
-private fun modelForSelectionTests(vararg projects: AgentProjectSessions) =
+private fun modelForSelectionTests(vararg projects: ModelAgentProjectSessions) =
   buildSessionTreeModel(
     projects = projects.toList(),
     visibleClosedProjectCount = Int.MAX_VALUE,
@@ -318,12 +317,12 @@ private fun modelForSelectionTests(vararg projects: AgentProjectSessions) =
     treeUiState = InMemorySessionTreeUiState(),
   )
 
-private fun projectWithThreads(vararg threadIds: String): AgentProjectSessions {
+private fun projectWithThreads(vararg threadIds: String): ModelAgentProjectSessions {
   return AgentProjectSessions(
     path = "/work/project-a",
     name = "Project A",
     isOpen = true,
-    hasLoaded = true,
+    providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
     threads = threadIds.map { threadId ->
       AgentSessionThread(
         id = threadId,

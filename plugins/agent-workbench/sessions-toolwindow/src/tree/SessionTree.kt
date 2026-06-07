@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -242,7 +243,7 @@ private class SessionTreeModelBuilder(
         node = SessionTreeNode.Error(project, errorMessage),
       )
     }
-    else if (project.hasLoaded && project.threads.isEmpty() && !hasVisibleWorktrees && project.providerWarnings.isEmpty()) {
+    else if (project.hasAnyProviderSnapshot() && project.threads.isEmpty() && !hasVisibleWorktrees && project.providerWarnings.isEmpty()) {
       childIds += addEntry(
         id = SessionTreeId.Empty(project.path),
         parentId = projectId,

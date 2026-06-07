@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext

@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.copyPathForSessionTreeId

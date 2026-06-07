@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsMainToolbarActivityGroup
@@ -287,7 +286,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("attention", AgentThreadActivity.NEEDS_INPUT, updatedAt),
               thread("done", AgentThreadActivity.UNREAD, updatedAt),
@@ -297,7 +296,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-b",
             name = "Project B",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(thread("running", AgentThreadActivity.PROCESSING, updatedAt)),
           ),
         ),
@@ -313,7 +312,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            hasLoaded = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(thread("attention", AgentThreadActivity.NEEDS_INPUT, 1_000)),
           )
         ),

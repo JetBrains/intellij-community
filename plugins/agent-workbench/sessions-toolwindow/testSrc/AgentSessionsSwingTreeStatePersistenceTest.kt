@@ -4,8 +4,6 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
@@ -32,13 +30,12 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-open",
           name = "Project Open",
           isOpen = true,
-          hasLoaded = true,
-        ),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),),
         AgentProjectSessions(
           path = "/work/project-error",
           name = "Project Error",
           isOpen = false,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           errorMessage = "Failed",
         ),
       ),
@@ -59,7 +56,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = false,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           worktrees = listOf(
             AgentWorktree(
               path = "/work/project-a-feature",
@@ -84,13 +81,12 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       path = "/work/project-a",
       name = "Project A",
       isOpen = true,
-      hasLoaded = true,
-    )
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),)
     val projectB = AgentProjectSessions(
       path = "/work/project-b",
       name = "Project B",
       isOpen = false,
-      hasLoaded = true,
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
       errorMessage = "Failed",
     )
     val previousModel = buildSessionTreeModel(
@@ -160,7 +156,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = false,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           threads = listOf(
             AgentSessionThread(
               id = "thread-a",
@@ -175,7 +171,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-b",
           name = "Project B",
           isOpen = false,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           worktrees = listOf(
             AgentWorktree(
               path = "/work/project-b-feature",

@@ -39,7 +39,6 @@ class AgentSessionContentRepositoryTest {
       TEST_PROJECT_PATH,
       AgentSessionWarmPathSnapshot(
         threads = listOf(thread(id = "thread-1", title = "Warm title")),
-        hasUnknownThreadCount = false,
         updatedAt = 100L,
       )
     )
@@ -68,7 +67,6 @@ class AgentSessionContentRepositoryTest {
             subAgents = listOf(AgentSubAgent(id = "sub-agent-1", name = longSubAgentName)),
           )
         ),
-        hasUnknownThreadCount = false,
         updatedAt = 100L,
       )
     )

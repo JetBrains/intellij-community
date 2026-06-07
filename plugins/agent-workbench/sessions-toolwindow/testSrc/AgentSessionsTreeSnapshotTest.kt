@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -28,14 +27,14 @@ class AgentSessionsTreeSnapshotTest {
         path = projectPath,
         name = "Project A",
         isOpen = false,
-        hasLoaded = true,
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
         threads = listOf(
           AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX),
           AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false, provider = AgentSessionProvider.CODEX),
         ),
       ),
-      AgentProjectSessions(path = "/work/project-b", name = "Project B", isOpen = false, hasLoaded = true),
-      AgentProjectSessions(path = "/work/project-open", name = "Project Open", isOpen = true, hasLoaded = true),
+      AgentProjectSessions(path = "/work/project-b", name = "Project B", isOpen = false, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+      AgentProjectSessions(path = "/work/project-open", name = "Project Open", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
     )
 
     val model = buildSessionTreeModel(
@@ -69,14 +68,18 @@ class AgentSessionsTreeSnapshotTest {
           path = "/work/project-open",
           name = "Project Open",
           isOpen = true,
-          hasLoaded = true,
-          threads = listOf(AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          threads = listOf(AgentSessionThread(id = "thread-1",
+                                              title = "Thread 1",
+                                              updatedAt = 100,
+                                              archived = false,
+                                              provider = AgentSessionProvider.CODEX)),
         ),
         AgentProjectSessions(
           path = "/work/project-error",
           name = "Project Error",
           isOpen = false,
-          hasLoaded = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
           errorMessage = "Failed",
         ),
       ),

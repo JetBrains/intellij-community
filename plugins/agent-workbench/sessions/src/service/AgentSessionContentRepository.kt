@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
@@ -40,16 +41,17 @@ internal class AgentSessionContentRepository(
       return false
     }
     val currentSnapshot = warmState.getPathSnapshot(normalizedPath)
-    if (currentSnapshot != null &&
-        currentSnapshot.threads == content.threads &&
-        currentSnapshot.hasUnknownThreadCount == content.hasUnknownThreadCount) {
-      return false
-    }
-    return warmState.setPathSnapshot(
+    val matchesCurrentSnapshot = currentSnapshot?.let { snapshot ->
+      snapshot.threads == content.threads &&
+      snapshot.providerLoadStates == content.providerLoadStates &&
+      snapshot.providersWithUnknownThreadCount == content.providersWithUnknownThreadCount
+    } == true
+    return !matchesCurrentSnapshot && warmState.setPathSnapshot(
       normalizedPath,
       AgentSessionWarmPathSnapshot(
         threads = content.threads,
-        hasUnknownThreadCount = content.hasUnknownThreadCount,
+        providerLoadStates = content.providerLoadStates,
+        providersWithUnknownThreadCount = content.providersWithUnknownThreadCount,
         updatedAt = System.currentTimeMillis(),
       ),
     )
@@ -292,7 +294,8 @@ internal class AgentSessionContentRepository(
 private data class PathContent(
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val hasUnknownThreadCount: Boolean,
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider>,
   @JvmField val errorMessage: String?,
 )
 
@@ -311,7 +314,8 @@ private fun AgentProjectSessions.toPathContent(): PathContent {
   return PathContent(
     isOpen = isOpen,
     threads = threads,
-    hasUnknownThreadCount = hasUnknownThreadCount,
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
     errorMessage = errorMessage,
   )
 }
@@ -320,7 +324,8 @@ private fun AgentWorktree.toPathContent(): PathContent {
   return PathContent(
     isOpen = isOpen,
     threads = threads,
-    hasUnknownThreadCount = hasUnknownThreadCount,
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
     errorMessage = errorMessage,
   )
 }
