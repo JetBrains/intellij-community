@@ -15,7 +15,8 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.common.DEFAULT_PROJECT_URL_LABEL
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -114,10 +115,22 @@ open class PyPackageRepository() {
     return findPackageSpecificationWithSpec(pyRequirement)
   }
 
+  open fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
+    val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return PythonPackageSearchResult(0, emptyList(), pageSize)
+    return cache.search(needle, pageSize)
+  }
 
-  protected open fun hasPackage(pyPackage: PyRequirement): Boolean = pyPackage.name in getPackages()
+  open fun hasPackage(name: String): Boolean {
+    val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return false
+    return name in cache
+  }
 
-  open fun getPackages(): Set<String> = service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
+  open fun getSize(): Int {
+    val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return 0
+    return cache.size
+  }
+
+  open fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
 
   open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
     return buildPackageDetailsBySimpleDetailsProtocol(packageName)

@@ -247,7 +247,7 @@
                     serviceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"
                     testServiceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PyPiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.add.v2.EelFileSystemFactory"
                         serviceImplementation="com.jetbrains.python.sdk.add.v2.EelFileSystemFactoryImpl"/>

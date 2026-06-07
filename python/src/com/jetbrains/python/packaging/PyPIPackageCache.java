@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * @author Mikhail Golubev
- * @deprecated use {@link com.jetbrains.python.packaging.pip.PypiPackageCache} to search for PyPI packages
+ * @deprecated use {@link com.jetbrains.python.packaging.pip.PyPiPackageCache} to search for PyPI packages
  * or {@link com.jetbrains.python.packaging.management.PythonRepositoryManager#allPackages()} to search for all available packages.
  */
 @Deprecated(forRemoval = true)

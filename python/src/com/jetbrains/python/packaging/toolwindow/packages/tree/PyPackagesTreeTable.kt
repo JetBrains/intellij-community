@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBTreeTable
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
+import com.jetbrains.python.packaging.cache.hasMorePagesAfterPageIndex
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -269,11 +270,11 @@ class PyPackagesTreeTable(
   }
 
   private fun loadMoreItems(node: ExpandResultNode) {
-    val result = packagingService.getMoreResultsForRepo(node.repository, items.size - 1)
-    items = items.dropLast(1) + result.packages
-    if (result.moreItems > 0) {
-      node.more = result.moreItems
-      items = items + listOf(node)
+    val viewData = packagingService.getMoreResultsForPage(node.repository, node.result, node.pageIndex)
+    items = items.dropLast(1) + viewData.displayable
+    if (viewData.result.hasMorePagesAfterPageIndex(viewData.pageIndex)) {
+      node.pageIndex = viewData.pageIndex
+      items = items + node
     }
   }
 

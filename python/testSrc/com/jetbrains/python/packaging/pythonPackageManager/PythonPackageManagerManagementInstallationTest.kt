@@ -10,7 +10,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipManagementInstaller
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.runBlocking
@@ -19,7 +19,7 @@ import org.junit.Test
 
 
 class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
-  private val PKG_TO_INSTALL = PythonRepositoryPackageSpecification(PyPIPackageRepository, "pytest")
+  private val PKG_TO_INSTALL = PythonRepositoryPackageSpecification(PyPiPackageRepository, "pytest")
 
 
   @EnvTestTagsRequired(tags = ["python3.8"])

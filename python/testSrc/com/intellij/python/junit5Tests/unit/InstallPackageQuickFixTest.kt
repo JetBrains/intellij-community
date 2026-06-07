@@ -35,7 +35,7 @@ internal class InstallPackageQuickFixTest(val project: Project) {
   /**
    * The test currently calls onSuccess directly (bypassing applyFix / real package install),
    * because I didn't find an easy way to run the complete inspection.
-   * The [com.jetbrains.python.packaging.pip.PypiPackageCache] cache is not initialized in tests
+   * The [com.jetbrains.python.packaging.pip.PyPiPackageCache] cache is not initialized in tests
    * also [com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix] is not available in batch mode and the inspection filters it out
    */
   private suspend fun applyInstallAndImportQuickFix(psiFile: PsiFile, packageName: String, importAlias: String?) {

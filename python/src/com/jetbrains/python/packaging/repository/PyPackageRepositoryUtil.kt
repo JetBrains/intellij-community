@@ -11,10 +11,11 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.pip.PypiPackageCache
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
@@ -42,11 +43,16 @@ internal fun PyPackageRepository.checkValid(): Boolean {
 }
 
 @ApiStatus.Experimental
-object PyPIPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
-  override fun getPackages(): Set<String> {
-    return service<PypiPackageCache>().packages
-  }
+object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
+  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
+    service<PyPiPackageCache>().search(needle, pageSize)
 
+  override fun hasPackage(name: String): Boolean =
+    name in service<PyPiPackageCache>()
+
+  override fun getSize(): Int =
+    service<PyPiPackageCache>().size
+  
   override fun getProjectUrl(packageName: String): ProjectUrl = ProjectUrl(name, PyPIPackageUtil.buildProjectUrl(packageName))
 
   override fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -70,10 +71,21 @@ class RequirementPackage(
 
 class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
 
-class ExpandResultNode(var more: Int, override val repository: PyPackageRepository) : DisplayablePackage("", repository)
+class ExpandResultNode(
+  override val repository: PyPackageRepository,
+  val result: PythonPackageSearchResult,
+  var pageIndex: Int,
+) : DisplayablePackage("", repository)
 
 class LoadingNode : DisplayablePackage("", null)
 
-open class PyPackagesViewData(val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
+open class PyPackagesViewData(
+  val repository: PyPackageRepository,
+  val result: PythonPackageSearchResult,
+  val pageIndex: Int,
+  val displayable: List<DisplayablePackage>,
+  val exactMatch: Int = -1,
+)
 
-class PyInvalidRepositoryViewData(repository: PyPackageRepository) : PyPackagesViewData(repository, emptyList())
+class PyInvalidRepositoryViewData(repository: PyPackageRepository) :
+  PyPackagesViewData(repository, PythonPackageSearchResult(0, emptyList(), 0), 0, emptyList())

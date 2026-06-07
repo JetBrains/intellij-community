@@ -4,7 +4,7 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import javax.swing.Icon
@@ -36,7 +36,7 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {
-    return getPackageManager(dataContext)?.repositoryManager?.repositories?.first { it is PyPIPackageRepository }
+    return getPackageManager(dataContext)?.repositoryManager?.repositories?.first { it is PyPiPackageRepository }
   }
 
   override fun getLogCommandType(): CommandType = CommandType.PIP

@@ -43,7 +43,7 @@ import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.packaging.management.TestPypiPackageCache
-import com.jetbrains.python.packaging.pip.PypiPackageCache
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection
@@ -102,7 +102,7 @@ class PyQuickFixTest : PyTestCase() {
   fun testInstallAndImportPackageByNameAlias() {
     val packageCache = TestPypiPackageCache()
     packageCache.testPackages = setOf("pandas")
-    ApplicationManager.getApplication().replaceService(PypiPackageCache::class.java,
+    ApplicationManager.getApplication().replaceService(PyPiPackageCache::class.java,
                                                        packageCache,
                                                        testRootDisposable)
     myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)

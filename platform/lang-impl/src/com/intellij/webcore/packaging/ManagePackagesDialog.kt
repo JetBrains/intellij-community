@@ -41,6 +41,7 @@ import com.intellij.util.ui.PlatformColors
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -77,12 +78,14 @@ open class ManagePackagesDialog @JvmOverloads constructor(
   notificationPanel: PackagesNotificationPanel = PackagesNotificationPanel(),
 )
   : DialogWrapper(myProject, true) {
-
-  private var myFilter = MyPackageFilter()
+  @ApiStatus.Internal
+  protected var myFilter = MyPackageFilter()
   private var myDescriptionTextArea = SwingHelper.createHtmlViewer(true, null, null, null).apply {
     border = IdeBorderFactory.createBorder(SideBorder.TOP)
   }
-  private val myPackages: JBList<RepoPackage> = JBList<RepoPackage>()
+
+  @ApiStatus.Internal
+  protected val myPackages: JBList<RepoPackage> = JBList<RepoPackage>()
   private val myInstallButton: JButton = JButton(LangBundle.message("button.install.package"))
   private val myOptionsCheckBox: JCheckBox = JCheckBox(LangBundle.message("checkbox.package.options"))
   private val myOptionsField: JTextField = JTextField()
@@ -93,9 +96,14 @@ open class ManagePackagesDialog @JvmOverloads constructor(
   private val myNotificationArea = notificationPanel
   private val myNotificationsAreaPlaceholder = myNotificationArea.component
 
-  private var myPackagesModel: PackagesModel? = null
-  private var mySelectedPackageName: String? = null
-  private val myInstalledPackages: MutableSet<String>
+  @ApiStatus.Internal
+  protected var myPackagesModel: PackagesModel? = null
+
+  @ApiStatus.Internal
+  protected var mySelectedPackageName: String? = null
+
+  @ApiStatus.Internal
+  protected val myInstalledPackages: MutableSet<String>
 
   private val myCurrentlyInstalling: MutableSet<String> = HashSet()
   private val myListSpeedSearch: ListSpeedSearch<*>
@@ -323,7 +331,8 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     }
   }
 
-  fun initModel() {
+  @ApiStatus.Internal
+  open fun initModel() {
     setDownloadStatus(true)
     val application = ApplicationManager.getApplication()
     application.executeOnPooledThread {
@@ -351,7 +360,8 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     }
   }
 
-  private fun doSelectPackage(packageName: String?) {
+  @ApiStatus.Internal
+  protected open fun doSelectPackage(packageName: String?) {
     val packagesModel = myPackages.model as? PackagesModel
     if (packageName == null || packagesModel == null) {
       return
@@ -380,7 +390,8 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     myOptionsField.text = optionsText
   }
 
-  private inner class MyPackageFilter : FilterComponent("PACKAGE_FILTER", 5) {
+  @ApiStatus.Internal
+  protected inner class MyPackageFilter : FilterComponent("PACKAGE_FILTER", 5) {
     init {
       textEditor.addKeyListener(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
@@ -403,15 +414,16 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     }
   }
 
-  private inner class PackagesModel(packages: MutableList<RepoPackage>) : CollectionListModel<RepoPackage?>(packages) {
+  @ApiStatus.Internal
+  protected open inner class PackagesModel(packages: MutableList<RepoPackage>) : CollectionListModel<RepoPackage?>(packages) {
     private val myFilteredOut: MutableList<RepoPackage> = ArrayList()
-    private var myView: MutableList<RepoPackage> = ArrayList()
+    protected var myView: MutableList<RepoPackage> = ArrayList()
 
     init {
       myView = packages
     }
 
-    fun filter(filter: String) {
+    open fun filter(filter: String) {
       val toProcess: MutableCollection<RepoPackage> = toProcess()
 
       toProcess.addAll(myFilteredOut)
@@ -528,10 +540,11 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     return emptyArray()
   }
 
-  inner class MyTableRenderer : ListCellRenderer<RepoPackage> {
-    private val myNameComponent = SimpleColoredComponent()
-    private val myRepositoryComponent = SimpleColoredComponent()
-    private val myPanel = JPanel(BorderLayout())
+  @ApiStatus.Internal
+  open inner class MyTableRenderer : ListCellRenderer<RepoPackage> {
+    protected val myNameComponent = SimpleColoredComponent()
+    protected val myRepositoryComponent = SimpleColoredComponent()
+    protected val myPanel = JPanel(BorderLayout())
 
     init {
       myPanel.add(myNameComponent, BorderLayout.WEST)

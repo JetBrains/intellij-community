@@ -114,18 +114,10 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public @NotNull List<RepoPackage> getAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.loadPackages();
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), false);
-    return getAllPackagesCached();
-  }
+  public abstract @NotNull List<RepoPackage> getAllPackages() throws IOException;
 
   @Override
-  public @NotNull List<RepoPackage> reloadAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.updatePyPICache();
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), true);
-    return getAllPackagesCached();
-  }
+  public abstract @NotNull List<@NotNull RepoPackage> reloadAllPackages() throws IOException;
 
 
   private static @NotNull List<String> getAdditionalRepositories() {

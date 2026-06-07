@@ -8,13 +8,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -32,44 +33,28 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.io.path.exists
 
-
-private val ALPHABET_REGEX = Regex("[-a-z0-9]+")
-
 @ApiStatus.Internal
-open class PypiPackageCache : PythonPackageCache<String> {
-  override val packages: Set<String>
-    get() = cache
+open class PyPiPackageCache : PythonPackageCache {
+  val filePath: Path = getCachePath()
 
-  override operator fun contains(key: String): Boolean = key in cache
-
-  fun lookup(word: String): LookupStatus {
-    if (word in cache) return LookupStatus.Present
-    if (!ALPHABET_REGEX.matches(word.lowercase())) return LookupStatus.Alien
-    return LookupStatus.Absent
-  }
-
-  override fun isEmpty(): Boolean = cache.isEmpty()
-
+  override val size: Int
+    get() = cache.size
+  
   @Volatile
   private var cache: Set<String> = emptySet()
 
   private val lock = Mutex()
   private var loadInProgress: Boolean = false
-
   private val gson: Gson = Gson()
 
-  val filePath: Path = getCachePath()
+  override operator fun contains(name: String): Boolean =
+    name in cache
 
-  private fun getCachePath(): Path {
-    val overridePath = System.getProperty(PACKAGE_INDEX_CACHE_PROPERTY)
-    if (overridePath != null) {
-      thisLogger().debug("Using package index cache path from property: $overridePath")
-      return Paths.get(overridePath)
-    }
+  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
+    val needleLowercase = prefix.lowercase()
+    val matches = cache.asSequence().filter { it.lowercase().startsWith(needleLowercase) }.toList()
 
-    val path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
-    thisLogger().debug("Using package index cache path: $path")
-    return path
+    return InMemorySearchPage.resultFromMatches(matches, pageSize)
   }
 
   @CheckReturnValue
@@ -89,7 +74,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
           return@withContext refresh()
         }
       }
-      if (packages.isEmpty()) {
+      if (cache.isEmpty()) {
         LOG.warn("Empty Pypi loaded package cache")
       }
     }
@@ -100,6 +85,19 @@ open class PypiPackageCache : PythonPackageCache<String> {
     }
     return Result.success(Unit)
   }
+
+  private fun getCachePath(): Path {
+    val overridePath = System.getProperty(PACKAGE_INDEX_CACHE_PROPERTY)
+    if (overridePath != null) {
+      thisLogger().debug("Using package index cache path from property: $overridePath")
+      return Paths.get(overridePath)
+    }
+
+    val path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
+    thisLogger().debug("Using package index cache path: $path")
+    return path
+  }
+
 
   private suspend fun tryLoadFromFile(): Boolean {
     return withContext(Dispatchers.IO) {

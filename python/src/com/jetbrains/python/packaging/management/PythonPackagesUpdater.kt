@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.Result
-import com.jetbrains.python.packaging.pip.PypiPackageCache
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -24,7 +24,7 @@ internal class PythonPackagesUpdater : ProjectActivity {
   override suspend fun execute(project: Project) {
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
-      when (val r = serviceAsync<PypiPackageCache>().reloadCache()) {
+      when (val r = serviceAsync<PyPiPackageCache>().reloadCache()) {
         is Result.Success -> Unit
         is Result.Failure -> {
           // TODO: Implement background UI notification

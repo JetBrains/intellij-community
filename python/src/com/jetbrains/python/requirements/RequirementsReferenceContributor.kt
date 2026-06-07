@@ -31,7 +31,7 @@ import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.SimpleName
@@ -170,7 +170,7 @@ private class RemoteRequirementNavTarget(
 
   // Priority: METADATA Project-URL match > spec-resolved repository URL > PyPI fallback.
   private suspend fun PythonPackageManager?.resolvePackageUrl(packageName: String): String {
-    if (this == null) return PyPIPackageRepository.getProjectUrl(packageName).url
+    if (this == null) return PyPiPackageRepository.getProjectUrl(packageName).url
 
     val installedPackageMetadata = listInstalledPackagesMetadata()[PyPackageName.from(packageName)]
     val preferredUpstream = installedPackageMetadata?.preferredProjectUrl()?.url
@@ -179,8 +179,8 @@ private class RemoteRequirementNavTarget(
     val normalized = PyPackageName.from(packageName).name
     val installed = listInstalledPackages().firstOrNull { PyPackageName.from(it.name).name == normalized }
     val repository = findPackageSpecification(installed?.name ?: packageName, installed?.version)?.repository
-                     ?: PyPIPackageRepository
+                     ?: PyPiPackageRepository
     val effectiveRepo = if (installed is CondaPackage && !installed.installedWithPip) CondaPackageRepository else repository
-    return (effectiveRepo.getProjectUrl(packageName) ?: PyPIPackageRepository.getProjectUrl(packageName)).url
+    return (effectiveRepo.getProjectUrl(packageName) ?: PyPiPackageRepository.getProjectUrl(packageName)).url
   }
 }

@@ -9,9 +9,9 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
+import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
@@ -25,7 +25,7 @@ import java.time.Duration
 @Service(Service.Level.PROJECT)
 internal class PipRepositoryManager(override val project: Project) : PythonRepositoryManagerBase() {
   override val repositories: List<PyPackageRepository>
-    get() = listOf(PyPIPackageRepository) + service<PythonSimpleRepositoryCache>().repositories
+    get() = listOf(PyPiPackageRepository) + service<PythonSimpleRepositoryCacheService>().repositories
 
   private val packageDetailsCache = Caffeine.newBuilder()
     .maximumSize(200)
@@ -41,28 +41,28 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
 
 
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?) = withContext(Dispatchers.IO) {
-    packageDetailsCache.get(packageName to (repository ?: PyPIPackageRepository))
+    packageDetailsCache.get(packageName to (repository ?: PyPiPackageRepository))
   }
 
   @Throws(IOException::class)
   override suspend fun initCaches() {
-    service<PypiPackageCache>().reloadCache().onFailure {
+    service<PyPiPackageCache>().reloadCache().onFailure {
       thisLogger().warn("Failed to load PyPI packages cache", it)
     }.orThrow()
 
     val repositoryService = service<PyPackageRepositories>()
-    val repositoryCache = service<PythonSimpleRepositoryCache>()
+    val repositoryCache = service<PythonSimpleRepositoryCacheService>()
     if (repositoryService.repositories.isNotEmpty() && repositoryCache.isEmpty()) {
-      repositoryCache.refresh()
+      repositoryCache.reloadAll().orThrow()
     }
-    thisLogger().debug("Pip repository cache initialized with ${service<PypiPackageCache>().packages.size} packages" +
+    thisLogger().debug("Pip repository cache initialized with ${service<PyPiPackageCache>().size} packages" +
                        "and ${repositoryCache.repositories.size} repositories")
   }
 
   @Throws(IOException::class)
   override suspend fun refreshCaches() {
-    service<PypiPackageCache>().reloadCache(force = true).orThrow()
-    service<PythonSimpleRepositoryCache>().refresh()
+    service<PyPiPackageCache>().reloadCache(force = true).orThrow()
+    service<PythonSimpleRepositoryCacheService>().reloadAll().orThrow()
   }
 
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>? {

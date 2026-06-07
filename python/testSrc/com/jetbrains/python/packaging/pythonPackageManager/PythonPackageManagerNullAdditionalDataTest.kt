@@ -13,7 +13,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.management.toInstallRequest
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
@@ -22,7 +22,7 @@ import org.junit.Test
 
 class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
   companion object {
-    private val PKG = PythonRepositoryPackageSpecification(PyPIPackageRepository, "requests")
+    private val PKG = PythonRepositoryPackageSpecification(PyPiPackageRepository, "requests")
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])

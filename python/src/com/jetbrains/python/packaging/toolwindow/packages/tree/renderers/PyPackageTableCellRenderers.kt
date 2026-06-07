@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.cache.remainingItemsAfterPageIndex
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -62,7 +63,12 @@ internal class PackageNameCellRenderer : TableCellRenderer {
     node: ExpandResultNode,
     bg: Color,
   ): Component {
-    val expandNodeLabel = JBLabel(PyBundle.message("python.toolwindow.packages.load.more", node.more)).apply {
+    val expandNodeLabel = JBLabel(
+      PyBundle.message(
+        "python.toolwindow.packages.load.more",
+        node.result.remainingItemsAfterPageIndex(node.pageIndex)
+      )
+    ).apply {
       foreground = UIUtil.getContextHelpForeground()
     }
     return PackageRendererUtils.createBasicPanel().apply {

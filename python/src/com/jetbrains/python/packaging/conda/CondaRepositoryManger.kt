@@ -25,10 +25,6 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
       initializationJob.start()
   }
 
-  override fun allPackages(): Set<String> {
-    return CondaPackageRepository.getPackages() + pipRepositoryManger.allPackages()
-  }
-
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
     waitForInit()
     val packageDetails = pipRepositoryManger.getPackageDetails(packageName, repository)

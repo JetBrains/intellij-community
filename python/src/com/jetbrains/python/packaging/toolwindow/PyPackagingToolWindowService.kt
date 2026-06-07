@@ -30,7 +30,8 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
-import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -41,7 +42,6 @@ import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
@@ -51,7 +51,7 @@ import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PyRepositoriesList
@@ -217,8 +217,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       searchJob?.cancel()
       searchJob = serviceScope.launch {
         val allMatches = findAllMatchingPackages(query)
-        val packagesFromRepos = packageManager.repositoryManager.searchPackages(query)
-          .map { (repository, packages) -> sortPackagesForRepo(packages, query, repository) }
+        val packagesFromRepos = packageManager.repositoryManager.searchPackages(query, PACKAGES_LIMIT)
+          .mapNotNull { (repository, result) ->
+            result.pages.firstOrNull()?.let { 
+              processPackagesForRepo(result, 0, query, repository)
+            }
+          }
           .toList()
 
         if (isActive) {
@@ -230,21 +234,15 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
     }
     else {
-      val packagesByRepository = packageManager.repositoryManager.packagesByRepository().map { (repository, packages) ->
-        val shownPackages = if (packages.size < PACKAGES_LIMIT) {
-          packages.asSequence().limitResultAndFilterOutInstalled(repository)
+      val packagesByRepository = packageManager.repositoryManager.searchPackages("", PACKAGES_LIMIT).map { (repository, result) ->
+        val displayable = if (result.pages.size == 1) {
+          result.pages[0].filterOutInstalled(repository)
         }
         else {
           emptyList()
         }
 
-        val moreItems = if (packages.size < PACKAGES_LIMIT) {
-          0
-        }
-        else {
-          packages.size
-        }
-        PyPackagesViewData(repository, shownPackages, moreItems = moreItems)
+        PyPackagesViewData(repository, result, 0, displayable)
       }.toList()
 
       toolWindowPanel?.resetSearch(installedPackages, packagesByRepository + invalidRepositories, currentSdk)
@@ -530,7 +528,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   ): List<InstalledPackage> {
     return packageIndex.installedByName.values.map { pkg ->
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
-      InstalledPackage(pkg, PyPIPackageRepository, nextVersion, emptyList(), isDeclared = pkg.name in declaredPackageNames)
+      InstalledPackage(pkg, PyPiPackageRepository, nextVersion, emptyList(), isDeclared = pkg.name in declaredPackageNames)
     }
   }
 
@@ -616,7 +614,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun resolveRepository(context: SdkContext, pkg: PythonPackage): PyPackageRepository {
-    return context.manager.findPackageSpecification(pkg.name, pkg.version)?.repository ?: PyPIPackageRepository
+    return context.manager.findPackageSpecification(pkg.name, pkg.version)?.repository ?: PyPiPackageRepository
   }
 
   private fun buildRequirements(
@@ -651,21 +649,15 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun sortPackagesForRepo(
-    packageNames: List<String>,
+  private fun processPackagesForRepo(
+    result: PythonPackageSearchResult,
+    pageIndex: Int,
     query: String,
     repository: PyPackageRepository,
-    skipItems: Int = 0,
   ): PyPackagesViewData {
-
-    val comparator = createNameComparator(query)
-
-    val shownPackages = packageNames.asSequence()
-      .sortedWith(comparator)
-      .limitResultAndFilterOutInstalled(repository, skipItems)
+    val shownPackages = result.pages[pageIndex].filterOutInstalled(repository)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    val moreItems = (packageNames.size - (skipItems + PACKAGES_LIMIT)).takeIf { it > 0 } ?: 0
-    return PyPackagesViewData(repository, shownPackages, exactMatch, moreItems)
+    return PyPackagesViewData(repository, result, pageIndex, shownPackages, exactMatch)
   }
 
   override fun dispose() {
@@ -713,30 +705,23 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           .forEach { packageService.addRepository(it) }
 
         // LAME: pip based repository manager handles all added repositories via cache...
-        service<PythonSimpleRepositoryCache>().refresh()
+        service<PythonSimpleRepositoryCacheService>().reloadAll().orThrow()
         refreshInstalledPackages()
       }
     }
   }
 
-  fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData {
-    val context = sdkContext ?: return PyPackagesViewData(repository, emptyList(), moreItems = 0)
-    val packageManager = context.manager
-
-    if (currentQuery.isNotEmpty()) {
-      return sortPackagesForRepo(packageManager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
-    }
-    else {
-      val packagesFromRepo = repository.getPackages()
-      val page = packagesFromRepo.asSequence().limitResultAndFilterOutInstalled(repository, skipItems)
-      return PyPackagesViewData(repository, page, moreItems = packagesFromRepo.size - (PACKAGES_LIMIT + skipItems))
-    }
+  fun getMoreResultsForPage(repository: PyPackageRepository, result: PythonPackageSearchResult, pageIndex: Int): PyPackagesViewData {
+    return processPackagesForRepo(
+      result,
+      pageIndex + 1,
+      currentQuery,
+      repository
+    )
   }
 
-  private fun Sequence<String>.limitResultAndFilterOutInstalled(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
-    return drop(skipItems)
-      .take(PACKAGES_LIMIT)
-      .filter { pkg -> installedPackages.none { it.name.equals(pkg, ignoreCase = true) } }
+  private fun Sequence<String>.filterOutInstalled(repository: PyPackageRepository): List<DisplayablePackage> {
+    return filter { pkg -> installedPackages.none { it.name.equals(pkg, ignoreCase = true) } }
       .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
   }
@@ -745,19 +730,5 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     private const val PACKAGES_LIMIT = 50
 
     fun getInstance(project: Project): PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
-
-    private fun createNameComparator(query: String): Comparator<String> {
-      val nameComparator = Comparator<String> { name1, name2 ->
-        val queryLowerCase = query.lowercase()
-        return@Comparator when {
-          name1.startsWith(queryLowerCase) && name2.startsWith(queryLowerCase) -> name1.length - name2.length
-          name1.startsWith(queryLowerCase) -> -1
-          name2.startsWith(queryLowerCase) -> 1
-          else -> name1.compareTo(name2)
-        }
-      }
-
-      return nameComparator
-    }
   }
 }

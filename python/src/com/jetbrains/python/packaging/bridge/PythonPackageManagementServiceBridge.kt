@@ -22,7 +22,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -63,16 +63,11 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     return getAllPackagesCached()
   }
 
-  private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
-    val repositoryUrl = repository.repositoryUrl.takeIf { it != PyPIPackageRepository.repositoryUrl }
-    return RepoPackage(pkg, repositoryUrl, null)
-  }
-
   override fun getAllPackagesCached(): List<RepoPackage> {
-    val packages = repositoryManager.repositories.flatMap { repo ->
-      repo.getPackages().map { createRepoPackage(it, repo) }
+    val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
+      manager.listInstalledPackages()
     }
-    return packages
+    return packages.map { RepoPackage(it.name, null, null) }
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {

@@ -11,12 +11,18 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.cache.firstPageOrEmpty
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.parser.icons.PythonParserIcons
 
 fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forSdk(project, sdk).repositoryManager
-  val packages = repositoryManager.allPackages()
+  val packages =
+    repositoryManager
+      .searchPackages(result.prefixMatcher.prefix)
+      .values
+      .flatMap { it.firstPageOrEmpty() }
+  result.restartCompletionOnAnyPrefixChange()
   val maxPriority = packages.size
   packages.asSequence().map {
     LookupElementBuilder.create(it.lowercase()).withIcon(PythonParserIcons.PythonFile)

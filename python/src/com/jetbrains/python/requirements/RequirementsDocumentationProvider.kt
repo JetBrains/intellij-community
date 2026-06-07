@@ -40,7 +40,7 @@ import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.requirements.psi.NameReq
 import java.net.URLDecoder
@@ -132,7 +132,7 @@ internal class RequirementDocumentationTarget(
     }
 
     val repository = packageManager?.findPackageSpecification(installed?.name ?: packageName, installed?.version)?.repository
-                     ?: PyPIPackageRepository
+                     ?: PyPiPackageRepository
     // METADATA only for installed remote packages: nothing to read for non-installed names,
     // and local packages prefer project sources over the editable-install dist-info.
     val metadata = if (installed != null && localPackagePath == null) {
@@ -230,7 +230,7 @@ internal class RequirementDocumentationTarget(
     // search returned a different repo for the same name).
     val effectiveRepo = if (installed is CondaPackage && !installed.installedWithPip) CondaPackageRepository else repository
     return effectiveRepo.getProjectUrl(pyRequirement.name)
-           ?: PyPIPackageRepository.getProjectUrl(pyRequirement.name)
+           ?: PyPiPackageRepository.getProjectUrl(pyRequirement.name)
   }
 
   // Flatten SPDX boolean: AND → ", ", OR → " or ". WITH (license-with-exception) stays as-is.

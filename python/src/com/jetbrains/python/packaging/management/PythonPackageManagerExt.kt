@@ -113,8 +113,3 @@ suspend fun PythonPackageManager.getInstalledPackage(packageName: String, versio
   waitForInit()
   return getInstalledPackageSnapshot(packageName, version)
 }
-
-@ApiStatus.Internal
-fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
-  return repositories.asSequence().map { it to it.getPackages() }
-}

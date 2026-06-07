@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.cache.hasMorePagesAfterPageIndex
 import com.jetbrains.python.packaging.repository.InstalledPyPackagedRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -64,7 +65,7 @@ internal class PyPackagingTreeView(
 
     val tableToData = repositories.map { repo -> repo to repoData.find { it.repository.name == repo.repositoryName }!! }
     tableToData.forEach { (table, data) ->
-      table.updateHeaderText(data.packages.size + data.moreItems)
+      table.updateHeaderText(data.result.total)
       table.expand()
     }
 
@@ -72,7 +73,7 @@ internal class PyPackagingTreeView(
 
     val exactMatchPackageName = tableToData
       .firstOrNull { (_, data) -> data.exactMatch != -1 }
-      ?.second?.let { data -> data.packages.getOrNull(data.exactMatch)?.name }
+      ?.second?.let { data -> data.displayable.getOrNull(data.exactMatch)?.name }
 
     exactMatchPackageName?.let { packageName ->
       val installedPackageIndex = installedPackages.items.indexOfFirst { it.name == packageName }
@@ -121,11 +122,11 @@ internal class PyPackagingTreeView(
 
   private fun updateValidRepositories(validRepoData: List<PyPackagesViewData>) {
     for (data in validRepoData) {
-      val withExpander = if (data.moreItems > 0) {
-        data.packages + listOf(ExpandResultNode(data.moreItems, data.repository))
+      val withExpander = if (data.result.hasMorePagesAfterPageIndex(data.pageIndex)) {
+        data.displayable + ExpandResultNode(data.repository, data.result, data.pageIndex)
       }
       else {
-        data.packages
+        data.displayable
       }
 
       val existingRepo = findTableForRepo(data.repository)

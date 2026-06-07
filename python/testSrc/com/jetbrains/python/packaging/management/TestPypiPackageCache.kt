@@ -2,15 +2,22 @@
 package com.jetbrains.python.packaging.management
 
 import com.jetbrains.python.Result
-import com.jetbrains.python.packaging.pip.PypiPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import java.io.IOException
 
-class TestPypiPackageCache : PypiPackageCache() {
+class TestPypiPackageCache : PyPiPackageCache() {
   var testPackages: Set<String> = emptySet()
-  override val packages: Set<String>
-    get() {
-      return testPackages
-    }
+
+  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
+    val list = testPackages.toList()
+    return InMemorySearchPage.resultFromMatches(list, list.size)
+  }
+
+  override fun contains(name: String): Boolean {
+    return name in testPackages
+  }
 
   override suspend fun reloadCache(force: Boolean): Result<Unit, IOException> {
     return Result.success(Unit)

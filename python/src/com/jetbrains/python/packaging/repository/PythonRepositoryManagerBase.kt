@@ -37,18 +37,6 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
     }
   }
 
-
-  override fun allPackages(): Set<String> {
-    if (repositories.size == 1)
-      return repositories.first().getPackages()
-
-    val result = mutableSetOf<String>()
-    for (repository in repositories) {
-      result.addAll(repository.getPackages())
-    }
-    return result
-  }
-
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? {
     waitForInit()
     val versions = getVersions(packageName, repository) ?: return null
@@ -64,7 +52,7 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
     val found = repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
     if (found == null) {
       thisLogger().debug("Package specification not found for $requirement. Tried repositories: ${
-        repositories.joinToString(",") { "${it.name}: packages=${it.getPackages().size}" }
+        repositories.joinToString(",") { "${it.name}: packages=${it.getSize()}" }
       }")
       return found
     }

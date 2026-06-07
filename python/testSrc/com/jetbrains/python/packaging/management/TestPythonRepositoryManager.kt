@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.TestOnly
 
@@ -21,7 +23,7 @@ class TestPythonRepositoryManager(
 
   private var packageVersions = mapOf<String, List<String>>()
   override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
-    return PythonRepositoryPackageSpecification(repository ?: PyPIPackageRepository, requirement)
+    return PythonRepositoryPackageSpecification(repository ?: PyPiPackageRepository, requirement)
   }
 
 
@@ -44,10 +46,6 @@ class TestPythonRepositoryManager(
   override val repositories: List<PyPackageRepository>
     get() = listOf(TestPackageRepository(packageNames))
 
-  override fun allPackages(): Set<String> {
-    return packageNames
-  }
-
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
     return PyResult.success(checkNotNull(packageDetails))
   }
@@ -69,7 +67,7 @@ class TestPythonRepositoryManager(
 }
 
 internal class TestPackageRepository(private val packages: Set<String>) : PyPackageRepository("test repository", null, null) {
-  override fun getPackages(): Set<String> {
-    return packages
+  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
+    return InMemorySearchPage.resultFromMatches(packages.toList(), pageSize)
   }
 }

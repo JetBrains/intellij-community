@@ -12,9 +12,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -25,24 +28,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service
-internal class CondaPackageCache : PythonPackageCache<String> {
+class CondaPackageCache : PythonPackageCache {
+  override val size: Int
+    get() = cache.size
+  
   @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
-
-  override val packages: Set<String>
-    get() = cache.keys
-
   private val lock = Mutex()
   private var loadInProgress: Boolean = false
 
-  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false) {
+  override operator fun contains(name: String): Boolean = name in cache
+
+  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
+    val needleLowercase = prefix.lowercase()
+    val matches = cache.keys.asSequence().filter { it.lowercase().startsWith(needleLowercase) }.toList()
+
+    return InMemorySearchPage.resultFromMatches(matches, pageSize)
+  }
+
+  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false): Result<Unit, IOException> {
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
-        return
+        return Result.Success(Unit)
       }
 
       loadInProgress = true
@@ -56,6 +68,8 @@ internal class CondaPackageCache : PythonPackageCache<String> {
         loadInProgress = false
       }
     }
+
+    return Result.Success(Unit)
   }
 
   private suspend fun refreshAll(sdk: Sdk, project: Project) {
@@ -111,7 +125,5 @@ internal class CondaPackageCache : PythonPackageCache<String> {
     }
   }
 
-  override fun isEmpty(): Boolean = cache.isEmpty()
   operator fun get(name: String): List<String>? = cache[name]
-  override fun contains(key: String): Boolean = key in cache
 }

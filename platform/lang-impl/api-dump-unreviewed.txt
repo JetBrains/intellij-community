@@ -16463,15 +16463,10 @@ c:com.intellij.webcore.packaging.ManagePackagesDialog
 - p:createCenterPanel():javax.swing.JPanel
 - p:getDimensionServiceKey():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
-- f:initModel():V
 - f:selectPackage(com.intellij.webcore.packaging.InstalledPackage):V
 - pf:setDownloadStatus(Z):V
 - f:setOptionsText(java.lang.String):V
 f:com.intellij.webcore.packaging.ManagePackagesDialog$Companion
-f:com.intellij.webcore.packaging.ManagePackagesDialog$MyTableRenderer
-- javax.swing.ListCellRenderer
-- <init>(com.intellij.webcore.packaging.ManagePackagesDialog):V
-- getListCellRendererComponent(javax.swing.JList,com.intellij.webcore.packaging.RepoPackage,I,Z,Z):java.awt.Component
 a:com.intellij.webcore.packaging.PackageManagementServiceEx
 - com.intellij.webcore.packaging.PackageManagementService
 - <init>():V
