@@ -131,8 +131,6 @@ jvm_library(
         "//plugins/kotlin/jvm/shared:shared_test_lib",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/formatter:formatter_test_lib",
-        "//plugins/kotlin/compiler-reference-index",
-        "//plugins/kotlin/compiler-reference-index:compiler-reference-index_test_lib",
         "//plugins/kotlin/maven",
         "//plugins/kotlin/maven:maven_test_lib",
         "//plugins/kotlin/tests-common:common-tests",

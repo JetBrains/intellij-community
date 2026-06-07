@@ -52,6 +52,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//plugins/gradle",
         "//plugins/kotlin/gradle/gradle",
+        "//plugins/maven",
     ],
 )
 
@@ -89,6 +90,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//plugins/gradle:gradle_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
+        "//plugins/maven:maven_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end

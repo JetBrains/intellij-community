@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" />
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />

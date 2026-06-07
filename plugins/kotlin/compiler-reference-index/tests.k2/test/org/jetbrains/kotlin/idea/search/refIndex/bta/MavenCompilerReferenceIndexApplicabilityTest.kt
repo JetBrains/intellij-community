@@ -1,13 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.maven
+package org.jetbrains.kotlin.idea.search.refIndex.bta
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider
-import org.jetbrains.kotlin.idea.search.refIndex.bta.isBtaCriProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Test
 
-class MavenCompilerReferenceIndexApplicabilityTest : AbstractKotlinMavenImporterTest() {
+class MavenCompilerReferenceIndexApplicabilityTest : MavenMultiVersionImportingTestCase(), ExpectedPluginModeProvider {
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     @Test
     fun `test BTA CRI provider is not applicable when Maven CRI generation property is disabled`() {
         withBtaCriRegistryEnabled {
@@ -57,21 +67,21 @@ class MavenCompilerReferenceIndexApplicabilityTest : AbstractKotlinMavenImporter
 
     private fun mavenProjectWithCriGenerationProperty(value: String): String =
         """
-<groupId>test</groupId>
-<artifactId>project</artifactId>
-<version>1.0.0</version>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1.0.0</version>
 
-<properties>
-    <kotlin.compiler.generateCompilerRefIndex>$value</kotlin.compiler.generateCompilerRefIndex>
-</properties>
-"""
+        <properties>
+            <kotlin.compiler.generateCompilerRefIndex>$value</kotlin.compiler.generateCompilerRefIndex>
+        </properties>
+        """.trimIndent()
 
     private fun mavenProjectWithoutCriGenerationProperty(): String =
         """
-<groupId>test</groupId>
-<artifactId>project</artifactId>
-<version>1.0.0</version>
-"""
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1.0.0</version>
+        """.trimIndent()
 
     private companion object {
         private const val BTA_CRI_REGISTRY_KEY = "kotlin.cri.bta.support.enabled"

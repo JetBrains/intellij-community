@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
@@ -26,13 +27,6 @@ import java.util.concurrent.ConcurrentMap
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.time.Duration.Companion.seconds
-
-/**
- * Maven/Gradle project property that enables Kotlin Compiler Reference Index artifact generation
- * by Kotlin BTA-based builds
- */
-@ApiStatus.Internal
-const val KOTLIN_CRI_GENERATION_PROPERTY: String = "kotlin.compiler.generateCompilerRefIndex"
 
 /**
  * Watches KCRI artifact directories produced by Kotlin Build Tools API-based builds (Gradle and Maven)
@@ -94,6 +88,12 @@ internal class BtaFileWatcher(private val project: Project) {
         private const val ENABLE_BTA_CRI_KEY = "kotlin.cri.bta.support.enabled"
 
         /**
+         * Maven/Gradle project property that enables Kotlin Compiler Reference Index artifact generation
+         * by Kotlin BTA-based builds
+         */
+        private const val KOTLIN_CRI_GENERATION_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
+
+        /**
          * Returns `true` when [ENABLE_BTA_CRI_KEY] is enabled and the project uses a BTA-based build system (Gradle or Maven)
          * with CRI generation enabled.
          */
@@ -106,7 +106,9 @@ internal class BtaFileWatcher(private val project: Project) {
         }
 
         private fun isMavenCriEnabled(project: Project): Boolean = runReadActionBlocking {
-            BtaMavenCriApplicabilityProvider.EP_NAME.findFirstSafe { it.isApplicable(project) } != null
+            MavenProjectsManager.getInstanceIfCreated(project)?.projects?.any { mavenProject ->
+                mavenProject.properties.getProperty(KOTLIN_CRI_GENERATION_PROPERTY).toBoolean()
+            } ?: false
         }
 
     }

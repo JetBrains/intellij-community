@@ -6,6 +6,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.maven"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
@@ -40,10 +41,6 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
             interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.btaMavenCriApplicabilityProvider"
-            interface="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaMavenCriApplicabilityProvider"
             dynamic="true"/>
   </extensionPoints>
 

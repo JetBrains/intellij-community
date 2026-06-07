@@ -3,7 +3,6 @@
     <module name="intellij.maven"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
-    <module name="intellij.kotlin.compilerReferenceIndex"/>
     <!-- endregion -->
   </dependencies>
 
@@ -22,7 +21,6 @@
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.maven.MavenFailedToDownloadSuggestedSolutionsContributorImpl"/>
     <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManager"/>
-    <btaMavenCriApplicabilityProvider implementation="org.jetbrains.kotlin.idea.maven.MavenBtaCriApplicabilityProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
