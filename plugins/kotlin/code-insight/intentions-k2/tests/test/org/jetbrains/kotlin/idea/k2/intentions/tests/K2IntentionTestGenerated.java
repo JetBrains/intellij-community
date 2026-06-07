@@ -1302,6 +1302,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/classNameClashing.kt");
         }
 
+        @TestMetadata("collectionTypeParameter.kt")
+        public void testCollectionTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/collectionTypeParameter.kt");
+        }
+
         @TestMetadata("constructor.kt")
         public void testConstructor() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/constructor.kt");
