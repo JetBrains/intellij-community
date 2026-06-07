@@ -3,34 +3,19 @@ package com.intellij.java.testFramework.backend;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.Path;
-
 public final class CompilerTestUtil {
-  private static final Logger LOG = Logger.getInstance(CompilerTestUtil.class);
-
   private CompilerTestUtil() {
   }
 
@@ -56,55 +41,5 @@ public final class CompilerTestUtil {
   @TestOnly
   public static void saveApplicationComponent(@NotNull PersistentStateComponent<?> appComponent) {
     EdtTestUtil.runInEdtAndWait(() -> getApplicationStore().saveComponent(appComponent));
-  }
-
-  @TestOnly
-  public static void enableExternalCompiler() {
-    final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-    WriteAction.runAndWait(() -> {
-      Sdk jdk = table.getInternalJdk();
-      if (table.findJdk(jdk.getName(), jdk.getSdkType().getName()) != jdk) {
-        table.addJdk(jdk);
-      }
-    });
-  }
-
-  @TestOnly
-  public static void disableExternalCompiler(final @NotNull Project project) {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk internalJdk = table.getInternalJdk();
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.equals(internalJdk)) {
-            ModuleRootModificationUtil.setModuleSdk(module, null);
-          }
-        }
-        if (table.findJdk(internalJdk.getName(), internalJdk.getSdkType().getName()) == internalJdk) {
-          table.removeJdk(internalJdk);
-        }
-        BuildManager.getInstance().clearState(project);
-      });
-      saveApplicationSettings();
-    });
-  }
-
-  public static void deleteBuildSystemDirectory(@NotNull Project project) {
-    BuildManager buildManager = BuildManager.getInstance();
-    if (buildManager == null) return;
-    Path buildSystemDirectory = buildManager.getBuildSystemDirectory(project);
-    try {
-      PathKt.delete(buildSystemDirectory);
-      return;
-    }
-    catch (Exception ignore) {
-    }
-    try {
-      FileUtil.delete(buildSystemDirectory.toFile());
-    }
-    catch (Exception e) {
-      LOG.warn("Unable to remove build system directory.", e);
-    }
   }
 }

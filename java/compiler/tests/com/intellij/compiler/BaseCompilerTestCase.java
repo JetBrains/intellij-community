@@ -35,6 +35,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.CompilerBuildTestUtil;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
@@ -79,7 +80,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CompilerTestUtil.enableExternalCompiler();
+    CompilerBuildTestUtil.enableExternalCompiler();
     WorkspaceModelCacheImpl.forceEnableCaching(getTestRootDisposable());
   }
 
@@ -107,7 +108,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
           FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
         }
       }
-      CompilerTestUtil.disableExternalCompiler(getProject());
+      CompilerBuildTestUtil.disableExternalCompiler(getProject());
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -145,7 +146,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     return addModule(moduleName, sourceRoot, null, null);
   }
 
-  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot, @Nullable VirtualFile resourceRoot) {
+  protected Module addModule(String moduleName,
+                             @Nullable VirtualFile sourceRoot,
+                             @Nullable VirtualFile testRoot,
+                             @Nullable VirtualFile resourceRoot) {
     return WriteAction.computeAndWait(() -> {
       Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -250,12 +254,13 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
-      @Override
-      public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
-        generatedFilePaths.add(relativePath);
-      }
-    });
+    myProject.getMessageBus().connect(getTestRootDisposable())
+      .subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+        @Override
+        public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
+          generatedFilePaths.add(relativePath);
+        }
+      });
 
     PlatformTestUtil.saveProject(myProject);
     CompilerTestUtil.saveApplicationSettings();
@@ -367,7 +372,8 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item, final boolean forTests) {
     File outputDir = getOutputDir(module, forTests);
-    Assert.assertTrue((forTests? "Test output" : "Output") +" directory " + outputDir.getAbsolutePath() + " doesn't exist", outputDir.exists());
+    Assert.assertTrue((forTests ? "Test output" : "Output") + " directory " + outputDir.getAbsolutePath() + " doesn't exist",
+                      outputDir.exists());
     item.build().assertDirectoryEqual(outputDir);
   }
 
@@ -383,8 +389,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   protected static File getOutputDir(Module module, boolean forTests) {
     CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     Assert.assertNotNull(extension);
-    String outputUrl = forTests? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
-    Assert.assertNotNull((forTests? "Test output" : "Output") +" directory for module '" + module.getName() + "' isn't specified", outputUrl);
+    String outputUrl = forTests ? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
+    Assert.assertNotNull((forTests ? "Test output" : "Output") + " directory for module '" + module.getName() + "' isn't specified",
+                         outputUrl);
     return JpsPathUtil.urlToFile(outputUrl);
   }
 
@@ -398,7 +405,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     }
   }
 
-  protected static void createFileInOutput(Artifact a, final String name)  {
+  protected static void createFileInOutput(Artifact a, final String name) {
     try {
       boolean created = new File(a.getOutputPath(), name).createNewFile();
       assertTrue(created);

@@ -4,7 +4,7 @@ package com.intellij.maven.testFramework
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.java.testFramework.backend.CompilerTestUtil
+import com.intellij.testFramework.CompilerBuildTestUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -155,7 +155,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
       ThrowableRunnable<Throwable> {
         ProgressManager.getInstance().runProcess({
-                                                   CompilerTestUtil.deleteBuildSystemDirectory(project)
+                                                   CompilerBuildTestUtil.deleteBuildSystemDirectory(project)
                                                  }, EmptyProgressIndicator())
 
       },
@@ -728,4 +728,3 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private val projectWithMavenNotificationExists: Boolean
     get() = myNotificationAware.getProjectsWithNotification().any { it.systemId == MavenUtil.SYSTEM_ID }
 }
-

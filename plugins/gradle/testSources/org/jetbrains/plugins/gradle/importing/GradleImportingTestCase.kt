@@ -5,7 +5,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
-import com.intellij.java.testFramework.backend.CompilerTestUtil
+import com.intellij.testFramework.CompilerBuildTestUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
@@ -189,7 +189,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       runAll(
         { Disposer.dispose(myTestDisposable) },
         { super.tearDown() },
-        { Disposer.dispose(myLongRunningThreadsDisposable)}
+        { Disposer.dispose(myLongRunningThreadsDisposable) }
       )
       return
     }
@@ -208,14 +208,14 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       },
       {
         TestDialogManager.setTestDialog(TestDialog.DEFAULT)
-        CompilerTestUtil.deleteBuildSystemDirectory(myProject)
+        CompilerBuildTestUtil.deleteBuildSystemDirectory(myProject)
       },
       { deprecationError.set(null) },
       { tearDownGradleVmOptions() },
       { resetGradleUserHomeIfNeeded() },
       { Disposer.dispose(myTestDisposable) },
       { super.tearDown() },
-      { Disposer.dispose(myLongRunningThreadsDisposable)}
+      { Disposer.dispose(myLongRunningThreadsDisposable) }
     )
   }
 

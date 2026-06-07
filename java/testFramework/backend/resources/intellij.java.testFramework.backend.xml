@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>

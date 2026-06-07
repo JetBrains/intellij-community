@@ -112,10 +112,11 @@ public final class CompilerTester {
       });
     }
 
-    CompilerTestUtil.enableExternalCompiler();
+    CompilerBuildTestUtil.enableExternalCompiler();
     if (overrideJdkAndOutput) {
       WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-        Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+        Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject()))
+          .setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
         if (!myModules.isEmpty()) {
           JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
           if ((project.getBasePath() != null) && (WslPath.getDistributionByWindowsUncPath(project.getBasePath()) == null)) {
@@ -133,7 +134,7 @@ public final class CompilerTester {
     try {
       RunAll.runAll(
         () -> myMainOutput.tearDown(),
-        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
+        () -> CompilerBuildTestUtil.disableExternalCompiler(getProject()),
         () -> IComponentStoreKt.getStateStore(ApplicationManager.getApplication()).clearCaches()
       );
     }
@@ -150,7 +151,8 @@ public final class CompilerTester {
   public void deleteClassFile(@NotNull String className) throws IOException {
     WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
-      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
+      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile()
+              .getVirtualFile());
     });
   }
 
@@ -287,7 +289,7 @@ public final class CompilerTester {
     TestLoggerFactory.publishArtifactIfTestFails(logDirectory, "build-log");
   }
 
-  public static void enableDebugLogging()  {
+  public static void enableDebugLogging() {
     var logDirectory = BuildManager.getBuildLogDirectory();
     try {
       NioFiles.deleteRecursively(logDirectory);

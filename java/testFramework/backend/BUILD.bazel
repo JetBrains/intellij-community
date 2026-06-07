@@ -29,7 +29,6 @@ jvm_library(
         "//platform/testFramework/common",
         "//platform/util",
         "//platform/util-ex",
-        "//jps/jps-builders:build",
         "//jps/model-api:model",
     ],
 )
@@ -55,7 +54,6 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//jps/jps-builders:build_test_lib",
         "//jps/model-api:model_test_lib",
     ],
 )
