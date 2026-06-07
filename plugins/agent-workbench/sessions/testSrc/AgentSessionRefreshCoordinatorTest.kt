@@ -25,6 +25,7 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordinator
+import com.intellij.agent.workbench.sessions.service.DefaultAgentSessionThreadPresentationUpdater
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -4473,7 +4474,7 @@ private suspend fun withLoadingCoordinator(
         )
       },
       scopedRefreshSignalsProvider = { _ -> codexScopedRefreshSignalsProvider().map { paths -> threadsChangedEvent(scopedPaths = paths) } },
-      openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
+      threadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(openChatTabPresentationUpdater),
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
       clearOpenConcreteNewThreadRebindAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
     )

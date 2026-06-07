@@ -12,7 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import java.util.UUID
 import javax.swing.Icon
 
@@ -66,7 +66,7 @@ internal class PiAgentSessionProviderDescriptor(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
-  override val threadRenameHandler: AgentThreadRenameHandler = AgentThreadRenameHandler.backend { path, threadId, normalizedName ->
+  override val threadRenameAction: AgentThreadRenameAction = { path, threadId, normalizedName ->
     threadMutationBackend.renameThread(path, threadId, normalizedName)
   }
 

@@ -12,8 +12,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageP
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -153,13 +151,8 @@ class PiAgentSessionProviderDescriptorTest {
 
     assertThat(descriptor.archiveThread("/tmp/project", "thread-1")).isTrue()
     assertThat(descriptor.unarchiveThread("/tmp/project", "thread-1")).isTrue()
-    val renameHandler = descriptor.threadRenameHandler
-
-    assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
-    renameHandler as AgentThreadRenameHandler.Backend
-    assertThat(renameHandler.supportedContexts)
-      .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-    assertThat(renameHandler.execute("/tmp/project", "thread-1", "Renamed thread")).isTrue()
+    val renameAction = checkNotNull(descriptor.threadRenameAction)
+    assertThat(renameAction("/tmp/project", "thread-1", "Renamed thread")).isTrue()
     assertThat(archivedPath).isEqualTo("/tmp/project")
     assertThat(archivedThreadId).isEqualTo("thread-1")
     assertThat(unarchivedPath).isEqualTo("/tmp/project")

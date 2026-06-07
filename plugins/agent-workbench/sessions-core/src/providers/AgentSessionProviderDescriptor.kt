@@ -39,11 +39,6 @@ enum class AgentInitialMessageDispatchAction {
   ENSURE_CODEX_PLAN_MODE,
 }
 
-enum class AgentThreadRenameContext {
-  TREE_POPUP,
-  EDITOR_TAB,
-}
-
 /**
  * Controls how synchronous provider pickers behave before CLI availability is known.
  */
@@ -52,36 +47,7 @@ enum class AgentSessionProviderCliVisibilityPolicy {
   DISCOVER_WHEN_AVAILABLE,
 }
 
-sealed interface AgentThreadRenameHandler {
-  val supportedContexts: Set<AgentThreadRenameContext>
-
-  /**
-   * Provider-side rename implementation. Implementations should only persist or perform the provider rename and report
-   * success. Agent Workbench owns local title overrides, open editor-tab presentation updates, and follow-up refreshes.
-   */
-  interface Backend : AgentThreadRenameHandler {
-    suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean
-  }
-
-  interface ChatDispatch : AgentThreadRenameHandler {
-    fun buildDispatchPlan(normalizedName: String): AgentInitialMessageDispatchPlan?
-  }
-
-  companion object {
-    fun backend(
-      supportedContexts: Set<AgentThreadRenameContext> = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB),
-      action: suspend (path: String, threadId: String, normalizedName: String) -> Boolean,
-    ): Backend {
-      return object : Backend {
-        override val supportedContexts: Set<AgentThreadRenameContext> = supportedContexts
-
-        override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-          return action(path, threadId, normalizedName)
-        }
-      }
-    }
-  }
-}
+typealias AgentThreadRenameAction = suspend (path: String, threadId: String, normalizedName: String) -> Boolean
 
 data class AgentInitialMessagePlan(
   @JvmField val message: String?,
@@ -218,7 +184,11 @@ interface AgentSessionProviderDescriptor {
   val closeOpenChatBeforeArchiveThread: Boolean
     get() = false
 
-  val threadRenameHandler: AgentThreadRenameHandler?
+  /**
+   * Provider-side rename implementation. Implementations should only persist or perform the provider rename and report
+   * success. Agent Workbench owns local title overrides, open editor-tab presentation updates, and follow-up refreshes.
+   */
+  val threadRenameAction: AgentThreadRenameAction?
     get() = null
 
   val supportsUnarchiveThread: Boolean

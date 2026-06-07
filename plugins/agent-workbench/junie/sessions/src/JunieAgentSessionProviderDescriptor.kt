@@ -11,8 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageP
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import javax.swing.Icon
 
 internal class JunieAgentSessionProviderDescriptor(
@@ -63,13 +62,8 @@ internal class JunieAgentSessionProviderDescriptor(
   override val pendingSessionLaunchYoloMarker: String
     get() = BRAVE_FLAG
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      return threadMutationBackend.renameThread(path, threadId, normalizedName)
-    }
+  override val threadRenameAction: AgentThreadRenameAction = { path, threadId, normalizedName ->
+    threadMutationBackend.renameThread(path, threadId, normalizedName)
   }
 
   override suspend fun isCliAvailable(): Boolean = JunieCliSupport.findExecutableViaTerminalResolver() != null

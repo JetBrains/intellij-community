@@ -4,8 +4,6 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
-import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -53,12 +51,7 @@ internal class AgentSessionProviderRefreshRunner(
   private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
   private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
-  private val openAgentChatTabPresentationUpdater: suspend (
-    AgentSessionProvider,
-    Set<String>,
-    Map<Pair<String, String>, String>,
-    Map<Pair<String, String>, AgentThreadActivity>,
-  ) -> Int = ::updateOpenAgentChatTabPresentation,
+  private val threadPresentationUpdater: AgentSessionThreadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(),
 ) {
   suspend fun refreshLoadedProviderThreads(
     provider: AgentSessionProvider,
@@ -554,26 +547,19 @@ internal class AgentSessionProviderRefreshRunner(
     // concrete threads for those paths, so evicting presentation there would regress open tabs
     // back to bootstrap titles/activity without a real provider snapshot.
     val authoritativePaths = LinkedHashSet<String>()
-    val titleByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, String>()
-    val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
+    val threadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       if (outcome.isComplete) {
         authoritativePaths += path
       }
-      for (thread in threads) {
-        if (thread.provider != provider) continue
-        val identityKey = path to buildAgentSessionIdentity(thread.provider, thread.id)
-        titleByPathAndThreadIdentity[identityKey] = thread.title
-        activityByPathAndThreadIdentity[identityKey] = thread.activity
-      }
+      threadsByPath[path] = threads
     }
 
-    val updatedTabs = openAgentChatTabPresentationUpdater(
-      provider,
-      authoritativePaths,
-      titleByPathAndThreadIdentity,
-      activityByPathAndThreadIdentity,
+    val updatedTabs = threadPresentationUpdater.updateProviderSnapshot(
+      provider = provider,
+      authoritativePaths = authoritativePaths,
+      threadsByPath = threadsByPath,
     )
 
     LOG.debug {

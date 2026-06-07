@@ -9,8 +9,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -49,12 +47,8 @@ class JunieAgentSessionProviderDescriptorTest {
 
     assertThat(descriptor.archiveThread("/project", "thread-1")).isTrue()
     assertThat(descriptor.unarchiveThread("/project", "thread-1")).isTrue()
-    val renameHandler = descriptor.threadRenameHandler as AgentThreadRenameHandler.Backend
-    assertThat(renameHandler.supportedContexts).containsExactlyInAnyOrder(
-      AgentThreadRenameContext.TREE_POPUP,
-      AgentThreadRenameContext.EDITOR_TAB,
-    )
-    assertThat(renameHandler.execute("/project", "thread-1", "Renamed thread")).isTrue()
+    val renameAction = checkNotNull(descriptor.threadRenameAction)
+    assertThat(renameAction("/project", "thread-1", "Renamed thread")).isTrue()
 
     assertThat(backend.calls).containsExactly(
       "archive:/project:thread-1",

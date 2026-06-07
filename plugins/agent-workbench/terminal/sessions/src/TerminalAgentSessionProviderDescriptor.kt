@@ -11,8 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalRestoreContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.terminal.sessions.icons.AgentWorkbenchTerminalSessionsIcons
 import com.intellij.openapi.components.service
 import java.util.UUID
@@ -70,13 +69,8 @@ internal class TerminalAgentSessionProviderDescriptor(
   override val supportsTerminalRestoreContext: Boolean
     get() = true
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      return stateService.renameSession(path = path, threadId = threadId, title = normalizedName)
-    }
+  override val threadRenameAction: AgentThreadRenameAction = { path, threadId, normalizedName ->
+    stateService.renameSession(path = path, threadId = threadId, title = normalizedName)
   }
 
   override suspend fun isCliAvailable(): Boolean = true

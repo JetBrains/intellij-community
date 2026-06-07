@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
 import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
-import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -32,7 +31,6 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -66,12 +64,7 @@ internal class AgentSessionRefreshCoordinator(
   scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<AgentSessionSourceUpdateEvent> = { provider ->
     agentChatScopedRefreshSignals(provider)
   },
-  private val openAgentChatTabPresentationUpdater: suspend (
-    AgentSessionProvider,
-    Set<String>,
-    Map<Pair<String, String>, String>,
-    Map<Pair<String, String>, AgentThreadActivity>,
-  ) -> Int = ::updateOpenAgentChatTabPresentation,
+  private val threadPresentationUpdater: AgentSessionThreadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(),
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingTabRebindRequest>>,
@@ -114,7 +107,7 @@ internal class AgentSessionRefreshCoordinator(
     refreshSupportProvider = ::refreshSupportFor,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
-    openAgentChatTabPresentationUpdater = openAgentChatTabPresentationUpdater,
+    threadPresentationUpdater = threadPresentationUpdater,
   )
   private val refreshScheduler = AgentSessionRefreshScheduler(
     serviceScope = serviceScope,
@@ -171,7 +164,7 @@ internal class AgentSessionRefreshCoordinator(
       ?.filter(String::isNotBlank)
       ?.toCollection(LinkedHashSet())
 
-    var activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity> = emptyMap()
+    var activityUpdates: List<AgentSessionThreadActivityPresentationUpdate> = emptyList()
     stateStore.update { state ->
       val update = applyThreadActivityHints(
         state = state,
@@ -180,20 +173,15 @@ internal class AgentSessionRefreshCoordinator(
         activityHintsByThreadId = activityHintsByThreadId,
         summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       )
-      activityByPathAndThreadIdentity = update.activityByPathAndThreadIdentity
+      activityUpdates = update.activityUpdates
       update.state
     }
 
-    if (activityByPathAndThreadIdentity.isEmpty()) {
+    if (activityUpdates.isEmpty()) {
       return
     }
     serviceScope.launch {
-      openAgentChatTabPresentationUpdater(
-        provider,
-        emptySet(),
-        emptyMap(),
-        activityByPathAndThreadIdentity,
-      )
+      threadPresentationUpdater.updateActivityHints(provider = provider, updates = activityUpdates)
     }
   }
 
@@ -447,12 +435,12 @@ internal class AgentSessionRefreshCoordinator(
 
 private data class ActivityHintStateUpdate(
   @JvmField val state: AgentSessionsState,
-  @JvmField val activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
+  @JvmField val activityUpdates: List<AgentSessionThreadActivityPresentationUpdate>,
 )
 
 private data class ActivityHintThreadUpdate(
   @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
+  @JvmField val activityUpdates: List<AgentSessionThreadActivityPresentationUpdate>,
 )
 
 private fun applyThreadActivityHints(
@@ -462,7 +450,7 @@ private fun applyThreadActivityHints(
   activityHintsByThreadId: Map<String, AgentThreadActivity>,
   summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
 ): ActivityHintStateUpdate {
-  val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
+  val activityUpdates = ArrayList<AgentSessionThreadActivityPresentationUpdate>()
   var changed = false
   val nextProjects = state.projects.map { project ->
     val projectUpdate = applyThreadActivityHintsForPath(
@@ -473,7 +461,7 @@ private fun applyThreadActivityHints(
       activityHintsByThreadId = activityHintsByThreadId,
       summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     )
-    activityByPathAndThreadIdentity.putAll(projectUpdate.activityByPathAndThreadIdentity)
+    activityUpdates.addAll(projectUpdate.activityUpdates)
 
     var worktreesChanged = false
     val nextWorktrees = project.worktrees.map { worktree ->
@@ -485,7 +473,7 @@ private fun applyThreadActivityHints(
         activityHintsByThreadId = activityHintsByThreadId,
         summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       )
-      activityByPathAndThreadIdentity.putAll(worktreeUpdate.activityByPathAndThreadIdentity)
+      activityUpdates.addAll(worktreeUpdate.activityUpdates)
       if (worktreeUpdate.threads === worktree.threads) {
         worktree
       }
@@ -508,14 +496,14 @@ private fun applyThreadActivityHints(
   }
 
   if (!changed) {
-    return ActivityHintStateUpdate(state = state, activityByPathAndThreadIdentity = activityByPathAndThreadIdentity)
+    return ActivityHintStateUpdate(state = state, activityUpdates = activityUpdates)
   }
   return ActivityHintStateUpdate(
     state = state.copy(
       projects = nextProjects,
       lastUpdatedAt = System.currentTimeMillis(),
     ),
-    activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
+    activityUpdates = activityUpdates,
   )
 }
 
@@ -529,10 +517,10 @@ private fun applyThreadActivityHintsForPath(
 ): ActivityHintThreadUpdate {
   val normalizedPath = normalizeAgentWorkbenchPath(path)
   if (normalizedScopedPaths != null && normalizedPath !in normalizedScopedPaths) {
-    return ActivityHintThreadUpdate(threads = threads, activityByPathAndThreadIdentity = emptyMap())
+    return ActivityHintThreadUpdate(threads = threads, activityUpdates = emptyList())
   }
 
-  val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
+  val activityUpdates = ArrayList<AgentSessionThreadActivityPresentationUpdate>()
   var changed = false
   val nextThreads = threads.map { thread ->
     if (thread.provider != provider) {
@@ -547,17 +535,21 @@ private fun applyThreadActivityHintsForPath(
     if (hintedActivity == thread.activity && thread.summaryActivity == hintedSummaryActivity) {
       return@map thread
     }
-    activityByPathAndThreadIdentity[path to buildAgentSessionIdentity(provider, thread.id)] = hintedActivity
+    activityUpdates += AgentSessionThreadActivityPresentationUpdate(
+      path = path,
+      threadId = thread.id,
+      activity = hintedActivity,
+    )
     changed = true
     thread.copy(activity = hintedActivity, summaryActivity = hintedSummaryActivity)
   }
 
   if (!changed) {
-    return ActivityHintThreadUpdate(threads = threads, activityByPathAndThreadIdentity = activityByPathAndThreadIdentity)
+    return ActivityHintThreadUpdate(threads = threads, activityUpdates = activityUpdates)
   }
   return ActivityHintThreadUpdate(
     threads = nextThreads,
-    activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
+    activityUpdates = activityUpdates,
   )
 }
 

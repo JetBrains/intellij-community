@@ -15,8 +15,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderO
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -103,13 +102,8 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val pendingSessionLaunchYoloMarker: String
     get() = "--dangerously-skip-permissions"
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      return renameEngine.rename(path = path, threadId = threadId, newTitle = normalizedName)
-    }
+  override val threadRenameAction: AgentThreadRenameAction = { path, threadId, normalizedName ->
+    renameEngine.rename(path = path, threadId = threadId, newTitle = normalizedName)
   }
 
   override val cliMissingMessageKey: String

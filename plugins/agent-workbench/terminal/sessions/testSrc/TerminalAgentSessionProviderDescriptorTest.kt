@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.terminal.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -38,7 +37,7 @@ class TerminalAgentSessionProviderDescriptorTest {
     runBlocking(Dispatchers.Default) {
       val stateService = TerminalSessionStateService()
       val descriptor = TerminalAgentSessionProviderDescriptor(stateService = stateService)
-      val renameHandler = descriptor.threadRenameHandler as AgentThreadRenameHandler.Backend
+      val renameAction = checkNotNull(descriptor.threadRenameAction)
 
       descriptor.recordNewSession(
         path = "/tmp/project/",
@@ -46,7 +45,7 @@ class TerminalAgentSessionProviderDescriptorTest {
         title = "Terminal",
         createdAtMs = 1000L,
       )
-      val renamed = renameHandler.execute("/tmp/project", "terminal-session-id", "Build shell")
+      val renamed = renameAction("/tmp/project", "terminal-session-id", "Build shell")
       val archived = descriptor.archiveThread("/tmp/project", "terminal-session-id")
       val unarchived = descriptor.unarchiveThread("/tmp/project", "terminal-session-id")
 

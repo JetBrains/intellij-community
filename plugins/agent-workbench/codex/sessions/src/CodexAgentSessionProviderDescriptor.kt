@@ -22,8 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderO
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
 import java.nio.file.Path
@@ -109,14 +108,9 @@ internal class CodexAgentSessionProviderDescriptor(
   override val pendingSessionLaunchYoloMarker: String
     get() = "--yolo"
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
-    override val supportedContexts: Set<AgentThreadRenameContext>
-      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
-
-    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      threadMutationBackend.setThreadName(path, threadId, normalizedName)
-      return true
-    }
+  override val threadRenameAction: AgentThreadRenameAction = { path, threadId, normalizedName ->
+    threadMutationBackend.setThreadName(path, threadId, normalizedName)
+    true
   }
 
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
