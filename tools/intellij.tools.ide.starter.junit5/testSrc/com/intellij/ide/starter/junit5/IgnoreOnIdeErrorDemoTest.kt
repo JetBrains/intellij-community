@@ -4,6 +4,8 @@ package com.intellij.ide.starter.junit5
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.ignoredTestFailuresPattern
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
@@ -46,6 +48,7 @@ class IgnoreOnIdeErrorDemoTest {
       reason = "demo: matching filter",
     )
   fun matchingFilterDowngradesFailureToIgnored(testInfo: TestInfo, @TempDir projectDir: Path) {
+    ConfigurationStorage.ignoredTestFailuresPattern("Drop error from command")
     runIdeAndDropError(testInfo, projectDir)
     error("expected failure: simulating a real assertion that fails when the IDE errored")
   }
