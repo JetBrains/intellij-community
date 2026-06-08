@@ -6,20 +6,25 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.Nls;
@@ -92,7 +97,7 @@ final class IntroduceConstantHelper implements FieldHelper {
   @Override
   public @NotNull OccurrenceManager createOccurrenceManager(final @NotNull PsiExpression selectedExpr,
                                                             final @NotNull PsiClass parentClass) {
-    return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
+    return new ExpressionOccurrenceManager(selectedExpr, parentClass, AnnotationEnumConstantFilter.INSTANCE);
   }
 
   @Override
@@ -147,6 +152,11 @@ final class IntroduceConstantHelper implements FieldHelper {
                                                        @Nullable PsiLocalVariable localVariable) {
     if (localVariable == null) {
       if (expr == null) return null;
+      if (isAnnotationEnumAttributeValue(expr)) {
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          JavaRefactoringBundle.message("constant.not.allowed.as.annotation.enum.value"));
+        return new InvalidInitializer(message, expr);
+      }
       PsiElement errorElement = FieldExtractor.isStaticFinalInitializer(expr, true);
       if (errorElement != null) {
         String message = RefactoringBundle.getCannotRefactorMessage(
@@ -168,5 +178,24 @@ final class IntroduceConstantHelper implements FieldHelper {
       return new InvalidInitializer(message, errorElement);
     }
     return null;
+  }
+
+  private static boolean isAnnotationEnumAttributeValue(@NotNull PsiExpression expression) {
+    PsiType type = expression.getType();
+    PsiClass valueClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (valueClass == null || !valueClass.isEnum()) return false;
+
+    PsiElement element = BaseExpressionToFieldHandler.getPhysicalElement(expression);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+    return parent instanceof PsiNameValuePair || parent instanceof PsiAnnotationMethod || parent instanceof PsiArrayInitializerMemberValue;
+  }
+
+  private static class AnnotationEnumConstantFilter implements OccurrenceFilter {
+    private static final AnnotationEnumConstantFilter INSTANCE = new AnnotationEnumConstantFilter();
+
+    @Override
+    public boolean isOK(@NotNull PsiExpression occurrence) {
+      return !isAnnotationEnumAttributeValue(occurrence);
+    }
   }
 }

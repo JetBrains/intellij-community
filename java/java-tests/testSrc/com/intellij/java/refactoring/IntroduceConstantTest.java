@@ -14,6 +14,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -106,6 +107,34 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAnnotationDescription() {
+    doTest();
+  }
+
+  public void testEnumConstantInAnnotationAttribute() {
+    doTestExtractingEnumConstantFromEnumAnnotationValue();
+  }
+
+  public void testEnumConstantInAnnotationDefaultValue() {
+    doTestExtractingEnumConstantFromEnumAnnotationValue();
+  }
+
+  private void doTestExtractingEnumConstantFromEnumAnnotationValue() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    try {
+      new IntroduceConstantHandler().invoke(getProject(), getEditor(), getFile(), null);
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Constant not allowed as annotation enum value.", e.getMessage());
+    }
+  }
+
+  public void testReplaceAllSkipsEnumConstantsInAnnotationAttributes() {
+    doTest();
+  }
+
+  public void testReplaceAllSkipsEnumConstantsInAnnotationDefaultValues() {
     doTest();
   }
 
