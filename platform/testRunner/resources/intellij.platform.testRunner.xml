@@ -24,6 +24,9 @@
   <!-- endregion -->
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.testFramework"
+                    interface="com.intellij.testIntegration.TestFramework"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.testStatusListener"
                     interface="com.intellij.execution.testframework.TestStatusListener"
                     dynamic="true"/>
