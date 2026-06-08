@@ -170,7 +170,7 @@ public final class HotSwapManager {
         String qualifiedName = getQualifiedName(relativePath, 0);
         if (qualifiedName != null) {
           final HotSwapFile hotswapFile = new HotSwapFile(new File(root, relativePath));
-          final long fileStamp = hotswapFile.file.lastModified();
+          final long fileStamp = hotswapFile.lastModified();
 
           for (Pair<DebuggerSession, Long> pair : sessionWithStamps) {
             final DebuggerSession session = pair.first;

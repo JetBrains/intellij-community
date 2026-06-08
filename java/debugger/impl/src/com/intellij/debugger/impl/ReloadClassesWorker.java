@@ -15,7 +15,6 @@ import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.concurrency.Semaphore;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -122,7 +120,7 @@ class ReloadClassesWorker {
     }
   }
 
-  public void reloadClasses(@NotNull Map<@NotNull String, @NotNull HotSwapFile> modifiedClasses) {
+  public void reloadClasses(@NotNull Map<@NotNull String, ? extends @NotNull HotSwapClassFile> modifiedClasses) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (modifiedClasses.isEmpty()) {
@@ -162,7 +160,7 @@ class ReloadClassesWorker {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
       int processedEntriesCount = 0;
-      for (Map.Entry<@NotNull String, @NotNull HotSwapFile> entry : modifiedClasses.entrySet()) {
+      for (Map.Entry<@NotNull String, ? extends @NotNull HotSwapClassFile> entry : modifiedClasses.entrySet()) {
         // stop if the process is finished already
         if (debugProcess.isDetached() || debugProcess.isDetaching()) {
           break;
@@ -175,7 +173,7 @@ class ReloadClassesWorker {
         myProgress.setText(qualifiedName);
         myProgress.setFraction(processedEntriesCount / (double)modifiedClasses.size());
         try {
-          redefineProcessor.processClass(qualifiedName, entry.getValue().file);
+          redefineProcessor.processClass(qualifiedName, entry.getValue());
         }
         catch (IOException e) {
           reportProblem(qualifiedName, e);
@@ -286,7 +284,7 @@ class ReloadClassesWorker {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(@NotNull String qualifiedName, @NotNull File file)
+    public void processClass(@NotNull String qualifiedName, @NotNull HotSwapClassFile file)
       throws IOException, LinkageError, UnsupportedOperationException {
 
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
@@ -294,7 +292,7 @@ class ReloadClassesWorker {
         return;
       }
 
-      final byte[] content = FileUtil.loadFileBytes(file);
+      final byte[] content = file.loadBytes();
       if (vmClasses.size() == 1) {
         ReferenceType vmClass = vmClasses.getFirst();
         myRedefineMap.put(vmClass, content);
