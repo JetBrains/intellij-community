@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -236,8 +235,7 @@ public final class MoveClassesOrPackagesUtil {
     PsiFile file = aClass.getContainingFile();
     Project project = moveDestination.getProject();
     VirtualFile dstDir = moveDestination.getVirtualFile();
-    String pkgName = PackageIndex.getInstance(project).getPackageNameByDirectory(dstDir);
-    PsiPackage newPackage = pkgName == null ? null : new PsiPackageImpl(moveDestination.getManager(), pkgName);
+    PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     newClass = aClass;
     final PsiDirectory containingDirectory = file.getContainingDirectory();
@@ -250,9 +248,6 @@ public final class MoveClassesOrPackagesUtil {
       if (document != null) {
         documentManager.commitDocument(document);
       }
-
-      file = moveDestination.findFile(file.getName());
-
     }
 
     if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
