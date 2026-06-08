@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.modTree;
 
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class ModificationBTreeImpl implements ModificationTree {
-  private static final int BRANCHING_FACTOR = 32;
+  private static final int BRANCHING_FACTOR = 8;
   private static final int MAX_CHILDREN = BRANCHING_FACTOR;
   private static final int MIN_CHILDREN = MAX_CHILDREN / 2;
 
@@ -58,15 +57,15 @@ public final class ModificationBTreeImpl implements ModificationTree {
     int accumulatedDelta = 0;
 
     while (node != null) {
-      accumulatedDelta = Math.addExact(accumulatedDelta, node.delta());
+      accumulatedDelta += node.delta();
 
       if (node instanceof Leaf leaf) {
-        if (offsetInVersion0 < leaf.start0()) {
-          return Math.addExact(leaf.start0(), accumulatedDelta);
+        if (offsetInVersion0 < leaf.start0) {
+          return leaf.start0 + accumulatedDelta;
         }
 
-        if (offsetInVersion0 < leaf.end0()) {
-          return Math.addExact(offsetInVersion0, accumulatedDelta);
+        if (offsetInVersion0 < leaf.end0) {
+          return offsetInVersion0 + accumulatedDelta;
         }
 
         return currentLength;
@@ -74,20 +73,9 @@ public final class ModificationBTreeImpl implements ModificationTree {
 
       Branch branch = (Branch)node;
       Node next = null;
-      Node[] children = branch.children();
+      Node[] children = branch.children;
 
-      int i = ObjectUtils.binarySearch(0, children.length, mid -> {
-        Node child = children[mid];
-        if (offsetInVersion0 < child.start0()) {
-          return 1;
-        }
-        if (offsetInVersion0 < child.end0()) {
-          return 0;
-        }
-        else {
-          return -1;
-        }
-      });
+      int i = searchChild/*Seq*/(offsetInVersion0, children);
       if (i >= 0) {
         next = children[i];
       }
@@ -98,17 +86,6 @@ public final class ModificationBTreeImpl implements ModificationTree {
         }
       }
 
-      //for (Node child : children) {
-      //  if (offsetInVersion0 < child.start0()) {
-      //    return Math.addExact(accumulatedDelta, child.currentStart());
-      //  }
-      //
-      //  if (offsetInVersion0 < child.end0()) {
-      //    next = child;
-      //    break;
-      //  }
-      //}
-
       if (next == null) {
         return currentLength;
       }
@@ -117,6 +94,37 @@ public final class ModificationBTreeImpl implements ModificationTree {
     }
 
     return currentLength;
+  }
+
+  private static int searchChild(int offsetInVersion0, Node[] children) {
+    int low = 0;
+    int high = children.length - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      Node child = children[mid];
+      if (offsetInVersion0 < child.start0()) {
+        high = mid - 1;
+      }
+      else if (offsetInVersion0 >= child.end0()) {
+        low = mid + 1;
+      }
+      else {
+        return mid;
+      }
+    }
+    return -(low + 1);
+  }
+  private static int searchChildSeq(int offsetInVersion0, Node[] children) {
+    for (int i = 0; i < children.length; i++) {
+      Node child = children[i];
+      if (offsetInVersion0 < child.start0()) {
+        return -i-1;
+      }
+      if (offsetInVersion0 < child.end0()) {
+        return i;
+      }
+    }
+    return -children.length-1;
   }
 
   @Override
@@ -686,7 +694,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     for (Node child : children) {
       if (child.height() != height) {
         throw new IllegalArgumentException(
-          "Cannot pack children with different heights"
+          "Cannot pack children with different heights: "+height+"; "+child.height()+"; "+children
         );
       }
     }

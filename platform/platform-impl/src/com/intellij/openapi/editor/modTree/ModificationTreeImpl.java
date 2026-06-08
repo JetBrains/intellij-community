@@ -162,21 +162,21 @@ public final class ModificationTreeImpl implements ModificationTree {
     boolean hasSuccessor = false;
 
     while (node != null) {
-      accumulatedDelta += node.delta();
+      accumulatedDelta += node.delta;
 
-      int currentStart = node.start0() + accumulatedDelta;
-      int currentEnd = node.end0() + accumulatedDelta;
+      int currentStart = node.start0 + accumulatedDelta;
+      int currentEnd = node.end0 + accumulatedDelta;
 
       if (offsetInCurrent < currentStart) {
         // Target is before this node's current range.
         // This node is the best "next original run" candidate so far.
-        successorVersion0Start = node.start0();
+        successorVersion0Start = node.start0;
         hasSuccessor = true;
-        node = node.left();
+        node = node.left;
       }
       else if (offsetInCurrent >= currentEnd) {
         // Target is after this node's current range.
-        node = node.right();
+        node = node.right;
       }
       else {
         // Target lies inside surviving original text.
@@ -222,18 +222,18 @@ public final class ModificationTreeImpl implements ModificationTree {
     boolean hasSuccessor = false;
 
     while (node != null) {
-      accumulatedDelta += node.delta();
+      accumulatedDelta += node.delta;
 
-      if (offsetInVersion0 < node.start0()) {
+      if (offsetInVersion0 < node.start0) {
         // Target is before this live run in version-0 space.
         // This node is the best successor seen so far.
-        successorCurrentStart = node.start0() + accumulatedDelta;
+        successorCurrentStart = node.start0 + accumulatedDelta;
         hasSuccessor = true;
-        node = node.left();
+        node = node.left;
       }
-      else if (offsetInVersion0 >= node.end0()) {
+      else if (offsetInVersion0 >= node.end0) {
         // Target is after this live run.
-        node = node.right();
+        node = node.right;
       }
       else {
         // Target lies inside surviving original text.
@@ -745,8 +745,8 @@ public final class ModificationTreeImpl implements ModificationTree {
     }
 
     if (root == null) {
-      /// No surviving original text.
-      /// This is valid: the current document may still contain only inserted text.
+      // No surviving original text.
+      // This is valid: the current document may still contain only inserted text.
       checkBoundaryMappings();
       return;
     }

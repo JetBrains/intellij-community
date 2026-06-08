@@ -343,7 +343,7 @@ class ModificationTreeImplTest {
     });
     long que = TimeoutUtil.measureExecutionTime(() -> {
       ModificationTree t = tree.get();
-      for (int n=0;n<10;n++) {
+      for (int n=0;n<100;n++) {
         for (int i = 0; i < 1_000_000; i++) {
           assertEquals(2 * i + 1, t.toCurrentOffset(i));
         }

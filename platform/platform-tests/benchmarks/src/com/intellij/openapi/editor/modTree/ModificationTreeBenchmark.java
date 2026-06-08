@@ -328,7 +328,7 @@ public class ModificationTreeBenchmark {
         }
     }
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main(final String[] args) throws RunnerException {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
     final Options opt = new OptionsBuilder()
