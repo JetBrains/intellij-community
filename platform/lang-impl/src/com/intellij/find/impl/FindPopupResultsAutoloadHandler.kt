@@ -341,7 +341,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
               }
               recentItemRef.set(WeakReference(newItem))
 
-              if (timeToFirstResult.get() == -1L) {
+              if (!loadMore && timeToFirstResult.get() == -1L) {
                 val firstResultTime = System.currentTimeMillis() - startTime.get()
                 timeToFirstResult.set(firstResultTime)
                 FindUsagesCollector.recordFirstResultTime(firstResultTime)
