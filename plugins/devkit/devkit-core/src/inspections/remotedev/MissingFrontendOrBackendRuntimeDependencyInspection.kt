@@ -10,6 +10,7 @@ import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.BACKEND_PLATFORM_MODULE_BASE_NAME
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.FRONTEND_PLATFORM_MODULE_BASE_NAME
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeDescriptorDependencyAnalyzer
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependencyKind
 
 internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPluginXmlInspectionBase() {
@@ -20,6 +21,11 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
   )
 
   private val coreModuleNames = moduleNameSuffixToRequiredRuntimeDependency.map { it.second }
+
+  override fun isAllowed(holder: DomElementAnnotationHolder): Boolean {
+    return super.isAllowed(holder)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(holder.fileElement.file)
+  }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is IdeaPlugin) return

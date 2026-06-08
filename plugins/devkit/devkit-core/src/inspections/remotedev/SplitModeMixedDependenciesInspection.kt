@@ -10,12 +10,15 @@ import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildNonNativePluginMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildMixedModuleDependenciesMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 
 internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionBase() {
 
   override fun isAllowed(holder: DomElementAnnotationHolder): Boolean {
-    return super.isAllowed(holder) && SplitModeInspectionUtil.isAllowedForSplitModeInspection(holder.fileElement.file)
+    return super.isAllowed(holder)
+           && SplitModeInspectionUtil.isAllowedForSplitModeInspection(holder.fileElement.file)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(holder.fileElement.file)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
