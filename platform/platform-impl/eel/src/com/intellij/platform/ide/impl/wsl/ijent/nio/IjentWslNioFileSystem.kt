@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.eel.EelDescriptor
@@ -70,4 +70,16 @@ class IjentWslNioFileSystem internal constructor(
 
   override fun newWatchService(): WatchService =
     ijentFs.newWatchService()
+
+  override fun equals(other: Any?): Boolean =
+    this === other ||
+    other is IjentWslNioFileSystem &&
+    provider == other.provider &&
+    wslId == other.wslId
+
+  override fun hashCode(): Int {
+    var result = provider.hashCode()
+    result = 31 * result + wslId.hashCode()
+    return result
+  }
 }

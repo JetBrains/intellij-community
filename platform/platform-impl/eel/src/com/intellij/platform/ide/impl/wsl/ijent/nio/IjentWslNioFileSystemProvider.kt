@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -329,6 +329,15 @@ class IjentWslNioFileSystemProvider(
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
     ijentFsProvider.setAttribute(path.toIjentPath(), attribute, value, *options)
+  }
+
+  override fun equals(other: Any?): Boolean =
+    this === other ||
+    other is IjentWslNioFileSystemProvider &&
+    wslId == other.wslId
+
+  override fun hashCode(): Int {
+    return wslId.hashCode()
   }
 
   companion object {
