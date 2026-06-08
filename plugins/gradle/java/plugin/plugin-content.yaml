@@ -1,14 +1,15 @@
 - name: lib/gradle-java-plugin.jar
   modules:
   - name: intellij.gradle.java.plugin
-  contentModules:
-  - name: intellij.gradle.java
 - name: lib/gradle-jps.jar
   modules:
   - name: intellij.gradle.jps
     libraries:
       ant:
       - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar
+- name: lib/intellij.gradle.java.jar
+  contentModules:
+  - name: intellij.gradle.java
 - name: lib/modules/intellij.gradle.analysis.jar
   contentModules:
   - name: intellij.gradle.analysis

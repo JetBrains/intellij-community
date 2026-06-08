@@ -1,3 +1,6 @@
+- name: lib/intellij.yaml.jar
+  contentModules:
+  - name: intellij.yaml
 - name: lib/modules/intellij.yaml.backend.jar
   contentModules:
   - name: intellij.yaml.backend
@@ -7,6 +10,3 @@
 - name: lib/modules/intellij.yaml.helm.jar
   contentModules:
   - name: intellij.yaml.helm
-- name: lib/yaml.jar
-  contentModules:
-  - name: intellij.yaml

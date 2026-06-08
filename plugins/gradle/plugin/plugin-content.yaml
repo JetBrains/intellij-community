@@ -1,178 +1,181 @@
 - name: lib/ant/ant-antlr.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-antlr.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-antlr.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-bcel.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-bcel.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-bcel.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-bsf.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-bsf.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-bsf.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-log4j.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-log4j.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-log4j.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-oro.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-oro.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-oro.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-regexp.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-regexp.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-regexp.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-resolver.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-resolver.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-resolver.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-apache-xalan2.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-xalan2.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-apache-xalan2.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-commons-logging.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-commons-logging.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-commons-logging.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-commons-net.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-commons-net.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-commons-net.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-imageio.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-imageio.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-imageio.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-jai.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jai.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jai.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-jakartamail.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jakartamail.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jakartamail.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-javamail.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-javamail.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-javamail.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-jdepend.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jdepend.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jdepend.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-jmf.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jmf.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jmf.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-jsch.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jsch.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-jsch.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-junit.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junit.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junit.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-junit4.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junit4.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junit4.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-junitlauncher.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junitlauncher.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-junitlauncher.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-launcher.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-launcher.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-launcher.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-netrexx.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-netrexx.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-netrexx.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-swing.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-swing.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-swing.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-testutil.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-testutil.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-testutil.jar
   reason: withProjectLibrary
 - name: lib/ant/ant-xz.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant-xz.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant-xz.jar
   reason: withProjectLibrary
 - name: lib/ant/ant.jar
   library: Ant
   files:
-    - name: $PROJECT_DIR$/community/lib/ant/lib/ant.jar
+  - name: $PROJECT_DIR$/community/lib/ant/lib/ant.jar
   reason: withProjectLibrary
 - name: lib/gradle-api-9.5.0.jar
   library: Gradle
   files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9/gradle-api-9.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9/gradle-api-9.jar
   reason: withProjectLibrary
 - name: lib/gradle-plugin.jar
   modules:
-    - name: intellij.gradle.plugin
-    - name: intellij.gradle.common
-  contentModules:
-    - name: intellij.gradle
-    - name: intellij.gradle.settings
+  - name: intellij.gradle.plugin
+  - name: intellij.gradle.common
 - name: lib/gradle-tooling-extension-api.jar
   modules:
-    - name: intellij.gradle.toolingExtension
+  - name: intellij.gradle.toolingExtension
 - name: lib/gradle-tooling-extension-impl.jar
   modules:
-    - name: intellij.gradle.toolingExtension.impl
+  - name: intellij.gradle.toolingExtension.impl
 - name: lib/gradle-tooling-proxy.jar
   modules:
-    - name: intellij.gradle.toolingProxy
+  - name: intellij.gradle.toolingProxy
 - name: lib/groovy-ant.jar
   modules:
-    - name: intellij.libraries.groovy.ant
-      libraries:
-        groovy-ant:
-          - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-ant/3/groovy-ant-3.jar
+  - name: intellij.libraries.groovy.ant
+    libraries:
+      groovy-ant:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-ant/3/groovy-ant-3.jar
 - name: lib/groovy.jar
   modules:
-    - name: intellij.libraries.groovy
-      libraries:
-        groovy:
-          - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3/groovy-3.jar
+  - name: intellij.libraries.groovy
+    libraries:
+      groovy:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3/groovy-3.jar
+- name: lib/intellij.gradle.jar
+  contentModules:
+  - name: intellij.gradle
+- name: lib/intellij.gradle.settings.jar
+  contentModules:
+  - name: intellij.gradle.settings
 - name: lib/modules/intellij.gradle.completion.ex.jar
   contentModules:
-    - name: intellij.gradle.completion.ex
+  - name: intellij.gradle.completion.ex
 - name: lib/modules/intellij.gradle.completion.jar
   contentModules:
-    - name: intellij.gradle.completion
+  - name: intellij.gradle.completion
 - name: lib/modules/intellij.gradle.completion.kotlin.jar
   contentModules:
-    - name: intellij.gradle.completion.kotlin
+  - name: intellij.gradle.completion.kotlin
 - name: lib/modules/intellij.gradle.completion.toml.jar
   contentModules:
-    - name: intellij.gradle.completion.toml
+  - name: intellij.gradle.completion.toml
 - name: lib/modules/intellij.gradle.properties.jar
   contentModules:
-    - name: intellij.gradle.properties
+  - name: intellij.gradle.properties

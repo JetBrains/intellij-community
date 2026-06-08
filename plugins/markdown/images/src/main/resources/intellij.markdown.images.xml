@@ -1,4 +1,4 @@
-<idea-plugin visibility="public" package="org.intellij.plugins.markdown.images">
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.platform.images"/>
     <plugin id="com.intellij.modules.xml"/>

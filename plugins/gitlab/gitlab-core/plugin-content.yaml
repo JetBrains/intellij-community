@@ -1,3 +1,6 @@
+- name: lib/intellij.vcs.gitlab.jar
+  contentModules:
+  - name: intellij.vcs.gitlab
 - name: lib/modules/intellij.vcs.gitlab.git.jar
   contentModules:
   - name: intellij.vcs.gitlab.git
@@ -10,6 +13,3 @@
 - name: lib/modules/intellij.vcs.gitlab.yaml.jar
   contentModules:
   - name: intellij.vcs.gitlab.yaml
-- name: lib/vcs-gitlab.jar
-  contentModules:
-  - name: intellij.vcs.gitlab
