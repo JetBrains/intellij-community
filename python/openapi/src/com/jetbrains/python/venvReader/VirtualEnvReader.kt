@@ -279,7 +279,7 @@ class VirtualEnvReader private constructor(
     const val PYENV_DEFAULT_DIR_NAME: String = ".pyenv"
 
     private val POSIX_PYTHON_PATTERN = Regex("^(pypy|pythonw?)(\\d+(\\.\\d+)*)?t?$")
-    private val WIN_PYTHON_PATTERN = Regex("^(pypy|pythonw?)(_d)?(\\d+(\\.\\d+)*)?t?\\.exe$", RegexOption.IGNORE_CASE)
+    private val WIN_PYTHON_PATTERN = Regex("^(pypy|pythonw?)(\\d+(\\.\\d+)*)?t?(_d)?\\.exe$", RegexOption.IGNORE_CASE)
     private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
 
     /**
