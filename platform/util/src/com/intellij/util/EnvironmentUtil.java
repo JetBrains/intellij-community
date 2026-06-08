@@ -5,9 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
-import kotlinx.coroutines.CompletableDeferred;
-import kotlinx.coroutines.CompletableDeferredKt;
-import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +70,7 @@ public final class EnvironmentUtil {
   @ApiStatus.ScheduledForRemoval
   public static final String MacOS_LOADER_BINARY = "printenv";
 
-  private static final AtomicReference<CompletableDeferred<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
+  private static final AtomicReference<Supplier<Map<String, String>>> ourEnvLoader = new AtomicReference<>();
 
   private EnvironmentUtil() { }
 
@@ -97,24 +95,20 @@ public final class EnvironmentUtil {
    * @return unmodifiable map of the process environment.
    */
   public static @NotNull Map<String, String> getEnvironmentMap() {
-    CompletableDeferred<Map<String, String>> getter = ourEnvGetter.get();
-    if (getter == null) {
-      getter = CompletableDeferredKt.CompletableDeferred(getSystemEnv());
-      if (!ourEnvGetter.compareAndSet(null, getter)) {
-        getter = ourEnvGetter.get();
+    Supplier<Map<String, String>> envLoader = ourEnvLoader.get();
+    if (envLoader == null) {
+      Map<String, String> systemEnv = getSystemEnv();
+      envLoader = () -> systemEnv;
+      if (!ourEnvLoader.compareAndSet(null, envLoader)) {
+        envLoader = ourEnvLoader.get();
       }
     }
-    try {
-      return getter.isCompleted() ? getter.getCompleted() : FutureKt.asCompletableFuture(getter).join();
-    }
-    catch (Throwable t) {
-      throw new AssertionError(t);  // unknown state; not expected to happen
-    }
+    return envLoader.get();
   }
 
   @ApiStatus.Internal
-  public static void setEnvironmentLoader(@NotNull CompletableDeferred<Map<String, String>> loader) {
-    ourEnvGetter.set(loader);
+  public static void setEnvironmentLoader(@NotNull Supplier<Map<String, String>> loader) {
+    ourEnvLoader.set(loader);
   }
 
   @ApiStatus.Internal

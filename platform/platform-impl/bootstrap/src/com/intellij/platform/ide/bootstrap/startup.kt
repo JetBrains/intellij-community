@@ -29,6 +29,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -78,6 +79,7 @@ import java.util.Random
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
+import java.util.function.Supplier
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import kotlin.system.exitProcess
@@ -221,8 +223,7 @@ fun startApplication(
   }
 
   shellEnvDeferred = scope.async {
-    // EnvironmentUtil wants logger
-    logDeferred.join()
+    logDeferred.join()  // environment loading needs a logger
     span("environment loading", Dispatchers.IO) {
       val log = logger<AppStarter>()
       if (shouldLoadShellEnv(log)) {
@@ -684,7 +685,17 @@ private fun shouldLoadShellEnv(log: Logger): Boolean {
 
 private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   val envFuture = CompletableDeferred<Map<String, String>>(parentJob)
-  EnvironmentUtil.setEnvironmentLoader(envFuture)
+
+  EnvironmentUtil.setEnvironmentLoader(object : Supplier<Map<String, String>> {
+    private var env: Map<String, String>? = null
+
+    override fun get(): Map<String, String> {
+      if (env == null) {
+        env = awaitWithCheckCanceled(envFuture)
+      }
+      return env!!
+    }
+  })
 
   try {
     val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
