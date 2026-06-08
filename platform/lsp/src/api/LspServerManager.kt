@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @Deprecated("Use LspClientManager", ReplaceWith("LspClientManager", "com.intellij.platform.lsp.api.LspClientManager"))
+@Suppress("DEPRECATION")
 interface LspServerManager : LspClientManager {
   @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
   fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspServer>
