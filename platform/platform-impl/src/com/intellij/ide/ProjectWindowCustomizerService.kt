@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.repaintFrame
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
@@ -373,6 +374,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
   private fun setCustomProjectColorWithIcon(project: Project, icon: Icon, evaluate: Boolean) {
     val iconMainColor = IconUtil.mainColor(icon, evaluate)
     setCustomProjectColor(project, iconMainColor, false)
+    repaintFrame(project)
   }
 
   @Internal
