@@ -100,6 +100,13 @@ class AgentSessionCostHintBanner(
     if (shouldAcknowledgeAgentSessionCostHint(eligible = eligible, acknowledged = acknowledged, settingEnabled = settingEnabled)) {
       hintStateService.acknowledge()
     }
-    isVisible = shouldShowAgentSessionCostHint(eligible = eligible, acknowledged = acknowledged, settingEnabled = settingEnabled)
+    val shouldShow = shouldShowAgentSessionCostHint(eligible = eligible, acknowledged = acknowledged, settingEnabled = settingEnabled)
+    if (isVisible != shouldShow) {
+      isVisible = shouldShow
+      revalidate()
+      repaint()
+      parent?.revalidate()
+      parent?.repaint()
+    }
   }
 }

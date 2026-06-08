@@ -102,6 +102,13 @@ class JbCentralQuotaHintBanner(
     if (shouldAcknowledgeJbCentralQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)) {
       hintStateService.acknowledge()
     }
-    isVisible = shouldShowJbCentralQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)
+    val shouldShow = shouldShowJbCentralQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)
+    if (isVisible != shouldShow) {
+      isVisible = shouldShow
+      revalidate()
+      repaint()
+      parent?.revalidate()
+      parent?.repaint()
+    }
   }
 }

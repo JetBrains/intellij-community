@@ -100,6 +100,13 @@ internal class ClaudeQuotaHintBanner(
     if (shouldAcknowledgeClaudeQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)) {
       hintStateService.acknowledge()
     }
-    isVisible = shouldShowClaudeQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)
+    val shouldShow = shouldShowClaudeQuotaHint(eligible = eligible, acknowledged = acknowledged, widgetEnabled = widgetEnabled)
+    if (isVisible != shouldShow) {
+      isVisible = shouldShow
+      revalidate()
+      repaint()
+      parent?.revalidate()
+      parent?.repaint()
+    }
   }
 }

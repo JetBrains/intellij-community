@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
+import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
@@ -54,18 +55,19 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
+import java.math.BigDecimal
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JPanel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
-import java.math.BigDecimal
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.delay
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -154,6 +156,42 @@ class AgentSessionsToolWindowFactorySwingTest {
     }
 
     assertThat(hintStateService.eligibleFlow.value).isTrue()
+  }
+
+  @Test
+  fun sessionCostHintBannerRequestsParentRefreshWhenAcknowledged() = runBlocking {
+    withSessionCostPresentationDisabled {
+      val hintStateService = AgentSessionCostHintStateService().apply { markEligible() }
+      assertBannerRequestsParentRefreshAfterHide(
+        bannerFactory = { AgentSessionCostHintBanner(hintStateService) },
+        hideBanner = { hintStateService.acknowledge() },
+      )
+    }
+  }
+
+  @Test
+  fun jbCentralQuotaHintBannerRequestsParentRefreshWhenAcknowledged() = runBlocking {
+    val executable = tempDir.resolve("jbcentral-cli").resolve(jbCentralExecutableName())
+    Files.createDirectories(executable.parent)
+    Files.writeString(executable, "stub")
+    val propertyName = "agent.workbench.sessions.jbcentral.path"
+    val previous = System.getProperty(propertyName)
+    System.setProperty(propertyName, executable.toAbsolutePath().toString())
+    try {
+      val hintStateService = JbCentralQuotaHintStateService().apply { markEligible() }
+      assertBannerRequestsParentRefreshAfterHide(
+        bannerFactory = { JbCentralQuotaHintBanner(hintStateService) },
+        hideBanner = { hintStateService.acknowledge() },
+      )
+    }
+    finally {
+      if (previous == null) {
+        System.clearProperty(propertyName)
+      }
+      else {
+        System.setProperty(propertyName, previous)
+      }
+    }
   }
 
   @Test
@@ -413,6 +451,39 @@ class AgentSessionsToolWindowFactorySwingTest {
   }
 }
 
+private suspend fun assertBannerRequestsParentRefreshAfterHide(
+  bannerFactory: () -> JPanel,
+  hideBanner: () -> Unit,
+) {
+  lateinit var banner: JPanel
+  lateinit var parent: RefreshTrackingPanel
+
+  try {
+    runInEdtAndWait {
+      banner = bannerFactory()
+      parent = RefreshTrackingPanel().apply {
+        add(banner)
+      }
+    }
+
+    waitForCondition { isVisibleForLayoutTest(banner) }
+    runInEdtAndWait { parent.resetRefreshCounters() }
+
+    runInEdtAndWait { hideBanner() }
+
+    waitForCondition { !isVisibleForLayoutTest(banner) }
+    waitForCondition {
+      refreshCountsForTest(parent).let { it.revalidateCount > 0 && it.repaintCount > 0 }
+    }
+  }
+  finally {
+    runInEdtAndWait {
+      banner.removeNotify()
+      parent.removeAll()
+    }
+  }
+}
+
 private class ColdStartToolWindowManager(project: Project) :
   ToolWindowManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope()) {
   private val toolWindowDisposable = Disposer.newDisposable("Agent sessions cold-start toolwindow")
@@ -536,8 +607,33 @@ private fun AgentSessionsState.claudeThreadCostAmount(): BigDecimal? {
     ?.amountUsd
 }
 
+private fun isVisibleForLayoutTest(component: JPanel): Boolean {
+  var visible = false
+  runInEdtAndWait { visible = component.isVisible }
+  return visible
+}
+
+private fun refreshCountsForTest(panel: RefreshTrackingPanel): RefreshCounts {
+  var counts = RefreshCounts(revalidateCount = 0, repaintCount = 0)
+  runInEdtAndWait {
+    counts = RefreshCounts(revalidateCount = panel.revalidateCount, repaintCount = panel.repaintCount)
+  }
+  return counts
+}
+
 private fun jbCentralExecutableName(): String {
   return if (SystemInfoRt.isWindows) "jbcentral.exe" else "jbcentral"
+}
+
+private suspend fun withSessionCostPresentationDisabled(action: suspend () -> Unit) {
+  val previous = AgentSessionCostPresentationSettings.isEnabled()
+  AgentSessionCostPresentationSettings.setEnabled(false)
+  try {
+    action()
+  }
+  finally {
+    AgentSessionCostPresentationSettings.setEnabled(previous)
+  }
 }
 
 private suspend fun withSessionCostPresentationEnabled(action: suspend () -> Unit) {
@@ -565,5 +661,33 @@ private fun withJbCentralPath(path: Path, action: () -> Unit) {
     else {
       System.setProperty(propertyName, previous)
     }
+  }
+}
+
+private data class RefreshCounts(
+  val revalidateCount: Int,
+  val repaintCount: Int,
+)
+
+private class RefreshTrackingPanel : JPanel() {
+  var revalidateCount: Int = 0
+    private set
+
+  var repaintCount: Int = 0
+    private set
+
+  override fun revalidate() {
+    revalidateCount++
+    super.revalidate()
+  }
+
+  override fun repaint() {
+    repaintCount++
+    super.repaint()
+  }
+
+  fun resetRefreshCounters() {
+    revalidateCount = 0
+    repaintCount = 0
   }
 }
