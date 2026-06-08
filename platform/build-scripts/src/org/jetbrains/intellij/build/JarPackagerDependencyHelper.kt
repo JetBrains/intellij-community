@@ -79,11 +79,6 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
   }
 
   fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
-    //TODO Please write some sane code here, caching is broken, a proper caching crashes dev build
-    if (module.name == "intellij.python.pyproject" && withTests) {
-      return java.util.List.of()
-    }
-
     val cache = if (withTests) testRuntimeLibraryCache else productionLibraryCache
     return cache.computeIfAbsent(module) {
       val javaExtensionService = JpsJavaExtensionService.getInstance()
