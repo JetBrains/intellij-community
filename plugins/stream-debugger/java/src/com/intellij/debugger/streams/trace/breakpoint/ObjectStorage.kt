@@ -21,20 +21,21 @@ import com.sun.jdi.PrimitiveType
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Type
 import com.sun.jdi.Value
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Interface for preventing garbage collection of objects in the target VM.
- * Objects stored via this interface are protected from GC until explicitly released.
+ * Prevents garbage collection of objects in the target VM.
+ * Uses JDI's `disableCollection()` API to protect objects from GC
+ * during stream tracing until they are explicitly released.
+ *
+ * All methods must be called from the debugger manager thread.
  */
-interface ObjectStorage {
-  fun store(obj: ObjectReference)
-
-  fun release(obj: ObjectReference)
-
-  fun releaseAll()
+@ApiStatus.Internal
+class ObjectStorage {
+  private val registeredObjects = mutableSetOf<ObjectReference>()
 
   /**
-   * Scoped access to ValueContext. The only way to obtain a ValueContext.
+   * Scoped access to [ValueContext]. The only way to obtain a [ValueContext].
    */
   fun <T> watch(evaluationContext: EvaluationContextImpl, block: ValueContext.() -> T): T {
     DebuggerManagerThreadImpl.assertIsManagerThread()
@@ -44,35 +45,25 @@ interface ObjectStorage {
       return ValueContextImpl(this, evaluationContext).block()
     }
     finally {
-      evaluationContext.setAutoLoadClasses(valueBefore)
+      evaluationContext.isAutoLoadClasses = valueBefore
     }
   }
-}
 
-/**
- * ObjectStorage implementation that prevents garbage collection by disabling collection on objects.
- * Uses JDI's disableCollection() API to protect objects from GC during stream tracing.
- *
- * All methods must be called from the debugger manager thread.
- */
-internal class DisableCollectionObjectStorage : ObjectStorage {
-  private val registeredObjects = mutableSetOf<ObjectReference>()
-
-  override fun store(obj: ObjectReference) {
+  fun store(obj: ObjectReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     if (registeredObjects.add(obj)) {
       DebuggerUtilsImpl.disableCollection(obj)
     }
   }
 
-  override fun release(obj: ObjectReference) {
+  fun release(obj: ObjectReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     if (registeredObjects.remove(obj)) {
       DebuggerUtilsImpl.enableCollection(obj)
     }
   }
 
-  override fun releaseAll() {
+  fun releaseAll() {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     registeredObjects.forEach { DebuggerUtilsImpl.enableCollection(it) }
     registeredObjects.clear()

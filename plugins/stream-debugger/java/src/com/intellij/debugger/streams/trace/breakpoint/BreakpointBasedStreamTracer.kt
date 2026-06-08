@@ -36,7 +36,7 @@ internal class BreakpointBasedStreamTracer(
 
     // Create ObjectStorage for protecting traced objects from GC
     // TODO: perhaps the objects need to be held until the window is closed
-    val objectStorage = DisableCollectionObjectStorage()
+    val objectStorage = ObjectStorage()
     val breakpointFactory = JdiBreakpointFactory()
     val manager = StreamTracingManager(
       breakpointFactory,

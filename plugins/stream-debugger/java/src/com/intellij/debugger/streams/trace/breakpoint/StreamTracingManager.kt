@@ -62,7 +62,7 @@ private sealed interface EvaluationStatus {
 
 internal class StreamTracingManager(
   private val breakpointFactory: JdiBreakpointFactory,
-  private val objectStorage: DisableCollectionObjectStorage,
+  private val objectStorage: ObjectStorage,
   private val handlerFactory: BreakpointBasedHandlerFactory,
 ) {
   private val evaluationFinished = CompletableDeferred<TracingResult>()
