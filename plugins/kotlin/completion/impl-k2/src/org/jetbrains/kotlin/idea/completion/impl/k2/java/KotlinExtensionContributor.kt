@@ -44,7 +44,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaUnificationSubstitutorPolicy
 import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
-import org.jetbrains.kotlin.analysis.api.components.createUnificationSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -247,7 +247,11 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
             // Getting matching extensions from the index does not check for generics inside the type properly,
             // which means false positive matches could be included. We filter them out manually.
             val receiverType = extension.receiverType ?: return@forEach
-            val unifier = createUnificationSubstitutor(this, receiverType, KaUnificationSubstitutorPolicy.UNIVERSAL)
+            val unifier = createSubtypingUnificationSubstitutor(
+                this,
+                receiverType,
+                KaUnificationSubstitutorPolicy.ASSIGN_RIGHT
+            )
             if (unifier == null) return@forEach
 
             if (extension is KaPropertySymbol) {
