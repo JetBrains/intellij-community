@@ -2155,6 +2155,9 @@ a:com.intellij.openapi.wm.impl.ToolbarComboWidget
 - f:setLeftIcons(java.util.List):V
 - f:setRightIcons(java.util.List):V
 - f:setText(java.lang.String):V
+c:com.intellij.openapi.wm.impl.ToolbarSplitButton
+- javax.accessibility.Accessible
+- getAccessibleContext():javax.accessibility.AccessibleContext
 a:com.intellij.openapi.wm.impl.VisibilityWatcher
 - deinstall(java.awt.Component):V
 - f:install(java.awt.Component):V

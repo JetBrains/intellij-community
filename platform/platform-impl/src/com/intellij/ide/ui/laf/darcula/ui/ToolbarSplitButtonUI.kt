@@ -3,6 +3,11 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.openapi.wm.impl.ToolbarSplitButton
@@ -21,7 +26,9 @@ import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
-import java.awt.event.ActionEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -40,6 +47,9 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
 
   private val clickListener = MyClickListener()
   private val hoverListener = MyHoverListener()
+  private val focusListener = MyFocusAdapter()
+  private var actionKeyAction: AnAction? = null
+  private var expandKeyAction: AnAction? = null
 
   companion object {
     @JvmStatic
@@ -53,14 +63,38 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     tryUpdateHtmlRenderer(widget, widget.text)
     hoverListener.addTo(widget)
     clickListener.installOn(widget)
+    widget.addFocusListener(focusListener)
+    installKeyboardActions(widget)
   }
 
   override fun uninstallUI(c: JComponent) {
     val widget = c as ToolbarSplitButton
+    uninstallKeyboardActions(widget)
     widget.removePropertyChangeListener(this)
     tryUpdateHtmlRenderer(widget, "")
     hoverListener.removeFrom(widget)
     clickListener.uninstall(widget)
+    widget.removeFocusListener(focusListener)
+  }
+
+  private fun installKeyboardActions(widget: ToolbarSplitButton) {
+    actionKeyAction = DumbAwareAction.create { e ->
+      widget.doAction(e.inputEvent?.modifiersEx ?: 0)
+    }.also {
+      it.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), widget)
+    }
+    expandKeyAction = DumbAwareAction.create { e ->
+      widget.doExpand(e.inputEvent?.modifiersEx ?: 0)
+    }.also {
+      it.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_DOWN), widget)
+    }
+  }
+
+  private fun uninstallKeyboardActions(widget: ToolbarSplitButton) {
+    actionKeyAction?.unregisterCustomShortcutSet(widget)
+    expandKeyAction?.unregisterCustomShortcutSet(widget)
+    actionKeyAction = null
+    expandKeyAction = null
   }
 
   override fun setUIDefaults(c: AbstractToolbarCombo) {
@@ -217,6 +251,12 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
         if (button.model.isActionButtonSelected()) g2.fillRoundRect(actionZone.x, actionZone.y, actionZone.width, actionZone.height, arc, arc)
         if (button.model.isExpandButtonSelected()) g2.fillRoundRect(expandZone.x, expandZone.y, expandZone.width, expandZone.height, arc, arc)
       }
+
+      if (button.isFocusOwner) {
+        val rect = SwingUtilities.calculateInnerArea(button, null)
+        val arc = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float
+        DarculaNewUIUtil.drawRoundedRectangle(g2, rect, JBUI.CurrentTheme.Focus.focusColor(), arc, DarculaUIUtil.BW.float)
+      }
     }
     finally {
       g2.dispose()
@@ -254,11 +294,10 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
       (e.component as? ToolbarSplitButton)?.let { button ->
         if (button.isEnabled) {
-          val ae = ActionEvent(button, 0, null, System.currentTimeMillis(), e.getModifiersEx())
           val zone = getZoneType(button, e.point)
           when(zone) {
-            EXPAND_ZONE -> button.model.getExpandListeners().forEach { l -> l.actionPerformed(ae) }
-            ACTION_ZONE -> button.model.getActionListeners().forEach { l -> l.actionPerformed(ae) }
+            EXPAND_ZONE -> button.doExpand(e.modifiersEx)
+            ACTION_ZONE -> button.doAction(e.modifiersEx)
           }
           return true
         }
@@ -286,6 +325,16 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
       val zone = getZoneType(button, Point(x, y))
       button.model.setActionButtonSelected(zone == ACTION_ZONE)
       button.model.setExpandButtonSelected(zone == EXPAND_ZONE)
+    }
+  }
+
+  private class MyFocusAdapter : FocusAdapter() {
+    override fun focusGained(e: FocusEvent?) {
+      e?.component?.repaint()
+    }
+
+    override fun focusLost(e: FocusEvent?) {
+      e?.component?.repaint()
     }
   }
 }

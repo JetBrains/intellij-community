@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarSplitButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
@@ -229,7 +230,7 @@ private fun mainToolbarComponents(component: Component): Iterable<Component> =
 private fun Component.isToolbarFocusableType(): Boolean =
   when (this) {
     is ActionMenu -> false
-    is ActionButton, is ToolbarComboButton, is AbstractButton -> true
+    is ActionButton, is ToolbarComboButton, is ToolbarSplitButton, is AbstractButton -> true
     else -> false
   }
 
