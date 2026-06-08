@@ -207,11 +207,13 @@ class PyVirtualEnvTerminalCustomizerTest {
   private suspend fun getShellStartupOptions(workDir: Path, shellType: ShellType): ShellStartupOptions {
     val sut = PyVirtualEnvTerminalCustomizer()
     val env = mutableMapOf<String, String>()
-    val command = sut.customizeCommandAndEnvironment(
+    val command = arrayOf(getShellPath(shellType).pathString)
+    sut.customizeEnvironment(
       projectFixture.get(),
       workDir.pathString,
-      arrayOf(getShellPath(shellType).pathString),
-      env)
+      command,
+      env,
+      localEel.descriptor)
 
     val options = ShellStartupOptions.Builder()
       .setFinalWorkingDirectoryEelPath(workDir.asEelPath())
