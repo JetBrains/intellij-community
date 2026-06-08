@@ -162,7 +162,7 @@ internal class PatternSpeedSearchMatcher(
             // string letters, and so will fail as well
             if (
                 fragmentLength > maxFoundLength ||
-                    currentNameIndex + fragmentLength == length && isTrailingSpacePattern()
+                    (currentNameIndex + fragmentLength == length && isTrailingSpacePattern())
             ) {
                 if (!isMiddleMatch(patternIndex, currentNameIndex)) {
                     maxFoundLength = fragmentLength
@@ -207,11 +207,11 @@ internal class PatternSpeedSearchMatcher(
         !isUpperCase[patternIndex] ||
             this[nextOccurrence].isUpperCase() ||
             isWordStartingAt(nextOccurrence) ||
-            !hasHumps && ignoreCase
+            (!hasHumps && ignoreCase)
 
     private fun Char.matchPatternChar(patternChar: Char, patternIndex: Int): Boolean =
         patternChar == this ||
-            ignoreCase && (patternLowerCase[patternIndex] == this || patternUpperCase[patternIndex] == this)
+            (ignoreCase && (patternLowerCase[patternIndex] == this || patternUpperCase[patternIndex] == this))
 
     private fun CharSequence.matchFragment(patternIndex: Int, currentIndex: Int, isAscii: Boolean): List<IntRange>? {
         val fragmentLength = maxMatchingFragment(patternIndex, currentIndex)
@@ -348,7 +348,7 @@ internal class PatternSpeedSearchMatcher(
         @Suppress("ComplexCondition")
         if (
             options == MatchingCaseSensitivity.FirstLetter &&
-                (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
+                (patternIndex == 0 || (patternIndex == 1 && isWildcard(0))) &&
                 patternChar.hasCase() &&
                 patternChar.isUpperCase() != this[0].isUpperCase()
         ) {
@@ -375,7 +375,7 @@ internal class PatternSpeedSearchMatcher(
         @Suppress("ComplexCondition")
         if (
             startFrom >= length ||
-                hasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])
+                (hasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1]))
         ) {
             return -1
         }

@@ -2,6 +2,7 @@
 package com.intellij.microservices.utils
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MicroservicesUsageCollector : CounterUsagesCollector() {
-  private val MICROSERVICES_USAGES_GROUP: EventLogGroup = EventLogGroup("microservices.usages", 11)
+  private val MICROSERVICES_USAGES_GROUP: EventLogGroup = EventLogGroup("microservices.usages", 12)
 
   override fun getGroup(): EventLogGroup = MICROSERVICES_USAGES_GROUP
 
@@ -67,7 +68,10 @@ object MicroservicesUsageCollector : CounterUsagesCollector() {
   // Activated = updated when selected + explicitly selected
   val ENDPOINTS_HTTP_CLIENT_ACTIVATED_EVENT: EventId = MICROSERVICES_USAGES_GROUP.registerEvent("endpoints.tab.http.client.activated")
   val ENDPOINTS_OPENAPI_ACTIVATED_EVENT: EventId = MICROSERVICES_USAGES_GROUP.registerEvent("endpoints.tab.openapi.activated")
-  val ENDPOINTS_EXAMPLES_ACTIVATED_EVENT: EventId = MICROSERVICES_USAGES_GROUP.registerEvent("endpoints.tab.examples.activated")
+  val ENDPOINTS_EXAMPLES_ACTIVATED_EVENT: EventId1<Class<*>?> = MICROSERVICES_USAGES_GROUP.registerEvent(
+    "endpoints.tab.examples.activated",
+    ClassEventField("selectedClientGeneratorClass")
+  )
   val ENDPOINTS_DOCUMENTATION_ACTIVATED_EVENT: EventId = MICROSERVICES_USAGES_GROUP.registerEvent("endpoints.tab.documentation.activated")
 
   val ENDPOINTS_EMPTY_STATE_ACTIVATED_EVENT: EventId = MICROSERVICES_USAGES_GROUP.registerEvent("endpoints.empty.state.activated")

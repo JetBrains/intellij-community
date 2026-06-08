@@ -7,7 +7,6 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
@@ -75,7 +74,6 @@ data class PyCondaEnv(
   override fun toString(): String = "$envIdentity@$fullCondaPathOnTarget"
 }
 
-@OptIn(IntellijInternalApi::class)
 @Service(Service.Level.APP)
 private class CondaEnvService(scope: CoroutineScope) {
   private val _condaEnvProviderImpl: Deferred<PyCondaEnvProvider> = scope.async {

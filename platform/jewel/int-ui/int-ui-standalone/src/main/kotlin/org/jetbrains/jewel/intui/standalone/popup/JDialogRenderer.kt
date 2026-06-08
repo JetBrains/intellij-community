@@ -128,7 +128,7 @@ internal object JDialogRenderer : PopupRenderer {
             }
         }
 
-        if (!isJBREnvironment && !supportBlending || window == null) {
+        if ((!isJBREnvironment && !supportBlending) || window == null) {
             ComposePopup(
                 popupPositionProvider = popupPositionProvider,
                 properties = properties,
@@ -206,6 +206,7 @@ private fun JPopupImpl(
 
     val composePanel = remember {
         ComposePanel(renderSettings = DEFAULT_RENDER_SETTINGS).apply {
+            isClearFocusOnMouseDownEnabled = false
             layout = null
             isOpaque = false
             background = TRANSPARENT_WITH_WINDOWS_HACK

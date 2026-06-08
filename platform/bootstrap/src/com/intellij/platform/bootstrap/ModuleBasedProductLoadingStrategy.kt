@@ -32,13 +32,20 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.name
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
-  private val currentMode: AtomicReference<ProductMode> = AtomicReference(null)
+  private val currentMode: MutableStateFlow<String> by lazy { MutableStateFlow(computeInitialModeId()) }
+
+  override val currentModeId: String
+    get() = currentMode.value
+
+  override val currentModeIdFlow: StateFlow<String>
+    get() = currentMode
 
   private val productModules by lazy {
     val rootModuleId = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
@@ -55,29 +62,21 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, moduleRepository)
   }
 
-  override val currentModeId: String
-    get() {
-      val currentModeId = currentMode.get()?.id
-      if (currentModeId != null) {
-        return currentModeId
-      }
-      else {
-        val initialModeId = if (AppMode.isIjLight()) "light" else System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
-        val initialMode = ProductMode.findById(initialModeId)
-        if (initialMode == null) {
-          error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
-        }
-        currentMode.compareAndSet(null, initialMode)
-        return currentMode.get().id
-      }
+  private fun computeInitialModeId(): String {
+    val initialModeId = if (AppMode.isIjLight()) ProductMode.LIGHT.id
+                        else System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
+    if (ProductMode.findById(initialModeId) == null) {
+      error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }
+    return initialModeId
+  }
 
   override fun advanceToLightWithRdConnectionMode(): Boolean {
-    return currentMode.compareAndSet(ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION)
+    return currentMode.compareAndSet(ProductMode.LIGHT.id, ProductMode.LIGHT_WITH_RD_CONNECTION.id)
   }
 
   override fun advanceToFrontendMode(): Boolean {
-    return currentMode.compareAndSet(ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.FRONTEND)
+    return currentMode.compareAndSet(ProductMode.LIGHT_WITH_RD_CONNECTION.id, ProductMode.FRONTEND.id)
   }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {

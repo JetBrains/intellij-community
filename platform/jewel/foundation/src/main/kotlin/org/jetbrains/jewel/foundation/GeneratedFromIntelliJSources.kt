@@ -2,6 +2,12 @@ package org.jetbrains.jewel.foundation
 
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Code annotated as generated is not included in Metalava checks, as it is generated from the IntelliJ sources and we
+ * do not control its API.
+ *
+ * For example, see `AllIconsKeys`.
+ */
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.CONSTRUCTOR,
@@ -13,12 +19,6 @@ import org.jetbrains.annotations.ApiStatus
     AnnotationTarget.TYPEALIAS,
     AnnotationTarget.VALUE_PARAMETER,
 )
-/**
- * Code annotated as generated is not included in Metalava checks, as it is generated from the IntelliJ sources and we
- * do not control its API.
- *
- * For example, see `AllIconsKeys`.
- */
 @ApiStatus.Internal
 @InternalJewelApi
 public annotation class GeneratedFromIntelliJSources

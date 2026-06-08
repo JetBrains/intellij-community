@@ -125,7 +125,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.agent.extension" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.detektPlugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.selfContainedProjects" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.cmd.tests" scope="TEST" />
@@ -212,7 +211,6 @@
     <orderEntry type="module" module-name="intellij.platform.ijent.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.inspect.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.detektPlugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge.tests" scope="TEST" />

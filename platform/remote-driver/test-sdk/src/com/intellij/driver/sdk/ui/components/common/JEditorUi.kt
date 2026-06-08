@@ -101,6 +101,12 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     click(inlayCenter)
   }
 
+  fun inlaysOnLine(lineIndex: Int): List<Inlay> =
+    editor.getInlayModel().getInlineElementsInRange(
+      document.getLineStartOffset(lineIndex),
+      document.getLineEndOffset(lineIndex),
+    )
+
   fun getInlayHints(braceAround: Boolean = true): List<InlayHint> {
     val hints = mutableListOf<InlayHint>()
     this.editor.getInlayModel().getInlineElementsInRange(0, Int.MAX_VALUE).forEach { element ->

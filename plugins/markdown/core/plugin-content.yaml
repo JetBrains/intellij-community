@@ -1,17 +1,12 @@
-- name: lib/markdown.jar
+- name: lib/intellij.markdown.jar
   contentModules:
   - name: intellij.markdown
-  - name: intellij.markdown.frontmatter
-  - name: intellij.markdown.frontmatter.yaml
-  - name: intellij.markdown.frontmatter.toml
-  - name: intellij.markdown.images
-  - name: intellij.markdown.xml
-  - name: intellij.markdown.model
-  - name: intellij.markdown.spellchecker
-  - name: intellij.markdown.compose.preview
 - name: lib/modules/intellij.markdown.backend.jar
   contentModules:
   - name: intellij.markdown.backend
+- name: lib/modules/intellij.markdown.compose.preview.jar
+  contentModules:
+  - name: intellij.markdown.compose.preview
 - name: lib/modules/intellij.markdown.fenceInjection.jar
   contentModules:
   - name: intellij.markdown.fenceInjection
@@ -24,6 +19,27 @@
 - name: lib/modules/intellij.markdown.frontend.split.jar
   contentModules:
   - name: intellij.markdown.frontend.split
+- name: lib/modules/intellij.markdown.frontmatter.jar
+  contentModules:
+  - name: intellij.markdown.frontmatter
+- name: lib/modules/intellij.markdown.frontmatter.toml.jar
+  contentModules:
+  - name: intellij.markdown.frontmatter.toml
+- name: lib/modules/intellij.markdown.frontmatter.yaml.jar
+  contentModules:
+  - name: intellij.markdown.frontmatter.yaml
+- name: lib/modules/intellij.markdown.images.jar
+  contentModules:
+  - name: intellij.markdown.images
 - name: lib/modules/intellij.markdown.java.jar
   contentModules:
   - name: intellij.markdown.java
+- name: lib/modules/intellij.markdown.model.jar
+  contentModules:
+  - name: intellij.markdown.model
+- name: lib/modules/intellij.markdown.spellchecker.jar
+  contentModules:
+  - name: intellij.markdown.spellchecker
+- name: lib/modules/intellij.markdown.xml.jar
+  contentModules:
+  - name: intellij.markdown.xml

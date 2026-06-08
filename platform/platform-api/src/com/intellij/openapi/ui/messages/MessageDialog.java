@@ -110,6 +110,10 @@ public class MessageDialog extends DialogWrapper {
     super(project, false);
   }
 
+  protected MessageDialog(@Nullable Project project, @Nullable Component parentComponent, boolean canBeParent) {
+    super(project, parentComponent, canBeParent, IdeModalityType.IDE);
+  }
+
   public MessageDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
   }

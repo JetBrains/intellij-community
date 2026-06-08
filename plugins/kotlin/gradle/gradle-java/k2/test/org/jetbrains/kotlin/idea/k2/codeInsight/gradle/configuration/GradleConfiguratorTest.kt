@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN
 import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KaptGradleKotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -301,6 +303,12 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKaptWithImplementationProcessorKts() {
+        doKaptConfiguratorTest()
+    }
+
     private fun doTest(kotlinVersion: String, moduleNames: List<String>, check: (List<VirtualFile>) -> Unit) {
         val files = importProjectFromTestData()
 
@@ -322,6 +330,16 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             )
 
             check(files)
+        }
+    }
+
+    private fun doKaptConfiguratorTest() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+            KaptGradleKotlinCompilerPluginProjectConfigurator().configureModule(module, ConfigurationResultBuilder())
+            checkFilesInMultimoduleProject(files, listOf("app"))
         }
     }
 

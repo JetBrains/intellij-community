@@ -22,7 +22,7 @@ import java.nio.file.Path
 class OpenChannelsCacheTest {
   @Test
   fun `accessor views are stable and mode-bound`() {
-    val cache = OpenChannelsCache(2, RecordingChannelOpener())
+    val cache = OpenChannelsCache("test-cache", 2, RecordingChannelOpener())
 
     assertSame(cache.asReadOnly(), cache.asReadOnly(), "Read-only accessor view must be stable")
     assertSame(cache.asWritable(), cache.asWritable(), "Writable accessor view must be stable")
@@ -35,7 +35,7 @@ class OpenChannelsCacheTest {
   fun `executeOp reuses cached channel for repeated read access`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
 
     try {
@@ -58,7 +58,7 @@ class OpenChannelsCacheTest {
   fun `executeIdempotentOp reuses cached resilient channel`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
 
     try {
@@ -79,7 +79,7 @@ class OpenChannelsCacheTest {
   fun `read-only accessor returns channel that rejects writes`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
 
     try {
@@ -100,7 +100,7 @@ class OpenChannelsCacheTest {
   fun `read-only accessor returns non-writable channel even if writable channel is cached`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
     val writableAccessor = cache.asWritable()
 
@@ -130,7 +130,7 @@ class OpenChannelsCacheTest {
   fun `unlocked descriptor is closed on shared-capacity eviction`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(1, opener)
+    val cache = OpenChannelsCache("test-cache", 1, opener)
     val readOnlyAccessor = cache.asReadOnly()
     val writableAccessor = cache.asWritable()
 
@@ -155,7 +155,7 @@ class OpenChannelsCacheTest {
   fun `read-only and writable descriptors are cached independently under shared owner`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
     val writableAccessor = cache.asWritable()
 
@@ -187,7 +187,7 @@ class OpenChannelsCacheTest {
   fun `closeChannel on one view does not close descriptor from another mode`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
     val writableAccessor = cache.asWritable()
 
@@ -207,7 +207,7 @@ class OpenChannelsCacheTest {
   @Test
   fun `StorageLockContext assertNoOpenChannels reports descriptors from both mode views`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
-    val cache = OpenChannelsCache(2, RecordingChannelOpener())
+    val cache = OpenChannelsCache("test-cache", 2, RecordingChannelOpener())
     val context = StorageLockContext(false, cache.asReadOnly(), cache.asWritable())
     val readOnlyAccessor = context.getChannelsAccessor(true)
     val writableAccessor = context.getChannelsAccessor(false)
@@ -248,7 +248,7 @@ class OpenChannelsCacheTest {
   fun `locked read-only descriptor keeps cached channel and caches writable descriptor separately`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val opener = RecordingChannelOpener()
-    val cache = OpenChannelsCache(2, opener)
+    val cache = OpenChannelsCache("test-cache", 2, opener)
     val readOnlyAccessor = cache.asReadOnly()
     val writableAccessor = cache.asWritable()
 

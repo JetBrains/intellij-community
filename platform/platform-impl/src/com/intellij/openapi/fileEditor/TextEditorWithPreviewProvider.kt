@@ -130,7 +130,7 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
   @ApiStatus.Experimental
   protected open suspend fun createSplitEditorAsync(project: Project, firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
     return withContext(Dispatchers.EDT) {
-      createSplitEditor(firstEditor, firstEditor)
+      createSplitEditor(firstEditor, secondEditor)
     }
   }
 

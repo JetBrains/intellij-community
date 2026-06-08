@@ -1,7 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.squareup.kotlinpoet.ClassName
-import io.gitlab.arturbosch.detekt.Detekt
+import dev.detekt.gradle.Detekt
 import org.gradle.util.internal.GUtil
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.tasks.DokkaGenerateModuleTask

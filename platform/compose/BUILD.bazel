@@ -4,12 +4,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.compose` start
 
-create_kotlinc_options(
-    name = "custom_compose",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "compose",
     srcs = glob(
@@ -20,7 +14,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_compose",
     module_name = "intellij.platform.compose",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -63,7 +56,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_compose",
     module_name = "intellij.platform.compose",
     visibility = ["//visibility:public"],
     exports = [
@@ -111,12 +103,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.compose.tests` start
 
-create_kotlinc_options(
-    name = "custom_compose-tests",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "compose-tests",
     srcs = glob(
@@ -149,7 +135,6 @@ jvm_library(
         "//platform/compose",
         "//platform/compose:compose_test_lib",
     ],
-    kotlinc_opts = ":custom_compose-tests",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,

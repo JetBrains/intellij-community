@@ -4,7 +4,8 @@
     <plugin id="org.jetbrains.plugins.terminal"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <localTerminalCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
+    <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
+    <terminalSettingsProvider implementation="com.intellij.python.terminal.PyVirtualEnvTerminalSettingsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

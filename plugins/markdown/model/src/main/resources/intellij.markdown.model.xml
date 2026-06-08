@@ -1,4 +1,4 @@
-<idea-plugin package="org.intellij.plugins.markdown.model">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
   </dependencies>

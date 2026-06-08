@@ -2,23 +2,29 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.IncrementallyComputedValue
+import com.intellij.collaboration.util.collectIncrementallyTo
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLabel
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
-import org.jetbrains.plugins.gitlab.util.GitLabCoroutineUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @ApiStatus.Internal
@@ -32,8 +38,8 @@ interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<G
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
-  val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>>
-  val labels: Flow<Result<List<GitLabLabel>>>
+  val mergeRequestMembers: StateFlow<IncrementallyComputedValue<List<GitLabUserDTO>>>
+  val labels: StateFlow<IncrementallyComputedValue<List<GitLabLabel>>>
 
   fun reloadData()
 }
@@ -85,10 +91,17 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     copy(label = it)
   }
 
-  override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> =
-    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getMembersBatches)
-  override val labels: Flow<Result<List<GitLabLabel>>> =
-    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getLabelsBatches)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val mergeRequestMembers: StateFlow<IncrementallyComputedValue<List<GitLabUserDTO>>> =
+    projectData.dataReloadSignal.withInitial(Unit).transformLatest {
+      projectData.getMembersBatches().collectIncrementallyTo(this)
+    }.stateIn(scope, SharingStarted.Lazily, IncrementallyComputedValue.loading())
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val labels: StateFlow<IncrementallyComputedValue<List<GitLabLabel>>> =
+    projectData.dataReloadSignal.withInitial(Unit).transformLatest {
+      projectData.getLabelsBatches().collectIncrementallyTo(this)
+    }.stateIn(scope, SharingStarted.Lazily, IncrementallyComputedValue.loading())
 
   override fun reloadData() {
     projectData.reloadData()

@@ -2,7 +2,15 @@
 
 plugins {
   kotlin("jvm")
-  kotlin("plugin.serialization") version "1.9.0"
+  alias(libs.plugins.kotlinx.serialization)
+}
+
+val jdkLevel =
+  (project.findProperty("jdk.level") as? String)?.toIntOrNull()
+    ?: error("jdk.level must be provided by the Jewel root build")
+
+kotlin {
+  jvmToolchain(jdkLevel)
 }
 
 sourceSets {

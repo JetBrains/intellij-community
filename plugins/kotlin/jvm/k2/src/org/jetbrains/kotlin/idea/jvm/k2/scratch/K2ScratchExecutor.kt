@@ -302,7 +302,7 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
     private suspend fun resolveKotlincIdeScratchHomeFromSources(): ScratchCompilerResolution {
         val distJar = withContext(Dispatchers.IO) {
             val version = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
-            downloadArtifactForIdeFromSources(OLD_KOTLIN_DIST_ARTIFACT_ID, version)
+            downloadArtifactForIdeFromSources(version)
         } ?: error("Can't download dist")
 
         val unpackedDistDir = KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(

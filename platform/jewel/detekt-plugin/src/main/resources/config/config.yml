@@ -1,5 +1,11 @@
 jewel:
   EqualityMembersRule:
     active: true
+    functionsToCheck:
+      - equals
+      - hashCode
+      - toString
+    annotated:
+      - GenerateDataFunctions
   MissingApiStatusAnnotationRule:
     active: true

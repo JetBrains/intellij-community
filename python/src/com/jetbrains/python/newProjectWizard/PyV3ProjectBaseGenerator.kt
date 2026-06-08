@@ -88,7 +88,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   ) {
     generateProjectImpl(settings, module, baseDir)
     log.info("Import started by project generator")
-    startAutoImportIfNeeded(module.project)
+    startAutoImportIfNeeded(module.project, "PyV3 generation")
   }
 
   private suspend fun generateProjectImpl(

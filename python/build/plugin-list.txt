@@ -2,8 +2,6 @@ intellij.color.scheme.github
 intellij.color.scheme.monokai
 intellij.color.scheme.twilight
 intellij.color.scheme.warmNeon
-intellij.completionMlRanking
-intellij.completionMlRankingModels
 intellij.configurationScript
 intellij.copyright
 intellij.editorconfig.plugin
@@ -14,7 +12,6 @@ intellij.properties
 intellij.restructuredtext
 intellij.searchEverywhereMl
 intellij.sh.plugin
-intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
 intellij.textmate.plugin

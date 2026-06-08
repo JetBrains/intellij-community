@@ -1,19 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.terminal
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.orLogException
@@ -24,8 +32,11 @@ import com.jetbrains.python.sdk.pyRichSdk
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -52,7 +63,7 @@ private data class Jediterm(val source: String, val sourceArgs: List<String>? = 
   }
 }
 
-class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
+class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   private companion object {
     val logger = fileLogger()
   }
@@ -78,11 +89,11 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     // No need to escape path: conda can't have spaces
     return Jediterm(
       """
-        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ; 
-        try { 
-          conda activate '${StringUtil.escapeChar(pythonHomePath.toString(), '\'')}' 
-        } catch { 
-          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}') 
+        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ;
+        try {
+          conda activate '${StringUtil.escapeChar(pythonHomePath.toString(), '\'')}'
+        } catch {
+          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}')
         }
         """.trimIndent()
     )
@@ -117,26 +128,69 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     }
   }
 
-  override fun customizeCommandAndEnvironment(
+  override fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions) {
+    val activationEnvs = LinkedHashMap<String, String>()
+    customizeEnvironment(
+      project = project,
+      workingDirectory = shellExecOptions.workingDirectory.asNioPath().toString(),
+      command = shellExecOptions.execCommand.command.toTypedArray(),
+      envs = activationEnvs,
+      terminalEelDescriptor = shellExecOptions.eelDescriptor,
+    )
+    for ((name, value) in activationEnvs) {
+      shellExecOptions.setEnvironmentVariable(name, value)
+    }
+  }
+
+  override fun getDefaultStartWorkingDirectory(project: Project): Path? {
+    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
+    return pyTerminalDefaultWorkingDirectory(project, file)
+  }
+
+  @Deprecated(
+    "Use `customizeEnvironment` instead",
+    ReplaceWith("customizeEnvironment(project, workingDirectory, command, envs, terminalEelDescriptor)")
+  )
+  fun customizeCommandAndEnvironment(
     project: Project,
     workingDirectory: String?,
     command: Array<out String>,
     envs: MutableMap<String, String>,
   ): Array<out String> {
+    customizeEnvironment(project, workingDirectory, command, envs, project.getEelDescriptor())
+    return command
+  }
+
+  /**
+   * Computes the virtual env activation for a shell running [command] in [workingDirectory], writing the
+   * activation environment variables into [envs]. The SDK is taken from the module that owns [workingDirectory].
+   *
+   * When [terminalEelDescriptor] is provided, activation is skipped if the SDK lives in a different environment
+   * than the terminal (e.g. a Windows interpreter for a WSL shell), to avoid injecting cross-environment paths.
+   */
+  @VisibleForTesting
+  @ApiStatus.Experimental
+  fun customizeEnvironment(
+    project: Project,
+    workingDirectory: String?,
+    command: Array<out String>,
+    envs: MutableMap<String, String>,
+    terminalEelDescriptor: EelDescriptor,
+  ) {
     if (!TerminalOptionsProvider.instance.shellIntegration) {
       logger.debug("Shell integration is disabled, skipping virtual env activation for ${project.name}")
-      return command
+      return
     }
 
     if (!PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
       logger.debug("Virtual env activation is disabled for ${project.name}")
-      return command
+      return
     }
 
     val shell = Shell.resolve(command)
     if (shell == null) {
       logger.warn("No shell to run for ${project.name}, cmd: ${command.joinToString(" ")}")
-      return command
+      return
     }
 
     val directory = if (workingDirectory != null) {
@@ -148,16 +202,24 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
     if (directory == null) {
       logger.warn("Cannot find working directory for ${project.name}")
-      return command
+      return
     }
 
-
-    val sdk = ModuleUtilCore.findModuleForFile(directory, project)?.pythonSdk ?: run {
+    val sdk = runReadActionBlocking { ModuleUtilCore.findModuleForFile(directory, project)?.pythonSdk } ?: run {
       logger.warn("Cannot find Python SDK for directory ${directory} in project ${project.name}")
-      return command
+      return
     }
 
-    val pythonEnvironment = sdk.pyRichSdk().environmentResult?.orLogException(logger)
+    val pythonEnvironment = sdk.pyRichSdk().environmentResult?.orLogException(logger) ?: run  {
+      logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
+      return
+    }
+
+    if (pythonEnvironment.pythonBinaryPath.getEelDescriptor() != terminalEelDescriptor) {
+      logger.info("Skipping virtual env activation: interpreter ${pythonEnvironment.pythonBinaryPath} runs " +
+                  "in a different environment than the terminal ($terminalEelDescriptor)")
+      return
+    }
 
     val jediterm = when (pythonEnvironment) {
       is PythonEnvironment.Venv -> {
@@ -170,17 +232,36 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         logger.debug("No activation for system python ${sdk.homePath}")
         null
       }
-      null -> null
     }
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
 
-    logger.debug("Running ${command.joinToString(" ")} with ${envs.entries.joinToString("\n")}")
-    return command
+    logger.debug("Activating ${sdk.homePath} with ${envs.entries.joinToString("\n")}")
   }
+}
 
-  @ApiStatus.Internal
-  override fun getConfigurable(project: Project): UnnamedConfigurable = object : UiDslUnnamedConfigurable.Simple() {
+/**
+ * Content root of the module that owns [file], or `null` (to fall back to the platform default,
+ * the project root) when [file] does not belong to any module content root.
+ *
+ * This makes a new terminal start in the module of the currently opened file, so that
+ * [PyVirtualEnvTerminalCustomizer] activates that module's virtual environment instead of always
+ * activating the root environment (PY-90039). The working directory follows the module regardless
+ * of whether it has a Python SDK; activation itself is gated on the SDK in
+ * [PyVirtualEnvTerminalCustomizer.customizeEnvironment].
+ */
+@ApiStatus.Internal
+fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Path? {
+  if (file == null) return null
+  return runReadActionBlocking {
+    if (project.isDisposed) return@runReadActionBlocking null
+    ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.toNioPathOrNull()
+  }
+}
+
+/** Adds the "Activate virtualenv" checkbox to the Terminal settings page. */
+internal class PyVirtualEnvTerminalSettingsProvider : TerminalSettingsProvider {
+  override fun createConfigurable(project: Project): UnnamedConfigurable = object : UiDslUnnamedConfigurable.Simple() {
     override fun Panel.createContent() {
       val settings = PyVirtualEnvTerminalSettings.getInstance(project)
       row {
@@ -190,14 +271,12 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 }
 
-@ApiStatus.Internal
 internal class SettingsState {
   var virtualEnvActivate: Boolean = true
 }
 
 @Service(Service.Level.PROJECT)
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
-@ApiStatus.Internal
 internal class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
   private var myState: SettingsState = SettingsState()
 

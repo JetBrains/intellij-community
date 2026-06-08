@@ -38,9 +38,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
  */
 public class PersistentMapTest extends PersistentMapTestBase {
   private static OpenChannelsCache newChannelsCache() {
-    return new OpenChannelsCache(8, (storageFile, readOnly) -> readOnly
-                                                               ? new ResilientFileChannel(storageFile, READ)
-                                                               : new ResilientFileChannel(storageFile, READ, WRITE, CREATE));
+    return new OpenChannelsCache("test-cache", 8,
+                                 (storageFile, readOnly) -> readOnly
+                                                            ? new ResilientFileChannel(storageFile, READ)
+                                                            : new ResilientFileChannel(storageFile, READ, WRITE, CREATE)
+    );
   }
 
   public void testRetainWriteOrderWhenCompactingBackward() throws IOException {

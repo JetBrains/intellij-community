@@ -242,6 +242,10 @@
                     interface="com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="statistic.eventLog.ideShutdownSessionTypeProvider"
+                    interface="com.intellij.featureStatistics.fusCollectors.IdeShutdownSessionTypeProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"
                     dynamic="true"/>
 
@@ -457,6 +461,8 @@
 
     <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" dynamic="true"/>
     <extensionPoint name="updateSettingsUIProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider" dynamic="true"/>
+    <extensionPoint name="updateCheckFirstRunDeferral" interface="com.intellij.openapi.updateSettings.impl.UpdateCheckFirstRunDeferral" dynamic="true"/>
+    <extensionPoint name="updateRequestParametersContributor" interface="com.intellij.openapi.updateSettings.impl.UpdateRequestParametersContributor" dynamic="true"/>
     <extensionPoint name="externalComponentSource" interface="com.intellij.ide.externalComponents.ExternalComponentSource" dynamic="true"/>
 
     <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider" dynamic="true"/>
@@ -621,6 +627,10 @@
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
+
+    <extensionPoint name="projectWidgetActionsFilter"
+                    interface="com.intellij.openapi.wm.impl.headertoolbar.ProjectWidgetActionsFilter"
+                    dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>

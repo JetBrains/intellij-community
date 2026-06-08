@@ -41,5 +41,4 @@ object GHGQLQueries {
   const val removeReaction = "graphql/query/removeReaction.graphql"
   const val getRepositoryCommitStatus = "graphql/query/getRepositoryCommitStatusShort.graphql"
   const val getRepositoryCommitStatusContexts = "graphql/query/getRepositoryCommitStatusContexts.graphql"
-  const val getPullRequestsAuthors = "graphql/query/getPullRequestsAuthors.graphql"
 }

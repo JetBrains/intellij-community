@@ -299,9 +299,11 @@ public class PagedFileStorageTest {
   }
 
   private static OpenChannelsCache newChannelsCache() {
-    return new OpenChannelsCache(2, (path, readOnly) -> readOnly
-                                                        ? new ResilientFileChannel(path, READ)
-                                                        : new ResilientFileChannel(path, READ, WRITE, CREATE));
+    return new OpenChannelsCache("test-cache", 2,
+                                 (path, readOnly) -> readOnly
+                                                     ? new ResilientFileChannel(path, READ)
+                                                     : new ResilientFileChannel(path, READ, WRITE, CREATE)
+    );
   }
 
   private static AssertionError suppressedAssertion(Throwable error) {

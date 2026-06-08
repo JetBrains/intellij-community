@@ -8,10 +8,13 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapNullableScoped
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel
 import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.IncrementallyComputedValue
+import com.intellij.collaboration.util.collectIncrementallyTo
 import com.intellij.collaboration.util.computeEmitting
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.DvcsUtil
@@ -54,6 +57,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -80,6 +84,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.service.getBatchedPotentialReviewers
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.BranchesCheckResult
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.BranchesState
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.CreationState
@@ -235,14 +240,21 @@ internal class GHPRCreateViewModelImpl(
       }
       .stateIn(cs, SharingStarted.Eagerly, null)
 
-  override val assigneesVm: LabeledListPanelViewModel<GHUser> = MetadataListViewModel(cs) {
-    dataContext.repositoryDataService.loadPotentialIssuesAssignees()
+  override val assigneesVm: LabeledListPanelViewModel<GHUser> =
+    MetadataListViewModel(cs, dataContext.repositoryDataService.dataReloadSignal) {
+      dataContext.repositoryDataService.loadBatchedPotentialIssuesAssignees()
   }
-  override val reviewersVm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer> = MetadataListViewModel(cs) {
-    dataContext.repositoryDataService.loadPotentialReviewers().filter { it.id != dataContext.securityService.currentUser.id }
-  }
-  override val labelsVm: LabeledListPanelViewModel<GHLabel> = MetadataListViewModel(cs) {
-    dataContext.repositoryDataService.loadLabels()
+
+  override val reviewersVm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer> =
+    MetadataListViewModel(cs, dataContext.repositoryDataService.dataReloadSignal) {
+      dataContext.repositoryDataService.getBatchedPotentialReviewers(dataContext.securityService).map { batch ->
+        batch.filter { it.id != dataContext.securityService.currentUser.id }
+      }
+    }
+
+  override val labelsVm: LabeledListPanelViewModel<GHLabel> =
+    MetadataListViewModel(cs, dataContext.repositoryDataService.dataReloadSignal) {
+      dataContext.repositoryDataService.loadBatchedLabels()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -591,13 +603,19 @@ internal class GHPRCreateViewModelImpl(
   }
 }
 
-private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend () -> List<T>) : LabeledListPanelViewModel<T> {
+private class MetadataListViewModel<T>(
+  cs: CoroutineScope,
+  reloadSignal: Flow<Unit>,
+  incrementallyLoadedItems: suspend () -> Flow<List<T>>,
+) : LabeledListPanelViewModel<T> {
   override val items = MutableStateFlow(emptyList<T>())
 
   // Eagerly load the data on creation, so that the reviewer panel is populated immediately.
-  override val selectableItems: StateFlow<ComputedResult<List<T>>> =
-    computationStateFlow(flowOf(Unit)) { itemsLoader() }
-      .stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val selectableItems: StateFlow<IncrementallyComputedValue<List<T>>> =
+    reloadSignal.withInitial(Unit).transformLatest {
+      incrementallyLoadedItems().collectIncrementallyTo(this)
+    }.stateIn(cs, SharingStarted.Eagerly, IncrementallyComputedValue.loading())
 
   override fun adjustList(newList: List<T>) {
     items.value = newList

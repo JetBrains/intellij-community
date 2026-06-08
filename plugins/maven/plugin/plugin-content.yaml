@@ -2,6 +2,15 @@
   modules:
   - name: intellij.maven.artifactResolver.m31
   - name: intellij.maven.artifactResolver.common
+- name: lib/intellij.maven.jar
+  contentModules:
+  - name: intellij.maven
+    libraries:
+      plexus-archiver:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar
+- name: lib/intellij.maven.model.jar
+  contentModules:
+  - name: intellij.maven.model
 - name: lib/intellij.maven.rt/maven-event-listener.jar
   modules:
   - name: intellij.maven.server.eventListener
@@ -81,7 +90,7 @@
 - name: lib/intellij.maven.server4/maven40-server.jar
   modules:
   - name: intellij.maven.server.m40
-- name: lib/jetbrains.idea.maven.indexer.api.rt.jar
+- name: lib/maven-indexer-api-rt.jar
   library: jetbrains.idea.maven.indexer.api.rt
   module: intellij.maven
   files:
@@ -90,9 +99,6 @@
   modules:
   - name: intellij.idea.community.build.dependencies
   - name: intellij.maven.plugin
-  contentModules:
-  - name: intellij.maven.model
-  - name: intellij.maven
 - name: lib/maven-server.jar
   modules:
   - name: intellij.maven.server
@@ -123,8 +129,3 @@
 - name: lib/modules/intellij.maven.proofreading.jar
   contentModules:
   - name: intellij.maven.proofreading
-- name: lib/plexus-archiver.jar
-  library: plexus-archiver
-  module: intellij.maven
-  files:
-  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar

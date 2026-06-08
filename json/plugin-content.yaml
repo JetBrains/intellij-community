@@ -1,6 +1,8 @@
-- name: lib/json.jar
+- name: lib/intellij.json.jar
   contentModules:
   - name: intellij.json
+- name: lib/intellij.json.syntax.jar
+  contentModules:
   - name: intellij.json.syntax
 - name: lib/modules/intellij.json.backend.jar
   contentModules:

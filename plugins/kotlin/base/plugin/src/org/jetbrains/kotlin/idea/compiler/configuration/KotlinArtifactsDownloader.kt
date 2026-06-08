@@ -6,7 +6,6 @@ import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import kotlinx.coroutines.CancellationException
@@ -190,11 +189,12 @@ object KotlinArtifactsDownloader {
             .distinct()
     }
 
-    fun downloadMavenArtifact(groupId: String, artifactId: String, version: String, suffix: String = ".jar"): Path? {
+    private suspend fun downloadMavenArtifact(groupId: String, artifactId: String, version: String): Path? {
         check(isRunningFromSources) {
             "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
                     "Use ${::downloadMavenArtifacts.name} when run in production"
         }
+        val suffix = ".jar"
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
         KotlinMavenUtils.findArtifact(groupId, artifactId, version, suffix)?.let {
             return it
@@ -208,23 +208,15 @@ object KotlinArtifactsDownloader {
             .also { Files.createDirectories(it.parent) }
         val groupPath = groupId.replace(".", "/")
         if (!artifact.exists()) {
-            val artifactCoordinates = "$groupPath/$artifactId/$version/$fileName"
-
-            runBlockingCancellable {
-                downloadAtomically(artifact, artifactCoordinates)
-            }
-
+            downloadAtomically(artifact, "$groupPath/$artifactId/$version/$fileName")
             check(artifact.exists()) { "$artifact should be downloaded" }
         }
 
         return artifact
     }
 
-    @JvmOverloads
-    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): Path? {
-        return downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)
-    }
-
+    suspend fun downloadArtifactForIdeFromSources(version: String): Path? =
+        downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
         if (isAllInOneOldFormatDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null

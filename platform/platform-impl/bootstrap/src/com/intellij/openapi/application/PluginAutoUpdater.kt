@@ -4,23 +4,24 @@ package com.intellij.openapi.application
 import com.intellij.ide.plugins.DiscoveredPluginsList
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNonLoadReason
-import com.intellij.ide.plugins.PluginSetBuilder
 import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
-import com.intellij.ide.plugins.isBrokenPlugin
+import com.intellij.ide.plugins.isExcluded
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
+import com.intellij.ide.plugins.resolveConstraints
 import com.intellij.ide.plugins.selectPluginsToLoad
+import com.intellij.ide.plugins.shortLogDescription
+import com.intellij.ide.plugins.validatePluginIsCompatible
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
 import com.intellij.openapi.application.PluginAutoUpdateRepository.clearUpdates
 import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdateDirPath
 import com.intellij.openapi.application.PluginAutoUpdateRepository.safeConsumeUpdates
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.extensions.PluginId
@@ -145,31 +146,28 @@ object PluginAutoUpdater {
   ): UpdateCheckResult {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
-    val exclusionReasons = mutableMapOf<PluginMainDescriptor, PluginNonLoadReason>()
     val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
-    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { plugin, reason ->
+    val excludedDescriptors = mutableMapOf<PluginMainDescriptor, PluginNonLoadReason>()
+    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { descriptor, reason ->
       if (reason !is PluginVersionIsSuperseded) {
-        exclusionReasons[plugin] = reason
+        excludedDescriptors[descriptor] = reason
       }
     }
-    val nonLoadReasonsCollector = ArrayList<PluginNonLoadReason>()
-    val pluginSet = PluginSetBuilder(initContext, pluginsToLoad, composedDiscoveryResult)
-      .createPluginSetWithEnabledModulesMap(exclusionReasons.keys, nonLoadReasonsCollector)
-    // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
+    val pluginSet = initContext.resolveConstraints(pluginsToLoad)
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
-      if (PluginManagerCore.isIncompatible(updateDesc)) {
-        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} is not compatible with current IDE build"
+      if (initContext.validatePluginIsCompatible(updateDesc) != null) {
+        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is not compatible with current IDE build"
         continue
       }
-      if (isBrokenPlugin(updateDesc)) {
-        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} is known to be broken"
+      if (initContext.isPluginBroken(updateDesc.pluginId, updateDesc.version)) {
+        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is known to be broken"
         continue
       }
-      if (ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(id)) {
-        rejectedUpdates[id] = "plugin $id is part of the IDE distribution and cannot be updated without IDE update"
+      if (id in initContext.essentialPlugins) {
+        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is part of the IDE distribution and cannot be updated without IDE update"
         continue
       }
       // I guess a more robust way to check which updates should be applied and which not is the following.
@@ -180,12 +178,17 @@ object PluginAutoUpdater {
       // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
-      val pluginToLoad = pluginSet.findEnabledPlugin(id)
-      if (pluginToLoad !== updateDesc) {
-        val nonLoadReason = nonLoadReasonsCollector.find { it.plugin === updateDesc }
-        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} would not load after the update" +
+      val plugin = pluginSet.originalPluginSet.resolvePluginId(id)
+      if (plugin == null || plugin !== updateDesc) {
+        val nonLoadReason = excludedDescriptors[updateDesc]
+        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
                               (nonLoadReason?.let { ": ${it.logMessage}" } ?:
-                              pluginToLoad?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
+                              plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
+        continue
+      }
+      if (pluginSet.isExcluded(plugin)) {
+        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update:\n" +
+          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, emptyMap(), plugin)
         continue
       }
       updatesToApply.add(id)

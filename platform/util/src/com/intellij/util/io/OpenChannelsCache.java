@@ -35,6 +35,9 @@ import java.util.Objects;
 public final class OpenChannelsCache {
   // TODO: does it make sense to have a background thread, that flushes the cache by timeout?
 
+  /** for {@linkplain #toString()} */
+  private final String cacheName;
+
   /** Max channels to keep open in cache */
   private final int capacity;
 
@@ -54,8 +57,11 @@ public final class OpenChannelsCache {
   private final PerModeStatistics writableStats = new PerModeStatistics();
 
 
-  public OpenChannelsCache(int capacity,
+  /** @param cacheName just for debugging */
+  public OpenChannelsCache(@NotNull String cacheName,
+                           int capacity,
                            @NotNull ChannelsAccessor.FileChannelOpener channelOpener) {
+    this.cacheName = cacheName;
     this.capacity = capacity;
     cachedChannels = new LinkedHashMap<>(capacity, 0.5f, /*orderByAccess: */true);
     this.channelOpener = channelOpener;
@@ -81,6 +87,12 @@ public final class OpenChannelsCache {
         capacity
       );
     }
+  }
+
+  @Override
+  public String toString() {
+    return "OpenChannelsCache[" + cacheName + "]" +
+           "[capacity: " + capacity + ", cached: " + cachedChannels.size() + ", opener: " + channelOpener + "]";
   }
 
   /**
@@ -316,7 +328,7 @@ public final class OpenChannelsCache {
 
     @Override
     public String toString() {
-      return "OpenChannelsCache.AccessorView[readOnly=" + readOnly + ']';
+      return "OpenChannelsCache[" + cacheName + "].AccessorView[readOnly: " + readOnly + ']';
     }
   }
 

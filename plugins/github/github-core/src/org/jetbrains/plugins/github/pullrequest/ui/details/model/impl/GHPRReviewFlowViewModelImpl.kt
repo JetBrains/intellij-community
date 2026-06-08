@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
@@ -13,7 +14,9 @@ import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.collectIncrementallyTo
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -22,17 +25,18 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -48,6 +52,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.service.getBatchedPotentialReviewers
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
@@ -69,7 +74,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val detailsData: GHPRDetailsDataProvider,
   private val changesData: GHPRChangesDataProvider,
-  private val reviewVmHelper: GHPRReviewViewModelHelper
+  private val reviewVmHelper: GHPRReviewViewModelHelper,
 ) : GHPRReviewFlowViewModel {
   private val cs = parentCs.childScope(this::class)
 
@@ -197,6 +202,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     detailsData.adjustReviewers(delta)
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun requestReview(parentComponent: JComponent) = runAction {
     val reviewers = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       reviewers + reviews.keys
@@ -205,15 +211,13 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       val point = RelativePoint.getNorthWestOf(parentComponent)
 
       val author = detailsState.value.author
-      val potentialReviewersLoadingFlow = flow {
-        runCatching {
-          repositoryDataService.loadPotentialReviewers().filter { it.id != author?.id }
-        }.also {
-          emit(it)
-        }
-      }
+      val potentialReviewersLoadingFlow = repositoryDataService.dataReloadSignal.withInitial(Unit).transformLatest {
+        repositoryDataService.getBatchedPotentialReviewers(securityService).map { batch ->
+          batch.filter { it.id != author?.id }
+        }.collectIncrementallyTo(this)
+      }.stateIn(cs, SharingStarted.Lazily, IncrementallyComputedValue.Companion.loading())
 
-      ChooserPopupUtil.showAsyncMultipleChooserPopup(point,
+      ChooserPopupUtil.showMultipleChooserPopupWithIncrementalLoading(point,
                                                      reviewers,
                                                      potentialReviewersLoadingFlow,
                                                      GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),

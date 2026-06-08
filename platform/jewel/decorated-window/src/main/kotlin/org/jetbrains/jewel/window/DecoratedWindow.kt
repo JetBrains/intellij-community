@@ -95,6 +95,7 @@ public fun DecoratedWindow(
         var decoratedWindowState by remember { mutableStateOf(DecoratedWindowState.of(window)) }
 
         DisposableEffect(window) {
+            window.isClearFocusOnMouseDownEnabled = false
             val adapter =
                 object : WindowAdapter(), ComponentListener {
                     override fun windowActivated(e: WindowEvent?) {

@@ -70,6 +70,9 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   protected open val defaultDirName: String
     get() = testName
 
+  protected open fun getGoldFileName(forcedGoldFileName: String?, testFileExt: String): String =
+    forcedGoldFileName ?: "${testName}_after.$testFileExt"
+
   open val testName: String get() = getTestName(true)
 
   @Throws(Exception::class)
@@ -225,7 +228,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         else {
           val ext = InjectedLanguageManager.getInstance(project).getTopLevelFile(myFixture.file)
             .name.takeLastWhile { it != '.' }
-          myFixture.checkResultByFile(goldFileName ?: "${testName}_after.$ext")
+          myFixture.checkResultByFile(getGoldFileName(goldFileName, ext))
         }
       }
     }

@@ -1,3 +1,6 @@
+- name: lib/intellij.sh.core.jar
+  contentModules:
+  - name: intellij.sh.core
 - name: lib/modules/intellij.sh.backend.jar
   contentModules:
   - name: intellij.sh.backend
@@ -19,5 +22,3 @@
 - name: lib/sh-plugin.jar
   modules:
   - name: intellij.sh.plugin
-  contentModules:
-  - name: intellij.sh.core

@@ -1,3 +1,9 @@
+- name: lib/intellij.properties.jar
+  contentModules:
+  - name: intellij.properties
+- name: lib/intellij.properties.psi.jar
+  contentModules:
+  - name: intellij.properties.psi
 - name: lib/modules/intellij.properties.backend.jar
   contentModules:
   - name: intellij.properties.backend
@@ -7,7 +13,3 @@
 - name: lib/modules/intellij.properties.copyright.jar
   contentModules:
   - name: intellij.properties.copyright
-- name: lib/properties.jar
-  contentModules:
-  - name: intellij.properties
-  - name: intellij.properties.psi

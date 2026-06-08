@@ -113,7 +113,7 @@ class ListPluginComponent(
   private val myNameComponent = JBLabel()
   private val myIconComponent = JLabel(AllIcons.Plugins.PluginLogo)
   private val myLayout = BaselineLayout()
-  private var succesefullyFinishedOnce = false
+  private var successfullyFinishedOnce = false
 
   @JvmField
   var myRestartButton: JButton? = null
@@ -613,7 +613,7 @@ class ListPluginComponent(
         myLayout.addButtonComponent(myUpdateButton!!, 0)
         myUpdateButton!!.addActionListener { updatePlugin(plugin) }
       }
-      else if (!succesefullyFinishedOnce) {
+      else if (!successfullyFinishedOnce) {
         myUpdateButton!!.isEnabled = true
         myUpdateButton!!.isVisible = true
       }
@@ -774,7 +774,7 @@ class ListPluginComponent(
   }
 
   private fun showProgress(repaint: Boolean) {
-    if (succesefullyFinishedOnce) return
+    if (successfullyFinishedOnce) return
     myIndicator = AbstractProgressIndicatorExBase()
     myLayout.setProgressComponent(object : AsyncProcessIcon("PluginListComponentIconProgress") {
       override fun getBaseline(width: Int, height: Int): Int {
@@ -797,14 +797,17 @@ class ListPluginComponent(
   }
 
   fun hideProgress() {
-    if (succesefullyFinishedOnce) return
+    if (successfullyFinishedOnce) return
     myIndicator = null
     myLayout.removeProgressComponent()
   }
 
   fun pluginInstalled(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel?) {
     if (success) {
-      succesefullyFinishedOnce = true
+      successfullyFinishedOnce = true
+      if (myUpdateDescriptor != null) {
+        myUpdateDescriptor = null
+      }
       if (restartRequired) {
         enableRestart()
       }

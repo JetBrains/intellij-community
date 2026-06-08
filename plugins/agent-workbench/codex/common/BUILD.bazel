@@ -3,12 +3,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.agent.workbench.codex.common` start
 
-create_kotlinc_options(
-    name = "custom_common",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "common",
     srcs = glob(
@@ -19,7 +13,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_common",
     module_name = "intellij.agent.workbench.codex.common",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -50,7 +43,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_common",
     module_name = "intellij.agent.workbench.codex.common",
     visibility = ["//visibility:public"],
     runtime_deps = [

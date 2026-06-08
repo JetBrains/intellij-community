@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
-import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
+import org.jetbrains.jps.model.module.JpsModule
 
 internal suspend fun inferModuleSources(
   layout: PluginLayout,
@@ -123,14 +123,21 @@ private suspend fun computeOutputJarPath(
   descriptorCacheWriter: DescriptorCacheWriter,
 ): String? {
   if (loadingRule == "embedded") {
-    //todo pack embedded to separate jar by default
-    // Case 1: Embedded lib modules → separate jar in root directory
-    if (moduleName.startsWith(LIB_MODULE_PREFIX) || moduleName.startsWith("intellij.kotlin.")) {
-      return "$moduleName.jar"
-    }
-
-    // Case 2: Embedded regular modules → merge into main plugin jar
-    return if (modulesWithCustomPath.contains(moduleName)) null else getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+    return computeEmbeddedOutputJarPath(
+      moduleName = moduleName,
+      modulesWithCustomPath = modulesWithCustomPath,
+      pluginLayout = pluginLayout,
+      frontendModuleFilter = frontendModuleFilter,
+      packIntoPluginJar = hasPackContentIntoPluginJarMarker(
+        findContentModuleDescriptorData(
+          moduleName = moduleName,
+          module = null,
+          context = context,
+          pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+          descriptorCacheWriter = descriptorCacheWriter,
+        )
+      ),
+    )
   }
 
   // Case 3: Non-embedded modules → check descriptor for separate jar need
@@ -161,17 +168,80 @@ private suspend fun checkNeedsSeparateJar(
   descriptorCacheWriter: DescriptorCacheWriter,
 ): Boolean {
   val module = context.outputProvider.findRequiredModule(moduleName)
-  val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
-  var descriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
-  if (descriptorData == null) {
-    descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, outputProvider = context.outputProvider)) {
-      "$descriptorFileName not found in module $moduleName"
-    }
-    descriptorCacheWriter.put(descriptorFileName, descriptorData)
+  val descriptorData = requireNotNull(
+    findContentModuleDescriptorData(
+      moduleName = moduleName,
+      module = module,
+      context = context,
+      pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+      descriptorCacheWriter = descriptorCacheWriter,
+    )
+  ) {
+    "${contentModuleNameToDescriptorFileName(moduleName)} not found in module $moduleName"
+  }
+  return needsSeparateJar(
+    descriptorData = descriptorData,
+    module = module,
+    pluginLayout = pluginLayout,
+    frontendModuleFilter = frontendModuleFilter,
+    helper = helper,
+  )
+}
+
+private fun needsSeparateJar(
+  descriptorData: ByteArray,
+  module: JpsModule,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  helper: JarPackagerDependencyHelper,
+): Boolean {
+  if (hasPackContentIntoPluginJarMarker(descriptorData)) {
+    return false
   }
   val descriptor = readXmlAsModel(descriptorData)
   return descriptor.getAttributeValue("package") == null ||
          helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter)
+}
+
+private fun computeEmbeddedOutputJarPath(
+  moduleName: String,
+  modulesWithCustomPath: Set<String>,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  packIntoPluginJar: Boolean,
+): String? {
+  return when {
+    modulesWithCustomPath.contains(moduleName) -> null
+    packIntoPluginJar -> getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+    else -> "$moduleName.jar"
+  }
+}
+
+private fun hasPackContentIntoPluginJarMarker(descriptorData: ByteArray?): Boolean {
+  return descriptorData != null && PACK_CONTENT_INTO_PLUGIN_JAR_MARKER_REGEX.containsMatchIn(descriptorData.decodeToString())
+}
+
+private suspend fun findContentModuleDescriptorData(
+  moduleName: String,
+  module: JpsModule?,
+  context: BuildContext,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
+  descriptorCacheWriter: DescriptorCacheWriter,
+): ByteArray? {
+  val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
+  val cachedDescriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
+  if (cachedDescriptorData != null) {
+    return cachedDescriptorData
+  }
+
+  val descriptorModule = module ?: context.outputProvider.findRequiredModule(moduleName)
+  val descriptorData = findUnprocessedDescriptorContent(
+    module = descriptorModule,
+    path = descriptorFileName,
+    outputProvider = context.outputProvider,
+  ) ?: return null
+  descriptorCacheWriter.put(descriptorFileName, descriptorData)
+  return descriptorData
 }
 
 private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
@@ -192,3 +262,5 @@ private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleIt
     }
   }
 }
+
+private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER_REGEX = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")

@@ -33,6 +33,7 @@ import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.collaboration.util.fold
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.onFailure
@@ -78,14 +79,11 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
@@ -544,25 +542,28 @@ private suspend fun <T : Any> editList(
   vm: LabeledListPanelViewModel<T>,
   getItemPresentation: (T) -> PopupItemPresentation,
 ) {
-  val newList = ChooserPopupUtil.showAsyncMultipleChooserPopup(
+  val newList = ChooserPopupUtil.showMultipleChooserPopupWithIncrementalLoading(
     RelativePoint.getNorthEastOf(parentComponent),
     vm.items.value,
-    vm.getSelectableItemsFlow(),
+    vm.getSelectableItemsState(),
     getItemPresentation,
     PopupConfig(showDirection = ShowDirection.ABOVE)
   )
   vm.adjustList(newList)
 }
 
-private fun <T : Any> LabeledListPanelViewModel<T>.getSelectableItemsFlow(): Flow<Result<List<T>>> {
+private fun <T : Any> LabeledListPanelViewModel<T>.getSelectableItemsState(): StateFlow<IncrementallyComputedValue<List<T>>> {
   val current = items.value
-  return flow {
-    if (current.isNotEmpty()) {
-      emit(Result.success(current))
+  return selectableItems.mapState { state ->
+    val loaded = state.valueOrNull ?: return@mapState state
+    val merged = current + loaded.filterNot(current::contains)
+    val exception = state.exceptionOrNull
+
+    when {
+      exception != null -> IncrementallyComputedValue.partialFailure(merged, exception)
+      state.isComplete -> IncrementallyComputedValue.success(merged)
+      else -> IncrementallyComputedValue.partialSuccess(merged)
     }
-    selectableItems
-      .mapNotNull { it.result?.map { items -> current + items.filter { item -> !current.contains(item) } } }
-      .first().let { emit(it) }
   }
 }
 

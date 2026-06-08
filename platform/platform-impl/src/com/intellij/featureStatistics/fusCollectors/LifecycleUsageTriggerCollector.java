@@ -39,7 +39,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 77);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 78);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -50,7 +50,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final VarargEventId IDE_EVENT_START = LIFECYCLE.registerVarargEvent(
     "ide.start", eapField, testField, commandLineField, internalField, headlessField, debugAgentField);
 
-  private static final EventId1<Boolean> IDE_CLOSE = LIFECYCLE.registerEvent("ide.close", EventFields.Boolean("restart"));
+  private static final BooleanEventField restartField = EventFields.Boolean("restart");
+  private static final EventField<SessionType> sessionTypeField =
+    EventFields.Enum("session_type", SessionType.class);
+  private static final VarargEventId IDE_CLOSE = LIFECYCLE.registerVarargEvent("ide.close", restartField, sessionTypeField);
 
   private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
     LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
@@ -139,7 +142,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onIdeClose(boolean restart) {
-    IDE_CLOSE.log(restart);
+    var providers = IdeShutdownSessionTypeProvider.EP_NAME.getExtensionList();
+    SessionType sessionType = providers.isEmpty() ? SessionType.SMART_ONLY : providers.getFirst().sessionType();
+    IDE_CLOSE.log(restartField.with(restart), sessionTypeField.with(sessionType));
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {

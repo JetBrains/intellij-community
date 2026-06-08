@@ -30,9 +30,6 @@ import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 
 /**
  * Used to apply styles for calls to @Composable functions.
- *
- * For K1 implementation
- * @see com.intellij.compose.ide.plugin.k1.highlighting.ComposableHighlightingVisitorExtension
  */
 internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighterExtension {
   override fun KaSession.highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {

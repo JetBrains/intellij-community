@@ -12,13 +12,13 @@
     <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4.desktop" type="repository">
-        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.10.0">
+        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.11.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0/ui-test-junit4-desktop-1.10.0.jar">
-              <sha256sum>de2f63543b8f646b85c789e3bf53121e4e6d89d3c7c0afc0358954cc27316a71</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.11.0/ui-test-junit4-desktop-1.11.0.jar">
+              <sha256sum>f5497e8de1e2b3c467c5686b2623157118c54427c32b45a2a2d438324c757d32</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0/ui-test-desktop-1.10.0.jar">
-              <sha256sum>b7d61af17254d98ffb858ceb80bd38597c2486eead80c2cfe0a37ba3ee9724b2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.11.0/ui-test-desktop-1.11.0.jar">
+              <sha256sum>5ecbf9db2b48c3a34974f6b38d9bc59a9b6da335d7b4985c8bb9f65e045e8a7e</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -46,16 +46,16 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0/ui-test-junit4-desktop-1.10.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0/ui-test-desktop-1.10.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.11.0/ui-test-junit4-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.11.0/ui-test-desktop-1.11.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0/ui-test-junit4-desktop-1.10.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0/ui-test-desktop-1.10.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.11.0/ui-test-junit4-desktop-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.11.0/ui-test-desktop-1.11.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0/ui-test-junit4-desktop-1.10.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0/ui-test-desktop-1.10.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.11.0/ui-test-junit4-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.11.0/ui-test-desktop-1.11.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

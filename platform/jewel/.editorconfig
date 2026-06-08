@@ -46,6 +46,8 @@ ktlint_standard_string-template-indent = disabled
 ktlint_standard_trailing-comma-on-call-site = disabled
 ktlint_standard_trailing-comma-on-declaration-site = disabled
 ktlint_standard_try-catch-finally-spacing = disabled
+ktlint_standard_blank-line-between-when-conditions = disabled
+ktlint_standard_when-entry-bracing = disabled
 ktlint_standard_wrapping = disabled
 trim_trailing_whitespace = false
 

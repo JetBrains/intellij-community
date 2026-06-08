@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.api.page.foldToList
-import com.intellij.collaboration.async.awaitCompleted
-import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.BatchesLoader
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitRemoteBranch
@@ -14,13 +12,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -29,8 +24,8 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHRepositoryPullRequestTemplate
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
@@ -44,12 +39,14 @@ class GHPRRepositoryDataServiceImpl internal constructor(
   override val repositoryId: String,
   override val defaultBranchName: String?,
   override val isFork: Boolean,
-)
-  : GHPRRepositoryDataService {
+) : GHPRRepositoryDataService {
   private val cs = parentCs.childScope(javaClass.name)
 
   private val serverPath = repositoryCoordinates.serverPath
   private val repoPath = repositoryCoordinates.repositoryPath
+
+  private val _dataReloadSignal = MutableSharedFlow<Unit>(replay = 1)
+  override val dataReloadSignal: SharedFlow<Unit> = _dataReloadSignal.asSharedFlow()
 
   init {
     requestExecutor.addListener(cs.nestedDisposable()) {
@@ -57,113 +54,76 @@ class GHPRRepositoryDataServiceImpl internal constructor(
     }
   }
 
-  private val collaboratorsRequest: MutableStateFlow<Deferred<List<GithubUserWithPermissions>>> by lazy {
-    MutableStateFlow(doLoadCollaboratorsAsync())
+  private val collaboratorsLoader by lazy {
+    BatchesLoader(cs, batchesFlow(requestExecutor, GithubApiRequests.Repos.Collaborators.pages(serverPath,
+                                                                                               repoPath.owner,
+                                                                                               repoPath.repository)))
   }
 
-  private fun doLoadCollaboratorsAsync(): Deferred<List<GithubUserWithPermissions>> = cs.async {
-    val pagesRequest = GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository)
-    batchesFlow(requestExecutor, pagesRequest).foldToList()
+  override fun loadBatchedCollaborators(): Flow<List<GithubUserWithPermissions>> = collaboratorsLoader.getBatches()
+
+  private val contributorsLoader by lazy {
+    val batchesFlow = batchesFlow(requestExecutor, GithubApiRequests.Repos.Contributors.pages(serverPath,
+                                                                                              repoPath.owner,
+                                                                                              repoPath.repository))
+    BatchesLoader(cs, batchesFlow.mapBatchItems { it.toGHUser() })
   }
 
-  private val convertedCollaboratorsRequest: Flow<Deferred<List<GHUser>>> by lazy {
-    collaboratorsRequest.mapScoped(true) {
-      async {
-        it.await().map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
-      }
-    }.shareIn(cs, SharingStarted.Eagerly, 1)
+  override fun loadBatchedContributors(): Flow<List<GHUser>> = contributorsLoader.getBatches()
+
+  private val assigneesLoader by lazy {
+    val batchesFlow = batchesFlow(requestExecutor, GithubApiRequests.Repos.Assignees.pages(serverPath,
+                                                                                           repoPath.owner,
+                                                                                           repoPath.repository))
+    BatchesLoader(cs, batchesFlow.mapBatchItems { it.toGHUser() })
   }
 
-  override suspend fun loadCollaborators(): List<GHUser> = convertedCollaboratorsRequest.awaitCompleted()
+  override fun loadBatchedPotentialIssuesAssignees(): Flow<List<GHUser>> = assigneesLoader.getBatches()
 
-  private val pullRequestAuthorsRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
-    MutableStateFlow(doLoadPRAuthorsAsync())
+  private fun GithubUser.toGHUser(): GHUser =
+    GHUser(nodeId, login, htmlUrl, avatarUrl ?: "", null)
+
+  private val labelsLoader by lazy {
+    val batchesFlow = batchesFlow(requestExecutor, GithubApiRequests.Repos.Labels.pages(serverPath,
+                                                                                        repoPath.owner,
+                                                                                        repoPath.repository)
+    )
+    BatchesLoader(cs, batchesFlow.mapBatchItems { GHLabel(it.nodeId, it.url, it.name, it.color) })
   }
 
-  private fun doLoadPRAuthorsAsync(): Deferred<List<GHUser>> = cs.async {
-    ApiPageUtil.createGQLPagesFlow {
-      requestExecutor.executeSuspend(GHGQLRequests.Repo.getPullRequestsAuthors(repositoryCoordinates, it))
-    }.map { it.nodes.mapNotNull { it.author } }
-      .foldToList()
-      .distinctBy { it.id }
-      .filterIsInstance<GHUser>()
-  }
-  override suspend fun loadPRsAuthors(): List<GHUser> = pullRequestAuthorsRequest.awaitCompleted()
+  override fun loadBatchedLabels(): Flow<List<GHLabel>> = labelsLoader.getBatches()
 
-  private val assigneesRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
-    MutableStateFlow(doLoadIssuesAssigneesAsync())
-  }
-
-  private fun doLoadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async {
-    batchesFlow(requestExecutor,
-                GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository)).foldToList()
-      .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
-  }
-
-  override suspend fun loadPotentialIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
-
-  private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
-    MutableStateFlow(doLoadLabelsAsync())
-  }
-
-  private fun doLoadLabelsAsync(): Deferred<List<GHLabel>> = cs.async {
-    batchesFlow(requestExecutor,
-                GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository)).foldToList()
-      .map { GHLabel(it.nodeId, it.url, it.name, it.color) }
-  }
-
-  override suspend fun loadLabels(): List<GHLabel> = labelsRequest.awaitCompleted()
-
-  private val teamsRequest: MutableStateFlow<Deferred<List<GHTeam>>> by lazy {
-    MutableStateFlow(doLoadTeamsAsync())
-  }
-
-  private fun doLoadTeamsAsync(): Deferred<List<GHTeam>> = cs.async {
-    if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
-    else ApiPageUtil.createGQLPagesFlow {
-      requestExecutor.executeSuspend(GHGQLRequests.Organization.Team.findAll(serverPath, repoOwner.login, it))
-    }.fold(mutableListOf()) { acc, value ->
-      acc.addAll(value.nodes)
-      acc
+  private val teamsLoader by lazy {
+    val pagesFlow = ApiPageUtil.createGQLPagesFlow {
+      requestExecutor.executeSuspend(GHGQLRequests.Organization.Team.findAll(serverPath,
+                                                                             repoOwner.login,
+                                                                             it))
     }
+    BatchesLoader(cs, pagesFlow.map { page -> page.nodes })
   }
 
   override fun mentionableUsersBatchesFlow(): Flow<List<GHUser>> = ApiPageUtil.createGQLPagesFlow {
     requestExecutor.executeSuspend(GHGQLRequests.Repo.findMentionableUsers(repositoryCoordinates, serverPath, it))
   }.map { it.nodes }
 
-  private val potentialReviewersRequest: Flow<Deferred<List<GHPullRequestRequestedReviewer>>> by lazy {
-    combine(teamsRequest, collaboratorsRequest) { teamsReq, collaboratorsReq ->
-      // can't await here bc combine transformer is not cancelled on new emissions
-      suspend {
-        val teams = teamsReq.await()
-        val collaboratorsWithWriteAccess = collaboratorsReq.await().filter { it.permissions.isPush }
-          .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
-        teams + collaboratorsWithWriteAccess
-      }
-    }.mapScoped(true) { awaiter ->
-      async {
-        awaiter()
-      }
-    }.shareIn(cs, SharingStarted.Eagerly, 1)
-  }
 
-  override suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer> = potentialReviewersRequest.awaitCompleted()
+  override fun loadBatchedTeams(): Flow<List<GHTeam>> = teamsLoader.getBatches()
 
   private val templatesRequest: Deferred<List<GHRepositoryPullRequestTemplate>> = cs.async(start = CoroutineStart.LAZY) {
     requestExecutor.executeSuspend(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
   }
 
   override suspend fun loadTemplate(): String? {
-    return templatesRequest.await().find { it.body != null && it.body.isNotBlank() }?.body
+    return templatesRequest.await().find { !it.body.isNullOrBlank() }?.body
   }
 
   override fun resetData() {
-    collaboratorsRequest.restart(doLoadCollaboratorsAsync())
-    pullRequestAuthorsRequest.restart(doLoadPRAuthorsAsync())
-    teamsRequest.restart(doLoadTeamsAsync())
-    assigneesRequest.restart(doLoadIssuesAssigneesAsync())
-    labelsRequest.restart(doLoadLabelsAsync())
+    collaboratorsLoader.cancel()
+    contributorsLoader.cancel()
+    assigneesLoader.cancel()
+    labelsLoader.cancel()
+    teamsLoader.cancel()
+    _dataReloadSignal.tryEmit(Unit)
   }
 
   override fun getDefaultRemoteBranch(): GitRemoteBranch? {
@@ -177,11 +137,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(
     return branches.findRemoteBranch("${currentRemote.remote.name}/master")
            ?: branches.findRemoteBranch("${currentRemote.remote.name}/main")
   }
-}
 
-private fun <T> MutableStateFlow<Deferred<T>>.restart(newRequest: Deferred<T>) {
-  update {
-    it.cancel()
-    newRequest
-  }
+  private fun <T, R> Flow<List<T>>.mapBatchItems(mapper: (T) -> R): Flow<List<R>> = map { batch -> batch.map(mapper) }
 }

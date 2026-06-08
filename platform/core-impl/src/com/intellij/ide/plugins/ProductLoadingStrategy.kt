@@ -6,6 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -36,6 +37,12 @@ abstract class ProductLoadingStrategy {
    * Returns ID of current [ProductMode][com.intellij.platform.runtime.product.ProductMode].
    */
   abstract val currentModeId: String
+
+  /**
+   * Emits the ID of the current [ProductMode][com.intellij.platform.runtime.product.ProductMode] and a new value
+   * whenever the mode advances (see [advanceToLightWithRdConnectionMode] and [advanceToFrontendMode]).
+   */
+  abstract val currentModeIdFlow: StateFlow<String>
 
   /**
    * Returns `true` if current product mode has successfully advanced from light to light_with_rd_connection

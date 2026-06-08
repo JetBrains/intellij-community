@@ -4,12 +4,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
 
-create_kotlinc_options(
-    name = "custom_impl",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -20,7 +14,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_impl",
     module_name = "intellij.pycharm.community.ide.impl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -105,7 +98,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_impl",
     module_name = "intellij.pycharm.community.ide.impl",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -194,12 +186,6 @@ exports_files(
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` start
 
-create_kotlinc_options(
-    name = "custom_pycharm-community-ide-impl-tests",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "pycharm-community-ide-impl-tests",
     srcs = glob(
@@ -226,7 +212,6 @@ jvm_library(
         "//python/ide/impl",
         "//python/ide/impl:impl_test_lib",
     ],
-    kotlinc_opts = ":custom_pycharm-community-ide-impl-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],

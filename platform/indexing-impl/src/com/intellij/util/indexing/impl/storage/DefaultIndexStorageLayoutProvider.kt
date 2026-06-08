@@ -293,6 +293,7 @@ private val CHANNEL_WITH_WAL_OPENER = FileChannelOpener { path: Path, readOnly: 
 
 /** Shared channels cache, with write-ahead-log feature  */
 private val CHANNELS_WITH_WRITE_AHEAD_CACHE = OpenChannelsCache(
+  "channels-cache-with-WAL",
   //Actually, _this_ cache's capacity is unrelated to CHANNELS_CACHE_CAPACITY -- this cache doesn't spend
   // (limited) file descriptors.
   // But the capacity should still be limited, because even FileChannelWithWAL carries some overhead.

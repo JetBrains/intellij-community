@@ -4038,6 +4038,7 @@ c:com.intellij.openapi.ui.Messages$InputDialog
 - com.intellij.openapi.ui.messages.MessageDialog
 - sf:INPUT_DIALOG_COLUMNS:I
 - p:myField:javax.swing.text.JTextComponent
+- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,java.lang.String[],I,java.lang.String):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,java.lang.String[],I):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,java.lang.String[],I,java.lang.String):V
@@ -4409,6 +4410,7 @@ c:com.intellij.openapi.ui.messages.MessageDialog
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):V
+- p:<init>(com.intellij.openapi.project.Project,java.awt.Component,Z):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,Z):V
 - <init>(com.intellij.openapi.project.Project,Z):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):V

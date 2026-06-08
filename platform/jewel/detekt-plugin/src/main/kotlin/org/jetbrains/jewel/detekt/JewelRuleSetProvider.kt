@@ -2,15 +2,15 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.RuleSet
-import io.gitlab.arturbosch.detekt.api.RuleSetProvider
+import dev.detekt.api.RuleSet
+import dev.detekt.api.RuleSetId
+import dev.detekt.api.RuleSetProvider
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
 
 class JewelRuleSetProvider : RuleSetProvider {
-    override val ruleSetId: String = "jewel"
+    override val ruleSetId: RuleSetId = RuleSetId("jewel")
 
-    override fun instance(config: Config): RuleSet =
-        RuleSet(ruleSetId, listOf(EqualityMembersRule(config), MissingApiStatusAnnotationRule(config)))
+    override fun instance(): RuleSet =
+        RuleSet(ruleSetId, rules = listOf(::EqualityMembersRule, ::MissingApiStatusAnnotationRule))
 }

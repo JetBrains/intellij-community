@@ -184,11 +184,12 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     RectanglePainter2D.FILL.paint(g, x, y, width, height, arc)
 
     if (selected && tabColor != null) {
-      val offset = JBUIScale.scale(if (compactMode) 2 else 3).toDouble()
+      val offset = JBUIScale.scale(if (compactMode) 2f else 3f).toDouble()
       val offset2 = offset * 2
+      val innerArc = (arc - offset - JBUIScale.scale(2f)).coerceAtLeast(0.0)
 
       g.color = getColoredTabBackground(tabColor, active)
-      RectanglePainter2D.FILL.paint(g, x + offset, y + offset, width - offset2, height - offset2, arc)
+      RectanglePainter2D.FILL.paint(g, x + offset, y + offset, width - offset2, height - offset2, innerArc)
     }
 
     g.color = draw
@@ -196,7 +197,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
   }
 
   private fun getColoredTabBackground(tabColor: Color, active: Boolean): Color {
-    return if (active) tabColor else ColorUtil.alphaBlending(JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground(), tabColor)
+    return if (active) tabColor else ColorUtil.withAlpha(tabColor, 0.9)
   }
 
   /**
@@ -241,7 +242,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     val info = getColors(active, hovered, selected)
 
     if (tabColor != null) {
-      val fill = if (selected) getBackgroundColor() else ColorUtil.alphaBlending(info.first, tabColor)
+      val fill = if (selected) getBackgroundColor() else ColorUtil.alphaBlending(info.first, ColorUtil.withAlpha(tabColor, 0.9))
       return fill to info.second
     }
 

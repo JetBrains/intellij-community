@@ -487,6 +487,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddToStringFixFactories.assignmentTypeMismatch)
         registerFactory(AddToStringFixFactories.returnTypeMismatch)
         registerFactory(AddToStringFixFactories.initializerTypeMismatch)
+        registerFactory(AddToStringFixFactories.incompatibleTypes)
 
         registerFactory(MakeUpperBoundNotNullFixFactories.argumentTypeMismatch)
         registerFactory(MakeUpperBoundNotNullFixFactories.nothingToOverride)

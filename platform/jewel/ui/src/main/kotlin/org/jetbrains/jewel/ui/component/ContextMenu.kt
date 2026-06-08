@@ -155,10 +155,15 @@ public class ContextSubmenu(label: String, public val submenu: () -> List<Contex
 public class ContextMenuItemOption(
     public val icon: IconKey? = null,
     public val actionType: ContextMenuItemOptionAction? = null,
-    public val enabled: Boolean = true,
+    enabled: Boolean = true,
     label: String,
     action: () -> Unit,
-) : ContextMenuItem(label, action) {
+) : ContextMenuItem(label, enabled, action) {
+    @Deprecated("Binary compatibility stub", level = DeprecationLevel.HIDDEN)
+    @get:JvmName("getEnabled")
+    public val enabledCompat: Boolean
+        get() = enabled
+
     @Deprecated("Kept for binary compat. Use the primary constructor instead.", level = DeprecationLevel.HIDDEN)
     public constructor(
         icon: IconKey? = null,
@@ -169,6 +174,7 @@ public class ContextMenuItemOption(
 }
 
 /** The predefined actions for [ContextMenuItemOption]s. */
+@Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
 public sealed class ContextMenuItemOptionAction {
     /** Represents a "Copy" action. */
     public data object CopyMenuItemOptionAction : ContextMenuItemOptionAction()

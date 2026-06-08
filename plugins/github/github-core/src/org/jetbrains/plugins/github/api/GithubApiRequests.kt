@@ -449,6 +449,27 @@ object GithubApiRequests {
           .withOperationName("add collaborator")
     }
 
+    object Contributors : Entity("/contributors") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String): GithubApiPagesLoader.Request<GithubUser> =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmStatic
+      fun get(
+        server: GithubServerPath,
+        username: String,
+        repoName: String,
+        pagination: GithubRequestPagination? = null,
+      ): GithubApiRequest<GithubResponsePage<GithubUser>> =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, paginationQuery(pagination)))
+
+      @JvmStatic
+      private fun get(url: String): GithubApiRequest<GithubResponsePage<GithubUser>> =
+        Get.jsonPage<GithubUser>(url)
+          .withOperation(GithubApiRequestOperation.RestGetRepositoryContributors)
+          .withOperationName("get contributors")
+    }
+
     object Issues : Entity("/issues") {
 
       @JvmStatic

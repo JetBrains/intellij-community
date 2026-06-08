@@ -1,4 +1,4 @@
-<idea-plugin package="org.intellij.plugins.markdown" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <id>org.intellij.plugins.markdown</id>
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
@@ -27,7 +27,7 @@
     <module name="intellij.markdown.frontend.split"/>
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
-    <module name="intellij.markdown.fenceInjector.textMate" loading="optional"/>
+    <module name="intellij.markdown.fenceInjector.textMate"/>
   </content>
 
   <description><![CDATA[

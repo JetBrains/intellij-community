@@ -8,7 +8,6 @@ import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.spi.IjentConnectionContext
 import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentTcpSessionMediator
-import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import kotlinx.coroutines.CompletableDeferred
 
@@ -16,8 +15,8 @@ class RawTcpEelMachine(
   private val deploy: TcpDeployInfo.FixedPort,
   private val coroutineScope: IjentScope,
 ) : TcpEelMachine(RawTcpConsts.internalName(deploy)) {
-  override suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy {
-    return object : IjentIsolatedTcpDeployingStrategy() {
+  override suspend fun createStrategy(): FusReportingStrategy {
+    return object : FusReportingStrategy() {
       override suspend fun deploy(): IjentConnectionContext {
         return IjentConnectionContext(
           targetPlatform = EelPlatform.getFor("linux", "x86-64")!!, // TODO,

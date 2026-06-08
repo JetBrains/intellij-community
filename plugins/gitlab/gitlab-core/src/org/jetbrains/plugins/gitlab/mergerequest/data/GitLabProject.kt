@@ -145,16 +145,19 @@ internal class GitLabProjectImpl(
                                            tokenRefreshFlow, projectCoordinates, projectId, gitRemote)
   }
 
-  private val labelsLoader = BatchesLoader(cs,
-                                           api.graphQL.createAllProjectLabelsFlow(projectCoordinates.projectPath).map { labels ->
-                                             labels.map {
-                                               GitLabLabel(it.title, it.color)
-                                             }
-                                           })
-  private val membersLoader = BatchesLoader(cs,
-                                            ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getProjectUsersURI(projectId)) {
-                                              api.rest.getProjectUsers(it)
-                                            }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
+  private val labelsLoader by lazy {
+    BatchesLoader(cs, api.graphQL.createAllProjectLabelsFlow(projectCoordinates.projectPath).map { labels ->
+      labels.map {
+        GitLabLabel(it.title, it.color)
+      }
+    })
+  }
+
+  private val membersLoader by lazy {
+    BatchesLoader(cs, ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getProjectUsersURI(projectId)) {
+      api.rest.getProjectUsers(it)
+    }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
+  }
 
   override suspend fun getEmojis(): List<GitLabReaction> = emojisRequest.await()
   override val defaultBranch: String? = details.defaultBranch

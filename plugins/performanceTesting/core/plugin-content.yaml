@@ -3,12 +3,24 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
   reason: <- intellij.performanceTesting
+- name: lib/intellij.driver.client.jar
+  contentModules:
+  - name: intellij.driver.client
+- name: lib/intellij.driver.impl.jar
+  contentModules:
+  - name: intellij.driver.impl
+- name: lib/intellij.driver.model.jar
+  contentModules:
+  - name: intellij.driver.model
 - name: lib/intellij.libraries.assertj.core.jar
   contentModules:
   - name: intellij.libraries.assertj.core
     libraries:
       assertJ:
       - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
+- name: lib/intellij.tools.ide.starter.bus.jar
+  contentModules:
+  - name: intellij.tools.ide.starter.bus
 - name: lib/modules/intellij.driver.frontend.split.jar
   contentModules:
   - name: intellij.driver.frontend.split
@@ -46,8 +58,3 @@
 - name: lib/performanceTesting.jar
   modules:
   - name: intellij.performanceTesting
-  contentModules:
-  - name: intellij.tools.ide.starter.bus
-  - name: intellij.driver.model
-  - name: intellij.driver.impl
-  - name: intellij.driver.client

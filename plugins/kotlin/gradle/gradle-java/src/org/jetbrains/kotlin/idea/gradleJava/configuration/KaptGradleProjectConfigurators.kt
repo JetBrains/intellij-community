@@ -42,26 +42,32 @@ class KaptGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCo
 }
 
 private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfiguratorFiles) {
-  val fileText = text
-  val annotationProcessorMatches = ANNOTATION_PROCESSOR_DEPENDENCY_REGEX.findAll(fileText).toList()
-  val kaptDependencies = KAPT_DEPENDENCY_REGEX.findAll(fileText).map { it.groupValues[1] }.toSet()
-  val dependenciesToAdd = annotationProcessorMatches
-    .map { it.groupValues[2] }
-    .filterNot { it.isLombokDependencyNotation() }
-    .distinct()
-    .filterNot { it in kaptDependencies }
+  if (this !is KtFile) return
+
+  val psiDocumentManager = PsiDocumentManager.getInstance(project)
+  val document = psiDocumentManager.getDocument(this) ?: return
+  psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
+  val fileText = document.text
+  val processorDependencyMatches = PROCESSOR_DEPENDENCY_REGEX.findAll(fileText)
+    .mapNotNull { it.toKaptProcessorDependency() }
+    .toList()
+  val kaptDependencies = KAPT_DEPENDENCY_REGEX.findAll(fileText)
+    .map { KaptDependency(it.groupValues[1], it.groupValues[2]) }
+    .toSet()
+  val dependenciesToAdd = processorDependencyMatches
+    .distinctBy { it.kaptConfiguration to it.notation }
+    .filterNot { KaptDependency(it.kaptConfiguration, it.notation) in kaptDependencies }
   if (dependenciesToAdd.isEmpty()) return
 
-  val lastProcessorMatch = annotationProcessorMatches.lastOrNull() ?: return
+  val lastProcessorMatch = dependenciesToAdd.last().match
   val insertOffset = fileText.indexOf('\n', lastProcessorMatch.range.last + 1).takeIf { it >= 0 } ?: fileText.length
   val indent = lastProcessorMatch.groupValues[1]
   val dependencyLines = dependenciesToAdd.joinToString(separator = "") { dependency ->
-    "\n$indent${kaptDependencyNotation(dependency, this is KtFile)}"
+    "\n$indent${kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)}"
   }
-  val document = PsiDocumentManager.getInstance(project).getDocument(this) ?: return
   changedFiles.storeOriginalFileContent(this)
   document.insertString(insertOffset, dependencyLines)
-  PsiDocumentManager.getInstance(project).commitDocument(document)
+  psiDocumentManager.commitDocument(document)
 }
 
 class KaptGradleProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfigurator(KAPT_PLUGIN_ID) {
@@ -129,15 +135,77 @@ private fun String.isLombokProcessorPath(): Boolean =
 private fun String.isLombokDependencyNotation(): Boolean =
   split(':').getOrNull(1) == "lombok" || contains("lombok", ignoreCase = true)
 
+private fun MatchResult.toKaptProcessorDependency(): KaptProcessorDependency? {
+  val sourceConfiguration = GradleProcessorDependencyConfiguration.byName(groupValues[2]) ?: return null
+  val notation = groupValues[3]
+  if (notation.isLombokDependencyNotation()) return null
+  if (!sourceConfiguration.acceptsAnyProcessor) {
+    val processorPath = GradleProcessorPath.of(notation) ?: return null
+    if (processorPath !in KNOWN_PROCESSOR_ARTIFACTS) return null
+  }
+  return KaptProcessorDependency(
+    match = this,
+    kaptConfiguration = sourceConfiguration.kaptConfiguration,
+    notation = notation,
+  )
+}
+
 private fun kaptPluginExpression(forKotlinDsl: Boolean): String =
   if (forKotlinDsl) "kotlin(\"kapt\")" else "id \"org.jetbrains.kotlin.kapt\""
 
-private fun kaptDependencyNotation(dependency: String, forKotlinDsl: Boolean): String =
-  if (forKotlinDsl) "kapt(\"$dependency\")" else "kapt \"$dependency\""
+private fun kaptDependencyNotation(configuration: String, dependency: String): String =
+  "$configuration(\"$dependency\")"
 
-private val ANNOTATION_PROCESSOR_DEPENDENCY_REGEX = Regex("""(?m)^(\s*)annotationProcessor\s*(?:\(\s*)?["']([^"']+)["']\s*\)?""")
+private data class KaptProcessorDependency(val match: MatchResult, val kaptConfiguration: String, val notation: String)
 
-private val KAPT_DEPENDENCY_REGEX = Regex("""(?m)^\s*kapt\s*(?:\(\s*)?["']([^"']+)["']""")
+private data class KaptDependency(val configuration: String, val notation: String)
+
+private enum class GradleProcessorDependencyConfiguration(
+  val dependencyConfiguration: String,
+  val kaptConfiguration: String,
+  val acceptsAnyProcessor: Boolean,
+) {
+  ANNOTATION_PROCESSOR("annotationProcessor", "kapt", acceptsAnyProcessor = true),
+  TEST_ANNOTATION_PROCESSOR("testAnnotationProcessor", "kaptTest", acceptsAnyProcessor = true),
+  IMPLEMENTATION("implementation", "kapt", acceptsAnyProcessor = false),
+  TEST_IMPLEMENTATION("testImplementation", "kaptTest", acceptsAnyProcessor = false);
+
+  companion object {
+    private val byDependencyConfiguration = entries.associateBy { it.dependencyConfiguration }
+
+    fun byName(name: String): GradleProcessorDependencyConfiguration? =
+      byDependencyConfiguration[name]
+  }
+}
+
+private data class GradleProcessorPath(val groupId: String, val artifactId: String) {
+  companion object {
+    fun of(dependencyNotation: String): GradleProcessorPath? {
+      val parts = dependencyNotation.split(':')
+      val groupId = parts.getOrNull(0)?.takeIf { it.isNotBlank() } ?: return null
+      val artifactId = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: return null
+      return GradleProcessorPath(groupId, artifactId)
+    }
+  }
+}
+
+private val PROCESSOR_DEPENDENCY_REGEX = Regex(
+  """(?m)^(\s*)(annotationProcessor|testAnnotationProcessor|implementation|testImplementation)\s*(?:\(\s*)?["']([^"']+)["']\s*\)?"""
+)
+
+private val KAPT_DEPENDENCY_REGEX = Regex("""(?m)^\s*(kapt|kaptTest)\s*(?:\(\s*)?["']([^"']+)["']""")
+
+private val KNOWN_PROCESSOR_ARTIFACTS = setOf(
+  GradleProcessorPath("org.mapstruct", "mapstruct-processor"),
+  GradleProcessorPath("com.google.dagger", "dagger-compiler"),
+  GradleProcessorPath("com.google.dagger", "hilt-compiler"),
+  GradleProcessorPath("androidx.room", "room-compiler"),
+  GradleProcessorPath("org.hibernate.orm", "hibernate-jpamodelgen"),
+  GradleProcessorPath("org.hibernate", "hibernate-jpamodelgen"),
+  GradleProcessorPath("io.micronaut", "micronaut-inject-java"),
+  GradleProcessorPath("com.google.auto.service", "auto-service"),
+  GradleProcessorPath("com.querydsl", "querydsl-apt"),
+)
 
 private val KNOWN_NON_LOMBOK_PROCESSOR_CLASSES = listOf(
   "org.mapstruct.ap.MappingProcessor",

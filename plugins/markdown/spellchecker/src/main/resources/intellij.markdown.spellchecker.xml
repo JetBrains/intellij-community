@@ -1,4 +1,4 @@
-<idea-plugin package="org.intellij.plugins.markdown.spellchecker">
+<idea-plugin>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.spellchecker"/>

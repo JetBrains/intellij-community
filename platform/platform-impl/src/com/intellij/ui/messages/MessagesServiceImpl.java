@@ -165,9 +165,11 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{getOkButton(), getCancelButton()},
-                                         0, comment);
+    InputDialog dialog = parentComponent == null
+                         ? new InputDialog(project, message, title, icon, initialValue, validator,
+                                           new String[]{getOkButton(), getCancelButton()}, 0, comment)
+                         : new InputDialog(project, parentComponent, message, title, icon, initialValue, validator,
+                                           new String[]{getOkButton(), getCancelButton()}, 0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {

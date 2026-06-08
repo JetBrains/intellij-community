@@ -8,24 +8,50 @@
   files:
   - name: $PROJECT_DIR$/community/lib/ecj-4.jar
   reason: withProjectLibrary
+- name: lib/intellij.java.compiler.antTasks.jar
+  contentModules:
+  - name: intellij.java.compiler.antTasks
+- name: lib/intellij.java.compiler.instrumentationUtil.jar
+  contentModules:
+  - name: intellij.java.compiler.instrumentationUtil
+- name: lib/intellij.java.compiler.instrumentationUtil.java8.jar
+  contentModules:
+  - name: intellij.java.compiler.instrumentationUtil.java8
+- name: lib/intellij.java.debugger.impl.shared.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.shared
+- name: lib/intellij.java.execution.impl.shared.jar
+  contentModules:
+  - name: intellij.java.execution.impl.shared
+- name: lib/intellij.java.frontback.impl.jar
+  contentModules:
+  - name: intellij.java.frontback.impl
+- name: lib/intellij.java.frontback.psi.impl.jar
+  contentModules:
+  - name: intellij.java.frontback.psi.impl
+- name: lib/intellij.java.frontback.psi.jar
+  contentModules:
+  - name: intellij.java.frontback.psi
+- name: lib/intellij.java.guiForms.compiler.jar
+  contentModules:
+  - name: intellij.java.guiForms.compiler
+- name: lib/intellij.java.psi.impl.jar
+  contentModules:
+  - name: intellij.java.psi.impl
+- name: lib/intellij.java.psi.jar
+  contentModules:
+  - name: intellij.java.psi
+- name: lib/intellij.java.syntax.jar
+  contentModules:
+  - name: intellij.java.syntax
+- name: lib/intellij.platform.jps.build.javac.rt.jar
+  contentModules:
+  - name: intellij.platform.jps.build.javac.rt
 - name: lib/java-impl.jar
   modules:
   - name: intellij.java.plugin
   contentModules:
-  - name: intellij.java.syntax
-  - name: intellij.java.frontback.psi
-  - name: intellij.java.frontback.psi.impl
-  - name: intellij.java.psi
-  - name: intellij.java.psi.impl
-  - name: intellij.java.frontback.impl
   - name: intellij.java.bookmarks
-  - name: intellij.platform.jps.build.javac.rt
-  - name: intellij.java.guiForms.compiler
-  - name: intellij.java.compiler.antTasks
-  - name: intellij.java.compiler.instrumentationUtil
-  - name: intellij.java.compiler.instrumentationUtil.java8
-  - name: intellij.java.debugger.impl.shared
-  - name: intellij.java.execution.impl.shared
 - name: lib/jb-jdi.jar
   library: jb-jdi
   files:

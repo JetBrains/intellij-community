@@ -386,7 +386,6 @@ public fun rememberSelectableLazyListState(
     )
 }
 
-@Composable
 /**
  * Remembers a [SingleSelectionLazyListState].
  *
@@ -397,6 +396,7 @@ public fun rememberSelectableLazyListState(
  * @param initialFirstVisibleItemScrollOffset Initial first visible item scroll offset, used only at creation time.
  * @param initialSelectedKey Optional preselected key for the initial composition.
  */
+@Composable
 public fun rememberSingleSelectionLazyListState(
     initialFirstVisibleItemIndex: Int = 0,
     initialFirstVisibleItemScrollOffset: Int = 0,
@@ -408,7 +408,6 @@ public fun rememberSingleSelectionLazyListState(
     )
 }
 
-@Composable
 /**
  * Remembers a [MultiSelectionLazyListState].
  *
@@ -419,6 +418,7 @@ public fun rememberSingleSelectionLazyListState(
  * @param initialFirstVisibleItemScrollOffset Initial first visible item scroll offset, used only at creation time.
  * @param initialSelectedKeys Optional preselected keys for the initial composition.
  */
+@Composable
 public fun rememberMultiSelectionLazyListState(
     initialFirstVisibleItemIndex: Int = 0,
     initialFirstVisibleItemScrollOffset: Int = 0,
