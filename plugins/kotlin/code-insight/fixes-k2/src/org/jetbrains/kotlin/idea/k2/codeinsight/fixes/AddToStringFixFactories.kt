@@ -43,4 +43,8 @@ internal object AddToStringFixFactories {
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         getFixes(diagnostic.initializer, diagnostic.expectedType, diagnostic.actualType)
     }
+
+    val incompatibleTypes = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IncompatibleTypes ->
+        getFixes(diagnostic.psi, diagnostic.typeA, diagnostic.typeB)
+    }
 }
