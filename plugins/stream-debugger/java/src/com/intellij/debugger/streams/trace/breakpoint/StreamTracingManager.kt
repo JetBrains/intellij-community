@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.DebugProcessAdapterImpl
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebugProcessListener
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -46,9 +47,15 @@ internal sealed class TracingResult {
 }
 
 private sealed interface EvaluationStatus {
-  data class EvaluationStarted(
+  class EvaluationStarted(
+    val requestors: RequestorsSet,
     val resumer: DebugProcessListener,
-  ) : EvaluationStatus
+  ) : EvaluationStatus {
+    fun cleanUp(debugProcess: DebugProcessImpl) {
+      debugProcess.removeDebugProcessListener(resumer)
+      requestors.cleanUp()
+    }
+  }
 
   data class EvaluationFinished(val result: TracingResult) : EvaluationStatus
 }
@@ -58,11 +65,6 @@ internal class StreamTracingManager(
   private val objectStorage: DisableCollectionObjectStorage,
   private val handlerFactory: BreakpointBasedHandlerFactory,
 ) {
-  private var sourceOperationBreakpoint: MethodExitRequestHandle? = null
-  private var intermediateOperationsBreakpoints: List<StreamCallRuntimeInfo> = emptyList()
-  private lateinit var terminalOperationBreakpoint: StreamCallRuntimeInfo
-  private var exceptionBreakpointRequest: ExceptionRequestHandle? = null
-
   private val evaluationFinished = CompletableDeferred<TracingResult>()
 
   suspend fun evaluateChain(
@@ -79,8 +81,7 @@ internal class StreamTracingManager(
       evaluationFinished.await()
     } finally {
       withDebugContext(debuggerContext.managerThread!!) {
-        debuggerContext.debugProcess!!.removeDebugProcessListener(started.resumer)
-        deleteBreakpointRequests()
+        started.cleanUp(debuggerContext.debugProcess!!)
       }
     }
   }
@@ -95,25 +96,27 @@ internal class StreamTracingManager(
                             ?: return@withDebugContext EvaluationStatus.EvaluationFinished(
                               TracingResult.Error(StreamDebuggerBundle.message("program.is.not.suspended")))
 
+    var requestors: RequestorsSet? = null
     try {
-      withDebugContext(evaluationContext.suspendContext) {
+      requestors = withDebugContext(evaluationContext.suspendContext) {
         val mgr = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContext)
-        createRequestors(evaluationContext, chain, breakpointPositions, mgr).enable()
+        createRequestors(evaluationContext, chain, breakpointPositions, mgr).also { it.firstToEnable().enable() }
       }
+
+      val resumer = SpuriousBreakpointResumer(evaluationContext.suspendContext.thread)
+      debugProcess.addDebugProcessListener(resumer)
+      debugProcess.suspendManager.resume(evaluationContext.suspendContext)
+      EvaluationStatus.EvaluationStarted(requestors, resumer)
     }
     catch (e: CancellationException) {
       throw e
     }
     catch (e: Throwable) {
       LOG.error("Failed to set up stream tracing", e)
-      return@withDebugContext EvaluationStatus.EvaluationFinished(
+      requestors?.cleanUp()
+      EvaluationStatus.EvaluationFinished(
         TracingResult.Error(StreamDebuggerBundle.message("stream.tracing.failed.due.to.internal.error"), e))
     }
-
-    val resumer = SpuriousBreakpointResumer(evaluationContext.suspendContext.thread)
-    debugProcess.addDebugProcessListener(resumer)
-    debugProcess.suspendManager.resume(evaluationContext.suspendContext)
-    EvaluationStatus.EvaluationStarted(resumer)
   }
 
   private fun gatherTracingResults(
@@ -132,42 +135,66 @@ internal class StreamTracingManager(
     }
   }
 
-  // returns first breakpoint request for stream chain
   private fun createRequestors(
     evaluationContext: EvaluationContextImpl,
     chain: StreamChain,
     positions: BreakpointResolveResult.Found,
     instrumentation: StreamInstrumentationManager,
-  ): RequestHandle<*> {
-    val qualifierExpressionBreakpoint = if (positions.qualifierExpressionMethod == null) {
-      // if qualifier expression is variable we need to replace it in current stack frame
-      instrumentation.replaceQualifierVariable(evaluationContext, chain.qualifierExpression)
-      null
-    }
-    else {
-      // if it is a method call, then we set additional breakpoint as for an intermediate operation
-      sourceOperationBreakpoint = createSourceOperationRequestor(evaluationContext, positions.qualifierExpressionMethod, instrumentation, positions.skipCount)
-      sourceOperationBreakpoint
-    }
+  ): RequestorsSet {
+    val created = mutableListOf<RequestHandle<*>>()
+    try {
+      // create from the end so that each step references the already created next one
+      val terminal = createTerminalOperationRequestors(
+        evaluationContext,
+        chain.terminationCall,
+        positions.terminationOperationMethod,
+        instrumentation
+      )
+      created += terminal.methodEntryRequest
+      created += terminal.methodExitRequest
 
-    intermediateOperationsBreakpoints = chain
-      .intermediateCalls.zip(positions.intermediateStepsMethods)
-      .mapIndexed { callOrder, (call, methodSignature) ->
-        createIntermediateOperationRequestors(evaluationContext, callOrder, call, methodSignature, instrumentation)
+      var nextEntry: MethodEntryRequestHandle = terminal.methodEntryRequest
+      val intermediate = arrayOfNulls<StreamCallRequestors>(chain.intermediateCalls.size)
+      for (i in chain.intermediateCalls.indices.reversed()) {
+        val info = createIntermediateOperationRequestors(
+          evaluationContext,
+          i,
+          chain.intermediateCalls[i],
+          positions.intermediateStepsMethods[i],
+          instrumentation,
+          nextEntry
+        )
+        created += info.methodEntryRequest
+        created += info.methodExitRequest
+        intermediate[i] = info
+        nextEntry = info.methodEntryRequest
       }
 
-    terminalOperationBreakpoint = createTerminalOperationRequestors(
-      evaluationContext,
-      chain.terminationCall,
-      positions.terminationOperationMethod,
-      instrumentation,
-    )
+      val source = if (positions.qualifierExpressionMethod == null) {
+        // if qualifier expression is variable we need to replace it in current stack frame
+        instrumentation.replaceQualifierVariable(evaluationContext, chain.qualifierExpression)
+        null
+      }
+      else {
+        // if it is a method call, then we set additional breakpoint as for an intermediate operation
+        createSourceOperationRequestor(
+          evaluationContext,
+          positions.qualifierExpressionMethod,
+          instrumentation,
+          positions.skipCount,
+          nextEntry
+        ).also { created += it }
+      }
 
-    exceptionBreakpointRequest = setupExceptionBreakpoint(evaluationContext, instrumentation)
+      val exception = setupExceptionBreakpoint(evaluationContext, instrumentation)
+        .also { created += it }
 
-    return qualifierExpressionBreakpoint
-           ?: intermediateOperationsBreakpoints.firstOrNull()?.methodEntryRequest
-           ?: terminalOperationBreakpoint.methodEntryRequest
+      return RequestorsSet(source, intermediate.asList().requireNoNulls(), terminal, exception)
+    }
+    catch (e: Throwable) {
+      created.forEach { it.delete() }
+      throw e
+    }
   }
 
   private fun createSourceOperationRequestor(
@@ -175,6 +202,7 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
     instrumentation: StreamInstrumentationManager,
     qualifierSkipCount: Int,
+    nextEntry: MethodEntryRequestHandle,
   ): MethodExitRequestHandle {
     val filter = if (qualifierSkipCount > 0) {
       var remainingSkips = qualifierSkipCount
@@ -190,7 +218,7 @@ internal class StreamTracingManager(
       LOG.debug("Source operation exit request hit")
       withFinishTracingOnException(value) {
         val result = instrumentation.onSourceOperationExit(evalContext, value)
-        enableNextBreakpoint(-1)
+        if (!evaluationFinished.isCompleted) nextEntry.enable()
         result
       }
     }
@@ -199,16 +227,17 @@ internal class StreamTracingManager(
   private fun createIntermediateOperationRequestors(
     evaluationContext: EvaluationContextImpl,
     callOrder: Int,
-    @Suppress("UNUSED_PARAMETER") call: IntermediateStreamCall,
+    call: IntermediateStreamCall,
     methodSignature: JvmMethodSignature,
     instrumentation: StreamInstrumentationManager,
-  ): StreamCallRuntimeInfo {
+    nextEntry: MethodEntryRequestHandle,
+  ): StreamCallRequestors {
     // create exit request first to be able to activate it in entry request
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       LOG.debug("Intermediate operation ${call.name} exit request hit")
       withFinishTracingOnException(value) {
         val result = instrumentation.onIntermediateOperationExit(evalContext, callOrder, value)
-        enableNextBreakpoint(callOrder)
+        if (!evaluationFinished.isCompleted) nextEntry.enable()
         result
       }
     }
@@ -220,7 +249,7 @@ internal class StreamTracingManager(
         result
       }
     }
-    return StreamCallRuntimeInfo(entryRequest, exitRequest)
+    return StreamCallRequestors(entryRequest, exitRequest)
   }
 
   private fun createTerminalOperationRequestors(
@@ -228,7 +257,7 @@ internal class StreamTracingManager(
     @Suppress("UNUSED_PARAMETER") call: TerminatorStreamCall,
     methodSignature: JvmMethodSignature,
     instrumentation: StreamInstrumentationManager,
-  ): StreamCallRuntimeInfo {
+  ): StreamCallRequestors {
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       LOG.debug("Terminal operation ${call.name} exit request hit")
       withFinishTracingOnException(value) {
@@ -255,18 +284,7 @@ internal class StreamTracingManager(
         result
       }
     }
-    return StreamCallRuntimeInfo(entryRequest, exitRequest)
-  }
-
-  private fun deleteBreakpointRequests() {
-    sourceOperationBreakpoint?.delete()
-    for (bp in intermediateOperationsBreakpoints) {
-      bp.methodEntryRequest.delete()
-      bp.methodExitRequest.delete()
-    }
-    terminalOperationBreakpoint.methodEntryRequest.delete()
-    terminalOperationBreakpoint.methodExitRequest.delete()
-    exceptionBreakpointRequest?.delete()
+    return StreamCallRequestors(entryRequest, exitRequest)
   }
 
   /**
@@ -330,22 +348,33 @@ internal class StreamTracingManager(
       frame.location().declaringType() == catchType
     }
   }
-
-  private fun enableNextBreakpoint(callNumber: Int) {
-    if (evaluationFinished.isCompleted) return
-    if (callNumber + 1 >= intermediateOperationsBreakpoints.size) {
-      terminalOperationBreakpoint.methodEntryRequest.enable()
-    }
-    else {
-      intermediateOperationsBreakpoints[callNumber + 1].methodEntryRequest.enable()
-    }
-  }
 }
 
-private data class StreamCallRuntimeInfo(
+private data class StreamCallRequestors(
   val methodEntryRequest: MethodEntryRequestHandle,
   val methodExitRequest: MethodExitRequestHandle,
 )
+
+private class RequestorsSet(
+  val source: MethodExitRequestHandle?,
+  val intermediate: List<StreamCallRequestors>,
+  val terminal: StreamCallRequestors,
+  val exception: ExceptionRequestHandle,
+) {
+  fun firstToEnable(): RequestHandle<*> =
+    source ?: intermediate.firstOrNull()?.methodEntryRequest ?: terminal.methodEntryRequest
+
+  fun cleanUp() {
+    source?.delete()
+    intermediate.forEach {
+      it.methodEntryRequest.delete()
+      it.methodExitRequest.delete()
+    }
+    terminal.methodEntryRequest.delete()
+    terminal.methodExitRequest.delete()
+    exception.delete()
+  }
+}
 
 /**
  * We need to skip breakpoints that are triggered during stream execution for several reasons:
