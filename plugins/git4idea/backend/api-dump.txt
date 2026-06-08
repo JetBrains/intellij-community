@@ -1,7 +1,84 @@
+c:git4idea.DialogManager
+- s:show(com.intellij.openapi.ui.DialogWrapper):V
+c:git4idea.GitFormatException
+- <init>(java.lang.String):V
+f:git4idea.GitLocalBranch
+- <init>(java.lang.String):V
+- f:findTrackedBranch(git4idea.repo.GitRepository):git4idea.GitRemoteBranch
 f:git4idea.GitProtectedBranchesKt
 - sf:findProtectedRemoteBranchContainingCommit(git4idea.repo.GitRepository,com.intellij.vcs.log.Hash,kotlin.coroutines.Continuation):java.lang.Object
 - sf:isCommitPublished(git4idea.repo.GitRepository,com.intellij.vcs.log.Hash,kotlin.coroutines.Continuation):java.lang.Object
 - sf:isCommitPublishedBlocking(git4idea.repo.GitRepository,com.intellij.vcs.log.Hash):Z
+c:git4idea.GitRevisionNumber
+- <init>(java.lang.String):V
+f:git4idea.GitUserRegistry
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.GitUserRegistry
+- getOrReadUser(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsUser
+- getUser(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsUser
+f:git4idea.GitUtil
+- s:cleanupErrorPrefixes(java.lang.String):java.lang.String
+- s:findGitDir(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- s:findGitRootFor(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- s:findRefreshFileOrLog(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- s:getDefaultOrFirstRemote(java.util.Collection):git4idea.repo.GitRemote
+- s:getDefaultRemote(java.util.Collection):git4idea.repo.GitRemote
+- s:getHead(git4idea.repo.GitRepository):com.intellij.vcs.log.Hash
+- s:getRepositories(com.intellij.openapi.project.Project):java.util.Collection
+- s:getRepositoryManager(com.intellij.openapi.project.Project):git4idea.repo.GitRepositoryManager
+- s:getRootsFromRepositories(java.util.Collection):java.util.Collection
+- s:getTrackInfoForCurrentBranch(git4idea.repo.GitRepository):git4idea.repo.GitBranchTrackInfo
+- s:hasGitRepositories(com.intellij.openapi.project.Project):Z
+- s:isGitRoot(java.io.File):Z
+- s:isGitRoot(java.nio.file.Path):Z
+- s:isUnderGit(com.intellij.openapi.vcs.FilePath):Z
+- s:isUnderGit(com.intellij.openapi.vfs.VirtualFile):Z
+- s:justOneGitRepository(com.intellij.openapi.project.Project):Z
+- s:mention(git4idea.repo.GitRepository):java.lang.String
+- s:refreshVfsInRoot(com.intellij.openapi.vfs.VirtualFile):V
+- s:refreshVfsInRoots(java.util.Collection):V
+- s:unescapePath(java.lang.String):java.lang.String
+- s:updateRepositories(java.util.Collection):V
+f:git4idea.GitVcs
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.GitVcs
+- parseRevisionNumber(java.lang.String):com.intellij.openapi.vcs.history.VcsRevisionNumber
+- s:runInBackground(com.intellij.openapi.progress.Task$Backgroundable):V
+a:git4idea.actions.GitRepositoryAction
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:git4idea.actions.GitResolveConflictsAction
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:git4idea.actions.branch.GitSingleBranchAction
+- <init>(java.util.function.Supplier):V
+f:git4idea.annotate.GitFileAnnotation
+- getCommitMessage(com.intellij.openapi.vcs.history.VcsRevisionNumber):java.lang.String
+- getLineInfo(I):git4idea.annotate.GitFileAnnotation$LineInfo
+- getLineRevisionNumber(I):com.intellij.openapi.vcs.history.VcsRevisionNumber
+f:git4idea.branch.GitBranchIncomingOutgoingManager
+- getBranchesWithOutgoing(git4idea.repo.GitRepository):java.util.Collection
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.branch.GitBranchIncomingOutgoingManager
+f:git4idea.branch.GitBranchSyncStatus$Companion
+- f:calcForCurrentBranch(git4idea.repo.GitRepository):git4idea.branch.GitBranchSyncStatus
+f:git4idea.branch.GitBranchUtil
+- s:convertBranchesToNames(java.util.Collection):java.util.Collection
+- s:getBranchNameOrRev(git4idea.repo.GitRepository):java.lang.String
+- s:getCommonLocalBranches(java.util.Collection):java.util.List
+- s:getCommonRemoteBranches(java.util.Collection):java.util.List
+- s:getCurrentRepository(com.intellij.openapi.project.Project):git4idea.repo.GitRepository
+- s:getDisplayableBranchText(git4idea.repo.GitRepository):java.lang.String
+- s:sortBranchNames(java.util.Collection):java.util.List
+- s:sortBranchesByName(java.util.Collection):java.util.List
+- s:stripRefsPrefix(java.lang.String):java.lang.String
+git4idea.branch.GitBrancher
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.branch.GitBrancher
+f:git4idea.branch.GitBranchesCollection
+- findBranchByName(java.lang.String):git4idea.GitBranch
+- findLocalBranch(java.lang.String):git4idea.GitLocalBranch
+- findRemoteBranch(java.lang.String):git4idea.GitRemoteBranch
+- getHash(git4idea.GitBranch):com.intellij.vcs.log.Hash
+f:git4idea.changes.GitBranchComparisonResultImplKt
+- sf:getFilePath(com.intellij.openapi.diff.impl.patch.FilePatch):java.lang.String
+f:git4idea.changes.GitBranchComparisonResultKt
 f:git4idea.checkin.GitCheckinEnvironment
 - getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
 - getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
@@ -13,6 +90,51 @@ f:git4idea.checkin.GitCommitOptions
 - f:copy(com.intellij.vcs.commit.CommitToAmend,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z):git4idea.checkin.GitCommitOptions
 - bs:copy$default(git4idea.checkin.GitCommitOptions,com.intellij.vcs.commit.CommitToAmend,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,java.lang.Object):git4idea.checkin.GitCommitOptions
 - f:getCommitToAmend():com.intellij.vcs.commit.CommitToAmend
+c:git4idea.checkout.GitCloneDialog
+- <init>(com.intellij.openapi.project.Project):V
+git4idea.commands.Git
+- a:getUnmergedFiles(git4idea.repo.GitRepository):git4idea.commands.GitCommandResult
+- a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
+- a:runCommand(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
+- a:runCommandWithoutCollectingOutput(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
+c:git4idea.commands.GitCommandResult
+- s:error(java.lang.String):git4idea.commands.GitCommandResult
+- getOutputOrThrow(I[]):java.lang.String
+- success(I[]):Z
+- throwOnError(I[]):V
+a:git4idea.commands.GitHandler
+- addParameters(java.lang.String[]):V
+- setInputProcessor(com.intellij.util.ThrowableConsumer):V
+c:git4idea.commands.GitLineHandler
+- addLineListener(git4idea.commands.GitLineHandlerListener):V
+- p:processTerminated(I):V
+- setIgnoreAuthenticationMode(com.intellij.externalProcessAuthHelper.AuthenticationMode):V
+- setUrl(java.lang.String):V
+- setUrls(java.util.Collection):V
+f:git4idea.commands.GitShallowCloneOptions
+- <init>(java.lang.Integer):V
+c:git4idea.commands.GitSimpleEventDetector
+- <init>(git4idea.commands.GitSimpleEventDetector$Event):V
+f:git4idea.commands.GitStandardProgressAnalyzer
+- s:createListener(com.intellij.openapi.progress.ProgressIndicator):git4idea.commands.GitLineHandlerListener
+c:git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
+- <init>(com.intellij.openapi.vfs.VirtualFile):V
+f:git4idea.config.GitConfigUtil
+- s:getBooleanValue(java.lang.String):java.lang.Boolean
+c:git4idea.config.GitExecutableManager
+- getExecutable(com.intellij.openapi.project.Project):git4idea.config.GitExecutable
+- getPathToGit(com.intellij.openapi.project.Project):java.lang.String
+- getVersion(com.intellij.openapi.project.Project):git4idea.config.GitVersion
+- identifyVersion(java.lang.String):git4idea.config.GitVersion
+- tryGetVersion(com.intellij.openapi.project.Project):git4idea.config.GitVersion
+c:git4idea.config.GitSharedSettings
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.config.GitSharedSettings
+- isBranchProtected(java.lang.String):Z
+f:git4idea.config.GitVcsApplicationSettings
+- setUseCredentialHelper(Z):V
+f:git4idea.config.GitVersion
+- isLaterOrEqual(git4idea.config.GitVersion):Z
+- s:parse(java.lang.String):git4idea.config.GitVersion
 e:git4idea.config.GitVersionSpecialty
 - sf:MERGE_TREE_PASS_THREE_TREES_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:PATHSPEC_FROM_FILE_SUPPORTED:git4idea.config.GitVersionSpecialty
@@ -23,12 +145,86 @@ e:git4idea.config.GitVersionSpecialty
 - f:existsIn(git4idea.repo.GitRepository):Z
 - s:getEntries():kotlin.enums.EnumEntries
 - f:getVersion():git4idea.config.GitVersion
+f:git4idea.diff.GitDiffProvider
+- <init>(com.intellij.openapi.project.Project):V
+a:git4idea.diff.GitSubmoduleContentRevision
+- sf:createCurrentRevision(git4idea.repo.GitRepository):com.intellij.openapi.vcs.changes.ContentRevision
+git4idea.fetch.GitFetchResult
+- a:showNotificationIfFailed(java.lang.String):Z
+git4idea.fetch.GitFetchSupport
+- a:fetchAllRemotes(java.util.Collection):git4idea.fetch.GitFetchResult
+- a:fetchRemotes(java.util.Collection):git4idea.fetch.GitFetchResult
+- s:fetchSupport(com.intellij.openapi.project.Project):git4idea.fetch.GitFetchSupport
+a:git4idea.history.GitCommitRequirements$DiffRenames
+f:git4idea.history.GitHistoryProvider
+- getLastRevision(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.history.VcsFileRevision
+git4idea.history.GitHistoryTraverser
+- a:toHash(I):com.intellij.vcs.log.Hash
+a:git4idea.history.GitHistoryTraverser$StartNode
+f:git4idea.history.GitHistoryTraverserProviderKt
+- sf:getTraverser(com.intellij.openapi.project.Project):git4idea.history.GitHistoryTraverser
+a:git4idea.ignore.GitRepositoryIgnoredFilesHolder
+- a:containsFile(com.intellij.openapi.vcs.FilePath):Z
+f:git4idea.log.GitLogProvider
+- <init>(com.intellij.openapi.project.Project):V
+f:git4idea.log.GitRefManager
+- sf:getRefType(java.lang.String):com.intellij.vcs.log.VcsRefType
 c:git4idea.merge.GitConflictResolver
 - p:myShouldFinishMergeAfterDialog:Z
+c:git4idea.merge.GitConflictResolver$Params
+- <init>(com.intellij.openapi.project.Project):V
+- setErrorNotificationTitle(java.lang.String):git4idea.merge.GitConflictResolver$Params
+- setMergeDialogCustomizer(com.intellij.openapi.vcs.merge.MergeDialogCustomizer):git4idea.merge.GitConflictResolver$Params
+f:git4idea.merge.GitMerger
+- <init>(com.intellij.openapi.project.Project):V
+- mergeCommit(com.intellij.openapi.vfs.VirtualFile):V
+- mergeCommit(java.util.Collection):V
+c:git4idea.merge.MergeChangeCollector
+- collect(com.intellij.openapi.vcs.update.UpdatedFiles):V
+f:git4idea.merge.dialog.GitOptionsPanel
+- f:rerender(java.util.Set):V
+f:git4idea.push.GitPushNotificationCustomizerKt
+a:git4idea.push.GitPushSource
+- s:create(git4idea.GitLocalBranch):git4idea.push.GitPushSource
+f:git4idea.push.GitPushSupport
+- getDefaultTarget(git4idea.repo.GitRepository):git4idea.push.GitPushTarget
+- getSource(git4idea.repo.GitRepository):git4idea.push.GitPushSource
+c:git4idea.rebase.GitRebaseEntry
+- sf:parseAction(java.lang.String):git4idea.rebase.GitRebaseEntry$Action
 f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String
 - f:getSubject(java.lang.String):java.lang.String
+f:git4idea.remote.hosting.GitAsyncExtensionsKt
+- sf:changesSignalFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
+- sf:findFirstRemoteBranchTrackedByCurrent(git4idea.repo.GitRepoInfo):git4idea.GitRemoteBranch
+- sf:gitRemotesFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
+- sf:infoFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
+f:git4idea.remote.hosting.GitHostingUrlUtil
+- sf:getUriFromRemoteUrl(java.lang.String):java.net.URI
+- sf:removeProtocolPrefix(java.lang.String):java.lang.String
+f:git4idea.remote.hosting.HostedGitRepositoriesManagerKt
+- sf:getKnownRepositories(git4idea.remote.hosting.HostedGitRepositoriesManager):java.util.Set
+f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
+- closeConnection(kotlin.coroutines.Continuation):java.lang.Object
+f:git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
+- <init>(git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel):V
+git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel$Error
+f:git4idea.repo.GitRefUtil
+- s:addRefsHeadsPrefixIfNeeded(java.lang.String):java.lang.String
+- s:getCurrentReference(git4idea.repo.GitRepository):git4idea.GitReference
+git4idea.repo.GitRepository
+- a:getBranchTrackInfo(java.lang.String):git4idea.repo.GitBranchTrackInfo
+git4idea.repo.GitRepositoryChangeListener
+- a:repositoryChanged(git4idea.repo.GitRepository):V
+f:git4idea.repo.GitRepositoryManager
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitRepositoryManager
+f:git4idea.repo.GitSubmoduleKt
+- sf:isSubmodule(git4idea.repo.GitRepository):Z
+f:git4idea.repo.GitTagHolder
+- f:getTag(java.lang.String):git4idea.GitTag
+f:git4idea.repo.GitUntrackedFilesHolder
+- f:markPossiblyUntracked(java.util.Collection):V
 c:git4idea.reset.GitResetOperation
 - <init>(com.intellij.openapi.project.Project,java.util.Map,git4idea.reset.GitResetMode,com.intellij.openapi.progress.ProgressIndicator,git4idea.reset.GitResetOperation$OperationPresentation,git4idea.reset.GitResetOperation$SmartResetPolicy):V
 - <init>(com.intellij.openapi.project.Project,java.util.Map,git4idea.reset.GitResetMode,com.intellij.openapi.progress.ProgressIndicator,git4idea.reset.GitResetOperation$SmartResetPolicy):V
@@ -39,6 +235,20 @@ e:git4idea.reset.GitResetOperation$SmartResetPolicy
 - sf:PROPOSE:git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:valueOf(java.lang.String):git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:values():git4idea.reset.GitResetOperation$SmartResetPolicy[]
+git4idea.status.GitStagingAreaHolder$StagingAreaListener
+- a:stagingAreaChanged(git4idea.repo.GitRepository):V
+f:git4idea.ui.ComboBoxWithAutoCompletion
+- f:addDocumentListener(com.intellij.openapi.editor.event.DocumentListener):V
+- f:setPlaceholder(java.lang.String):V
+- f:updatePreserving(kotlin.jvm.functions.Function0):V
+f:git4idea.ui.branch.GitBranchPopupActions
+- s:getSelectedBranchFullPresentation(java.lang.String):java.lang.String
+c:git4idea.ui.branch.GitBranchWidget
+- <init>(com.intellij.openapi.project.Project):V
+c:git4idea.ui.branch.GitCompareBranchesHelper
+- <init>(com.intellij.openapi.project.Project):V
+f:git4idea.update.GitUpdateSessionKt
+- sf:getBodyForUpdateNotification(java.lang.Integer):java.lang.String
 f:git4idea.util.GitFileUtils
 - sf:INSTANCE:git4idea.util.GitFileUtils
 - sf:addFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):V
@@ -58,3 +268,25 @@ f:git4idea.util.GitFileUtils
 - sf:restoreStagedAndWorktree(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String):V
 - sf:revertUnstagedPaths(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
 - sf:stageForCommit(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection,java.util.Collection,java.util.List):V
+f:git4idea.util.GitUIUtil
+- s:bold(java.lang.String):java.lang.String
+- s:code(java.lang.String):java.lang.String
+f:git4idea.util.GitVcsConsoleWriter
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.util.GitVcsConsoleWriter
+- showCommandLine(java.lang.String):V
+- showErrorMessage(java.lang.String):V
+- showMessage(java.lang.String):V
+c:git4idea.util.StringScanner
+- <init>(java.lang.String):V
+- boundedToken(C):java.lang.String
+- startsWith(C):Z
+f:git4idea.validators.GitBranchValidatorKt
+- sf:checkRefName(java.lang.String):com.intellij.openapi.ui.ValidationInfo
+- sf:checkRefNameEmptyOrHead(java.lang.String):com.intellij.openapi.ui.ValidationInfo
+f:git4idea.validators.GitNewBranchNameValidator
+- checkInput(java.lang.String):Z
+- s:newInstance(java.util.Collection):git4idea.validators.GitNewBranchNameValidator
+f:git4idea.validators.GitRefNameValidator
+- checkInput(java.lang.String):Z
+- cleanUpBranchName(java.lang.String):java.lang.String
+- cleanUpBranchNameOnTyping(java.lang.String):java.lang.String
