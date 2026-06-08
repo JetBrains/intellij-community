@@ -927,7 +927,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     if (isRequired) {
       var message: @NonNls String = "cannot find extension implementation $aClass(epName=$name, extensionCount=${size()}"
       cachedExtensions?.let {
-        message += ", cachedExtensions=$cachedExtensions"
+        message += ", cachedExtensions=$it"
       }
       if (isInReadOnlyMode) {
         message += ", point in read-only mode"
