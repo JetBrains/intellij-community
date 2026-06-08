@@ -23,7 +23,12 @@ import com.intellij.util.text.StringSearcher
 
 internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
-  abstract fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>)
+  open fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
+    findAllOccurrences(issue, file).forEach { range ->
+      @Suppress("HardCodedStringLiteral")
+      holder.registerProblem(createProblemDescriptor(file, range, issue.message))
+    }
+  }
 
   abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
 
@@ -69,7 +74,7 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
   private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
-    if (!isOnTheFly)
+    if (!isOnTheFly) return null
     if (!Registry.`is`("grazie.specification.semantics.enabled")) {
       thisLogger().warn("Specification semantics inspection is disabled")
       return null
