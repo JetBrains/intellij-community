@@ -113,7 +113,11 @@ f:com.intellij.platform.lsp.api.LspCommunicationChannel$StdIO
 - hashCode():I
 com.intellij.platform.lsp.api.LspServer
 - com.intellij.platform.lsp.api.LspClient
+- sf:Companion:com.intellij.platform.lsp.api.LspServer$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
 - getDescriptor():com.intellij.platform.lsp.api.LspServerDescriptor
+f:com.intellij.platform.lsp.api.LspServer$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
 a:com.intellij.platform.lsp.api.LspServerDescriptor
 - com.intellij.platform.lsp.api.LspClientDescriptor
 - sf:Companion:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
