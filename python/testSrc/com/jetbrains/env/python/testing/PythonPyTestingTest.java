@@ -1336,13 +1336,47 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         var consoleText = runner.getAllConsoleText();
         Assertions.assertThat(consoleText.split("\n|(\r\n)"))
           .containsSubsequence(
-            "test_progress.py::test_one PASSED    [ 50%]",
-            "test_progress.py::test_two FAILED    [100%]",
+            "test_progress.py::test_one PASSED                                        [ 33%]",
+            "test_progress.py::test_two PASSED                                        [ 66%]",
+            "test_progress.py::test_three FAILED                                      [100%]",
             "Here's some failing test output."
           );
       }
     });
   }
+
+  @Test
+  public void testStdoutCapturedForPassingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_passed_output_config", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_capture.py", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setAdditionalArguments("-c pytest.ini");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText.split("\n|(\r\n)"))
+          .containsSubsequence(
+            "test_capture.py::test_pass_with_print PASSED                             [100%]",
+            "stdout_from_passing_test_config"
+          );
+      }
+    });
+  }
+
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;
