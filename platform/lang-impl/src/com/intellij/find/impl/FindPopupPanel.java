@@ -1898,7 +1898,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
-    public void onLoadingRowVisibilityRequest(boolean visible) {
+    public void setLoadingRowVisible(boolean visible) {
       if (myLoadMoreRow != null) myLoadMoreRow.setVisible(visible);
     }
 

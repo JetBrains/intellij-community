@@ -218,7 +218,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
     if (!loadMore) {
       state.resetForFreshSearch(ShowUsagesAction.getUsagesPageSize())
-      host.onLoadingRowVisibilityRequest(visible = false)
+      host.setLoadingRowVisible(false)
     }
 
     // For load-more, preserve the user's current scroll position: the previously visible
@@ -282,7 +282,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     val countedBeforePass = state.cumulativeUsageCount()
 
     if (loadMore) {
-      host.onLoadingRowVisibilityRequest(visible = true)
+      host.setLoadingRowVisible(true)
     }
 
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(
@@ -447,7 +447,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
             tryLoadMore()
           }
           else {
-            host.onLoadingRowVisibilityRequest(visible = false)
+            host.setLoadingRowVisible(false)
             if (displayOccurrences > 0) {
               host.updateInfoLabel(displayOccurrences, displayFiles, loadingMore = !state.isExhausted)
             }
@@ -574,7 +574,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
     // -- Reset / loading-row visibility --
     fun resetUi()
-    fun onLoadingRowVisibilityRequest(visible: Boolean)
+    fun setLoadingRowVisible(visible: Boolean)
 
     // -- Debouncer / scheduler bridges --
     fun cancelPendingScheduleRequests()
