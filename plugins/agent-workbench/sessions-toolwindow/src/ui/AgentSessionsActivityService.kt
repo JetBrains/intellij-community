@@ -8,6 +8,8 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+private val LOG = logger<AgentSessionsActivityService>()
 
 @Service(Service.Level.PROJECT)
 internal class AgentSessionsActivityService(
@@ -53,7 +57,20 @@ internal class AgentSessionsActivityService(
     val nowMillis = System.currentTimeMillis()
     val nextSummary = freshAgentSessionsActivitySummary(summary, nowMillis)
     val nextMainToolbarSummary = mainToolbarActivityState.update(nextSummary, isLoadedState)
-    if (_chromeSummary.value != nextSummary || _mainToolbarSummary.value != nextMainToolbarSummary) {
+    val rawCounts = summary.countsDebugText()
+    val freshCounts = nextSummary.countsDebugText()
+    if (rawCounts != freshCounts) {
+      LOG.debug { "Filtered stale Agent activity rows raw=$rawCounts fresh=$freshCounts" }
+    }
+    val previousChromeSummary = _chromeSummary.value
+    val previousMainToolbarSummary = _mainToolbarSummary.value
+    if (previousChromeSummary != nextSummary || previousMainToolbarSummary != nextMainToolbarSummary) {
+      LOG.debug {
+        "Updating Agent activity summaries loaded=$isLoadedState " +
+        "raw=$rawCounts " +
+        "chrome=${previousChromeSummary.countsDebugText()}->$freshCounts " +
+        "mainToolbar=${previousMainToolbarSummary.countsDebugText()}->${nextMainToolbarSummary.countsDebugText()}"
+      }
       _chromeSummary.value = nextSummary
       _mainToolbarSummary.value = nextMainToolbarSummary
       ActivityTracker.getInstance().inc()
@@ -67,6 +84,10 @@ internal class AgentSessionsActivityService(
     val delayMillis = summary.nextChromeActivityExpirationDelay(nowMillis) ?: return
     chromeRefreshAlarm.requestWithCustomDelay(delayMillis.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
   }
+}
+
+private fun AgentSessionsActivitySummary.countsDebugText(): String {
+  return "attention=${attentionRows.size},running=${runningRows.size},done=${doneRows.size}"
 }
 
 internal class AgentSessionsMainToolbarActivityState {

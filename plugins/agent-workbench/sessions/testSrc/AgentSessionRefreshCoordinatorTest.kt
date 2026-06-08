@@ -2493,10 +2493,11 @@ class AgentSessionRefreshCoordinatorTest {
       )
 
       waitForCondition {
-        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.firstOrNull { it.id == "claude-1" }
-          ?.activity == AgentThreadActivity.UNREAD
+        val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "claude-1" }
+                     ?: return@waitForCondition false
+        thread.activity == AgentThreadActivity.UNREAD && thread.summaryActivity == AgentThreadActivity.UNREAD
       }
 
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
