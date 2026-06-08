@@ -114,6 +114,11 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
+  protected boolean cacheContent() {
+    return false;
+  }
+
+  @Override
   public final void forceCachedPsi(@NotNull PsiFile psiFile) {
     myRoots.put(psiFile.getLanguage(), (PsiFileImpl)psiFile);
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);

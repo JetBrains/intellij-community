@@ -84,6 +84,10 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.psi.AbstractFileViewProvider
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.psi.FileViewProvider
+- *p:cacheContent():Z
 *f:com.intellij.psi.DummyBlockType
 - sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
 - <init>():V

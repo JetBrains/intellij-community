@@ -87,6 +87,11 @@ class SingleRootInjectedFileViewProvider extends SingleRootFileViewProvider impl
     return "Single root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (correspondsToRealFile() ? "" : " nonphysical");
   }
 
+  @Override
+  protected boolean cacheContent() {
+    return false;
+  }
+
   public void doNotInterruptMeWhileImPatchingLeaves(@NotNull Runnable runnable) {
     myPatchingLeaves = true;
     try {

@@ -358,7 +358,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       storedContent = new VirtualFileContent();
       myContent.set(storedContent);
     }
-    if (storedContent instanceof VirtualFileContent) {
+    if (cacheContent() && storedContent instanceof VirtualFileContent) {
       // Once someone decided to retrieve the content, we need to return consistent data from this function.
       // So we are fixing the content for this snapshot by freezing the text and modstamp.
       FrozenFileContent frozenFileContent = new FrozenFileContent((VirtualFileContent)storedContent);
@@ -367,6 +367,19 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     } else {
       return storedContent;
     }
+  }
+
+  /**
+   * To support versioned content of {@link FileViewProvider},
+   * we need to remember the values of content for older versions and not take them from {@link VirtualFileContent}
+   * This is why we have {@link FrozenFileContent}.
+   * However, in the case of language injections, caching works poorly -- the content needs to be retrieved from the associated {@link DocumentWindow},
+   * which might not be ready at the moment of first access to {@link VirtualFile}.
+   * This is why we disable caching for injected view providers -- they have relaxed locking invariants anyway.
+   */
+  @ApiStatus.Experimental
+  protected boolean cacheContent() {
+    return true;
   }
 
   private void setContent(@NotNull Content content) {
