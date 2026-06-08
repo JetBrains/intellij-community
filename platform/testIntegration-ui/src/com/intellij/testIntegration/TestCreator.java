@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.navigation.ItemPresentation;
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 
 /**
  * Implementations of this extension are used on generating tests while navigation using GotoTestOrCodeAction.
- * Corresponding extension point qualified name is {@code com.intellij.testCreator}, see {@link com.intellij.testIntegration.LanguageTestCreators}
+ * Corresponding extension point qualified name is {@code com.intellij.testCreator}, see {@link LanguageTestCreators}
  * <p>
  * To decorate creating test action consider implementing {@link ItemPresentation}.
  */

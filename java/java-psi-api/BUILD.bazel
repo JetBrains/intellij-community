@@ -19,9 +19,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/testIntegration"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
+        "//platform/testIntegration",
         "//platform/util",
         "//platform/util/multiplatform",
         "//platform/util/base",
@@ -43,10 +45,16 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.java.psi",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/testIntegration",
+        "//platform/testIntegration:testIntegration_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":psi",
         "//platform/core-api:core_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",

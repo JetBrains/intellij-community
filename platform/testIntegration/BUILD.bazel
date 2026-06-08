@@ -1,0 +1,56 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.testIntegration` start
+
+jvm_library(
+    name = "testIntegration",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.testIntegration",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/util",
+        "@lib//:jetbrains-annotations",
+    ],
+)
+
+jvm_library(
+    name = "testIntegration_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.testIntegration",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":testIntegration",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.testIntegration` end
+
+### auto-generated section `iml intellij.platform.testIntegration` start
+exports_files(
+    [
+        "intellij.platform.testIntegration.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.testIntegration` end

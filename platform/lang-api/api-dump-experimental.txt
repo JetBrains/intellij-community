@@ -654,5 +654,3 @@ a:com.intellij.task.ProjectTaskRunner
 - isAborted():Z
 - s:valueOf(java.lang.String):com.intellij.task.TaskRunnerResults
 - s:values():com.intellij.task.TaskRunnerResults[]
-com.intellij.testIntegration.TestFinder
-- *:navigateToTestImmediately(com.intellij.psi.PsiElement):Z

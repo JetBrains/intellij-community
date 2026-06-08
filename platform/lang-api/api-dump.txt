@@ -2035,18 +2035,6 @@ com.intellij.task.ProjectTaskRunner$Result
 com.intellij.task.ProjectTaskState
 - a:isFailed():Z
 - a:isSkipped():Z
-com.intellij.testIntegration.TestCreator
-- com.intellij.openapi.project.PossiblyDumbAware
-- a:createTest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- a:isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-com.intellij.testIntegration.TestFinder
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:findClassesForTest(com.intellij.psi.PsiElement):java.util.Collection
-- a:findSourceElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- a:findTestsForClass(com.intellij.psi.PsiElement):java.util.Collection
-- getSearchingForClassesForTestProgressTitle(com.intellij.psi.PsiElement):java.lang.String
-- getSearchingForTestsForClassProgressTitle(com.intellij.psi.PsiElement):java.lang.String
-- a:isTest(com.intellij.psi.PsiElement):Z
 a:com.intellij.ui.FileColorManager
 - a:getColor(java.lang.String):java.awt.Color
 - a:getColorNames():java.util.Collection

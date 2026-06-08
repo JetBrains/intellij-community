@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -146,5 +144,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.locking.impl" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
   </component>
 </module>

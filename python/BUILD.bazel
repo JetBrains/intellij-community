@@ -520,6 +520,8 @@ jvm_library(
         "//python/python-requirements:requirements",
         "//python/python-pytools:pytools",
         "//python/python-uv/backend",
+        "//platform/testIntegration",
+        "//platform/testIntegration-ui",
     ],
 )
 
@@ -674,6 +676,8 @@ jvm_library(
         "//python/python-requirements:requirements_test_lib",
         "//python/python-pytools:pytools_test_lib",
         "//python/python-uv/backend:backend_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1399,6 +1403,10 @@ jvm_library(
         "//python/conda:conda_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "//platform/testIntegration",
+        "//platform/testIntegration:testIntegration_test_lib",
+        "//platform/testIntegration-ui",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

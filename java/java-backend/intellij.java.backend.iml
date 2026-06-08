@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.java.impl.inspections" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.refactoring" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" exported="" scope="RUNTIME" />

@@ -154,6 +154,8 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/locking-impl",
         "//fleet/rhizomedb",
+        "//platform/testIntegration",
+        "//platform/testIntegration-ui",
     ],
 )
 
@@ -289,6 +291,8 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/locking-impl:locking-impl_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl` end

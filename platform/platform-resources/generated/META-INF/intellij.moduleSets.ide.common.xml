@@ -202,6 +202,8 @@
     <module name="intellij.platform.lvcs" loading="embedded"/>
     <module name="intellij.platform.configurationStore.impl" loading="embedded"/>
     <module name="intellij.platform.lang.core" loading="embedded"/>
+    <module name="intellij.platform.testIntegration" loading="embedded"/>
+    <module name="intellij.platform.testIntegration.ui" loading="embedded"/>
     <module name="intellij.platform.lang" loading="embedded"/>
     <module name="intellij.platform.lang.impl" loading="embedded"/>
     <module name="intellij.platform.statistics" loading="embedded"/>

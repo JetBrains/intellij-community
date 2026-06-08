@@ -355,6 +355,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.configurationStore.impl")
 
     embeddedModule("intellij.platform.lang.core")
+    embeddedModule("intellij.platform.testIntegration")
+    embeddedModule("intellij.platform.testIntegration.ui")
     embeddedModule("intellij.platform.lang")
     embeddedModule("intellij.platform.lang.impl")
 

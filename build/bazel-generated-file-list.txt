@@ -890,6 +890,8 @@ platform/testFramework/junit5/projectStructure
 platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
 platform/testFramework/teamCity
+platform/testIntegration
+platform/testIntegration-ui
 platform/testRunner
 platform/testRunner/plugin
 platform/threadDumpParser

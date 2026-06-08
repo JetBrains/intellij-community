@@ -12591,10 +12591,6 @@ c:com.intellij.testIntegration.GotoTestOrCodeHandler
 - p:navigateToElement(com.intellij.pom.Navigatable):V
 - p:shouldSortTargets():Z
 - p:useEditorFont():Z
-f:com.intellij.testIntegration.LanguageTestCreators
-- com.intellij.lang.LanguageExtension
-- sf:INSTANCE:com.intellij.testIntegration.LanguageTestCreators
-- <init>():V
 f:com.intellij.testIntegration.TestFinderHelper
 - <init>():V
 - s:calcTestNameProximity(java.lang.String,java.lang.String):java.lang.Integer

@@ -65,6 +65,8 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testIntegration"/>
+    <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>

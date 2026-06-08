@@ -207,5 +207,7 @@
     <orderEntry type="module" module-name="intellij.python.requirements" exported="" />
     <orderEntry type="module" module-name="intellij.python.pytools" />
     <orderEntry type="module" module-name="intellij.python.uv.backend" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
   </component>
 </module>

@@ -1,0 +1,34 @@
+com.intellij.testIntegration.TestFinder
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:findClassesForTest(com.intellij.psi.PsiElement):java.util.Collection
+- a:findSourceElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:findTestsForClass(com.intellij.psi.PsiElement):java.util.Collection
+- getSearchingForClassesForTestProgressTitle(com.intellij.psi.PsiElement):java.lang.String
+- getSearchingForTestsForClassProgressTitle(com.intellij.psi.PsiElement):java.lang.String
+- a:isTest(com.intellij.psi.PsiElement):Z
+com.intellij.testIntegration.TestFramework
+- com.intellij.openapi.project.PossiblyDumbAware
+- sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- findAfterClassMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- findAfterSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- findBeforeClassMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- findBeforeSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:findOrCreateSetUpMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:findSetUpMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:findTearDownMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getAfterClassMethodFileTemplateDescriptor():com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- getBeforeClassMethodFileTemplateDescriptor():com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- a:getDefaultSuperClass():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getLanguage():com.intellij.lang.Language
+- a:getLibraryPath():java.lang.String
+- a:getName():java.lang.String
+- a:getSetUpMethodFileTemplateDescriptor():com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- a:getTearDownMethodFileTemplateDescriptor():com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- a:getTestMethodFileTemplateDescriptor():com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- a:isIgnoredMethod(com.intellij.psi.PsiElement):Z
+- a:isLibraryAttached(com.intellij.openapi.module.Module):Z
+- a:isPotentialTestClass(com.intellij.psi.PsiElement):Z
+- a:isTestClass(com.intellij.psi.PsiElement):Z
+- a:isTestMethod(com.intellij.psi.PsiElement):Z
+- isTestMethod(com.intellij.psi.PsiElement,Z):Z
