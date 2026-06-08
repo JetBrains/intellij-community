@@ -48,6 +48,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -533,6 +534,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     // TODO: copied from ExpandableTextField
     JScrollPane pane = editor.getScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    editor.getColorsScheme().setColor(ScrollBarPainter.BACKGROUND, editor.getBackgroundColor());
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
       setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"));
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
