@@ -39,6 +39,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -167,6 +168,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         myProject = project;
 
         window = windowManager.suggestParentWindow(project);
+        // When the focused window is a non-IdeFrame window (e.g., a Lux host dialog in remote dev)
+        // and suggestParentWindow returned the IDE frame, prefer the focused window as parent.
+        // This ensures child dialogs appear over the actual focused window rather than the main frame.
+        if (curWindow != null && !(curWindow instanceof IdeFrame) && curWindow.isShowing()
+            && (window == null || window instanceof IdeFrame)) {
+          window = curWindow;
+        }
         if (window == null) {
           if (curWindow instanceof IdeFrameImpl) {
             window = curWindow;
