@@ -102,6 +102,7 @@ public final class PageCacheUtils {
 
   /** Shared channels cache */
   private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
+    "shared-channels-cache",
     CHANNELS_CACHE_CAPACITY,
     RESILIENT_CHANNEL_OPENER
   );
@@ -205,6 +206,11 @@ public final class PageCacheUtils {
 
     private @NotNull CachedChannelsStatistics getStatistics() {
       return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */operationsExecuted.get(), 0);
+    }
+
+    @Override
+    public String toString() {
+      return "UncachedChannelsAccessors";
     }
 
     private final class UncachedChannelsAccessor implements ChannelsAccessor {

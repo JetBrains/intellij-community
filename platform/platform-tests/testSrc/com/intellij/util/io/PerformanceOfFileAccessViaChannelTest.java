@@ -36,11 +36,13 @@ public class PerformanceOfFileAccessViaChannelTest extends PerformanceOfFileAcce
   private static final boolean USE_IDEMPOTENT_OPS = Boolean.getBoolean("PerformanceOfFileAccessViaChannelTest.USE_IDEMPOTENT_OPS");
 
 
-  private final OpenChannelsCache cache = new OpenChannelsCache(32, (path, readOnly) -> {
-    return readOnly
-           ? FileChannel.open(path, StandardOpenOption.READ)
-           : FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
-  });
+  private final OpenChannelsCache cache = new OpenChannelsCache(
+    "test-cache", 32,
+    (path, readOnly) -> {
+      return readOnly
+             ? FileChannel.open(path, StandardOpenOption.READ)
+             : FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
+    });
   private final ChannelsAccessor writableCacheAccessor = cache.asWritable();
 
   //======================= Single-threaded: =======================

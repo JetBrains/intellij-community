@@ -218,7 +218,7 @@ private class BenchmarkStorageLockContextFactory(
     if (walMode == WalMode.PERSISTENT) {
       walRoot = Files.createTempDirectory("IndexStorageLayoutBenchmark-wal-")
       wal = createWal(walRoot, asyncWALFlusher)
-      walChannels = OpenChannelsCache(PageCacheUtils.CHANNELS_CACHE_CAPACITY, createWalChannelOpener(wal))
+      walChannels = OpenChannelsCache("test-cache", PageCacheUtils.CHANNELS_CACHE_CAPACITY, createWalChannelOpener(wal))
     }
     else {
       walRoot = null

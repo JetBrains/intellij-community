@@ -228,6 +228,15 @@ public final class StorageLockContext {
     return readOnly ? readOnlyChannelsAccessor : writableChannelsAccessor;
   }
 
+  @Override
+  public String toString() {
+    return "StorageLockContext[" +
+           "useReadWriteLock: " + useReadWriteLock +
+           ", channels: " + readOnlyChannelsAccessor + "/" + writableChannelsAccessor +
+           ", disableAssertions: " + disableAssertions +
+           ']';
+  }
+
   /** Checks that no cached channel remains for the file in either read-only or writable accessor. */
   public void assertNoOpenChannels(@NotNull Path path) {
     StringBuilder openChannels = new StringBuilder();
