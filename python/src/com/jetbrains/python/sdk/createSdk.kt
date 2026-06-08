@@ -30,6 +30,8 @@ import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
+import kotlin.io.path.Path
 
 // Those are tools to create SDK
 // As PyCharm developer, do not call `addSdk` directly: use these tools only.
@@ -179,10 +181,9 @@ private suspend fun createSdkImpl(
 
         // Paths can't be compared as strings as c:\windows != c:/Windows, so we convert then to NIO Paths.
         val homePath = try {
-          it.homeDirectory?.toNioPath()
+          it.homePath?.let { home -> Path(home) }
         }
-        catch (_: java.lang.UnsupportedOperationException) {
-          // See toNioPath doc
+        catch (_: InvalidPathException) {
           null
         }
 
