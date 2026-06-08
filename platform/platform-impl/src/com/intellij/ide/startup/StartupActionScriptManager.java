@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class StartupActionScriptManager {
   @ApiStatus.Internal
   public static final String ACTION_SCRIPT_FILE = "action.script";
@@ -208,7 +208,7 @@ public final class StartupActionScriptManager {
   }
 
   public interface ActionCommand {
-    /** @deprecated implement {@link #execute(FileSystem)} */
+    /// @deprecated implement [#execute(FileSystem)]
     @Deprecated(forRemoval = true)
     default void execute() throws IOException {
       execute(FileSystems.getDefault());
@@ -228,10 +228,10 @@ public final class StartupActionScriptManager {
       myDestination = destination.toAbsolutePath().toString();
     }
 
-    /** @deprecated Use {@link #CopyCommand(Path, Path)} */
+    /// @deprecated Use [#CopyCommand(Path, Path)]
     @Deprecated(forRemoval = true)
-    @SuppressWarnings("IO_FILE_USAGE")
-    public CopyCommand(@NotNull File source, @NotNull File destination) {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public CopyCommand(@NotNull java.io.File source, @NotNull java.io.File destination) {
       mySource = source.getAbsolutePath();
       myDestination = destination.getAbsolutePath();
     }
@@ -267,10 +267,10 @@ public final class StartupActionScriptManager {
       this(source, destination, null);
     }
 
-    /** @deprecated Use {@link #UnzipCommand(Path, Path)} */
+    /// @deprecated Use [#UnzipCommand(Path, Path)]
     @Deprecated(forRemoval = true)
-    @SuppressWarnings("IO_FILE_USAGE")
-    public UnzipCommand(@NotNull File source, @NotNull File destination) {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public UnzipCommand(@NotNull java.io.File source, @NotNull java.io.File destination) {
       this(source.toPath(), destination.toPath());
     }
 
@@ -313,10 +313,10 @@ public final class StartupActionScriptManager {
       mySource = source.toAbsolutePath().toString();
     }
 
-    /** @deprecated Use {@link #DeleteCommand(Path)} */
+    /// @deprecated Use [#DeleteCommand(Path)]
     @Deprecated(forRemoval = true)
-    @SuppressWarnings("IO_FILE_USAGE")
-    public DeleteCommand(@NotNull File source) {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public DeleteCommand(@NotNull java.io.File source) {
       mySource = source.getAbsolutePath();
     }
 

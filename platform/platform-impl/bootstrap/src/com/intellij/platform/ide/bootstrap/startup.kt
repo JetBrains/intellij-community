@@ -397,7 +397,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     if (OS.CURRENT == OS.Windows) {
       span("system libs setup") {
         if (System.getProperty("winp.folder.preferred") == null) {
-          System.setProperty("winp.folder.preferred", PathManager.getTempPath())
+          System.setProperty("winp.folder.preferred", PathManager.getTempDir().toString())
         }
       }
     }
@@ -700,9 +700,9 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   try {
     val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
     val env = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(null, null, null), timeoutMillis).first
-    if ("LANG" !in env && "LC_ALL" !in env && @Suppress("SpellCheckingInspection") "LC_CTYPE" !in env) {
+    if ("LANG" !in env && "LC_ALL" !in env && "LC_CTYPE" !in env) {
       val value = EnvironmentUtil.setLocaleEnv(env, Charset.defaultCharset())
-      log.info(@Suppress("SpellCheckingInspection") "LC_CTYPE=${value}")
+      log.info("LC_CTYPE=${value}")
     }
     envFuture.complete(env.toImmutableMap())
     return true

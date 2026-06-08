@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -22,15 +22,15 @@ final class RunConfigurationPathMacroFilter extends PathMacroFilter {
 
     var name = element.getAttributeValue(Constants.NAME);
     var value = element.getAttributeValue(Constants.VALUE);
-
-    return name != null && value != null && EnvironmentUtil.containsEnvKeySubstitution(name, value);
+    //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
+    return name != null && value != null && ArrayUtil.find(value.split(java.io.File.pathSeparator), "$" + name + "$") != -1;
   }
 
   @Override
   public boolean recursePathMacros(@NotNull Attribute attribute) {
-    final Element parent = attribute.getParent();
+    var parent = attribute.getParent();
     if (parent != null && Constants.OPTION.equals(parent.getName())) {
-      final Element grandParent = parent.getParentElement();
+      var grandParent = parent.getParentElement();
       return grandParent != null && "configuration".equals(grandParent.getName());
     }
     return false;

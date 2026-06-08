@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
 import com.intellij.concurrency.installThreadContext
@@ -37,14 +37,8 @@ import java.util.function.Function
  * An instance of the class should be used for performing multiple similar operations;
  * for one-shot tasks, [.compute] is simpler to use.
  */
-class DiskQueryRelay<Param : Any, Result>(
-  function: Function<in Param, out Result>,
-  private val executor: ExecutorService,
-) {
-
-  constructor(
-    function: Function<in Param, out Result>,
-  ) : this(function, ProcessIOExecutorService.INSTANCE)
+class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Result>, private val executor: ExecutorService) {
+  constructor(function: Function<in Param, out Result>) : this(function, ProcessIOExecutorService.INSTANCE)
 
   private val function: Function<in Param, out Result> = Function { arg: Param ->
     val startedAtNs = System.nanoTime()
@@ -82,7 +76,6 @@ class DiskQueryRelay<Param : Any, Result>(
           }
         })
       }
-
       if (future.isDone) {
         // maybe it was very fast and completed before being put into a map
         myTasks.remove(arg, future)
@@ -101,29 +94,22 @@ class DiskQueryRelay<Param : Any, Result>(
     /**
      * Use the method for one-shot tasks; for performing multiple similar operations, prefer an instance of the class.
      *
-     *
      * To avoid deadlocks, please pay attention to locks held at the call time and try to abstain from taking locks
      * inside the `task` block.
      */
     @JvmStatic
     @Throws(ProcessCanceledException::class)
-    fun <Result, E : Exception> compute(task: ThrowableComputable<Result, E>): Result {
-      return compute(task, ProcessIOExecutorService.INSTANCE)
-    }
+    fun <Result, E : Exception> compute(task: ThrowableComputable<Result, E>): Result = compute(task, ProcessIOExecutorService.INSTANCE)
 
     /**
      * Use the method for one-shot tasks; for performing multiple similar operations, prefer an instance of the class.
      *
-     *
      * To avoid deadlocks, please pay attention to locks held at the call time and try to abstain from taking locks
      * inside the `task` block.
      */
     @JvmStatic
     @Throws(ProcessCanceledException::class)
-    fun <Result, E : Exception> compute(
-      task: ThrowableComputable<Result, E>,
-      executor: ExecutorService,
-    ): Result {
+    fun <Result, E : Exception> compute(task: ThrowableComputable<Result, E>, executor: ExecutorService): Result {
       if (!isInCancellableContext()) {
         return task.compute()
       }
@@ -165,8 +151,6 @@ class DiskQueryRelay<Param : Any, Result>(
         GlobalScope
       }
 
-
-
     // ==================================== monitoring: ====================================================== //
     /** total time (since app start) of actual task executions, ns  */
     private val taskExecutionTotalTimeNs = AtomicLong()
@@ -181,12 +165,10 @@ class DiskQueryRelay<Param : Any, Result>(
     private val tasksRequestedCount = AtomicInteger()
 
     @ApiStatus.Internal
-    fun taskExecutionTotalTime(unit: TimeUnit): Long =
-      unit.convert(taskExecutionTotalTimeNs.get(), TimeUnit.NANOSECONDS)
+    fun taskExecutionTotalTime(unit: TimeUnit): Long = unit.convert(taskExecutionTotalTimeNs.get(), TimeUnit.NANOSECONDS)
 
     @ApiStatus.Internal
-    fun taskWaitingTotalTime(unit: TimeUnit): Long =
-      unit.convert(taskWaitingTotalTimeNs.get(), TimeUnit.NANOSECONDS)
+    fun taskWaitingTotalTime(unit: TimeUnit): Long = unit.convert(taskWaitingTotalTimeNs.get(), TimeUnit.NANOSECONDS)
 
     @ApiStatus.Internal
     fun tasksExecuted(): Int = tasksExecutedCount.get()
@@ -197,5 +179,4 @@ class DiskQueryRelay<Param : Any, Result>(
 
   @Service(Service.Level.APP)
   private class DiskQueryRelayCoroutineScope(val scope: CoroutineScope)
-
 }
