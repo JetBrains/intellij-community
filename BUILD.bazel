@@ -58,6 +58,11 @@ create_kotlinc_options(
 ## see community/build/tests-options.bzl
 exports_files(["intellij.idea.community.main.iml"])
 
+exports_files(
+    glob(["build.txt"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.idea.community.main` start
 
 jvm_library(
