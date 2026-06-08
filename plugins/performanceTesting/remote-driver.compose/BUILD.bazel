@@ -3,6 +3,12 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` start
 
+create_kotlinc_options(
+    name = "custom_remote-driver.compose",
+    api_version = "2.3",
+    language_version = "2.3",
+)
+
 jvm_library(
     name = "remote-driver.compose",
     srcs = glob(
@@ -13,6 +19,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_remote-driver.compose",
     module_name = "intellij.performanceTesting.remoteDriver.compose",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -39,6 +46,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_remote-driver.compose",
     module_name = "intellij.performanceTesting.remoteDriver.compose",
     visibility = ["//visibility:public"],
     runtime_deps = [
