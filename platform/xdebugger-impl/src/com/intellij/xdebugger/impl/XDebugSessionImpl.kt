@@ -1181,7 +1181,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (needsInitialization || effectiveAttract) {
       invokeLaterIfProjectAlive(myProject, Runnable {
         if (needsInitialization && !DapMode.isDap()) {
-          initSessionTab(null, effectiveAttract)
+          initSessionTab(null, shouldShowTab = true)
         }
         val topFrameIsAbsent = topFramePosition == null
         if (SplitDebuggerMode.isSplitDebugger()) {
