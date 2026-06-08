@@ -1377,6 +1377,42 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testStderrCapturedForPassingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(
+      "/testRunner/env/pytest/capture_stderr_show_passed_output", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_stderr.py", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setAdditionalArguments("-c pytest.ini");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText.split("\n|(\r\n)"))
+          .containsSubsequence(
+            "test_stderr.py::test_pass_with_stderr PASSED                             [ 50%]",
+            "stderr_from_passing_test",
+            "",
+            "test_stderr.py::test_fail_with_stderr FAILED                             [100%]",
+            "stderr_from_failing_test"
+          );
+      }
+    });
+  }
+
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;
