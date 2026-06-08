@@ -142,7 +142,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     if (data.isEmpty()) {
       // Vector overload bypasses the override and just appends.
       model.addRow(v as Vector<*>)
-      host.onFirstRowAdded()
+      host.selectFirstRow()
       state.firstResultPath = v.first().path
       state.recordRowKey(key)
       return
@@ -563,7 +563,6 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
     // -- Result routing --
     fun appendIncomingRow(item: FindPopupItem)
-    fun onFirstRowAdded()
     fun selectFirstRow()
     fun schedulePreviewUpdateIfSelected(adapter: UsageInfoAdapter)
     fun forEachVisibleRowItem(action: (FindPopupItem) -> Unit)

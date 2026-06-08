@@ -1854,11 +1854,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
-    public void onFirstRowAdded() {
-      myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
-    }
-
-    @Override
     public void selectFirstRow() {
       myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
     }
