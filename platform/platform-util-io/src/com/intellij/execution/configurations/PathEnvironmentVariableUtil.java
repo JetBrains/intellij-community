@@ -6,6 +6,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,5 +172,12 @@ public final class PathEnvironmentVariableUtil {
       ourOnPathCache.put(name, result);
     }
     return result;
+  }
+
+  @ApiStatus.Internal
+  public static void appendSearchPath(@NotNull Map<String, String> env, @NotNull String envName, @NotNull String pathToAppend) {
+    var currentPath = env.get(envName);
+    var newPath = currentPath != null ? currentPath + java.io.File.pathSeparator + pathToAppend : pathToAppend;
+    env.put(envName, newPath);
   }
 }

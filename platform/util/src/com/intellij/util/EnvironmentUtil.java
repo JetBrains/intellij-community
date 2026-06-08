@@ -250,12 +250,4 @@ public final class EnvironmentUtil {
   public static boolean containsEnvKeySubstitution(@NotNull String envKey, @NotNull String val) {
     return ArrayUtil.find(val.split(java.io.File.pathSeparator), "$" + envKey + "$") != -1;
   }
-
-  @ApiStatus.Internal
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public static void appendSearchPath(@NotNull Map<String, String> env, @NotNull String envName, @NotNull String pathToAppend) {
-    String currentPath = env.get(envName);
-    String newPath = currentPath != null ? currentPath + java.io.File.pathSeparator + pathToAppend : pathToAppend;
-    env.put(envName, newPath);
-  }
 }
