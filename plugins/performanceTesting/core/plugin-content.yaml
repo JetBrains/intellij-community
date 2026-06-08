@@ -52,6 +52,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
   reason: <- intellij.performanceTesting.remoteDriver
+- name: lib/modules/intellij.performanceTesting.remoteDriver.jcef.jar
+  contentModules:
+  - name: intellij.performanceTesting.remoteDriver.jcef
 - name: lib/modules/intellij.performanceTesting.vcs.jar
   contentModules:
   - name: intellij.performanceTesting.vcs

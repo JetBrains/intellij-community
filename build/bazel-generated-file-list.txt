@@ -1489,6 +1489,7 @@ plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose
+plugins/performanceTesting/remote-driver.jcef
 plugins/performanceTesting/scripts-ui
 plugins/performanceTesting/vcs
 plugins/properties

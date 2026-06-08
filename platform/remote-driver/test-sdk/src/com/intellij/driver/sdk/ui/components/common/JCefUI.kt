@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.remoteDev.JCefUiAdapter
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_JCEF_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
@@ -208,7 +208,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   }
 }
 
-@Remote("com.jetbrains.performancePlugin.remotedriver.jcef.JcefComponentWrapper", plugin = REMOTE_ROBOT_MODULE_ID)
+@Remote("com.intellij.performanceTesting.remoteDriver.jcef.JcefComponentWrapper", plugin = REMOTE_ROBOT_JCEF_MODULE_ID)
 @BeControlAdapter(JCefUiAdapter::class)
 interface JcefComponentWrapper {
   fun runJs(@Language("JavaScript") js: String)

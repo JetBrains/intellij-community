@@ -6,6 +6,7 @@ import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.RdTarget
 
 internal const val REMOTE_ROBOT_MODULE_ID = "com.jetbrains.performancePlugin/intellij.performanceTesting.remoteDriver"
+internal const val REMOTE_ROBOT_JCEF_MODULE_ID = "com.jetbrains.performancePlugin/intellij.performanceTesting.remoteDriver.jcef"
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.RobotService",
         plugin = REMOTE_ROBOT_MODULE_ID)

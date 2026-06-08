@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.performancePlugin.remotedriver.jcef
+package com.intellij.performanceTesting.remoteDriver.jcef
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase

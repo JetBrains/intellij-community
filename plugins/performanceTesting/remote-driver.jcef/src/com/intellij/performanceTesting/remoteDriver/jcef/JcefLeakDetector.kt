@@ -1,4 +1,4 @@
-package com.jetbrains.performancePlugin.remotedriver.jcef
+package com.intellij.performanceTesting.remoteDriver.jcef
 
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalysisConfig
@@ -55,7 +55,7 @@ internal class JcefLeakDetector {
           navigator.goTo(l)
           val gcRootPathsTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(showSize = false), null)
           gcRootPathsTree.registerObject(l.toInt())
-          if (!gcRootPathsTree.printTree().contains("com.jetbrains.performancePlugin.remotedriver.jcef.JcefComponentWrapper"))
+          if (!gcRootPathsTree.printTree().contains("com.intellij.performanceTesting.remoteDriver.jcef.JcefComponentWrapper"))
             mainReport.append(gcRootPathsTree.printTree())
         }
       }
