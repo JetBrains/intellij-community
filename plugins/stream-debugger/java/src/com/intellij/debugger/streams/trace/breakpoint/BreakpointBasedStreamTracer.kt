@@ -13,11 +13,8 @@ import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.frame.XValue
 import com.sun.jdi.Value
-
-private val LOG = logger<BreakpointBasedStreamTracer>()
 
 /**
  * StreamTracer implementation that uses breakpoints for value interception.

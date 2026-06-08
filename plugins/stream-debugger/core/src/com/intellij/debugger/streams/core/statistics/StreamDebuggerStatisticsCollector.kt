@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.core.statistics
 
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector.StreamTraceResult
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -11,9 +10,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
-  enum class StreamTraceResult {
+internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
+  private enum class StreamTraceResult {
     SUCCESS,
     CLIENT_EXCEPTION,
     COMPILATION_FAILED,
@@ -47,15 +45,15 @@ object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
     )
     TRACE_FINISHED.log(project, events)
   }
-}
 
-private fun getTraceResult(result: StreamTracer.Result): StreamTraceResult {
-  return when (result) {
-    is StreamTracer.Result.Evaluated -> {
-      if (result.result.exceptionThrown()) StreamTraceResult.CLIENT_EXCEPTION else StreamTraceResult.SUCCESS
+  private fun getTraceResult(result: StreamTracer.Result): StreamTraceResult {
+    return when (result) {
+      is StreamTracer.Result.Evaluated -> {
+        if (result.result.exceptionThrown()) StreamTraceResult.CLIENT_EXCEPTION else StreamTraceResult.SUCCESS
+      }
+      is StreamTracer.Result.EvaluationFailed -> StreamTraceResult.INTERNAL_ERROR
+      is StreamTracer.Result.CompilationFailed -> StreamTraceResult.COMPILATION_FAILED
+      StreamTracer.Result.Unknown -> StreamTraceResult.INTERNAL_ERROR
     }
-    is StreamTracer.Result.EvaluationFailed -> StreamTraceResult.INTERNAL_ERROR
-    is StreamTracer.Result.CompilationFailed -> StreamTraceResult.COMPILATION_FAILED
-    StreamTracer.Result.Unknown -> StreamTraceResult.INTERNAL_ERROR
   }
 }

@@ -29,8 +29,6 @@ import com.sun.jdi.Value
 interface ObjectStorage {
   fun store(obj: ObjectReference)
 
-  fun storeAll(objects: Collection<ObjectReference>): Unit = objects.forEach { store(it) }
-
   fun release(obj: ObjectReference)
 
   fun releaseAll()
