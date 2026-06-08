@@ -24,14 +24,14 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))
 
-        val isEnabled = config.get("enabledIn${pluginMode.name}").asBoolean
+        val isEnabled = config.get("enabledInK2").asBoolean
         if (!isEnabled) return
 
         isMultiModule = true
 
         doTestCommittingDocuments { rootDir, _ ->
             withConfiguredRuntime(config) {
-               runRefactoring(path, config, rootDir, project)
+                runRefactoring(path, config, rootDir, project)
             }
         }
     }

@@ -15,11 +15,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
@@ -30,21 +27,24 @@ import org.junit.jupiter.api.TestInstance
 import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RunBlockingInspectionTest: ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class RunBlockingInspectionTest {
     private val testDataDir = KotlinRoot.DIR.resolve("code-insight/inspections-shared/tests/testData/inspections/runBlocking").path
+
     private data class TraceElement(val fgName: String, val url: String, val fileAndLine: String)
+
     private val psiFileMap = mutableMapOf<String, PsiFile>()
     private lateinit var myTests: List<Test>
 
     private val testCase = FixtureProvodingTestCase(testDataDir)
-    private class FixtureProvodingTestCase(private val testDataDir: String): LightJavaCodeInsightFixtureTestCase() {
+
+    private class FixtureProvodingTestCase(private val testDataDir: String) : LightJavaCodeInsightFixtureTestCase() {
         private val projectDescriptor: DefaultLightProjectDescriptor = object : DefaultLightProjectDescriptor() {
             override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
                 super.configureModule(module, model, contentEntry)
                 MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
             }
         }
+
         fun getFixture() = myFixture
         public override fun setUp() = super.setUp()
         public override fun tearDown() {
@@ -57,18 +57,16 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
 
     @BeforeAll
     fun initialize() {
-        setUpWithKotlinPlugin(testCase.testRootDisposable) {
-            testCase.setUp()
-            testCase.getFixture().testDataPath = testDataDir
-            val file = File("$testDataDir/inspectionData/tests.xml")
-            val expectedRoot: Element = JDOMUtil.load(file)
-            myTests = expectedRoot.getChildren("test").map { Test.fromElement(it) }
+        testCase.setUp()
+        testCase.getFixture().testDataPath = testDataDir
+        val file = File("$testDataDir/inspectionData/tests.xml")
+        val expectedRoot: Element = JDOMUtil.load(file)
+        myTests = expectedRoot.getChildren("test").map { Test.fromElement(it) }
 
-            val aggregatedInputFiles = myTests.fold(listOf<String>()) { acc, test -> acc + (test.inputFiles) }
-            aggregatedInputFiles.forEach { input ->
-                val psiFile = testCase.getFixture().configureByFile(input)
-                psiFileMap[input] = psiFile
-            }
+        val aggregatedInputFiles = myTests.fold(listOf<String>()) { acc, test -> acc + (test.inputFiles) }
+        aggregatedInputFiles.forEach { input ->
+            val psiFile = testCase.getFixture().configureByFile(input)
+            psiFileMap[input] = psiFile
         }
 
     }
@@ -94,7 +92,7 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
 
     fun runTest(test: Test): DynamicTest {
         return dynamicTest(test.name) {
-            val psiFiles = test.inputFiles.map { inputFile -> psiFileMap[inputFile]!!.virtualFile}
+            val psiFiles = test.inputFiles.map { inputFile -> psiFileMap[inputFile]!!.virtualFile }
             val analysisScope = AnalysisScope(testCase.getFixture().project, psiFiles)
             val toolWrapper = GlobalInspectionToolWrapper(RunBlockingInspection())
             val context = createGlobalContextForTool(analysisScope, testCase.getFixture().project, listOf(toolWrapper))
@@ -115,11 +113,13 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
                 val problems = resultList.map {
                     it.getChild("trace")
                         .getChildren("trace_element")
-                        .map { trel -> TraceElement(
-                            trel.getAttributeValue("fq_name"),
-                            trel.getAttributeValue("url"),
-                            trel.getAttributeValue("file_and_line")
-                        ) }
+                        .map { trel ->
+                            TraceElement(
+                                trel.getAttributeValue("fq_name"),
+                                trel.getAttributeValue("url"),
+                                trel.getAttributeValue("file_and_line")
+                            )
+                        }
                 }
                 assertResults(problems, test)
             }
@@ -145,11 +145,17 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
             //Verify runBlocking found
             Assertions.assertNotNull(foundTrace, "Following runBlocking not detected: $expectedRBUrl")
             //Verify files
-            Assertions.assertArrayEquals(expectation.trace.map {"temp:///src/${it.file}"}.toTypedArray(), foundTrace!!.map {it.url.split("#")[0]}.toTypedArray())
+            Assertions.assertArrayEquals(
+                expectation.trace.map { "temp:///src/${it.file}" }.toTypedArray(),
+                foundTrace!!.map { it.url.split("#")[0] }.toTypedArray()
+            )
             //Verify offsets
-            if (checkOffsets) Assertions.assertArrayEquals(expectation.trace.map {it.offset.toString()}.toTypedArray(), foundTrace.map {it.url.split("#")[1]}.toTypedArray())
+            if (checkOffsets) Assertions.assertArrayEquals(
+                expectation.trace.map { it.offset.toString() }.toTypedArray(),
+                foundTrace.map { it.url.split("#")[1] }.toTypedArray()
+            )
             //Verify fqNames
-            Assertions.assertArrayEquals(expectation.trace.map {it.fqName}.toTypedArray(), foundTrace.map {it.fgName}.toTypedArray())
+            Assertions.assertArrayEquals(expectation.trace.map { it.fqName }.toTypedArray(), foundTrace.map { it.fgName }.toTypedArray())
         }
     }
 
@@ -177,8 +183,10 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
         companion object {
             fun fromElement(element: Element): Test {
                 val name = element.getAttributeValue("name")!!
-                val inputFiles = element.getChild("input_files").getChildren("input_file").map { inputFile -> inputFile.getAttributeValue("path") }
-                val results = element.getChild("problems")?.getChildren("problem")?.map { problem -> Result.fromElement(problem) } ?: emptyList()
+                val inputFiles =
+                    element.getChild("input_files").getChildren("input_file").map { inputFile -> inputFile.getAttributeValue("path") }
+                val results =
+                    element.getChild("problems")?.getChildren("problem")?.map { problem -> Result.fromElement(problem) } ?: emptyList()
                 val strictness = element.getAttributeValue("strictness") ?: "declared"
                 return Test(name, inputFiles, results, strictness)
             }

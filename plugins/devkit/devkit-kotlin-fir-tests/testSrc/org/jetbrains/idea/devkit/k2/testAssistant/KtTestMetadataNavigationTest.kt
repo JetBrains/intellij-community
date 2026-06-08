@@ -16,13 +16,9 @@ import junit.framework.TestCase
 import org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
 
@@ -35,7 +31,7 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase(), Expe
   override fun getProjectDescriptor(): LightProjectDescriptor = projectDescriptor
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     myFixture.addClass("""
       package org.junit.platform.commons.annotation;
@@ -98,7 +94,7 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase(), Expe
       .single()
 
     val dataContext = MapDataContext().apply {
-        put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
+      put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
     }
     val findTestDataFilesForTests = NavigateToTestDataAction.findTestDataFiles(
       dataContext, project, true).map { it.path }

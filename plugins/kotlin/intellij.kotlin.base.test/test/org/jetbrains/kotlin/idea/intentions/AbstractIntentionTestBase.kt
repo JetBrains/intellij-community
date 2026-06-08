@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.KEEP_ACTIONS_LIST_ORDER_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -181,10 +180,10 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+        listOf(IgnoreTests.DIRECTIVES.IGNORE_K2, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.IGNORE_K2, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
     private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
         if (beforeCheck) {
@@ -339,7 +338,10 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             file,
             dataFile(), actions,
             actionsToExclude = emptyList(),
-            actionsListDirectives = pluginMode.actionsListDirectives
+            actionsListDirectives = arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            )
         )
     }
 

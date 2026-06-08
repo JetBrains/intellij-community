@@ -7,18 +7,16 @@ import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestB
 import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.psi.PsiClassOwner
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
 
-abstract class KotlinJUnit5AcceptanceTest : JUnitMalformedDeclarationInspectionTestBase(MavenTestLib.JUNIT5), ExpectedPluginModeProvider {
+abstract class KotlinJUnit5AcceptanceTest : JUnitMalformedDeclarationInspectionTestBase(MavenTestLib.JUNIT5) {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
   fun testCompoundAnnotation() {
-    myFixture.addFileToProject("CombinedKotlinAnnotation.kt","""@org.junit.jupiter.api.Test
+    myFixture.addFileToProject("CombinedKotlinAnnotation.kt", """@org.junit.jupiter.api.Test
 annotation class CombinedKotlinAnnotation""")
     val file = myFixture.configureByText("tests.kt", """
       class Tests {

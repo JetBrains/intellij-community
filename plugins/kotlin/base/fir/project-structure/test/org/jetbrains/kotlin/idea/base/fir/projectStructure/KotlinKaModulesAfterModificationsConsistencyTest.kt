@@ -3,12 +3,9 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.intellij.testFramework.DumbModeTestUtils
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinKaModulesAfterModificationsConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testPreserveConsistentEntriesAfterDumbMode() {
         myFixture.configureByText("A.kt", "import java.io.IOExc<caret>eption \nclass A")

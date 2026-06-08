@@ -5,16 +5,12 @@ package org.jetbrains.kotlin.idea.fir.completion.test
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class SmartEnterCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testBasic() {
         doTest(

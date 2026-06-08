@@ -18,11 +18,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode = KotlinPluginMode.K2
 
     override fun setUp() {
         super.setUp()

@@ -5,15 +5,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 internal class ComposeResourcesErrorsHighlightingTest : ComposeResourcesTestCase() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test

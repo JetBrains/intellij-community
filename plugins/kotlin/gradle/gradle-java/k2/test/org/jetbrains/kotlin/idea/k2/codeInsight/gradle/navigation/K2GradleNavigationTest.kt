@@ -2,11 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.navigation
 
 import org.jetbrains.kotlin.gradle.KotlinGradleGotoDeclarationTest
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 class K2GradleNavigationTest : KotlinGradleGotoDeclarationTest()

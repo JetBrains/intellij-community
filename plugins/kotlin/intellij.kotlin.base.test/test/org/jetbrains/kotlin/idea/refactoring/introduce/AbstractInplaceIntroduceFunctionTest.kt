@@ -15,7 +15,7 @@ import java.io.File
 
 abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(unused: String) {
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
@@ -46,7 +46,7 @@ abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixt
         if (checkResult) {
             val testName = getTestName(false)
             var expectedFile = "$testName.kt.after"
-            if (isFirPlugin && File(testDataDirectory, "$testName.kt.fir.after").exists()) {
+            if (File(testDataDirectory, "$testName.kt.fir.after").exists()) {
                 expectedFile = "$testName.kt.fir.after"
             }
 

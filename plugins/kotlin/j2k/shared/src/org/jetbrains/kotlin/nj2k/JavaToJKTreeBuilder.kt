@@ -123,7 +123,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
@@ -826,15 +825,7 @@ class JavaToJKTreeBuilder(
             }
 
         private fun PsiArrayAccessExpression.toJK(): JKExpression =
-            if (isK1Mode()) {
-                // Leave the old K1 code to not break K1 nullability inference
-                arrayExpression.toJK().callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.Array.get"),
-                    arguments = listOf(indexExpression?.toJK() ?: JKStubExpression())
-                )
-            } else {
                 JKArrayAccessExpression(arrayExpression.toJK(), indexExpression.toJK())
-            }
 
         private fun PsiTypeCastExpression.toJK(): JKExpression {
             val expression = operand?.toJK() ?: createErrorExpression()

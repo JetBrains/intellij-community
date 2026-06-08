@@ -6,18 +6,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinScriptMoveTest : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinScriptMoveTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun `test empty script is moved by file processor`() {
         val sourceRoot = runWriteAction { myFixture.tempDirFixture.findOrCreateDir("src/main/kotlin") }

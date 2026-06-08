@@ -7,17 +7,13 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
-abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase() {
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
     addKotlinFile("SomeControlFlowException.kt", """
         package com.example

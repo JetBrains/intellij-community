@@ -3,17 +3,10 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.idea.devkit.inspections.ThreadingConcurrencyInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBase(), ExpectedPluginModeProvider {
+class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBase() {
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun testWithCheckUnannotatedMethodsDisabledAnnotatedMethod() {
     doTestHighlighting("""

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.editor
 
 import com.intellij.testFramework.EditorTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.editor.LazyElementTypeTestBase
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -11,7 +10,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class LazyKtBlockExpressionTest : LazyElementTypeTestBase<KtBlockExpression>(KtBlockExpression::class.java) {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testSimpleReparse() = noReparse(inIf(" { a<caret>b }"), 'c')
 

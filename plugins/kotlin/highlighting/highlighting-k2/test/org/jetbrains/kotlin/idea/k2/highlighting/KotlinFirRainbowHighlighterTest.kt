@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.highlighting
 
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -11,9 +10,6 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class KotlinFirRainbowHighlighterTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testRainbowSimple() {
         checkRainbow(

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.kotlin.TEST_KOTLIN_MODEL_PATH
@@ -16,9 +15,6 @@ import org.junit.Test
 import java.nio.file.Path
 
 class KotlinUastNonVisitorConversionsTest : AbstractFirUastTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
 

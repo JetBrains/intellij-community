@@ -9,24 +9,20 @@ import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.CompilerPluginDeclarationHighlighter
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
-abstract class AbstractCompilerPluginDeclarationHighlighterTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
+abstract class AbstractCompilerPluginDeclarationHighlighterTest : BasePlatformTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor? {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun doTest(testPath: String) {
         myFixture.module.addPluginLibraryToClassPath(KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)

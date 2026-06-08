@@ -5,7 +5,6 @@ Foundational test utilities and base classes for Kotlin IDE plugin tests.
 This module provides the lowest-level building blocks that other Kotlin test framework modules build upon:
 
 - **Test base classes** — `NewLightKotlinCodeInsightFixtureTestCase` for lightweight fixture-based Kotlin tests.
-- **K1/K2 plugin mode management** — `KotlinPluginModeExtension` (JUnit 5) and `@UseK1PluginMode`/`@UseK2PluginMode` annotations for switching between compiler frontends in tests.
 - **Test data infrastructure** — `@TestRoot`/`@TestMetadata`-based test data path resolution, golden-file comparison (`KotlinTestHelpers.assertEqualsToPath`), and directive parsing (`IgnoreTests`).
 - **Analysis utilities** — `AnalysisUtils.ensureFilesResolved()` for forcing Analysis API resolution in tests.
 - **Platform compatibility** — `AndroidStudioTestUtils` for skipping or adjusting tests when running under Android Studio.

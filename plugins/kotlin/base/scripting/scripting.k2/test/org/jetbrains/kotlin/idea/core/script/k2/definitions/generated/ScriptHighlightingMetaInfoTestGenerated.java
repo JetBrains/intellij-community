@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.core.script.k2.definitions.generated;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -26,12 +25,6 @@ public abstract class ScriptHighlightingMetaInfoTestGenerated extends AbstractSc
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/highlighterMetaInfo/focusMode")
         public static class FocusMode extends AbstractScriptHighlightingMetaInfoTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -45,12 +38,6 @@ public abstract class ScriptHighlightingMetaInfoTestGenerated extends AbstractSc
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/highlighterMetaInfo")
         public static class Uncategorized extends AbstractScriptHighlightingMetaInfoTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -65,12 +52,6 @@ public abstract class ScriptHighlightingMetaInfoTestGenerated extends AbstractSc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/mainKts/highlighting")
     public static class SingleFile extends AbstractScriptHighlightingMetaInfoTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -89,12 +70,6 @@ public abstract class ScriptHighlightingMetaInfoTestGenerated extends AbstractSc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/mainKts/highlighting")
     public static class MultiFiles extends AbstractScriptHighlightingMetaInfoTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.kotlin.inspections.KotlinCheckedExceptionInspection
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -37,7 +36,7 @@ import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
-@UseK2PluginMode
+
 @TestApplication
 class KotlinCheckedExceptionsInspectionTest {
   private lateinit var myFixture: JavaCodeInsightTestFixture

@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.AutoConfigurationSettings
@@ -16,9 +15,6 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class KotlinGradleAutoConfigTest : KotlinGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private fun findGradleModuleConfigurator(): KotlinGradleModuleConfigurator {
         return KotlinProjectConfigurator.EP_NAME.findExtensionOrFail(KotlinGradleModuleConfigurator::class.java)

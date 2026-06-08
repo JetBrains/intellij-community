@@ -11,10 +11,8 @@ import com.intellij.lang.jvm.source.JvmDeclarationSearcher
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -22,11 +20,8 @@ import kotlin.reflect.KClass
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinJvmDeclarationSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

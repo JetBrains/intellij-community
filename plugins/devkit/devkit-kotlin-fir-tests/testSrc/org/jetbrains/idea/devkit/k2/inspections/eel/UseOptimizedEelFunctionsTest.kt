@@ -25,7 +25,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -33,7 +32,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 @Suppress("ClassName", "TestFunctionName")
-@UseK2PluginMode
+
 @TestApplication
 class UseOptimizedEelFunctionsTest {
   private lateinit var myFixture: JavaCodeInsightTestFixture

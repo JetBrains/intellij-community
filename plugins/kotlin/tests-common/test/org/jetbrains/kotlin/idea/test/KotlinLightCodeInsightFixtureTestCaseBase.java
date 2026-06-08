@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+ 
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,8 +25,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 
-public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase
-        implements ExpectedPluginModeProvider {
+public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
 
     @NotNull
     @Override
@@ -47,11 +46,6 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     protected final Collection<Path> myFilesToDelete = new HashSet<>();
     private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
-
-    @Override
-    protected void setUp() throws Exception {
-        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, super::setUp);
-    }
 
     @Override
     protected void tearDown() throws Exception {
@@ -90,13 +84,4 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
 
-    // todo inline the method
-    protected final boolean isFirPlugin() {
-        return getPluginMode() == KotlinPluginMode.K2;
-    }
-
-    @Override
-    public @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
-    }
 }

@@ -24,7 +24,7 @@ abstract class AbstractMultiPlatformCompletionTest : AbstractMultiModuleTest() {
         val file = project.findFileWithCaret() as KtFile
         val virtualFilePath = file.virtualFile!!.toNioPath()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, IgnoreTests.DIRECTIVES.of(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, IgnoreTests.DIRECTIVES.IGNORE_K2) {
             val doc = PsiDocumentManager.getInstance(myProject).getDocument(file)!!
             val offset = doc.extractMarkerOffset(project)
             val editor = EditorFactory.getInstance().createEditor(doc, myProject)!!

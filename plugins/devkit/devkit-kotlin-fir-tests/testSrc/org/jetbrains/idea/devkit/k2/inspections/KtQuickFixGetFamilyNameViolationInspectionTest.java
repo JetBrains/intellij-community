@@ -5,25 +5,17 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 /**
  * @author Dmitry Batkovich
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/getFamilyNameViolation")
-public class KtQuickFixGetFamilyNameViolationInspectionTest extends QuickFixGetFamilyNameViolationInspectionTestBase implements
-                                                                                                                     ExpectedPluginModeProvider {
-
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KtQuickFixGetFamilyNameViolationInspectionTest extends QuickFixGetFamilyNameViolationInspectionTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override

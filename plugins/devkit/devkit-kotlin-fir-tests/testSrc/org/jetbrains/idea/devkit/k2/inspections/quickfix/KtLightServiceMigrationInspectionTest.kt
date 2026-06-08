@@ -4,16 +4,10 @@ package org.jetbrains.idea.devkit.k2.inspections.quickfix
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMigrationInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightServiceMigration")
-internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInspectionTestBase() {
+    
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
   private val MY_SERVICE_KT = "MyService.kt"

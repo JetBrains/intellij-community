@@ -6,12 +6,10 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertToStringTemplateInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testIntentionPreview() {
         doTest("""

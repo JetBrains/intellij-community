@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
@@ -51,7 +50,7 @@ abstract class AbstractUsageHighlightingTest : KotlinLightCodeInsightFixtureTest
             }
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFile().toPath(),
-            IgnoreTests.DIRECTIVES.of(pluginMode),
+            IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             withCustomCompilerOptions(myFixture.file.text, project, module) {

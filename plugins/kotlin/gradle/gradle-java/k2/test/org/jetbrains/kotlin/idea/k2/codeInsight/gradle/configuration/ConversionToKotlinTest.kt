@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
@@ -24,9 +23,6 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
         val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
         foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private fun runSimpleTestcase(kotlinVersion: String) {
         val files = importProjectFromTestData()

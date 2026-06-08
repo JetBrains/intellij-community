@@ -35,7 +35,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider
 import org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -43,7 +42,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicReference
 
-@UseK2PluginMode
+
 @TestApplication
 class JpsKotlinBuildSystemDependencyManagerTest {
 

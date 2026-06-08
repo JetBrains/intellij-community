@@ -3,15 +3,11 @@ package com.intellij.compose.ide.plugin.k2.intentions
 
 import com.intellij.openapi.command.WriteCommandAction
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class K2ComposePluginQuickFixTest : KotlinLightCodeInsightFixtureTestCase() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
   private fun runQuickFixTest(initialCode: String, expectedCode: String) {
     val file = myFixture.configureByText("build.gradle.kts", initialCode.trimIndent()) as KtFile

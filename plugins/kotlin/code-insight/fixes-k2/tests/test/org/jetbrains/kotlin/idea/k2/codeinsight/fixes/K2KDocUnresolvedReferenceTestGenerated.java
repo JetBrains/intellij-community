@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2KDocUnresolvedReferenceTestGenerated extends AbstractK2K
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../testData/quickFixes/kdocUnresolvedReference/javaDeclaration")
     public static class JavaDeclaration extends AbstractK2KDocUnresolvedReferenceTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -77,12 +70,6 @@ public abstract class K2KDocUnresolvedReferenceTestGenerated extends AbstractK2K
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../testData/quickFixes/kdocUnresolvedReference/kotlinDeclaration")
     public static class KotlinDeclaration extends AbstractK2KDocUnresolvedReferenceTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -131,12 +118,6 @@ public abstract class K2KDocUnresolvedReferenceTestGenerated extends AbstractK2K
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../testData/quickFixes/kdocUnresolvedReference/location")
     public static class Location extends AbstractK2KDocUnresolvedReferenceTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -170,12 +151,6 @@ public abstract class K2KDocUnresolvedReferenceTestGenerated extends AbstractK2K
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../testData/quickFixes/kdocUnresolvedReference")
     public static class Uncategorized extends AbstractK2KDocUnresolvedReferenceTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.codeInsight
 
 import com.intellij.openapi.paths.WebReference
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil.unwrapMultiReference
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,8 +11,6 @@ import kotlin.reflect.KClass
 
 @RunWith(JUnit4::class)
 class KotlinWebReferenceContributorTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     @Test
     fun `web reference in string`() {

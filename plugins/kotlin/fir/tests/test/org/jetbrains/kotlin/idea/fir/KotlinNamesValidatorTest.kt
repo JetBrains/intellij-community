@@ -3,21 +3,15 @@ package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.lang.refactoring.NamesValidator
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinNamesValidatorTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinNamesValidatorTest : LightJavaCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     val validator: NamesValidator = KotlinNamesValidator()
 

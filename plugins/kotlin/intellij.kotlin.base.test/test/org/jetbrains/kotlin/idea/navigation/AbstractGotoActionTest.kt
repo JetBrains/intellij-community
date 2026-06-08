@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
@@ -20,7 +19,7 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
     protected fun doTest(testPath: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             testFile = Path.of(testPath),
-            disableTestDirective = DIRECTIVES.of(pluginMode)
+            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         ) {
             val parts = KotlinTestUtils.loadBeforeAfterAndDependenciesText(testPath)
 

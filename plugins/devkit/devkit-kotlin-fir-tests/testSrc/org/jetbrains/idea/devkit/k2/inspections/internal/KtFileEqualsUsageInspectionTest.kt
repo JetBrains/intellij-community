@@ -2,15 +2,9 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal
 
 import org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtFileEqualsUsageInspectionTest : FileEqualsUsageInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KtFileEqualsUsageInspectionTest : FileEqualsUsageInspectionTestBase() {
+    
 
   fun testEquals() {
     doTest("equals(java.io.File(\"any\"))", true)

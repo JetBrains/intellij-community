@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -111,7 +110,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open val disableTestDirective: String
-        get() = IgnoreTests.DIRECTIVES.of(pluginMode)
+        get() = IgnoreTests.DIRECTIVES.IGNORE_K2
 
     override fun runInDispatchThread(): Boolean = false
 
@@ -168,12 +167,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         //multiple, when chooser is provided
         val calledId = calledEventIds.firstOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
 
-        val fusDirectiveName = if (isFirPlugin) {
-            "FUS_K2_QUICKFIX_NAME"
-        } else {
-            "FUS_QUICKFIX_NAME"
-        }
-
+        val fusDirectiveName = "FUS_K2_QUICKFIX_NAME"
         val quickFixName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $fusDirectiveName:")
         if (quickFixName.isNullOrEmpty()) {
             val expected = """
@@ -328,9 +322,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     protected open fun loadScriptConfiguration(file: KtFile) {}
 
     private fun PsiFile.actionHint(contents: String): ActionHint {
-      return ActionHint.parse(this, contents,
-                              actionPrefix?.let { ".*//(?: $it)?" } ?: "//",
-                              true)
+        return ActionHint.parse(
+            this, contents,
+            actionPrefix?.let { ".*//(?: $it)?" } ?: "//",
+            true)
     }
 
     private fun applyAction(contents: String, hint: ActionHint, intention: IntentionAction, fileName: String) {
@@ -351,7 +346,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             val element = PsiUtilBase.getElementAtCaret(editor)
             stubComparisonFailure = try {
                 val expectedPreviewText = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, TEST_PREVIEW).singleOrNull()
-                if (expectedPreviewText != null && isFirPlugin) {
+                if (expectedPreviewText != null) {
                     val text = myFixture.getIntentionPreviewText(intention)
                     assertEquals("Different preview found:", expectedPreviewText, text)
                 }
@@ -390,9 +385,13 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
-        val actionDirective = pluginMode.actionsListDirectives.firstNotNullOfOrNull {
-            if (!InTextDirectivesUtils.isDirectiveDefined(text, it)) it else null
-        } ?: return
+        val actionDirective =
+            arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            ).firstNotNullOfOrNull {
+                if (!InTextDirectivesUtils.isDirectiveDefined(text, it)) it else null
+            } ?: return
         val actionHint = myFixture.file.actionHint(text)
 
         myFixture.doHighlighting()
@@ -458,7 +457,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
         DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
-            myFixture.file,dataFile(), actions, actionsListDirectives = pluginMode.actionsListDirectives
+            myFixture.file, dataFile(), actions, actionsListDirectives = arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            )
         )
     }
 
@@ -467,7 +469,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {}
 
     override val additionalToolDirectives: Array<String>
-        get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)
+        get() = arrayOf(K2_TOOL_DIRECTIVE)
 
     protected open val actionPrefix: String? = null
 }

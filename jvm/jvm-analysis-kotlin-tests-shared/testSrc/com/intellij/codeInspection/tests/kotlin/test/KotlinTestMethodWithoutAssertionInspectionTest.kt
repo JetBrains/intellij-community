@@ -3,12 +3,10 @@ package com.intellij.codeInspection.tests.kotlin.test
 import com.intellij.jvm.analysis.internal.testFramework.test.TestMethodWithoutAssertionInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 

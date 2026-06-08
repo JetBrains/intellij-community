@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.inspections.tests
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -14,9 +13,6 @@ abstract class AbstractK2InspectionTest : AbstractInspectionTest() {
 
     override fun inspectionClassDirective() = "// K2_INSPECTION_CLASS:"
     override fun registerGradlePlugin() {}
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

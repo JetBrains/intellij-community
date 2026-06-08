@@ -1,10 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspectionTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 
   fun `test equals slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

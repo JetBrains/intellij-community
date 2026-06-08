@@ -2,9 +2,7 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.KtAssert
 import java.io.File
 
 interface UastFileComparisonTestBase {
@@ -16,34 +14,4 @@ interface UastFileComparisonTestBase {
         get() = System.getenv("TEAMCITY_VERSION") != null
                 || KotlinTestUtils.IS_UNDER_TEAMCITY
 
-    fun cleanUpIdenticalFile(
-        currentFile: File,
-        counterpartFile: File,
-        identicalFile: File,
-        kind: String
-    ) {
-        // Already cleaned up
-        if (identicalFile.exists()) return
-        // Nothing to compare
-        if (!currentFile.exists() || !counterpartFile.exists()) return
-
-        val content = currentFile.readText().trim()
-        if (content == counterpartFile.readText().trim()) {
-            val message = if (isTeamCityBuild) {
-                "Please remove .$kind.fir.txt dump and .$kind.fe10.txt dump"
-            } else {
-                currentFile.delete()
-                counterpartFile.delete()
-                FileUtil.writeToFile(identicalFile, content)
-                "Deleted .$kind.fir.txt dump and .$kind.fe10.txt dump, added .$kind.txt instead"
-            }
-            KtAssert.fail(
-                """
-                    Dump via FIR UAST & via FE10 UAST are the same.
-                    $message
-                    Please re-run the test now
-                """.trimIndent()
-            )
-        }
-    }
 }

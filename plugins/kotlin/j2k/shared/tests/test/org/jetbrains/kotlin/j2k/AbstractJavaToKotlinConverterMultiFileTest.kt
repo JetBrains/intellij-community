@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -23,7 +22,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         val filesToConvert = directory.listFiles { _, name -> name.endsWith(".java") }!!.sortedBy { it.name }
         val firstFile = filesToConvert.first()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(firstFile.toPath(), getDisableTestDirective(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(firstFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             withCustomCompilerOptions(firstFile.readText(), project, module) {
                 doTest(directory, filesToConvert)
             }
@@ -55,8 +54,8 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
             JavaToKotlinActionHandler.convertFiles(psiFilesToConvert, project, module, askExternalCodeProcessing = false)
         }
 
-        val resultFiles = psiFilesToConvert.map {
-            f -> f.containingDirectory.findFile(f.name.replace(".java", ".kt")) as KtFile
+        val resultFiles = psiFilesToConvert.map { f ->
+            f.containingDirectory.findFile(f.name.replace(".java", ".kt")) as KtFile
         }
 
         fun expectedResultFile(i: Int) = File(filesToConvert[i].path.replace(".java", ".kt"))

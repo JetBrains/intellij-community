@@ -5,14 +5,9 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/usePlatformProcessAwaitExit")
-class KtUsePlatformProcessAwaitExitInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtUsePlatformProcessAwaitExitInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/usePlatformProcessAwaitExit"
@@ -20,7 +15,7 @@ class KtUsePlatformProcessAwaitExitInspectionTest : LightJavaCodeInsightFixtureT
 
   @Throws(Exception::class)
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.enableInspections(UsePlatformProcessAwaitExitInspection())
     myFixture.addClass("""
       package java.util.concurrent;

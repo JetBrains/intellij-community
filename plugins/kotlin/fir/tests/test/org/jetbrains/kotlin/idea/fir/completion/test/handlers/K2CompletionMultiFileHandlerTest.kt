@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionMultiFileHandlerTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -14,9 +13,6 @@ import java.nio.file.Paths
 
 @RunWith(JUnit38ClassRunner::class)
 class K2CompletionMultiFileHandlerTest : AbstractCompletionMultiFileHandlerTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     /**
      * This is a temporary solution! This test should be rewritten to be generated!

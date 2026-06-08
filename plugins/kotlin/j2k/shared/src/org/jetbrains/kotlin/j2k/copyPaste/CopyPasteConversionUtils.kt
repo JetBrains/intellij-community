@@ -10,14 +10,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.ParseContext
@@ -25,7 +23,6 @@ import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -146,11 +143,7 @@ fun ElementAndTextList.lineCount(): Int {
     return elements.sumOf { StringUtil.getLineBreakCount(it.text) }
 }
 
-fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind = when {
-    isK2Mode() -> K2
-    targetFile is KtCodeFragment -> K1_OLD
-    else -> K1_NEW
-}
+fun getJ2kKind(): J2kConverterExtension.Kind = K2
 
 fun runPostProcessing(
     project: Project,

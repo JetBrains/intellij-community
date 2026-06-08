@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.gradle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadActionBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
@@ -40,7 +39,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             val text = document.text
             IgnoreTests.runTestIfNotDisabledByFileDirective(
                 mainFile.virtualFile.toNioPath(),
-                if (useK2Plugin == true) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+                IgnoreTests.DIRECTIVES.IGNORE_K2
             ) {
                 assertTrue("Actual text:\n\n$text") {
                     !text.contains(EXPECTED_NAVIGATION_DIRECTIVE) && text.contains(expectedNavigationText)
@@ -68,7 +67,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             val textAfter = document.text
             IgnoreTests.runTestIfNotDisabledByFileDirective(
                 mainFile.virtualFile.toNioPath(),
-                if (useK2Plugin == true) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+                IgnoreTests.DIRECTIVES.IGNORE_K2
             ) {
                 assertEquals(textBefore, textAfter, "Navigation should not work")
             }

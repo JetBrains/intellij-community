@@ -3,16 +3,10 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.UastHintedVisitorAdapterHintsInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtUastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHintsInspectionTestBase(), ExpectedPluginModeProvider {
+class KtUastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHintsInspectionTestBase() {
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun `test missing hint`() {
     doTest(

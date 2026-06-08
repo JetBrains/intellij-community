@@ -9,20 +9,16 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-open class NavigateToLibraryRegressionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+open class NavigateToLibraryRegressionTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         invalidateLibraryCache(project)
     }
 

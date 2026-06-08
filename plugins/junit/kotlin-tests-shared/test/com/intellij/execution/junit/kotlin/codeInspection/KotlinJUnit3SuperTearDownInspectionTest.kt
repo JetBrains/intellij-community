@@ -13,11 +13,9 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase() {
 
   protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -35,9 +33,7 @@ abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInsp
 
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+  
 
   fun `test teardown in finally no highlighting`() {
     myFixture.testHighlighting(

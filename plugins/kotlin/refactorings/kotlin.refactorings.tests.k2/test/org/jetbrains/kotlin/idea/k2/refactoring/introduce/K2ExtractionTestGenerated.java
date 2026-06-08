@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -22,12 +21,6 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractSuperclass")
     public static class ExtractSuperclass extends AbstractK2ExtractionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractSuperclassTest, this, testDataFilePath);
         }
@@ -141,12 +134,6 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractInterface")
     public static class ExtractInterface extends AbstractK2ExtractionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractInterfaceTest, this, testDataFilePath);
         }

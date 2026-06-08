@@ -41,7 +41,7 @@ abstract class AbstractSlicerTest : KotlinLightCodeInsightFixtureTestCase() {
         if (supportIgnoring()) {
             IgnoreTests.runTestIfNotDisabledByFileDirective(
                 mainFile.toPath(),
-                IgnoreTests.DIRECTIVES.of(pluginMode),
+                IgnoreTests.DIRECTIVES.IGNORE_K2,
                 directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
                 test = doTest,
             )

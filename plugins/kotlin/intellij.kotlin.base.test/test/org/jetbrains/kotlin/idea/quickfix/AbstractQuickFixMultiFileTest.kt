@@ -27,14 +27,12 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.TestFiles
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -45,7 +43,7 @@ import java.nio.file.Paths
 
 abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun doTestWithExtraFile(beforeFileName: String) {
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
             enableInspections(beforeFileName)
 
@@ -58,7 +56,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     private fun enableInspections(beforeFileName: String) {
-        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile, this.pluginMode)
+        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile)
         if (inspectionFile != null) {
             val className = FileUtil.loadFile(inspectionFile).trim { it <= ' ' }
             val inspectionClass = Class.forName(className)
@@ -134,11 +132,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
         fun firstFileWith(subStringInName: String) = subFiles.firstOrNull { file -> file.path.contains(subStringInName) }
 
-        val afterFile = if (isFirPlugin) {
-            firstFileWith(".after.fir") ?: firstFileWith(".after")
-        } else {
-            firstFileWith(".after")
-        }
+        val afterFile = firstFileWith(".after.fir") ?: firstFileWith(".after")
         val beforeFile = firstFileWith(".before")!!
 
         subFiles.remove(beforeFile)
@@ -171,7 +165,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         null,
                         this::availableActions,
                         myFixture::doHighlighting,
-                        pluginMode = pluginMode,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
@@ -250,7 +243,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         null,
                         this::availableActions,
                         myFixture::doHighlighting,
-                        pluginMode = pluginMode,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
@@ -283,7 +275,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
     private fun findAfterFile(fullPath: String): File {
         val path = fullPath.replace(".before.Main.", ".before.")
-        val afterTokens = (if (pluginMode == KotlinPluginMode.K2) arrayOf(".after.k2.") else arrayOf()) + ".after."
+        val afterTokens = arrayOf(".after.k2.", ".after.")
         for (afterToken in afterTokens) {
             val file = File(path.replace(".before.", afterToken))
             if (file.exists()) return file
@@ -331,10 +323,12 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             getAvailableActions: () -> List<IntentionAction>,
             doHighlighting: () -> List<HighlightInfo>,
             shouldBeAvailableAfterExecution: Boolean = false,
-            pluginMode: KotlinPluginMode,
             checkAvailableActionsAreExpected: (File, Collection<IntentionAction>) -> Unit = { file, collection ->
                 DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
-                    psiFile, file, collection, actionsListDirectives = pluginMode.actionsListDirectives
+                    psiFile, file, collection, actionsListDirectives = arrayOf(
+                        DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                        DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+                    )
                 )
             }
         ) {

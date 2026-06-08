@@ -4,17 +4,12 @@ package org.jetbrains.idea.devkit.k2.inspections.internal
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtUndesirableClassUsageInspectionTest : PluginModuleTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtUndesirableClassUsageInspectionTest : PluginModuleTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
 
     myFixture.enableInspections(UndesirableClassUsageInspection())
   }

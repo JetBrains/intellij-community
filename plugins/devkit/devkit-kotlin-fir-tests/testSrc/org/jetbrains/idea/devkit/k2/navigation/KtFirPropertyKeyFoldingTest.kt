@@ -9,15 +9,12 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtFirPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+class KtFirPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
@@ -125,7 +122,5 @@ class KtFirPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase(), ExpectedPl
     myFixture.testHighlighting("MyClass.kt")
 
   }
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
 }

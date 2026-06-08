@@ -9,8 +9,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.gradle.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -25,9 +23,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @Suppress("SENSELESS_COMPARISON")
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
 @TestDataPath($$"$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/completion")

@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.junit5
 
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedClass
 
@@ -13,8 +11,7 @@ import org.junit.jupiter.params.ParameterizedClass
 @ExtendWith(PluginTargetVersionsExtension::class)
 annotation class KmpParametrizedClass
 
-@UseK2PluginMode
+
 @TestApplication
-@AssertKotlinPluginMode
 @ExtendWith(KotlinSdkExtension::class)
 annotation class K2TestApplication

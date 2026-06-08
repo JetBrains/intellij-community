@@ -4,19 +4,13 @@ package org.jetbrains.idea.devkit.k2.inspections.quickfix;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.UseDPIAwareEmptyBorderFixTestBase;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 
-public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+
+public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override
@@ -179,7 +173,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
       kotlin("""
                import javax.swing.border.Border
                import com.intellij.util.ui.JBUI.Borders
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -190,7 +184,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
       kotlin("""
                import javax.swing.border.Border
                import com.intellij.util.ui.JBUI.Borders
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -207,7 +201,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
       kotlin("""
                import javax.swing.border.Border
                import com.intellij.util.ui.JBUI.Borders.empty
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -218,7 +212,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
       kotlin("""
                import javax.swing.border.Border
                import com.intellij.util.ui.JBUI.Borders.empty
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -233,7 +227,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     return """
       import javax.swing.border.Border
       import javax.swing.border.EmptyBorder
-
+      
       @Suppress("UNUSED_VARIABLE")
       class TestClass {
         fun any() {
@@ -248,7 +242,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
       import com.intellij.util.ui.JBUI
       import javax.swing.border.Border
       import javax.swing.border.EmptyBorder
-
+      
       @Suppress("UNUSED_VARIABLE")
       class TestClass {
         fun any() {
@@ -262,7 +256,7 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     return """
       import com.intellij.util.ui.JBUI
       import javax.swing.border.Border
-
+      
       @Suppress("UNUSED_VARIABLE")
       class TestClass {
         fun any() {

@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetCheckerDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinLibraries
 import org.jetbrains.kotlin.idea.core.util.toPsiFile

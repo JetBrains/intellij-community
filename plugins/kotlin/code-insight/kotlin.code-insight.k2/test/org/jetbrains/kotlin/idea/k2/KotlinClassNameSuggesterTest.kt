@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.ClassId
@@ -11,8 +10,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 
 class KotlinClassNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testTopLevelClass() = test("x/y/Foo", "foo")
     fun testJavaLangString() = test("java/lang/String", "string")

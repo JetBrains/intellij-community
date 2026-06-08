@@ -2,11 +2,7 @@
 package org.jetbrains.idea.devkit.k2
 
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2CompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionInspectionTest() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
 }

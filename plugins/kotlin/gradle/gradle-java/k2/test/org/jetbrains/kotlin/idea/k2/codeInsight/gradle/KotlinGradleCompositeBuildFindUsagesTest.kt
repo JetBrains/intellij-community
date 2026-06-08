@@ -5,8 +5,6 @@ import com.intellij.testFramework.TestDataPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -16,9 +14,8 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/findUsages/")

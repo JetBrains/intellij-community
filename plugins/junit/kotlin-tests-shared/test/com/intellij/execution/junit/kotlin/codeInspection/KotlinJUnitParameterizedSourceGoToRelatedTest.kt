@@ -11,14 +11,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
 
-abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGoToRelatedTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGoToRelatedTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 

@@ -2,15 +2,11 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.OverrideOnlyApiInspectionTestBase
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("/testData/codeInspection/overrideOnly")
-abstract class KotlinOverrideOnlyApiInspectionTest : OverrideOnlyApiInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinOverrideOnlyApiInspectionTest : OverrideOnlyApiInspectionTestBase() {
 
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+  
 
   fun `test invocations`() {
     myFixture.allowTreeAccessForAllFiles()

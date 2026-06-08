@@ -34,7 +34,7 @@ abstract class AbstractK2AmbiguousActualsTest : AbstractMultiModuleTest() {
         }
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val ignoreDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
@@ -55,7 +55,9 @@ abstract class AbstractK2AmbiguousActualsTest : AbstractMultiModuleTest() {
                     emptyList()
                 } else {
                     val differentErrors =
-                        problemDescriptors.map { it.substringAfter("in modules", "").trim().split(",").map { it.trim() }.filter { !it.isBlank() } }
+                        problemDescriptors.map {
+                            it.substringAfter("in modules", "").trim().split(",").map { it.trim() }.filter { !it.isBlank() }
+                        }
                             .distinct()
                     assertTrue("Found more than one problemDescriptor", differentErrors.size <= 1)
                     differentErrors.firstOrNull() ?: emptyList()

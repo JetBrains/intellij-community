@@ -4,21 +4,14 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.TokenSetInParserDefinitionInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/tokenSetInParserDefinition")
-class KtTokenSetInParserDefinitionInspectionTest : TokenSetInParserDefinitionInspectionTestBase(), ExpectedPluginModeProvider {
+class KtTokenSetInParserDefinitionInspectionTest : TokenSetInParserDefinitionInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/tokenSetInParserDefinition"
   override fun getFileExtension() = "kt"
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun testParserDefinitionWithIllegalTokenSet() {
     doInspectionTest()

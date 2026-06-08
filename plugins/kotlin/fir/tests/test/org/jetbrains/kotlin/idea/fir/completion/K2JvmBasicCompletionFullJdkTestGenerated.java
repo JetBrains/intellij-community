@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.completion;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/fullJdk/chain")
     public static class Chain extends AbstractK2JvmBasicCompletionFullJdkTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -67,12 +60,6 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/fullJdk/lambdaSignature")
     public static class LambdaSignature extends AbstractK2JvmBasicCompletionFullJdkTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -256,12 +243,6 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/fullJdk")
     public static class Uncategorized extends AbstractK2JvmBasicCompletionFullJdkTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

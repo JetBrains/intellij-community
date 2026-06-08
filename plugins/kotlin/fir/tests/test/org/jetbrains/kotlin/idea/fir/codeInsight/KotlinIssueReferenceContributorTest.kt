@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
 import org.junit.Before
@@ -19,7 +18,6 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class KotlinIssueReferenceContributorTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     @Before
     fun setUpIssues() {

@@ -4,7 +4,6 @@ package org.jetbrains.fir.uast.test
 import com.intellij.platform.uast.testFramework.common.PossibleSourceTypesTestBase
 import com.intellij.platform.uast.testFramework.common.allUElementSubtypes
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UField
@@ -17,9 +16,6 @@ import org.junit.Test
 import java.nio.file.Path
 
 class KotlinPossibleSourceTypesTest : AbstractFirUastTest(), PossibleSourceTypesTestBase {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
 

@@ -5,16 +5,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.usages.PsiElementUsageTarget
 import com.intellij.usages.UsageTargetUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 
 class KotlinFindUsagesTargetTest: KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testPrimaryConstructorValProperty() {
         doTestPosition("class Foo(<caret>val x: Int)")

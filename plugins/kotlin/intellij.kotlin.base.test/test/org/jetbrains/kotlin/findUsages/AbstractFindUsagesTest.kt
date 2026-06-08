@@ -44,7 +44,6 @@ import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
@@ -95,7 +94,8 @@ abstract class AbstractFindUsagesWithDisableComponentSearchTest : AbstractFindUs
 }
 
 abstract class AbstractKotlinScriptFindUsagesTest : AbstractFindUsagesTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
 }
 
 abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(), KMPTest {
@@ -116,12 +116,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         path,
         this::extraConfig,
         KotlinFindUsageConfigurator.fromFixture(myFixture),
-        if (pluginMode == KotlinPluginMode.K2) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+        FindUsageTestType.FIR,
         prefixForResults,
         ignoreLog,
         testPlatform,
         diagnosticProvider = getDiagnosticProvider(),
-        scriptsUpdater =  { updateScripts(it) }
+        scriptsUpdater = { updateScripts(it) }
     )
 
     protected abstract fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic>
@@ -139,16 +139,16 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         }
 
         fun <T : PsiElement> doFindUsageTest(
-          path: String,
-          extraConfig: (path: String) -> Unit = { },
-          configurator: KotlinFindUsageConfigurator,
-          testType: FindUsageTestType = FindUsageTestType.DEFAULT,
-          prefixForResults: String = "",
-          ignoreLog: Boolean,
-          testPlatform: KMPTestPlatform,
-          executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) },
-          diagnosticProvider: (KtFile) -> List<Diagnostic>,
-          scriptsUpdater: (PsiFile) -> Unit = {}
+            path: String,
+            extraConfig: (path: String) -> Unit = { },
+            configurator: KotlinFindUsageConfigurator,
+            testType: FindUsageTestType = FindUsageTestType.DEFAULT,
+            prefixForResults: String = "",
+            ignoreLog: Boolean,
+            testPlatform: KMPTestPlatform,
+            executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) },
+            diagnosticProvider: (KtFile) -> List<Diagnostic>,
+            scriptsUpdater: (PsiFile) -> Unit = {}
         ) {
             val mainFile = File(path)
 
@@ -219,7 +219,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                 KMPProjectDescriptorTestUtilities.validateTest(configurator.allFiles, testPlatform)
 
                 if ((configurator.file as? KtFile)?.isScript() == true) {
-                   scriptsUpdater(configurator.file)
+                    scriptsUpdater(configurator.file)
                 }
 
                 val javaNamesMap: Map<String, String> = FileTypeIndex.getFiles(
@@ -255,9 +255,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                     else -> configurator.elementAtCaret
                 }
 
-                val psiElementAsTitle = when(caretElement) {
+                val psiElementAsTitle = when (caretElement) {
                     is KtClass, is KtProperty, is KtParameter, is KtFunction ->
                         KotlinFindUsagesSupport.tryRenderDeclarationCompactStyle(caretElement as KtDeclaration)
+
                     is PsiMethod -> {
                         val unwrapped = caretElement.unwrapped
                         if (unwrapped is KtDeclaration) {
@@ -266,15 +267,18 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                             null
                         }
                     }
+
                     else -> null
                 }
 
                 val expectedPsiElementAsTitle = InTextDirectivesUtils.findStringWithPrefixes(mainFileText, "// PSI_ELEMENT_AS_TITLE:")
-               KotlinTestUtils.assertEqualsToFile(
-                mainFile,
-                mainFileText.replace("// PSI_ELEMENT_AS_TITLE: \"$expectedPsiElementAsTitle\"\n",
-                                     if (psiElementAsTitle != null) "// PSI_ELEMENT_AS_TITLE: \"$psiElementAsTitle\"\n" else "")
-              )
+                KotlinTestUtils.assertEqualsToFile(
+                    mainFile,
+                    mainFileText.replace(
+                        "// PSI_ELEMENT_AS_TITLE: \"$expectedPsiElementAsTitle\"\n",
+                        if (psiElementAsTitle != null) "// PSI_ELEMENT_AS_TITLE: \"$psiElementAsTitle\"\n" else ""
+                    )
+                )
 
                 UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
@@ -308,8 +312,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                         val navigationElement = caretElement.navigationElement
                         if (navigationElement !== originalElement) {
                             if (navigationElement.originalElement != originalElement) {
-                               println(originalElement.text)
-                               println(navigationElement.text)
+                                println(originalElement.text)
+                                println(navigationElement.text)
                             }
                             findUsagesAndCheckResults(
                                 mainFileText,
@@ -354,9 +358,9 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
             filters: Collection<(UsageInfo2UsageAdapter) -> Boolean>,
             usageInfos: Collection<UsageInfo>
         ): Collection<UsageInfo2UsageAdapter> = usageInfos
-          .map(::UsageInfo2UsageAdapter)
-          .onEach { it.updateCachedPresentation() }
-          .filter { usageAdapter -> filters.all { it(usageAdapter) } }
+            .map(::UsageInfo2UsageAdapter)
+            .onEach { it.updateCachedPresentation() }
+            .filter { usageAdapter -> filters.all { it(usageAdapter) } }
 
 
         internal fun getUsageType(element: PsiElement?): UsageType? {
@@ -369,10 +373,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
             return UsageTypeProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getUsageType(element) } ?: UsageType.UNCLASSIFIED
         }
 
-        internal fun <T> instantiateClasses(mainFileText: String, directive: String, mapper: (Any) -> T = {
-            @Suppress("UNCHECKED_CAST")
-            it as T
-        }): Collection<T> =
+        internal fun <T> instantiateClasses(
+            mainFileText: String, directive: String, mapper: (Any) -> T = {
+                @Suppress("UNCHECKED_CAST")
+                it as T
+            }
+        ): Collection<T> =
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, directive).map {
                 try {
                     val declaredConstructor = Class.forName(it).getDeclaredConstructor()
@@ -425,14 +431,17 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
     }
 
-    val importFilteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> = AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
-        .map { rule -> { usageInfo -> rule.isVisible(usageInfo) } }
-    val filteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> = AbstractFindUsagesTest.instantiateClasses<UsageFilteringRule>(mainFileText, "// USAGE_FILTERING_RULES: ")
-        .map { rule -> { usageInfo -> rule.isVisible(usageInfo, emptyArray()) } }
+    val importFilteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> =
+        AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
+            .map { rule -> { usageInfo -> rule.isVisible(usageInfo) } }
+    val filteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> =
+        AbstractFindUsagesTest.instantiateClasses<UsageFilteringRule>(mainFileText, "// USAGE_FILTERING_RULES: ")
+            .map { rule -> { usageInfo -> rule.isVisible(usageInfo, emptyArray()) } }
 
     val groupingRules =
         AbstractFindUsagesTest.instantiateClasses<UsageGroupingRule>(mainFileText, "// GROUPING_RULES: ") {
-            (it as? UsageGroupingRule) ?: (it as? FileStructureGroupRuleProvider)?.getUsageGroupingRule(project) ?: error("UsageGroupingRule is expected, actual is ${it.javaClass.name}")
+            (it as? UsageGroupingRule) ?: (it as? FileStructureGroupRuleProvider)?.getUsageGroupingRule(project)
+            ?: error("UsageGroupingRule is expected, actual is ${it.javaClass.name}")
         }
 
 
@@ -456,7 +465,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         val usageChunks = ArrayList<TextChunk>()
         usageChunks.addAll(usageAdapter.presentation.text.asList())
         if (usageChunks.isNotEmpty()) {
-            usageChunks[1] = TextChunk(usageChunks[1] .attributes, usageChunks[1].text.trimIndent())
+            usageChunks[1] = TextChunk(usageChunks[1].attributes, usageChunks[1].text.trimIndent())
         }
         usageChunks.add(1, TextChunk(TextAttributes(), " ")) // add space after line number
 
@@ -484,7 +493,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
 
     KotlinTestUtils.assertEqualsToFile("${testType.name} $additionalErrorMessage", results, finalUsages.joinToString("\n"))
 
-    if (log != null  && !ignoreLog) {
+    if (log != null && !ignoreLog) {
         KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "log"), log)
 
         // if log is empty then compare results with plain search
@@ -510,12 +519,12 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
 }
 
 fun findUsages(
-  targetElement: PsiElement,
-  options: FindUsagesOptions?,
-  highlightingMode: Boolean,
-  project: Project,
-  searchSuperDeclaration: Boolean = true,
-  testType: AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.DEFAULT,
+    targetElement: PsiElement,
+    options: FindUsagesOptions?,
+    highlightingMode: Boolean,
+    project: Project,
+    searchSuperDeclaration: Boolean = true,
+    testType: AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.DEFAULT,
 ): Collection<UsageInfo> {
     try {
         val handler: FindUsagesHandler = if (targetElement is PsiMember)
@@ -537,7 +546,8 @@ fun findUsages(
             if (it is KotlinFunctionFindUsagesOptions) it.isSearchForBaseMethod = searchSuperDeclaration
             else if (it is KotlinPropertyFindUsagesOptions) {
                 it.isSearchForBaseAccessors = searchSuperDeclaration
-                it.isSearchInOverridingMethods = if (options is KotlinPropertyFindUsagesOptions) options.isSearchInOverridingMethods else false
+                it.isSearchInOverridingMethods =
+                    if (options is KotlinPropertyFindUsagesOptions) options.isSearchInOverridingMethods else false
             }
         }
 

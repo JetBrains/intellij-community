@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.completion;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava/companionObject")
     public static class CompanionObject extends AbstractK2KotlinInJavaCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -112,12 +105,6 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava/component")
     public static class Component extends AbstractK2KotlinInJavaCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -151,12 +138,6 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava/extensions")
     public static class Extensions extends AbstractK2KotlinInJavaCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -315,12 +296,6 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava/suspend")
     public static class Suspend extends AbstractK2KotlinInJavaCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -354,12 +329,6 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava")
     public static class Uncategorized extends AbstractK2KotlinInJavaCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

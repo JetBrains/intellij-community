@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
@@ -298,8 +297,6 @@ fun main(args: Array<String>) {}
     }
 
     fun `test unused beforeAll`() {
-        if (pluginMode == KotlinPluginMode.K2) return
-
         myFixture.addClass("package org.junit.jupiter.api; public @interface BeforeAll{}")
         myFixture.addClass("package kotlin.jvm; public @interface JvmStatic{}")
         myFixture.configureByText("Demo.kt", """

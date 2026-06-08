@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/inline/anonymousFunction")
     public static class AnonymousFunction extends AbstractKotlinFirInlineTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -122,12 +115,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineTypeAlias")
     public static class InlineTypeAlias extends AbstractKotlinFirInlineTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -174,12 +161,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/addParenthesis")
         public static class AddParenthesis extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -348,12 +329,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/explicateParameterTypes")
         public static class ExplicateParameterTypes extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -397,12 +372,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/explicateTypeArgument")
         public static class ExplicateTypeArgument extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -461,12 +430,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/fromFinalJavaToKotlin")
         public static class FromFinalJavaToKotlin extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -560,12 +523,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/fromJavaToKotlin")
         public static class FromJavaToKotlin extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -659,12 +616,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/javaUsages")
         public static class JavaUsages extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -681,12 +632,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/accessors")
             public static class Accessors extends AbstractKotlinFirInlineTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -725,12 +670,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property")
             public static class Uncategorized extends AbstractKotlinFirInlineTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -860,12 +799,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/stringTemplates")
         public static class StringTemplates extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -914,12 +847,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty")
         public static class Uncategorized extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1184,12 +1111,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/inline/lambdaExpression")
     public static class LambdaExpression extends AbstractKotlinFirInlineTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1256,12 +1177,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/expressionBody")
         public static class ExpressionBody extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1470,12 +1385,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/fromFinalJavaToKotlin")
         public static class FromFinalJavaToKotlin extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1594,12 +1503,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/fromIntellij")
         public static class FromIntellij extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1703,12 +1606,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/fromJavaToKotlin")
         public static class FromJavaToKotlin extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1837,12 +1734,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/fromKotlinToJava")
         public static class FromKotlinToJava extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1871,12 +1762,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction/returnAtEnd")
         public static class ReturnAtEnd extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2115,12 +2000,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/inline/namedFunction")
         public static class Uncategorized extends AbstractKotlinFirInlineTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

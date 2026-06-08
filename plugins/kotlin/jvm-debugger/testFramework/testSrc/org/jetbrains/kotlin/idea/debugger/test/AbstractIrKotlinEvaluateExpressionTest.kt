@@ -28,7 +28,7 @@ import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
@@ -83,7 +83,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
 
     private fun restoreEvaluationInJavaContext() {
         Registry.get("debugger.enable.kotlin.evaluator.in.java.context")
-          .setValue(originalEnableKotlinEvaluatorInJavaContext)
+            .setValue(originalEnableKotlinEvaluatorInJavaContext)
     }
 
 
@@ -134,7 +134,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                     if (myWasUsedOnlyDefaultSuspendPolicy) {
                         // It would be more correct to extract the policy from the breakpoint declaration (in test),
                         // but it is not a very easy task
-                        TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy, )
+                        TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy,)
                     }
                     evaluate(this, expression, kind, expected)
                 }
@@ -301,7 +301,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
 
         val effectiveExpected = when {
             compileWithK2 && expectedK2Compiler.isNotEmpty() -> expectedK2Compiler
-            KotlinPluginModeProvider.isK2Mode() && expectedK2Ide.isNotEmpty() -> expectedK2Ide
+            expectedK2Ide.isNotEmpty() -> expectedK2Ide
             else -> expected
         }
 

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.fir.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -18,8 +17,6 @@ import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class Java9MultiModuleHighlightingTest : AbstractMultiModuleTest() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleHighlighting/java9")
 

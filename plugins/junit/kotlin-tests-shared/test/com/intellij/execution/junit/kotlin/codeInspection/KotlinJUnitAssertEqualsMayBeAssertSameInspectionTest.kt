@@ -7,9 +7,7 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
   listOf(TestKotlinArtifacts.kotlinStdlib), listOf(TestKotlinArtifacts.kotlinStdlibSources)
@@ -20,13 +18,10 @@ private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDe
   }
 }
 
-abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(),
-                                                                      ExpectedPluginModeProvider {
+abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase() {
   override fun getProjectDescriptor() = ktProjectDescriptor
 
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+  
 
   fun `test JUnit 3 highlighting`() {
     myFixture.testHighlighting(

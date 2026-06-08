@@ -17,7 +17,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -103,7 +103,7 @@ fun runRefactoringTest(
 
     val conflictFile = (alternativeConflicts
         ?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
-        ?: File(File(path).parentFile, "conflicts.k2.txt").takeIf { KotlinPluginModeProvider.Companion.isK2Mode() && it.exists() }
+        ?: File(File(path).parentFile, "conflicts.k2.txt").takeIf { it.exists() }
         ?: File(File(path).parentFile, "conflicts.txt")).normalize()
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!

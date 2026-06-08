@@ -8,8 +8,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
@@ -20,9 +18,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBaseTest() {
 
     protected fun checkCaret(expression: String) {

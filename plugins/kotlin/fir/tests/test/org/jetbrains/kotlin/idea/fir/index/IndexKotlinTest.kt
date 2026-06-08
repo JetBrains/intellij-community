@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -22,7 +21,6 @@ import kotlin.io.path.exists
 @TestMetadata("testData/index")
 @RunWith(JUnit38ClassRunner::class)
 class IndexKotlinTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = object : KotlinLightProjectDescriptor() {
         override fun configureModule(module: Module, model: ModifiableRootModel) {

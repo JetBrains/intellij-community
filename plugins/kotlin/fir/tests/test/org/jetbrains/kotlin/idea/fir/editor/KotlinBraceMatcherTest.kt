@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.fir.editor
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -10,7 +9,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinBraceMatcherTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testGenericsWithInOutModifiers() {
         doBraceMatchingTest("class A<caret><in T, out F, *>")

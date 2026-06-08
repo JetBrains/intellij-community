@@ -18,7 +18,6 @@
 package com.intellij.compose.ide.plugin.k2.intentions
 
 import com.intellij.compose.ide.plugin.shared.intentions.ComposableAnnotationQuickFixTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 /**
  * Tests for adding `@Composable` annotation quick fix
@@ -26,5 +25,4 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
  * Based on: [com.android.tools.compose.intentions.AddComposableAnnotationQuickFixTest]
  */
 class K2AddComposableAnnotationQuickFixTest : ComposableAnnotationQuickFixTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 }

@@ -2,23 +2,17 @@
 package org.jetbrains.kotlin.idea.fir.actions
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.jetbrains.kotlin.idea.actions.isScriptLocationAccepted
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.ScriptingHostConfiguration
-import org.jetbrains.kotlin.idea.actions.isScriptLocationAccepted
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
-class NewKotlinScriptActionTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class NewKotlinScriptActionTest : BasePlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun testEmptyAcceptedLocationsAcceptsAnyDirectory() {
         val directory = myFixture.tempDirFixture.findOrCreateDir(".")

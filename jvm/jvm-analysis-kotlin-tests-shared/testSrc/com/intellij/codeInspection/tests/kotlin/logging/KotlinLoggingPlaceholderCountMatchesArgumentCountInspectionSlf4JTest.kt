@@ -3,13 +3,9 @@ package com.intellij.codeInspection.tests.kotlin.logging
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase(), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
+  
 
   fun `test slf4j disable slf4jToLog4J2Type`() {
     inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO

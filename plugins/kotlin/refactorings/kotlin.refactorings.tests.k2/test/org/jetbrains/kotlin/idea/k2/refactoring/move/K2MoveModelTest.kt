@@ -9,7 +9,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.utils.editor.commitToPsi
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
@@ -24,8 +23,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 
 class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun `test empty file from source directory without target move`() {
         val fooFile = myFixture.addFileToProject("Foo.kt", """

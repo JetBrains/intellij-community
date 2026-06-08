@@ -22,16 +22,13 @@ import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.io.File
 
-abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
-                                                  ExpectedPluginModeProvider {
+abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
 
     private companion object {
         const val DEFAULT_MODULE_NAME = "module"
@@ -84,9 +81,7 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
         error("Configured module with name $name not found")
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun tearDown() {
         runAll(

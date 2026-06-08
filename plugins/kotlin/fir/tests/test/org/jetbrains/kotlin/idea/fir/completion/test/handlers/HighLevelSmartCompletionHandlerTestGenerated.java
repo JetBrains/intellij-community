@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart/lambda")
     public static class Lambda extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -77,12 +70,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart/lambdaSignature")
     public static class LambdaSignature extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -101,12 +88,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart/SAM")
     public static class SAM extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -150,12 +131,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart/suspendLambdaSignature")
     public static class SuspendLambdaSignature extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -174,12 +149,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart/throwables")
     public static class Throwables extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -203,12 +172,6 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/handlers/smart")
     public static class Uncategorized extends AbstractHighLevelSmartCompletionHandlerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

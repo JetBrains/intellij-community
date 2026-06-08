@@ -3,16 +3,10 @@ package org.jetbrains.idea.devkit.k2.navigation
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtLightClassCompatibilityTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtLightClassCompatibilityTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun testEnumConstructor() {
     myFixture.addFileToProject("pkg/MyEnum.kt", """

@@ -14,11 +14,9 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleHighlightingTest
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
@@ -37,9 +35,6 @@ import kotlin.math.absoluteValue
 
 @RunWith(JUnit38ClassRunner::class)
 open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleHighlighting")
 

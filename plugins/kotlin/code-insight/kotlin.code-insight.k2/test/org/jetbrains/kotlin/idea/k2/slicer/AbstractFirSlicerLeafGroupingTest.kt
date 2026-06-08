@@ -5,14 +5,12 @@ import com.intellij.slicer.SliceLanguageSupportProvider
 import com.intellij.slicer.SliceLeafAnalyzer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinSliceProvider
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractFirSlicerLeafGroupingTest: AbstractSlicerLeafGroupingTest() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
     override fun createAnalyzer(sliceProvider: SliceLanguageSupportProvider): SliceLeafAnalyzer {
         return (sliceProvider as KotlinSliceProvider).leafAnalyzer
     }

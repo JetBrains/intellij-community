@@ -18,7 +18,7 @@ abstract class AbstractMultiModuleRenameTest : KotlinMultiFileTestCase() {
 
         val file = renameParamsObject.getString("file")
         val newName = renameParamsObject.getString("newName")
-        val isEnabled = renameParamsObject.get("enabledIn${pluginMode.name}")?.asBoolean != false
+        val isEnabled = renameParamsObject.get("enabledInK2")?.asBoolean != false
 
         isMultiModule = true
 

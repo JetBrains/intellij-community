@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.debugger.evaluate;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -26,12 +25,6 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType/k1")
         public static class K1 extends AbstractK2CodeFragmentCompletionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -60,12 +53,6 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType/k2")
         public static class K2 extends AbstractK2CodeFragmentCompletionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -89,12 +76,6 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType")
         public static class Uncategorized extends AbstractK2CodeFragmentCompletionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -129,12 +110,6 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/codeFragments")
     public static class Uncategorized extends AbstractK2CodeFragmentCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

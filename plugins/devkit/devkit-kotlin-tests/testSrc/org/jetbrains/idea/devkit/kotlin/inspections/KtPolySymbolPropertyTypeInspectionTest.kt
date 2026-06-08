@@ -3,12 +3,9 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFixTestBase(), ExpectedPluginModeProvider {
+abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFixTestBase() {
 
   override fun getFileExtension(): String = "kt"
 
@@ -17,7 +14,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
 
     myFixture.enableInspections(KtPolySymbolPropertyTypeInspection())
 

@@ -6,14 +6,12 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.PathUtil
 import com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspectionTestCase
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/suspiciousPackagePrivateAccess")
-abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt"), ExpectedPluginModeProvider {
+abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt") {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
     val modules = ModuleManager.getInstance(project).modules
     for (module in modules) {
@@ -37,5 +35,6 @@ abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPa
     doTestWithDependency()
   }
 
-  override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
+  override fun getBasePath() =
+    "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
 }

@@ -5,16 +5,14 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useDPIAwareEmptyBorder")
-public class KtUseDPIAwareEmptyBorderInspectionTest extends UseDPIAwareEmptyBorderInspectionTestBase implements ExpectedPluginModeProvider {
+public class KtUseDPIAwareEmptyBorderInspectionTest extends UseDPIAwareEmptyBorderInspectionTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override
@@ -33,10 +31,5 @@ public class KtUseDPIAwareEmptyBorderInspectionTest extends UseDPIAwareEmptyBord
 
   public void testUseSwingEmptyBorder() {
     doTest();
-  }
-
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
   }
 }

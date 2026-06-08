@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -27,7 +26,7 @@ abstract class AbstractKotlinNavigationMultiModuleTest : AbstractMultiModuleTest
         try {
             val gotoData = doNavigate(editor, file)
             val documentText = editor.document.text
-            val expectedReferences = if (pluginMode == KotlinPluginMode.K2 && documentText.contains("// K2_REF:")) {
+            val expectedReferences = if (documentText.contains("// K2_REF:")) {
                 NavigationTestUtils.getExpectedReferences(documentText, "// K2_REF:")
             } else {
                 NavigationTestUtils.getExpectedReferences(documentText, "// REF:")

@@ -54,14 +54,12 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateConstructorFromKotlinUsageRequest
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.util.elementByOffset
 import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -72,11 +70,9 @@ import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import kotlin.jvm.java
 
 @RunWith(JUnit38ClassRunner::class)
 class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private class SimpleMethodRequest(
         project: Project,

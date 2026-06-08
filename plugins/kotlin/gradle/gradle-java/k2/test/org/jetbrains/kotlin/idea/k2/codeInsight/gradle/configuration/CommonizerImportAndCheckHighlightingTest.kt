@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
@@ -22,9 +21,6 @@ import org.junit.Test
 import java.util.Locale
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"
 

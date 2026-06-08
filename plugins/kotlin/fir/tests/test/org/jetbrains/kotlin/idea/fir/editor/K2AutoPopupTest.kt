@@ -3,15 +3,11 @@ package org.jetbrains.kotlin.idea.fir.editor
 
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.editor.KotlinAutoPopupTest
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 // TODO: rewrite this test to make it generated
 internal class K2AutoPopupTest : KotlinAutoPopupTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

@@ -5,16 +5,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 abstract class AbstractKotlinCodeVisionProviderTest :
-    CodeVisionTestCase(),
-    ExpectedPluginModeProvider { // Abstract- prefix is just a convention for GenerateTests
+    CodeVisionTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         ConfigLibraryUtil.configureKotlinRuntime(module)
     }
 

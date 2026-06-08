@@ -29,7 +29,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val NAME_COUNT_TO_USE_STAR_IMPORT_DIRECTIVE = "// NAME_COUNT_TO_USE_STAR_IMPORT:"
     private val PACKAGES_TO_USE_STAR_IMPORTS_DIRECTIVE = "// PACKAGE_TO_USE_STAR_IMPORTS:"
 
-    private val disableTestDirective: String get() = IgnoreTests.DIRECTIVES.of(pluginMode)
+    private val disableTestDirective: String get() = IgnoreTests.DIRECTIVES.IGNORE_K2
 
     protected fun doTestCut(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), "${disableTestDirective}_CUT") {
@@ -131,13 +131,11 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private fun getTestFileNameWithExtension(extension: String): String {
         val testFileName = dataFile().name.removeSuffix(".kt")
 
-        if (isFirPlugin) {
-            val k2Extension = IgnoreTests.FileExtension.K2
-            val k2FileNameWithExtension = "$testFileName.$k2Extension$extension"
-            val k2File = File(testDataDirectory, k2FileNameWithExtension)
+        val k2Extension = IgnoreTests.FileExtension.K2
+        val k2FileNameWithExtension = "$testFileName.$k2Extension$extension"
+        val k2File = File(testDataDirectory, k2FileNameWithExtension)
 
-            if (k2File.exists()) return k2FileNameWithExtension
-        }
+        if (k2File.exists()) return k2FileNameWithExtension
 
         return "$testFileName$extension"
     }

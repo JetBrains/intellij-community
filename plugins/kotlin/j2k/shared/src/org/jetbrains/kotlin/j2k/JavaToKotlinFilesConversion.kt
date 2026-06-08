@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 
 @ApiStatus.Internal
@@ -35,7 +33,4 @@ suspend fun convertJavaFilesToKotlin(
 }
 
 @ApiStatus.Internal
-fun getJ2kKind(): J2kConverterExtension.Kind = when {
-    isK2Mode() -> K2
-    else -> K1_NEW
-}
+fun getJ2kKind(): J2kConverterExtension.Kind = K2

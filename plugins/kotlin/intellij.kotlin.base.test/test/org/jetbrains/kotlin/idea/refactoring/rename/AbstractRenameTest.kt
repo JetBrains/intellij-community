@@ -99,8 +99,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
                 if ("@" in libraryInfo) {
                     Path.of(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
-                }
-                else {
+                } else {
                     ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]?.toPath()
                 }
             }
@@ -117,7 +116,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val testFile = File(path)
         val renameObject = loadTestConfiguration(testFile)
 
-        val testIsEnabledInK2 = renameObject.get(if (isFirPlugin) "enabledInK2" else "enabledInK1")?.asBoolean ?: true
+        val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean ?: true
 
         val result = runCatching {
             val renameTypeStr = renameObject.getString("type")
@@ -167,8 +166,10 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
                 val hintExceptionUnquoted = StringUtil.unquoteString(e.message!!)
                 if (hintsDirective.isNotEmpty()) {
-                    Assert.assertTrue("Expected one of $hintsDirective but was $hintExceptionUnquoted",
-                                      hintsDirective.contains(hintExceptionUnquoted))
+                    Assert.assertTrue(
+                        "Expected one of $hintsDirective but was $hintExceptionUnquoted",
+                        hintsDirective.contains(hintExceptionUnquoted)
+                    )
                 } else {
                     Assert.fail("""Unexpected "hint: $hintExceptionUnquoted" """)
                 }
@@ -324,7 +325,8 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val packageSegment = packageDirective.packageNames[fqn.pathSegments().size - 1]
             val segmentReference = packageSegment.mainReference
 
-            val psiElement = segmentReference.resolve() ?: error("unable to resolve '${segmentReference.element.text}' from $packageDirective '${packageDirective.text}'")
+            val psiElement = segmentReference.resolve()
+                ?: error("unable to resolve '${segmentReference.element.text}' from $packageDirective '${packageDirective.text}'")
 
             val substitution = RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)

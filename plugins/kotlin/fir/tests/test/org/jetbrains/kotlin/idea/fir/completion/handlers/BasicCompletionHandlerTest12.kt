@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.completion.handlers
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.test.TestMetadata
@@ -17,7 +16,6 @@ import java.io.File
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
 class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private fun checkResult() {
         fixture.checkResultByFile(getTestName(false) + ".kt.after")

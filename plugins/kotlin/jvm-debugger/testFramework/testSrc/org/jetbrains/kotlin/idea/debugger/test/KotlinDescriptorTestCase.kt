@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -70,7 +69,6 @@ import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.IgnorableTestCase
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
@@ -83,7 +81,6 @@ import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
 import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.test.createFacet
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -104,8 +101,7 @@ internal const val JVM_MODULE_NAME_START = "jvm"
 private const val MULTI_MODULES = "multiModules"
 
 abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
-                                          IgnorableTestCase,
-                                          ExpectedPluginModeProvider {
+    IgnorableTestCase {
     protected lateinit var context: ConfigurationContext
 
     private lateinit var testAppDirectory: File
@@ -147,10 +143,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFile().toPath(),
-            when (pluginMode) {
-                KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-                KotlinPluginMode.K2 -> getK2IgnoreDirective()
-            },
+            getK2IgnoreDirective(),
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             super.runBare(testRunnable)
@@ -164,7 +157,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     protected open val useInlineScopes: Boolean get() = false
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
 
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
@@ -563,6 +556,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                     val relativeNameString = candidate.relativeClassName.asString().replace('.', '$')
                     packagePrefix + relativeNameString
                 }
+
                 else -> {
                     error("Multiple main functions found: " + candidates.joinToString())
                 }
@@ -628,7 +622,11 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
      * attach external dependencies defined by // ATTACH_LIBRARY_BY_LABEL: notation,
      * add javaagents defined by // ATTACH_JAVA_AGENT_BY_LABEL: notation
      */
-    open fun addDependenciesByLabels(compilerFacility: DebuggerTestCompilerFacility, libraryLabels: List<String>, agentLabels: List<String>) {
+    open fun addDependenciesByLabels(
+        compilerFacility: DebuggerTestCompilerFacility,
+        libraryLabels: List<String>,
+        agentLabels: List<String>
+    ) {
     }
 
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)
@@ -679,14 +677,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
             try {
                 attachLibrary(
-                  model, KOTLIN_LIBRARY_NAME,
-                  listOf(TestKotlinArtifacts.kotlinStdlib.toFile(), TestKotlinArtifacts.jetbrainsAnnotations.toFile()),
-                  listOf(TestKotlinArtifacts.kotlinStdlibSources.toFile(), TestKotlinArtifacts.kotlinStdlibCommonSources.toFile())
+                    model, KOTLIN_LIBRARY_NAME,
+                    listOf(TestKotlinArtifacts.kotlinStdlib.toFile(), TestKotlinArtifacts.jetbrainsAnnotations.toFile()),
+                    listOf(TestKotlinArtifacts.kotlinStdlibSources.toFile(), TestKotlinArtifacts.kotlinStdlibCommonSources.toFile())
                 )
 
                 attachLibrary(model, TEST_LIBRARY_NAME, listOf(libraryOutputDirectory), listOf(librarySrcDirectory))
-            }
-            finally {
+            } finally {
                 model.commit()
             }
         }
@@ -739,8 +736,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         } catch (e: Throwable) {
             if (ignoreIsPassedCallback == null) {
                 throw e
-            }
-            else {
+            } else {
                 return
             }
         }
@@ -843,7 +839,7 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
 
 class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<TestFileWithModule>) : List<TestFileWithModule> by files
 
-sealed class DebuggerTestModule(name: String, dependencies: List<String>) : KotlinBaseTest.TestModule(name, dependencies, emptyList())  {
+sealed class DebuggerTestModule(name: String, dependencies: List<String>) : KotlinBaseTest.TestModule(name, dependencies, emptyList()) {
     class Common(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies)
     class Jvm(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies) {
         companion object {

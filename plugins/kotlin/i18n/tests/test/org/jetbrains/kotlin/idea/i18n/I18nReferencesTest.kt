@@ -11,32 +11,27 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil.addDependency
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class I18nReferencesTest : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class I18nReferencesTest : JavaCodeInsightFixtureTestCase() {
 
     override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
-            myFixture.addClass(
-                """package org.jetbrains.annotations;
-            import java.lang.annotation.*;
+        super.setUp()
+        myFixture.addClass(
+            """package org.jetbrains.annotations;
+        import java.lang.annotation.*;
 @Target({ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.TYPE_USE})
 public @interface PropertyKey { String resourceBundle(); }"""
-            )
-            myFixture.addFileToProject("messages/MyBundle.properties", "key1=value1\nkey2=value2 {0}")
-        }
+        )
+        myFixture.addFileToProject("messages/MyBundle.properties", "key1=value1\nkey2=value2 {0}")
     }
 
     fun testResolveResourceBundle() {
-        myFixture.configureByText("FooBar.kt", """
+        myFixture.configureByText(
+            "FooBar.kt", """
             import org.jetbrains.annotations.PropertyKey
             class FooBar(key : @PropertyKey(resourceBundle = "m<caret>essages.MyBundle") String) {}
             fun bar() {
@@ -49,7 +44,8 @@ public @interface PropertyKey { String resourceBundle(); }"""
     }
 
     fun testResolveResourceBundleKey() {
-        myFixture.configureByText("FooBar.kt", """import org.jetbrains.annotations.PropertyKey
+        myFixture.configureByText(
+            "FooBar.kt", """import org.jetbrains.annotations.PropertyKey
 class FooBar(key : @PropertyKey(resourceBundle = "messages.MyBundle") String) {
 }
 fun bar() {
@@ -115,7 +111,8 @@ fun bar() {
 
     fun testInvalidKey() {
         myFixture.enableInspections(KotlinInvalidBundleOrPropertyInspection())
-        myFixture.configureByText("FooBar.kt", """import org.jetbrains.annotations.PropertyKey
+        myFixture.configureByText(
+            "FooBar.kt", """import org.jetbrains.annotations.PropertyKey
 class FooBar(@PropertyKey(resourceBundle = "messages.MyBundle") key : String) {
 }
 fun bar() {
@@ -125,9 +122,10 @@ fun bar() {
         myFixture.testHighlighting(false, false, false)
     }
 
-  fun testWrongNumberOfArguments() {
+    fun testWrongNumberOfArguments() {
         myFixture.enableInspections(KotlinInvalidBundleOrPropertyInspection())
-        myFixture.configureByText("FooBar.kt", """import org.jetbrains.annotations.PropertyKey
+        myFixture.configureByText(
+            "FooBar.kt", """import org.jetbrains.annotations.PropertyKey
 class FooBar(@PropertyKey(resourceBundle = "messages.MyBundle") key : String, vararg args: String) {
 }
 fun bar() {

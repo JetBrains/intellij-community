@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.util.concurrent.Callable
 import java.util.function.BiFunction
@@ -17,8 +16,6 @@ import java.util.function.BiFunction
  * Test how "Import class" quick fix behaves in presence of typing around/moving caret
  */
 class ImportClassDuringTypingTest: KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testImportHintMustStillBeAvailableAfterTypingBeforeTheReference() {
         myFixture.configureByText("Foo.kt", "class Foo(val ok: <caret>FileInputStream)")

@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
@@ -445,9 +443,9 @@ class JKCodeBuilder(private val context: ConverterContext) {
             forLoopParameter.name.accept(this)
             if (!forLoopParameter.type.isPresent() || forLoopParameter.type.type is JKContextType) return
 
-            val needExplicitType = isK1Mode() || // for K1 nullability inference
-                    settings.specifyLocalVariableTypeByDefault ||
-                    forLoopParameter.type.annotationList.annotations.isNotEmpty()
+            val needExplicitType =
+                settings.specifyLocalVariableTypeByDefault ||
+                        forLoopParameter.type.annotationList.annotations.isNotEmpty()
 
             if (needExplicitType) {
                 printer.print(": ")
@@ -464,7 +462,6 @@ class JKCodeBuilder(private val context: ConverterContext) {
                 method.typeParameterList.accept(this)
             }
 
-            printInferenceLabel(method)
             method.name.accept(this)
             renderParameterList(method)
 
@@ -542,7 +539,6 @@ class JKCodeBuilder(private val context: ConverterContext) {
 
         override fun visitThisExpressionRaw(thisExpression: JKThisExpression) {
             if (thisExpression.shouldBePreserved) {
-                printExplicitLabel(thisExpression)
             }
             printer.print("this")
             thisExpression.qualifierLabel.accept(this)
@@ -657,8 +653,7 @@ class JKCodeBuilder(private val context: ConverterContext) {
             if (callExpression.identifier.isAnnotationMethod()) return
 
             val methodName = callExpression.identifier.fqName
-            if (isK1Mode() ||
-                (methodName != "java.util.stream.Stream.collect" && !methodName.startsWith("java.util.stream.Collectors"))
+            if ((methodName != "java.util.stream.Stream.collect" && !methodName.startsWith("java.util.stream.Collectors"))
             ) {
                 // Type arguments for Stream.collect calls cannot be explicitly specified in Kotlin.
                 // This is a K2 counterpart to the K1 `RemoveJavaStreamsCollectCallTypeArgumentsProcessing`.
@@ -937,8 +932,7 @@ class JKCodeBuilder(private val context: ConverterContext) {
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
             if (lambdaExpression.functionalType.isPresent()) {
                 // print SAM constructor
-                val renderTypeParameters = isK1Mode()
-                printer.renderType(lambdaExpression.functionalType.type, lambdaExpression, renderTypeParameters)
+                printer.renderType(lambdaExpression.functionalType.type, lambdaExpression, false)
                 printer.print(" ")
             }
 
@@ -1113,18 +1107,5 @@ class JKCodeBuilder(private val context: ConverterContext) {
             }
         }
 
-        private fun printExplicitLabel(thisExpression: JKThisExpression) {
-            // TODO: Currently disabled for K2 J2K, but may have to be enabled
-            // if we don't figure out how to accurately preserve original `this` expressions without a post-processing
-            if (KotlinPluginModeProvider.isK2Mode()) return
-            val label = elementInfoStorage.getOrCreateExplicitLabelForElement(thisExpression)
-            printer.print(label.render())
-        }
-
-        private fun printInferenceLabel(element: JKElement) {
-            if (KotlinPluginModeProvider.isK2Mode()) return
-            val label = elementInfoStorage.getOrCreateInferenceLabelForElement(element)
-            printer.print(label.render())
-        }
     }
 }

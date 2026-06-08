@@ -7,18 +7,11 @@ import org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspectio
 import org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection
 import org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/internal")
-class KtUseEqualsInspectionTest : UseEqualsInspectionTestBase(), ExpectedPluginModeProvider {
+class KtUseEqualsInspectionTest : UseEqualsInspectionTestBase() {
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/internal"
 

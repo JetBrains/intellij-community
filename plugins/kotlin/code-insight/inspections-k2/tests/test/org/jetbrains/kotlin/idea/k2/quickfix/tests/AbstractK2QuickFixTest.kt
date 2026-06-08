@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.k2.quickfix.tests
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
@@ -14,7 +12,6 @@ import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
@@ -40,8 +37,8 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
 
     override fun tearDown() {
         runAll(
-          { runInEdtAndWait { project.invalidateCaches() } },
-          { super.tearDown() },
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() },
         )
     }
 
@@ -61,7 +58,10 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
             file,
             dataFile(), actions,
             actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
-            actionsListDirectives = pluginMode.actionsListDirectives
+            actionsListDirectives = arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            )
         )
     }
 

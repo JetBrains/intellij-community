@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.j2k.k2;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/annotations")
     public static class Annotations extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -217,12 +210,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/anonymousBlock")
     public static class AnonymousBlock extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -306,12 +293,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/anonymousClass")
     public static class AnonymousClass extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -335,12 +316,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayAccessExpression")
     public static class ArrayAccessExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -369,12 +344,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayInitializerExpression")
     public static class ArrayInitializerExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -448,12 +417,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayType")
     public static class ArrayType extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -517,12 +480,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/assertStatement")
     public static class AssertStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -556,12 +513,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/assignmentExpression")
     public static class AssignmentExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -710,12 +661,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/binaryExpression")
     public static class BinaryExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -854,12 +799,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/blocks")
     public static class Blocks extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -878,12 +817,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/boxedType")
     public static class BoxedType extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -967,12 +900,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/breakStatement")
     public static class BreakStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -991,12 +918,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/callChainExpression")
     public static class CallChainExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1035,12 +956,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/caseConversion")
     public static class CaseConversion extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1059,12 +974,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/class")
     public static class Class extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1258,12 +1167,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/classExpression")
     public static class ClassExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1292,12 +1195,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/comments")
     public static class Comments extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1406,12 +1303,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/conditionalExpression")
     public static class ConditionalExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1425,12 +1316,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/constructors")
     public static class Constructors extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1669,12 +1554,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/continueStatement")
     public static class ContinueStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1693,12 +1572,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/declarationStatement")
     public static class DeclarationStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1737,12 +1610,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/detectProperties")
     public static class DetectProperties extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2146,12 +2013,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/doWhileStatement")
     public static class DoWhileStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2185,12 +2046,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/docComments")
     public static class DocComments extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2274,12 +2129,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/enum")
     public static class Enum extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2418,12 +2267,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/equals")
     public static class Equals extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2467,12 +2310,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/explicitApiMode")
     public static class ExplicitApiMode extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2491,12 +2328,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/field")
     public static class Field extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2585,12 +2416,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/for")
     public static class For extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2869,12 +2694,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/foreachStatement")
     public static class ForeachStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2913,12 +2732,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/formatting")
     public static class Formatting extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2992,12 +2805,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/function")
     public static class Function extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3231,12 +3038,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/functionalInterfaces")
     public static class FunctionalInterfaces extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3285,12 +3086,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/identifier")
     public static class Identifier extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3319,12 +3114,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/ifStatement")
     public static class IfStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3373,12 +3162,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/implicitCasts")
     public static class ImplicitCasts extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3457,12 +3240,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/importStatement")
     public static class ImportStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3496,12 +3273,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/inheritance")
     public static class Inheritance extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3535,12 +3306,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/interface")
     public static class Interface extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3609,12 +3374,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/invalidCode")
     public static class InvalidCode extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3648,12 +3407,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/isOperator")
     public static class IsOperator extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3677,12 +3430,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/issues")
     public static class Issues extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4106,12 +3853,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/javaStandardMethods")
     public static class JavaStandardMethods extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4135,12 +3876,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/javaStreamsApi")
     public static class JavaStreamsApi extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4194,12 +3929,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/kotlinApiAccess")
     public static class KotlinApiAccess extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4303,12 +4032,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/labelStatement")
     public static class LabelStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4322,12 +4045,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/lambda")
     public static class Lambda extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4346,12 +4063,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/libraryUsage")
     public static class LibraryUsage extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4375,12 +4086,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/list")
     public static class List extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4399,12 +4104,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/literalExpression")
     public static class LiteralExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4508,12 +4207,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/localVariable")
     public static class LocalVariable extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4567,12 +4260,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/methodCallExpression")
     public static class MethodCallExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4696,12 +4383,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/misc")
     public static class Misc extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4740,12 +4421,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/mutableCollections")
     public static class MutableCollections extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4819,12 +4494,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/newClassExpression")
     public static class NewClassExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4911,12 +4580,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/enhancedSwitchStatement")
         public static class EnhancedSwitchStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4935,12 +4598,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching")
         public static class PatternMatching extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4969,12 +4626,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/recordClass")
         public static class RecordClass extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5063,12 +4714,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/switchExpression")
         public static class SwitchExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5162,12 +4807,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/textBlocks")
         public static class TextBlocks extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5226,12 +4865,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures")
         public static class Uncategorized extends AbstractK2JavaToKotlinConverterSingleFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5246,12 +4879,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/nullability")
     public static class Nullability extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5535,12 +5162,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/nullabilityGenerics")
     public static class NullabilityGenerics extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5684,12 +5305,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/objectLiteral")
     public static class ObjectLiteral extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5723,12 +5338,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/overloads")
     public static class Overloads extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5777,12 +5386,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/packageStatement")
     public static class PackageStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5796,12 +5399,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/parenthesizedExpression")
     public static class ParenthesizedExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5850,12 +5447,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/polyadicExpression")
     public static class PolyadicExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5894,12 +5485,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/postProcessing")
     public static class PostProcessing extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6068,12 +5653,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/postfixOperator")
     public static class PostfixOperator extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6092,12 +5671,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions")
     public static class PreAndPostprocessorExtensions extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6116,12 +5689,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/prefixOperator")
     public static class PrefixOperator extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6160,12 +5727,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/projections")
     public static class Projections extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6179,12 +5740,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/protected")
     public static class Protected extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6228,12 +5783,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/rawGenerics")
     public static class RawGenerics extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6262,12 +5811,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/returnStatement")
     public static class ReturnStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6306,12 +5849,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/settings")
     public static class Settings extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6340,12 +5877,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression")
     public static class SimplifyNegatedBinaryExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6384,12 +5915,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/staticMembers")
     public static class StaticMembers extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6443,12 +5968,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/strings")
     public static class Strings extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6462,12 +5981,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/superExpression")
     public static class SuperExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6511,12 +6024,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/switch")
     public static class Switch extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6605,12 +6112,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/synchronizedStatement")
     public static class SynchronizedStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6624,12 +6125,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/thisExpression")
     public static class ThisExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6648,12 +6143,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/throwStatement")
     public static class ThrowStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6667,12 +6156,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/toArray")
     public static class ToArray extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6686,12 +6169,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/toKotlinClasses")
     public static class ToKotlinClasses extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6730,12 +6207,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/tryStatement")
     public static class TryStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6769,12 +6240,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/tryWithResource")
     public static class TryWithResource extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6843,12 +6308,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/typeCastExpression")
     public static class TypeCastExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6952,12 +6411,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/typeParameters")
     public static class TypeParameters extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7041,12 +6494,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/types")
     public static class Types extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7085,12 +6532,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/varArg")
     public static class VarArg extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7114,12 +6555,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/visibility")
     public static class Visibility extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7193,12 +6628,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/whileStatement")
     public static class WhileStatement extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

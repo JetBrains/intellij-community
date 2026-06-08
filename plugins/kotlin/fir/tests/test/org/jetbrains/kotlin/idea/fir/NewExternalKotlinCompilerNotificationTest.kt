@@ -4,25 +4,19 @@ package org.jetbrains.kotlin.idea.fir
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.configuration.notifications.campaignVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
 import org.jetbrains.kotlin.idea.configuration.notifications.newExternalKotlinCompilerShouldBePromoted
 import org.jetbrains.kotlin.idea.configuration.notifications.whatIsNewPageVersion
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class NewExternalKotlinCompilerNotificationTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class NewExternalKotlinCompilerNotificationTest : LightPlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun testWhatIsNewPage() {
         assertWhatIsNewPage(kotlinVersion = "1.6.21", expectedPageVersion = "1620", expectedCampaignVersion = "1-6-21")

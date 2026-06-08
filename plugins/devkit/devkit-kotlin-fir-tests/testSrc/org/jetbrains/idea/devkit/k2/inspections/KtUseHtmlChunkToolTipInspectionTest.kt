@@ -4,17 +4,11 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.quickfix.UseHtmlChunkToolTipInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/useHtmlChunkToolTip")
-class KtUseHtmlChunkToolTipInspectionTest : UseHtmlChunkToolTipInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtUseHtmlChunkToolTipInspectionTest : UseHtmlChunkToolTipInspectionTestBase() {
 
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useHtmlChunkToolTip"

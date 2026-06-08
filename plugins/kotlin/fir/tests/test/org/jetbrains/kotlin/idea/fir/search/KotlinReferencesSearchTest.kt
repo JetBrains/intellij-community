@@ -7,7 +7,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
@@ -25,9 +24,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/search/references")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinReferencesSearchTest : AbstractSearcherTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testPlus() {
         val refs = doTest<KtFunction>()

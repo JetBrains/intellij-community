@@ -26,17 +26,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
@@ -53,8 +50,7 @@ import kotlin.io.path.Path
 import kotlin.reflect.KClass
 
 @Suppress("ACCIDENTAL_OVERRIDE")
-abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
-                                               ExpectedPluginModeProvider {
+abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     public override fun getModule(name: String): Module = super.getModule(name)
 
@@ -98,7 +94,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         GradleProcessOutputInterceptor.install(testRootDisposable)
 
         setUpImportStatusCollector()
@@ -120,9 +116,6 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
             super.tearDown()
         }
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     protected open fun setUpImportStatusCollector() {
         ExternalSystemProgressNotificationManager
@@ -166,8 +159,10 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
                     // Real file with expected testdata allows to throw nicer exceptions in
                     // case of mismatch, as well as open interactive diff window in IDEA
-                    virtualFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH,
-                        afterFile.takeIf(Files::exists)?.toCanonicalPath() ?: it.absolutePath)
+                    virtualFile.putUserData(
+                        VfsTestUtil.TEST_DATA_FILE_PATH,
+                        afterFile.takeIf(Files::exists)?.toCanonicalPath() ?: it.absolutePath
+                    )
 
                     virtualFile
                 }

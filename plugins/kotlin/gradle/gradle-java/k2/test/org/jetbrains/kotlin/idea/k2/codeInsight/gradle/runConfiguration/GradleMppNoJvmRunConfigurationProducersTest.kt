@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
@@ -13,8 +12,6 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTest
 import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -30,13 +27,12 @@ import org.junit.Test
  * If a project has no jvm target (as here) and other ones producers mistakenly delegate to Gradle plugin tests are not available.
  */
 
-class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfigurationProducerTestCase() {
 
     private lateinit var projectData: ProjectData
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         projectData = generateAndImportMppNoJvmProject()
     }
 

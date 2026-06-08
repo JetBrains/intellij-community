@@ -5,20 +5,12 @@ import com.intellij.compiler.CompilerReferenceService
 import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.util.descendantsOfType
-import com.intellij.util.currentJavaVersion
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
-abstract class AbstractKotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedPluginModeProvider {
-    // it is known that Kotlin 1.9.25 is incompatible with JDK25
-    val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
+abstract class AbstractKotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
+    val isCompatibleVersions: Boolean = true
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
 
     fun `test dirty scope`() {
         if (!isCompatibleVersions) return

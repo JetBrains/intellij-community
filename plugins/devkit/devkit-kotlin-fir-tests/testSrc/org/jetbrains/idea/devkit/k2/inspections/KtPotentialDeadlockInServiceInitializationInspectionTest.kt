@@ -2,15 +2,9 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import org.jetbrains.idea.devkit.inspections.PotentialDeadlockInServiceInitializationInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlockInServiceInitializationInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlockInServiceInitializationInspectionTestBase() {
+    
 
   fun `test read and write actions are reported in a light service`() {
     myFixture.configureByText("TestService.kt", getServiceWithReadAndWriteActionsCalledDuringInit(true))

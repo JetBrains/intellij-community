@@ -5,21 +5,16 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingActionUpdateThread")
-class MissingActionUpdateThreadInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class MissingActionUpdateThreadInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/missingActionUpdateThread"
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.enableInspections(MissingActionUpdateThread::class.java)
     myFixture.addClass("package com.intellij.openapi.actionSystem;" +
                        "public interface ActionUpdateThreadAware {" +

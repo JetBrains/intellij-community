@@ -18,25 +18,12 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
-import org.junit.Ignore;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/references/pluginConfigReference")
-public class KtPluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, () -> super.setUp());
-  }
+public class KtPluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

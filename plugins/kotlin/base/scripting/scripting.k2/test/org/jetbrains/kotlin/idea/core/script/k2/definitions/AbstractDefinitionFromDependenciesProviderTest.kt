@@ -11,19 +11,15 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit3RunnerWithInners::class)
-abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTestCase(), ExpectedPluginModeProvider {
+abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun runInDispatchThread(): Boolean = false
 

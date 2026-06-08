@@ -7,9 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
@@ -26,8 +23,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.writeText
 
-abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase(),
-                                                          ExpectedPluginModeProvider {
+abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
@@ -71,10 +67,6 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         Paths.get(testMethodPath)
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
-
     override fun tearDown() {
         cachedDirectives = null
         super.tearDown()
@@ -110,23 +102,21 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
         val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
 
-        if (pluginMode == KotlinPluginMode.K2) {
-            val expectedPath = Paths.get(testDataPath, expectedPathString)
+        val expectedPath = Paths.get(testDataPath, expectedPathString)
 
-            for (extension in listOf(K2_TEST_FILE_EXTENSION, FIR_TEST_FILE_EXTENSION)) {
-                val k2ExpectedPathString = getExpectedPath(".$extension$expectedSuffix", addSuffixAfterExtension)
-                val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
+        for (extension in listOf(K2_TEST_FILE_EXTENSION, FIR_TEST_FILE_EXTENSION)) {
+            val k2ExpectedPathString = getExpectedPath(".$extension$expectedSuffix", addSuffixAfterExtension)
+            val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
 
-                if (k2ExpectedPath.exists()) {
-                    checkContentByExpectedPath(k2ExpectedPathString)
-                    IgnoreTests.cleanUpIdenticalK2TestFile(
-                        originalTestFile = expectedPath.toFile(),
-                        k2Extension = FIR_TEST_FILE_EXTENSION,
-                        k2TestFile = k2ExpectedPath.toFile()
-                    )
+            if (k2ExpectedPath.exists()) {
+                checkContentByExpectedPath(k2ExpectedPathString)
+                IgnoreTests.cleanUpIdenticalK2TestFile(
+                    originalTestFile = expectedPath.toFile(),
+                    k2Extension = FIR_TEST_FILE_EXTENSION,
+                    k2TestFile = k2ExpectedPath.toFile()
+                )
 
-                    return
-                }
+                return
             }
         }
 

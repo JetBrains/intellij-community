@@ -11,11 +11,8 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -25,12 +22,9 @@ import org.junit.runner.RunWith
  * @see org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider
  */
 @RunWith(JUnit3RunnerWithInners::class)
-abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     @RunWith(JUnit3RunnerWithInners::class)
     class KtFileAndKtClass : KtSearchEverywhereEqualityProviderTest() {

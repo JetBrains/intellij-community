@@ -5,7 +5,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -24,9 +23,6 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
     init {
         isMultiModule = true
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
 

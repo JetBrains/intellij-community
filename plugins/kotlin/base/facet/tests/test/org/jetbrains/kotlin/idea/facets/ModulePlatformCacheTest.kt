@@ -10,7 +10,6 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
@@ -35,8 +34,6 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
         ModulePlatformCache.getInstance(project) // initialize
         module.createFacetWithAdditionalSetup(JvmPlatforms.defaultJvmPlatform, false) {}
     }
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun `test target platform cache invalidation on change of jvmTarget - default initial with non-null args`() {
         with(module.kotlinFacet) {

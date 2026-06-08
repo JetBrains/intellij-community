@@ -17,7 +17,7 @@ import com.intellij.util.ThreeState.YES
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
-class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
+class KotlinJUnit4Framework : JUnit4Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
         override val markerClassFqns: Collection<String> = listOf(JUnitUtil.TEST_ANNOTATION)
         override val disabledTestAnnotation: String = "org.junit.Ignore"
@@ -43,7 +43,10 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             if (checkState != UNSURE) return checkState
 
             return CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(checkJUnit4TestClass(declaration), OuterModelsModificationTrackerManager.getTracker(declaration.project))
+                CachedValueProvider.Result.create(
+                    checkJUnit4TestClass(declaration),
+                    OuterModelsModificationTrackerManager.getTracker(declaration.project)
+                )
             }
         }
 
@@ -177,44 +180,24 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
-    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getSetUpMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit4 SetUp Function.kt")
-        }
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit4 SetUp Function.kt")
     }
 
-    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTearDownMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit4 TearDown Function.kt")
-        }
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit4 TearDown Function.kt")
     }
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit4 Test Function.kt")
-        }
+        return FileTemplateDescriptor("Kotlin JUnit4 Test Function.kt")
     }
 
-    override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getParametersMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit4 Parameters Function.kt")
-        }
+    override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit4 Parameters Function.kt")
     }
 
-    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestClassFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit4 Test Class.kt")
-        }
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor =
+        FileTemplateDescriptor("Kotlin JUnit4 Test Class.kt")
 
     override fun isFrameworkAvailable(clazz: PsiElement): Boolean {
         return super.isFrameworkAvailable(clazz) || clazz is KtClass && psiBasedDelegate.isFrameworkAvailable(clazz)

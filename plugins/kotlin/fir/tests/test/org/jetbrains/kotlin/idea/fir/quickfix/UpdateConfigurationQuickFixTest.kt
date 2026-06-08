@@ -20,7 +20,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -31,11 +30,9 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Ignore
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -43,12 +40,9 @@ import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 @Ignore
-class UpdateConfigurationQuickFixTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun testModuleLanguageVersion() {
         configureRuntime("mockRuntime11")

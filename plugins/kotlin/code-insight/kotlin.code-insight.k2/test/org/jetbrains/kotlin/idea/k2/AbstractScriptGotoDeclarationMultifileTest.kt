@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.TestFiles
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
@@ -71,12 +70,10 @@ abstract class AbstractScriptGotoDeclarationMultifileTest : KotlinMultiFileLight
         GlobalState.checkSystemStreams()
         setupTempDir()
 
-        setUpWithKotlinPlugin {
-            val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
-            myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
-            myFixture.setTestDataPath(testDataDirectory.path)
-            myFixture.setUp()
-        }
+        val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
+        myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
+        myFixture.setTestDataPath(testDataDirectory.path)
+        myFixture.setUp()
 
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
         EditorTracker.getInstance(project)

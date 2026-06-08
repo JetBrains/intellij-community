@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.multiplatformTests
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -42,16 +42,13 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesCheckDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -104,15 +101,10 @@ import kotlin.io.path.writeText
  *
  * Sharing of the test suite capabilities should be done via standalone composable modularized [TestFeature]s
  *
- * Passing [KotlinPluginMode.K2] will turn on K2 IDE mode and will force use of FIR frontend and all corresponding services.
- * The choice happens during IDE plugins loading, it's not possible to have different tests in one suite for different plugin kinds.
- * K1 and K2 classpaths cannot be mixed together. K2 test suites should belong to a different module than K1 tests, see also
- * [com.intellij.ideaProjectStructure.fast.KotlinModuleConsistencyTest].
  */
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath($$"$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
-    ExpectedPluginModeProvider,
     WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
     HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions, TestWithAndroidVersion, DevModeTweaksDsl,
@@ -166,8 +158,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
@@ -231,13 +221,11 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
         }
 
-        setUpWithKotlinPlugin {
-            // Hack: usually this is set-up by JUnit's Parametrized magic, but
-            // our tests source versions from `kotlinTestPropertiesService`, not from
-            // @Parametrized
-            (this as GradleImportingTestCase).gradleVersion = testGradleVersion.version.version
-            super.setUp()
-        }
+        // Hack: usually this is set-up by JUnit's Parametrized magic, but
+        // our tests source versions from `kotlinTestPropertiesService`, not from
+        // @Parametrized
+        (this as GradleImportingTestCase).gradleVersion = testGradleVersion.version.version
+        super.setUp()
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()

@@ -3,15 +3,9 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInspection.i18n.TitleCapitalizationInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+    
 
   fun testBasic() {
     myFixture.enableInspections(TitleCapitalizationInspection())

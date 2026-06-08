@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.GetTestPlatformMethod
-import org.jetbrains.kotlin.testGenerator.generator.methods.KotlinPluginModeMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
@@ -103,8 +102,6 @@ class SuiteElement private constructor(
                 allMethods += testCaseMethods
 
                 if (testCaseMethods.isNotEmpty()) {
-                    allMethods += KotlinPluginModeMethod(group.pluginMode)
-
                     if (platform.isSpecified) {
                         allMethods += GetTestPlatformMethod(platform)
                     }

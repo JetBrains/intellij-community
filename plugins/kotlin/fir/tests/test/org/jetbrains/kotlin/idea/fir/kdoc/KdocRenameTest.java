@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.kdoc;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
-import org.jetbrains.annotations.NotNull;import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.base.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.internal.runners.JUnit38ClassRunner;
@@ -15,12 +15,8 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/kdoc/rename")
 @RunWith(JUnit38ClassRunner.class)
 public class KdocRenameTest extends KotlinLightCodeInsightFixtureTestCase {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
 
-  public void testParamReference() {
+    public void testParamReference() {
         doTest("bar");
     }
 
@@ -32,7 +28,7 @@ public class KdocRenameTest extends KotlinLightCodeInsightFixtureTestCase {
         doTest("xyzzy");
     }
 
-  private void doTest(String newName) {
+    private void doTest(String newName) {
         myFixture.configureByFile(getTestName(false) + ".kt");
         PsiElement element = TargetElementUtil
                 .findTargetElement(getEditor(),

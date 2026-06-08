@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
@@ -1242,17 +1241,17 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     //   use mutable versions of collection creation functions
 
     private fun setOfFqName(): String =
-        if (isK1Mode()) "kotlin.collections.setOf" else "kotlin.collections.mutableSetOf"
+        "kotlin.collections.mutableSetOf"
 
     private fun listOfFqName(): String =
-        if (isK1Mode()) "kotlin.collections.listOf" else "kotlin.collections.mutableListOf"
+        "kotlin.collections.mutableListOf"
 
     private fun emptyListFqName(): String =
-        if (isK1Mode()) "kotlin.collections.emptyList" else "kotlin.collections.mutableListOf"
+        "kotlin.collections.mutableListOf"
 
     private fun emptySetFqName(): String =
-        if (isK1Mode()) "kotlin.collections.emptySet" else "kotlin.collections.mutableSetOf"
+        "kotlin.collections.mutableSetOf"
 
     private fun emptyMapFqName(): String =
-        if (isK1Mode()) "kotlin.collections.emptyMap" else "kotlin.collections.mutableMapOf"
+        "kotlin.collections.mutableMapOf"
 }

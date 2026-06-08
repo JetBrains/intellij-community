@@ -30,7 +30,7 @@ abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtur
             myFixture.editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
         )!!
-        val suffix = if (isFirPlugin) "_K2" else ""
+        val suffix = "_K2"
         val expectedNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// SUGGESTED_NAMES$suffix: ")
         val actualNames = getSuggestNames(targetElement)
         assertEquals(expectedNames, actualNames)

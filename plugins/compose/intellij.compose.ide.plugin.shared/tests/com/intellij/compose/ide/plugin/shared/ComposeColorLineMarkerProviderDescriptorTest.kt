@@ -32,7 +32,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.createFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.test.TestMetadata
@@ -50,8 +49,6 @@ private const val TARGET_GRADLE_VERSION = "8.9"
 @TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.shared/testData")
 @TestMetadata("")
 abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImportingTestCase() {
-
-  abstract override val pluginMode: KotlinPluginMode
 
   private var _codeInsightTestFixture: CodeInsightTestFixture? = null
 

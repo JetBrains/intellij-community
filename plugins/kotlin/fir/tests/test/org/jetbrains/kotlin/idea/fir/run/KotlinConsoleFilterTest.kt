@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.run
 
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.run.KotlinConsoleFilter
 import org.jetbrains.kotlin.idea.run.LocalFileHyperlinkInfo
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -13,7 +12,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinConsoleFilterTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testWindowsPath() {
         val filter = KotlinConsoleFilter(project, GlobalSearchScope.allScope(project))

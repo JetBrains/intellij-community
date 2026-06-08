@@ -13,13 +13,11 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.junit.Assume
 import java.io.File
 
-abstract class KotlinFacetTestCase : BasePlatformTestCase(), ExpectedPluginModeProvider {
+abstract class KotlinFacetTestCase : BasePlatformTestCase() {
 
     private lateinit var myTestFixture: JavaCodeInsightTestFixture
     lateinit var myProject: Project
@@ -34,7 +32,7 @@ abstract class KotlinFacetTestCase : BasePlatformTestCase(), ExpectedPluginModeP
 
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
 
         val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
         val testDataPath: String = getTestDataPath()

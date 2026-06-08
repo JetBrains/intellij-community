@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.junit.jupiter.api.assertThrows
@@ -23,9 +22,6 @@ import java.io.File
 @OptIn(KaAllowAnalysisOnEdt::class)
 class WriteActionInAnalyzeTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     // NOTE: Suspend calls are currently not supported in the Analysis API, so we're not testing the suspend endpoints for write actions.
 

@@ -3,13 +3,9 @@ package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.codeInsight.highlighting.ReadWriteUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinFindUsagesReadAccessTest: KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testKotlinReadWriteAccessFromJava() {
         myFixture.addFileToProject("Foo.kt", "class Foo { var p = 0 }")

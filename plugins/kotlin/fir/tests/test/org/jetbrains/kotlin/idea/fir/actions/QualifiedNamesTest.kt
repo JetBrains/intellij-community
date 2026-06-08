@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.actions
 import com.intellij.ide.actions.CopyReferenceAction
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -13,8 +12,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class QualifiedNamesTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testClassRef() {
         myFixture.configureByText(

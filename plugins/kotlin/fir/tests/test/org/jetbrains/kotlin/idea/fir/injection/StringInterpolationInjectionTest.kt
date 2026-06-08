@@ -16,7 +16,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -24,7 +23,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class StringInterpolationInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

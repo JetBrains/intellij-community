@@ -2,8 +2,11 @@
 package org.jetbrains.kotlin.idea.base.plugin
 
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Only K2 plugin exists, please remove all usages")
 interface KotlinPluginModeProvider {
 
     val pluginMode: KotlinPluginMode
@@ -21,6 +24,8 @@ interface KotlinPluginModeProvider {
     }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Only K2 plugin exists, please remove all usages")
 enum class KotlinPluginMode(
     private val propertyKey: String // TODO @PropertyKey,
 ) {

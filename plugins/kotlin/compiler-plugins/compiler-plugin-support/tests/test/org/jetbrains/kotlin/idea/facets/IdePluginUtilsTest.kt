@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.facets
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
@@ -16,8 +15,6 @@ class IdePluginUtilsTest : KotlinFacetTestCase() {
     val compilerPluginId = "pluginId"
     val otherCompilerPluginId = "pluginId2"
     val pluginName = "pluginName"
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun `test modify empty compiler arguments for plugin with new classpath and new options`() {
         val compilerPluginSetup = CompilerPluginSetup(

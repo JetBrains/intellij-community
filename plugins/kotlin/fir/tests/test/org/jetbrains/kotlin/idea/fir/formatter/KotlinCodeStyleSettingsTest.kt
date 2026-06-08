@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
 import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
@@ -19,19 +18,15 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.ByteArrayOutputStream
 import java.io.File
 
 
-class KotlinCodeStyleSettingsTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
+class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun `test json export with official code style`() = doTestWithJson(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyle")
     fun `test json export with obsolete code style`() = doTestWithJson(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyle")
@@ -119,8 +114,6 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase(), ExpectedPluginModeP
         assertTrue(copyOfSettings.kotlinCommonSettings == copyOfSettings.kotlinCommonSettings)
         assertTrue(copyOfSettings.kotlinCustomSettings == copyOfSettings.kotlinCustomSettings)
     }
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
 }
 

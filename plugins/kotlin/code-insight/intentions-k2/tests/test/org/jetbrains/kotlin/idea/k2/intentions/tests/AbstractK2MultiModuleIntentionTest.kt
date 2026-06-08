@@ -49,7 +49,7 @@ abstract class AbstractK2MultiModuleIntentionTest : AbstractMultiModuleTest() {
 
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
-        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val ignoreDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
@@ -101,7 +101,6 @@ abstract class AbstractK2MultiModuleIntentionTest : AbstractMultiModuleTest() {
                         actionHint,
                         this::availableActions,
                         this::doHighlighting,
-                        pluginMode = pluginMode,
                         shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(
                             actionFile.text,
                             "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION"

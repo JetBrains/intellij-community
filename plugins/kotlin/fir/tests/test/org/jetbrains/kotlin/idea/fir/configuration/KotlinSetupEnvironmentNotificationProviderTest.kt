@@ -3,21 +3,15 @@ package org.jetbrains.kotlin.idea.fir.configuration
 
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinSetupEnvironmentNotificationProviderTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinSetupEnvironmentNotificationProviderTest : LightJavaCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     @Test
     fun testFileUnderSrcMainKotlin() {

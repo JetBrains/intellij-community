@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
@@ -39,7 +38,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Extracti
 import org.jetbrains.kotlin.name.FqName
 
 class K2ComposableAnnotationToExtractedFunctionAdderTest : ComposableAnnotationToExtractedFunctionAdderTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 
   override fun JavaCodeInsightTestFixture.invokeExtractFunctionIn(application: Application, existingAnnotationFqNames: List<FqName>) {
     val helper = ExtractionHelper(existingAnnotationFqNames)

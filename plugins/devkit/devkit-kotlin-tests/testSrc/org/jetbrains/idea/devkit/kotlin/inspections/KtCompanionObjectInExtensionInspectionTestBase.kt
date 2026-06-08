@@ -6,14 +6,11 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
-abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspectionFixTestBase(),
-                                                                ExpectedPluginModeProvider {
+abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun getFileExtension(): String = "kt"
 
@@ -22,7 +19,7 @@ abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspe
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     myFixture.addClass(
       """
         package com.intellij.openapi.extensions; 
@@ -110,7 +107,7 @@ abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspe
 
     val k2FileName = "${resultName}_after.k2.$extension"
     val k2FilePath = getTestDataPath() + "/" + k2FileName
-    if (KotlinPluginModeProvider.isK2Mode() && File(k2FilePath).exists()) {
+    if (File(k2FilePath).exists()) {
       return beforeName to k2FileName
     }
     return beforeName to "${resultName}_after.$extension"

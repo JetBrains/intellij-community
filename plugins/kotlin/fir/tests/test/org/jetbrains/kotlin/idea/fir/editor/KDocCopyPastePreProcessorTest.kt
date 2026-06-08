@@ -4,12 +4,10 @@ package org.jetbrains.kotlin.idea.fir.editor
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.testFramework.EditorTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.awt.datatransfer.StringSelection
 
 class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testDefaultPaste() = doTypeTest(
         """

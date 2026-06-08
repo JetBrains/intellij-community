@@ -88,7 +88,6 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROP
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.RECEIVER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.SETTER_PARAMETER
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -128,7 +127,7 @@ import kotlin.jvm.optionals.getOrNull
  * Remember to commit new builders.
  */
 @TestFixtures
-@UseK2PluginMode
+
 class BuildersGeneratorTest {
   companion object {
     private var oldInitInspections = false

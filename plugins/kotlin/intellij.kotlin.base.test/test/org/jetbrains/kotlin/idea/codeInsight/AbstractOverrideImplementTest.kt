@@ -153,7 +153,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     }
 
     private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>, fileNameWithoutExtension: String) {
-        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
+        if (InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
             return
         }
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
@@ -210,14 +210,13 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
         if (InTextDirectivesUtils.isDirectiveDefined(
                 goldenResultFile.readText(StandardCharsets.UTF_8),
-                IgnoreTests.DIRECTIVES.of(pluginMode)
+                IgnoreTests.DIRECTIVES.IGNORE_K2
             )
         ) {
             return
         }
 
-        val resultFile = if (isFirPlugin) {
-            if (firIdenticalIsPresent) {
+        val resultFile = if (firIdenticalIsPresent) {
                 goldenResultFile
             } else {
                 val firResultFile = File(myFixture.testDataPath, "$fileNameWithoutExtension.kt.${IgnoreTests.FileExtension.FIR}.after")
@@ -226,9 +225,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
                 }
                 firResultFile
             }
-        } else {
-            goldenResultFile
-        }
+
         Assert.assertTrue(resultFile.exists())
         val errorLines = myFixture.dumpErrorLines()
         val currentFile = FileEditorManager.getInstance(project).currentFile!!
@@ -275,7 +272,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
         val testFile = File(testDataDirectory, "$fileNameWithoutExtension.kt")
 
-        val frontendDependentDirective = if (isFirPlugin) MEMBER_K2_DIRECTIVE_PREFIX else MEMBER_K1_DIRECTIVE_PREFIX
+        val frontendDependentDirective = MEMBER_K2_DIRECTIVE_PREFIX
         val actualMemberTexts = chooserObjects.map {
             val text = it.text
             val textStyle = (it as? MemberChooserObjectBase)?.textStyle ?: 0

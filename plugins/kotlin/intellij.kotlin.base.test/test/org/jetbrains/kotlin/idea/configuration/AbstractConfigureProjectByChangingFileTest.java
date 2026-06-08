@@ -100,7 +100,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
         });
     }
 
-    private void copyAllFiles() {
+    private void copyAllFiles() throws Exception {
         File testDataDir = getTestDataDirectory();
 
         ApplicationManager.getApplication().runWriteAction(() -> {
@@ -182,7 +182,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
+            SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor) o;
 
             if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
             return areJdksEqual(that.getSdk());

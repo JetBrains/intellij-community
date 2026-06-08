@@ -1,20 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
-import org.junit.jupiter.api.extension.ConditionEvaluationResult
-import org.junit.jupiter.api.extension.ExecutionCondition
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -22,10 +17,8 @@ import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
-import org.junit.jupiter.params.provider.EnumSource
 import org.junit.platform.commons.util.AnnotationUtils
 import java.util.stream.Stream
-import kotlin.jvm.optionals.getOrNull
 
 /**
  * # Simple junit5 based test method intended for writing unit tests
@@ -105,8 +98,7 @@ import kotlin.jvm.optionals.getOrNull
 
 @TestTemplate
 @ExtendWith(KotlinPluginUnitTestExtension::class)
-@EnumSource(KotlinPluginMode::class)
-annotation class KotlinPluginUnitTest(vararg val modes: KotlinPluginMode = [KotlinPluginMode.K1, KotlinPluginMode.K2])
+annotation class KotlinPluginUnitTest
 
 internal class KotlinPluginUnitTestExtension : TestTemplateInvocationContextProvider {
     override fun supportsTestTemplate(context: ExtensionContext): Boolean {
@@ -116,113 +108,20 @@ internal class KotlinPluginUnitTestExtension : TestTemplateInvocationContextProv
     }
 
     override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
-        val testMethod = context.testMethod.getOrNull() ?: return Stream.empty()
-        val annotation = testMethod.getAnnotation(KotlinPluginUnitTest::class.java) ?: return Stream.empty()
-
-        val k1PluginModeProviderClassName = "org.jetbrains.kotlin.idea.base.fe10.plugin.K1KotlinPluginModeProvider"
-        val k2PluginModeProviderClassName = "org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"
-
-        val k1ProviderClassOrNull = javaClass.classLoader.loadClassOrNull(k1PluginModeProviderClassName)
-        val k2ProviderClassOrNull = javaClass.classLoader.loadClassOrNull(k2PluginModeProviderClassName)
-
-        if (k1ProviderClassOrNull != null && k2ProviderClassOrNull != null) {
-            thisLogger().warn("Detected K1 & K2 plugin at runtime: Use 'kotlin.all-tests' or 'kotlin.fir-all-tests' as classpath")
-        }
-
-        if (k2ProviderClassOrNull != null) {
-            return if (annotation.modes.contains(KotlinPluginMode.K2)) {
-                Stream.of(KotlinPluginUnitTestInvocationContext(KotlinPluginMode.K2))
-            } else Stream.of(IgnoredKotlinPluginUnitTestInvocationContext(KotlinPluginMode.K2))
-        }
-
-        if (k1ProviderClassOrNull != null) {
-            return if (annotation.modes.contains(KotlinPluginMode.K1)) {
-                Stream.of(KotlinPluginUnitTestInvocationContext(KotlinPluginMode.K1))
-            } else Stream.of(IgnoredKotlinPluginUnitTestInvocationContext(KotlinPluginMode.K1))
-        }
-
-        error("Missing Kotlin Plugin: Use 'kotlin.all-tests' or 'kotlin.fir-all-tests' as classpath")
-    }
-}
-
-private fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
-    return try {
-        loadClass(name)
-    } catch (_: ClassNotFoundException) {
-        null
+        return Stream.of(KotlinPluginUnitTestInvocationContext())
     }
 }
 
 private class KotlinPluginUnitTestInvocationContext(
-    val mode: KotlinPluginMode
 ) : TestTemplateInvocationContext {
-    override fun getDisplayName(invocationIndex: Int): String =
-        "KotlinPluginMode ${mode.name}"
+    override fun getDisplayName(invocationIndex: Int): String = "Project resolver"
 
     override fun getAdditionalExtensions(): List<Extension?> =
         listOf(
-            KotlinPluginModeParameterResolver(mode),
-            KotlinPluginSetup(mode),
             LightJavaCodeInsightTestFixtureExtension5()
         )
 }
 
-
-private class IgnoredKotlinPluginUnitTestInvocationContext(
-    val mode: KotlinPluginMode
-) : TestTemplateInvocationContext {
-
-    inner class Ignored : ExecutionCondition {
-        override fun evaluateExecutionCondition(context: ExtensionContext?): ConditionEvaluationResult? {
-            return ConditionEvaluationResult.disabled("Not enabled for KotlinPluginMode.$mode")
-        }
-    }
-
-    override fun getDisplayName(invocationIndex: Int): String {
-        return "KotlinPluginMode: ${mode.name} | Ignored"
-    }
-
-    override fun getAdditionalExtensions(): List<Extension?> =
-        listOf(
-            Ignored(),
-            KotlinPluginModeParameterResolver(mode),
-            KotlinPluginSetup(mode),
-            LightJavaCodeInsightTestFixtureExtension5()
-        )
-}
-
-
-private class KotlinPluginModeParameterResolver(
-    private val mode: KotlinPluginMode
-) : ParameterResolver {
-    override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean {
-        return parameterContext.parameter.type == KotlinPluginMode::class.java
-    }
-
-    override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any? {
-        if (parameterContext.parameter.type != KotlinPluginMode::class.java) return null
-        return mode
-    }
-}
-
-private class KotlinPluginSetup(override val pluginMode: KotlinPluginMode) :
-    BeforeEachCallback, AfterEachCallback,
-    BeforeTestExecutionCallback, ExpectedPluginModeProvider {
-    private val namespace = ExtensionContext.Namespace.create(KotlinPluginSetup::class.java)
-
-    override fun beforeEach(context: ExtensionContext) {
-        context.getStore(namespace).getOrComputeIfAbsent("pluginMode") { useK2Plugin }
-        useK2Plugin = pluginMode == KotlinPluginMode.K2
-    }
-
-    override fun afterEach(context: ExtensionContext) {
-        useK2Plugin = context.getStore(namespace).get("pluginMode") as Boolean?
-    }
-
-    override fun beforeTestExecution(context: ExtensionContext) {
-        assertKotlinPluginMode()
-    }
-}
 
 private class LightJavaCodeInsightTestFixtureExtension5 : BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
@@ -261,8 +160,7 @@ private class LightJavaCodeInsightTestFixtureExtension5 : BeforeEachCallback, Af
     ): Boolean {
         return parameterContext.parameter.type == JavaCodeInsightTestFixture::class.java ||
                 parameterContext.parameter.type == CodeInsightTestFixture::class.java ||
-                parameterContext.parameter.type == Project::class.java ||
-                parameterContext.parameter.type == KotlinPluginMode::class.java
+                parameterContext.parameter.type == Project::class.java
     }
 
     override fun resolveParameter(

@@ -54,7 +54,7 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
     protected fun doTest(fileName: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(fileName),
-            IgnoreTests.DIRECTIVES.of(pluginMode)
+            IgnoreTests.DIRECTIVES.IGNORE_K2
         ) {
             doActualTest(fileName)
         }
@@ -130,8 +130,8 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
                 val expectedFile = run {
                     val extension = when {
-                        isFirPlugin && !isMultiline -> "k2.txt"
-                        isFirPlugin && isMultiline -> "k2_multiline.txt"
+                        !isMultiline -> "k2.txt"
+                        isMultiline -> "k2_multiline.txt"
                         else -> "k1.txt"
                     }
                     mainFile.toPath().resolveSibling("${mainFile.nameWithoutExtension}.${extension}")

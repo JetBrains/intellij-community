@@ -8,7 +8,6 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.TestInClassConfigurationProducer
 import com.intellij.refactoring.RefactoringFactory
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer
 import org.jetbrains.kotlin.idea.run.AbstractRunConfigurationBaseTest
@@ -27,9 +26,6 @@ import org.junit.runner.RunWith
 class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
 
     private lateinit var mockLibraryFacility: MockLibraryFacility
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun setUp() {
         super.setUp()

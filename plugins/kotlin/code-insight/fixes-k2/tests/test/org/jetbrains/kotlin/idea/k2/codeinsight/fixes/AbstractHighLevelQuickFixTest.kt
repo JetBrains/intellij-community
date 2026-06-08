@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.KEEP_ACTIONS_LIST_ORDER_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
@@ -77,7 +76,10 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
             file,
             dataFile(), actions,
             actionsToExclude = emptyList(),
-            actionsListDirectives = pluginMode.actionsListDirectives
+            actionsListDirectives = arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            )
         )
     }
 }

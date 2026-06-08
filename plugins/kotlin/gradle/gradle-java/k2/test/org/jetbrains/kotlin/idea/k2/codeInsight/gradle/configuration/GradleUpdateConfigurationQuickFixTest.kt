@@ -12,9 +12,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -24,9 +22,8 @@ import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
 @TestDataPath("/")
 @TestMetadata("../../../idea/tests/testData/gradle/languageFeature/")

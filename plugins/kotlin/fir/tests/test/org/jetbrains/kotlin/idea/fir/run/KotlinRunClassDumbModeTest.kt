@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
  * Test that "run class" is calculated correctly and is available in Dumb Mode.
  */
 class KotlinRunClassDumbModeTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

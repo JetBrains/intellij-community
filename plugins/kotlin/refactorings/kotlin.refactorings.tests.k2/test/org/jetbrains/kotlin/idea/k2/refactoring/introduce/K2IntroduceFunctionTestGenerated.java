@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/basic")
     public static class Basic extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -387,12 +380,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/contextParameters")
     public static class ContextParameters extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -454,12 +441,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/conditionalJumps")
         public static class ConditionalJumps extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -518,12 +499,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/default")
         public static class Default extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -567,12 +542,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/definiteReturns")
         public static class DefiniteReturns extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -626,12 +595,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/evaluateExpression")
         public static class EvaluateExpression extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -710,12 +673,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/exitPointEquivalence")
         public static class ExitPointEquivalence extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -769,12 +726,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/initializer")
         public static class Initializer extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -818,12 +769,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues")
         public static class OutputValues extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1007,12 +952,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/returnTypeCandidates")
         public static class ReturnTypeCandidates extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1036,12 +975,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/throws")
         public static class Throws extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1095,12 +1028,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable")
         public static class Unextractable extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1150,12 +1077,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/defaultContainer")
     public static class DefaultContainer extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -1199,12 +1120,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/delegation")
     public static class Delegation extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -1228,12 +1143,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/duplicates")
     public static class Duplicates extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -1315,12 +1224,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/initializers/accessors")
         public static class Accessors extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1349,12 +1252,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/initializers/classes")
         public static class Classes extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1383,12 +1280,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/initializers/functions")
         public static class Functions extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1457,12 +1348,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/initializers/properties")
         public static class Properties extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1512,12 +1397,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/multiline")
     public static class Multiline extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -1546,12 +1425,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/optIn")
     public static class OptIn extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -1613,12 +1486,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/candidateTypes")
         public static class CandidateTypes extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1712,12 +1579,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/capturedFunctions")
         public static class CapturedFunctions extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1751,12 +1612,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/extractSuper")
         public static class ExtractSuper extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1785,12 +1640,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis")
         public static class ExtractThis extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1919,12 +1768,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/it")
         public static class It extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1953,12 +1796,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/misc")
         public static class Misc extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2162,12 +1999,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/parameters/nonDenotableTypes")
         public static class NonDenotableTypes extends AbstractK2IntroduceFunctionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2217,12 +2048,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/script")
     public static class Script extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -2246,12 +2071,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
@@ -2345,12 +2164,6 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/typeParameters")
     public static class TypeParameters extends AbstractK2IntroduceFunctionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }

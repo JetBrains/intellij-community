@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.cache.LLFirSessi
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.createKaSourceModuleWithCustomBaseContentScope
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.isCustomSourceModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.registerAsMock
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -26,9 +25,6 @@ import java.io.File
  */
 class SessionInvalidationAvoidsAccessingSourceRootsTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @OptIn(KaImplementationDetail::class, LLFirInternals::class)
     fun `test that session invalidation does not request the source roots of dependent modules`() {

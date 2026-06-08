@@ -11,13 +11,11 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.runner.RunWith
@@ -25,16 +23,11 @@ import org.junit.runner.RunWith
 @RunWith(JUnit3RunnerWithInners::class)
 class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestCase() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun `test highlighting does not flicker during auto-import`() {
         // type in the editor some not-imported class name along with some other unresolved references

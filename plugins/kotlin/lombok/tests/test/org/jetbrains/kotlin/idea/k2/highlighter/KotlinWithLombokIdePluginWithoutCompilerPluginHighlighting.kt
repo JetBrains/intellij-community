@@ -8,20 +8,15 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import de.plushnikov.intellij.plugin.LombokTestUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
+internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : JavaCodeInsightFixtureTestCase() {
 
     private val sdk: Sdk
         get() = LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR.sdk ?: error("Lombok SDK is not found")
 
     override fun setUp() {
-        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+        super.setUp()
         LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR.registerSdk(testRootDisposable)
     }
 
@@ -113,7 +108,7 @@ internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : Java
             "javaWithLombokModule",
             myFixture.tempDirFixture.findOrCreateDir("javaWithLombokModule"),
         )
-        
+
         @Language("JAVA")
         val javaContainerText = """
             package lib;
@@ -131,7 +126,7 @@ internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : Java
                 private D value;
             }
             """.trimIndent()
-        
+
         val javaContainerFile = myFixture.addFileToProject(
             "javaWithLombokModule/lib/Container.java",
             javaContainerText,

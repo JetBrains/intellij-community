@@ -6,7 +6,6 @@ import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.util.startOffset
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UMultiResolvable
@@ -14,9 +13,6 @@ import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.test.common.kotlin.orFail
 
 class FirMultiResolveTestInDifferentReadActions : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     // see https://youtrack.jetbrains.com/issue/KT-60539
     fun testMultiResolveFromDifferentReadAction(){

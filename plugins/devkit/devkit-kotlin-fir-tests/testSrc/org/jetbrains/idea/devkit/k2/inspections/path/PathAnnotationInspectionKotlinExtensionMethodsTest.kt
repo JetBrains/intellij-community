@@ -2,9 +2,6 @@
 package org.jetbrains.idea.devkit.k2.inspections.path
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 /**
  * Tests for PathAnnotationInspection with Kotlin extension methods from kotlin.io.path.
@@ -13,12 +10,9 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
  * - `Path.name`, `Path.nameWithoutExtension`, `Path.extension` should be considered as returning `@Filename`
  * - `Path.pathString`, `Path.absolutePathString()` should be considered as returning `@MultiRoutingFileSystemPath`
  */
-class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspectionKotlinTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspectionKotlinTestBase() {
 
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun testPathNameExtensionMethod() {
     doTest("""

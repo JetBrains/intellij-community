@@ -5,12 +5,10 @@ import com.intellij.idea.IJIgnore
 import com.intellij.junit.testFramework.HamcrestAssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UField
@@ -18,9 +17,6 @@ import org.jetbrains.uast.test.kotlin.TEST_KOTLIN_MODEL_PATH
 import java.nio.file.Path
 
 class MultiplesRequiredTypesTest : AbstractFirUastTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
 

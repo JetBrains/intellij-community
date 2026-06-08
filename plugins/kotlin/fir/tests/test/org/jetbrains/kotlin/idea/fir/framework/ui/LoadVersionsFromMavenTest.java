@@ -6,11 +6,8 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -18,7 +15,7 @@ import java.util.Collection;
 import java.util.Locale;
 
 @RunWith(JUnit38AssumeSupportRunner.class)
-public class LoadVersionsFromMavenTest extends LightIdeaTestCase implements ExpectedPluginModeProvider {
+public class LoadVersionsFromMavenTest extends LightIdeaTestCase {
     public void testDownload() {
         Collection<String> versions;
         try {
@@ -40,11 +37,6 @@ public class LoadVersionsFromMavenTest extends LightIdeaTestCase implements Expe
 
     @Override
     protected void setUp() throws Exception {
-        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
-    }
-
-    @Override
-    public @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+        super.setUp();
     }
 }

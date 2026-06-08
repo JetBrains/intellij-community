@@ -20,8 +20,8 @@ abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTest
 
     override fun doTest(testDataPath: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
-            dataFilePath(), 
-            IgnoreTests.DIRECTIVES.of(pluginMode),
+            dataFilePath(),
+            IgnoreTests.DIRECTIVES.IGNORE_K2,
             test = { super.doTest(testDataPath) }
         )
     }
@@ -45,7 +45,7 @@ abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTest
         bindElement(refElement)
     }
 
-     abstract fun bindElement(refElement: KtElement)
+    abstract fun bindElement(refElement: KtElement)
 
     protected companion object {
         const val BIND_TO = "BIND_TO"

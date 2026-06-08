@@ -1,8 +1,4 @@
 <idea-plugin package="org.jetbrains.kotlin.onboarding">
-  <applicationListeners>
-    <listener class="org.jetbrains.kotlin.onboarding.k2.FirStatusBarWidgetListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-  </applicationListeners>
 
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
@@ -13,7 +9,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
 
-    <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.onboarding.k2.FirStatusBarWidgetFactory"/>
     <applicationSettings service="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">

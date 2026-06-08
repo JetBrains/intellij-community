@@ -3,7 +3,6 @@
 package org.jetbrains.fir.uast.test
 
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.resolvableWithTargets
 import org.jetbrains.uast.test.env.kotlin.assertEqualsToFile
@@ -13,9 +12,6 @@ import java.nio.file.Path
 
 class KotlinUastResolveEverythingTest : AbstractFirUastTest() {
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun check(filePath: String, file: UFile) {
         val expected = Path.of(filePath.removeSuffix(".kt") + ".resolved.txt").toFile()

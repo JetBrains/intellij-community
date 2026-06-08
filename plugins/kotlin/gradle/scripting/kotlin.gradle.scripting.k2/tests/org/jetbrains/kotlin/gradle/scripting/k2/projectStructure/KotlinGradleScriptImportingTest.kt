@@ -17,8 +17,6 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.BASE_SCRIPT_MODEL_PHASE
@@ -47,9 +45,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
 
-@UseK2PluginMode
+
 @TestApplication
-@AssertKotlinPluginMode
 class KotlinGradleScriptImportingTest {
 
     private val testRoot by tempPathFixture()

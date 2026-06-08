@@ -7,10 +7,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.getContainingUClass
 import org.jetbrains.uast.getParentOfType
@@ -22,13 +19,12 @@ private const val SERVICE_DECLARATIONS_DIR = "serviceDeclarations"
 private const val SERVICE_USAGES_DIR = "serviceUsages"
 
 @TestDataPath("\$CONTENT_ROOT/testData/util/serviceUtil")
-class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "util/serviceUtil"
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
     addPlatformClasses()
     myFixture.configureByFile("plugin.xml")

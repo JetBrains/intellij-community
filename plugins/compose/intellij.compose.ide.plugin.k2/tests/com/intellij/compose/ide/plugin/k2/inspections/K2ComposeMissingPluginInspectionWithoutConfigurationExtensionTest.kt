@@ -5,13 +5,9 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.compose.ide.plugin.shared.util.enableComposeInTest
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 internal class K2ComposeMissingPluginInspectionWithoutConfigurationExtensionTest : KotlinLightCodeInsightFixtureTestCase() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
   override fun setUp() {
     super.setUp()

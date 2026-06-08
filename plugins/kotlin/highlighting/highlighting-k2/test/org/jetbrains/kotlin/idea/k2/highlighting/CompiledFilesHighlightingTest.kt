@@ -20,7 +20,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompiler
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompilerTask
@@ -46,7 +45,6 @@ import kotlin.io.path.name
 @RunWith(JUnit38ClassRunner::class)
 @TestMetadata("testData/highlighter/compiled")
 class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     // KTIJ-38501
     @TestMetadata("default/linkdata/package_kotlin.collections/26_collections.knm")

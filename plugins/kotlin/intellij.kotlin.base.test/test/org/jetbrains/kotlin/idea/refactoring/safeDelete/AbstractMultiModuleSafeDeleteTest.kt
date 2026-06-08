@@ -26,7 +26,7 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
             val elementClass = Class.forName(config.getString("elementClass")) as Class<PsiElement>
             val element = elementsAtCaret.single().getNonStrictParentOfType(elementClass)!!
             val project = mainFile.project
-            with (KotlinSafeDeleteSettings) {
+            with(KotlinSafeDeleteSettings) {
                 project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED = config.get("liftParameterToExpected")?.asBoolean ?: true
             }
             SafeDeleteHandler.invoke(project, arrayOf(element), null, true, null)
@@ -57,7 +57,7 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
 
         isMultiModule = true
 
-        val isEnabled = config.get("enabledIn${pluginMode.name}")?.asBoolean != false
+        val isEnabled = config.get("enabledInK2")?.asBoolean != false
 
         val results = runCatching {
             doTestCommittingDocuments { rootDir, _ ->

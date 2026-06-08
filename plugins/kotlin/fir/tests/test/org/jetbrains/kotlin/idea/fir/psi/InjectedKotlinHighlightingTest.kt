@@ -5,12 +5,10 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl.waitForAs
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue
 import com.intellij.testFramework.fixtures.InjectionTestFixture
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class InjectedKotlinHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
     // Kotlin disables several diagnostics inside injected fragments, e.g. inside Markdown fence blocks
 
     private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)

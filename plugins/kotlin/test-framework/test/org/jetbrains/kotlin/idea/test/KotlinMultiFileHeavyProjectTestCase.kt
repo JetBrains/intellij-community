@@ -25,8 +25,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
-                                                     ExpectedPluginModeProvider {
+abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
 
     open val testDataDirectory: Path by lazy {
         Path(TestMetadataUtil.getTestDataPath(javaClass))
@@ -41,9 +40,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
 
     private var mockLibraryFacility: MockLibraryFacility? = null
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun tearDown(): Unit = runAll(
         { mockLibraryFacility?.tearDown(module) },

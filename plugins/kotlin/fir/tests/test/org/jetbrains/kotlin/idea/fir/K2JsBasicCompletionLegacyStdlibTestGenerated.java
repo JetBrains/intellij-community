@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -25,12 +24,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/annotations")
         public static class Annotations extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -259,12 +252,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/autoPopup")
         public static class AutoPopup extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -363,12 +350,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/backticked")
         public static class Backticked extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -392,12 +373,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/boldOrGrayed")
         public static class BoldOrGrayed extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -531,12 +506,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/bracketOperators")
         public static class BracketOperators extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -580,12 +549,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/callableReference")
         public static class CallableReference extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -709,12 +672,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/companionObject")
         public static class CompanionObject extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -858,12 +815,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/constructor")
         public static class Constructor extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -932,12 +883,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/contextSensitiveResolution")
         public static class ContextSensitiveResolution extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -966,12 +911,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/dslMarker")
         public static class DslMarker extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1020,12 +959,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/enums")
         public static class Enums extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1124,12 +1057,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/extensionDeclarations")
         public static class ExtensionDeclarations extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1228,12 +1155,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/extensionFunctionTypeValues")
         public static class ExtensionFunctionTypeValues extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1272,12 +1193,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/extensionMethodInObject")
         public static class ExtensionMethodInObject extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1371,12 +1286,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/extensions")
         public static class Extensions extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1555,12 +1464,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/fromSmart")
         public static class FromSmart extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1624,12 +1527,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/fromUnresolvedNames")
         public static class FromUnresolvedNames extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1708,12 +1605,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/highOrderFunctions")
         public static class HighOrderFunctions extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1772,12 +1663,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/inInitBlock")
         public static class InInitBlock extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1796,12 +1681,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/inStringLiterals")
         public static class InStringLiterals extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1840,12 +1719,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/inSuperTypes")
         public static class InSuperTypes extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1879,12 +1752,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/inTypeAlias")
         public static class InTypeAlias extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1903,12 +1770,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/lambdaAndTypeParams")
         public static class LambdaAndTypeParams extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1942,12 +1803,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/lambdaSignature")
         public static class LambdaSignature extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2011,12 +1866,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/namedArguments")
         public static class NamedArguments extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2240,12 +2089,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/noCompletion")
         public static class NoCompletion extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2299,12 +2142,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/objects")
         public static class Objects extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2343,12 +2180,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/operatorNames")
         public static class OperatorNames extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2372,12 +2203,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/override")
         public static class Override extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2471,12 +2296,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/parameterNameAndType")
         public static class ParameterNameAndType extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2665,12 +2484,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/primaryConstructor")
         public static class PrimaryConstructor extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2739,12 +2552,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/primitiveCompletion")
         public static class PrimitiveCompletion extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2948,12 +2755,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/sealedHierarchy")
         public static class SealedHierarchy extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2987,12 +2788,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/shadowing")
         public static class Shadowing extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3141,12 +2936,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/smartCast")
         public static class SmartCast extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3200,12 +2989,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/staticMembers")
         public static class StaticMembers extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3244,12 +3027,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/substitutedSignature")
         public static class SubstitutedSignature extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3293,12 +3070,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/super")
         public static class Super extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3357,12 +3128,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/typeAliasTypes")
         public static class TypeAliasTypes extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3391,12 +3156,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/typeArgsOrNot")
         public static class TypeArgsOrNot extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3450,12 +3209,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common")
         public static class Uncategorized extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4459,12 +4212,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/variableNameAndType")
         public static class VariableNameAndType extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4503,12 +4250,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/visibility")
         public static class Visibility extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4602,12 +4343,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/when")
         public static class When extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4731,12 +4466,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/where")
         public static class Where extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

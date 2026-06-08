@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.artifacts.KotlinJvmLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
@@ -24,10 +23,7 @@ abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTest
     }
 
     protected fun performTest() {
-        val disableDirective = when (pluginMode) {
-            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
-        }
+        val disableDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
             myFixture.configureByDefaultFile()
             templateName?.let(myFixture::type)

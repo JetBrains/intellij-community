@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementWithLibTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
@@ -16,9 +15,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/codeInsight/overrideImplement/withLib")
 @RunWith(JUnit38ClassRunner::class)
 internal class FirOverrideImplementWithLibTest : OverrideImplementWithLibTest<KtClassMember>(), FirOverrideImplementTestMixIn {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

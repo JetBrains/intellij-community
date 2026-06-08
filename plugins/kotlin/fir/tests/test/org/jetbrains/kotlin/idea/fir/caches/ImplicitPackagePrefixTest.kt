@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.fir.caches
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -18,8 +17,6 @@ import org.junit.runner.RunWith
 class ImplicitPackagePrefixTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private lateinit var cacheService: PerModulePackageCacheService
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
 

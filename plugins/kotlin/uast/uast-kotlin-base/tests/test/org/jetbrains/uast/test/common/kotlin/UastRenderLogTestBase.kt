@@ -2,15 +2,13 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.asRecursiveLogString
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastRenderLogTestBase : UastFileComparisonTestBase,
-                                  ExpectedPluginModeProvider {
+interface UastRenderLogTestBase : UastFileComparisonTestBase {
 
     private fun getRenderFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "render$suffix")
     private fun getLogFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "log$suffix")
@@ -21,13 +19,13 @@ interface UastRenderLogTestBase : UastFileComparisonTestBase,
     private fun getPluginRenderFile(filePath: String): File {
         val identicalFile = getIdenticalRenderFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getRenderFile(filePath, "$pluginSuffix$TXT")
+        return getRenderFile(filePath, ".fir$TXT")
     }
 
     private fun getPluginLogFile(filePath: String): File {
         val identicalFile = getIdenticalLogFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getLogFile(filePath, "$pluginSuffix$TXT")
+        return getLogFile(filePath, ".fir$TXT")
     }
 
     fun check(filePath: String, file: UFile) {
@@ -36,18 +34,5 @@ interface UastRenderLogTestBase : UastFileComparisonTestBase,
 
         KotlinTestUtils.assertEqualsToFile(renderFile, file.asRenderString())
         KotlinTestUtils.assertEqualsToFile(logFile, file.asRecursiveLogString())
-
-        cleanUpIdenticalFile(
-            renderFile,
-            getRenderFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalRenderFile(filePath),
-            kind = "render"
-        )
-        cleanUpIdenticalFile(
-            logFile,
-            getLogFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalLogFile(filePath),
-            kind = "log"
-        )
     }
 }

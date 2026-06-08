@@ -4,19 +4,13 @@ package org.jetbrains.idea.devkit.k2.inspections.quickfix;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.UseDPIAwareInsetsFixTestBase;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 
-public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+
+public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override
@@ -170,7 +164,7 @@ public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase imp
       kotlin("""
                import com.intellij.util.ui.JBUI.insets
                import java.awt.Insets
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -182,7 +176,7 @@ public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase imp
                import com.intellij.util.ui.JBUI
                import com.intellij.util.ui.JBUI.insets
                import java.awt.Insets
-
+               
                @Suppress("UNUSED_VARIABLE")
                class TestClass {
                  fun any() {
@@ -196,7 +190,7 @@ public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase imp
   private static String awtInsets(String code) {
     return """
       import java.awt.Insets
-
+      
       @Suppress("UNUSED_VARIABLE")
       class TestClass {
         fun any() {
@@ -210,7 +204,7 @@ public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase imp
     return """
       import com.intellij.util.ui.JBUI
       import java.awt.Insets
-
+      
       @Suppress("UNUSED_VARIABLE")
       class TestClass {
         fun any() {

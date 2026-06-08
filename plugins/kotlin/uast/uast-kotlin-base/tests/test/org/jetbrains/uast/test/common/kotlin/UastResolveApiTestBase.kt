@@ -11,8 +11,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiParameter
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -32,7 +30,7 @@ import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 
-interface UastResolveApiTestBase : ExpectedPluginModeProvider {
+interface UastResolveApiTestBase {
 
     fun checkCallbackForDoWhile(filePath: String, uFile: UFile) {
         val facade = uFile.findFacade()
@@ -113,30 +111,32 @@ interface UastResolveApiTestBase : ExpectedPluginModeProvider {
             val resolvedImport = uImport.resolve()
                 ?: throw IllegalStateException("Unresolved import: ${uImport.asRenderString()}")
 
-            val isK2PluginMode = pluginMode == KotlinPluginMode.K2
             val expected = when (resolvedImport) {
                 is PsiClass -> {
                     // import java.lang.Thread.*
                     resolvedImport.name == "Thread" || resolvedImport.name == "UncaughtExceptionHandler"
                 }
+
                 is PsiMethod -> {
                     // import java.lang.Thread.currentThread
                     resolvedImport.name == "currentThread" || resolvedImport.name == "emptyList"
                 }
+
                 is PsiField -> {
                     // import java.lang.Thread.NORM_PRIORITY
-                    resolvedImport.name == "NORM_PRIORITY" ||
-                            // import kotlin.Int.Companion.SIZE_BYTES
-                            (!isK2PluginMode && resolvedImport.name == "SIZE_BYTES")
+                    resolvedImport.name == "NORM_PRIORITY"
                 }
+
                 is KtNamedFunction -> {
                     // import kotlin.collections.emptyList
-                    isK2PluginMode && resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
+                    resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
                 }
+
                 is KtProperty -> {
                     // import kotlin.Int.Companion.SIZE_BYTES
-                    isK2PluginMode && resolvedImport.name == "SIZE_BYTES"
+                    resolvedImport.name == "SIZE_BYTES"
                 }
+
                 else -> false
             }
             Assert.assertTrue("Unexpected import: $resolvedImport", expected)

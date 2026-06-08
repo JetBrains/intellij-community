@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.folding
 
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.testFramework.EditorTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
@@ -18,7 +17,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/folding/afterOptimizeImports")
 @RunWith(JUnit38ClassRunner::class)
 class FoldingAfterOptimizeImportsTest : AbstractKotlinFoldingTest() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testFoldingAfterOptimizeImports() = doTest()
     fun testFoldingAfterOptimizeImportsRemoveFirst() = doTest()

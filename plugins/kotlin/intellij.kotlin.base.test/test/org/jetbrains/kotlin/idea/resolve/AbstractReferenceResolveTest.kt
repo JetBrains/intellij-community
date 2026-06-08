@@ -36,7 +36,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     protected open fun doTest(path: String) {
         configureTest()
-        val controlDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val controlDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
             performChecks()
         }
@@ -65,14 +65,20 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             val fileText = myFixture.file.text
             val expectedResolveData = readResolveData(fileText, getExpectedReferences(fileText, index))
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
-            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }, replacePlaceholders = replacePlaceholders) { reference, resolveTo ->
+            checkReferenceResolve(
+                expectedResolveData,
+                offset,
+                psiReference,
+                render = { this.render(it) },
+                replacePlaceholders = replacePlaceholders
+            ) { reference, resolveTo ->
                 checkResolvedTo(expectedResolveData, reference, resolveTo)
                 performAdditionalResolveChecks(listOf(resolveTo))
             }
         }
     }
 
-    protected open fun render(element: PsiElement) : String {
+    protected open fun render(element: PsiElement): String {
         return element.renderAsGotoImplementation()
     }
 
@@ -101,7 +107,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             val results = executeOnPooledThreadInReadAction {
                 wrapReference(psiReference).multiResolve(true).map { result ->
                     result.element
-                        ?:  UsefulTestCase.fail("Reference ${psiReference} was resolved to ${result} without psi element") as Nothing
+                        ?: UsefulTestCase.fail("Reference ${psiReference} was resolved to ${result} without psi element") as Nothing
                 }
             }
 
@@ -127,7 +133,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     protected open fun getExpectedReferences(text: String, index: Int): List<String> {
-        val additionalPrefix = if (isFirPlugin) "_K2" else "_K1"
+        val additionalPrefix = "_K2"
         val prefix = "REF"
         return getExpectedReferences(text, index, prefix + additionalPrefix).ifEmpty {
             getExpectedReferences(text, index, prefix)
@@ -193,8 +199,10 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
                 } else {
                     if (!expectedResolveData.shouldBeUnresolved()) {
                         assertNull(
-                            "Element $psiReference (${psiReference.element
-                                .text}) wasn't resolved to anything, but $expectedString was expected", expectedString
+                            "Element $psiReference (${
+                                psiReference.element
+                                    .text
+                            }) wasn't resolved to anything, but $expectedString was expected", expectedString
                         )
                     }
                 }

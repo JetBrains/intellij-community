@@ -5,16 +5,12 @@ import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 private const val inspectionPath = "/codeInspection/sourceToSinkFlow/markAsSafeFix"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-abstract class KotlinMarkAsSafeFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+abstract class KotlinMarkAsSafeFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() {
+  
 
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 

@@ -4,19 +4,15 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.kotlin.inspections.DispatchersEdtInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class DispatchersEdtInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class DispatchersEdtInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN

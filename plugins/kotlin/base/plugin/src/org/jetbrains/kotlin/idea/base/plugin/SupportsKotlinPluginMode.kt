@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.plugin
 
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 
 /**
 * Represents if the Kotlin plugin supports K1 or K2 mode. The following code to `plugin.xml` can be added to support both K1 and K2 modes:
@@ -23,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Attribute
  * </extensions>
  * ```
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("K1 plugin doesn't exist anymore, K2 mode is used by default")
 class SupportsKotlinPluginMode {
   @Attribute("supportsK1")

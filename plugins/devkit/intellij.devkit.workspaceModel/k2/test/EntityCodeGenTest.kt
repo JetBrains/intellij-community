@@ -3,8 +3,7 @@ package com.intellij.devkit.workspaceModel.k2
 
 import com.intellij.devkit.workspaceModel.AbstractEntityCodeGenTest
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 
-@UseK2PluginMode
+
 @TestApplication
 class EntityCodeGenTest : AbstractEntityCodeGenTest()

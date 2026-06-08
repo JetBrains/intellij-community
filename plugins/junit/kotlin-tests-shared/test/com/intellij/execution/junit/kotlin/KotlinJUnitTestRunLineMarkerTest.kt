@@ -7,17 +7,15 @@ import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 
-abstract class KotlinJUnitTestRunLineMarkerTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnitTestRunLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
   companion object {
     val descriptor: JUnitProjectDescriptor = JUnitProjectDescriptor(HIGHEST, MavenTestLib.JUNIT5)
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 

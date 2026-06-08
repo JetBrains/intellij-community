@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -20,7 +18,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/kdoc/inCompletion")
 @RunWith(JUnit38ClassRunner::class)
 class QuickDocInCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

@@ -41,13 +41,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFunction
 
 @ApiStatus.Internal
-abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.enableComposeInTest()

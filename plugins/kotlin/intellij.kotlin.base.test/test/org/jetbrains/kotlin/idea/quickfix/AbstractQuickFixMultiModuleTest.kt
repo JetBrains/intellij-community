@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
@@ -40,10 +39,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
     override val additionalToolDirectives: Array<String>
         get() {
-            val directive = when (pluginMode) {
-                KotlinPluginMode.K1 -> AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
-                KotlinPluginMode.K2 -> AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
-            }
+            val directive = AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
             return arrayOf(directive)
         }
 
@@ -52,7 +48,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val ignoreDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
@@ -102,8 +98,10 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         actionHint,
                         this::availableActions,
                         this::doHighlighting,
-                        pluginMode = pluginMode,
-                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
+                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(
+                            actionFile.text,
+                            "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION"
+                        )
                     )
 
                     ExpectActualUtils.testLog.toString()
@@ -143,7 +141,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
-    protected open fun checkForUnexpectedErrors(actionFile: KtFile){
+    protected open fun checkForUnexpectedErrors(actionFile: KtFile) {
     }
 
     private fun compareToExpected(directory: String) {

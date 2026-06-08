@@ -2,10 +2,8 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2JavaApiUsageInspectionTest : KotlinJavaApiUsageInspectionTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 
   fun `test method that will be overridden in a future Java version`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)

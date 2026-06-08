@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.refactoring
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class ApplicableMoveHandlersTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testOrder() {
         val kotlinHandlers = MoveHandlerDelegate.EP_NAME.extensionList.filter { it.supportsLanguage(KotlinLanguage.INSTANCE) }

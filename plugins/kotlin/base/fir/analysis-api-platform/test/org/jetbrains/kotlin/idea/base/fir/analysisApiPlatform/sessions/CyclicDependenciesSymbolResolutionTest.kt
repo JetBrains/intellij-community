@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.components.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,9 +27,6 @@ import java.io.File
 class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
 
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun `test that function symbols from cyclic dependencies can be resolved`() {
         val moduleA = createModuleInTmpDir("a") {

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.fir.navigation
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES
 import org.jetbrains.kotlin.idea.test.KOTLIN_JAVASCRIPT
 import org.jetbrains.kotlin.idea.test.KOTLIN_JAVASCRIPT_WITH_ADDITIONAL_JVM_WITH_STDLIB
@@ -22,7 +21,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     @ProjectDescriptorKind(JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES)
     fun testNavigateToCommonDeclarationWhenPlatformSpecificOverloadAvailable() {

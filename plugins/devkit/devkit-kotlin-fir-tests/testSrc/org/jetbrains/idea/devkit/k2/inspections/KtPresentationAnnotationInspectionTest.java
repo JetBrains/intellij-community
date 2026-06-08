@@ -13,21 +13,14 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/presentation")
-public class KtPresentationAnnotationInspectionTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KtPresentationAnnotationInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -36,7 +29,7 @@ public class KtPresentationAnnotationInspectionTest extends JavaCodeInsightFixtu
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
     myFixture.enableInspections(PresentationAnnotationInspection.class);
   }
 

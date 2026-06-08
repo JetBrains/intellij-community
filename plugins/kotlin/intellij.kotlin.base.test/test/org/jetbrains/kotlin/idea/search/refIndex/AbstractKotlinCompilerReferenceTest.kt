@@ -5,7 +5,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.compiler.impl.CompileDriver
 import com.intellij.testFramework.assertEqualsToFile
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.io.path.Path
 import kotlin.io.path.deleteExisting
@@ -26,9 +25,8 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val isK2 = pluginMode == KotlinPluginMode.K2
         val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json")
-            .takeIf { isK2 && it.exists() }
+            .takeIf { it.exists() }
         val pathToCheck = firConfigurationPath ?: configurationPath
         val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 
@@ -36,7 +34,7 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         val shouldBeUsage = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }?.toSet().orEmpty()
         val ignoreK2Compiler = config[IGNORE_K2_COMPILER]?.asString
 
-        val isTestEnabled = isCompatibleVersions && (!isK2 || ignoreK2Compiler == null)
+        val isTestEnabled = isCompatibleVersions && (ignoreK2Compiler == null)
 
         runCatching {
             val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)

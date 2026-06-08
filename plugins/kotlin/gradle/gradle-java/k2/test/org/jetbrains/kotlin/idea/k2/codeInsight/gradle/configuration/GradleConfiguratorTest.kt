@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
@@ -65,9 +64,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
         foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("<9.0.0")

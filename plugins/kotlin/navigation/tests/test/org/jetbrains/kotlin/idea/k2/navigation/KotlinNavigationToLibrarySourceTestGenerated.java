@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.navigation;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -26,12 +25,6 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers")
         public static class Classfiers extends AbstractKotlinNavigationToLibrarySourceTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -75,12 +68,6 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/constructors")
         public static class Constructors extends AbstractKotlinNavigationToLibrarySourceTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -104,12 +91,6 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/functions")
         public static class Functions extends AbstractKotlinNavigationToLibrarySourceTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -153,12 +134,6 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties")
         public static class Properties extends AbstractKotlinNavigationToLibrarySourceTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

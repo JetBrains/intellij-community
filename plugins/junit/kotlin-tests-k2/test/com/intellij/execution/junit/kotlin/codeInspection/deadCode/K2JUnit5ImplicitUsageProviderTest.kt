@@ -3,11 +3,9 @@ package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
 
 class K2JUnit5ImplicitUsageProviderTest : KotlinJUnit5ImplicitUsageProviderTest() {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
   override val inspection: InspectionProfileEntry by lazy { UnusedSymbolInspection() }
 
   fun `test usage of method source with property name`() {

@@ -14,19 +14,14 @@ import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeApiUsageInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import kotlin.time.Duration.Companion.seconds
 
-class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String = "inspections/apiUsageRestrictedToModuleType"
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
 
     val service = SplitModeApiRestrictionsService.getInstance()

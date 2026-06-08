@@ -4,15 +4,9 @@ package org.jetbrains.kotlin.idea.fir.actions
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class NewKotlinFileActionTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+class NewKotlinFileActionTest : BasePlatformTestCase() {
+    
 
     private val testTemplate = CustomFileTemplate("test template", "kt").apply {
         text = """

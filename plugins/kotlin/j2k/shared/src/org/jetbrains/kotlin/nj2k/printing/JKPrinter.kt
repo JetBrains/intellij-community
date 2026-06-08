@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
 import org.jetbrains.kotlin.nj2k.JKImportStorage
@@ -117,11 +116,6 @@ class JKPrinter(
 ) : JKPrinterBase() {
     private val symbolRenderer = JKSymbolRenderer(importStorage, project)
 
-    private fun JKType.renderTypeInfo() {
-        if (isK2Mode()) return
-        this@JKPrinter.print(elementInfoStorage.getOrCreateInferenceLabelForElement(this).render())
-    }
-
     fun renderType(type: JKType, owner: JKTreeElement? = null, renderTypeParameters: Boolean = true) {
         if (type is JKNoType) return
 
@@ -132,14 +126,11 @@ class JKPrinter(
                 }
 
                 is JKStarProjectionType -> {
-                    type.renderTypeInfo()
                     this.print("Any?")
                 }
             }
             return
         }
-
-        type.renderTypeInfo()
 
         when (type) {
             is JKClassType -> {

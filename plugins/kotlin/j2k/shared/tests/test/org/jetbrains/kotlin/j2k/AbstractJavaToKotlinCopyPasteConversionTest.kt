@@ -42,7 +42,7 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTe
 
     fun doTest(unused: String) {
         val testFile = dataFile()
-        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile.toPath(), getDisableTestDirective(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             withCustomCompilerOptions(testFile.readText(), project, module) {
                 doTest(testFile)
             }
@@ -63,17 +63,17 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTe
 
         configureTargetFile("$baseName.to.kt")
 
-            ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
+        ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
 
-            myFixture.performEditorAction(IdeActions.ACTION_PASTE)
-            UIUtil.dispatchAllInvocationEvents()
+        myFixture.performEditorAction(IdeActions.ACTION_PASTE)
+        UIUtil.dispatchAllInvocationEvents()
 
         assertEquals(
             noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
             if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
         )
 
-        val expectedFile = getExpectedFile(testFile, isCopyPaste = true, pluginMode)
+        val expectedFile = getExpectedFile(testFile, isCopyPaste = true)
         val actualText = myFixture.file.text
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }

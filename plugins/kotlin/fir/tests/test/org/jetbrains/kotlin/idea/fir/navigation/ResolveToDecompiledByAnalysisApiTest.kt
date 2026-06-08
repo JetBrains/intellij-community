@@ -5,7 +5,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.test.TestMetadata
 
 class ResolveToDecompiledByAnalysisApiTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private val mockLibraryFacility = MockLibraryFacility(
         source = IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/resolveByAnalysisApi/library"),

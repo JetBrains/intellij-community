@@ -3,14 +3,12 @@
 package org.jetbrains.kotlin.idea.fir.injection
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.utils.keysToMap
 
 class StringInjectionHostTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testRegular() {
         with(quoted("")) {

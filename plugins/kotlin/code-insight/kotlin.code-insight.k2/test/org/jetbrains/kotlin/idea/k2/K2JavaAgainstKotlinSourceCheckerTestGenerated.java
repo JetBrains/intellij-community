@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2JavaAgainstKotlinSourceCheckerTestGenerated extends Abst
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin")
     public static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -247,12 +240,6 @@ public abstract class K2JavaAgainstKotlinSourceCheckerTestGenerated extends Abst
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/kotlinAndJavaChecker/javaWithKotlin")
     public static class JavaWithKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -6,12 +6,11 @@ import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest.Compan
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest.Companion.ACTIONS_NOT_IMPLEMENTED
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 
-abstract class AbstractK2MultiFileQuickFixTest: AbstractQuickFixMultiFileTest() {
+abstract class AbstractK2MultiFileQuickFixTest : AbstractQuickFixMultiFileTest() {
 
     override fun checkForUnexpectedErrors(file: KtFile) {}
 
@@ -25,7 +24,10 @@ abstract class AbstractK2MultiFileQuickFixTest: AbstractQuickFixMultiFileTest() 
             this.file,
             dataFile(), actions,
             actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
-            actionsListDirectives = pluginMode.actionsListDirectives
+            actionsListDirectives = arrayOf(
+                DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE,
+                DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+            )
         )
     }
 }

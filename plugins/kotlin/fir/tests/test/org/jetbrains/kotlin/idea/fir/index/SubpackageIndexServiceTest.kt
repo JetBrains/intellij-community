@@ -2,13 +2,11 @@
 package org.jetbrains.kotlin.idea.fir.index
 
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 class SubpackageIndexServiceTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testBasicWithoutCaching() {
         setupSimpleTest()

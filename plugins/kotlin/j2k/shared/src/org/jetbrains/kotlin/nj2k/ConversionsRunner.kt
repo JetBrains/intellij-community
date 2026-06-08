@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 
@@ -14,7 +13,7 @@ object ConversionsRunner {
         trees: List<JKTreeRoot>,
         context: ConverterContext,
     ) {
-        val j2kKind = if (KotlinPluginModeProvider.isK2Mode()) K2 else K1_NEW
+        val j2kKind = K2
         val conversions = J2kConverterExtension.extension(j2kKind).getConversions(context)
 
         for (conversion in conversions) {

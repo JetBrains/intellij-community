@@ -26,8 +26,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertTrue
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -41,9 +39,8 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @TestDataPath($$"$CONTENT_ROOT/testData")
 @TestRoot("completion/kotlin/tests/testData")
 @TestMetadata("buildGradleKts/dependencies")

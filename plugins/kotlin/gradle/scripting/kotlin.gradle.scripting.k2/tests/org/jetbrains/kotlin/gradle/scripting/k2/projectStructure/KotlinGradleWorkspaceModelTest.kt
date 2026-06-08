@@ -8,8 +8,6 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
@@ -19,9 +17,8 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @ParameterizedClass
 @AllGradleVersionsSource
 @TargetVersions(KOTLIN_SUPPORTED_VERSIONS, KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)

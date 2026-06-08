@@ -69,7 +69,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
     public void doJavaMethodTest(@NotNull String path) throws Exception {
         doTest(path, PsiMethod.class, true);
     }
-    
+
     public void doJavaParameterTest(@NotNull String path) throws Exception {
         doTest(path, PsiParameter.class, true);
     }
@@ -110,10 +110,9 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
             @NotNull String path, @NotNull Class<T> elementClass, boolean withJava) throws Exception {
         String[] filePaths;
         if (withJava) {
-            filePaths = new String[]{path, path.endsWith(".java") ? path.replace(".java", ".kt") : path.replace(".kt", ".java")};
-        }
-        else {
-            filePaths = new String[]{path};
+            filePaths = new String[] {path, path.endsWith(".java") ? path.replace(".java", ".kt") : path.replace(".kt", ".java")};
+        } else {
+            filePaths = new String[] {path};
         }
 
         Editor[] editors = new Editor[filePaths.length];
@@ -136,46 +135,46 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
         T element = PsiTreeUtil.getParentOfType(elementAtCaret, elementClass, false);
 
         IgnoreTests.INSTANCE.runTestIfNotDisabledByFileDirective(
-          dataFile().toPath(),
-          IgnoreTests.DIRECTIVES.of(getPluginMode()),
-          _ -> Collections.emptyList(),
-          IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
-          _ -> {
-              return KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(myFixture.getFile().getText(), getProject(), getModule(), () -> {
-                  try {
-                      SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
-                      if (new File(path + ".messages").exists()) {
-                          throw new AssertionError("Expected conflicts are not found.");
-                      }
-                      for (int j = 0; j < filePaths.length; j++) {
-                          File file = new File(filePaths[j] + ".after");
-                          if (isFirPlugin()) {
-                              File firSpecific = new File(filePaths[j] + ".fir.after");
-                              if (firSpecific.exists()) {
-                                  file = firSpecific;
-                              }
-                          }
-                          assertTrue("After file is expected to be present", file.exists());
-                          String actualText = editors[j].getDocument().getText();
-                          String expectedText = FileUtil.loadFile(file);
-                          if (!StringUtil.equals(expectedText, actualText)) {
-                              //do not create missed files
-                              String message = "Text mismatch in file: " + file.getName();
-                              throw new FileComparisonFailedError(message, expectedText, actualText, FileUtil.toSystemIndependentName(file.getPath()));
-                          }
-                      }
-                  } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-                      List<String> messages = new ArrayList<>(e.getMessages());
-                      Collections.sort(messages);
+                dataFile().toPath(),
+                IgnoreTests.DIRECTIVES.IGNORE_K2,
+                _ -> Collections.emptyList(),
+                IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
+                _ -> {
+                    return KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(myFixture.getFile().getText(), getProject(),
+                                                                                             getModule(), () -> {
+                                try {
+                                    SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
+                                    if (new File(path + ".messages").exists()) {
+                                        throw new AssertionError("Expected conflicts are not found.");
+                                    }
+                                    for (int j = 0; j < filePaths.length; j++) {
+                                        File file = new File(filePaths[j] + ".after");
+                                        File firSpecific = new File(filePaths[j] + ".fir.after");
+                                        if (firSpecific.exists()) {
+                                            file = firSpecific;
+                                        }
+                                        assertTrue("After file is expected to be present", file.exists());
+                                        String actualText = editors[j].getDocument().getText();
+                                        String expectedText = FileUtil.loadFile(file);
+                                        if (!StringUtil.equals(expectedText, actualText)) {
+                                            //do not create missed files
+                                            String message = "Text mismatch in file: " + file.getName();
+                                            throw new FileComparisonFailedError(message, expectedText, actualText,
+                                                                                FileUtil.toSystemIndependentName(file.getPath()));
+                                        }
+                                    }
+                                } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+                                    List<String> messages = new ArrayList<>(e.getMessages());
+                                    Collections.sort(messages);
 
-                      File messageFile = new File(path + ".messages");
-                      assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
-                  } catch (IOException e) {
-                      throw new AssertionError(e);
-                  }
-                  return Unit.INSTANCE;
-              });
-          }
+                                    File messageFile = new File(path + ".messages");
+                                    assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
+                                } catch (IOException e) {
+                                    throw new AssertionError(e);
+                                }
+                                return Unit.INSTANCE;
+                            });
+                }
         );
     }
 }

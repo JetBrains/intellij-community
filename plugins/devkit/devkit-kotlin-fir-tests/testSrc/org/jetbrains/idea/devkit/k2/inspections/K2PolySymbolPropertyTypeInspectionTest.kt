@@ -2,9 +2,6 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import org.jetbrains.idea.devkit.kotlin.inspections.KtPolySymbolPropertyTypeInspectionTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 internal class K2PolySymbolPropertyTypeInspectionTest : KtPolySymbolPropertyTypeInspectionTest() {
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 }

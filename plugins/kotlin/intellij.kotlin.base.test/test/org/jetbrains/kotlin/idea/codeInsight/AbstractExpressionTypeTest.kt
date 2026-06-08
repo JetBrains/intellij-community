@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
@@ -31,10 +30,7 @@ abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtu
     }
 
     private val expectedTypeDirective: String
-        get() = when (pluginMode) {
-            KotlinPluginMode.K1 -> "// K1_TYPE: "
-            KotlinPluginMode.K2 -> "// K2_TYPE: "
-        }
+        get() = "// K2_TYPE: "
 
     override fun doMultiFileTest(
         files: List<PsiFile>,

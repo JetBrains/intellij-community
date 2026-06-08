@@ -20,7 +20,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
@@ -39,9 +38,6 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
     override fun runInDispatchThread(): Boolean {
         return false
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     protected fun doTest(
         searchPattern: String,

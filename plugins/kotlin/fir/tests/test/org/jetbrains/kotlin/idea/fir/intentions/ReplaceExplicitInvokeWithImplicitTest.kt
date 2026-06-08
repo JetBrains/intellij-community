@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceExplicitInvokeWithImplicitTest27 : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun test() {
         val argumentsInReceiver = listOf("", "<>{}", "<>()", "()", "[]")

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.editor;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -25,12 +24,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace")
         public static class AfterUnmatchedBrace extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -109,12 +102,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/arrayAccess")
         public static class ArrayAccess extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -128,12 +115,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -362,12 +343,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/commenter")
         public static class Commenter extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -421,12 +396,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/contextReceivers")
         public static class ContextReceivers extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -475,12 +444,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -749,12 +712,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -791,12 +748,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma")
             public static class TrailingComma extends AbstractK2EnterHandlerTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -850,12 +801,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyBraces")
             public static class Uncategorized extends AbstractK2EnterHandlerTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -910,12 +855,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1209,12 +1148,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1293,12 +1226,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1400,12 +1327,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/editor/enterHandler/multilineString/spaces")
             public static class Spaces extends AbstractK2EnterHandlerTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1627,12 +1548,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2")
                 public static class Tabs2 extends AbstractK2EnterHandlerTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1696,12 +1611,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4")
                 public static class Tabs4 extends AbstractK2EnterHandlerTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1767,12 +1676,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/script")
         public static class Script extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1811,12 +1714,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/templates")
         public static class Templates extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1940,12 +1837,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -2403,12 +2294,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2627,12 +2512,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2666,12 +2545,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2720,12 +2593,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2784,12 +2651,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2888,12 +2749,6 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractK2EnterHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }

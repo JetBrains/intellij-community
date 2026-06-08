@@ -3,16 +3,10 @@ package org.jetbrains.idea.devkit.k2.inspections.errorhandling
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+    
 
   fun `test simple return`() = doTest("""
     fun foo() {

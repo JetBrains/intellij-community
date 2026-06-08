@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.unwrap;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -22,12 +21,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/removeExpression")
     public static class RemoveExpression extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestExpressionRemover, this, testDataFilePath);
         }
@@ -61,12 +54,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapThen")
     public static class UnwrapThen extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestThenUnwrapper, this, testDataFilePath);
         }
@@ -90,12 +77,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapElse")
     public static class UnwrapElse extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestElseUnwrapper, this, testDataFilePath);
         }
@@ -119,12 +100,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/removeElse")
     public static class RemoveElse extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestElseRemover, this, testDataFilePath);
         }
@@ -138,12 +113,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLoop")
     public static class UnwrapLoop extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestLoopUnwrapper, this, testDataFilePath);
         }
@@ -167,12 +136,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapTry")
     public static class UnwrapTry extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestTryUnwrapper, this, testDataFilePath);
         }
@@ -196,12 +159,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapCatch")
     public static class UnwrapCatch extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCatchUnwrapper, this, testDataFilePath);
         }
@@ -225,12 +182,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/removeCatch")
     public static class RemoveCatch extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCatchRemover, this, testDataFilePath);
         }
@@ -244,12 +195,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFinally")
     public static class UnwrapFinally extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFinallyUnwrapper, this, testDataFilePath);
         }
@@ -273,12 +218,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/removeFinally")
     public static class RemoveFinally extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFinallyRemover, this, testDataFilePath);
         }
@@ -297,12 +236,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLambda")
     public static class UnwrapLambda extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestLambdaUnwrapper, this, testDataFilePath);
         }
@@ -366,12 +299,6 @@ public abstract class KotlinFirUnwrapRemoveTestGenerated extends AbstractKotlinF
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter")
     public static class UnwrapFunctionParameter extends AbstractKotlinFirUnwrapRemoveTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFunctionParameterUnwrapper, this, testDataFilePath);
         }

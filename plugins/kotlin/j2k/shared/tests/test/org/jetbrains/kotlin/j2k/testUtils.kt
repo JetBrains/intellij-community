@@ -19,9 +19,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ON
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K1
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K2
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -45,9 +42,6 @@ private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
-internal fun getDisableTestDirective(pluginMode: KotlinPluginMode): String =
-    if (pluginMode === K2) IGNORE_K2 else IGNORE_K1
-
 internal fun File.getFileTextWithoutDirectives(): String =
     readText().getTextWithoutDirectives()
 
@@ -65,7 +59,7 @@ internal fun String.getTextWithoutDirectives(): String =
 // 3. If the test only has a default version of testdata ".kt", then:
 //   - it may have "IGNORE_K2" directive, in this case the test is completely ignored in K2
 //   - or, if no IGNORE directives are present, the K1 and K2 results are identical for such a test
-internal fun getExpectedFile(testFile: File, isCopyPaste: Boolean, pluginMode: KotlinPluginMode): File {
+internal fun getExpectedFile(testFile: File, isCopyPaste: Boolean): File {
     val prefix = if (isCopyPaste) ".expected" else ""
     val testFileExtension = ".${testFile.extension}"
 
@@ -74,10 +68,7 @@ internal fun getExpectedFile(testFile: File, isCopyPaste: Boolean, pluginMode: K
         throw AssertionError("Expected file doesn't exist: ${defaultFile.path}.")
     }
 
-    val customFileExtension = when (pluginMode) {
-        K1 -> "$prefix.k1.kt"
-        K2 -> "$prefix.k2.kt"
-    }
+    val customFileExtension = "$prefix.k2.kt"
     val customFile = File(testFile.path.replace(testFileExtension, customFileExtension)).takeIf(File::exists)
     if (customFile == null) return defaultFile
 

@@ -19,13 +19,9 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class MainKtsDependsOnCompletionTest : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class MainKtsDependsOnCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private val fakeCompletionService = object : DependencyCompletionService {
         override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
@@ -33,11 +29,11 @@ class MainKtsDependsOnCompletionTest : KotlinLightCodeInsightFixtureTestCase(), 
                 DependencyCompletionEvent.Item(DependencyCompletionResult("org.example", "lib-alpha", "1.0", source = SERVER)),
                 DependencyCompletionEvent.Item(DependencyCompletionResult("org.example", "lib-beta", "2.0", source = SERVER)),
                 DependencyCompletionEvent.Item(DependencyCompletionResult("com.other", "util", "3.0", source = SERVER)),
-        )
+            )
     }
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         application.replaceService(DependencyCompletionService::class.java, fakeCompletionService, testRootDisposable)
 
         // Register extensions programmatically because the content module intellij.kotlin.base.scripting.main.kts

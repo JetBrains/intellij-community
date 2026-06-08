@@ -2,26 +2,16 @@
 package org.jetbrains.idea.devkit.k2.navigation;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 import org.jetbrains.idea.devkit.navigation.ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 @SuppressWarnings("NewClassNamingConvention")
 @TestDataPath("/navigation/extensionDeclaration")
 public class KtExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTest
-  extends ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+  extends ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase {
 
-  @Override
-  protected void setUp() {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
-  }
+   
 
   @Override
   protected String getBasePath() {

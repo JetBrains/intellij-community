@@ -18,7 +18,7 @@ import com.theoryinpractice.testng.TestNGFramework
 import com.theoryinpractice.testng.util.TestNGUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
+class KotlinTestNGFramework : TestNGFramework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
         override val markerClassFqns: Collection<String> = listOf(TestNGUtil.TEST_ANNOTATION_FQN)
         override val disabledTestAnnotation: String
@@ -46,7 +46,10 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
             if (checkState != UNSURE) return checkState
 
             return CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(checkTestNGTestClass(declaration), OuterModelsModificationTrackerManager.getTracker(declaration.project))
+                CachedValueProvider.Result.create(
+                    checkTestNGTestClass(declaration),
+                    OuterModelsModificationTrackerManager.getTracker(declaration.project)
+                )
             }
         }
 
@@ -135,7 +138,8 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
 
         override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
             return findAnnotation(declaration, testAnnotations)?.let {
-                it.valueArguments.find { argument -> argument.getArgumentName()?.asName?.asString() == "enabled" }?.getArgumentExpression()?.text == "false"
+                it.valueArguments.find { argument -> argument.getArgumentName()?.asName?.asString() == "enabled" }
+                    ?.getArgumentExpression()?.text == "false"
             } == true
         }
     }
@@ -190,43 +194,22 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
-    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getSetUpMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin TestNG SetUp Function.kt")
-        }
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin TestNG SetUp Function.kt")
     }
 
-    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTearDownMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin TestNG TearDown Function.kt")
-        }
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin TestNG TearDown Function.kt")
     }
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin TestNG Test Function.kt")
-        }
+        return FileTemplateDescriptor("Kotlin TestNG Test Function.kt")
     }
 
-    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestClassFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin TestNG Test Class.kt")
-        }
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor = FileTemplateDescriptor("Kotlin TestNG Test Class.kt")
 
-    override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getParametersMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin TestNG Parameters Function.kt")
-        }
+    override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin TestNG Parameters Function.kt")
     }
 }
 

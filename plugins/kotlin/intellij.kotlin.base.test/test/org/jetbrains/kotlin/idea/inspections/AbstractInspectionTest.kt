@@ -67,8 +67,10 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         val optionsFile = File(path)
         val options = FileUtil.loadFile(optionsFile, true)
 
-        val inspectionClass = Class.forName(InTextDirectivesUtils.findStringWithPrefixes(options, inspectionClassDirective())
-                                                ?: error("Not found line with directive ${inspectionClassDirective()}"))
+        val inspectionClass = Class.forName(
+            InTextDirectivesUtils.findStringWithPrefixes(options, inspectionClassDirective())
+                ?: error("Not found line with directive ${inspectionClassDirective()}")
+        )
 
         val fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(options, "// FIXTURE_CLASS: ")
 
@@ -98,7 +100,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
                             val text = FileUtil.loadFile(file, true)
 
                             val shouldBeIgnored =
-                                InTextDirectivesUtils.isDirectiveDefined(text, IgnoreTests.DIRECTIVES.of(pluginMode))
+                                InTextDirectivesUtils.isDirectiveDefined(text, IgnoreTests.DIRECTIVES.IGNORE_K2)
                             if (shouldBeIgnored) return@mapNotNull null
 
                             val fileText =

@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -109,10 +109,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
     }
 
     private fun getAfterFile(path: String): File {
-        if (KotlinPluginModeProvider.Companion.isK2Mode()) {
-            File("$path.k2.after").takeIf { it.exists() }?.let { return it }
-        }
-        return File("$path.after")
+        return File("$path.k2.after").takeIf { it.exists() } ?: File("$path.after")
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

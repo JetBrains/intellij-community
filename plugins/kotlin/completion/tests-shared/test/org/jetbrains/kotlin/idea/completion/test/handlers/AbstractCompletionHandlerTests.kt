@@ -34,26 +34,20 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
     }
 
     protected open fun doTest(testPath: String) {
-        if (isFirPlugin) {
-            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
-                test(testPath)
-                val originalTestFile = dataFile()
-                val extension = originalTestFile.extension
-                val k2Extension = IgnoreTests.FileExtension.FIR
-                val originalAfterFile = originalTestFile.withExtension("$extension.after")
-                val firAfterFile = originalTestFile.withExtension("$k2Extension.$extension.after")
-                IgnoreTests.cleanUpIdenticalK2TestFile(
-                    originalTestFile,
-                    k2Extension,
-                    additionalFileToMarkFirIdentical = originalAfterFile,
-                    additionalFileToDeleteIfIdentical = firAfterFile,
-                    additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)
-                )
-            }
-        } else {
-            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
-                test(testPath)
-            }
+        runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
+            test(testPath)
+            val originalTestFile = dataFile()
+            val extension = originalTestFile.extension
+            val k2Extension = IgnoreTests.FileExtension.FIR
+            val originalAfterFile = originalTestFile.withExtension("$extension.after")
+            val firAfterFile = originalTestFile.withExtension("$k2Extension.$extension.after")
+            IgnoreTests.cleanUpIdenticalK2TestFile(
+                originalTestFile,
+                k2Extension,
+                additionalFileToMarkFirIdentical = originalAfterFile,
+                additionalFileToDeleteIfIdentical = firAfterFile,
+                additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)
+            )
         }
     }
 

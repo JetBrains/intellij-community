@@ -3,22 +3,13 @@ package com.intellij.evaluationPlugin.languages.callGraphs
 import com.intellij.evaluationPlugin.languages.kotlin.callGraphs.KotlinCallGraphBuilder
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
 
 @RunWith(Parameterized::class)
-class KotlinCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KotlinCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase() {
 
   companion object {
     @JvmStatic

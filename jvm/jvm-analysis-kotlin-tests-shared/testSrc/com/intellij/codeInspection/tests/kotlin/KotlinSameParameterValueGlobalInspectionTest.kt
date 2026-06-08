@@ -1,13 +1,9 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.SameParameterValueInspectionTestBase
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinSameParameterValueGlobalInspectionTest : SameParameterValueInspectionTestBase(false), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+abstract class KotlinSameParameterValueGlobalInspectionTest : SameParameterValueInspectionTestBase(false) {
+  
 
   fun testEntryPoint() {
     doHighlightTest(runDeadCodeFirst = true)

@@ -2,15 +2,9 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtUnregisteredNamedColorInspectionTest : UnregisteredNamedColorInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KtUnregisteredNamedColorInspectionTest : UnregisteredNamedColorInspectionTestBase() {
+    
 
   fun testInspection() {
     myFixture.configureByText("InspectionTest.kt", """

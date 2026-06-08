@@ -133,7 +133,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
         val copiedJavaCode = prepareCopiedJavaCodeByContext(text, javaConversionContext, pasteTarget)
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind(targetData.file)
+        val j2kKind = getJ2kKind()
 
         val converter = J2KTextCopyPasteConverter(project, editor, conversionData, targetData, j2kKind)
         val conversionTime = measureTimeMillis { converter.convert() }

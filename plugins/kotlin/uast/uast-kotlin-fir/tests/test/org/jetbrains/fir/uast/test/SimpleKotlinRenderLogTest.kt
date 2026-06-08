@@ -2,7 +2,6 @@
 package org.jetbrains.fir.uast.test
 
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.kotlin.AbstractKotlinRenderLogTest
@@ -15,9 +14,6 @@ class SimpleKotlinRenderLogTest : AbstractFirUastTest(), AbstractKotlinRenderLog
     }
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun check(fileName: String, file: UFile) {
         super<AbstractKotlinRenderLogTest>.check(getTestName(/* lowercaseFirstLetter = */ false), file)

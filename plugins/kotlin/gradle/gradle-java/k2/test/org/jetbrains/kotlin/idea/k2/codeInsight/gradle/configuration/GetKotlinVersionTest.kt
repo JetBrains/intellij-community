@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
@@ -16,9 +15,6 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GetKotlinVersionTest : MultiplePluginVersionGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("7.6.3+")

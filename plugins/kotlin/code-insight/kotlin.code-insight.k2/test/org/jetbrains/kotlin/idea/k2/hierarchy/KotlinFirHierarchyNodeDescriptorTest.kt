@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.roots.ui.util.CompositeAppearance
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallHierarchyNodeDescriptor
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideHierarchyNodeDescriptor
@@ -17,8 +16,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinFirHierarchyNodeDescriptorTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

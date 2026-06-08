@@ -8,21 +8,16 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
 
-class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureTestCase5(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureTestCase5() {
 
   @BeforeEach
   fun setUp() {
-    setUpWithKotlinPlugin(fixture.testRootDisposable) {}
     fixture.enableInspections(EventLogDescriptionInspection::class.java)
     fixture.addClass("""
       package com.intellij.internal.statistic.eventLog;
@@ -253,46 +248,46 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
     fixture.doHighlighting()
 
     val action = fixture.getAvailableIntention("Add 'b.group' to 'SORTED.properties'")
-      assertNotNull(action)
+    assertNotNull(action)
     fixture.launchAction(action)
-      Assertions.assertEquals(
-          """
+    Assertions.assertEquals(
+      """
       a.group=first
       b.group=
       c.group=third
       """.trimIndent(),
-          PsiDocumentManager.getInstance(fixture.project).getDocument(propertiesFile)!!.text
-      )
+      PsiDocumentManager.getInstance(fixture.project).getDocument(propertiesFile)!!.text
+    )
   }
 
   private fun testResolve(expectedFile: String, expectedText: String) = runReadActionBlocking {
-      val reference = fixture.getReferenceAtCaretPosition()
-      assertNotNull(reference)
-      assertEventDescriptionReference(reference, expectedFile, expectedText)
+    val reference = fixture.getReferenceAtCaretPosition()
+    assertNotNull(reference)
+    assertEventDescriptionReference(reference, expectedFile, expectedText)
   }
 
   @Suppress("SameParameterValue")
   private fun testMultiResolve(expectedFile: String, vararg expectedTexts: String) = runReadActionBlocking {
-      val reference = fixture.getReferenceAtCaretPosition()
-      val multiReference = assertInstanceOf<PsiMultiReference>(reference)
-      val references = multiReference.references
-      Assertions.assertEquals(expectedTexts.size, references.size, "Wrong number of references")
-      references.forEachIndexed { i, ref ->
-          assertEventDescriptionReference(ref, expectedFile, expectedTexts[i])
-      }
+    val reference = fixture.getReferenceAtCaretPosition()
+    val multiReference = assertInstanceOf<PsiMultiReference>(reference)
+    val references = multiReference.references
+    Assertions.assertEquals(expectedTexts.size, references.size, "Wrong number of references")
+    references.forEachIndexed { i, ref ->
+      assertEventDescriptionReference(ref, expectedFile, expectedTexts[i])
+    }
   }
 
   private fun assertEventDescriptionReference(reference: PsiReference, expectedFile: String, expectedText: String) {
-      Assertions.assertEquals("EventLogDescriptionReference", reference.javaClass.simpleName)
+    Assertions.assertEquals("EventLogDescriptionReference", reference.javaClass.simpleName)
     val property = assertInstanceOf<Property>(reference.resolve())
-      Assertions.assertEquals(expectedFile, property.containingFile.name)
-      Assertions.assertEquals(expectedText, property.value)
+    Assertions.assertEquals(expectedFile, property.containingFile.name)
+    Assertions.assertEquals(expectedText, property.value)
   }
 
   private fun testNoResolve() {
     val reference = fixture.getReferenceAtCaretPosition()
     if (reference != null) {
-        Assertions.assertNotEquals("EventLogDescriptionReference", reference.javaClass.simpleName)
+      Assertions.assertNotEquals("EventLogDescriptionReference", reference.javaClass.simpleName)
     }
   }
 }

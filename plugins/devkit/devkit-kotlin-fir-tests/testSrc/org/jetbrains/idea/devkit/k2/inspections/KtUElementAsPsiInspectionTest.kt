@@ -3,14 +3,10 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
 
     myFixture.addClass("package org.jetbrains.uast; public interface UElement {}")
     myFixture.addClass("""package com.intellij.psi; public interface PsiElement {
@@ -27,7 +23,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testPassAsPsiClass() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.UClass
       import com.intellij.psi.PsiClass
 
@@ -50,7 +46,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testExtensionMethods() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.*
       import com.intellij.psi.*
 
@@ -72,7 +68,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testAssignment() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.UClass
       import com.intellij.psi.PsiClass
 
@@ -95,7 +91,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testCast() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.*
       import com.intellij.psi.PsiClass
 
@@ -115,7 +111,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testCallParentMethod() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.UClass
       import com.intellij.psi.PsiClass
 
@@ -135,7 +131,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testImplementAndCallParentMethod() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import org.jetbrains.uast.UClass
       import com.intellij.psi.*
 
@@ -162,7 +158,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testPsiElementExtensionFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import com.intellij.psi.PsiElement
       import org.jetbrains.uast.UClass
       import org.jetbrains.uast.UElement
@@ -183,7 +179,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testPsiElementExtensionFunctionInClassExtendingUElement() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import com.intellij.psi.PsiElement
       import org.jetbrains.uast.UClass
       import org.jetbrains.uast.UElement
@@ -204,7 +200,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testTopLevelPsiElementExtensionFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import com.intellij.psi.PsiElement
       import org.jetbrains.uast.UClass
       import org.jetbrains.uast.UElement
@@ -226,7 +222,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testNestedMethods() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import com.intellij.psi.PsiElement
       import org.jetbrains.uast.UClass
       import org.jetbrains.uast.UElement
@@ -255,7 +251,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase(), Exp
   fun testNestedKotlinFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
-      """
+                              """
       import com.intellij.psi.PsiElement
       import org.jetbrains.uast.UClass
       import org.jetbrains.uast.UElement

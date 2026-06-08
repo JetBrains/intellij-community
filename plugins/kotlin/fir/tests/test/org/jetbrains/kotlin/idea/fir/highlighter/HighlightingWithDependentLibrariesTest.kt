@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -23,7 +22,6 @@ import java.io.File
 @TestMetadata("testData/highlightingWithDependentLibraries")
 @RunWith(JUnit38ClassRunner::class)
 class HighlightingWithDependentLibrariesTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = object : KotlinLightProjectDescriptor() {
         override fun configureModule(module: Module, model: ModifiableRootModel) {

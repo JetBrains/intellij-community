@@ -6,11 +6,10 @@ import com.intellij.compose.ide.plugin.shared.util.enableComposeInTest
 import com.intellij.compose.ide.plugin.shared.util.isComposeEnabled
 import com.intellij.compose.ide.plugin.shared.util.resolveTestDataDirectory
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 
-abstract class BaseComposableCallHighlightingTestCase  : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class BaseComposableCallHighlightingTestCase  : KotlinLightCodeInsightFixtureTestCase() {
 
   override val testDataDirectory: File
     get() = resolveTestDataDirectory("testData/highlighting/$testDataSubdirectory").toFile()

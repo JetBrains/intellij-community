@@ -19,21 +19,19 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.isMultiExtensionName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import java.io.File
 
-abstract class KotlinMultiFileTestCase : MultiFileTestCase(),
-                                         ExpectedPluginModeProvider {
+abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
 
     protected var isMultiModule = false
     private var vfsDisposable: Ref<Disposable>? = null
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         vfsDisposable = allowProjectRootAccess(this)
 
         runWriteAction {
@@ -44,20 +42,14 @@ abstract class KotlinMultiFileTestCase : MultiFileTestCase(),
     }
 
     protected open fun fileFilter(file: VirtualFile): Boolean {
-        if (pluginMode == KotlinPluginMode.K2) {
-            if (file.name.endsWith(".k2.kt")) return true
-            val k2CounterPart = file.parent.findChild("${file.nameWithoutExtension}.k2.kt")
-            if (k2CounterPart?.isFile == true) return false
-        } else {
-            if (file.name.endsWith(".k2.kt")) return false
-        }
+        if (file.name.endsWith(".k2.kt")) return true
+        val k2CounterPart = file.parent.findChild("${file.nameWithoutExtension}.k2.kt")
+        if (k2CounterPart?.isFile == true) return false
         return !isMultiExtensionName(file.name)
     }
 
     protected open fun fileNameMapper(file: VirtualFile): String {
-        return if (pluginMode == KotlinPluginMode.K2) {
-            file.name.replace(".k2.kt", ".kt")
-        } else file.name
+        return file.name.replace(".k2.kt", ".kt")
     }
 
     override fun compareResults(rootAfter: VirtualFile, rootDir: VirtualFile) {

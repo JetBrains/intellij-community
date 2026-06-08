@@ -10,16 +10,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
-internal class K2ComposablePropertyCallHighlightingTestCase: ComposablePropertyCallHighlightingTestCase() {
+internal class K2ComposablePropertyCallHighlightingTestCase : ComposablePropertyCallHighlightingTestCase() {
   private val ext = ComposableFunctionCallHighlighterExtension()
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
   @OptIn(KaAllowAnalysisOnEdt::class)
   override fun PsiFile.highlightCallUnderCaret(): HighlightInfoType? = allowAnalysisOnEdt {

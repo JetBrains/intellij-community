@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.util.invalidateCaches
@@ -33,9 +32,6 @@ class FirCompletionOutsideSourceRootTest : KotlinLightCodeInsightFixtureTestCase
         myFixture.configureFromExistingVirtualFile(tempFile)
         myFixture.completeBasic()
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

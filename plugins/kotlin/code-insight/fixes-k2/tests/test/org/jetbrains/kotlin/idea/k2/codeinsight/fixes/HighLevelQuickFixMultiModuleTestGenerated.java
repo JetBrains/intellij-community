@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/accessibilityChecker")
     public static class AccessibilityChecker extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -127,12 +120,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect")
     public static class ActualAnnotationsNotMatchExpect extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -266,12 +253,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addMissingActualMembers")
     public static class AddMissingActualMembers extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -355,12 +336,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation")
     public static class AddThrowsAnnotation extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -384,12 +359,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject")
     public static class CanSealedSubClassBeObject extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -423,12 +392,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/changeModifier")
     public static class ChangeModifier extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -447,12 +410,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/changeSignature")
     public static class ChangeSignature extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -506,12 +463,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/changeVisibility")
     public static class ChangeVisibility extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -525,12 +476,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/createActual")
     public static class CreateActual extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -734,12 +679,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/createActualExplicitApi")
     public static class CreateActualExplicitApi extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -758,12 +697,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/createExpect")
     public static class CreateExpect extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1112,12 +1045,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors")
     public static class FixNativeThrowsErrors extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1156,12 +1083,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter")
     public static class FunctionTypeReceiverToParameter extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1220,12 +1141,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/initializeProperty")
     public static class InitializeProperty extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1254,12 +1169,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/inlineToValue")
     public static class InlineToValue extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1288,12 +1197,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen")
     public static class MakeOverridenMemberOpen extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1322,12 +1225,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/other")
     public static class Other extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1651,12 +1548,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch")
     public static class PackageDirectoryMismatch extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1680,12 +1571,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType")
     public static class RedundantNullableReturnType extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -5,21 +5,14 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/unsafeReturnStatementVisitor")
-public class KtUnsafeReturnStatementVisitorInspectionTest extends UnsafeReturnStatementVisitorInspectionTestBase implements
-                                                                                                                 ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KtUnsafeReturnStatementVisitorInspectionTest extends UnsafeReturnStatementVisitorInspectionTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override

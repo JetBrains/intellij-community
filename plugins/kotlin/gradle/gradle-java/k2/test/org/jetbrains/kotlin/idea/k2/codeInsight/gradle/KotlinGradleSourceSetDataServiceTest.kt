@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.facetSettings
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService
@@ -21,8 +20,6 @@ import org.junit.jupiter.api.assertDoesNotThrow
 
 @IJIgnore(issue = "KTIJ-38911")
 class KotlinGradleSourceSetDataServiceTest : KotlinGradleImportingTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("7.6+")

@@ -45,7 +45,7 @@ abstract class AbstractJoinLinesTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.IGNORE_K2, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
 

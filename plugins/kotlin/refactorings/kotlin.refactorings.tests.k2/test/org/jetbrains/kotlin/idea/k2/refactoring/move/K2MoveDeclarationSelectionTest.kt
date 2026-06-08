@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
@@ -14,8 +13,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 
 class K2MoveDeclarationSelectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun `test end of function`() {
         doTest("""

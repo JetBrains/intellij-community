@@ -7,13 +7,10 @@ import com.intellij.compose.ide.plugin.shared.util.configureByText
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompletionContributorTest() {
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
-  // outputs slightly differ on K1 and K2, so we have some separate test implementations.
+    // outputs slightly differ on K1 and K2, so we have some separate test implementations.
 
   fun testModifierImportAlias() {
     // Prepare

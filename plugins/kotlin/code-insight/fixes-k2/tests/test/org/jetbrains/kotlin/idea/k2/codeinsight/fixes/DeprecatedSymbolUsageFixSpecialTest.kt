@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 @TestDataPath("/")
 @TestMetadata("testData/quickfix.special/deprecatedSymbolUsage")
 class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 

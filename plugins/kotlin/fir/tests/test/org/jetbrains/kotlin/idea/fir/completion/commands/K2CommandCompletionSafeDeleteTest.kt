@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.fir.completion.commands
 
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class K2CommandCompletionSafeDeleteTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode = KotlinPluginMode.K2
 
     override fun setUp() {
         super.setUp()

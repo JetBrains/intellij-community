@@ -2,12 +2,8 @@
 package org.jetbrains.idea.devkit.k2.quickfix
 
 import org.jetbrains.idea.devkit.kotlin.inspections.quickfix.KtMoveProhibitedDeclarationsToTopLevelFixTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2MoveProhibitedDeclarationsToTopLevelFixTest : KtMoveProhibitedDeclarationsToTopLevelFixTest() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
   fun testMoveConflicts() {
     val expectedConflicts = listOf(

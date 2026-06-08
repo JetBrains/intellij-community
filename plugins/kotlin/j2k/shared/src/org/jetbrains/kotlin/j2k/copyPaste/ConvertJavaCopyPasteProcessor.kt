@@ -70,7 +70,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
         val copiedJavaCode = values.single() as CopiedJavaCode
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind(targetData.file)
+        val j2kKind = getJ2kKind()
 
         val converter = J2kConverterExtension.extension(j2kKind)
             .createCopyPasteConverter(project, editor, conversionData, targetData)

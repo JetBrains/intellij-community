@@ -6,22 +6,16 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun runInDispatchThread(): Boolean = false
 

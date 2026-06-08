@@ -26,11 +26,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.completion.test.CompletionTestUtilKt;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
@@ -39,11 +37,7 @@ import java.io.File;
 import java.util.List;
 
 @RunWith(JUnit38ClassRunner.class)
-public class KotlinConfidenceTest extends LightCompletionTestCase implements ExpectedPluginModeProvider {
-    @Override
-    public @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
-    }
+public class KotlinConfidenceTest extends LightCompletionTestCase {
 
     private static final String TYPE_DIRECTIVE_PREFIX = "// TYPE:";
     private final ThreadLocal<Boolean> skipComplete = ThreadLocal.withInitial(() -> false);
@@ -90,7 +84,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase implements Exp
 
     @Override
     protected void setUp() throws Exception {
-        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, () -> super.setUp());
+        super.setUp();
 
         TestUtilsKt.invalidateLibraryCache(getProject());
     }
@@ -130,8 +124,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase implements Exp
             TestModeFlags.runWithFlag(CompletionAutoPopupHandler.ourTestingAutopopup, true, () -> type(typeText));
 
             checkResultByFile(getAfterFileName());
-        }
-        finally {
+        } finally {
             CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = completeByChars;
         }
     }
@@ -139,7 +132,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase implements Exp
     private static String getTypeText(String text) {
         String[] directives = InTextDirectivesUtils.findArrayWithPrefixes(text, TYPE_DIRECTIVE_PREFIX);
         if (directives.length == 0) return null;
-        assertEquals("One directive with \"" + TYPE_DIRECTIVE_PREFIX +"\" expected", 1, directives.length);
+        assertEquals("One directive with \"" + TYPE_DIRECTIVE_PREFIX + "\" expected", 1, directives.length);
 
         return StringUtil.unquoteString(directives[0]);
     }

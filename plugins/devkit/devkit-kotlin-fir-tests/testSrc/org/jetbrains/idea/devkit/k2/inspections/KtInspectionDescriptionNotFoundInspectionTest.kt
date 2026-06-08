@@ -9,13 +9,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/inspectionDescription")
-class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/inspectionDescription"
@@ -28,7 +24,7 @@ class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTest
 
   @Throws(Exception::class)
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.enableInspections(InspectionDescriptionNotFoundInspection::class.java)
   }
 

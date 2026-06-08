@@ -8,9 +8,6 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -21,18 +18,9 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 
-class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChangeListenerTest(), ExpectedPluginModeProvider {
+class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChangeListenerTest() {
     override val fileType: FileType
         get() = KotlinFileType.INSTANCE
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
-    override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
-        }
-    }
 
     fun test1() {
         setup("fun foo(<caret>) {}")

@@ -29,25 +29,25 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest : KotlinLightCod
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     protected fun doTest(unused: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             doTest()
         }
     }
-    
+
     private fun doTest() {
         val fileName = fileName()
 
         val dataFile = dataFile(fileName)
         val fileText = dataFile.readText()
 
-        val considerUnknownAsBlocking = 
+        val considerUnknownAsBlocking =
             InTextDirectivesUtils.getPrefixedBoolean(fileText, CONSIDER_UNKNOWN_AS_BLOCKING)
                 ?: error("No '$CONSIDER_UNKNOWN_AS_BLOCKING' directive found")
 
-        val considerSuspendContextNonBlocking = 
+        val considerSuspendContextNonBlocking =
             InTextDirectivesUtils.getPrefixedBoolean(fileText, CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING)
                 ?: error("No '$CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING' directive found")
-        
+
         val inspection = BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking, considerSuspendContextNonBlocking)
         myFixture.enableInspections(inspection)
 

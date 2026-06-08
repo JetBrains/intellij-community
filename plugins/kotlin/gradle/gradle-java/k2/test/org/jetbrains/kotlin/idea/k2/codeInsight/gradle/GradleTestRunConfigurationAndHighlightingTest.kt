@@ -19,7 +19,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.application
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
@@ -32,9 +31,6 @@ import java.io.File
 import java.util.Locale
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("<7.6")

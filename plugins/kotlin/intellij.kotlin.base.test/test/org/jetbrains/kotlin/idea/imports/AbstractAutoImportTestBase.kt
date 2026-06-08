@@ -36,7 +36,7 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
 
     private fun doTest() {
         val mainFile = mainFile().also { check(it.exists()) { "$it should exist" } }
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), disableTestDirective) {
             val base = mainFile.parentFile

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration
 
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -47,7 +45,7 @@ class KotlinCreateTestDialog(
      * Workaround to fix display name rendering for Kotlin test members
      */
     @OptIn(KaAllowAnalysisOnEdt::class)
-    private class KotlinTestMemberInfo(memberInfo: MemberInfo): MemberInfo(memberInfo.member) {
+    private class KotlinTestMemberInfo(memberInfo: MemberInfo) : MemberInfo(memberInfo.member) {
         init {
             val unwrapped = (memberInfo.member as? KtLightMethod)?.unwrapped
             // for enum synthetic methods like `values`, `valueOf` unwrapped is KtClass rather KtNamedFunction
@@ -66,11 +64,7 @@ class KotlinCreateTestDialog(
         RefactoringMessageUtil.checkCanCreateClass(
             myTargetDirectory,
             getClassName(),
-            if (KotlinPluginModeProvider.isK1Mode()) {
-                JavaFileType.INSTANCE
-            } else {
-                KotlinFileType.INSTANCE
-            }
+            KotlinFileType.INSTANCE
         )
 
     override fun suggestTestClassName(targetClass: PsiClass?): String? =

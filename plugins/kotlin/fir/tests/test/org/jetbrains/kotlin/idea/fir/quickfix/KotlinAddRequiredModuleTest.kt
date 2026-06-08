@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightJava9ModulesCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import org.jetbrains.kotlin.idea.test.KotlinMultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3
@@ -13,7 +12,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinAddRequiredModuleTest : KotlinLightJava9ModulesCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private val messageM2 = QuickFixBundle.message("module.info.add.requires.name", "M_TWO")
 

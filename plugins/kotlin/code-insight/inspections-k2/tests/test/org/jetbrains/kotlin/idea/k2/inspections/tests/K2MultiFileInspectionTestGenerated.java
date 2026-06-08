@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/invalidBundleOrProperty")
     public static class InvalidBundleOrProperty extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -42,12 +35,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinImportAlias")
     public static class KotlinImportAlias extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -61,12 +48,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJava")
     public static class KotlinInternalInJava extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -80,12 +61,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaTest")
     public static class KotlinInternalInJavaTest extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -99,12 +74,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinJvmAnnotationInJava")
     public static class KotlinJvmAnnotationInJava extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -118,12 +87,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinSealedInJavaTest")
     public static class KotlinSealedInJavaTest extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -137,12 +100,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mainInTwoModules")
     public static class MainInTwoModules extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -156,12 +113,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedPackageDirectory")
     public static class MismatchedPackageDirectory extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -175,12 +126,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts")
     public static class MismatchedPackageDirectoryWithEmptyKts extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -194,12 +139,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectory")
     public static class MismatchedProjectAndDirectory extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -213,12 +152,6 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot")
     public static class MismatchedProjectAndDirectoryRoot extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

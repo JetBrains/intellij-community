@@ -44,21 +44,26 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
                 updateScriptDependencies();
             }
 
-            ExpectedHighlightingData data = new ExpectedHighlightingData(myFixture.getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
+            ExpectedHighlightingData data =
+                    new ExpectedHighlightingData(myFixture.getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
             if (checkInfos) data.checkSymbolNames();
             ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(allowDocChange);
             data.init();
 
-            return ((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
+            return ((CodeInsightTestFixtureImpl) myFixture).collectAndCheckHighlighting(data);
         });
     }
 
-    protected void updateScriptDependencies() {}
-    protected void initializeHighlightingSuspender() {}
+    protected void updateScriptDependencies() {
+    }
+
+    protected void initializeHighlightingSuspender() {
+    }
 
     protected void doTest(String unused) throws Exception {
         String fileText = FileUtil.loadFile(new File(dataFilePath(fileName())), true);
-        boolean expectedDuplicatedHighlighting = InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
+        boolean expectedDuplicatedHighlighting =
+                InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
 
         ConfigLibraryUtil.INSTANCE.configureLibrariesByDirective(myFixture.getModule(), fileText);
         myFixture.configureByFile(fileName());
@@ -69,15 +74,14 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
             }
         }
 
-        withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
+        withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, true, () -> {
             try {
                 initializeHighlightingSuspender();
                 KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun(myFixture.getProject(), fileText, () -> {
                     checkHighlighting(fileText);
                     return Unit.INSTANCE;
                 });
-            }
-            catch (FileComparisonFailedError e) {
+            } catch (FileComparisonFailedError e) {
                 List<HighlightInfo> highlights =
                         DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
                 String text = myFixture.getFile().getText();

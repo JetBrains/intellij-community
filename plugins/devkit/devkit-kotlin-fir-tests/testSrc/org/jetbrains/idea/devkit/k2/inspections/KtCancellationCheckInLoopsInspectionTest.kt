@@ -4,20 +4,16 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/cancellationCheckInLoops")
-class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase() {
 
   override fun getFileExtension(): String = "kt"
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.addFileToProject(
       "Coroutines.kt",
       //language=kotlin

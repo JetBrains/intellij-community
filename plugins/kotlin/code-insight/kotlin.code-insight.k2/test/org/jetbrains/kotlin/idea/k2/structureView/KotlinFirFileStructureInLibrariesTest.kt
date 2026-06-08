@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.structureView
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.structureView.KotlinFileStructureTestBase
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -15,9 +14,6 @@ class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
 
     override val fileExtension: String
         get() = error("`configureDefault` should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.LightClassUtil;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.base.test.TestRoot;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
+
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.name.SpecialNames;
@@ -39,15 +39,6 @@ import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 @TestMetadata("testData/javaFacade")
 @RunWith(JUnit38ClassRunner.class)
 public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase {
-    @Override
-    public @NotNull KotlinPluginMode getPluginMode() {
-      return KotlinPluginMode.K2;
-    }
-
-    @Override
-    protected void setUp() {
-        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, () -> super.setUp());
-    }
 
     @NotNull
     @Override
@@ -291,8 +282,7 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
             assertNotNull(String.format("Failed to wrap declaration '%s' to method", declaration.getText()), psiMethod);
             assertInstanceOf(psiMethod, KtLightMethod.class);
             assertEquals("Invalid original element for generated method", ((KtLightMethod) psiMethod).getKotlinOrigin(), declaration);
-        }
-        else {
+        } else {
             assertNull("There should be no wrapper for given method", psiMethod);
         }
     }

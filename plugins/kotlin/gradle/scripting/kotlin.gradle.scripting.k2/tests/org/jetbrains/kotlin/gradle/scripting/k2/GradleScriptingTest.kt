@@ -18,8 +18,6 @@ import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
@@ -30,9 +28,8 @@ import org.junit.jupiter.params.ParameterizedClass
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
-@UseK2PluginMode
+
 @TestApplication
-@AssertKotlinPluginMode
 @ParameterizedClass
 @BaseGradleVersionSource
 class GradleScriptingTest(private val gradleVersion: GradleVersion) {

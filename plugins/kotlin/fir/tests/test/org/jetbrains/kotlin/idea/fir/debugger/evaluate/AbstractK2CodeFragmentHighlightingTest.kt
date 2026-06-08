@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -16,9 +15,6 @@ abstract class AbstractK2CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

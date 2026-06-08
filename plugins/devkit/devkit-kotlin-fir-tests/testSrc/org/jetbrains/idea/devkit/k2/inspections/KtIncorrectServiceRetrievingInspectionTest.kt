@@ -4,16 +4,12 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.IncorrectServiceRetrievingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectServiceRetrieving")
-internal class KtIncorrectServiceRetrievingInspectionTest : IncorrectServiceRetrievingInspectionTestBase(), ExpectedPluginModeProvider {
+internal class KtIncorrectServiceRetrievingInspectionTest : IncorrectServiceRetrievingInspectionTestBase() {
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.configureByFile("service.kt")
     myFixture.configureByFile("services.kt")
   }

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.hierarchy;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -22,12 +21,6 @@ public abstract class HierarchyMultiplatformTestGenerated extends AbstractHierar
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/hierarchy/kmp/type")
     public static class Type extends AbstractHierarchyMultiplatformTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSubClassHierarchyTest, this, testDataFilePath);
         }
@@ -61,12 +54,6 @@ public abstract class HierarchyMultiplatformTestGenerated extends AbstractHierar
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/hierarchy/kmp/superType")
     public static class SuperType extends AbstractHierarchyMultiplatformTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSuperClassHierarchyTest, this, testDataFilePath);
         }
@@ -80,12 +67,6 @@ public abstract class HierarchyMultiplatformTestGenerated extends AbstractHierar
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/hierarchy/kmp/method")
     public static class Method extends AbstractHierarchyMultiplatformTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doMethodHierarchyTest, this, testDataFilePath);
         }

@@ -4,10 +4,9 @@ package com.intellij.compose.ide.plugin.shared
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
-abstract class ComposableNamingInspectionSuppressorTest : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class ComposableNamingInspectionSuppressorTest : KotlinLightCodeInsightFixtureTestCase() {
   private val suppressor = ComposableNamingInspectionSuppressor()
 
   fun testDoSuppressFunctionNameForComposable() = testKotlin("FunctionName", expectedSuppressed = true) {

@@ -2,15 +2,13 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastIdentifiersTestBase : UastFileComparisonTestBase,
-                                    ExpectedPluginModeProvider {
+interface UastIdentifiersTestBase : UastFileComparisonTestBase {
 
     private fun getIdentifiersFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "identifiers$suffix")
     private fun getRefNamesFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "refNames$suffix")
@@ -21,13 +19,13 @@ interface UastIdentifiersTestBase : UastFileComparisonTestBase,
     private fun getPluginIdentifiersFile(filePath: String): File {
         val identicalFile = getIdenticalIdentifiersFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getIdentifiersFile(filePath, "$pluginSuffix${TXT}")
+        return getIdentifiersFile(filePath, ".fir${TXT}")
     }
 
     private fun getPluginRefNamesFile(filePath: String): File {
         val identicalFile = getIdenticalRefNamesFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getRefNamesFile(filePath, "$pluginSuffix${TXT}")
+        return getRefNamesFile(filePath, ".fir${TXT}")
     }
 
     // TODO: ideally, we don't want this kind of allowList.
@@ -47,19 +45,6 @@ interface UastIdentifiersTestBase : UastFileComparisonTestBase,
         if (refNamesContent.isNotEmpty()) {
             KotlinTestUtils.assertEqualsToFile(refNamesFile, refNamesContent)
         }
-
-        cleanUpIdenticalFile(
-            identifiersFile,
-            getIdentifiersFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalIdentifiersFile(filePath),
-            kind = "identifiers"
-        )
-        cleanUpIdenticalFile(
-            refNamesFile,
-            getRefNamesFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalRefNamesFile(filePath),
-            kind = "refNames"
-        )
 
         try {
             file.testIdentifiersParents()

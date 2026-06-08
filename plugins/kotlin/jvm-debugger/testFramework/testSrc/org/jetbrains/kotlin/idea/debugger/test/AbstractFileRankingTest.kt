@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.util.ThrowableRunnable
 import com.sun.jdi.Location
 import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
@@ -19,6 +18,7 @@ import java.io.File
 // We can't determine which .kt file transformed into which .class files,
 // so we have to manually specify it in test files.
 private const val PRODUCED_CLASS_NAMES_DIRECTIVE = "// PRODUCED_CLASS_NAMES:"
+
 // For anonymous classes, which may not exist if INDY lambdas used
 private const val PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX = "(optional)"
 
@@ -28,9 +28,7 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             file.toPath(),
             when {
-                pluginMode == KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-                compileWithK2 && pluginMode == KotlinPluginMode.K2 -> "// IGNORE_K2"
-                pluginMode == KotlinPluginMode.K2 -> "// IGNORE_K2_K1"
+                !compileWithK2 -> "// IGNORE_K2_K1"
                 else -> IgnoreTests.DIRECTIVES.IGNORE_K2
             },
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
@@ -153,7 +151,7 @@ private fun collectClassNamesToKtFiles(
                     } else {
                         classNameWithSuffix
                     }
-                    assert(isOptional || outputFiles.any { it.qualifiedName == className}) { "Class name $className not found in output files"}
+                    assert(isOptional || outputFiles.any { it.qualifiedName == className }) { "Class name $className not found in output files" }
                     val file = get(className)
                     if (file != null) {
                         error("Same class name \"$className\" specified twice: in ${file.name} and ${sourceFile.name}")

@@ -3,14 +3,11 @@ package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K1
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 
@@ -33,7 +30,6 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   fun `test implicit usage of parameter in parameterized test`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
-    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         class MyTest {
           @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
@@ -45,7 +41,6 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   fun `test implicit usage of multiple parameters in parameterized test`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
-    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.provider.Arguments
       import java.util.stream.Stream
@@ -70,7 +65,6 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   fun `test unused parameter when not in display name`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
-    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyTest {
         @org.junit.jupiter.params.ParameterizedTest

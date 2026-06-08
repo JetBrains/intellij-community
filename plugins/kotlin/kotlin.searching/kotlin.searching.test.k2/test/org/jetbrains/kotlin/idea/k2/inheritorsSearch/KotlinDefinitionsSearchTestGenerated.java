@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -22,12 +21,6 @@ public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/definitionsSearch/kotlinClass")
     public static class KotlinClass extends AbstractKotlinDefinitionsSearchTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestKotlinClass, this, testDataFilePath);
         }
@@ -46,12 +39,6 @@ public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/definitionsSearch/javaClass")
     public static class JavaClass extends AbstractKotlinDefinitionsSearchTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestJavaClass, this, testDataFilePath);
         }
@@ -65,12 +52,6 @@ public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/definitionsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractKotlinDefinitionsSearchTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }

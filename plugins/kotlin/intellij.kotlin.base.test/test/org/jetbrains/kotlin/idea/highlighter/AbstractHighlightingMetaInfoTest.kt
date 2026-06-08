@@ -25,10 +25,6 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
         val psiFile = files.first()
 
-        if (!isFirPlugin && psiFile is KtFile && psiFile.isScript()) {
-            updateScriptDependencies(psiFile)
-        }
-
         if (this is KMPTest) {
             runReadAction { KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform) }
         }
@@ -60,8 +56,6 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             }
         }
     }
-
-    protected open fun updateScriptDependencies(psiFile: KtFile) {}
 
     protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {
         return resolveSibling("$name.$suffix")

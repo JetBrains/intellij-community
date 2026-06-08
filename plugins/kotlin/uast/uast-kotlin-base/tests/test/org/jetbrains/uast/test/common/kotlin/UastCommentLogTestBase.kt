@@ -3,7 +3,6 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UDeclaration
@@ -14,8 +13,7 @@ import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
-interface UastCommentLogTestBase : UastFileComparisonTestBase,
-                                   ExpectedPluginModeProvider {
+interface UastCommentLogTestBase : UastFileComparisonTestBase {
 
     private fun getCommentsFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "comments$suffix")
 
@@ -24,7 +22,7 @@ interface UastCommentLogTestBase : UastFileComparisonTestBase,
     private fun getPluginCommentsFile(filePath: String): File {
         val identicalFile = getIdenticalCommentsFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getCommentsFile(filePath, "$pluginSuffix$TXT")
+        return getCommentsFile(filePath, ".fir$TXT")
     }
 
     private fun UComment.testLog(indent: String): String {
@@ -36,13 +34,6 @@ interface UastCommentLogTestBase : UastFileComparisonTestBase,
 
         val commentsFile = getPluginCommentsFile(filePath)
         KotlinTestUtils.assertEqualsToFile(commentsFile, comments)
-
-        cleanUpIdenticalFile(
-            commentsFile,
-            getCommentsFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalCommentsFile(filePath),
-            kind = "comments"
-        )
     }
 
     private fun printComments(file: UFile): String = buildString {

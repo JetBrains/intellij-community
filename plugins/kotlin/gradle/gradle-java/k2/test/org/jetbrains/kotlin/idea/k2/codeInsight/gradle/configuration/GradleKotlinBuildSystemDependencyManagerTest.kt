@@ -18,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
@@ -28,9 +27,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
 class GradleKotlinBuildSystemDependencyManagerTest : KotlinGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private lateinit var gradleDependencyManager: GradleKotlinBuildSystemDependencyManager
     override fun testDataDirName(): String = "gradleKotlinBuildSystemDependencyManager"

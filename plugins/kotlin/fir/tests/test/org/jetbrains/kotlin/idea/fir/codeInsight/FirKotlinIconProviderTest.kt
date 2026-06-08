@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.codeInsight
+
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PsiIconUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -15,12 +15,9 @@ import javax.swing.Icon
 
 class FirKotlinIconProviderTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-  }
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun tearDown() {
         runAll(
@@ -29,12 +26,12 @@ class FirKotlinIconProviderTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-  fun testJavaBase() {
-    val aClass = myFixture.addClass("public class BaseJavaClass {}")
-    myFixture.addFileToProject("foo.kt", "class Foo : BaseJavaClass() {}")
-    val psiClass = ClassInheritorsSearch.search(aClass).findFirst()!!
-    val icon = PsiIconUtil.getIconFromProviders(psiClass, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
-    val iconString = (icon.safeAs<RowIcon>()?.allIcons?.joinToString(transform = Icon::toString) ?: icon)?.toString()
-    assertEquals("org/jetbrains/kotlin/idea/icons/classKotlin.svg", iconString)
-  }
+    fun testJavaBase() {
+        val aClass = myFixture.addClass("public class BaseJavaClass {}")
+        myFixture.addFileToProject("foo.kt", "class Foo : BaseJavaClass() {}")
+        val psiClass = ClassInheritorsSearch.search(aClass).findFirst()!!
+        val icon = PsiIconUtil.getIconFromProviders(psiClass, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
+        val iconString = (icon.safeAs<RowIcon>()?.allIcons?.joinToString(transform = Icon::toString) ?: icon)?.toString()
+        assertEquals("org/jetbrains/kotlin/idea/icons/classKotlin.svg", iconString)
+    }
 }

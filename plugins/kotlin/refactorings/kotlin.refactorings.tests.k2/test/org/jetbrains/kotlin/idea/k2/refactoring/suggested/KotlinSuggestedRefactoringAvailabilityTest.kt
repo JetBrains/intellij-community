@@ -5,26 +5,14 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.ImportPath
 
-class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailabilityTest(), ExpectedPluginModeProvider {
+class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailabilityTest() {
     override val fileType: LanguageFileType
         get() = KotlinFileType.INSTANCE
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
-    override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
-        }
-    }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

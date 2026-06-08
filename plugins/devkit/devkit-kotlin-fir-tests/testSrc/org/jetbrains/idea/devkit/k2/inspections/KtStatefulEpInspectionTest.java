@@ -2,23 +2,16 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.StatefulEpInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/statefulEp")
-public class KtStatefulEpInspectionTest extends StatefulEpInspectionTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KtStatefulEpInspectionTest extends StatefulEpInspectionTestBase {
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
   }
 
   @Override

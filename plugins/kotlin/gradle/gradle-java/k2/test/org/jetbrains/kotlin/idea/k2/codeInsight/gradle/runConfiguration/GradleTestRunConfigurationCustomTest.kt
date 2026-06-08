@@ -8,12 +8,11 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.textWithoutTags
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.textWithoutTags
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.kotlin.idea.run.getConfigurations
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
@@ -23,9 +22,6 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("4.7+")

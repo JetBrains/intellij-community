@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -115,9 +114,6 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
             myFixture.disableInspections(unclearPrecedenceOfBinaryExpressionInspection)
         }
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

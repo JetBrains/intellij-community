@@ -14,32 +14,20 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditionalData
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChangeCollectorTest<KtNamedFunction>(), ExpectedPluginModeProvider {
+class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChangeCollectorTest<KtNamedFunction>() {
     override val fileType: FileType
         get() = KotlinFileType.INSTANCE
 
     override val language: Language
         get() = KotlinLanguage.INSTANCE
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
-    override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
-        }
-    }
 
     override fun addDeclaration(file: PsiFile, text: String): KtNamedFunction {
         val psiFactory = KtPsiFactory(project)

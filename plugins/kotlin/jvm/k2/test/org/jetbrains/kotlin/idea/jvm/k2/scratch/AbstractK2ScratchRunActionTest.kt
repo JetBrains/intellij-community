@@ -21,24 +21,19 @@ import com.intellij.testFramework.TestDataProvider
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.job
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchToolWindowFactory
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
-abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
+abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase() {
 
     override fun getTestDataPath() = TestMetadataUtil.getTestDataPath(this::class.java)
 
@@ -119,9 +114,7 @@ abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase(), Exp
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     companion object {
         fun configureOptions(

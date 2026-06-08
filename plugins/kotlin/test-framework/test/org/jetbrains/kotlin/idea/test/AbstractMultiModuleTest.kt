@@ -34,7 +34,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
@@ -52,8 +51,7 @@ import kotlin.io.path.createDirectory
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
-abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
-                                         ExpectedPluginModeProvider {
+abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
     private var vfsDisposable: Ref<Disposable>? = null
 
@@ -64,14 +62,11 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     }
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         enableKotlinOfficialCodeStyle(project)
 
         vfsDisposable = allowProjectRootAccess(this)
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
     // The test should be ignored in such cases, but since JUnit3 doesn't provide such an option, we make them pass instead.

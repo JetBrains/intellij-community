@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.quickfix.QuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -51,7 +49,8 @@ import kotlin.io.path.writeText
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.minutes
 
-abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(), ExpectedPluginModeProvider, QuickFixTest {
+abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(),
+    QuickFixTest {
     override fun testDataDirName(): String = "fixes"
     final override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
 
@@ -98,15 +97,15 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         }
 
     override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
 
-            /* Setup 'after' directory: Ensure that we process it similar to the 'before', by also replacing test properties */
-            afterDirectory = TemporaryDirectory.generateTemporaryPath("${testDataDirName()}.after")
+        super.setUp()
 
-            /* Some quick fix (e.g. AddKotlinLibraryQuickFix) will modify build scripts *and* re-sync the project */
-            AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
-        }
+        /* Setup 'after' directory: Ensure that we process it similar to the 'before', by also replacing test properties */
+        afterDirectory = TemporaryDirectory.generateTemporaryPath("${testDataDirName()}.after")
+
+        /* Some quick fix (e.g. AddKotlinLibraryQuickFix) will modify build scripts *and* re-sync the project */
+        AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
+
     }
 
     @OptIn(ExperimentalPathApi::class)
@@ -259,7 +258,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
     }
 
     private fun PsiFile.actionHint(contents: String): ActionHint {
-        return ActionHint.parse(this, contents,
+        return ActionHint.parse(
+            this, contents,
             actionPrefix?.let { ".*//(?: $it)?" } ?: "//",
             true)
     }

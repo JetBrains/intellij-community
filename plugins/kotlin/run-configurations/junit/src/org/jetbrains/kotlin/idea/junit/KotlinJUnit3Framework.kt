@@ -248,33 +248,17 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
-    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getSetUpMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
-        }
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor =
+        FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
 
-    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTearDownMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
-        }
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor =
+        FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestMethodFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
-        }
+        FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
 
-    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            super.getTestClassFileTemplateDescriptor()
-        } else {
-            FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
-        }
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor =
+        FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
 }
 
 private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)

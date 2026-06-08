@@ -6,9 +6,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.kotlin.inspections.remotedev.RpcInterfaceDoesNotExtendRemoteApiInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @Language("kotlin")
 private const val FLEET_RPC_API = """
@@ -20,11 +17,10 @@ interface RemoteApi<Metadata>
 annotation class Rpc
 """
 
-class RpcInterfaceDoesNotExtendRemoteApiInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class RpcInterfaceDoesNotExtendRemoteApiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.enableInspections(RpcInterfaceDoesNotExtendRemoteApiInspection())
 
     myFixture.addFileToProject("fleet/rpc/Rpc.kt", FLEET_RPC_API)

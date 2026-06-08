@@ -14,9 +14,8 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
+import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
 import org.jetbrains.kotlin.psi.KtBlockCodeFragmentType;
 import org.jetbrains.kotlin.psi.KtDeclaration;
@@ -34,11 +33,7 @@ import java.util.List;
 import static org.jetbrains.kotlin.idea.test.AstAccessControl.dropPsiAndTestWithControlledAccessToAst;
 
 @RunWith(JUnit38ClassRunner.class)
-public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
-    @Override
-      public @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
-      }
+public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
     @NotNull
     @Override
@@ -93,7 +88,6 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase impleme
                     });
 
             assertEquals("kotlin.collections", ktFile.getPackageFqName().asString());
-
         }
     }
 

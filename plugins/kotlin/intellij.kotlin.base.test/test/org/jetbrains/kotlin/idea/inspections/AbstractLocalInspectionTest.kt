@@ -92,7 +92,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             createInspection(mainFile)
         } catch (e: Throwable) {
             val shouldBeIgnored =
-                InTextDirectivesUtils.isDirectiveDefined(FileUtil.loadFile(mainFile), IgnoreTests.DIRECTIVES.of(pluginMode))
+                InTextDirectivesUtils.isDirectiveDefined(FileUtil.loadFile(mainFile), IgnoreTests.DIRECTIVES.IGNORE_K2)
             if (shouldBeIgnored) {
                 return
             } else {
@@ -133,17 +133,17 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     protected open fun updateScriptDependencies(ktFile: KtFile) {}
 
     /**
-      For each test file `xxx.foo` there can be several "extra" files configured, to be copied to the same project with the main file.
-      These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
-      I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
+    For each test file `xxx.foo` there can be several "extra" files configured, to be copied to the same project with the main file.
+    These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
+    I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
      */
     protected fun findExtraFilesForTest(mainFile: File): List<String> {
         var i = 1
         val extraFileNames = mutableListOf<String>()
         extraFileLoop@ while (true) {
             val extra = File(mainFile.parent).listFiles { _, name ->
-                    name.startsWith(FileUtil.getNameWithoutExtension(mainFile) + "." + i + ".")
-                    && !name.endsWith(".after")
+                name.startsWith(FileUtil.getNameWithoutExtension(mainFile) + "." + i + ".")
+                        && !name.endsWith(".after")
             }
             if (extra != null && extra.size == 1) {
                 val extraFile = extra[0]
@@ -187,10 +187,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+        listOf(IgnoreTests.DIRECTIVES.IGNORE_K2, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.IGNORE_K2, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
     protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {}
 
@@ -280,8 +280,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
-            assertTrue("Fix '$fixDescription' not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
-              localFixActions.isNotEmpty()
+            assertTrue(
+                "Fix '$fixDescription' not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
+                localFixActions.isNotEmpty()
             )
         }
 
@@ -300,9 +301,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         if (modCommandAction != null) {
             val actionContext = ActionContext.from(editor, file)
             val command: ModCommand = ActionUtil.underModalProgress(project, "compute") {
-              runReadAction {
-                modCommandAction.perform(actionContext)
-              }
+                runReadAction {
+                    modCommandAction.perform(actionContext)
+                }
             }
             project.executeCommand(localFixAction.text, null) {
                 ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
@@ -310,7 +311,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         } else {
             project.executeCommand(localFixAction.text, null) {
                 if (localFixAction.startInWriteAction()) {
-                  runWriteAction { localFixAction.invoke(project, editor, file) }
+                    runWriteAction { localFixAction.invoke(project, editor, file) }
                 } else {
                     localFixAction.invoke(project, editor, file)
                 }
@@ -376,24 +377,24 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     protected open fun passesToIgnore(): IntArray {
         return intArrayOf(
-          Pass.LINE_MARKERS,
-          Pass.SLOW_LINE_MARKERS,
-          Pass.EXTERNAL_TOOLS,
-          Pass.POPUP_HINTS,
-          Pass.UPDATE_ALL,
-          Pass.UPDATE_FOLDING,
-          Pass.WOLF
+            Pass.LINE_MARKERS,
+            Pass.SLOW_LINE_MARKERS,
+            Pass.EXTERNAL_TOOLS,
+            Pass.POPUP_HINTS,
+            Pass.UPDATE_ALL,
+            Pass.UPDATE_FOLDING,
+            Pass.WOLF
         )
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode), "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
             doTestForInternal(mainFile, inspection, fileText)
         }
     }
 
     protected open fun getAfterTestDataAbsolutePath(mainFileName: String) =
-      testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
+        testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
 
     protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         val mainFileName = mainFile.name
@@ -422,19 +423,22 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 noLocalFixTextStrings,
             )
         ) {
-            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied:\n$afterFileAbsolutePath", Files.exists(afterFileAbsolutePath))
+            assertFalse(
+                "${afterFileAbsolutePath.fileName} should not exist as no action could be applied:\n$afterFileAbsolutePath",
+                Files.exists(afterFileAbsolutePath)
+            )
             return
         }
 
         createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
         } catch (_: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(
-              File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
-              editor.document.text
+                File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
+                editor.document.text
             )
         }
 

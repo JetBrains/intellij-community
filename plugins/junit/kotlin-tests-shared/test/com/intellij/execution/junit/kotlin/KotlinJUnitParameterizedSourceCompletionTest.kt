@@ -3,14 +3,13 @@ package com.intellij.execution.junit.kotlin
 
 import com.intellij.junit.testFramework.JUnitParameterizedSourceCompletionTestBase
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompletionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompletionTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
+
   fun `test kotlin method source`() {
     myFixture.configureByText("Test.kt", """ 
       import org.junit.jupiter.params.ParameterizedTest
@@ -30,6 +29,7 @@ abstract class KotlinJUnitParameterizedSourceCompletionTest : JUnitParameterized
     """)
     myFixture.testCompletionVariants(file.name, "abc")
   }
+
   fun `test kotlin method source several methods`() {
     myFixture.configureByText("Test.kt", """ 
       import org.junit.jupiter.params.ParameterizedTest
@@ -73,6 +73,7 @@ abstract class KotlinJUnitParameterizedSourceCompletionTest : JUnitParameterized
     """)
     myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc")
   }
+
   fun `test kotlin field source`() {
     myFixture.configureByText("Test.kt", """ 
       import org.junit.jupiter.params.ParameterizedTest
@@ -90,6 +91,7 @@ abstract class KotlinJUnitParameterizedSourceCompletionTest : JUnitParameterized
     """)
     myFixture.testCompletionVariants(file.name, "abc")
   }
+
   fun `test kotlin field source several fields`() {
     myFixture.configureByText("Test.kt", """ 
       import org.junit.jupiter.params.ParameterizedTest

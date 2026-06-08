@@ -11,7 +11,6 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
@@ -21,9 +20,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.KaModuleStructureTxtR
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
@@ -33,9 +30,8 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 
 @TestRoot("gradle/scripting/kotlin.gradle.scripting.k2/")
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 @TestDataPath($$"$CONTENT_ROOT")
 internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradleCodeInsightTest() {
     protected fun checkProjectStructure(

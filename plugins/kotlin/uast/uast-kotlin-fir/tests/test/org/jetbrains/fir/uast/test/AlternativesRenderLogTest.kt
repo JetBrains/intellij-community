@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
@@ -19,9 +18,6 @@ import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
 class AlternativesRenderLogTest : AbstractFirUastTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
 

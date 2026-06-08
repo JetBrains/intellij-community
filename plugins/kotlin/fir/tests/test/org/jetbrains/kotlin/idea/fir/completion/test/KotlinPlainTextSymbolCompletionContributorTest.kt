@@ -6,13 +6,9 @@ import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorE
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinPlainTextSymbolCompletionContributorTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testBasics() {
         myFixture.configureByText(

@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.k2.debugger.test
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.mockJDI.MockVirtualMachine
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.core.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class K2FileApplicabilityCheckerTest : KotlinLightPlatformCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testGeneratedLambdaMethodDoesNotMatchTopLevelFunctionWithSamePrefix() = runBlocking {
         val actualText = """

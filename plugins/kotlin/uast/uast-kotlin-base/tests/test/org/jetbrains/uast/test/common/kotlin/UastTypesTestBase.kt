@@ -2,14 +2,12 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastTypesTestBase : UastFileComparisonTestBase,
-                              ExpectedPluginModeProvider {
+interface UastTypesTestBase : UastFileComparisonTestBase {
 
     private fun getTypesFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "types$suffix")
 
@@ -18,7 +16,7 @@ interface UastTypesTestBase : UastFileComparisonTestBase,
     private fun getPluginTypesFile(filePath: String): File {
         val identicalFile = getIdenticalTypesFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getTypesFile(filePath, "$pluginSuffix$TXT")
+        return getTypesFile(filePath, ".fir$TXT")
     }
 
     fun check(filePath: String, file: UFile) {
@@ -26,11 +24,5 @@ interface UastTypesTestBase : UastFileComparisonTestBase,
 
         KotlinTestUtils.assertEqualsToFile(typesFile, file.asLogTypes())
 
-        cleanUpIdenticalFile(
-            typesFile,
-            getTypesFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalTypesFile(filePath),
-            kind = "types"
-        )
     }
 }

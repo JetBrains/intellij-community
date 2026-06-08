@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.presentation.KotlinDefaultNamedDeclarationPresentation
 import org.jetbrains.kotlin.idea.presentation.KotlinFunctionPresentation
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -18,7 +17,6 @@ import java.awt.Graphics
 import javax.swing.Icon
 
 class DeclarationPresentersTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testGetIconWithNoExtraIconProviders() {
         myFixture.configureByText("Foo.kt", "class <caret>Foo")

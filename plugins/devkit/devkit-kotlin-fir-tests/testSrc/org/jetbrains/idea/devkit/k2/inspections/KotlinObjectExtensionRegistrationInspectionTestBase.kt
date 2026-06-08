@@ -3,18 +3,13 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-internal abstract class KotlinObjectExtensionRegistrationInspectionTestBase : PluginModuleTestCase(), ExpectedPluginModeProvider {
-
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+internal abstract class KotlinObjectExtensionRegistrationInspectionTestBase : PluginModuleTestCase() {
 
   protected abstract val testedInspection: LocalInspectionTool
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     myFixture.addClass("""
       package com.intellij.util.xmlb.annotations;
       import java.lang.annotation.*;

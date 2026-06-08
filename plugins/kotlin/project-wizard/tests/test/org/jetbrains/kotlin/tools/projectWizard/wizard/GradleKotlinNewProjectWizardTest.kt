@@ -20,7 +20,6 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome
 import org.jetbrains.kotlin.tools.projectWizard.gradle.isLessOrEqualToMaxJvmTarget
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -33,7 +32,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -43,12 +41,6 @@ import kotlin.io.path.pathString
 import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
-    @BeforeEach
-    override fun setUp() {
-        super.setUp()
-        assertTrue(useK2Plugin != false)
-    }
-
     private fun Project.compileModules(vararg moduleNames: String) {
         assertModules(this, *moduleNames)
         compileModules(this, true, *moduleNames)

@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.platform.modification.isGlobalLevel
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.psi.KtFile
@@ -18,9 +17,6 @@ abstract class AbstractKotlinModificationEventTest : AbstractMultiModuleTest() {
     protected open val defaultAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet()
 
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    final override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     protected fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
 

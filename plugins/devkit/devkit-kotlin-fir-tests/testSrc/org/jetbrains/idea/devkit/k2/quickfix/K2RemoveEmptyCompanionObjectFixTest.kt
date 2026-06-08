@@ -2,11 +2,7 @@
 package org.jetbrains.idea.devkit.k2.quickfix
 
 import org.jetbrains.idea.devkit.kotlin.inspections.quickfix.KtRemoveEmptyCompanionObjectFixTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2RemoveEmptyCompanionObjectFixTest : KtRemoveEmptyCompanionObjectFixTest() {
-
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
 
 }

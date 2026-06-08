@@ -32,7 +32,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
     protected void doTest(@NotNull String path) throws Exception {
         IgnoreTests.INSTANCE.runTestIfNotDisabledByFileDirective(
                 Paths.get(path),
-                IgnoreTests.DIRECTIVES.of(getPluginMode()),
+                IgnoreTests.DIRECTIVES.IGNORE_K2,
                 ArrayUtil.EMPTY_STRING_ARRAY,
                 IgnoreTests.DirectivePosition.FIRST_LINE_IN_FILE,
                 new Function1<>() {
@@ -72,8 +72,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
                     textData,
                     textData + "\n\n//INFO: " + info,
                     testDataFile.getAbsolutePath());
-        }
-        else {
+        } else {
             StringBuilder expectedInfoBuilder = new StringBuilder();
             for (String directive : directives) {
                 expectedInfoBuilder.append(directive).append("\n");
@@ -91,8 +90,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
                 if (!cleanedInfo.startsWith(StringUtil.trimEnd(expectedInfo, "...\n"))) {
                     wrapToFileComparisonFailure(cleanedInfo, path, textData);
                 }
-            }
-            else if (!expectedInfo.equals(cleanedInfo)) {
+            } else if (!expectedInfo.equals(cleanedInfo)) {
                 wrapToFileComparisonFailure(cleanedInfo, path, textData);
             }
         }
@@ -108,14 +106,14 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
         PsiElement targetElement = documentationManager.findTargetElement(myFixture.getEditor(), myFixture.getFile());
         PsiElement originalElement = DocumentationManager.getOriginalElement(targetElement);
 
-        PsiElement list = ParameterInfoController.findArgumentList(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), -1);
+        PsiElement list =
+                ParameterInfoController.findArgumentList(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), -1);
         PsiElement expressionList = null;
         if (list != null) {
             LookupEx lookup = LookupManager.getInstance(myFixture.getProject()).getActiveLookup();
             if (lookup != null) {
                 expressionList = null; // take completion variants for documentation then
-            }
-            else {
+            } else {
                 expressionList = list;
             }
         }

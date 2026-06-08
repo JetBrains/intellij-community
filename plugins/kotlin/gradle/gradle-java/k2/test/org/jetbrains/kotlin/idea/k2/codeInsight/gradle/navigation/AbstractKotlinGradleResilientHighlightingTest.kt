@@ -5,7 +5,6 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
@@ -33,7 +32,7 @@ abstract class AbstractKotlinGradleResilientHighlightingTest : AbstractGradleCod
         verifyHighlighting(gradleVersion)
     }
 
-    private val outputFileExtensions: List<String> = listOfNotNull(".highlighting.k2".takeIf { useK2Plugin == true }, ".highlighting")
+    private val outputFileExtensions: List<String> = listOfNotNull(".highlighting.k2", ".highlighting")
 
     private fun verifyHighlighting(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_KOTLIN_FIXTURE_WITH_ERROR) {
@@ -53,7 +52,7 @@ abstract class AbstractKotlinGradleResilientHighlightingTest : AbstractGradleCod
           runInEdtAndWait {
             IgnoreTests.runTestIfNotDisabledByFileDirective(
               mainFile.virtualFile.toNioPath(),
-              if (useK2Plugin == true) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+              IgnoreTests.DIRECTIVES.IGNORE_K2
             ) {
               checkHighlighting(
                 mainFile,

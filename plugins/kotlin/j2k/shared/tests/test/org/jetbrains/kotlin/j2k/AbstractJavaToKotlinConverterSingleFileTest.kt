@@ -43,7 +43,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val javaFile = File(javaPath)
         val fileContents = javaFile.getFileTextWithoutDirectives()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), getDisableTestDirective(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             withCustomCompilerOptions(fileContents, project, module) {
                 doTest(javaFile, fileContents)
             }
@@ -59,7 +59,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings, directives)
-        val expectedFile = getExpectedFile(javaFile, isCopyPaste = false, pluginMode)
+        val expectedFile = getExpectedFile(javaFile, isCopyPaste = false)
 
         val actualText = if (prefix == "file") {
             dumpTextWithErrors(createKotlinFile(convertedText))
@@ -137,7 +137,13 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "file" -> fileToKotlin(javaCode, settings, preprocessorExtensions = preprocessorExtensions, postprocessorExtensions = postprocessorExtensions)
+            "file" -> fileToKotlin(
+                javaCode,
+                settings,
+                preprocessorExtensions = preprocessorExtensions,
+                postprocessorExtensions = postprocessorExtensions
+            )
+
             else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
     }

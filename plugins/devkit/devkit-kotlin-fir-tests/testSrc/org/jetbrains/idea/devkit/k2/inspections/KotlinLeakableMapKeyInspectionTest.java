@@ -2,24 +2,16 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.LeakableMapKeyInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 
-import static org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt.setUpWithKotlinPlugin;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/leakableMapKey")
-public class KotlinLeakableMapKeyInspectionTest extends LeakableMapKeyInspectionTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KotlinLeakableMapKeyInspectionTest extends LeakableMapKeyInspectionTestBase {
 
   @Override
-  public void setUp() {
-    setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+  public void setUp() throws Exception {
+    super.setUp();
   }
 
   @Override

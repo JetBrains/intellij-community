@@ -10,16 +10,14 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProviderSettings
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.name
 import kotlin.io.path.readText
 
-abstract class AbstractKtCompilerDeclarationsHintProviderTest : InlayHintsProviderTestCase(), ExpectedPluginModeProvider {
+abstract class AbstractKtCompilerDeclarationsHintProviderTest : InlayHintsProviderTestCase() {
     private val provider
         get() = InlayHintsProviderExtension.findProviders()
             .map { it.provider }
@@ -30,9 +28,7 @@ abstract class AbstractKtCompilerDeclarationsHintProviderTest : InlayHintsProvid
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun doTest(testPath: String) {
         val testFile = Paths.get(testPath)

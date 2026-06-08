@@ -5,13 +5,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.PrivateExtensionClassInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class K2PrivateExtensionClassInspectionTestBase : LightDevKitInspectionFixTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+abstract class K2PrivateExtensionClassInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun getFileExtension(): String = "kt"
 
@@ -22,7 +18,7 @@ abstract class K2PrivateExtensionClassInspectionTestBase : LightDevKitInspection
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     myFixture.addClass(
       """
         package com.intellij.openapi.extensions; 
@@ -44,7 +40,7 @@ abstract class K2PrivateExtensionClassInspectionTestBase : LightDevKitInspection
     )
 
     myFixture.addClass(
-    """
+      """
       package com.intellij.openapi.actionSystem;
       
       public class AnAction { }

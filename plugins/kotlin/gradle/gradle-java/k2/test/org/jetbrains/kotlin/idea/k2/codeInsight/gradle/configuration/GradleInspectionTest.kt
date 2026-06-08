@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
@@ -16,9 +15,6 @@ import org.junit.Test
 import java.io.File
 
 class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("6.8.3") // Configuration method 'compile' is deprecated. The test with `implementation` is below

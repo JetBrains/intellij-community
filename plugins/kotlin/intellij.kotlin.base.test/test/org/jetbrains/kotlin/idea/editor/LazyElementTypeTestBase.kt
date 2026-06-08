@@ -8,19 +8,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.EditorTestUtil.performTypingAction
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 
 abstract class LazyElementTypeTestBase<T>(private val lazyElementClass: Class<T>) :
-    LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider where T : PsiElement {
+    LightJavaCodeInsightFixtureTestCase() where T : PsiElement {
 
-    override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K1
-
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     protected fun reparse(text: String, char: Char): Unit = doTest(text, char, true)
     protected fun noReparse(text: String, char: Char): Unit = doTest(text, char, false)

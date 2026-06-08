@@ -6,7 +6,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersInspection
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinCleanupInspection
@@ -21,7 +20,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/inspections/cleanup")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

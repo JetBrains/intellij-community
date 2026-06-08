@@ -3,8 +3,6 @@
 package org.jetbrains.fir.uast.test
 
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
@@ -14,8 +12,6 @@ import org.jetbrains.uast.visitor.UastVisitor
 import java.nio.file.Path
 
 abstract class AbstractKotlinExpressionValueTest : AbstractFirUastTest() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = TEST_KOTLIN_MODEL_PATH
 

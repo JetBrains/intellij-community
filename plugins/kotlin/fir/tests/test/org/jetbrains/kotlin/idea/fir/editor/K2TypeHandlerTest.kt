@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.editor
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
@@ -15,7 +14,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class K2TypeHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private val dollar = '$'
 

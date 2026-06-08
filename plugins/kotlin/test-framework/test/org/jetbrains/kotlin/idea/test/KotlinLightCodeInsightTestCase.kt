@@ -8,14 +8,9 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import java.io.File
 
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")
-abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightJavaCodeInsightTestCase(),
-                                                ExpectedPluginModeProvider {
+abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightJavaCodeInsightTestCase() {
 
     @Throws(Exception::class)
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
-
     open fun getTestDataDirectory(): File {
         val clazz = this::class.java
         val root = getTestsRoot(clazz)

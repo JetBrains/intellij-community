@@ -10,19 +10,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.actions.RenameFileAction
-import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.RenameDialog
+import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 
 class RenameKotlinClassInDumbModeTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun setUp() {
         super.setUp()

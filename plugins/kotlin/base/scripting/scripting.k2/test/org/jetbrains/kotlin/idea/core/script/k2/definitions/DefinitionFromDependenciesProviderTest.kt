@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -12,8 +11,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestDataPath($$"$CONTENT_ROOT")
 @TestMetadata("testData/script/templatesFromDependencies")
 class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependenciesProviderTest() {
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private fun runTest(path: String) {
         KotlinTestUtils.runTest({ doTest(it) }, this, path)

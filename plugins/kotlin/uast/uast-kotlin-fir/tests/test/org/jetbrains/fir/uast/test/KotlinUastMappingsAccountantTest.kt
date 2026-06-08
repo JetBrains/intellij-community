@@ -8,7 +8,6 @@ import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTes
 import com.intellij.platform.uast.testFramework.common.sourcesFromDirRecursive
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.kotlin.TEST_KOTLIN_MODEL_DIR
@@ -31,9 +30,6 @@ class KotlinUastMappingsAccountantTest :
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private val delegate by lazy(LazyThreadSafetyMode.NONE) {
         UastMappingsAccountantTest(

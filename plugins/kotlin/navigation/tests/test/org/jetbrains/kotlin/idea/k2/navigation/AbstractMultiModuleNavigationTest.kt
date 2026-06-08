@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.test.findFileWithCaret
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
-abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {
+abstract class AbstractMultiModuleNavigationTest : AbstractMultiModuleTest() {
     protected fun dataFile(fileName: String): File = File(testDataPath, fileName)
 
     protected fun dataFile(): File = dataFile(fileName())
@@ -34,7 +34,7 @@ abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val ignoreDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
@@ -80,7 +80,7 @@ abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {
     }
 
     protected open fun getExpectedReferences(text: String, index: Int): List<String> {
-        val additionalPrefix = "_${pluginMode.name}"
+        val additionalPrefix = "_K2"
         val prefix = "REF"
         return AbstractReferenceResolveTest.Companion.getExpectedReferences(text, index, prefix + additionalPrefix).ifEmpty {
             AbstractReferenceResolveTest.Companion.getExpectedReferences(text, index, prefix)

@@ -9,8 +9,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 import org.jetbrains.uast.ULiteralExpression;
 import org.junit.Assume;
 
@@ -21,10 +20,10 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 import static com.intellij.jvm.analysis.internal.testFramework.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
-public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
+public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), super::setUp);
+    super.setUp();
     Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
   }
 

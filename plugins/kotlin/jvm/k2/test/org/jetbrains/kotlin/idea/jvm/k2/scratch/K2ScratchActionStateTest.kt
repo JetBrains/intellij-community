@@ -13,22 +13,15 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.TestDataProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class K2ScratchActionStateTest : FileEditorManagerTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
+class K2ScratchActionStateTest : FileEditorManagerTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     fun testRunActionDisabledInInteractiveMode() {
         val editor = openScratchEditor()

@@ -4,16 +4,12 @@ package org.jetbrains.kotlin.idea.k2.findUsages
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import de.plushnikov.intellij.plugin.LombokTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinLombokFindUsagesTest: KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testFindUsagesForSetter() {
         val aClass = myFixture.addClass(

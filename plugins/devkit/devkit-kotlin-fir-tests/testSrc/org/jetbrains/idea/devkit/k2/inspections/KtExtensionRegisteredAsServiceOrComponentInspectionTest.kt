@@ -4,16 +4,10 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceOrComponentInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionRegisteredAsServiceOrComponent")
-class KtExtensionRegisteredAsServiceOrComponentInspectionTest : ExtensionRegisteredAsServiceOrComponentInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-  override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
-  }
+class KtExtensionRegisteredAsServiceOrComponentInspectionTest : ExtensionRegisteredAsServiceOrComponentInspectionTestBase() {
+    
 
   override fun getBasePath() = "${DevkitKtTestsUtil.TESTDATA_PATH}inspections/extensionRegisteredAsServiceOrComponent"
 

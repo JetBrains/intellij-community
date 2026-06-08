@@ -246,7 +246,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
 
     protected fun doTestIfNotDisabledByFileDirective(isIntroduceVariableTest: Boolean = false, action: (PsiFile) -> Unit) {
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
@@ -303,7 +303,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     if (isIntroduceVariableTest) options.last() else options.first()
                 }
 
-                val extractTestFiles = ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin)
+                val extractTestFiles = ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, true)
                 checkExtract(
                     extractTestFiles,
                     checkAdditionalAfterdata,
@@ -347,7 +347,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             if (it.isNotEmpty()) {
                 @Suppress("UNCHECKED_CAST")
                 val args = it.map(String::toBoolean).toTypedArray() as Array<Any?>
-                ExtractionOptions::class.java.constructors.first { ctor -> ctor.parameterTypes.size == args.size }.newInstance(*args) as ExtractionOptions
+                ExtractionOptions::class.java.constructors.first { ctor -> ctor.parameterTypes.size == args.size }
+                    .newInstance(*args) as ExtractionOptions
             } else ExtractionOptions.DEFAULT
         }
 

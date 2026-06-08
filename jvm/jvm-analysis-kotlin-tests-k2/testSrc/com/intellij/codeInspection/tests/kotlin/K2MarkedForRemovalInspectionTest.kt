@@ -1,10 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class K2MarkedForRemovalInspectionTest : KotlinMarkedForRemovalInspectionTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 
   fun `test highlighted as deprecated for removal`() {
     myFixture.addClass("""

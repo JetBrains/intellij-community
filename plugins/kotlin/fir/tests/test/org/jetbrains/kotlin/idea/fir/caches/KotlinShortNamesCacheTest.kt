@@ -13,7 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
@@ -32,8 +31,6 @@ import kotlin.reflect.KMutableProperty0
 @TestMetadata("testData/cache")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private lateinit var cacheInstance: PsiShortNamesCache
 

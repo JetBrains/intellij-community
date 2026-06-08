@@ -21,17 +21,14 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.core.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.incremental.isClassFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import kotlin.properties.Delegates
 
-abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
-                                          ExpectedPluginModeProvider {
+abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
     private companion object {
         private const val CLASSES_DIRECTORY_NAME = "classes"
@@ -60,9 +57,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         super.runBare(testRunnable)
     }
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     override fun compileProject() {
         // Do nothing.

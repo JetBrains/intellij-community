@@ -4,10 +4,9 @@ package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/wrapInSupplierFix")
-abstract class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/wrapInSupplierFix"
 

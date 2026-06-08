@@ -8,7 +8,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTarget
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -18,9 +17,6 @@ import org.jetbrains.kotlin.test.util.invalidateCaches
 
 class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

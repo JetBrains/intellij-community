@@ -7,18 +7,14 @@ import org.jetbrains.kotlin.config.ResourceKotlinRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestResourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase(),
-                                              ExpectedPluginModeProvider {
+abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase() {
 
     private var sdkCreationChecker: KotlinSdkCreationChecker? = null
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         sdkCreationChecker = KotlinSdkCreationChecker()
     }
 
@@ -28,9 +24,6 @@ abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase
             { super.tearDown() },
         )
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     protected fun assertKotlinSources(moduleName: String, vararg expectedSources: String) {
         doAssertContentFolders(moduleName, SourceKotlinRootType, *expectedSources)

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -17,9 +16,6 @@ import java.io.File
  */
 class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private val moduleDependentsProvider get() = KotlinModuleDependentsProvider.getInstance(project)
 

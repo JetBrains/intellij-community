@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.names
 
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.KotlinModulePackageNamesProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -24,9 +23,6 @@ import kotlin.io.path.name
 class IdeKotlinModulePackageNamesProviderTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base/fir/analysis-api-platform/testData/kotlinModulePackageNames")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private val fooBarClassFilesPath = Path.of("classFiles", "fooBar")
 

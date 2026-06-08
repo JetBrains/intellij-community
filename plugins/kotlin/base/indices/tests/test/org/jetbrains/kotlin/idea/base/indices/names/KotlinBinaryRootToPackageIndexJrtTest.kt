@@ -11,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.junit.Test
@@ -34,8 +33,6 @@ import java.nio.file.Path
 @RunWith(JUnit4::class)
 class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
     private val testDataPath = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex/jrt").toPath()
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     lateinit var jrtPath: Path
     lateinit var jrtRoot: VirtualFile

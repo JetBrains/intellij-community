@@ -4,12 +4,10 @@ package com.intellij.execution.junit.kotlin.codeInspection
 import com.intellij.junit.testFramework.JUnitAssertEqualsOnArrayInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnitAssertEqualsOnArrayInspectionTest : JUnitAssertEqualsOnArrayInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnitAssertEqualsOnArrayInspectionTest : JUnitAssertEqualsOnArrayInspectionTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopeUtil
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import java.io.File
 
@@ -15,9 +14,6 @@ import java.io.File
  */
 class KotlinGlobalSearchScopeMergerTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     private class UniqueScope : GlobalSearchScope() {
         override fun isSearchInModuleContent(aModule: Module): Boolean = false

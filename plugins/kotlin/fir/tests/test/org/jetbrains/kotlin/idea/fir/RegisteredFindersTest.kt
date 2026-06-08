@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.fir
 import com.intellij.psi.NonClasspathClassFinder
 import com.intellij.psi.PsiElementFinder
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -13,7 +12,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class RegisteredFindersTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST
 

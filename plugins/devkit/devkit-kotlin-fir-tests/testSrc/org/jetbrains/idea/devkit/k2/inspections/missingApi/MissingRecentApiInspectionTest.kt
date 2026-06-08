@@ -18,17 +18,13 @@ import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspecti
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiUsageProcessor
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 /**
  * Base class for tests of [MissingRecentApiInspection] on Java and Kotlin sources.
  */
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingApi")
-class MissingRecentApiInspectionTest : PluginModuleTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class MissingRecentApiInspectionTest : PluginModuleTestCase() {
 
   private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -48,7 +44,7 @@ class MissingRecentApiInspectionTest : PluginModuleTestCase(), ExpectedPluginMod
   override fun getProjectDescriptor() = projectDescriptor
 
   override fun setUp() {
-    setUpWithKotlinPlugin { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(module)
     configureInspection()
     assertAnnotationsFoundForClass("library.RecentClass")

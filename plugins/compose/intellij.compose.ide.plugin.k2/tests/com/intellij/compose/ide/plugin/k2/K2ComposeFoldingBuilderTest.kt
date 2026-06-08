@@ -18,9 +18,7 @@
 package com.intellij.compose.ide.plugin.k2
 
 import com.intellij.compose.ide.plugin.shared.ComposeFoldingBuilderTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 /** Test for [K2ComposeFoldingBuilder]. */
 internal class K2ComposeFoldingBuilderTest : ComposeFoldingBuilderTest() {
-  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 }

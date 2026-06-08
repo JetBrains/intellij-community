@@ -1,9 +1,8 @@
 package com.intellij.logging.highlighting
 
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderAnnotatorTestBase
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotatorTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotatorTestBase() {
   override val fileName: String = "Logging.kt"
 
   fun `test log4j2 default log`() = doTest(

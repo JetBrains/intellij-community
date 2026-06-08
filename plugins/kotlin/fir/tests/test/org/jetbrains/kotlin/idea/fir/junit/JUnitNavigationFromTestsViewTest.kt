@@ -8,11 +8,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 internal class JUnitNavigationFromTestsViewTest: KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testNavigationWithMethodWithTailingTraces() {
         myFixture.addFileToProject("ATest.kt",

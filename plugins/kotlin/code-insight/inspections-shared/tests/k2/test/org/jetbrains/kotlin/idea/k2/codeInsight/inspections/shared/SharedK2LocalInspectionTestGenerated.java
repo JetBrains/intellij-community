@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -23,12 +22,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/ambiguousNonLocalJump")
     public static class AmbiguousNonLocalJump extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -82,12 +75,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/bigDecimalEquals")
     public static class BigDecimalEquals extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -142,12 +129,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
             public static class Termination extends AbstractSharedK2LocalInspectionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -566,12 +547,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspectionsLocal/collections/convertCallChainIntoSequence")
             public static class Uncategorized extends AbstractSharedK2LocalInspectionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -767,12 +742,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/complexRedundantLet")
     public static class ComplexRedundantLet extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1181,12 +1150,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/constantConditionIf")
     public static class ConstantConditionIf extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1298,12 +1261,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/also")
         public static class Also extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1357,12 +1314,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile")
         public static class DoWhile extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1396,12 +1347,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/for")
         public static class For extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1435,12 +1380,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/if")
         public static class If extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1494,12 +1433,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse")
         public static class IfElse extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1553,12 +1486,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/when")
         public static class When extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1587,12 +1514,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/while")
         public static class While extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1627,12 +1548,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons")
     public static class ConvertRangeCheckToTwoComparisons extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1731,12 +1646,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/convertTwoComparisonsToRangeCheck")
     public static class ConvertTwoComparisonsToRangeCheck extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1943,12 +1852,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope")
         public static class AmbiguousCoroutineScope extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2102,12 +2005,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/deferredResultUnused")
         public static class DeferredResultUnused extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2186,12 +2083,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob")
         public static class ForEachJoinOnCollectionOfJob extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2250,12 +2141,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred")
         public static class MapAwaitOnCollectionOfDeferred extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2324,12 +2209,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext")
         public static class PreferCurrentCoroutineContextToCoroutineContext extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2393,12 +2272,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees")
         public static class SuspendCoroutineLacksCancellationGuarantees extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2468,12 +2341,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/delegationToVarProperty")
     public static class DelegationToVarProperty extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2527,12 +2394,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument")
     public static class FilterIsInstanceCallWithClassLiteralArgument extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2576,12 +2437,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/forEachParameterNotUsed")
     public static class ForEachParameterNotUsed extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2625,12 +2480,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/implicitNullableNothingType")
     public static class ImplicitNullableNothingType extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2694,12 +2543,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/infixCallToOrdinary")
     public static class InfixCallToOrdinary extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2738,12 +2581,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaCollectionsStaticMethodOnImmutableList")
     public static class JavaCollectionsStaticMethodOnImmutableList extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2762,12 +2599,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
     public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2856,12 +2687,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/migrateDiagnosticSuppression")
     public static class MigrateDiagnosticSuppression extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2885,12 +2710,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen")
     public static class MoveVariableDeclarationIntoWhen extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3069,12 +2888,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/objectLiteralToLambda")
     public static class ObjectLiteralToLambda extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3088,12 +2901,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/recursivePropertyAccessor")
     public static class RecursivePropertyAccessor extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3237,12 +3044,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantConstructorKeyword")
     public static class RedundantConstructorKeyword extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3296,12 +3097,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
     public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3325,12 +3120,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantGetter")
     public static class RedundantGetter extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3414,12 +3203,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda")
     public static class RedundantLabeledReturnOnLastExpressionInLambda extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3488,12 +3271,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantOverride")
     public static class RedundantOverride extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3757,12 +3534,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantReturnLabel")
     public static class RedundantReturnLabel extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3796,12 +3567,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantSamConstructor")
     public static class RedundantSamConstructor extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -3890,12 +3655,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantSemicolon")
     public static class RedundantSemicolon extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4034,12 +3793,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantSetter")
     public static class RedundantSetter extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4158,12 +3911,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantSuspend")
     public static class RedundantSuspend extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4372,12 +4119,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantValueArgument")
     public static class RedundantValueArgument extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4456,12 +4197,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeCurlyBracesFromTemplate")
     public static class RemoveCurlyBracesFromTemplate extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4570,12 +4305,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptyClassBody")
     public static class RemoveEmptyClassBody extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4729,12 +4458,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall")
     public static class RemoveEmptyParenthesesFromLambdaCall extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4793,12 +4516,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
     public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4827,12 +4544,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeRedundantBackticks")
     public static class RemoveRedundantBackticks extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4896,12 +4607,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeSetterParameterType")
     public static class RemoveSetterParameterType extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4925,12 +4630,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeUnnecessaryParentheses")
     public static class RemoveUnnecessaryParentheses extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5159,12 +4858,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality")
     public static class ReplaceAssertBooleanWithAssertEquality extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5236,12 +4929,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateBy")
         public static class AssociateBy extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5260,12 +4947,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateByKeyAndValue")
         public static class AssociateByKeyAndValue extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5309,12 +4990,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateByTo")
         public static class AssociateByTo extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5333,12 +5008,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateByToKeyAndValue")
         public static class AssociateByToKeyAndValue extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5375,12 +5044,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multipackage")
             public static class Multipackage extends AbstractSharedK2LocalInspectionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5399,12 +5062,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWith")
             public static class Uncategorized extends AbstractSharedK2LocalInspectionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5509,12 +5166,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWithTo")
         public static class AssociateWithTo extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5554,12 +5205,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceMapGetOrDefault")
     public static class ReplaceMapGetOrDefault extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5583,12 +5228,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceMapIndexedWithListGenerator")
     public static class ReplaceMapIndexedWithListGenerator extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5682,12 +5321,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replacePrintlnWithLogging")
     public static class ReplacePrintlnWithLogging extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5736,12 +5369,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceRangeToWithRangeUntil")
     public static class ReplaceRangeToWithRangeUntil extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5790,12 +5417,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceRangeToWithUntil")
     public static class ReplaceRangeToWithUntil extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5847,12 +5468,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceReadLineWithReadln/readln")
         public static class Readln extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5881,12 +5496,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull")
         public static class ReadlnOrNull extends AbstractSharedK2LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5916,12 +5525,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceToStringWithStringTemplate")
     public static class ReplaceToStringWithStringTemplate extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5950,12 +5553,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange")
     public static class ReplaceWithStringBuilderAppendRange extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5999,12 +5596,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/safeCastWithReturn")
     public static class SafeCastWithReturn extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6058,12 +5649,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/setterBackingFieldAssignment")
     public static class SetterBackingFieldAssignment extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6172,12 +5757,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simpleRedundantLet")
     public static class SimpleRedundantLet extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6601,12 +6180,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyBooleanWithConstants")
     public static class SimplifyBooleanWithConstants extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6810,12 +6383,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
     public static class SimplifyNegatedBinaryExpression extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6899,12 +6466,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition")
     public static class SimplifyWhenWithBooleanConstantCondition extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6988,12 +6549,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/sortModifiers")
     public static class SortModifiers extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7077,12 +6632,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/suspiciousAsDynamic")
     public static class SuspiciousAsDynamic extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7096,12 +6645,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/suspiciousJavaClassCallableReference")
     public static class SuspiciousJavaClassCallableReference extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7150,12 +6693,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/suspiciousVarProperty")
     public static class SuspiciousVarProperty extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7199,12 +6736,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/throwableNotThrown")
     public static class ThrowableNotThrown extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7338,12 +6869,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/trailingComma")
     public static class TrailingComma extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7497,12 +7022,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/unsafeCastWithReturn")
     public static class UnsafeCastWithReturn extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7521,12 +7040,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/unusedDataClassCopyResult")
     public static class UnusedDataClassCopyResult extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7560,12 +7073,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/wrapUnaryOperator")
     public static class WrapUnaryOperator extends AbstractSharedK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

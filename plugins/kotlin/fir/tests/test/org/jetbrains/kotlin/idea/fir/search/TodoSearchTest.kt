@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.psi.search.PsiTodoSearchHelper
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -15,7 +14,6 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/search/todo")
 @RunWith(JUnit38ClassRunner::class)
 class TodoSearchTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
 

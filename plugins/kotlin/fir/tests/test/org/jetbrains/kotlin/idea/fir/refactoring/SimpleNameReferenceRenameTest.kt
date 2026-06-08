@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.refactoring.rename.RenameProcessor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.test.TestMetadata
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestRoot("idea/tests")
 @TestMetadata("testData/refactoring/rename/simpleNameReference")
 class SimpleNameReferenceRenameTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testRenameLabel() {
         doTest("foo")

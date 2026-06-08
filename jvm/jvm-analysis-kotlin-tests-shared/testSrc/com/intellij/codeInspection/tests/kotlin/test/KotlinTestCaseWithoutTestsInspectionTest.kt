@@ -2,13 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithoutTestsInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase(), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase() {
+  
 
   fun `test case without test methods in JUnit 3`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

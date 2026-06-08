@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.structureView;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.TestMetadata;
@@ -25,12 +24,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/classes/incorrectCode")
         public static class IncorrectCode extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("extendClassWithoutSuperConstructorCall.kt")
             public void testExtendClassWithoutSuperConstructorCall() throws Exception {
                 performTest();
@@ -45,12 +38,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/classes")
         public static class Uncategorized extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("classImplemeningInterfaces.kt")
             public void testClassImplemeningInterfaces() throws Exception {
                 performTest();
@@ -89,12 +76,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/methods/incorrectCode")
         public static class IncorrectCode extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("overideMethodWithoutOverrideModifier.kt")
             public void testOverideMethodWithoutOverrideModifier() throws Exception {
                 performTest();
@@ -114,12 +95,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/methods")
         public static class Uncategorized extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("intersectionOverrideMethods.kt")
             public void testIntersectionOverrideMethods() throws Exception {
                 performTest();
@@ -148,12 +123,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/properties/incorrectCode")
         public static class IncorrectCode extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("overidePropertyWithoutOverrideModifier.kt")
             public void testOveridePropertyWithoutOverrideModifier() throws Exception {
                 performTest();
@@ -173,12 +142,6 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/gotoSuperDeclarationsHandler/properties")
         public static class Uncategorized extends AbstractKotlinGoToSuperDeclarationsHandlerTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             @TestMetadata("intersectionOverrideProperties.kt")
             public void testIntersectionOverrideProperties() throws Exception {
                 performTest();

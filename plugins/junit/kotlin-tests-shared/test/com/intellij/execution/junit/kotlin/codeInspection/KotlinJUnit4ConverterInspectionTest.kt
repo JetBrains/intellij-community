@@ -5,12 +5,10 @@ import com.intellij.junit.testFramework.JUnit4ConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 
@@ -70,7 +68,8 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
     try {
       myFixture.runQuickFix("Convert to JUnit 4 test case")
       fail("Expected ConflictsInTestsException exception te be thrown.")
-    } catch(e: BaseRefactoringProcessor.ConflictsInTestsException) {
+    }
+    catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
       assertEquals(e.messages.size, 2)
       assertContainsElements(
         e.messages,

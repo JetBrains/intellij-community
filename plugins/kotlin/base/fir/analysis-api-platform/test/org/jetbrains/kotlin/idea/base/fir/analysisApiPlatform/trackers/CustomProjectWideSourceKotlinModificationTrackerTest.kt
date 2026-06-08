@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideSourceModificationTracker
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertNotEquals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -19,8 +18,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isContractDescriptionCallPsiCheck
 
 class CustomProjectWideSourceKotlinModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun `test remove block from getter`() {
         val file = myFixture.configureByText("usage.kt", "val i: Int get(){}") as KtFile

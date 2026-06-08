@@ -3,19 +3,12 @@ package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml/actions")
-public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomInspectionTestBase implements ExpectedPluginModeProvider {
-  @Override
-  public @NotNull KotlinPluginMode getPluginMode() {
-    return KotlinPluginMode.K2;
-  }
+public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomInspectionTestBase {
 
   @Override
   protected String getBasePath() {
@@ -24,7 +17,7 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
 
   @Override
   protected void setUp() throws Exception {
-    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), () -> super.setUp());
+    super.setUp();
 
     setUpActionClasses(!getTestName(false).contains("Without"));
   }
@@ -52,31 +45,31 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
     myFixture.copyFileToProject("AnotherBundle.properties");
     addKotlinClass("foo/bar/BarAction.kt",
                    """
-                       package foo.bar
-                       class BarAction : com.intellij.openapi.actionSystem.AnAction() {}""");
+                     package foo.bar
+                     class BarAction : com.intellij.openapi.actionSystem.AnAction() {}""");
     addKotlinClass("foo/InternalActionBase.kt", """
-                       package foo
-                       internal class InternalActionBase : com.intellij.openapi.actionSystem.AnAction() {
-                         constructor() {}
-                       }""");
+      package foo
+      internal class InternalActionBase : com.intellij.openapi.actionSystem.AnAction() {
+        constructor() {}
+      }""");
     addKotlinClass("foo/ActionWithDefaultConstructor.kt", """
-                       package foo
-                       class ActionWithDefaultConstructor : InternalActionBase() {}""");
+      package foo
+      class ActionWithDefaultConstructor : InternalActionBase() {}""");
     addKotlinClass("foo/bar/BarGroup.kt", """
-                       package foo.bar
-                       public class BarGroup : com.intellij.openapi.actionSystem.ActionGroup() {}""");
+      package foo.bar
+      public class BarGroup : com.intellij.openapi.actionSystem.ActionGroup() {}""");
     addKotlinClass("foo/bar/GroupWithCanBePerformed.kt", """
-                       package foo.bar
-                       public class GroupWithCanBePerformed : com.intellij.openapi.actionSystem.ActionGroup() {
-                         override fun canBePerformed(context: com.intellij.openapi.actionSystem.DataContext): Boolean {
-                           return true
-                         }
-                       }""");
+      package foo.bar
+      public class GroupWithCanBePerformed : com.intellij.openapi.actionSystem.ActionGroup() {
+        override fun canBePerformed(context: com.intellij.openapi.actionSystem.DataContext): Boolean {
+          return true
+        }
+      }""");
 
     myFixture.addClass("""
-    package com.intellij.ui.components;
-    public class JBList {}
-    """);
+                         package com.intellij.ui.components;
+                         public class JBList {}
+                         """);
     myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap name=\"MyKeymap\"/>");
     myFixture.testHighlighting("ActionComplexHighlighting.xml");
   }

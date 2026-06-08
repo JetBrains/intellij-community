@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -29,12 +28,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
             public static class InaccessibleMembers extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -123,12 +116,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/compilingEvaluator")
             public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -183,12 +170,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/contextParameters")
         public static class ContextParameters extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -237,12 +218,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/contextReceivers")
         public static class ContextReceivers extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -319,12 +294,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines/runToCursor")
             public static class RunToCursor extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -373,12 +342,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines/stepInto")
             public static class StepInto extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -427,12 +390,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines/stepOut")
             public static class StepOut extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -499,12 +456,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines/stepOver")
                 public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                     }
@@ -613,12 +564,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported")
                 public static class Unsupported extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                     }
@@ -638,12 +583,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/coroutines")
             public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -763,12 +702,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/createExpression")
         public static class CreateExpression extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -792,12 +725,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/extraVariables")
         public static class ExtraVariables extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -861,12 +788,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/frame")
         public static class Frame extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1185,12 +1106,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/funWithDefaultParam")
         public static class FunWithDefaultParam extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1219,12 +1134,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/implicitClassReceiver")
         public static class ImplicitClassReceiver extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1268,12 +1177,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/javaContext")
         public static class JavaContext extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1312,12 +1215,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/labels")
         public static class Labels extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1351,12 +1248,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/lambdas")
         public static class Lambdas extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1473,12 +1364,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/reflectiveAccess")
             public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -1492,12 +1377,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses")
             public static class ValueClasses extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -1537,12 +1416,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/reifiedTypeParameters")
         public static class ReifiedTypeParameters extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1576,12 +1449,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1605,12 +1472,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/simpleConstructors")
         public static class SimpleConstructors extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1624,12 +1485,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/simpleLocals")
         public static class SimpleLocals extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1733,12 +1588,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/simpleSmartcasts")
         public static class SimpleSmartcasts extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -1777,12 +1626,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint")
         public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -2603,12 +2446,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing")
             public static class Capturing extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -2682,12 +2519,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues")
             public static class DefaultValues extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -2714,12 +2545,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences")
                 public static class FunReferences extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                     }
@@ -2768,12 +2593,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
                 public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K2;
-                    }
-
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                     }
@@ -2798,12 +2617,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent")
             public static class LambdaContent extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -2842,12 +2655,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/returns")
             public static class Returns extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -2871,12 +2678,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda")
             public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K2;
-                }
-
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
                 }
@@ -2891,12 +2692,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/multipleBreakpoints/library")
         public static class Library extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -2915,12 +2710,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/multipleBreakpoints/reifiedParamEvaluation")
         public static class ReifiedParamEvaluation extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
             }
@@ -2949,12 +2738,6 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/multipleBreakpoints")
         public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
             }

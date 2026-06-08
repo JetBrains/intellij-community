@@ -6,21 +6,15 @@ import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinIntentionDescriptionTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinIntentionDescriptionTest : LightPlatformTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     private val necessaryNormalNames = listOf("description.html", "before.kt.template", "after.kt.template")
     private val necessaryXmlNames = listOf("description.html", "before.xml.template", "after.xml.template")

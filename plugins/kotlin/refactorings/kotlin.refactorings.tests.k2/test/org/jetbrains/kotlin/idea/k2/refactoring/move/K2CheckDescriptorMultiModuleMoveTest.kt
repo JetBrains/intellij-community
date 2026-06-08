@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
@@ -26,8 +25,6 @@ import org.junit.runner.RunWith
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestMetadata("../../idea/tests/testData/refactoring/moveDescriptors")
 class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModuleMoveTest() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     @TestMetadata("moveExpectProperty")
     @Throws(Exception::class)

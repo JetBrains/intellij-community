@@ -4,23 +4,16 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 
-abstract class KotlinLightPlatformCodeInsightFixtureTestCase : BasePlatformTestCase(),
-                                                               ExpectedPluginModeProvider {
+abstract class KotlinLightPlatformCodeInsightFixtureTestCase : BasePlatformTestCase() {
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
 
         enableKotlinOfficialCodeStyle(project)
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
-
-        // TODO override in KotlinFirBreadcrumbsTestGenerated?
-        if (pluginMode == KotlinPluginMode.K1) {
-            invalidateLibraryCache(project)
-        }
     }
 
     override fun tearDown() {

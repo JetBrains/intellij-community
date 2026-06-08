@@ -5,16 +5,10 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.structuralsearch.MatchOptions
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KotlinOptimizedSearchScanTest : LightQuickFixTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinOptimizedSearchScanTest : LightQuickFixTestCase() {
 
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+    
 
     private fun getSearchPlan(query: String): String {
         val matchOptions = MatchOptions()

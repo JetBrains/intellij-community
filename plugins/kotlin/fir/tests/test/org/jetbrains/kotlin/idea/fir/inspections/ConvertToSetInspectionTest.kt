@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertArgumentToSetInspection
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 class ConvertToSetInspectionTest15 : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun `test regular minus`() = runTests(
         receiverTypes = listOf("Iterable<Int>", "Set<Int>", "Sequence<Int>"),

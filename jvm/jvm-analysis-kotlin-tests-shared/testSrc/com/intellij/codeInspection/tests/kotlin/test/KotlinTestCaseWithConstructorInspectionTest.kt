@@ -9,14 +9,10 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
-abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase(), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
+abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
+  
 
   companion object {
     private val descriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {

@@ -4,11 +4,10 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 
-abstract class KotlinLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase(),
-                                                        ExpectedPluginModeProvider {
+abstract class KotlinLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase() {
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         enableKotlinOfficialCodeStyle(project)
     }
 

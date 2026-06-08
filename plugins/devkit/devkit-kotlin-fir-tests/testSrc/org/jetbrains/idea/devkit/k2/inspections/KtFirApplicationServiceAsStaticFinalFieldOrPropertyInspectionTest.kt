@@ -6,23 +6,17 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 @TestDataPath("/inspections/applicationServiceAsStaticFinalFieldOrProperty")
-class KtFirApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase(), ExpectedPluginModeProvider {
+class KtFirApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest :
+  ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
-
-  override fun getBasePath() = PluginPathManager.getPluginHomePathRelative("devkit") + "/devkit-kotlin-tests/testData/inspections/applicationServiceAsStaticFinalFieldOrProperty"
+  override fun getBasePath() =
+    PluginPathManager.getPluginHomePathRelative("devkit") + "/devkit-kotlin-tests/testData/inspections/applicationServiceAsStaticFinalFieldOrProperty"
 
   override fun getFileExtension(): String = "kt"
 
-  override fun setUp() {
-    setUpWithKotlinPlugin {  super.setUp() }
-  }
 
   override fun tearDown() {
     runAll(

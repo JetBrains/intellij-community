@@ -19,8 +19,6 @@ import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightAnnotation
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -75,7 +73,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import kotlin.test.fail as kfail
 
-interface UastApiTestBase : ExpectedPluginModeProvider {
+interface UastApiTestBase {
 
     fun checkCallbackForAnnotationParameters(uFilePath: String, uFile: UFile) {
         val annotation = uFile.findElementByText<UAnnotation>("@IntRange(from = 10, to = 0)")

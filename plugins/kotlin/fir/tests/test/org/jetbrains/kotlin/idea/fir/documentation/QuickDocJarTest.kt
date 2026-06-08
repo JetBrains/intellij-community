@@ -5,13 +5,11 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
 
 class QuickDocJarTest : KotlinLightCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testWithSources_showsDefaults() {
         val classesRoot = JarFileSystem.getInstance().refreshAndFindFileByPath("$IDEA_TEST_DATA_DIR/lib/HasDefaults.jar!/")

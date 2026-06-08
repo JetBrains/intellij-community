@@ -6,15 +6,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.artifacts.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtFunction
 
 class KotlinTypeAliasNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     fun testSimple() = test("String", "StringAlias")
     fun testNullable() = test("String?", "NullableString")

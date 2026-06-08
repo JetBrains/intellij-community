@@ -5,11 +5,9 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -28,7 +26,7 @@ abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase
   }
 
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
 
     addKotlinFile("EntitySource.kt", """
       package com.intellij.platform.workspace.storage
@@ -81,8 +79,9 @@ abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase
     val (fileNameBefore, _) = getBeforeAndAfterFileNames()
     myFixture.testHighlighting(fileNameBefore)
   }
-  
+
   companion object {
-    private val TESTDATA_PATH = PluginPathManager.getPluginHomePathRelative("devkit") + "/intellij.devkit.workspaceModel/tests/testData/inspections/"
+    private val TESTDATA_PATH =
+      PluginPathManager.getPluginHomePathRelative("devkit") + "/intellij.devkit.workspaceModel/tests/testData/inspections/"
   }
 }

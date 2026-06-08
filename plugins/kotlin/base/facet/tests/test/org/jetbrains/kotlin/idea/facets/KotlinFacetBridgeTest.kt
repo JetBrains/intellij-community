@@ -10,14 +10,11 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.idea.workspaceModel.deserializeExternalSystemTestRunTask
 
-class KotlinFacetBridgeTest : KotlinFacetTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class KotlinFacetBridgeTest : KotlinFacetTestCase() {
 
     fun testSimpleKotlinFacetCreate() {
         getKotlinFacet()

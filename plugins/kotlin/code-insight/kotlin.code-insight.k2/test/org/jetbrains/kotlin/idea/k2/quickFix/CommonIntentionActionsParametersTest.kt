@@ -13,14 +13,10 @@ import com.intellij.lang.jvm.actions.setMethodParametersRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UMethod
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -28,13 +24,12 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class CommonIntentionActionsParametersTest : KotlinLightCodeInsightFixtureTestCaseBase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
         myFixture.configureByText("Anno.kt", "annotation class Anno(val i: Int)")
         myFixture.configureByText("ClassRef.kt", "annotation class ClassRef(val klass: KClass<*>)")
         myFixture.configureByText("Root.kt", "annotation class Root(val children: Array<Child>")
@@ -77,39 +72,39 @@ class CommonIntentionActionsParametersTest : KotlinLightCodeInsightFixtureTestCa
         )
     }
 
-  @OptIn(KaAllowAnalysisOnEdt::class)
-  fun testSetConstructorParameters() {
-      myFixture.configureByText(
-          "foo.kt",
-           """
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun testSetConstructorParameters() {
+        myFixture.configureByText(
+            "foo.kt",
+            """
            class Foo(<caret>) {
            }
            """.trimIndent()
-      )
+        )
 
-    val action = allowAnalysisOnEdt {
-        createChangeParametersActions(
-            myFixture.atCaret<UMethod>().javaPsi,
-            setMethodParametersRequest(
-                linkedMapOf<String, JvmType>(
-                    "i" to PsiTypes.intType(),
-                    "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
-                ).entries
-            )
-        ).find { it.text.contains("Change signature of Foo") }
-    }
-    if (action == null) fail("Change signature intention not found")
-    myFixture.launchAction(action!!)
-    myFixture.checkResult(
-        """
+        val action = allowAnalysisOnEdt {
+            createChangeParametersActions(
+                myFixture.atCaret<UMethod>().javaPsi,
+                setMethodParametersRequest(
+                    linkedMapOf<String, JvmType>(
+                        "i" to PsiTypes.intType(),
+                        "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
+                    ).entries
+                )
+            ).find { it.text.contains("Change signature of Foo") }
+        }
+        if (action == null) fail("Change signature intention not found")
+        myFixture.launchAction(action!!)
+        myFixture.checkResult(
+            """
         import java.io.File
 
         class Foo(i: Int, file: File) {
         }
         """.trimIndent(),
-        true
-    )
-  }
+            true
+        )
+    }
 
     fun testAddParameterToTheEnd() {
         myFixture.configureByText(

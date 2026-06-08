@@ -4,14 +4,12 @@ package com.intellij.execution.junit.kotlin.codeInspection
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.junit.testFramework.MavenTestLib
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnitMalformedDeclarationInspectionTestBase(
-    vararg versions: MavenTestLib,
-) : JUnitMalformedDeclarationInspectionTestBase(*versions), ExpectedPluginModeProvider {
+  vararg versions: MavenTestLib,
+) : JUnitMalformedDeclarationInspectionTestBase(*versions) {
   override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    super.setUp()
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 }

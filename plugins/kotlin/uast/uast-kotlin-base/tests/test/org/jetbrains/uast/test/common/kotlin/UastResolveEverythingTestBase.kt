@@ -7,14 +7,12 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.light.LightVariableBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
-                                          ExpectedPluginModeProvider {
+interface UastResolveEverythingTestBase : UastFileComparisonTestBase {
 
     private fun getResolvedFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "resolved$suffix")
 
@@ -23,20 +21,13 @@ interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
     private fun getPluginResolvedFile(filePath: String): File {
         val identicalFile = getIdenticalResolvedFile(filePath)
         if (identicalFile.exists()) return identicalFile
-        return getResolvedFile(filePath, "$pluginSuffix$TXT")
+        return getResolvedFile(filePath, ".fir$TXT")
     }
 
     fun check(filePath: String, file: UFile) {
         val resolvedFile = getPluginResolvedFile(filePath)
 
         KotlinTestUtils.assertEqualsToFile(resolvedFile, file.resolvableWithTargets(::renderLightElementDifferently))
-
-        cleanUpIdenticalFile(
-            resolvedFile,
-            getResolvedFile(filePath, "$counterpartSuffix$TXT"),
-            getIdenticalResolvedFile(filePath),
-            kind = "resolved"
-        )
     }
 
     fun renderLightElementDifferently(element: PsiElement?): String {

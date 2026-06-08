@@ -11,20 +11,16 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
-abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase(),
-    ExpectedPluginModeProvider {
+abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
     override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
+        super.setUp()
 
         customToStringProvider = provider@{ element ->
             val navigatable = PsiNavigateUtil.getNavigatable(element)
@@ -52,15 +48,12 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
 
     open fun doTest(testPath: String) {
         val defaultFile = File(testPath)
-        val k2File = when (pluginMode) {
-            KotlinPluginMode.K1 -> null
-            KotlinPluginMode.K2 -> File(testPath.replace(".kt", ".k2.kt"))
-                .takeIf(File::exists)
-        }
+        val k2File = File(testPath.replace(".kt", ".k2.kt"))
+            .takeIf(File::exists)
 
         configureDependencies(defaultFile)
         val file = k2File ?: defaultFile
-        IgnoreTests.runTestIfNotDisabledByFileDirective(file.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(file.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             doTestProviders(file = file)
         }
     }

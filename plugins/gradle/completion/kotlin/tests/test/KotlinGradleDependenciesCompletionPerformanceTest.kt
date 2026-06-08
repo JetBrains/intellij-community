@@ -20,8 +20,6 @@ import com.intellij.testFramework.replaceService
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
-import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -34,9 +32,8 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
 @PerformanceUnitTest
-@UseK2PluginMode
+
 @GradleProjectTestApplication
-@AssertKotlinPluginMode
 internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotlinGradleCompletionTest() {
 
   @BeforeEach

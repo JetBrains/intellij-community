@@ -10,7 +10,11 @@ abstract class AbstractJavaAgainstKotlinSourceCheckerTest : AbstractJavaAgainstK
     fun doTest(path: String) {
         val relativePath = File(path).toRelativeString(File(testDataPath))
         fun doTest() {
-            IgnoreTests.runTestIfNotDisabledByFileDirective(Path.of(path), IgnoreTests.DIRECTIVES.of(pluginMode), directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE) {
+            IgnoreTests.runTestIfNotDisabledByFileDirective(
+                Path.of(path),
+                IgnoreTests.DIRECTIVES.IGNORE_K2,
+                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+            ) {
                 doTest(true, true, relativePath.replace(".kt", ".java"), relativePath)
             }
         }

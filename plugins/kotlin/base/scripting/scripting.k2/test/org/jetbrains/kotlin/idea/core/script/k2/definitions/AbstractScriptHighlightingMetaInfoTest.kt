@@ -6,7 +6,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.GlobalState
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -20,9 +19,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptServi
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
-import kotlin.jvm.java
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
@@ -39,13 +36,12 @@ abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMeta
     protected open val customDefinitionsProvider: CustomDefinitionProviderForTest? = null
 
     override fun setUp() {
-        setUpWithKotlinPlugin {
-            val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
-            myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
-            val javaModuleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
-            javaModuleFixtureBuilder.addContentRoot(myFixture.tempDirPath)
-            myFixture.setUp()
-        }
+        val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
+        myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
+        val javaModuleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
+        javaModuleFixtureBuilder.addContentRoot(myFixture.tempDirPath)
+        myFixture.setUp()
+
 
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
         invalidateLibraryCache(project)
