@@ -14,7 +14,7 @@
     reason: <- intellij.evaluationPlugin
   contentModules:
   - name: intellij.evaluationPlugin.languages.cpp
-  - name: intellij.evaluationPlugin.languages.cppRd
+  - name: intellij.evaluationPlugin.languages.cppRider
   - name: intellij.evaluationPlugin.languages.csharp
   - name: intellij.evaluationPlugin.languages.go
   - name: intellij.evaluationPlugin.languages.js
