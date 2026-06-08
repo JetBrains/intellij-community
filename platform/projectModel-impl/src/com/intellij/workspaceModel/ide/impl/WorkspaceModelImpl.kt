@@ -90,7 +90,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val reactive = WmReactive(this)
 
   final override val entityStorage: VersionedEntityStorageImpl
-  private val unloadedEntitiesStorage: VersionedEntityStorageImpl
+  final override val unloadedEntitiesStorage: VersionedEntityStorageImpl
   private val lock = ThreadContextAwareReentrantLock()
 
   /** replay = 1 is needed to send the very first state when the subscription fo the flow happens.

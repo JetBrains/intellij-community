@@ -49,6 +49,9 @@
     <registryKey key="ide.workspace.model.relative.paths.to.exclude.automatically"
                  defaultValue=".worktrees;.claude/worktrees" restartRequired="true"
                  description="Semicolon-separated list of relative-paths from project root to automatically exclude from indexing and searching."/>
+    <registryKey key="use.wsm.for.dependent.unloaded.modules" defaultValue="true" restartRequired="true"
+                 description="Use workspace model based modules graph for calculating dependent unloaded modules"/>
+
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>
 </idea-plugin>
