@@ -14,11 +14,11 @@ T = TypeVar("T")
 def is_two_element_tuple(val: tuple[T, ...]) -> TypeIs[tuple[T, T]]:
     return len(val) == 2
 
-def func1(names: tuple[str, ...]):
+def func1(names: tuple[str, str] | tuple[str, str, str]):
     if is_two_element_tuple(names):
         assert_type(names, tuple[str, str])
     else:
-        assert_type(names, tuple[str, ...])
+        assert_type(names, tuple[str, str, str])
 
 
 # > The final narrowed type may be narrower than **R**, due to the constraints of the

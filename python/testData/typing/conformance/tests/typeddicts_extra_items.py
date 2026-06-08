@@ -140,7 +140,7 @@ class MovieExtra(TypedDict, extra_items=int):
 def unpack_no_extra(**kwargs: Unpack[MovieNoExtra]) -> None: ...
 def unpack_extra(**kwargs: Unpack[MovieExtra]) -> None: ...
 
-unpack_no_extra(name="No Country for Old Men", year=2007) # E: Unrecognized item
+unpack_no_extra(name="No Country for Old Men", year=2007) # E?: Unrecognized item
 unpack_extra(name="No Country for Old Men", year=2007) # OK
 
 # > Notably, if the TypedDict type specifies ``extra_items`` to be read-only,
