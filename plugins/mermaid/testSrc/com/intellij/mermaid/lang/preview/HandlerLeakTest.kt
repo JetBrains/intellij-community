@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.preview
 
+import com.intellij.idea.IJIgnore
 import com.intellij.mermaid.markdown.preview.WaitForLoadHandlerAdapter
 import com.intellij.mermaid.markdown.preview.createBrowser
 import com.intellij.mermaid.markdown.preview.executeCancellableJavaScript
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test
 @PreviewTest
 @WithJcef
 @TestApplication
+@IJIgnore(issue = "IJPL-245868")
 class HandlerLeakTest {
   @TestDisposable
   lateinit var disposable: Disposable

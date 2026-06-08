@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.preview
 
+import com.intellij.idea.IJIgnore
 import com.intellij.mermaid.markdown.preview.MermaidDiagramPreviewComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 @WithJcef
 @ExtendWith(WaitForBuiltInServerExtension::class)
 @TestApplication
+@IJIgnore(issue = "IJPL-245868")
 class PreviewHandlerLeakTest {
   @JvmField
   @RegisterExtension

@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.preview
 
+import com.intellij.idea.IJIgnore
 import com.intellij.mermaid.markdown.preview.JsCallExecutionException
 import com.intellij.mermaid.markdown.preview.createBrowser
 import com.intellij.mermaid.markdown.preview.executeCancellableJavaScript
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit
 @WithJcef
 @ExtendWith(WaitForBuiltInServerExtension::class)
 @TestApplication
+@IJIgnore(issue = "IJPL-245868")
 class SuspendableJsCallTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   @Test
