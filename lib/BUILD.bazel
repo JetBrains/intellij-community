@@ -6390,57 +6390,57 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jacoco/org.jacoco.ant-0.8.14.jar_copy",
-    src = "@org_jacoco-org_jacoco_ant-0_8_14_http//file",
-    out = "org.jacoco/org.jacoco.ant-0.8.14.jar",
+    name = "org.jacoco/org.jacoco.ant-0.8.15.jar_copy",
+    src = "@org_jacoco-org_jacoco_ant-0_8_15_http//file",
+    out = "org.jacoco/org.jacoco.ant-0.8.15.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jacoco/org.jacoco.core-0.8.14.jar_copy",
-    src = "@org_jacoco-org_jacoco_core-0_8_14_http//file",
-    out = "org.jacoco/org.jacoco.core-0.8.14.jar",
+    name = "org.jacoco/org.jacoco.core-0.8.15.jar_copy",
+    src = "@org_jacoco-org_jacoco_core-0_8_15_http//file",
+    out = "org.jacoco/org.jacoco.core-0.8.15.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.ow2.asm/asm-9.9.jar_copy",
-    src = "@org_ow2_asm-asm-9_9_http//file",
-    out = "org.ow2.asm/asm-9.9.jar",
+    name = "org.ow2.asm/asm-9.10.1.jar_copy",
+    src = "@org_ow2_asm-asm-9_10_1_http//file",
+    out = "org.ow2.asm/asm-9.10.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.ow2.asm/asm-commons-9.9.jar_copy",
-    src = "@org_ow2_asm-asm-commons-9_9_http//file",
-    out = "org.ow2.asm/asm-commons-9.9.jar",
+    name = "org.ow2.asm/asm-commons-9.10.1.jar_copy",
+    src = "@org_ow2_asm-asm-commons-9_10_1_http//file",
+    out = "org.ow2.asm/asm-commons-9.10.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.ow2.asm/asm-tree-9.9.jar_copy",
-    src = "@org_ow2_asm-asm-tree-9_9_http//file",
-    out = "org.ow2.asm/asm-tree-9.9.jar",
+    name = "org.ow2.asm/asm-tree-9.10.1.jar_copy",
+    src = "@org_ow2_asm-asm-tree-9_10_1_http//file",
+    out = "org.ow2.asm/asm-tree-9.10.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jacoco/org.jacoco.report-0.8.14.jar_copy",
-    src = "@org_jacoco-org_jacoco_report-0_8_14_http//file",
-    out = "org.jacoco/org.jacoco.report-0.8.14.jar",
+    name = "org.jacoco/org.jacoco.report-0.8.15.jar_copy",
+    src = "@org_jacoco-org_jacoco_report-0_8_15_http//file",
+    out = "org.jacoco/org.jacoco.report-0.8.15.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jacoco/org.jacoco.agent-0.8.14.jar_copy",
-    src = "@org_jacoco-org_jacoco_agent-0_8_14_http//file",
-    out = "org.jacoco/org.jacoco.agent-0.8.14.jar",
+    name = "org.jacoco/org.jacoco.agent-0.8.15.jar_copy",
+    src = "@org_jacoco-org_jacoco_agent-0_8_15_http//file",
+    out = "org.jacoco/org.jacoco.agent-0.8.15.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -6450,56 +6450,56 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jacoco-org_jacoco_ant-0_8_14_http_import",
-        ":org_jacoco-org_jacoco_core-0_8_14_http_import",
-        ":org_ow2_asm-asm-9_9_http_import",
-        ":org_ow2_asm-asm-commons-9_9_http_import",
-        ":org_ow2_asm-asm-tree-9_9_http_import",
-        ":org_jacoco-org_jacoco_report-0_8_14_http_import",
-        ":org_jacoco-org_jacoco_agent-0_8_14_http_import",
+        ":org_jacoco-org_jacoco_ant-0_8_15_http_import",
+        ":org_jacoco-org_jacoco_core-0_8_15_http_import",
+        ":org_ow2_asm-asm-9_10_1_http_import",
+        ":org_ow2_asm-asm-commons-9_10_1_http_import",
+        ":org_ow2_asm-asm-tree-9_10_1_http_import",
+        ":org_jacoco-org_jacoco_report-0_8_15_http_import",
+        ":org_jacoco-org_jacoco_agent-0_8_15_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_jacoco-org_jacoco_ant-0_8_14_http_import",
-    jar = "@org_jacoco-org_jacoco_ant-0_8_14_http//file",
-    source_jar = "@org_jacoco-org_jacoco_ant-0_8_14-sources_http//file",
+    name = "org_jacoco-org_jacoco_ant-0_8_15_http_import",
+    jar = "@org_jacoco-org_jacoco_ant-0_8_15_http//file",
+    source_jar = "@org_jacoco-org_jacoco_ant-0_8_15-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jacoco-org_jacoco_core-0_8_14_http_import",
-    jar = "@org_jacoco-org_jacoco_core-0_8_14_http//file",
-    source_jar = "@org_jacoco-org_jacoco_core-0_8_14-sources_http//file",
+    name = "org_jacoco-org_jacoco_core-0_8_15_http_import",
+    jar = "@org_jacoco-org_jacoco_core-0_8_15_http//file",
+    source_jar = "@org_jacoco-org_jacoco_core-0_8_15-sources_http//file",
 )
 
 jvm_import(
-    name = "org_ow2_asm-asm-9_9_http_import",
-    jar = "@org_ow2_asm-asm-9_9_http//file",
-    source_jar = "@org_ow2_asm-asm-9_9-sources_http//file",
+    name = "org_ow2_asm-asm-9_10_1_http_import",
+    jar = "@org_ow2_asm-asm-9_10_1_http//file",
+    source_jar = "@org_ow2_asm-asm-9_10_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_ow2_asm-asm-commons-9_9_http_import",
-    jar = "@org_ow2_asm-asm-commons-9_9_http//file",
-    source_jar = "@org_ow2_asm-asm-commons-9_9-sources_http//file",
+    name = "org_ow2_asm-asm-commons-9_10_1_http_import",
+    jar = "@org_ow2_asm-asm-commons-9_10_1_http//file",
+    source_jar = "@org_ow2_asm-asm-commons-9_10_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_ow2_asm-asm-tree-9_9_http_import",
-    jar = "@org_ow2_asm-asm-tree-9_9_http//file",
-    source_jar = "@org_ow2_asm-asm-tree-9_9-sources_http//file",
+    name = "org_ow2_asm-asm-tree-9_10_1_http_import",
+    jar = "@org_ow2_asm-asm-tree-9_10_1_http//file",
+    source_jar = "@org_ow2_asm-asm-tree-9_10_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jacoco-org_jacoco_report-0_8_14_http_import",
-    jar = "@org_jacoco-org_jacoco_report-0_8_14_http//file",
-    source_jar = "@org_jacoco-org_jacoco_report-0_8_14-sources_http//file",
+    name = "org_jacoco-org_jacoco_report-0_8_15_http_import",
+    jar = "@org_jacoco-org_jacoco_report-0_8_15_http//file",
+    source_jar = "@org_jacoco-org_jacoco_report-0_8_15-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jacoco-org_jacoco_agent-0_8_14_http_import",
-    jar = "@org_jacoco-org_jacoco_agent-0_8_14_http//file",
-    source_jar = "@org_jacoco-org_jacoco_agent-0_8_14-sources_http//file",
+    name = "org_jacoco-org_jacoco_agent-0_8_15_http_import",
+    jar = "@org_jacoco-org_jacoco_agent-0_8_15_http//file",
+    source_jar = "@org_jacoco-org_jacoco_agent-0_8_15-sources_http//file",
 )
 
 copy_file(
@@ -6545,13 +6545,13 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jacoco-org_jacoco_ant-0_8_14_http_import",
-        ":org_jacoco-org_jacoco_core-0_8_14_http_import",
-        ":org_ow2_asm-asm-9_9_http_import",
-        ":org_ow2_asm-asm-commons-9_9_http_import",
-        ":org_ow2_asm-asm-tree-9_9_http_import",
-        ":org_jacoco-org_jacoco_report-0_8_14_http_import",
-        ":org_jacoco-org_jacoco_agent-0_8_14_http_import",
+        ":org_jacoco-org_jacoco_ant-0_8_15_http_import",
+        ":org_jacoco-org_jacoco_core-0_8_15_http_import",
+        ":org_ow2_asm-asm-9_10_1_http_import",
+        ":org_ow2_asm-asm-commons-9_10_1_http_import",
+        ":org_ow2_asm-asm-tree-9_10_1_http_import",
+        ":org_jacoco-org_jacoco_report-0_8_15_http_import",
+        ":org_jacoco-org_jacoco_agent-0_8_15_http_import",
     ],
 )
 
