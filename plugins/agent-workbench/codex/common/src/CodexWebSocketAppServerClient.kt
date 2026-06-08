@@ -181,6 +181,52 @@ class CodexWebSocketAppServerClient(
     )
   }
 
+  internal suspend fun listModelsPage(
+    cursor: String? = null,
+    limit: Int = PAGE_LIMIT,
+    includeHidden: Boolean = false,
+  ): ModelListResult {
+    val resolvedLimit = limit.coerceAtLeast(1)
+    return request(
+      method = "model/list",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeNumberField("limit", resolvedLimit)
+        cursor?.let { generator.writeStringField("cursor", it) }
+        if (includeHidden) {
+          generator.writeBooleanField("includeHidden", true)
+        }
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseModelListResult(parser) },
+      defaultResult = ModelListResult(emptyList(), null),
+    )
+  }
+
+  suspend fun listModels(includeHidden: Boolean = false): List<CodexGenerationModel> {
+    val models = mutableListOf<CodexGenerationModel>()
+    var cursor: String? = null
+    val seenCursors = LinkedHashSet<String>()
+    while (true) {
+      val response = listModelsPage(
+        cursor = cursor,
+        limit = PAGE_LIMIT,
+        includeHidden = includeHidden,
+      )
+      models.addAll(response.models)
+      val nextCursor = response.nextCursor
+      if (nextCursor.isNullOrBlank()) {
+        break
+      }
+      if (!seenCursors.add(nextCursor)) {
+        LOG.warn("model/list returned a repeating cursor '$nextCursor'; stopping pagination")
+        break
+      }
+      cursor = nextCursor
+    }
+    return models
+  }
+
   suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
     val normalizedThreadId = threadId.trim()
     if (normalizedThreadId.isEmpty()) {

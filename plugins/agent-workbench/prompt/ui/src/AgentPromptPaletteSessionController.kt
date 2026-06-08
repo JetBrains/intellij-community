@@ -78,6 +78,7 @@ internal class AgentPromptPaletteSessionController(
 
   private val contextController: AgentPromptPaletteContextController
   private val draftController: AgentPromptPaletteDraftController
+  private val generationSettingsController: AgentPromptGenerationSettingsController
   private val submitController: AgentPromptPaletteSubmitController
 
   @Volatile
@@ -126,6 +127,16 @@ internal class AgentPromptPaletteSessionController(
       getContainerModeSelected = { view.containerModeAction.selected },
       setContainerModeSelected = { view.headerControls.setContainerModeSelected(it) },
     )
+    generationSettingsController = AgentPromptGenerationSettingsController(
+      invocationData = invocationData,
+      providerSelector = providerSelector,
+      generationSettingsPanel = view.generationSettingsPanel,
+      modelSelectorLink = view.modelSelectorLink,
+      reasoningEffortLink = view.reasoningEffortLink,
+      modelCatalogScope = popupScope,
+      launcherProvider = launcherProvider,
+      onDefaultSaved = { showInfo(AgentPromptBundle.message("popup.generation.default.saved")) },
+    )
     submitController = AgentPromptPaletteSubmitController(
       project = project,
       invocationData = invocationData,
@@ -142,6 +153,7 @@ internal class AgentPromptPaletteSessionController(
       onSubmitBlocked = ::showError,
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
+      generationSettingsProvider = generationSettingsController::currentSettings,
       isContainerModeSelected = { view.containerModeAction.selected },
       isContainerModeSupported = ::isContainerModeSupported,
       isContainerModeRuntimeAvailable = ::isContainerModeRuntimeAvailable,
@@ -151,7 +163,11 @@ internal class AgentPromptPaletteSessionController(
 
   fun initialize(initialAddContextRequest: AgentPromptAddContextRequest? = null) {
     contextController.configureAddContextButton()
+    generationSettingsController.restoreDefaultSettings(
+      launcherProvider()?.loadProviderPreferences()?.generationSettingsByProviderId.orEmpty()
+    )
     refreshProviders()
+    generationSettingsController.refreshSelectedProviderModels()
     contextController.loadInitialContext(initialAddContextRequest?.contextItems)
     contextController.resolveExtensionTabs()
 
@@ -232,6 +248,7 @@ internal class AgentPromptPaletteSessionController(
         reloadExistingTasks()
       }
       updateProviderOptionsVisibility()
+      generationSettingsController.refreshSelectedProviderModels()
       updateSendAvailability()
       refreshFooterHintForCurrentState()
     }
@@ -554,6 +571,9 @@ internal class AgentPromptPaletteSessionController(
 
   private fun updateProviderOptionsVisibility() {
     providerSelector.setProviderOptionsVisible(contextState.activeExtensionTab == null)
+    generationSettingsController.setGenerationControlsVisible(
+      contextState.activeExtensionTab == null && currentTargetMode() == PromptTargetMode.NEW_TASK
+    )
 
     val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
     val showContainerMode = shouldShowContainerModeOption(

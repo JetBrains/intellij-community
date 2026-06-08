@@ -7,7 +7,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -73,6 +75,45 @@ class ClaudeAgentSessionProviderDescriptorTest {
 
     assertThat(launchSpec.command)
       .containsExactly("claude", "--session-id", sessionId)
+  }
+
+  @Test
+  fun applyGenerationSettingsLeavesAutoLaunchSpecUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    val updatedLaunchSpec = bridge.applyGenerationSettings(launchSpec, AgentPromptGenerationSettings.AUTO)
+
+    assertThat(updatedLaunchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId)
+    assertThat(updatedLaunchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsReasoningEffortFlag(): Unit = runBlocking(Dispatchers.Default) {
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    val updatedLaunchSpec = bridge.applyGenerationSettings(
+      launchSpec,
+      AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+    )
+
+    assertThat(updatedLaunchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId, "--effort", "max")
+    assertThat(updatedLaunchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
+  fun replaceOrAddEffortInsertsBeforePromptSeparator() {
+    assertThat(replaceOrAddEffort(listOf("claude", "--", "Refactor this"), "xhigh"))
+      .containsExactly("claude", "--effort", "xhigh", "--", "Refactor this")
+  }
+
+  @Test
+  fun replaceOrAddEffortReplacesExistingFlag() {
+    assertThat(replaceOrAddEffort(listOf("claude", "--effort", "low", "--session-id", "session-1"), "high"))
+      .containsExactly("claude", "--effort", "high", "--session-id", "session-1")
   }
 
   @Test

@@ -10,6 +10,7 @@ import com.intellij.util.textCompletion.TextCompletionProvider
 import com.intellij.util.textCompletion.TextCompletionUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import javax.swing.ScrollPaneConstants
 
 internal class AgentPromptTextField(
   project: Project,
@@ -32,7 +33,7 @@ internal class AgentPromptTextField(
       editor.settings.isFoldingOutlineShown = false
       editor.settings.isAdditionalPageAtBottom = false
       editor.settings.isRightMarginShown = false
-      editor.setVerticalScrollbarVisible(true)
+      editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       editor.setHorizontalScrollbarVisible(false)
     }
   }
@@ -43,6 +44,15 @@ internal class AgentPromptTextField(
       .createEditorHighlighter(project, MarkdownFileType.INSTANCE)
     ed.backgroundColor = JBUI.CurrentTheme.Popup.BACKGROUND
     ed.gutterComponentEx.background = JBUI.CurrentTheme.Popup.BACKGROUND
+    setupPromptBorder(ed)
     return ed
+  }
+
+  override fun setupBorder(editor: EditorEx) {
+    setupPromptBorder(editor)
+  }
+
+  private fun setupPromptBorder(editor: EditorEx) {
+    editor.setBorder(JBUI.Borders.empty(4, 6, 0, 6))
   }
 }

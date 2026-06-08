@@ -216,12 +216,16 @@ internal class AgentPromptProviderSelector(
     if (provider == null) {
       providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
       providerIconLabel.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
+      providerIconLabel.accessibleContext.accessibleName = AgentPromptBundle.message("popup.provider.selector.label")
+      providerIconLabel.accessibleContext.accessibleDescription = AgentPromptBundle.message("popup.provider.selector.tooltip")
       updateProviderOptionsPresentation()
       return
     }
 
     providerIconLabel.icon = getIcon(provider.icon, selectedLaunchMode)
     providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
+    providerIconLabel.accessibleContext.accessibleName = provider.displayName
+    providerIconLabel.accessibleContext.accessibleDescription = AgentPromptBundle.message("popup.provider.selector.tooltip")
     updateProviderOptionsPresentation()
   }
 

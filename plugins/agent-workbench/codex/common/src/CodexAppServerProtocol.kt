@@ -18,6 +18,11 @@ internal data class ThreadListResult(
   @JvmField val nextCursor: String?,
 )
 
+internal data class ModelListResult(
+  @JvmField val models: List<CodexGenerationModel>,
+  @JvmField val nextCursor: String?,
+)
+
 internal data class CodexAppServerTurnStartResult(
   @JvmField val turnId: String,
   @JvmField val status: String? = null,
@@ -145,6 +150,25 @@ internal class CodexAppServerProtocol {
       true
     }
     return skills
+  }
+
+  fun parseModelListResult(parser: JsonParser): ModelListResult {
+    if (parser.currentToken != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      return ModelListResult(models = emptyList(), nextCursor = null)
+    }
+
+    val models = mutableListOf<CodexGenerationModel>()
+    var nextCursor: String? = null
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "data", "models" -> parseModelArray(parser, models)
+        "nextCursor", "next_cursor" -> nextCursor = readStringOrNull(parser)
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    return ModelListResult(models, nextCursor)
   }
 
   fun parseThreadStartResult(parser: JsonParser): CodexStartedThreadSession {
@@ -510,6 +534,97 @@ private fun parseSkillObject(parser: JsonParser): CodexSkill? {
     shortDescription = shortDescription?.trimToNull(),
     defaultPrompt = defaultPrompt?.trimToNull(),
   )
+}
+
+private fun parseModelArray(parser: JsonParser, models: MutableList<CodexGenerationModel>) {
+  if (parser.currentToken != JsonToken.START_ARRAY) {
+    parser.skipChildren()
+    return
+  }
+
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token == JsonToken.START_OBJECT) {
+      parseModelObject(parser)?.let(models::add)
+    }
+    else {
+      parser.skipChildren()
+    }
+  }
+}
+
+private fun parseModelObject(parser: JsonParser): CodexGenerationModel? {
+  var id: String? = null
+  var displayName: String? = null
+  val supportedReasoningEfforts = LinkedHashSet<String>()
+  var defaultReasoningEffort: String? = null
+  var hidden = false
+  var isDefault = false
+
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "id", "slug", "model" -> id = readStringOrNull(parser)
+      "displayName", "display_name", "name", "title" -> displayName = readStringOrNull(parser)
+      "supportedReasoningLevels", "supported_reasoning_levels",
+      "supportedReasoningEfforts", "supported_reasoning_efforts",
+      "reasoningLevels", "reasoning_levels" -> parseReasoningEffortArray(parser, supportedReasoningEfforts)
+      "defaultReasoningLevel", "default_reasoning_level",
+      "defaultReasoningEffort", "default_reasoning_effort" -> defaultReasoningEffort = parseReasoningEffortValue(parser)
+      "hidden", "isHidden", "is_hidden" -> hidden = readBooleanOrFalse(parser)
+      "default", "isDefault", "is_default" -> isDefault = readBooleanOrFalse(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val resolvedId = id?.trimToNull() ?: return null
+  return CodexGenerationModel(
+    id = resolvedId,
+    displayName = displayName?.trimToNull(),
+    supportedReasoningEfforts = ArrayList(supportedReasoningEfforts),
+    defaultReasoningEffort = defaultReasoningEffort?.trimToNull(),
+    hidden = hidden,
+    isDefault = isDefault,
+  )
+}
+
+private fun parseReasoningEffortArray(parser: JsonParser, target: MutableSet<String>) {
+  if (parser.currentToken != JsonToken.START_ARRAY) {
+    parseReasoningEffortValue(parser)?.let(target::add)
+    return
+  }
+
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    parseReasoningEffortValue(parser)?.let(target::add)
+  }
+}
+
+private fun parseReasoningEffortValue(parser: JsonParser): String? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> readStringOrNull(parser)?.trimToNull()
+    JsonToken.START_OBJECT -> parseReasoningEffortObject(parser)
+    else -> {
+      parser.skipChildren()
+      null
+    }
+  }
+}
+
+private fun parseReasoningEffortObject(parser: JsonParser): String? {
+  var effort: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "reasoningEffort", "reasoning_effort", "effort", "id", "name", "value" -> {
+        effort = readStringOrNull(parser)?.trimToNull() ?: effort
+      }
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return effort
 }
 
 private fun parseSkillInterface(parser: JsonParser): ParsedSkillInterface {
@@ -916,6 +1031,17 @@ private fun readBooleanOrTrue(parser: JsonParser): Boolean {
     else -> {
       parser.skipChildren()
       true
+    }
+  }
+}
+
+private fun readBooleanOrFalse(parser: JsonParser): Boolean {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_TRUE -> true
+    JsonToken.VALUE_FALSE -> false
+    else -> {
+      parser.skipChildren()
+      false
     }
   }
 }

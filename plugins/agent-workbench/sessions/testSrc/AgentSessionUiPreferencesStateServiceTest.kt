@@ -2,8 +2,10 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -40,6 +42,9 @@ class AgentSessionUiPreferencesStateServiceTest {
       providerId = AgentSessionProvider.CLAUDE.value,
       launchMode = AgentSessionLaunchMode.STANDARD,
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
+      generationSettingsByProviderId = mapOf(
+        "claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)
+      ),
     )
     service.setProviderPreferences(prefs)
 
@@ -47,6 +52,8 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(loaded.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
     assertThat(loaded.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
+    assertThat(loaded.generationSettingsByProviderId)
+      .isEqualTo(mapOf("claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)))
   }
 
   @Test
@@ -123,6 +130,9 @@ class AgentSessionUiPreferencesStateServiceTest {
       providerId = AgentSessionProvider.CLAUDE.value,
       launchMode = AgentSessionLaunchMode.STANDARD,
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
+      generationSettingsByProviderId = mapOf(
+        "claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)
+      ),
     ))
 
     // Launch with codex — should merge, not replace
@@ -135,6 +145,8 @@ class AgentSessionUiPreferencesStateServiceTest {
     val loaded = service.getProviderPreferences()
     assertThat(loaded.providerOptionsByProviderId).containsEntry("claude", setOf("plan_mode"))
     assertThat(loaded.providerOptionsByProviderId).containsEntry("codex", setOf("fast"))
+    assertThat(loaded.generationSettingsByProviderId)
+      .isEqualTo(mapOf("claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)))
   }
 
   @Test

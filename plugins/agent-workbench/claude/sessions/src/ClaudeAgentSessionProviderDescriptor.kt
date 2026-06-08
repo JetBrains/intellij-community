@@ -6,7 +6,9 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -72,6 +74,15 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val promptOptions: List<AgentPromptProviderOption>
     get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
+  override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
+    get() = setOf(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+      AgentPromptReasoningEffort.MAX,
+    )
+
   override val editorTabActionIds: List<String>
     get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 
@@ -133,6 +144,17 @@ internal class ClaudeAgentSessionProviderDescriptor(
     return buildClaudeNewSessionLaunchSpec(mode, executableResolver())
   }
 
+  override fun applyGenerationSettings(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+  ): AgentSessionTerminalLaunchSpec {
+    val effort = sanitizeGenerationSettings(generationSettings).reasoningEffort
+    if (effort == AgentPromptReasoningEffort.AUTO) {
+      return baseLaunchSpec
+    }
+    return baseLaunchSpec.copy(command = replaceOrAddEffort(baseLaunchSpec.command, effort.claudeCliValue()))
+  }
+
   override fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     initialMessagePlan: AgentInitialMessagePlan,
@@ -181,6 +203,23 @@ internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): Li
     result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
   }
   return result
+}
+
+internal fun replaceOrAddEffort(command: List<String>, effort: String): List<String> {
+  val result = command.toMutableList()
+  val index = result.indexOf(EFFORT_FLAG)
+  if (index >= 0 && index + 1 < result.size) {
+    result[index + 1] = effort
+    return result
+  }
+
+  val promptSeparatorIndex = result.indexOf("--").takeIf { it >= 0 } ?: result.size
+  result.addAll(promptSeparatorIndex, listOf(EFFORT_FLAG, effort))
+  return result
+}
+
+private fun AgentPromptReasoningEffort.claudeCliValue(): String {
+  return name.lowercase()
 }
 
 internal fun buildClaudeResumeLaunchSpec(

@@ -65,9 +65,13 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Header provider/launch options, including Plan mode and Run in container, are right-aligned after the target tabs through a Search Everywhere-style action toolbar. Checkbox options render through `CheckboxAction` components with platform header checkbox metrics; the prompt footer/status area uses the compact BigPopup advertiser strip, not a custom large footer panel.
+- `NEW_TASK` exposes provider-backed model and reasoning-effort controls as specified by `global-prompt-generation-controls.spec.md`. Header actions stay limited to prompt-surface tools such as provider selection, Plan mode, Run in container, preview, and prompt library.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- Generation settings are applied only to `NEW_TASK` launches; `EXISTING_TASK` must not expose editable model or reasoning-effort controls.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Extension tab auto-selection is opt-in through `AgentPromptPaletteExtension.shouldAutoSelect(contextItems)` and applies only to the auto-select action. Active extension tabs own their submit action and bypass provider/options routing.
   [@test] ../../prompt/ui/testSrc/AgentPromptExtensionActionDataContextTest.kt
@@ -87,6 +91,7 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
 
 ## References
 - `add-to-agent-context.spec.md`
+- `global-prompt-generation-controls.spec.md`
 - `global-prompt-suggestions.spec.md`
 - `../prompt-context/prompt-context-contracts.spec.md`
 - `../agent-core-contracts.spec.md`

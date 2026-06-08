@@ -8,8 +8,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -60,6 +62,87 @@ class CodexAgentSessionProviderDescriptorTest {
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + "--yolo")
+  }
+
+  @Test
+  fun applyGenerationSettingsLeavesAutoLaunchSpecUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(bridge.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO).command)
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsReasoningEffortConfig(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH),
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("-c", "model_reasoning_effort=\"xhigh\""))
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsModelFlag(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(modelId = "gpt-5.1-codex"),
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsModelAndReasoningEffort(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+      ).command
+    )
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex", "-c", "model_reasoning_effort=\"high\"")
+      )
+  }
+
+  @Test
+  fun applyGenerationSettingsIgnoresUnsupportedReasoningEffort(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
+  }
+
+  @Test
+  fun applyGenerationSettingsIgnoresUnsupportedReasoningEffortButKeepsModel(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.MAX,
+        ),
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
   }
 
   @Test

@@ -219,6 +219,35 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun listModelsParsesCodexAppServerCatalog(): Unit = runBlocking(Dispatchers.Default) {
+    val configPath = tempDir.resolve("codex-models.json")
+    writeConfig(path = configPath, threads = emptyList())
+    val backendDir = tempDir.resolve("backend-models")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val models = client.listModels()
+
+      assertThat(models.map { it.id }).containsExactly("gpt-5.1-codex", "o4-mini")
+      assertThat(models.first().displayName).isEqualTo("GPT-5.1 Codex")
+      assertThat(models.first().supportedReasoningEfforts).containsExactly("low", "medium", "high")
+      assertThat(models.first().defaultReasoningEffort).isEqualTo("medium")
+      assertThat(models.first().isDefault).isTrue()
+      assertThat(models.last().supportedReasoningEfforts).containsExactly("low", "high")
+      assertThat(models.last().defaultReasoningEffort).isEqualTo("low")
+
+      assertThat(client.listModels(includeHidden = true).map { it.id }).containsExactly("gpt-5.1-codex", "o4-mini", "hidden-codex")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun listThreadsIncludesSubAgentSourcesAndParsesSourceStatusMetadata(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-source-status")
     Files.createDirectories(project)

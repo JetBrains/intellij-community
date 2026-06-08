@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
+import com.intellij.agent.workbench.codex.common.CodexGenerationModel
 import com.intellij.agent.workbench.codex.common.CodexSkill
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
@@ -47,6 +48,10 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
 
   internal suspend fun listSkills(projectPath: Path): List<CodexSkill> {
     return client.listSkills(cwd = projectPath.invariantSeparatorsPathString)
+  }
+
+  internal suspend fun listModels(): List<CodexGenerationModel> {
+    return client.listModels()
   }
 
   @Suppress("unused")

@@ -70,6 +70,16 @@ data class CodexTurnCollaborationMode(
 )
 
 @Immutable
+data class CodexGenerationModel(
+  @JvmField val id: String,
+  @JvmField val displayName: String? = null,
+  @JvmField val supportedReasoningEfforts: List<String> = emptyList(),
+  @JvmField val defaultReasoningEffort: String? = null,
+  @JvmField val hidden: Boolean = false,
+  @JvmField val isDefault: Boolean = false,
+)
+
+@Immutable
 data class CodexThreadActivitySnapshot(
   @JvmField val threadId: String,
   @JvmField val updatedAt: Long,

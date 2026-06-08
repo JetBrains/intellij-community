@@ -8,7 +8,10 @@ import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
@@ -71,6 +74,14 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override val promptOptions: List<AgentPromptProviderOption>
     get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+
+  override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
+    get() = setOf(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+    )
 
   override val editorTabActionIds: List<String>
     get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
@@ -144,6 +155,38 @@ internal class CodexAgentSessionProviderDescriptor(
       buildCodexBaseCommand(executable)
     }
     return AgentSessionTerminalLaunchSpec(command = command)
+  }
+
+  override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+    val service = serviceAsync<SharedCodexAppServerService>()
+    return runCatching { service.listModels() }
+      .getOrDefault(emptyList())
+      .asSequence()
+      .filterNot { model -> model.hidden }
+      .map { model ->
+        AgentPromptGenerationModel(
+          id = model.id,
+          displayName = model.displayName ?: model.id,
+          supportedReasoningEfforts = model.supportedReasoningEfforts.mapNotNullTo(LinkedHashSet(), ::toPromptReasoningEffort),
+          defaultReasoningEffort = toPromptReasoningEffort(model.defaultReasoningEffort),
+          isDefault = model.isDefault,
+        )
+      }
+      .toList()
+  }
+
+  override fun applyGenerationSettings(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+  ): AgentSessionTerminalLaunchSpec {
+    val settings = sanitizeGenerationSettings(generationSettings)
+    val generationArgs = buildCodexGenerationArgs(settings)
+    if (generationArgs.isEmpty()) {
+      return baseLaunchSpec
+    }
+    return baseLaunchSpec.copy(
+      command = insertCodexGenerationArgs(baseLaunchSpec.command, generationArgs),
+    )
   }
 
   override fun buildLaunchSpecWithInitialMessage(
@@ -238,6 +281,48 @@ private fun buildCodexBaseCommand(executable: String): List<String> {
     "-c",
     CODEX_TERMINAL_TITLE_CONFIG,
   )
+}
+
+private fun buildCodexGenerationArgs(settings: AgentPromptGenerationSettings): List<String> {
+  val args = mutableListOf<String>()
+  settings.modelId?.let { modelId -> args.addAll(listOf("--model", modelId)) }
+  val effort = settings.reasoningEffort
+  if (effort != AgentPromptReasoningEffort.AUTO) {
+    args.addAll(listOf("-c", "model_reasoning_effort=\"${effort.codexConfigValue()}\""))
+  }
+  return args
+}
+
+private fun insertCodexGenerationArgs(command: List<String>, args: List<String>): List<String> {
+  val promptSeparatorIndex = command.indexOf("--").takeIf { it >= 0 } ?: command.size
+  return command.toMutableList().apply {
+    addAll(promptSeparatorIndex, args)
+  }
+}
+
+private fun AgentPromptReasoningEffort.codexConfigValue(): String {
+  return name.lowercase()
+}
+
+private fun toPromptReasoningEffort(value: String?): AgentPromptReasoningEffort? {
+  return when (value.normalizeCodexToken()) {
+    "low" -> AgentPromptReasoningEffort.LOW
+    "medium" -> AgentPromptReasoningEffort.MEDIUM
+    "high" -> AgentPromptReasoningEffort.HIGH
+    "xhigh" -> AgentPromptReasoningEffort.XHIGH
+    "max" -> AgentPromptReasoningEffort.MAX
+    else -> null
+  }
+}
+
+private fun String?.normalizeCodexToken(): String {
+  return this
+    ?.trim()
+    ?.lowercase()
+    ?.replace("_", "")
+    ?.replace("-", "")
+    ?.replace(" ", "")
+    .orEmpty()
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"

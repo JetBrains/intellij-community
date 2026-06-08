@@ -146,11 +146,13 @@ internal class AgentPromptPaletteDraftController(
   }
 
   fun saveProviderPreferences() {
+    val currentPreferences = launcherProvider()?.loadProviderPreferences()
     launcherProvider()?.saveProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(
         providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
         launchMode = providerSelector.selectedLaunchMode,
         providerOptionsByProviderId = providerSelector.providerOptionSelections(),
+        generationSettingsByProviderId = currentPreferences?.generationSettingsByProviderId.orEmpty(),
         containerModeEnabled = getContainerModeSelected(),
       )
     )

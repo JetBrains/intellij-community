@@ -160,13 +160,12 @@ class AgentPromptPaletteViewLayoutTest {
       val view = createPaletteView(promptArea = promptArea, contextChipsPanel = contextChips.component)
 
       layoutPopupRoot(view.rootPanel)
-      val foundPromptArea = checkNotNull(findPromptArea(view.rootPanel, promptArea))
       val initialLocation = locationInRoot(view.addContextButton, view.rootPanel)
       val firstChipLocation = locationInRoot(contextChips.component.components.first(), view.rootPanel)
-      val promptAreaLocation = locationInRoot(foundPromptArea, view.rootPanel)
+      val promptEditorLocation = locationInRoot(view.promptEditorPanel, view.rootPanel)
 
-      assertThat(initialLocation.x).isEqualTo(promptAreaLocation.x)
-      assertThat(firstChipLocation.x).isEqualTo(promptAreaLocation.x)
+      assertThat(initialLocation.x).isEqualTo(promptEditorLocation.x)
+      assertThat(firstChipLocation.x).isEqualTo(promptEditorLocation.x)
 
       contextChips.render(
         listOf(
@@ -201,10 +200,14 @@ class AgentPromptPaletteViewLayoutTest {
 
       layoutPopupRoot(view.rootPanel)
       val promptHeightWithSuggestions = foundPromptArea.height
+      val generationSettingsHeight = view.generationSettingsPanel.height
+      val generationSettingsLocation = locationInRoot(view.generationSettingsPanel, view.rootPanel)
 
       assertThat(view.suggestionsPanel.isVisible).isTrue()
       assertThat(view.suggestionsPanel.height).isGreaterThan(0)
       assertThat(promptHeightWithSuggestions).isGreaterThan(0)
+      assertThat(view.generationSettingsPanel.isVisible).isTrue()
+      assertThat(generationSettingsHeight).isGreaterThan(0)
 
       promptArea.text = "Draft prompt"
       layoutPopupRoot(view.rootPanel)
@@ -212,6 +215,27 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(view.suggestionsPanel.isVisible).isTrue()
       assertThat(view.suggestionsPanel.height).isGreaterThan(0)
       assertThat(foundPromptArea.height).isEqualTo(promptHeightWithSuggestions)
+      assertThat(view.generationSettingsPanel.isVisible).isTrue()
+      assertThat(view.generationSettingsPanel.height).isEqualTo(generationSettingsHeight)
+      assertThat(locationInRoot(view.generationSettingsPanel, view.rootPanel)).isEqualTo(generationSettingsLocation)
+    }
+  }
+
+  @Test
+  fun hidingGenerationSettingsReturnsSpaceToPromptArea() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val view = createPaletteView(promptArea = promptArea)
+      val foundPromptArea = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+
+      layoutPopupRoot(view.rootPanel)
+      val promptHeightWithControls = foundPromptArea.height
+      assertThat(view.generationSettingsPanel.height).isGreaterThan(0)
+
+      view.generationSettingsPanel.isVisible = false
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(foundPromptArea.height).isGreaterThan(promptHeightWithControls)
     }
   }
 
@@ -241,10 +265,12 @@ class AgentPromptPaletteViewLayoutTest {
 
       val promptAreaLocation = locationInRoot(checkNotNull(findPromptArea(view.rootPanel, promptArea)), view.rootPanel)
       val suggestionsLocation = locationInRoot(view.suggestionsPanel, view.rootPanel)
+      val generationSettingsLocation = locationInRoot(view.generationSettingsPanel, view.rootPanel)
       val composerContextLocation = locationInRoot(view.composerContextPanel, view.rootPanel)
 
       assertThat(suggestionsLocation.y + view.suggestionsPanel.height).isLessThanOrEqualTo(promptAreaLocation.y)
-      assertThat(promptAreaLocation.y + promptArea.height).isLessThanOrEqualTo(composerContextLocation.y)
+      assertThat(promptAreaLocation.y + promptArea.height).isLessThanOrEqualTo(generationSettingsLocation.y)
+      assertThat(generationSettingsLocation.y + view.generationSettingsPanel.height).isLessThanOrEqualTo(composerContextLocation.y)
     }
   }
 

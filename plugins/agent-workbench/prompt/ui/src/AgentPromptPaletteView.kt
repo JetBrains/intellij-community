@@ -46,6 +46,7 @@ import java.awt.CardLayout
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Color
+import java.awt.FlowLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
@@ -80,12 +81,16 @@ private fun headerIconButtonSize(): Dimension = Dimension(ActionToolbar.DEFAULT_
 internal data class AgentPromptPaletteView(
   @JvmField val rootPanel: JPanel,
   @JvmField val promptPanel: JPanel,
+  @JvmField val promptEditorPanel: JPanel,
   @JvmField val suggestionsPanel: JPanel,
   @JvmField val composerContextPanel: JPanel,
   @JvmField val bottomPanel: JPanel,
   @JvmField val tabbedPane: JBTabbedPane,
   @JvmField val providerIconLabel: JBLabel,
   @JvmField val promptLibraryIconLabel: JLabel,
+  @JvmField val generationSettingsPanel: JPanel,
+  @JvmField val modelSelectorLink: ActionLink,
+  @JvmField val reasoningEffortLink: ActionLink,
   @JvmField val addContextButton: ActionLink,
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
   @JvmField val existingTaskList: JBList<ThreadEntry>,
@@ -297,7 +302,7 @@ internal fun createAgentPromptPaletteView(
     isEditable = false
     isOpaque = true
     background = JBUI.CurrentTheme.Popup.BACKGROUND
-    border = JBUI.Borders.empty(4)
+    border = JBUI.Borders.empty(4, 6, 0, 6)
     (caret as? DefaultCaret)?.updatePolicy = DefaultCaret.NEVER_UPDATE
   }
   val previewScrollPane = JBScrollPane(previewPane).apply {
@@ -306,6 +311,7 @@ internal fun createAgentPromptPaletteView(
   }
 
   val promptCardLayout = CardLayout()
+  promptArea.border = JBUI.Borders.empty()
   val promptCardPanel = JPanel(promptCardLayout).apply {
     isOpaque = false
     add(promptArea, CARD_EDITOR)
@@ -424,6 +430,26 @@ internal fun createAgentPromptPaletteView(
     DialogUtil.registerMnemonic(this)
   }
 
+  val modelSelectorLink = ActionLink(AgentPromptBundle.message("popup.generation.model.auto")).apply {
+    autoHideOnDisable = false
+    setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.model.tooltip")))
+    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.model.auto")
+  }
+
+  val reasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.reasoning.auto")).apply {
+    autoHideOnDisable = false
+    setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.reasoning.tooltip")))
+    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.reasoning.accessible.name")
+  }
+
   val contextChipsContainer = JPanel(BorderLayout()).apply {
     isOpaque = false
     add(contextChipsPanel, BorderLayout.CENTER)
@@ -440,11 +466,25 @@ internal fun createAgentPromptPaletteView(
     addToBottom(composerContextActionsPanel)
   }
 
+  val generationSettingsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 8, 0)).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty(0, 6, 6, 6)
+    add(modelSelectorLink)
+    add(reasoningEffortLink)
+  }
+
+  val promptEditorPanel = BorderLayoutPanel().apply {
+    isOpaque = false
+    border = JBUI.Borders.customLine(UIUtil.getBoundsColor())
+    addToCenter(promptCardPanel)
+    addToBottom(generationSettingsPanel)
+  }
+
   val promptPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
     border = JBUI.Borders.empty(6, 12, 8, 12)
     add(suggestionsPanel, BorderLayout.NORTH)
-    add(promptCardPanel, BorderLayout.CENTER)
+    add(promptEditorPanel, BorderLayout.CENTER)
     add(composerContextPanel, BorderLayout.SOUTH)
     minimumSize = PROMPT_PANEL_MINIMUM_SIZE
   }
@@ -473,18 +513,23 @@ internal fun createAgentPromptPaletteView(
     addToBottom(bottomPanel)
   }
   headerToolbar.targetComponent = rootPanel
+  headerControls.updateActions()
 
   WindowMoveListener(rootPanel).installTo(headerPanel)
 
   return AgentPromptPaletteView(
     rootPanel = rootPanel,
     promptPanel = promptPanel,
+    promptEditorPanel = promptEditorPanel,
     suggestionsPanel = suggestionsPanel,
     composerContextPanel = composerContextPanel,
     bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,
     providerIconLabel = providerIconLabel,
     promptLibraryIconLabel = promptLibraryIconLabel,
+    generationSettingsPanel = generationSettingsPanel,
+    modelSelectorLink = modelSelectorLink,
+    reasoningEffortLink = reasoningEffortLink,
     addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,

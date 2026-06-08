@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
@@ -43,6 +44,7 @@ internal class AgentPromptPaletteSubmitController(
   private val onSubmitBlocked: (@Nls String) -> Unit,
   private val onSubmitSucceeded: () -> Unit,
   private val onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
+  private val generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
   private val isContainerModeSelected: () -> Boolean = { false },
   private val isContainerModeSupported: (AgentSessionProvider) -> Boolean = { false },
   private val isContainerModeRuntimeAvailable: (AgentSessionProvider) -> Boolean = { false },
@@ -206,6 +208,7 @@ internal class AgentPromptPaletteSubmitController(
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
+      generationSettings = if (targetMode == PromptTargetMode.NEW_TASK) generationSettingsProvider() else AgentPromptGenerationSettings.AUTO,
       containerMode = shouldSubmitContainerMode(
         isSelected = isContainerModeSelected(),
         selectedProvider = providerEntry.bridge.provider,

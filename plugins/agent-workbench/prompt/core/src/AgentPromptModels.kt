@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
 
 data class AgentPromptContextItem(
     @JvmField val rendererId: String,
@@ -78,6 +79,35 @@ data class AgentPromptInitialMessageRequest(
     @JvmField val providerOptionIds: Set<String> = emptySet(),
 )
 
+@Serializable
+enum class AgentPromptReasoningEffort {
+    AUTO,
+    LOW,
+    MEDIUM,
+    HIGH,
+    XHIGH,
+    MAX,
+}
+
+@Serializable
+data class AgentPromptGenerationSettings(
+    @JvmField val modelId: String? = null,
+    @JvmField val reasoningEffort: AgentPromptReasoningEffort = AgentPromptReasoningEffort.AUTO,
+) {
+    companion object {
+        @JvmField
+        val AUTO: AgentPromptGenerationSettings = AgentPromptGenerationSettings()
+    }
+}
+
+data class AgentPromptGenerationModel(
+    @JvmField val id: String,
+    @JvmField val displayName: @NlsSafe String,
+    @JvmField val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = emptySet(),
+    @JvmField val defaultReasoningEffort: AgentPromptReasoningEffort? = null,
+    @JvmField val isDefault: Boolean = false,
+)
+
 data class AgentPromptContextEnvelopeSummary(
     @JvmField val softCapChars: Int = 12_000,
     @JvmField val softCapExceeded: Boolean = false,
@@ -91,6 +121,7 @@ data class AgentPromptLaunchRequest(
     @JvmField val initialMessageRequest: AgentPromptInitialMessageRequest,
     @JvmField val targetThreadId: String? = null,
     @JvmField val preferredDedicatedFrame: Boolean? = null,
+    @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     @JvmField val containerMode: Boolean = false,
     /**
      * Extra environment variables to inject into the terminal launch spec.

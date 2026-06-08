@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.state
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -55,6 +56,7 @@ class AgentSessionUiPreferencesStateService
       providerId = state.lastUsedProvider,
       launchMode = state.launchMode,
       providerOptionsByProviderId = state.providerOptionsByProviderId,
+      generationSettingsByProviderId = state.generationSettingsByProviderId,
       containerModeEnabled = state.containerModeEnabled,
     )
   }
@@ -65,6 +67,7 @@ class AgentSessionUiPreferencesStateService
         lastUsedProvider = preferences.providerId ?: current.lastUsedProvider,
         launchMode = preferences.launchMode,
         providerOptionsByProviderId = preferences.providerOptionsByProviderId,
+        generationSettingsByProviderId = preferences.generationSettingsByProviderId,
         containerModeEnabled = preferences.containerModeEnabled,
       )
     }
@@ -90,6 +93,7 @@ class AgentSessionUiPreferencesStateService
       providerId = provider.value,
       launchMode = launchMode,
       providerOptionsByProviderId = updatedOptions,
+      generationSettingsByProviderId = state.generationSettingsByProviderId,
       containerModeEnabled = state.containerModeEnabled,
     ))
   }
@@ -116,6 +120,7 @@ class AgentSessionUiPreferencesStateService
     @JvmField val lastUsedProvider: String? = null,
     @JvmField val launchMode: AgentSessionLaunchMode? = null,
     @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
+    @JvmField val generationSettingsByProviderId: Map<String, AgentPromptGenerationSettings> = emptyMap(),
     @JvmField val lastUsedVcsMergeProvider: String? = null,
     @JvmField val lastUsedVcsMergeLaunchMode: AgentSessionLaunchMode? = null,
     @JvmField val containerModeEnabled: Boolean = false,

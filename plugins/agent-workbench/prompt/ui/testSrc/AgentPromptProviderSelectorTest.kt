@@ -3,8 +3,14 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
+import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
@@ -13,6 +19,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
@@ -96,6 +103,353 @@ class AgentPromptProviderSelectorTest {
       assertThat(fixture.view.headerControls.providerOptionActions).isEmpty()
       assertThat(collectComponentsOfType(fixture.view.rootPanel, JBCheckBox::class.java).map { it.text })
         .doesNotContain("Plan mode")
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsControlsUseProviderDefaultsAndVisibility(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.MEDIUM, AgentPromptReasoningEffort.HIGH),
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"),
+        ),
+      )
+      val fixture = withContext(Dispatchers.EDT) {
+        createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+      }
+      val controller = withContext(Dispatchers.EDT) {
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        ).also { controller ->
+          controller.restoreDefaultSettings(
+            mapOf(AgentSessionProvider.CODEX.value to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH))
+          )
+        }
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) { fixture.view.modelSelectorLink.isVisible }
+      }
+      withContext(Dispatchers.EDT) {
+        assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+        assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
+        assertThat(fixture.view.modelSelectorLink.isVisible).isTrue()
+        assertThat(fixture.view.modelSelectorLink.isEnabled).isTrue()
+        assertThat(fixture.view.modelSelectorLink.text).isEqualTo("Model Default")
+        assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
+        assertThat(fixture.view.reasoningEffortLink.isEnabled).isTrue()
+        assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort High")
+
+        controller.setGenerationControlsVisible(false)
+
+        assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
+        assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
+        assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  fun generationSettingsControlsStayVisibleWhenReasoningEffortIsUnsupported() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.PI,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = {},
+      )
+
+      controller.refreshPresentation()
+
+      assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
+      assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
+      assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.reasoningEffortLink.isEnabled).isFalse()
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Default")
+      assertThat(fixture.view.reasoningEffortLink.toolTipText).contains("not available")
+    }
+  }
+
+  @Test
+  fun generationSettingsReasoningEffortPopupActionsUseCodexLabelsAndClearSavedAskAgentDefault() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(
+          AgentPromptReasoningEffort.LOW,
+          AgentPromptReasoningEffort.HIGH,
+          AgentPromptReasoningEffort.XHIGH,
+        ),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = {},
+      ).also { controller ->
+        controller.restoreDefaultSettings(
+          mapOf(AgentSessionProvider.CODEX.value to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH))
+        )
+      }
+
+      controller.refreshPresentation()
+      val actionGroup = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+      val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
+      val footerActionTexts = setOf("Save for Ask Agent", "Clear Ask Agent Default")
+      val selectionActions = actions.filter { action ->
+        action.templatePresentation.text != null && action.templatePresentation.text !in footerActionTexts
+      }
+
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Extra High")
+      assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+        .containsExactly("Default", "Low", "High", "Extra High", "Clear Ask Agent Default")
+      assertThat(actions.last().templatePresentation.description)
+        .isEqualTo("Use provider defaults for future Ask Agent launches with this provider.")
+      assertThat(selectionActions.map { action -> action.templatePresentation.keepPopupOnPerform })
+        .containsOnly(KeepPopupOnPerform.Never)
+    }
+  }
+
+  @Test
+  fun generationSettingsClearDefaultActionRemovesSavedAskAgentOverride() {
+    runInEdtAndWait {
+      val providerId = AgentSessionProvider.CODEX.value
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          generationSettingsByProviderId = mapOf(
+            providerId to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)
+          )
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(
+          AgentPromptReasoningEffort.HIGH,
+          AgentPromptReasoningEffort.XHIGH,
+        ),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      var defaultSavedNotifications = 0
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { defaultSavedNotifications++ },
+      ).also { controller ->
+        controller.restoreDefaultSettings(launcher.preferences.generationSettingsByProviderId)
+      }
+
+      val clearAction = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "Clear Ask Agent Default" }
+      clearAction.actionPerformed(TestActionEvent.createTestEvent(clearAction))
+
+      assertThat(defaultSavedNotifications).isEqualTo(1)
+      assertThat(launcher.preferences.generationSettingsByProviderId).doesNotContainKey(providerId)
+      assertThat(controller.currentSettings()).isEqualTo(AgentPromptGenerationSettings.AUTO)
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Default")
+      val actions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+        .containsExactly("Default", "High", "Extra High")
+    }
+  }
+
+  @Test
+  fun generationSettingsDefaultPopupActionSavesChangedAskAgentOverride() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(
+          AgentPromptReasoningEffort.HIGH,
+          AgentPromptReasoningEffort.XHIGH,
+        ),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = {},
+      ).also { controller ->
+        controller.restoreDefaultSettings(
+          mapOf(AgentSessionProvider.CODEX.value to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH))
+        )
+      }
+
+      val highAction = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "High" }
+      highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
+
+      val actions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort High")
+      assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+        .containsExactly("Default", "High", "Extra High", "Save for Ask Agent")
+      assertThat(actions.last().templatePresentation.description)
+        .isEqualTo("Remember this model and effort for future Ask Agent launches with this provider.")
+    }
+  }
+
+  @Test
+  fun generationSettingsDefaultPopupActionHiddenForProviderDefaultWithoutSavedOverride() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = {},
+      )
+
+      controller.refreshPresentation()
+
+      val actions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Default")
+      assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+        .containsExactly("Default", "High")
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupActionsCloseOnSelection(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"),
+        ),
+      )
+      val fixture = withContext(Dispatchers.EDT) {
+        createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+      }
+      val controller = withContext(Dispatchers.EDT) {
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        ).also { controller -> controller.refreshPresentation() }
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) { controller.createModelActionGroupForTest() != null }
+      }
+      withContext(Dispatchers.EDT) {
+        val actionGroup = checkNotNull(controller.createModelActionGroupForTest())
+        val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
+
+        assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+          .containsExactly("Default", "GPT-5.1 Codex")
+        assertThat(actions.map { action -> action.templatePresentation.keepPopupOnPerform })
+          .containsOnly(KeepPopupOnPerform.Never)
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  fun generationSettingsDefaultPopupActionClearsSavedAskAgentOverride() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = {},
+      ).also { controller ->
+        controller.restoreDefaultSettings(
+          mapOf(AgentSessionProvider.CODEX.value to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH))
+        )
+      }
+
+      val defaultAction = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "Default" }
+      defaultAction.actionPerformed(TestActionEvent.createTestEvent(defaultAction))
+
+      val actions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Default")
+      assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+        .containsExactly("Default", "High", "Clear Ask Agent Default")
+      assertThat(actions.last().templatePresentation.description)
+        .isEqualTo("Use provider defaults for future Ask Agent launches with this provider.")
     }
   }
 
@@ -270,6 +624,8 @@ class AgentPromptProviderSelectorTest {
     cliAvailable: Boolean = true,
     supportsPromptLaunch: Boolean = true,
     cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.PROMINENT,
+    supportedReasoningEffortsOverride: Set<AgentPromptReasoningEffort> = emptySet(),
+    availableGenerationModels: List<AgentPromptGenerationModel> = emptyList(),
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
@@ -277,6 +633,7 @@ class AgentPromptProviderSelectorTest {
       override val displayNameKey: String = "provider.${provider.value}"
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
+      override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = supportedReasoningEffortsOverride
       override val supportsPromptLaunch: Boolean = supportsPromptLaunch
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
@@ -284,6 +641,10 @@ class AgentPromptProviderSelectorTest {
       override val icon = EmptyIcon.ICON_16
 
       override suspend fun isCliAvailable(): Boolean = cliAvailable
+
+      override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+        return availableGenerationModels
+      }
 
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = emptyList())
@@ -306,6 +667,40 @@ class AgentPromptProviderSelectorTest {
       labelFallback = "Plan mode",
       defaultSelected = true,
     )
+  }
+
+  private fun testInvocationData(project: com.intellij.openapi.project.Project): AgentPromptInvocationData {
+    return AgentPromptInvocationData(
+      project = project,
+      actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
+      actionText = "Ask Agent",
+      actionPlace = "MainMenu",
+      invokedAtMs = 0L,
+    )
+  }
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private fun testScope(): CoroutineScope {
+    return CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+  }
+
+  private class TestPromptLauncherBridge(
+    initialPreferences: AgentPromptLauncherBridge.ProviderPreferences,
+  ) : AgentPromptLauncherBridge {
+    var preferences: AgentPromptLauncherBridge.ProviderPreferences = initialPreferences
+      private set
+
+    override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+      error("Not required for this test")
+    }
+
+    override fun loadProviderPreferences(): AgentPromptLauncherBridge.ProviderPreferences {
+      return preferences
+    }
+
+    override fun saveProviderPreferences(preferences: AgentPromptLauncherBridge.ProviderPreferences) {
+      this.preferences = preferences
+    }
   }
 
   private data class ProviderSelectorFixture(

@@ -26,6 +26,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
@@ -592,6 +593,7 @@ class AgentSessionLaunchService internal constructor(
     updateGeneralProviderPreferences: Boolean = true,
     launchModalityState: ModalityState? = null,
     threadTitle: String? = null,
+    generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     extraEnvVariables: Map<String, String> = emptyMap(),
     extraCommandArgs: List<String> = emptyList(),
   ) {
@@ -645,10 +647,11 @@ class AgentSessionLaunchService internal constructor(
                                    ?.let(descriptor::buildInitialMessagePlan)
                                  ?: AgentInitialMessagePlan.EMPTY
         val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)
+        val generationLaunchSpec = descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)
         val augmentedSpec = AgentSessionLaunchSpecs.augment(
           projectPath = normalizedPath,
           provider = provider,
-          launchSpec = baseLaunchSpec,
+          launchSpec = generationLaunchSpec,
         )
         // Apply launch contributors (e.g. AwbMcpConfigContributor writing the merged
         // `.awb/awb-mcp.json` and adding `--mcp-config`). sessionId is null for new
@@ -877,6 +880,7 @@ class AgentSessionLaunchService internal constructor(
             initialMessageRequest = request.initialMessageRequest,
             preferredDedicatedFrame = request.preferredDedicatedFrame,
             promptLaunchResolved = ::reportPromptLaunchResolved,
+            generationSettings = request.generationSettings,
             extraEnvVariables = request.containerSessionEnvVariables,
             extraCommandArgs = request.containerSessionExtraArgs,
           )

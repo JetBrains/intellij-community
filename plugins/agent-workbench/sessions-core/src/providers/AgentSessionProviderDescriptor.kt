@@ -8,7 +8,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
@@ -127,6 +130,13 @@ interface AgentSessionProviderDescriptor {
   val promptOptions: List<AgentPromptProviderOption>
     get() = emptyList()
 
+  /**
+   * Concrete reasoning efforts accepted by this provider. [AgentPromptReasoningEffort.AUTO] is implicit and means
+   * no launch override should be added.
+   */
+  val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
+    get() = emptySet()
+
   val supportsPromptLaunch: Boolean
     get() = true
 
@@ -212,7 +222,26 @@ interface AgentSessionProviderDescriptor {
     launchMode: AgentSessionLaunchMode,
   ): AgentSessionTerminalLaunchSpec = buildResumeLaunchSpec(sessionId)
 
+  suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+    return emptyList()
+  }
+
   suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
+
+  fun sanitizeGenerationSettings(generationSettings: AgentPromptGenerationSettings): AgentPromptGenerationSettings {
+    val modelId = generationSettings.modelId
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+    val reasoningEffort = generationSettings.reasoningEffort
+      .takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
+      ?: AgentPromptReasoningEffort.AUTO
+    return generationSettings.copy(modelId = modelId, reasoningEffort = reasoningEffort)
+  }
+
+  fun applyGenerationSettings(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+  ): AgentSessionTerminalLaunchSpec = baseLaunchSpec
 
   fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,

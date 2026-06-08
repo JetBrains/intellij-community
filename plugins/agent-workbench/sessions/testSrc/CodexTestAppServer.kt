@@ -52,6 +52,14 @@ private data class TurnEntry(
   @JvmField val itemTypes: List<String>,
 )
 
+private data class MockModelEntry(
+  @JvmField val id: String,
+  @JvmField val displayName: String,
+  @JvmField val fieldStyle: String = "camel",
+  @JvmField val hidden: Boolean = false,
+  @JvmField val isDefault: Boolean = false,
+)
+
 private data class Request(
   @JvmField val id: String,
   @JvmField val method: String,
@@ -66,6 +74,7 @@ private data class RequestParams(
   @JvmField val cursor: String? = null,
   @JvmField val limit: Int? = null,
   @JvmField val includeTurns: Boolean? = null,
+  @JvmField val includeHidden: Boolean? = null,
   @JvmField val cwd: String? = null,
   @JvmField val sourceKinds: Set<String>? = null,
   @JvmField val model: String? = null,
@@ -180,6 +189,14 @@ internal object CodexTestAppServer {
         })
         "skills/list" -> writeResponse(writer, request.id, resultWriter = { generator ->
           writeSkillsList(generator)
+        })
+        "model/list" -> writeResponse(writer, request.id, resultWriter = { generator ->
+          writeModelList(
+            generator = generator,
+            cursor = request.params.cursor,
+            limit = request.params.limit,
+            includeHidden = request.params.includeHidden ?: false,
+          )
         })
         "thread/read" -> writeResponse(writer, request.id, resultWriter = { generator ->
           val thread = request.params.id
@@ -354,6 +371,66 @@ internal object CodexTestAppServer {
     generator.writeEndArray()
     generator.writeEndObject()
     generator.writeEndArray()
+    generator.writeEndObject()
+  }
+
+  private fun writeModelList(
+    generator: JsonGenerator,
+    cursor: String?,
+    limit: Int?,
+    includeHidden: Boolean,
+  ) {
+    val models = listOf(
+      MockModelEntry(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex", isDefault = true),
+      MockModelEntry(id = "o4-mini", displayName = "o4 mini", fieldStyle = "snake"),
+      MockModelEntry(id = "hidden-codex", displayName = "Hidden Codex", hidden = true),
+    ).filter { model -> includeHidden || !model.hidden }
+    val pageStart = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+    val pageLimit = (limit ?: models.size).coerceAtLeast(1)
+    val pageItems = models.drop(pageStart).take(pageLimit)
+    val nextOffset = pageStart + pageItems.size
+    val nextCursor = if (nextOffset < models.size) nextOffset.toString() else null
+
+    generator.writeStartObject()
+    generator.writeFieldName("data")
+    generator.writeStartArray()
+    pageItems.forEach { model -> writeModelObject(generator, model) }
+    generator.writeEndArray()
+    if (nextCursor != null) {
+      generator.writeStringField("nextCursor", nextCursor)
+    }
+    generator.writeEndObject()
+  }
+
+  private fun writeModelObject(generator: JsonGenerator, model: MockModelEntry) {
+    generator.writeStartObject()
+    if (model.fieldStyle == "snake") {
+      generator.writeStringField("slug", model.id)
+      generator.writeStringField("display_name", model.displayName)
+      generator.writeFieldName("supported_reasoning_levels")
+      generator.writeStartArray()
+      generator.writeString("low")
+      generator.writeString("high")
+      generator.writeEndArray()
+      generator.writeStringField("default_reasoning_level", "low")
+      generator.writeBooleanField("is_default", model.isDefault)
+    }
+    else {
+      generator.writeStringField("id", model.id)
+      generator.writeStringField("displayName", model.displayName)
+      generator.writeFieldName("supportedReasoningLevels")
+      generator.writeStartArray()
+      listOf("low", "medium", "high").forEach { effort ->
+        generator.writeStartObject()
+        generator.writeStringField("reasoningEffort", effort)
+        generator.writeStringField("description", "Test effort")
+        generator.writeEndObject()
+      }
+      generator.writeEndArray()
+      generator.writeStringField("defaultReasoningLevel", "medium")
+      generator.writeBooleanField("isDefault", model.isDefault)
+    }
+    generator.writeBooleanField("hidden", model.hidden)
     generator.writeEndObject()
   }
 
@@ -623,6 +700,7 @@ internal object CodexTestAppServer {
       var paramsCursor: String? = null
       var paramsLimit: Int? = null
       var paramsIncludeTurns: Boolean? = null
+      var paramsIncludeHidden: Boolean? = null
       var paramsCwd: String? = null
       var paramsSourceKinds: MutableSet<String>? = null
       var paramsModel: String? = null
@@ -648,6 +726,7 @@ internal object CodexTestAppServer {
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()
                   "includeTurns", "include_turns" -> paramsIncludeTurns = readBooleanOrNull(parser)
+                  "includeHidden", "include_hidden" -> paramsIncludeHidden = readBooleanOrNull(parser)
                   "cwd" -> paramsCwd = readStringOrNull(parser)
                   "approvalPolicy" -> paramsApprovalPolicy = readStringOrNull(parser)
                   "sandbox", "sandboxPolicy" -> paramsSandbox = readStringOrNull(parser)
@@ -701,6 +780,7 @@ internal object CodexTestAppServer {
           cursor = paramsCursor,
           limit = paramsLimit,
           includeTurns = paramsIncludeTurns,
+          includeHidden = paramsIncludeHidden,
           cwd = paramsCwd,
           sourceKinds = paramsSourceKinds,
           model = paramsModel,
