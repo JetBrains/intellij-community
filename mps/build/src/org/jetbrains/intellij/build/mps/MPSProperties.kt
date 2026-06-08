@@ -54,7 +54,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.platform.buildData",
-            "intellij.platform.whatsNew",
             "intellij.platform.configurationStore.impl",
             "intellij.platform.diagnostic.startUpPerformanceReporter",
             "intellij.platform.jps.build.javac.rt",
@@ -192,6 +191,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
         moduleSet(CommunityModuleSets.ideCommon())
 
+        module("intellij.platform.whatsNew")
         module("intellij.platform.tips")
         module("intellij.ide.startup.importSettings")
 

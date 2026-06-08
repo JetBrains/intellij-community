@@ -1062,7 +1062,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jaxen/intellij.libraries.jaxen.iml" filepath="$PROJECT_DIR$/libraries/jaxen/intellij.libraries.jaxen.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jbr/intellij.libraries.jbr.iml" filepath="$PROJECT_DIR$/libraries/jbr/intellij.libraries.jbr.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jcef/intellij.libraries.jcef.iml" filepath="$PROJECT_DIR$/libraries/jcef/intellij.libraries.jcef.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/jcef/plugin/intellij.libraries.jcef.plugin.iml" filepath="$PROJECT_DIR$/libraries/jcef/plugin/intellij.libraries.jcef.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jcip/intellij.libraries.jcip.iml" filepath="$PROJECT_DIR$/libraries/jcip/intellij.libraries.jcip.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jediterm-core/intellij.libraries.jediterm.core.iml" filepath="$PROJECT_DIR$/libraries/jediterm-core/intellij.libraries.jediterm.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jediterm-ui/intellij.libraries.jediterm.ui.iml" filepath="$PROJECT_DIR$/libraries/jediterm-ui/intellij.libraries.jediterm.ui.iml" />

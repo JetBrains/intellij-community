@@ -1,9 +1,0 @@
-- name: lib/libraries-jcef-plugin.jar
-  modules:
-  - name: intellij.libraries.jcef.plugin
-- name: lib/modules/intellij.libraries.jcef.jar
-  contentModules:
-  - name: intellij.libraries.jcef
-    libraries:
-      jcef:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/144/jcef-144.jar

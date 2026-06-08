@@ -7,3 +7,18 @@
 - name: lib/modules/intellij.jcef.frontend.jar
   contentModules:
   - name: intellij.jcef.frontend
+- name: lib/modules/intellij.libraries.jcef.jar
+  contentModules:
+  - name: intellij.libraries.jcef
+    libraries:
+      jcef:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/144/jcef-144.jar
+- name: lib/modules/intellij.platform.ide.impl.jcef.jar
+  contentModules:
+  - name: intellij.platform.ide.impl.jcef
+- name: lib/modules/intellij.platform.ide.newUiOnboarding.jcef.jar
+  contentModules:
+  - name: intellij.platform.ide.newUiOnboarding.jcef
+- name: lib/modules/intellij.platform.ui.jcef.jar
+  contentModules:
+  - name: intellij.platform.ui.jcef

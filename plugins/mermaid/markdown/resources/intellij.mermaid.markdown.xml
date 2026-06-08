@@ -1,10 +1,12 @@
 <idea-plugin package="com.intellij.mermaid.markdown">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.libraries.jcef"/>
     <module name="intellij.markdown"/>
-    <!-- endregion -->
+    <module name="intellij.platform.ui.jcef"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <browserPreviewExtensionProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension$Provider"

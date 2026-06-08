@@ -10,10 +10,13 @@
   <dependencies>
     <!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->
     <plugin id="com.intellij.modules.platform"/>
-    <plugin id="intellij.libraries.jcef.plugin"/>
   </dependencies>
 
   <content namespace="jetbrains">
+    <module name="intellij.libraries.jcef" loading="required"/>
+    <module name="intellij.platform.ui.jcef"/>
+    <module name="intellij.platform.ide.impl.jcef"/>
+    <module name="intellij.platform.ide.newUiOnboarding.jcef"/>
     <module name="intellij.jcef.frontend" required-if-available="intellij.platform.frontend"/>
     <module name="intellij.internal.jcef"/>
   </content>

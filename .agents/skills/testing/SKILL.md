@@ -53,6 +53,14 @@ Use `community/tests.cmd` for tests that belong to community-only modules:
 ./community/tests.cmd --module <module> --test <pattern>
 ```
 
+### Product layout and packaging changes
+
+When changing `ProductProperties`, `productImplementationModules`, product content descriptors, plugin/module-set packaging, or generated product layout XML, also run:
+
+```bash
+./tests.cmd --module intellij.idea.ultimate.build.tests --test com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest
+```
+
 ### Windows PowerShell note
 
 When running `tests.cmd` from PowerShell, pass JVM `-D...` arguments via stop-parsing mode to avoid argument mangling:

@@ -11,7 +11,9 @@
   <dependencies>
     <module name="intellij.json"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.jcef"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.yaml"/>
   </dependencies>

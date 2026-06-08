@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.java.aetherDependencyResolver.plugin",
-  "intellij.libraries.jcef.plugin",
   "intellij.jcef.plugin",
   "intellij.libraries.misc.plugin",
   "intellij.platform.bookmarks.plugin",

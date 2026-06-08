@@ -37,7 +37,7 @@ jvm_library(
         "//platform/platform-util-netty:ide-util-netty",
         "//libraries/jsoup",
         "//libraries/jcef",
-        "//libraries/jcef/plugin",
+        "//plugins/jcef/plugin",
         "//platform/util-ex",
         "//libraries/markdown",
         "//plugins/toml",
@@ -71,7 +71,7 @@ jvm_library(
         ":tests",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//libraries/jcef/plugin:plugin_test_lib",
+        "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
     ],
     deps = [

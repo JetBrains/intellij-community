@@ -444,7 +444,6 @@ libraries/javax/annotation
 libraries/jaxen
 libraries/jbr
 libraries/jcef
-libraries/jcef/plugin
 libraries/jcip
 libraries/jediterm-core
 libraries/jediterm-ui

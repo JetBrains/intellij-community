@@ -390,9 +390,6 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
-    <module name="intellij.platform.ui.jcef"/>
-    <module name="intellij.platform.ide.newUiOnboarding.jcef"/>
-    <module name="intellij.platform.ide.impl.jcef"/>
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>

@@ -371,10 +371,6 @@ object CommunityModuleSets {
     moduleSet(essential())
     moduleSet(compose())
 
-    module("intellij.platform.ui.jcef")
-    module("intellij.platform.ide.newUiOnboarding.jcef")
-    module("intellij.platform.ide.impl.jcef")
-
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
     module("intellij.platform.collaborationTools")
