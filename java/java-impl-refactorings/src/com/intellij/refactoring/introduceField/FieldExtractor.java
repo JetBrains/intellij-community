@@ -546,10 +546,6 @@ final class FieldExtractor {
       else if ("package-info.java".equals(file.getName())) {
         return JavaRefactoringBundle.message("error.not.supported.for.package.info", helper.getRefactoringName());
       }
-      else {
-        LOG.error("Unexpected file: " + file);
-        return null;
-      }
     }
     return null;
   }
