@@ -309,6 +309,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
         val kotlinJvmPluginVersion = when {
+            GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.6.0") -> "2.3.21"
             GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.5.0") -> "2.3.20"
             GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.4.0") -> "2.3.0"
             else -> "2.2.21"
