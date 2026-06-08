@@ -44,6 +44,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -176,6 +177,39 @@ class UpdateCheckerFacadeTest {
     assertEquals(2, pluginIds.size)
     assertTrue(pluginIds.contains("ImageView"))
     assertTrue(pluginIds.contains("ColourChooser"))
+  }
+
+  @Test
+  fun `update check of marketplace-like repository has no mid in query`() {
+    application.replaceService(MarketplaceCustomizationService::class.java, TestMarketplaceCustomizationService(server.url, false),
+                               testDisposable.get())
+
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "0.1", "0", "999.99999", true),
+      InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
+    ))
+
+    setServerPlugins(
+      listOf(
+        RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
+        RepositoryPluginMock("ImageView", "502", "102", "0.1"),
+      ),
+      """
+      []
+      """.trimIndent()
+    )
+
+    val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates().pluginUpdates
+    assertTrue(result.all.isEmpty())
+
+    assertNotNull(receivedUpdatesRequestUri, "There must be a request from the IDE")
+    val queryParameters = receivedUpdatesRequestUri!!.queryParameters
+
+    assertFalse(queryParameters.contains("mid"), "Query parameters must not contain 'mid'")
+
+    assertTrue(queryParameters.contains("build"), "Query parameters must contain 'build'")
+    assertEquals(ApplicationInfoImpl.getShadowInstanceImpl().getPluginCompatibleBuildAsNumber().asString(),
+                 queryParameters["build"])
   }
 
   @Test
@@ -534,7 +568,8 @@ class UpdateCheckerFacadeTest {
   }
 }
 
-private class TestMarketplaceCustomizationService(private val mockHost: String) : MarketplaceCustomizationService {
+private class TestMarketplaceCustomizationService(private val mockHost: String, private val byJetBrains: Boolean = true) : MarketplaceCustomizationService {
+  override fun usesJetBrainsPluginRepository(): Boolean = byJetBrains
   override fun getPluginManagerUrl(): String = "$mockHost/plugins"
   override fun getPluginDownloadUrl(): String = "$mockHost/download"
   override fun getPluginsListUrl(): String = "$mockHost/list"
