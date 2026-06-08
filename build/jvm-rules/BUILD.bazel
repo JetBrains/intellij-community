@@ -55,7 +55,10 @@ define_kt_toolchain(
     btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
     btapi_kotlin_reflect = ":kotlin-reflect_import",
     btapi_kotlin_stdlib = ":kotlin-stdlib_import",
-    language_version = "2.3",
+    experimental_remove_private_classes_in_abi_jars = True,
+    jvm_runtime = [
+        ":kotlin-stdlib_import",
+    ],
 
     # Implicit Kotlin stdlib + jetbrains-annotations injected by rules_kotlin into
     # every kt_jvm_library's JavaInfo. Without these overrides the toolchain falls
@@ -64,10 +67,7 @@ define_kt_toolchain(
         ":annotations_import",
         ":kotlin-stdlib_import",
     ],
-    jvm_runtime = [
-        ":kotlin-stdlib_import",
-    ],
-    experimental_remove_private_classes_in_abi_jars = True,
+    language_version = "2.3",
 )
 
 # --@rules_jvm//:trace
@@ -86,10 +86,10 @@ jvm_import(
     name = "annotations_import",
     jar = "@annotations_http//file",
     source_jar = "@annotations-sources_http//file",
-    visibility = ["//visibility:public"],
     # Version must match the `annotations_http` http_file URL in MODULE.bazel —
     # verified at analysis time by `:annotations_import_coords_check`.
     tags = ["maven_coordinates=org.jetbrains:annotations:26.0.2"],
+    visibility = ["//visibility:public"],
 )
 
 assert_maven_coordinates_match_jar(
@@ -221,10 +221,10 @@ jvm_import(
 jvm_import(
     name = "kotlin-stdlib_import",
     jar = "@kotlin-stdlib_http//file",
-    visibility = ["//visibility:public"],
     # Version must match `kotlin_compiler_version` in MODULE.bazel — verified at
     # analysis time by `:kotlin-stdlib_import_coords_check`.
     tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.4.0"],
+    visibility = ["//visibility:public"],
 )
 
 assert_maven_coordinates_match_jar(

@@ -6,17 +6,18 @@ bazel_dep(name = "rules_jvm", version = "0.0.1")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 
 local_path_override(
-  module_name = "rules_jvm",
-  path = "../build/jvm-rules",
+    module_name = "rules_jvm",
+    path = "../build/jvm-rules",
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
 http_jvm_lib = use_repo_rule("//:http-lib.bzl", "http_jvm_lib")
 
 http_jvm_lib(
-  name = "kotlin_compose_compiler_plugin",
-  url = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar",
-  sha256 = "5545c33ddbc331ce4f2700b15c7d8b8603d219c434f3370298af45e99f1930b9",
+    name = "kotlin_compose_compiler_plugin",
+    sha256 = "5545c33ddbc331ce4f2700b15c7d8b8603d219c434f3370298af45e99f1930b9",
+    url = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar",
 )
 
 ### auto-generated section `maven libs` start
