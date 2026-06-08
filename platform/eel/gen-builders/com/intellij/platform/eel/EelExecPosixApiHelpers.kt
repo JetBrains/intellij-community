@@ -57,11 +57,17 @@ object EelExecPosixApiHelpers {
 
     private var workingDirectory: EelPath? = null
 
+    /**
+     * Command-line arguments passed to the process, not including the executable itself.
+     */
     @ApiStatus.Experimental
     fun args(arg: List<String>): SpawnProcess = apply {
       this.args = arg
     }
 
+    /**
+     * Command-line arguments passed to the process, not including the executable itself.
+     */
     fun args(vararg arg: String): SpawnProcess = apply {
       this.args = listOf(*arg)
     }
