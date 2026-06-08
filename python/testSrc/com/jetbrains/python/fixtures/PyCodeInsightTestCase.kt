@@ -82,7 +82,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
-import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -524,11 +524,11 @@ abstract class PyCodeInsightTestCase {
     val project = expr.project
     val containingFile = expr.containingFile
 
-    val contextCA = codeAnalysis(project, containingFile)
-    val contextUI = userInitiated(project, containingFile)
-    val actualType: PyType? = contextCA.getType(expr)
-    val actualTypeCA = PythonDocumentationProvider.getTypeName(actualType, contextCA, PyTypeRenderer.Feature.UNSAFE_UNION)
-    val actualTypeUI = PythonDocumentationProvider.getTypeName(actualType, contextUI, PyTypeRenderer.Feature.UNSAFE_UNION)
+    fun renderType(context: TypeEvalContext) =
+      PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRenderer.Feature.UNSAFE_UNION)
+
+    val actualTypeCA = renderType(codeAnalysis(project, containingFile))
+    val actualTypeUI = renderType(userInitiated(project, containingFile))
 
     if (actualTypeCA != actualTypeUI) {
       return "Type mismatch for code analysis context ('$actualTypeCA') and user initiated context ('$actualTypeUI')"
