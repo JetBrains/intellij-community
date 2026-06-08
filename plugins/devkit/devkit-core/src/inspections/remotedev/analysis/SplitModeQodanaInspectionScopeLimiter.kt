@@ -7,6 +7,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,13 +29,16 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+// The class is intentionally not coupled to the exsiting RestrictionsService since it represents a temporary solution for qodana-based
+// split mode compatibility testing. After the testing phase is complete, we likely will get rid of the service, enable the tests for the entire monorepo
 @Service(Service.Level.APP)
 @ApiStatus.Internal
 class SplitModeQodanaInspectionScopeLimiter(private val coroutineScope: CoroutineScope) {
 
   companion object {
     private val LOG: Logger = logger<SplitModeQodanaInspectionScopeLimiter>()
-    private const val QODANA_ANALYSIS_SCOPE_FILE_PATH = "/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
+    private const val QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH =
+      "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
 
     @JvmStatic
     fun getInstance(): SplitModeQodanaInspectionScopeLimiter = service()
@@ -54,11 +61,18 @@ class SplitModeQodanaInspectionScopeLimiter(private val coroutineScope: Coroutin
     if (!SplitModeAnalysisFlags.isQodanaAnalysisScopeLimiterEnabled()) {
       return true
     }
-    if (!ensureScopeIsLoaded()) {
+
+    val request = createScopeLoadRequest(file.project)
+    if (!ensureScopeIsLoaded(request)) {
       return false
     }
 
-    val moduleNames = state.get().moduleNames
+    val loadedState = state.get()
+    if (loadedState.scopeKey != request.scopeKey) {
+      return false
+    }
+
+    val moduleNames = loadedState.moduleNames
     if (moduleNames.isEmpty()) {
       return true
     }
@@ -68,28 +82,37 @@ class SplitModeQodanaInspectionScopeLimiter(private val coroutineScope: Coroutin
   }
 
   @TestOnly
-  fun reloadScopeForTest() {
-    val moduleNames = loadModuleNames()
-    state.set(ScopeState(LoadingState.COMPLETED, moduleNames))
+  fun reloadScopeForTest(project: Project) {
+    val request = createScopeLoadRequest(project)
+    val moduleNames = loadModuleNames(request)
+    state.set(ScopeState(LoadingState.COMPLETED, request.scopeKey, moduleNames))
   }
 
-  private fun isLoaded(): Boolean {
-    return state.get().loadingState == LoadingState.COMPLETED
+  private fun createScopeLoadRequest(project: Project): ScopeLoadRequest {
+    return ScopeLoadRequest(
+      projectRoot = project.guessProjectDir(),
+      additionalFilePath = SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath(),
+    )
   }
 
-  private fun ensureScopeIsLoaded(): Boolean {
-    if (isLoaded()) {
+  private fun isLoaded(scopeKey: ScopeKey): Boolean {
+    val currentState = state.get()
+    return currentState.loadingState == LoadingState.COMPLETED && currentState.scopeKey == scopeKey
+  }
+
+  private fun ensureScopeIsLoaded(request: ScopeLoadRequest): Boolean {
+    if (isLoaded(request.scopeKey)) {
       return true
     }
 
-    scheduleLoadScope()
-    if (isLoaded()) {
+    scheduleLoadScope(request)
+    if (isLoaded(request.scopeKey)) {
       return true
     }
 
     val loadedInTime = runBlockingCancellable {
       withTimeoutOrNull(1.seconds) {
-        while (!isLoaded()) {
+        while (!isLoaded(request.scopeKey)) {
           delay(10.milliseconds)
         }
         true
@@ -98,75 +121,99 @@ class SplitModeQodanaInspectionScopeLimiter(private val coroutineScope: Coroutin
     return loadedInTime == true
   }
 
-  private fun scheduleLoadScope() {
+  private fun scheduleLoadScope(request: ScopeLoadRequest) {
     while (true) {
       val currentState = state.get()
-      if (currentState.loadingState != LoadingState.NOT_STARTED) {
+      if (currentState.scopeKey == request.scopeKey && currentState.loadingState != LoadingState.NOT_STARTED) {
         return
       }
 
-      val loadingState = currentState.copy(loadingState = LoadingState.IN_PROGRESS)
+      val loadingState = ScopeState(LoadingState.IN_PROGRESS, request.scopeKey)
       if (state.compareAndSet(currentState, loadingState)) {
         coroutineScope.launch {
-          loadScope()
+          loadScope(request)
         }
         return
       }
     }
   }
 
-  private suspend fun loadScope() {
-    var scopeState = ScopeState(loadingState = LoadingState.COMPLETED)
+  private suspend fun loadScope(request: ScopeLoadRequest) {
+    var scopeState = ScopeState(loadingState = LoadingState.COMPLETED, scopeKey = request.scopeKey)
     try {
-      LOG.info("Loading split-mode Qodana analysis scope from $QODANA_ANALYSIS_SCOPE_FILE_PATH")
+      LOG.info("Loading split-mode Qodana analysis scope from project file $QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH")
       val moduleNames = withContext(Dispatchers.IO) {
-        loadModuleNames()
+        loadModuleNames(request)
       }
-      scopeState = ScopeState(LoadingState.COMPLETED, moduleNames)
+      scopeState = ScopeState(LoadingState.COMPLETED, request.scopeKey, moduleNames)
       LOG.info("Loaded ${moduleNames.size} split-mode Qodana analysis scope module names")
     }
     catch (e: Exception) {
       LOG.error("Failed to load split-mode Qodana analysis scope", e)
     }
     finally {
-      state.set(scopeState)
+      finishLoading(request.scopeKey, scopeState)
     }
   }
 
-  private fun loadModuleNames(): Set<String> {
-    val moduleNames = mutableSetOf<String>()
-
-    val bundledJsonText = readBundledJson(QODANA_ANALYSIS_SCOPE_FILE_PATH)
-    if (bundledJsonText != null) {
-      moduleNames.addAll(parseModuleNames(bundledJsonText))
+  private fun finishLoading(scopeKey: ScopeKey, scopeState: ScopeState) {
+    while (true) {
+      val currentState = state.get()
+      if (currentState.scopeKey != scopeKey || currentState.loadingState != LoadingState.IN_PROGRESS) {
+        return
+      }
+      if (state.compareAndSet(currentState, scopeState)) {
+        return
+      }
     }
-
-    val additionalJsonText = readAdditionalQodanaAnalysisScopeJson()
-    if (additionalJsonText != null) {
-      moduleNames.addAll(parseModuleNames(additionalJsonText))
-    }
-
-    return moduleNames
   }
 
-  private fun parseModuleNames(jsonText: String): List<String> {
-    return json.decodeFromString<SplitModeQodanaAnalysisScope>(jsonText).moduleNames
+  private fun loadModuleNames(request: ScopeLoadRequest): Set<String> {
+    val externallyProvidedModules = readAdditionalQodanaAnalysisScopeJson(request.additionalFilePath)
+    if (!externallyProvidedModules.isNullOrBlank()) {
+      LOG.warn("Split-mode Qodana analysis scope is provided externally")
+      return parseModuleNames(externallyProvidedModules)
+    }
+
+    val moduleNamesFromCurrentlyInspectedProject = readProjectQodanaAnalysisScopeJson(request.projectRoot)
+    if (!moduleNamesFromCurrentlyInspectedProject.isNullOrBlank()) {
+      LOG.warn("Split-mode Qodana analysis scope is taken from currently inspected project")
+      return parseModuleNames(moduleNamesFromCurrentlyInspectedProject)
+    }
+
+    LOG.warn("Split-mode Qodana analysis scope is not provided")
+    return emptySet()
+  }
+
+  private fun parseModuleNames(jsonText: String): Set<String> {
+    return json.decodeFromString<SplitModeQodanaAnalysisScope>(jsonText)
+      .moduleNames.asSequence()
       .map { it.trim() }
       .filter { it.isNotEmpty() }
+      .toSet()
   }
 
-  private fun readBundledJson(filePath: String): String? {
-    val inputStream = SplitModeQodanaInspectionScopeLimiter::class.java.getResourceAsStream(filePath)
-    if (inputStream == null) {
-      LOG.warn("Split-mode Qodana analysis scope file not found: $filePath")
+  private fun readProjectQodanaAnalysisScopeJson(projectRoot: VirtualFile?): String? {
+    if (projectRoot == null) {
+      LOG.info("Cannot load split-mode Qodana analysis scope: project root is unknown")
       return null
     }
 
-    return inputStream.bufferedReader().use { it.readText() }
+    val scopeFile = projectRoot.findFileByRelativePath(QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH)
+    if (scopeFile == null) {
+      LOG.info("Project split-mode Qodana analysis scope file does not exist: $QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH")
+      return null
+    }
+
+    LOG.info("Loading project split-mode Qodana analysis scope from ${scopeFile.path}")
+    return VfsUtilCore.loadText(scopeFile)
   }
 
-  private fun readAdditionalQodanaAnalysisScopeJson(): String? {
-    val filePath = SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath() ?: return null
+  private fun readAdditionalQodanaAnalysisScopeJson(filePath: String?): String? {
+    if (filePath == null) {
+      return null
+    }
+
     val path = Path.of(filePath)
     if (!Files.isRegularFile(path)) {
       LOG.info("Additional split-mode Qodana analysis scope file does not exist: $filePath")
@@ -179,7 +226,20 @@ class SplitModeQodanaInspectionScopeLimiter(private val coroutineScope: Coroutin
 
   private data class ScopeState(
     val loadingState: LoadingState = LoadingState.NOT_STARTED,
+    val scopeKey: ScopeKey? = null,
     val moduleNames: Set<String> = emptySet(),
+  )
+
+  private data class ScopeLoadRequest(
+    val projectRoot: VirtualFile?,
+    val additionalFilePath: String?,
+  ) {
+    val scopeKey: ScopeKey = ScopeKey(projectRoot?.url, additionalFilePath)
+  }
+
+  private data class ScopeKey(
+    val projectRootUrl: String?,
+    val additionalFilePath: String?,
   )
 
   @Serializable

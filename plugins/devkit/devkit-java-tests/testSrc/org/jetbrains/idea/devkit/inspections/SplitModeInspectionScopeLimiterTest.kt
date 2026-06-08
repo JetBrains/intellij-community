@@ -10,12 +10,15 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import java.nio.file.Files
 
+private const val QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH =
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
+
 internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
 
   fun testDisabledLimiterAllowsFileOutsideConfiguredModules() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
-    withQodanaAnalysisScopeLimiter(false, """{ "moduleNames": ["other.module"] }""") {
+    withQodanaAnalysisScopeLimiter(false, additionalScopeJson = """{ "moduleNames": ["other.module"] }""") {
       assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
     }
   }
@@ -24,7 +27,7 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
     val moduleName = getModuleName(file)
 
-    withQodanaAnalysisScopeLimiter(true, """{ "moduleNames": ["$moduleName"] }""") {
+    withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "moduleNames": ["$moduleName"] }""") {
       assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
     }
   }
@@ -32,25 +35,42 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
   fun testEnabledLimiterRejectsFileOutsideConfiguredModules() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
-    withQodanaAnalysisScopeLimiter(true, """{ "moduleNames": ["other.module"] }""") {
+    withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "moduleNames": ["other.module"] }""") {
       assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    }
+  }
+
+  fun testEnabledLimiterCombinesProjectAndAdditionalScopeFiles() {
+    val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
+    val moduleName = getModuleName(file)
+
+    withQodanaAnalysisScopeLimiter(
+      enabled = true,
+      projectScopeJson = """{ "moduleNames": ["other.module"] }""",
+      additionalScopeJson = """{ "moduleNames": ["$moduleName"] }""",
+    ) {
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
     }
   }
 
   fun testEnabledLimiterAllowsAllModulesWhenScopeIsEmpty() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
-    withQodanaAnalysisScopeLimiter(true, null) {
+    withQodanaAnalysisScopeLimiter(true) {
       assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
     }
   }
 
   private fun withQodanaAnalysisScopeLimiter(
     enabled: Boolean,
-    @Language("JSON") scopeJson: String?,
+    @Language("JSON") projectScopeJson: String? = null,
+    @Language("JSON") additionalScopeJson: String? = null,
     action: () -> Unit,
   ) {
-    val additionalFile = scopeJson?.let {
+    if (projectScopeJson != null) {
+      myFixture.addFileToProject(QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH, projectScopeJson)
+    }
+    val additionalFile = additionalScopeJson?.let {
       Files.createTempFile("split-mode-qodana-analysis-scope", ".json").also { file ->
         Files.writeString(file, it)
       }
@@ -60,13 +80,13 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     try {
       enabledRegistryValue.setValue(enabled)
       additionalFileRegistryValue.setValue(additionalFile?.toString() ?: "")
-      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest()
+      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest(project)
       action()
     }
     finally {
       enabledRegistryValue.setValue(false)
       additionalFileRegistryValue.setValue("")
-      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest()
+      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest(project)
       if (additionalFile != null) {
         Files.deleteIfExists(additionalFile)
       }
