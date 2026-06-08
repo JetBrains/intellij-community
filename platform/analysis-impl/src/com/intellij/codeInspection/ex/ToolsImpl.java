@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -597,7 +598,7 @@ public final class ToolsImpl implements Tools {
     myDefaultState.setLevel(level);
   }
 
-  boolean normalizeRemovedSeverities(@NotNull Set<String> removedSeverityNames,
+  boolean normalizeRemovedSeverities(@NotNull @Unmodifiable Set<String> removedSeverityNames,
                                      @NotNull SeverityRegistrar severityRegistrar) {
     boolean changed = normalizeRemovedSeverity(myDefaultState, removedSeverityNames, severityRegistrar);
     if (myTools != null) {
@@ -609,7 +610,7 @@ public final class ToolsImpl implements Tools {
   }
 
   private static boolean normalizeRemovedSeverity(@NotNull ScopeToolState state,
-                                                  @NotNull Set<String> removedSeverityNames,
+                                                  @NotNull @Unmodifiable Set<String> removedSeverityNames,
                                                   @NotNull SeverityRegistrar severityRegistrar) {
     String severityName = state.getLevel().getSeverity().getName();
     if (!removedSeverityNames.contains(severityName) || severityRegistrar.isSeverityValid(severityName)) {

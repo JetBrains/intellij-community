@@ -122,7 +122,7 @@ class InspectionSchemeTest {
       }
 
       // Simulate project-level registrar initialization before provided severities are synced at app startup.
-      SeverityRegistrar.syncProvidedSeveritiesSilently(emptyMap())
+      SeverityRegistrar.syncProvidedSeverities(emptyMap(), true)
 
       var appProfileManagerInitialized = false
       try {

@@ -975,7 +975,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Internal
-  public boolean normalizeRemovedSeverities(@NotNull Set<String> removedSeverityNames) {
+  public boolean normalizeRemovedSeverities(@NotNull @Unmodifiable Set<String> removedSeverityNames) {
     if (!myInitialized || removedSeverityNames.isEmpty()) {
       return false;
     }

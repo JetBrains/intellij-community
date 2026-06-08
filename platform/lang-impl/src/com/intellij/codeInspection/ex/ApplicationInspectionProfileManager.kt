@@ -147,10 +147,9 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable @Internal con
     }
 
     HighlightDisplayLevel.syncProvidedSeverities(providedSeverities)
-    val removedSeverities = if (notifyListeners) SeverityRegistrar.syncProvidedSeverities(providedTypes)
-    else SeverityRegistrar.syncProvidedSeveritiesSilently(providedTypes)
+    val removedSeverities = SeverityRegistrar.syncProvidedSeverities(providedTypes, notifyListeners)
     if (notifyListeners && removedSeverities.isNotEmpty()) {
-      normalizeRemovedProvidedSeverities(removedSeverities.toSet())
+      normalizeRemovedProvidedSeverities(removedSeverities)
     }
   }
 

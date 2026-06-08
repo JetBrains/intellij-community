@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.Icon;
 import java.awt.Color;
@@ -29,10 +30,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,18 +90,11 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     ourStandardSeveritiesState = buildStandardSeveritiesState(Collections.emptyMap());
   }
 
-  @SuppressWarnings("unused")
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
-    Map<String, HighlightInfoType> map = new LinkedHashMap<>(1);
-    map.put(highlightSeverity.getName(), highlightInfoType);
-    boolean changed = false;
+    boolean changed;
     synchronized (STANDARD_SEVERITIES_LOCK) {
-      for (Map.Entry<String, ? extends HighlightInfoType> entry : ((Map<String, ? extends HighlightInfoType>)map).entrySet()) {
-        HighlightInfoType previous = REGISTERED_STANDARD_SEVERITIES.put(entry.getKey(), entry.getValue());
-        if (!entry.getValue().equals(previous)) {
-          changed = true;
-        }
-      }
+      HighlightInfoType previous = REGISTERED_STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
+      changed = !highlightInfoType.equals(previous);
       if (changed) {
         ourStandardSeveritiesState = buildStandardSeveritiesState(getStandardSeveritiesState().providerTypes);
       }
@@ -110,27 +106,17 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   @Internal
-  public static @NotNull Collection<String> syncProvidedSeverities(@NotNull Map<String, ? extends HighlightInfoType> map) {
-    return doSyncProvidedSeverities(map, true);
-  }
-
-  @Internal
-  public static @NotNull Collection<String> syncProvidedSeveritiesSilently(@NotNull Map<String, ? extends HighlightInfoType> map) {
-    return doSyncProvidedSeverities(map, false);
-  }
-
-  private static @NotNull Collection<String> doSyncProvidedSeverities(@NotNull Map<String, ? extends HighlightInfoType> map,
-                                                                      boolean notifyListeners) {
-    LinkedHashMap<String, HighlightInfoType> providedTypes = new LinkedHashMap<>(map.size());
-    providedTypes.putAll(map);
-
-    Collection<String> removedNames = List.of();
+  public static @NotNull @Unmodifiable Set<@NotNull String> syncProvidedSeverities(@NotNull Map<String, ? extends HighlightInfoType> providedTypes, boolean notifyListeners) {
     boolean changed = false;
+    Set<String> removedNames;
     synchronized (STANDARD_SEVERITIES_LOCK) {
       StandardSeveritiesState oldState = getStandardSeveritiesState();
-      if (!sameOrderedMap(oldState.providerTypes, providedTypes)) {
+      if (sameOrderedMap(oldState.providerTypes, providedTypes)) {
+        removedNames = Set.of();
+      }
+      else {
         StandardSeveritiesState newState = buildStandardSeveritiesState(providedTypes);
-        LinkedHashSet<String> removed = new LinkedHashSet<>(oldState.allTypes.keySet());
+        Set<String> removed = new HashSet<>(oldState.allTypes.keySet());
         removed.removeAll(newState.allTypes.keySet());
         removedNames = removed;
         ourStandardSeveritiesState = newState;
@@ -196,7 +182,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;
     }
 
-    if (severity == HighlightSeverity.INFORMATION){
+    if (severity == HighlightSeverity.INFORMATION) {
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
     }
 
@@ -523,7 +509,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   private static @NotNull List<HighlightSeverity> mergeOrderWithDefault(@NotNull List<String> currentOrderNames,
                                                                         @NotNull List<HighlightSeverity> defaultOrder) {
     LinkedHashMap<String, HighlightSeverity> severitiesByName = new LinkedHashMap<>(defaultOrder.size());
-    LinkedHashMap<String, Integer> defaultIndices = new LinkedHashMap<>(defaultOrder.size());
+    Map<String, Integer> defaultIndices = new HashMap<>(defaultOrder.size());
     for (int i = 0; i < defaultOrder.size(); i++) {
       HighlightSeverity severity = defaultOrder.get(i);
       severitiesByName.put(severity.getName(), severity);
@@ -574,7 +560,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     while (firstIterator.hasNext() && secondIterator.hasNext()) {
       Map.Entry<String, ? extends HighlightInfoType> firstEntry = firstIterator.next();
       Map.Entry<String, ? extends HighlightInfoType> secondEntry = secondIterator.next();
-      if (!firstEntry.getKey().equals(secondEntry.getKey()) || !firstEntry.getValue().equals(secondEntry.getValue())) {
+      if (!firstEntry.equals(secondEntry)) {
         return false;
       }
     }
@@ -594,8 +580,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     }
     defaultOrder.sort(null);
 
-    LinkedHashMap<String, HighlightInfoType> providerCopy = new LinkedHashMap<>(providerTypes.size());
-    providerCopy.putAll(providerTypes);
+    LinkedHashMap<String, HighlightInfoType> providerCopy = new LinkedHashMap<>(providerTypes);
     return new StandardSeveritiesState(
       Collections.unmodifiableMap(effectiveTypes),
       Collections.unmodifiableMap(providerCopy),
@@ -612,20 +597,9 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  private static final class StandardSeveritiesState {
-    private final @NotNull Map<String, HighlightInfoType> allTypes;
-    private final @NotNull Map<String, HighlightInfoType> providerTypes;
-    private final @NotNull List<HighlightInfoType> orderedTypes;
-    private final @NotNull List<HighlightSeverity> defaultOrder;
-
-    private StandardSeveritiesState(@NotNull Map<String, HighlightInfoType> allTypes,
-                                    @NotNull Map<String, HighlightInfoType> providerTypes,
-                                    @NotNull List<HighlightInfoType> orderedTypes,
-                                    @NotNull List<HighlightSeverity> defaultOrder) {
-      this.allTypes = allTypes;
-      this.providerTypes = providerTypes;
-      this.orderedTypes = orderedTypes;
-      this.defaultOrder = defaultOrder;
-    }
+  private record StandardSeveritiesState(@NotNull @Unmodifiable Map<String, HighlightInfoType> allTypes,
+                                         @NotNull @Unmodifiable Map<String, HighlightInfoType> providerTypes,
+                                         @NotNull @Unmodifiable List<HighlightInfoType> orderedTypes,
+                                         @NotNull @Unmodifiable List<HighlightSeverity> defaultOrder) {
   }
 }
