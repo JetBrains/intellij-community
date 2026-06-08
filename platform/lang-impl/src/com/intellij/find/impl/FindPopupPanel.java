@@ -244,7 +244,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   private final Alarm myPreviewUpdater;
   private final Runnable updatePreviewRunnable;
   private final @NotNull FindPopupScopeUI myScopeUI;
-  private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
   private SearchTextArea myReplaceTextArea;
   private ActionListener myOkActionListener;
@@ -946,10 +945,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     bottomPanel.add(myReplaceAllButton, btnGapLeft);
     bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
 
-    myCodePreviewComponent = myUsagePreviewPanel.createComponent();
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.add(myUsagePreviewTitle, BorderLayout.NORTH);
-    previewPanel.add(myCodePreviewComponent, BorderLayout.CENTER);
+    previewPanel.add(myUsagePreviewPanel.createComponent(), BorderLayout.CENTER);
     myPreviewSplitter.setSecondComponent(previewPanel);
     JPanel scopesPanel = new JPanel();
     new RowBuilder(scopesPanel)
@@ -1850,7 +1848,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     public void appendIncomingRow(@NotNull FindPopupItem item) {
       myPreviewSplitter.getSecondComponent().setVisible(true);
       ((DefaultTableModel)myResultsPreviewTable.getModel()).addRow(new Object[]{item});
-      myCodePreviewComponent.setVisible(true);
       int rowCount = myResultsPreviewTable.getRowCount();
       myReplaceAllButton.setEnabled(rowCount > 0);
       myReplaceSelectedButton.setEnabled(rowCount > 0);
