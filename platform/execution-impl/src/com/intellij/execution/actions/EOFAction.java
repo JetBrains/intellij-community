@@ -15,6 +15,7 @@ import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,8 +31,8 @@ public final class EOFAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
-    ConsoleView console = UIUtil.getParentOfType(ConsoleView.class, IdeFocusManager.findInstance().getFocusOwner());
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    ConsoleView console = resolveConsole(e, descriptor);
     ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
     e.getPresentation().setEnabledAndVisible(console != null
                                              && handler != null
@@ -40,11 +41,11 @@ public final class EOFAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     ProcessHandler activeProcessHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
 
-    ConsoleView console = e.getData(LangDataKeys.CONSOLE_VIEW);
+    ConsoleView console = resolveConsole(e, descriptor);
     if (console instanceof TerminalExecutionConsole) {
       sendEOFToPtyProcess(activeProcessHandler.getProcessInput());
       return;
@@ -59,6 +60,28 @@ public final class EOFAction extends DumbAwareAction {
     }
     catch (IOException ignored) {
     }
+  }
+
+  /**
+   * Resolves the {@link ConsoleView} the action should target.
+   * <p>
+   * Prefers the console in the data context or focus owner. Falls back to event's
+   * {@link RunContentDescriptor}'s execution console when neither is available (e.g. when invoked
+   * from the Find Action popup), but only if that console's component is currently showing —
+   * so the action is disabled when the user is on a non-console tab (Threads, Variables, etc.) in
+   * the Debug tool window.
+   */
+  private static @Nullable ConsoleView resolveConsole(@NotNull AnActionEvent e, @Nullable RunContentDescriptor descriptor) {
+    ConsoleView fromData = e.getData(LangDataKeys.CONSOLE_VIEW);
+    if (fromData != null) return fromData;
+
+    ConsoleView fromFocus = UIUtil.getParentOfType(ConsoleView.class, IdeFocusManager.findInstance().getFocusOwner());
+    if (fromFocus != null) return fromFocus;
+
+    if (descriptor == null) return null;
+    if (!(descriptor.getExecutionConsole() instanceof ConsoleView console)) return null;
+    if (!console.getComponent().isShowing()) return null;
+    return console;
   }
 
   /**
