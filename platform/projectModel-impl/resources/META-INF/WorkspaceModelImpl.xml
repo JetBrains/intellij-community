@@ -14,6 +14,7 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeWorkspaceFileIndexContributor"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
@@ -45,7 +46,9 @@
                  description="Enable existence of multiple workspace models, one per each isolated environment"/>
     <registryKey key="ide.workspace.model.dump.on.every.wsm.update" defaultValue="false" restartRequired="false"
                  description="Dump workspace model to log directory on every WSM update"/>
-
+    <registryKey key="ide.workspace.model.relative.paths.to.exclude.automatically"
+                 defaultValue=".worktrees;.claude/worktrees" restartRequired="true"
+                 description="Semicolon-separated list of relative-paths from project root to automatically exclude from indexing and searching."/>
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>
 </idea-plugin>
