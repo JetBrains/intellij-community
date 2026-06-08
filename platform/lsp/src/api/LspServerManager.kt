@@ -4,6 +4,7 @@ package com.intellij.platform.lsp.api
 import com.intellij.openapi.project.Project
 
 @Deprecated("Use LspClientManager", ReplaceWith("LspClientManager", "com.intellij.platform.lsp.api.LspClientManager"))
+@Suppress("DEPRECATION")
 interface LspServerManager : LspClientManager {
   @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
   fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspServer>
